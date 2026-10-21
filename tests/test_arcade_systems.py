@@ -178,6 +178,75 @@ class Library(unittest.TestCase):
         self.assertGreater(G.frame_stats(G.png_read(png)[2])["colours"], 1)
 
 
+# the SHA-256 of the 48 bytes every licensed cartridge carries at 0x104 (the boot ROM checks them); only the hash is
+# here, computed from the user's cartridges in memory
+LOGO_SHA256 = "daf4cabdc852baa0291849203f0b41fd0b4ecd58e0d7aff4a509f5de4d7f9a2e"
+CART_EXTS = (".gb", ".gbc", ".sgb", ".nds")
+
+
+def cartridges_in(files, logo_sha256: str = LOGO_SHA256) -> list[str]:
+    """The files that are, or zip, a cartridge: by extension, or by the logo's hash at 0x104."""
+    import hashlib
+    import io
+
+    def is_cart(data: bytes) -> bool:
+        return len(data) >= 0x150 and hashlib.sha256(data[0x104:0x134]).hexdigest() == logo_sha256
+    found = []
+    for f in files:
+        f = Path(f)
+        if f.suffix.lower() in CART_EXTS:
+            found.append(str(f))
+            continue
+        try:
+            data = f.read_bytes()
+        except OSError:
+            continue
+        if is_cart(data):
+            found.append(str(f))
+        elif f.suffix.lower() == ".zip":
+            with zipfile.ZipFile(io.BytesIO(data)) as z:
+                if any(Path(n).suffix.lower() in CART_EXTS or is_cart(z.read(n)) for n in z.namelist()):
+                    found.append(str(f))
+    return found
+
+
+class NoCartridgeInTheRepository(unittest.TestCase):
+    """Cartridges are read where the user keeps them: no tracked file is one or zips one, and the folders that
+    hold what is derived from them (state/: pictures, lifted code, surveys) and the saves are ignored by git."""
+
+    def test_no_tracked_file_is_a_cartridge(self):
+        import subprocess
+        from helpers import ROOT
+        out = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True).stdout
+        files = [ROOT / f.decode() for f in out.split(b"\0") if f]
+        self.assertGreater(len(files), 100)
+        self.assertEqual(cartridges_in(files), [])
+
+    def test_the_detector_sees_cartridges(self):
+        """A planted cartridge of each kind is found: a .gb file, a .zip holding a .gbc, and (standing in for the
+        logo, whose bytes are not here) a renamed file whose bytes at 0x104 have the hash looked for."""
+        import hashlib
+        ctx = model_ctx()
+        rom = cart(ctx)
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_planted_"))
+        (d / "a.gb").write_bytes(rom)
+        with zipfile.ZipFile(d / "b.zip", "w") as z:
+            z.writestr("b.gbc", rom)
+        (d / "c.bin").write_bytes(rom)
+        (d / "d.txt").write_text("no cartridge")
+        logo = hashlib.sha256(rom[0x104:0x134]).hexdigest()
+        self.assertEqual(sorted(Path(f).name for f in cartridges_in(sorted(d.iterdir()), logo)),
+                         ["a.gb", "b.zip", "c.bin"])
+        self.assertEqual(cartridges_in([d / "c.bin"]), [], "the card assembler leaves the real logo out")
+
+    def test_state_and_saves_are_ignored(self):
+        import subprocess
+        from helpers import ROOT
+        for rel in ("state/emu/x.json", "state/arcade/covers/rom-0.png", "saves/x/save.bin"):
+            p = subprocess.run(["git", "check-ignore", "-q", rel], cwd=ROOT)
+            self.assertEqual(p.returncode, 0, f"{rel} is not ignored by git")
+
+
 @unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
 class PlayerPackage(unittest.TestCase):
     @classmethod

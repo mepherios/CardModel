@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import threading
 import time
@@ -62,9 +63,12 @@ SETTINGS_OVERRIDE: Path | None = None       # tests point it at a temporary file
 
 
 def settings_file(ctx) -> Path:
-    """library.json in the arcade's folder: the parent of the saves folder the platform card names."""
+    """library.json in the arcade's folder: the parent of the saves folder the platform card names
+    (CARDMODEL_LIBRARY names another file: the tests' own, so no test reads the user's cartridges)."""
     if SETTINGS_OVERRIDE is not None:
         return SETTINGS_OVERRIDE
+    if os.environ.get("CARDMODEL_LIBRARY"):
+        return Path(os.environ["CARDMODEL_LIBRARY"]).expanduser()
     plat = ctx.store.get("platform/macos")
     saves = Path(str((plat or {}).get("saves", "") or "~/Library/Application Support/Cardmodel Arcade/saves/{id}"))
     return Path(str(saves).replace("{id}", "")).expanduser().parent / "library.json"
@@ -145,7 +149,8 @@ def scan(ctx, force: bool = False) -> dict:
     with _lock:
         if _state["scan"] is not None and not force:
             return _state["scan"]
-    cache_path = ctx.state_root / "arcade" / "library-cache.json"
+    own = SETTINGS_OVERRIDE is not None or bool(os.environ.get("CARDMODEL_LIBRARY"))     # a test's library
+    cache_path = (settings_file(ctx).parent if own else ctx.state_root / "arcade") / "library-cache.json"
     try:
         cache = json.loads(cache_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -189,7 +194,9 @@ def scan(ctx, force: bool = False) -> dict:
                     row["verdict"] = {"level": level, "text": text, "reason": v.get("reason")}
                 else:
                     row["verdict"] = {"level": "unknown", "text": "Not surveyed yet (cardmodel machine survey)"}
-                row["cover"] = f"/api/cover/{row['id']}.png" if cover_path(ctx, row["id"]).is_file() else None
+                cp = cover_path(ctx, row["id"])
+                row["cover_drawn"] = cp.is_file()                   # an empty file: the screen stayed blank
+                row["cover"] = f"/api/cover/{row['id']}.png" if row["cover_drawn"] and cp.stat().st_size else None
                 roms.append(row)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text(json.dumps(fresh_cache), encoding="utf-8")
@@ -330,7 +337,7 @@ def route(handler, method: str, parts: list[str]) -> bool:
         return False
     if parts == ["api", "library"]:
         lib = scan(ctx)
-        if any(r.get("cover") is None for r in lib["roms"] if r.get("system_card") == "gameboy"):
+        if any(not r.get("cover_drawn") for r in lib["roms"] if r.get("system_card") == "gameboy"):
             start_drawing(ctx)
         lib = dict(lib, drawing={"busy": _state["drawing"], "drawn": _state["drawn"], "of": _state["to_draw"]})
         handler._json(lib)
