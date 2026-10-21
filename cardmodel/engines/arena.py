@@ -5,7 +5,10 @@
   planted   a suboptimal form of an algorithm card (naive recursion, a loop with a closed form,
             trial division to n, ...) under a fresh name and with renamed parameters
   decoy     looks like a planted function but computes something else (off-by-one ranges,
-            shifted sums, different seeds); substituting the look-alike card would be a bug
+            shifted sums, different seeds); substituting the look-alike card would be a bug.
+            improve also matches a*card + b, so a decoy must differ from every such image on the
+            small inputs every comparison includes: a sum that starts at 1 instead of 0 is card + 1,
+            replaced correctly, and is no decoy
   optimal   an already-optimal form: improve must keep it (or find a faster verified one)
   rewrite   an expression with a cheaper equivalent under the rule cards
   shell     effectful code (files, sockets, clocks): must stay byte-identical
@@ -34,8 +37,8 @@ from .improve import improve_source, rename
 DECOYS = [
     ("triangular", '''
 def {name}({p0}: int) -> int:
-    t = 1
-    for i in range({p0}):
+    t = 0
+    for i in range(2, {p0}):
         t += i
     return t'''),
     ("sum_1_to_n", '''
