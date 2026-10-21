@@ -162,11 +162,24 @@ replaced by the byte it would read; it is then specialised:
 3. register caching in locals when no remaining call reads them, written back at every exit;
 4. dead code (flags overwritten before use).
 
-A block runs only when it can finish before `next_event`, so nothing can raise an interrupt inside it except the
-CPU's own writes; after any instruction that may move `next_event` it checks and leaves. It never starts once the
-frame is done. Blocks are cached per ROM and machine, emitted through the C card in per-bank parts, linked into
-one library. The profile grows with each session (the shell saves the new entries at exit); a launch re-lifts
-when it grew enough.
+A block runs whole only when it can finish before `next_event`, so nothing can raise an interrupt inside it
+except the CPU's own writes; after any instruction that may move `next_event` it checks and leaves. **Every
+instruction of a block is an entry** (`blk_K(entry, single)`, and `run_block` switches over every instruction
+start): when the next event is too close, right after EI, or once the frame is done, the block runs just that one
+instruction exactly as the interpreter would (`single`: with EI's delay counted down after it), and the step loop
+takes the next boundary. HALT, STOP and EI are blocks of one instruction. **Code in RAM** (the OAM DMA routine
+every game copies to HRAM, routines copied to work RAM) is lifted one instruction at a time from the bytes the
+profile saw it run with (`ram_seen`, `ram_code`); each lifted RAM instruction first checks that RAM still holds
+those bytes, and during OAM DMA that it is in HRAM, else the interpreter runs it (`run_ram`).
+
+So the ROM's code that was found runs as lifted card IR; the machine counts what still went through the
+instruction-at-a-time interpreter (`interpreted`, `interpreted_ram`). Pokemon Crystal, after a 31,800-frame
+profile (the survey's presses, then a seeded walk), on a run with another seed: 98.4 % of 15.6 million
+instructions ran lifted, none from RAM through the interpreter, frame-identical to the interpreter.
+
+Blocks are cached per ROM, machine and lifter version, emitted through the C card in per-bank parts, linked into
+one library. The profile grows with each session (the shell saves the new entries at exit, and an app made for
+one cartridge keeps them beside its save: docs/ARCADE.md section 5); a launch re-lifts when it grew enough.
 
 ## 5. The effect shell (CM21, CM34)
 
@@ -218,7 +231,10 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   the hand-over is in V-blank as in CGB mode (LY, STAT and LCDC after the boot depend on the header and are not
   tested). The CGB's early line-144 STAT source is measured in single speed; in double speed it is the same 4
   dots, unverified.
-* Lifting: code in RAM, code right after EI and the HALT/STOP/illegal opcodes always run in the interpreter.
+* Lifting: code no profile or static successor reached, RAM code whose bytes changed since it was profiled,
+  code in video or cartridge RAM, illegal opcodes and the instruction after a HALT bug run in the interpreter
+  (counted in `interpreted`). Discovery follows calls and jumps statically only within bank 0 and within a
+  switchable bank; jumps through tables are found by profiles.
 * DS: no 2D/3D graphics, sound, touch, SPI devices, RTC or Wi-Fi yet; no wait states; flat VRAM. ARM lifting
   covers ARM-state ARM9 code only; its word guards read through the bus, so it saves the decode but not the
   fetches (little speed-up for RAM-resident code).

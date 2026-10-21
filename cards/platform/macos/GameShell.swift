@@ -7,7 +7,8 @@
 //   --shot PATH         with --frames: write the last frame as a PNG
 //   --input SCRIPT      frame:button+button,... pressed for one frame each (tests)
 //   --save-dir DIR      where save.bin lives (default ~/Library/Application Support/Cardmodel Arcade/saves/ID)
-//   --rom PATH          a cartridge, for a console player (game.json has "cartridge"): read where it is (a .zip
+//   --rom PATH          a cartridge, for a console player (game.json has "cartridge"; its "path" when no --rom,
+//                       an app made for one cartridge): read where it is (a .zip
 //                       in memory), its bytes copied into the module, which decodes it
 //   --title TEXT        the window's title
 
@@ -33,8 +34,13 @@ struct Spec: Decodable {
     let keys: [String: [String]]
     let keys2: [String: [String]]
     let gamepad: [String: String]
-    struct Cartridge: Decodable { let symbol: String; let bytes: Int; let load: String; let extensions: [String]; let zip: Bool }
+    struct Cartridge: Decodable { let symbol: String; let bytes: Int; let load: String; let extensions: [String]; let zip: Bool
+                                  let path: String? }
+    struct Keep: Decodable { let symbol: String; let bytes: Int; let file: String; let mode: String? }
     let cartridge: Cartridge?      // a console player: the cartridge array and the function that decodes it
+    let keep: [Keep]?              // arrays kept beside the save: bits ORed in ("or"), or bytes that are set copied
+                                   // over ("copy"): what ran where, for the next build of an app for one cartridge
+    let globals: [String: Int64]?  // Int64 globals set before the module starts (e.g. profiling on)
     let clock: String?             // an Int64 the shell keeps at the Unix time (a cartridge's real-time clock)
     let flush: String?             // called before the shell quits (unsaved battery RAM)
 }
@@ -88,6 +94,7 @@ final class Game {
     let saveURL: URL
     var clock: UnsafeMutablePointer<Int64>?
     var flushFn: VoidFn?
+    var kept: [(UnsafeMutablePointer<UInt8>, Spec.Keep)] = []
 
     init(bundle: Bundle, saveDir: URL?, romPath: String?) {
         let specURL = bundle.url(forResource: "game", withExtension: "json")!
@@ -112,7 +119,7 @@ final class Game {
         saveURL = dir.appendingPathComponent("save.bin")
         unsafeBitCast(sym(spec.entry.reset), to: VoidFn.self)()
         if let c = spec.cartridge {
-            guard let path = romPath else { fatalError("\(spec.title) plays a cartridge: start it with --rom PATH") }
+            guard let path = romPath ?? c.path else { fatalError("\(spec.title) plays a cartridge: start it with --rom PATH") }
             guard let data = readCartridge(path, c.extensions) else { fatalError("cannot read a cartridge from \(path)") }
             let dst = sym(c.symbol).assumingMemoryBound(to: UInt8.self)
             let n = min(data.count, c.bytes)
@@ -124,6 +131,8 @@ final class Game {
             clock?.pointee = Int64(Date().timeIntervalSince1970)
         }
         if let f = spec.flush { flushFn = unsafeBitCast(sym(f), to: VoidFn.self) }
+        for (name, value) in spec.globals ?? [:] { sym(name).assumingMemoryBound(to: Int64.self).pointee = value }
+        for k in spec.keep ?? [] { kept.append((sym(k.symbol).assumingMemoryBound(to: UInt8.self), k)) }
         if let data = try? Data(contentsOf: saveURL) {
             data.withUnsafeBytes { raw in
                 let n = min(raw.count, spec.save.bytes)
@@ -140,10 +149,21 @@ final class Game {
         return q != 0
     }
 
-    // before quitting: let the module save what it has not, then write it
+    // before quitting: let the module save what it has not, then write it; merge the kept bit arrays
     func finish() {
         flushFn?()
         if saveDirty.pointee != 0 { writeSave() }
+        for (ptr, k) in kept {
+            let url = saveURL.deletingLastPathComponent().appendingPathComponent(k.file)
+            var bytes = [UInt8]((try? Data(contentsOf: url)) ?? Data())
+            if bytes.count < k.bytes { bytes += [UInt8](repeating: 0, count: k.bytes - bytes.count) }
+            if k.mode == "copy" {
+                for i in 0..<k.bytes where ptr[i] != 0 { bytes[i] = ptr[i] }
+            } else {
+                for i in 0..<k.bytes { bytes[i] |= ptr[i] }
+            }
+            try? Data(bytes).write(to: url, options: .atomic)
+        }
     }
 
     func writeSave() {

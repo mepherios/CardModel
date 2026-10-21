@@ -115,11 +115,11 @@ class Player:
     """The player headless (tests, the library's title screens): a cartridge in, frames out, in any engine."""
 
     def __init__(self, ctx, name: str, rom: bytes, engine: str = "native", fresh: bool = False, clock: int = 0,
-                 save: bytes | None = None):
+                 save: bytes | None = None, machine=None, ir: dict | None = None):
         self.ctx = ctx
         self.card = system_card(ctx.store, name)
-        self.ir = module(ctx, name)
-        self.m = N.load(ctx, self.ir, engine, fresh=fresh)
+        self.ir = ir or module(ctx, name)
+        self.m = machine or N.load(ctx, self.ir, engine, fresh=fresh)     # machine: e.g. one with lifted code
         c = self.card
         self.m.call("reset_all")
         cart = c["cartridge"]
