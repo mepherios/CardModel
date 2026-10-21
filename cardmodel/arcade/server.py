@@ -94,6 +94,7 @@ def game_entry(ctx, card, full: bool = False) -> dict:
         "build_due": info is None or info.get("source") != src,
         "source": src, "media": media,
         "building": _builds.get(gid, {}).get("state") == "building",
+        "build_error": build_error(gid, src),
     }
     if full:
         out["about"] = card.get("about", [])
@@ -101,12 +102,20 @@ def game_entry(ctx, card, full: bool = False) -> dict:
     return out
 
 
+def build_error(gid: str, src: str) -> str | None:
+    """Why the cards as they are now did not build, if their last build failed (the last good build stays)."""
+    st = _builds.get(gid) or {}
+    return st.get("error") if st.get("state") == "error" and st.get("source") == src else None
+
+
 def start_build(ctx, gid: str) -> dict:
+    card = card_for(ctx, gid)
+    src = S.source_hash(ctx, card) if card.category == "system" else B.source_hash(ctx, card)
     with _lock:
         st = _builds.get(gid)
         if st and st.get("state") == "building":
             return st
-        st = {"state": "building", "step": 0, "of": 6, "label": "starting", "started": time.time()}
+        st = {"state": "building", "step": 0, "of": 6, "label": "starting", "started": time.time(), "source": src}
         _builds[gid] = st
 
     def run():

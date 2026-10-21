@@ -329,7 +329,17 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
                 progress(id, "building", st["step"] as? Int ?? 0, st["of"] as? Int ?? 6, 0,
                          st["label"] as? String ?? "")
                 if s == "done" { break }
-                if s == "error" { throw ArcadeError.message(st["error"] as? String ?? "build failed") }
+                if s == "error" {
+                    // the cards in progress do not build: the last good build is still there to install
+                    let why = st["error"] as? String ?? "build failed"
+                    let good = (entry["build"] as? [String: Any])?["build"] as? String
+                    if good == nil || good == state.library[id]?.build {
+                        throw ArcadeError.message("The game's cards in progress don't build yet (\(why)). "
+                                                  + (good == nil ? "There is no earlier build." : "You have the last good build."))
+                    }
+                    emit(["type": "notice", "id": id, "message": "The cards in progress don't build yet: installing the last good build instead."])
+                    break
+                }
                 if cancelled { throw ArcadeError.message("cancelled") }
             }
             entry = try await fetchJSON("api/game/\(id)") as? [String: Any] ?? entry
