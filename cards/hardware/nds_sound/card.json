@@ -1,0 +1,20 @@
+{
+  "category": "hardware",
+  "name": "nds_sound",
+  "machine": "nds",
+  "statement": "The ARM7's sixteen sound channels (0x04000400 + 16 n: SOUNDxCNT, SOUNDxSAD, SOUNDxTMR, SOUNDxPNT, SOUNDxLEN), SOUNDCNT, SOUNDBIAS and the two capture units, as far as a game can see them: a channel's busy bit (SOUNDxCNT bit 31) stays set while it plays, a one-shot channel stops when its samples would have played out, a looping, manual, PSG or noise channel plays until it is stopped, and a one-shot capture stops when its buffer would be full. No samples are mixed yet: there is no audio output.",
+  "registers": [
+    {"offset": "0x00 + 16 n", "name": "SOUNDxCNT", "bits": "0-6 volume, 8-9 divider, 15 hold, 16-22 panning, 24-26 PSG duty, 27-28 repeat (0 manual, 1 loop, 2 one-shot), 29-30 format (0 PCM8, 1 PCM16, 2 IMA-ADPCM, 3 PSG/noise), 31 start/busy"},
+    {"offset": "0x04 + 16 n", "name": "SOUNDxSAD"}, {"offset": "0x08 + 16 n", "name": "SOUNDxTMR (sample period: 0x10000 - TMR ticks of 16.756991 MHz)"},
+    {"offset": "0x0A + 16 n", "name": "SOUNDxPNT (loop start, words)"}, {"offset": "0x0C + 16 n", "name": "SOUNDxLEN (length, words)"},
+    {"offset": "0x100", "name": "SOUNDCNT"}, {"offset": "0x104", "name": "SOUNDBIAS"},
+    {"offset": "0x108", "name": "SNDCAP0CNT, SNDCAP1CNT (bit 2 one-shot, bit 3 PCM8, bit 7 start/busy)"},
+    {"offset": "0x110", "name": "SNDCAP0DAD, SNDCAP0LEN, SNDCAP1DAD, SNDCAP1LEN"}
+  ],
+  "cycles_per_sample_tick": 2,
+  "limits": "no mixing and no audio output; the busy bits follow from the sample counts and rates (a channel's hold bit and the capture's addition modes change nothing)",
+  "sources": ["GBATEK (DS sound)"],
+  "logic": ["sound.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

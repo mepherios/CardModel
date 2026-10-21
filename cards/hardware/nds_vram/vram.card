@@ -1,0 +1,206 @@
+-- DS video memory: nine banks in one physical array (`vram`, in nds_memory: A 0x00000, B 0x20000, C 0x40000, D
+-- 0x60000, E 0x80000, F 0x90000, G 0x94000, H 0x98000, I 0xA0000), each placed by its VRAMCNT register into one
+-- space: the CPU's LCDC window, engine A/B BG and OBJ, the extended palette slots, the 3D texture and texture
+-- palette slots, or the ARM7's 0x06000000 (banks C and D). The page table `vmap` holds, per 8 KiB page of every
+-- space, 1 + the physical offset of the page mapped there (0: nothing); it is rebuilt at every VRAMCNT write.
+-- When two banks claim one page the later bank (A..I order) wins here (hardware ORs them).
+const SEG_ABG = 0                 -- engine A BG: 512 KiB = 64 pages
+const SEG_BBG = 64                -- engine B BG: 128 KiB
+const SEG_AOBJ = 80               -- engine A OBJ: 256 KiB
+const SEG_BOBJ = 112              -- engine B OBJ: 128 KiB
+const SEG_LCDC = 128              -- the LCDC window (0x06800000): 656 KiB
+const SEG_ARM7 = 210              -- the ARM7's 0x06000000: 256 KiB
+const SEG_TEX = 242               -- 3D texture slots 0-3: 512 KiB
+const SEG_TEXPAL = 306            -- 3D texture palette slots 0-5: 96 KiB
+const SEG_ABGX = 318              -- engine A BG extended palettes: slots 0-3, 8 KiB each
+const SEG_BBGX = 322              -- engine B BG extended palettes
+const SEG_AOBJX = 326             -- engine A OBJ extended palette (8 KiB)
+const SEG_BOBJX = 327             -- engine B OBJ extended palette
+const VMAP_SIZE = 328
+array vmap: Int[328]
+array vramcnt: Int[9]
+array bank_base: Int[9] = [0x00000, 0x20000, 0x40000, 0x60000, 0x80000, 0x90000, 0x94000, 0x98000, 0xA0000]
+array bank_pages: Int[9] = [16, 16, 16, 16, 8, 2, 2, 4, 2]
+array bank_lcdc: Int[9] = [0, 16, 32, 48, 64, 72, 74, 76, 80]
+
+-- where bank k's first page goes for its MST and offset (-1: nowhere), and how many of its pages go there
+fn bank_dest(k: Int, mst: Int, ofs: Int) -> Int {
+  if mst == 0 {
+    return SEG_LCDC + bank_lcdc[k]
+  }
+  if k < 4 {
+    if mst == 1 {
+      return SEG_ABG + ofs * 16
+    }
+    if mst == 2 {
+      return if k < 2 then SEG_AOBJ + (ofs & 1) * 16 else SEG_ARM7 + (ofs & 1) * 16
+    }
+    if mst == 3 {
+      return SEG_TEX + ofs * 16
+    }
+    if mst == 4 and k == 2 {
+      return SEG_BBG
+    }
+    if mst == 4 and k == 3 {
+      return SEG_BOBJ
+    }
+    return -1
+  }
+  if k == 4 {
+    if mst == 1 {
+      return SEG_ABG
+    }
+    if mst == 2 {
+      return SEG_AOBJ
+    }
+    if mst == 3 {
+      return SEG_TEXPAL
+    }
+    if mst == 4 {
+      return SEG_ABGX
+    }
+    return -1
+  }
+  if k == 5 or k == 6 {
+    let o = (ofs & 1) * 2 + (ofs >> 1) * 8
+    if mst == 1 {
+      return SEG_ABG + o
+    }
+    if mst == 2 {
+      return SEG_AOBJ + o
+    }
+    if mst == 3 {
+      return SEG_TEXPAL + ((ofs & 1) + (ofs >> 1) * 4) * 2
+    }
+    if mst == 4 {
+      return SEG_ABGX + (ofs & 1) * 2
+    }
+    if mst == 5 {
+      return SEG_AOBJX
+    }
+    return -1
+  }
+  if k == 7 {
+    if mst == 1 {
+      return SEG_BBG
+    }
+    if mst == 2 {
+      return SEG_BBGX
+    }
+    return -1
+  }
+  if mst == 1 {
+    return SEG_BBG + 4
+  }
+  if mst == 2 {
+    return SEG_BOBJ
+  }
+  if mst == 3 {
+    return SEG_BOBJX
+  }
+  return -1
+}
+fn bank_span(k: Int, mst: Int) -> Int {
+  if k == 4 and mst == 4 {
+    return 4
+  }
+  if (k == 5 or k == 6) and mst == 5 {
+    return 1
+  }
+  if k == 8 and mst == 3 {
+    return 1
+  }
+  return bank_pages[k]
+}
+fn vram_remap() {
+  for i in 0 .. VMAP_SIZE {
+    vmap[i] = 0
+  }
+  for k in 0 .. 9 {
+    let v = vramcnt[k]
+    if (v & 0x80) != 0 {
+      let mst = if k < 2 then v & 3 else v & 7
+      let dst = bank_dest(k, mst, (v >> 3) & 3)
+      if dst >= 0 {
+        for j in 0 .. bank_span(k, mst) {
+          vmap[dst + j] = 1 + bank_base[k] + j * 0x2000
+        }
+      }
+    }
+  }
+}
+-- VRAMCNT_A..G at 0x240-0x246, H and I at 0x248-0x249 (0x247 is WRAMCNT)
+fn vramcnt_write(o: Int, v: Int) {
+  let k = if o < 0x247 then o - 0x240 else o - 0x241
+  vramcnt[k] = v
+  vram_remap()
+}
+fn vramcnt_read(o: Int) -> Int = vramcnt[if o < 0x247 then o - 0x240 else o - 0x241]
+-- the ARM7's VRAMSTAT: bit 0 bank C, bit 1 bank D mapped to it
+fn vramstat() -> Int {
+  var s = 0
+  if (vramcnt[2] & 0x87) == 0x82 {
+    s = s | 1
+  }
+  if (vramcnt[3] & 0x87) == 0x82 {
+    s = s | 2
+  }
+  return s
+}
+-- a CPU address in 0x06000000-0x06FFFFFF -> a physical index into vram, or -1 where nothing is mapped
+fn vram_index(x: Int) -> Int {
+  var p = 0
+  if cur == 1 {
+    p = vmap[SEG_ARM7 + ((x >> 13) & 31)]
+  } else {
+    let r = (x >> 21) & 7
+    if r == 0 {
+      p = vmap[SEG_ABG + ((x >> 13) & 63)]
+    } elif r == 1 {
+      p = vmap[SEG_BBG + ((x >> 13) & 15)]
+    } elif r == 2 {
+      p = vmap[SEG_AOBJ + ((x >> 13) & 31)]
+    } elif r == 3 {
+      p = vmap[SEG_BOBJ + ((x >> 13) & 15)]
+    } else {
+      let o = x & 0xFFFFF
+      if o >= 0xA4000 {
+        return -1
+      }
+      p = vmap[SEG_LCDC + (o >> 13)]
+    }
+  }
+  if p == 0 {
+    return -1
+  }
+  return p - 1 + (x & 0x1FFF)
+}
+fn vram_rd8(x: Int) -> Int {
+  let i = vram_index(x)
+  if i < 0 {
+    return 0
+  }
+  return vram[i]
+}
+fn vram_wr8(x: Int, v: Int) {
+  let i = vram_index(x)
+  if i >= 0 {
+    vram[i] = v
+  }
+}
+-- what the 2D engines and the 3D slots read: byte `off` of the space starting at page `seg` (pmask + 1 pages)
+fn vspace8(seg: Int, pmask: Int, off: Int) -> Int {
+  let p = vmap[seg + ((off >> 13) & pmask)]
+  if p == 0 {
+    return 0
+  }
+  return vram[p - 1 + (off & 0x1FFF)]
+}
+fn vspace16(seg: Int, pmask: Int, off: Int) -> Int {
+  let p = vmap[seg + ((off >> 13) & pmask)]
+  if p == 0 {
+    return 0
+  }
+  let i = p - 1 + (off & 0x1FFE)
+  return vram[i] | (vram[i + 1] << 8)
+}

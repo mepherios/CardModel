@@ -36,6 +36,10 @@ the ROM survey, differential runs, DS coverage) are in `COVERAGE.md` and come fr
 ./bin/cardmodel machine nds "Pokemon Diamond.nds" --frames 300   # the DS prototype and its coverage
 ```
 
+```bash
+./bin/cardmodel machine nds "Pokemon Diamond.nds" --frames 2400 --input "1500:start,1506:-" --png both.png --shots shots/ --every 120
+```
+
 ROMs are read where they are (zips in memory). No ROM byte is ever copied into the repository; lifted code and
 execution profiles live in the state cache (`state/emu/`, gitignored); saves go to `saves/` (gitignored) or
 `--save-dir`.
@@ -180,19 +184,49 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 * **ISA**: `isa/armv5te`: ARM and Thumb instruction forms with masks, fields, ISA level (`v4t` / `v5te`),
   nominal ARM946E-S cycles, flags as data, semantics and vectors; the decoder tables are generated from them.
   The same cards run the ARM9 (arch 5) and the ARM7 (arch 4), which take turns on the core's registers.
-* **Machine**: `machine/nds` with `nds_memory` (both maps, TCMs via CP15, WRAMCNT), `nds_io` (interrupts,
-  IPC sync and FIFOs, timers, DMA, divider and square root, the cartridge bus serving reads from the image),
-  `nds_bios` (HLE BIOS calls, CP15, our own IRQ dispatcher words at the vector). Direct boot as the firmware
-  leaves it.
-* **What it is for now**: measured coverage. `cardmodel machine nds ROM` reports per CPU the instructions run,
-  distinct addresses, which instruction cards the code used, undecodable instructions, BIOS calls (modelled or
-  not), and every hardware block the game touched that no card models. That list is the work queue.
+* **Machine**: `machine/nds` with `nds_memory` (both maps, TCMs via CP15, WRAMCNT; palettes and OAM drop byte
+  writes), `nds_io` (interrupts, IPC sync and FIFOs, timers, DMA, divider and square root, the cartridge bus
+  serving reads from the image, and the dispatch to the cards below), `nds_bios` (HLE BIOS calls, the ARM7's
+  sine/pitch/volume tables computed from their definitions, CP15, our own IRQ dispatcher words at the vector),
+  and the video and peripherals:
+
+  | card | what it is |
+  |---|---|
+  | `nds_vram` | the nine VRAM banks in one array, placed by VRAMCNT into the LCDC window, engine A/B BG and OBJ, the extended palette, texture and texture palette slots or the ARM7's window; an 8 KiB page table rebuilt at every VRAMCNT write |
+  | `nds_2d` | engines A and B, drawn line by line into two 256x192 screens: display modes, BG modes 0-6 (text, affine, extended map, 256-colour and direct-colour bitmaps, large bitmap), 4/8 bpp, extended palettes, 128 OBJs per engine (tiled 1D/2D, bitmap, affine, double size, semi-transparent, OBJ window), windows, blending, brightness, mosaic on text BGs, master brightness, POWCNT1's screen swap |
+  | `nds_3d` | the geometry FIFO as a game's code sees it while nothing is drawn: every command taken at once, GXSTAT idle, the FIFO interrupt and FIFO-mode DMA |
+  | `nds_spi` | the ARM7's SPI bus: power management, a firmware flash made from the card's data (header, Wi-Fi block, user settings with CRC; no console's firmware), the touch screen controller through the firmware's calibration |
+  | `nds_backup` | the save chip on the auxiliary SPI bus: serial flash commands; which chip a game has is data by game code |
+  | `nds_rtc` | the real-time clock on three bit-banged wires: status, date and time in BCD, alarms stored; it runs on machine time from what the host sets |
+  | `nds_sound` | the channels' busy bits: a one-shot channel stops when its samples would have played out, a capture when its buffer is full (no mixing) |
+
+  A frame is 263 lines: per line the line events, the 2D engines draw a visible line from the registers as they
+  are, the CPUs run the drawing part of the line, H-blank (flag, interrupt, H-blank DMA), the rest of the line,
+  then timers, sound and the geometry FIFO advance. The cartridge bus starts its DMAs again for every ready word,
+  so NitroSDK's 1-word repeating card DMA moves whole blocks. Direct boot as the firmware leaves it.
+* **The host** (`machine/nds.py`): `DS(ctx, rom, clock=..., save=...)` inserts an image (a save chip's bytes and a
+  start time for the clock are inputs; the default clock is fixed so runs repeat), `screens()` returns both
+  screens, `png_screens` stacks them as on the console, `set_buttons` / `touch` are the inputs, `save_bytes()` the
+  save chip, `machine=` reuses a loaded machine for another image.
+* **Headless** (`cardmodel machine nds ROM`): `--input` holds buttons from a frame on, `--png` saves both screens
+  after the run, `--shots DIR --every K` every K frames; the report says when each screen first showed a
+  picture. Pokemon Diamond draws its copyright and ESRB screens after frame 51, plays the 2D parts of its intro
+  (the Game Freak logo, the Pokemon logo, the town and the trainer silhouette), shows its title screen and,
+  with START and A, starts a new game (Professor Rowan's introduction).
+* **Measured coverage**: per CPU the instructions run, distinct addresses, which instruction cards the code used,
+  undefined instructions (counted as they run; code overwritten after it ran is reported apart), BIOS calls
+  (modelled or not), every hardware register the game touched that no card models, and what the screens show.
+  That list is the work queue.
 * **The same pipeline for ARM code** (`machine/lift_arm.py`, `cardmodel machine nds ROM --lift`): an ARM card is a
   function of its instruction word, so a block is the cards' IR with constant words: fields fold, register-list
   loops unroll, pure helpers are evaluated at lift time, the condition becomes one flag test, registers live in
   locals. DS code is in RAM and overlays replace it, so a block first checks that its words are still there; it
   leaves after a branch and wherever the interpreter would check for interrupts, halts or a CPSR change. The
   differential run compares both CPUs' registers and every RAM after each frame.
+* **Witnesses** (`tests/test_nds.py`): a synthetic image whose ARM9 code maps banks and draws on both screens;
+  each 2D feature pixel by pixel through the bus; VRAM banks; the save chip, firmware, touch screen, power
+  management, clock, sound busy bits, geometry FIFO and the per-word cartridge DMA; and, when the image is on
+  the machine (`CARDMODEL_DS_ROM`), Pokemon Diamond's first screens.
 * **Nothing is decrypted**: an image whose secure area is encrypted is refused.
 
 ## 7. Adding things
@@ -219,6 +253,9 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   tested). The CGB's early line-144 STAT source is measured in single speed; in double speed it is the same 4
   dots, unverified.
 * Lifting: code in RAM, code right after EI and the HALT/STOP/illegal opcodes always run in the interpreter.
-* DS: no 2D/3D graphics, sound, touch, SPI devices, RTC or Wi-Fi yet; no wait states; flat VRAM. ARM lifting
-  covers ARM-state ARM9 code only; its word guards read through the bus, so it saves the decode but not the
-  fetches (little speed-up for RAM-resident code).
+* DS: no 3D drawing (the 3D layer is transparent: Pokemon Diamond's title Dialga and its 3D overworld are not
+  drawn), no sound mixing, display capture, main-memory display FIFO or Wi-Fi; no wait states (a nominal
+  instructions-per-line budget); a 2D line is drawn from the registers as they are when it starts; two VRAM
+  banks on one page do not OR together; the save chip is serial flash only. ARM lifting covers ARM-state ARM9
+  code only (Thumb and the ARM7 stay interpreted); its word guards read through the bus, so it saves the decode
+  but not the fetches (little speed-up for RAM-resident code).

@@ -1,0 +1,84 @@
+-- Sound as the ARM7 sees it: the registers are the ARM7's latched I/O bytes (io_file at 0x2000 + offset); what
+-- is modelled is when a channel or capture stops. Starting a channel (bit 31 of SOUNDxCNT going from 0 to 1)
+-- in one-shot mode gives it (PNT + LEN) words of samples - PCM8 one byte per sample, PCM16 two, IMA-ADPCM two
+-- samples per byte after a 4-byte header - at one sample per (0x10000 - TMR) ticks of half the bus clock;
+-- snd_left counts the bus cycles down per line and clears the busy bit at zero. Other repeat modes and PSG/noise
+-- play until stopped (snd_left = -1). A one-shot capture (SNDCAPxCNT bit 2) fills LEN words at the rate of
+-- the channel it follows (channel 1 for capture 0, channel 3 for capture 1).
+const SND_TICK = card.hardware.nds_sound.cycles_per_sample_tick
+array snd_left: Int[16]
+array cap_left: Int[2]
+
+fn snd_reg(o: Int) -> Int = io_file[0x2000 + o] | (io_file[0x2000 + o + 1] << 8)
+fn snd_period(ch: Int) -> Int = (0x10000 - snd_reg(0x408 + ch * 16)) * SND_TICK
+-- byte 3 of SOUNDxCNT written with value v (the other bytes are latched already)
+fn sound_start(ch: Int, v: Int, was: Int) {
+  if (v & 0x80) == 0 {
+    snd_left[ch] = 0
+    return
+  }
+  if (was & 0x80) != 0 {
+    return
+  }
+  let rep = (v >> 3) & 3
+  let fmt = (v >> 5) & 3
+  if rep != 2 or fmt == 3 {
+    snd_left[ch] = -1
+    return
+  }
+  let words = snd_reg(0x40A + ch * 16) + (snd_reg(0x40C + ch * 16) | ((io_file[0x2000 + 0x40E + ch * 16] & 0x3F) << 16))
+  let bytes = words * 4
+  var samples = bytes
+  if fmt == 1 {
+    samples = bytes >> 1
+  } elif fmt == 2 {
+    samples = max(0, bytes - 4) * 2
+  }
+  snd_left[ch] = max(1, samples * snd_period(ch))
+}
+fn capture_start(k: Int, v: Int, was: Int) {
+  if (v & 0x80) == 0 or (v & 4) == 0 {
+    cap_left[k] = if (v & 0x80) != 0 then -1 else 0
+    return
+  }
+  if (was & 0x80) != 0 {
+    return
+  }
+  let words = snd_reg(0x514 + k * 8)
+  let samples = if (v & 8) != 0 then words * 4 else words * 2
+  cap_left[k] = max(1, samples * snd_period(1 + k * 2))
+}
+-- an ARM7 byte write into the sound block (after it was latched)
+fn sound_written(o: Int, v: Int, was: Int) {
+  if o < 0x500 and (o & 15) == 3 {
+    sound_start((o - 0x400) >> 4, v, was)
+  } elif o == 0x508 or o == 0x509 {
+    capture_start(o - 0x508, v, was)
+  }
+}
+fn sound_advance(cycles: Int) {
+  for ch in 0 .. 16 {
+    let l = snd_left[ch]
+    if l > 0 {
+      if l <= cycles {
+        snd_left[ch] = 0
+        let a = 0x2000 + 0x403 + ch * 16
+        io_file[a] = io_file[a] & 0x7F
+      } else {
+        snd_left[ch] = l - cycles
+      }
+    }
+  }
+  for k in 0 .. 2 {
+    let l = cap_left[k]
+    if l > 0 {
+      if l <= cycles {
+        cap_left[k] = 0
+        let a = 0x2000 + 0x508 + k
+        io_file[a] = io_file[a] & 0x7F
+      } else {
+        cap_left[k] = l - cycles
+      }
+    }
+  }
+}

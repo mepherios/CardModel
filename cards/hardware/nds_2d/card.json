@@ -1,0 +1,26 @@
+{
+  "category": "hardware",
+  "name": "nds_2d",
+  "machine": "nds",
+  "statement": "The DS's two 2D graphics engines, A (registers 0x04000000-0x0400006F) and B (0x04001000-0x0400106F), drawn line by line into two 256x192 screens: display modes (off, graphics, VRAM display, main-memory FIFO), BG modes 0-6 with text, affine, extended (16-bit map, 256-colour and direct-colour bitmaps) and large-bitmap backgrounds, 4 and 8 bits per pixel, extended palettes, 128 OBJs per engine (tiled 1D/2D, bitmap, affine, double size, semi-transparent, OBJ window), windows 0/1/OBJ, alpha blending, brightness up/down, mosaic on text backgrounds, master brightness, and POWCNT1's screen swap. BG0 in 3D mode stays transparent (the 3D engine draws nothing yet).",
+  "registers": [
+    {"offset": "0x00", "name": "DISPCNT", "bits": "0-2 BG mode, 3 BG0 is 3D (A), 4 tile OBJ 1D, 5 bitmap OBJ 256 wide, 6 bitmap OBJ 1D, 7 forced blank, 8-12 BG0-3/OBJ on, 13-15 windows 0/1/OBJ, 16-17 display mode, 18-19 VRAM display bank, 20-21 tile OBJ 1D boundary, 22 bitmap OBJ 1D boundary, 24-26 char base (A), 27-29 screen base (A), 30 BG extended palettes, 31 OBJ extended palettes"},
+    {"offset": "0x08", "name": "BG0CNT-BG3CNT", "bits": "0-1 priority, 2-5 char base (16 KiB), 6 mosaic, 7 256 colours / bitmap, 8-12 screen base (2 KiB; bitmaps 16 KiB), 13 extended palette slot (BG0/1) or wraparound (BG2/3), 14-15 size"},
+    {"offset": "0x10", "name": "BG0HOFS-BG3VOFS"},
+    {"offset": "0x20", "name": "BG2PA-BG2PD, BG2X, BG2Y (8.8 and 20.8 fixed point)"},
+    {"offset": "0x30", "name": "BG3PA-BG3PD, BG3X, BG3Y"},
+    {"offset": "0x40", "name": "WIN0H, WIN1H, WIN0V, WIN1V, WININ, WINOUT"},
+    {"offset": "0x4C", "name": "MOSAIC"},
+    {"offset": "0x50", "name": "BLDCNT, BLDALPHA, BLDY"},
+    {"offset": "0x6C", "name": "MASTER_BRIGHT", "bits": "0-4 factor (0-16), 14-15 mode (1 up, 2 down)"}
+  ],
+  "palettes": {"engine A BG": "0x05000000", "engine A OBJ": "0x05000200", "engine B BG": "0x05000400", "engine B OBJ": "0x05000600"},
+  "oam": {"engine A": "0x07000000", "engine B": "0x07000400"},
+  "screen": {"width": 256, "height": 192, "layout": "top screen then bottom screen, RGB888", "swap": "POWCNT1 (0x04000304) bit 15: 1 = engine A on the top screen"},
+  "obj_sizes": {"square": [[8, 8], [16, 16], [32, 32], [64, 64]], "horizontal": [[16, 8], [32, 8], [32, 16], [64, 32]], "vertical": [[8, 16], [8, 32], [16, 32], [32, 64]]},
+  "limits": "a line is drawn from the registers as they are when it starts (changes inside a line apply from the next); no display capture, no main-memory display FIFO (mode 3 shows black), no 3D layer, no mosaic on affine backgrounds or OBJs, no OBJ cycle limit per line; colours blend in 5 bits per channel and master brightness works in 6",
+  "sources": ["GBATEK (DS video: display control, BG and OBJ, windows, blending, master brightness)"],
+  "logic": ["engine.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

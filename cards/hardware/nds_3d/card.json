@@ -1,0 +1,19 @@
+{
+  "category": "hardware",
+  "name": "nds_3d",
+  "machine": "nds",
+  "statement": "The DS 3D engine as a game's code sees it while nothing is drawn: the geometry command FIFO (GXFIFO 0x04000400 and the command ports 0x04000440-0x040005FF) takes every command at once, so GXSTAT (0x04000600) always reports the FIFO empty and the engine idle; the FIFO interrupt (GXSTAT bits 30-31) fires while its condition holds, and DMA in geometry-FIFO mode runs at once. No polygons are transformed or drawn yet.",
+  "registers": [
+    {"address": "0x04000400", "name": "GXFIFO"},
+    {"address": "0x04000440-0x040005FF", "name": "geometry command ports"},
+    {"address": "0x04000600", "name": "GXSTAT", "bits": "0 test busy, 1 box test, 8-12 position/vector matrix stack level, 13 projection stack level, 14 matrix stack busy, 15 stack overflow, 16-24 FIFO entries, 25 less than half full, 26 empty, 27 busy, 30-31 FIFO interrupt (1 less than half full, 2 empty)"},
+    {"address": "0x04000604", "name": "RAM_COUNT (polygons, vertices)"}
+  ],
+  "gxstat_idle": 100663296,
+  "irq_gxfifo": 2097152,
+  "limits": "no geometry, no rasteriser: the 3D layer (BG0 in 3D mode) stays transparent, matrices and test results read as zero",
+  "sources": ["GBATEK (DS 3D: geometry commands, GXSTAT)"],
+  "logic": ["gx.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

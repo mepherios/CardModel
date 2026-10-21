@@ -1,9 +1,12 @@
 -- Nintendo DS I/O for both CPUs (index c: 0 = ARM9, 1 = ARM7): interrupt controllers (IME/IE/IF), IPC sync and the
--- two 16-word FIFOs, four timers each, DMA (immediate, V-blank and cartridge starts), the ARM9 divider and square
--- root, the cartridge bus (command B7 reads 0x200-byte blocks straight from the ROM image: the image is the
--- data the bus would deliver), DISPSTAT/VCOUNT, KEYINPUT, HALTCNT. Registers nobody models are latched in a
--- byte file so reads give back what was written, and every register address touched is marked in io_touch9/7
--- (the coverage report reads them).
+-- two 16-word FIFOs, four timers each, DMA (immediate, V-blank, H-blank, start of display, the cartridge bus once
+-- per ready word, the geometry FIFO), the ARM9 divider and square root, the cartridge bus (command B7 reads
+-- 0x200-byte blocks straight from the ROM image: the image is the data the bus would deliver), DISPSTAT/VCOUNT
+-- with the H-blank flag, KEYINPUT, HALTCNT. The registers of the video and peripheral cards are dispatched to
+-- them: VRAM bank control (nds_vram), SPI (nds_spi), the save chip's AUXSPIDATA (nds_backup), the clock
+-- (nds_rtc), the sound channels (nds_sound), GXSTAT and the geometry ports (nds_3d); the 2D engines' registers
+-- stay latched here and nds_2d reads them. Registers nobody models are latched in a byte file so reads give back
+-- what was written, and every register address touched is marked in io_touch9/7 (the coverage report reads them).
 const IRQ_VBLANK = 0x1
 const IRQ_HBLANK = 0x2
 const IRQ_VCOUNT = 0x4
@@ -19,6 +22,7 @@ array ie: Int[2]
 array irqf: Int[2]
 array dispstat: Int[2]
 global vcount: Int = 0
+global hblank_flag: Int = 0
 array ipcsync: Int[2]
 array fifocnt: Int[2]
 array fifo: Int[32]                       -- 16 words per direction: fifo[c*16 + i] is what CPU c sends
@@ -217,6 +221,11 @@ fn dma_timing(c: Int, cnt: Int) -> Int {
   }
   return ((cnt >> 28) & 3) * 2
 }
+-- a DMA that starts the moment it is enabled: immediate, or (ARM9) geometry FIFO, which always has room here
+fn dma_starts_now(c: Int, cnt: Int) -> Bool {
+  let t = dma_timing(c, cnt)
+  return t == 0 or (c == 0 and t == 7)
+}
 fn dma_event(c: Int, timing: Int) {
   for ch in 0 .. 4 {
     let cnt = dma_cnt[c * 4 + ch]
@@ -311,9 +320,25 @@ fn cart_start(v: Int) {
   }
   if cart_left > 0 {
     cart_ctrl = cart_ctrl | 0x80800000
-    dma_event(cur, if cur == 0 then 5 else 4)
+    cart_dma(cur)
   } else {
     cart_done()
+  }
+}
+-- a word is ready on the cartridge bus for as long as the transfer lasts, and each ready word starts CPU c's
+-- DMAs in cartridge mode again (a game's 1-word repeating DMA moves the whole block this way)
+fn cart_dma(c: Int) {
+  let t = if c == 0 then 5 else 4
+  var more = true
+  while more and cart_left > 0 {
+    more = false
+    for ch in 0 .. 4 {
+      let cnt = dma_cnt[c * 4 + ch]
+      if (cnt & 0x80000000) != 0 and dma_timing(c, cnt) == t and cart_left > 0 {
+        dma_run(c, ch)
+        more = true
+      }
+    }
   }
 }
 fn cart_done() {
@@ -399,6 +424,9 @@ fn io_read8(a: Int) -> Int {
     if vcount >= 192 and vcount < 262 {
       v = v | 1
     }
+    if hblank_flag != 0 {
+      v = v | 2
+    }
     if ((dispstat[cur] >> 8) | ((dispstat[cur] & 0x80) << 1)) == vcount {
       v = v | 4
     }
@@ -434,7 +462,31 @@ fn io_read8(a: Int) -> Int {
     return (cart_ctrl >> sh) & 0xFF
   }
   if o == 0x1A0 or o == 0x1A1 {
-    return (aux_cnt >> ((o & 1) * 8)) & 0xFF
+    return ((aux_cnt & 0xFF7F) >> ((o & 1) * 8)) & 0xFF
+  }
+  if o == 0x1A2 {
+    return aux_data
+  }
+  if o == 0x1A3 {
+    return 0
+  }
+  if cur == 1 {
+    if o >= 0x1C0 and o < 0x1C4 {
+      return spi_read8(o)
+    }
+    if o == 0x138 or o == 0x139 {
+      return rtc_read8(o)
+    }
+    if o == 0x240 {
+      return vramstat()
+    }
+  } else {
+    if o >= 0x240 and o < 0x24A and o != 0x247 {
+      return vramcnt_read(o)
+    }
+    if o >= 0x600 and o < 0x604 {
+      return gx_read8(o)
+    }
   }
   if o >= 0x208 and o < 0x20C {
     return (ime[cur] >> sh) & 0xFF
@@ -496,8 +548,11 @@ fn io_write32(a: Int, v: Int) {
     let i = cur * 4 + ch
     let was = dma_cnt[i] & 0x80000000
     dma_cnt[i] = v & MASK32
-    if was == 0 and (v & 0x80000000) != 0 and dma_timing(cur, v) == 0 {
+    if was == 0 and (v & 0x80000000) != 0 and dma_starts_now(cur, v) {
       dma_run(cur, ch)
+    } elif (was == 0 and (v & 0x80000000) != 0 and cart_left > 0 and
+            dma_timing(cur, v) == (if cur == 0 then 5 else 4)) {
+      cart_dma(cur)
     }
     return
   }
@@ -564,6 +619,17 @@ fn io_write8(a: Int, v: Int) {
   } elif o == 0x1A0 or o == 0x1A1 {
     let s = (o & 1) * 8
     aux_cnt = (aux_cnt & (0xFFFF ^ (0xFF << s))) | (v << s)
+    auxspicnt_written()
+  } elif o == 0x1A2 or o == 0x1A3 {
+    if o == 0x1A2 {
+      auxspi_write(v)
+    }
+  } elif cur == 1 and (o == 0x1C0 or o == 0x1C1) {
+    spicnt_write(o, v)
+  } elif cur == 1 and o == 0x1C2 {
+    spidata_write(v)
+  } elif cur == 1 and o == 0x138 {
+    rtc_write(v | (rtc_io & 0xFF00))
   } elif o >= 0x1A4 and o < 0x1A8 {
     cart_ctrl = (cart_ctrl & (MASK32 ^ (0xFF << sh))) | (v << sh)
     if o == 0x1A7 and (v & 0x80) != 0 {
@@ -603,11 +669,27 @@ fn io_write8(a: Int, v: Int) {
     } else {
       let was = dma_cnt[i] & 0x80000000
       dma_cnt[i] = (dma_cnt[i] & (MASK32 ^ (0xFF << s))) | (v << s)
-      if k == 11 and was == 0 and (dma_cnt[i] & 0x80000000) != 0 and dma_timing(cur, dma_cnt[i]) == 0 {
+      if k == 11 and was == 0 and (dma_cnt[i] & 0x80000000) != 0 and dma_starts_now(cur, dma_cnt[i]) {
         dma_run(cur, ch)
+      } elif (k == 11 and was == 0 and (dma_cnt[i] & 0x80000000) != 0 and cart_left > 0 and
+              dma_timing(cur, dma_cnt[i]) == (if cur == 0 then 5 else 4)) {
+        cart_dma(cur)
       }
     }
   } else {
-    io_file[(cur << 13) | o] = v
+    let idx = (cur << 13) | o
+    let was = io_file[idx]
+    io_file[idx] = v
+    if cur == 0 {
+      if o >= 0x240 and o < 0x24A {
+        vramcnt_write(o, v)
+      } elif o >= 0x400 and o < 0x700 {
+        gx_written(o, v)
+      } else {
+        gpu_io_written(o)
+      }
+    } elif o >= 0x400 and o < 0x520 {
+      sound_written(o, v, was)
+    }
   }
 }

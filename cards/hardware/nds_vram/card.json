@@ -1,0 +1,40 @@
+{
+  "category": "hardware",
+  "name": "nds_vram",
+  "machine": "nds",
+  "statement": "Nintendo DS video memory: nine banks (A-D 128 KiB, E 64 KiB, F and G 16 KiB, H 32 KiB, I 16 KiB) in one physical array, each placed by its VRAMCNT register (0x04000240-0x04000249: MST bits 0-2, offset bits 3-4, enable bit 7) into the CPU's LCDC window, engine A's or engine B's BG and OBJ spaces, the extended palette slots, the 3D texture and texture palette slots, or (banks C and D) the ARM7's 0x06000000. A page table of 8 KiB pages, rebuilt at every VRAMCNT write, tells the CPUs and the 2D engines which physical page sits where.",
+  "banks": {
+    "A": {"offset": 0, "size": 131072, "lcdc": "0x06800000", "mst": {"0": "LCDC", "1": "engine A BG + 128K * OFS", "2": "engine A OBJ + 128K * (OFS & 1)", "3": "texture slot OFS"}},
+    "B": {"offset": 131072, "size": 131072, "lcdc": "0x06820000", "mst": {"0": "LCDC", "1": "engine A BG + 128K * OFS", "2": "engine A OBJ + 128K * (OFS & 1)", "3": "texture slot OFS"}},
+    "C": {"offset": 262144, "size": 131072, "lcdc": "0x06840000", "mst": {"0": "LCDC", "1": "engine A BG + 128K * OFS", "2": "ARM7 0x06000000 + 128K * (OFS & 1)", "3": "texture slot OFS", "4": "engine B BG"}},
+    "D": {"offset": 393216, "size": 131072, "lcdc": "0x06860000", "mst": {"0": "LCDC", "1": "engine A BG + 128K * OFS", "2": "ARM7 0x06000000 + 128K * (OFS & 1)", "3": "texture slot OFS", "4": "engine B OBJ"}},
+    "E": {"offset": 524288, "size": 65536, "lcdc": "0x06880000", "mst": {"0": "LCDC", "1": "engine A BG", "2": "engine A OBJ", "3": "texture palette slots 0-3", "4": "engine A BG extended palettes (slots 0-3)"}},
+    "F": {"offset": 589824, "size": 16384, "lcdc": "0x06890000", "mst": {"0": "LCDC", "1": "engine A BG + 16K * (OFS & 1) + 64K * (OFS >> 1)", "2": "engine A OBJ (same offsets)", "3": "texture palette slot (OFS & 1) + 4 * (OFS >> 1)", "4": "engine A BG extended palettes, slots 0-1 or 2-3 (OFS & 1)", "5": "engine A OBJ extended palette"}},
+    "G": {"offset": 606208, "size": 16384, "lcdc": "0x06894000", "mst": {"0": "LCDC", "1": "engine A BG + 16K * (OFS & 1) + 64K * (OFS >> 1)", "2": "engine A OBJ (same offsets)", "3": "texture palette slot (OFS & 1) + 4 * (OFS >> 1)", "4": "engine A BG extended palettes, slots 0-1 or 2-3 (OFS & 1)", "5": "engine A OBJ extended palette"}},
+    "H": {"offset": 622592, "size": 32768, "lcdc": "0x06898000", "mst": {"0": "LCDC", "1": "engine B BG", "2": "engine B BG extended palettes (slots 0-3)"}},
+    "I": {"offset": 655360, "size": 16384, "lcdc": "0x068A0000", "mst": {"0": "LCDC", "1": "engine B BG + 32K", "2": "engine B OBJ", "3": "engine B OBJ extended palette"}}
+  },
+  "spaces": {
+    "engine A BG": {"cpu": "0x06000000", "size": 524288},
+    "engine B BG": {"cpu": "0x06200000", "size": 131072},
+    "engine A OBJ": {"cpu": "0x06400000", "size": 262144},
+    "engine B OBJ": {"cpu": "0x06600000", "size": 131072},
+    "LCDC": {"cpu": "0x06800000", "size": 671744},
+    "ARM7": {"cpu": "0x06000000 (ARM7)", "size": 262144},
+    "texture": {"size": 524288}, "texture palette": {"size": 98304},
+    "engine A BG extended palettes": {"size": 32768}, "engine B BG extended palettes": {"size": 32768},
+    "engine A OBJ extended palette": {"size": 8192}, "engine B OBJ extended palette": {"size": 8192}
+  },
+  "registers": [
+    {"address": "0x04000240", "name": "VRAMCNT_A (ARM9) / VRAMSTAT (ARM7 read: bit 0 C, bit 1 D mapped to the ARM7)"},
+    {"address": "0x04000241", "name": "VRAMCNT_B"}, {"address": "0x04000242", "name": "VRAMCNT_C"},
+    {"address": "0x04000243", "name": "VRAMCNT_D"}, {"address": "0x04000244", "name": "VRAMCNT_E"},
+    {"address": "0x04000245", "name": "VRAMCNT_F"}, {"address": "0x04000246", "name": "VRAMCNT_G"},
+    {"address": "0x04000248", "name": "VRAMCNT_H"}, {"address": "0x04000249", "name": "VRAMCNT_I"}
+  ],
+  "limits": "two banks mapped to the same page do not OR together (the later bank in A-I order wins); wait states and the CPU/engine access conflicts are not modelled",
+  "sources": ["GBATEK (DS memory control: VRAM bank control)"],
+  "logic": ["vram.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}
