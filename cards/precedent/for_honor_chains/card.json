@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "For Honor",
+  "generalised_by": "A chain card is one link between two move cards: any fighter with both moves has it, and the links are checked as a graph (GL9, GL10).",
+  "limit": "Chains are fixed per hero.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "for_honor_chains",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Chains: light and heavy attacks string together, each link from a side the defender must read.",
+  "tier": 1,
+  "year": 2017
+}

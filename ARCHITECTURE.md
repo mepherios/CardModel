@@ -48,7 +48,8 @@ cardmodel/                      the repository IS the model (its home)
 │   ├── lang/                   the card language: syntax.py (lexer, parser), compile.py (IR, logic, theorems,
 │   │                           cards, algorithm resolution), run.py (tests, queries, theorems, build, emit)
 │   ├── game/                   the Vector Counter System: combat.py (engine on the card-language kernel),
-│   │                           analysis.py (exact equilibria, design laws, sensitivity, balance), ai.py, world.py
+│   │                           analysis.py (exact equilibria, design laws, sensitivity, balance), tree.py (the
+│   │                           duel tree by backward induction), ai.py, world.py
 │   ├── emit/                   lean.py (theorems, fail-closed batch checker, lint), lean_logic.py (derivations
 │   │                           as Lean terms), lean_import.py (Lean theorems as cards, faithfulness), lean_chain.py
 │   │                           (rule-card chains as calc proofs), proofs.py, hints.py

@@ -1,0 +1,35 @@
+{
+  "category": "chain",
+  "damage_pct": 80,
+  "depends_on": [
+    "move/slash_right",
+    "move/diagonal",
+    "precedent/for_honor_chains",
+    "precedent/tekken_strings"
+  ],
+  "from": "slash_right",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "slash_right_to_diagonal",
+  "on": [
+    "hit",
+    "block",
+    "pierce"
+  ],
+  "precedent": [
+    "for_honor_chains",
+    "tekken_strings"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Right, then the upper-right diagonal: flow makes it quick, the later window keeps it answerable.",
+  "tier": 1,
+  "to": "diagonal",
+  "window": [
+    3,
+    11
+  ]
+}

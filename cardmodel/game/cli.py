@@ -4,7 +4,7 @@
   matrix [--distance D]     the exact equilibrium of an exchange (row mix, value, certificate)
   sensitivity               which number on which card most changes the game
   balance [--budget N]      seeded local search over move numbers until the design laws hold
-  duel A B [--trace]        two AIs (random, greedy, equilibrium, reader, habit)
+  duel A B [--trace]        two AIs (random, greedy, equilibrium, reader, habit, tree)
   tournament [--duels N]    every AI against every other
   play [--vs reader]        you against an AI, one exchange at a time
   world [--impact]          the systemic world: ticks, events, causes, the action that changed the most
@@ -115,7 +115,7 @@ def cmd(args) -> int:
         cli._out(args, r, "\n".join(lines if args.trace else lines[-1:]))
         return 0
     if act == "tournament":
-        names = args.agents or ["random", "greedy", "equilibrium", "reader", "habit"]
+        names = args.agents or ["random", "greedy", "equilibrium", "reader", "habit", "tree"]
         r = ai.tournament(g, names, duels=args.duels, seed=args.seed or 0)
         lines = [f"{args.duels} duels per pair (sides alternate), seed {r['seed']}:"]
         for a, sc in r["score"].items():
