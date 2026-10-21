@@ -1,0 +1,66 @@
+{
+  "applies_to": [
+    "project"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "project",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "schema": {
+    "properties": {
+      "docs": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "games": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "kind": {
+        "enum": [
+          "game",
+          "program",
+          "research"
+        ]
+      },
+      "metrics": {
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "order": {
+        "type": "integer"
+      },
+      "paths": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "repo": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "kind",
+      "statement"
+    ],
+    "type": "object"
+  },
+  "statement": "A project in progress: what the hub watches, never how far along it is.",
+  "tier": 0
+}

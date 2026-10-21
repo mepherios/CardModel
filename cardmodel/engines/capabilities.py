@@ -488,9 +488,20 @@ def live_hub(ctx: Ctx, seed: int) -> str:
         _need(proj["last"] and proj["last"]["title"] == "start", f"the last commit was not read: {proj['last']}")
         _need(proj["phase"] == "active now" and proj["changes"], f"uncommitted work was not seen: {proj['phase']}")
         _need(hashlib.sha256(index.read_bytes()).hexdigest() == before, "reading the repository wrote its index")
+        from . import projects as PJ
+        detail = {"goal": "g", "standing": "s", "done": [], "in_progress": [], "left": [], "blockers": [],
+                  "next_steps": [], "user_actions": [], "owner": {"session": "s"}, "branches": [],
+                  "updated": "2001-01-01T00:00:00+00:00"}
+        st.save({"name": "p", "category": "project", "title": "P", "kind": "game", "statement": "s",
+                 "paths": ["proj"], **detail})
+        st.invalidate()
+        with mock.patch.object(P, "home", lambda: d):
+            stale = PJ.check(Ctx(st))
+        _need(stale["projects"]["p"]["stale"], "a card revised before its project's last change was not stale (CM41)")
     finally:
         shutil.rmtree(d, ignore_errors=True)
-    return "a project's phase, last commit and uncommitted work computed from git, without writing to the repository"
+    return ("a project's phase, last commit and uncommitted work computed from git without writing to it; a card "
+            "revised before the project's last change is stale")
 
 
 def anyps5(ctx: Ctx, seed: int) -> str:

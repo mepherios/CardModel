@@ -5,6 +5,9 @@ A ``project`` card (cards/project) names what to watch: ``repo`` (another folder
 absent), ``paths`` (what in the repository belongs to the project: a folder, a file, or a glob), ``games`` (games
 whose builds belong to it), ``metrics`` and ``docs``. Nothing on the card says how far along the project is:
 
+  detail     what the owning session keeps on the card (law CM41, engines/projects.py): goal, standing, done / in
+             progress / left, blockers, next steps, the user's actions, owner, when it was revised, and whether
+             the card is stale; every user action, gathered and ranked by what it unblocks
   status     the last commit on the main branch that touches the project's paths; branches with unmerged commits
              touching them (ahead / behind main, last commit, the worktree they are checked out in); uncommitted
              changes under its paths in every worktree (how many files, the newest change); its phase: active now
@@ -462,11 +465,21 @@ class Snapshot:
         return sorted(ev, key=lambda e: e["t"], reverse=True)[:FEED]
 
     def compute(self) -> dict:
+        from ..engines import projects as PJ
         now = time.time()
         early, releases = self.early(), self.releases()
-        projects = [self.project(c, early, releases, now) for c in self.ctx.store.cards("project")]
+        checked = PJ.check(self.ctx, now)
+        projects = []
+        for c in self.ctx.store.cards("project"):
+            row = self.project(c, early, releases, now)
+            d = PJ.detail(c)
+            row["detail"] = {k: d.get(k) for k in ("goal", "standing", "done", "in_progress", "left", "blockers",
+                                                   "next_steps", "user_actions", "owner", "updated", "source")}
+            row["card"] = checked["projects"].get(c.name, {})
+            projects.append(row)
         projects.sort(key=lambda p: ({"game": 0, "program": 1, "research": 2}.get(p["kind"], 3), p["order"]))
         return {"generated": now, "projects": projects, "activity": self.activity(), "early": early,
+                "waiting_on_you": PJ.waiting_on_you(self.ctx), "card_problems": checked["problems"],
                 "releases": list(releases.values()),
                 "repos": [{"label": r.label, "path": str(r.root), "ok": r.ok, "main": r.main,
                            "worktrees": [{"name": w["name"], "branch": w["branch"], "dirty": len(w["dirty"])}
@@ -512,6 +525,7 @@ class Hub:
             files += [st / f for f in STATE_FILES] + [st / "self" / "last.json"]
             files += list((st / "arcade" / "depots").glob("*/latest"))
         files += list((paths.home() / "cards" / "project").rglob("card.json"))
+        files += [r / ".cardmodel" / "project.json" for r in self._repo_roots()]
         out = []
         for f in files:
             try:

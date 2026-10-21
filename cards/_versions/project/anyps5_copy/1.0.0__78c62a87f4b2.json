@@ -1,0 +1,24 @@
+{
+  "category": "project",
+  "kind": "program",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "count": "dirs",
+      "git_files": "core/libs/prx/",
+      "label": "system libraries"
+    }
+  ],
+  "name": "anyps5_copy",
+  "order": 8,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "repo": "~/Programmering/AnyPS5-cardmodel",
+  "statement": "The copy of AnyPS5 the model's fixes go into (~/Programmering/AnyPS5-cardmodel; the original is never written).",
+  "tier": 1,
+  "title": "AnyPS5 (working copy)"
+}

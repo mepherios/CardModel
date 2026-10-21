@@ -1,0 +1,38 @@
+{
+  "category": "project",
+  "docs": [
+    "docs/ANYPS5.md"
+  ],
+  "kind": "program",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "format": "{complete}/{declared} exports complete, {witnessed} witnessed",
+      "label": "coverage",
+      "verify": "anyps5"
+    },
+    {
+      "goal": "G_P4_anyps5_complete_fraction",
+      "label": "complete fraction"
+    }
+  ],
+  "name": "anyps5",
+  "order": 7,
+  "paths": [
+    "cardmodel/anyps5",
+    "stdlib/anyps5.card",
+    "stdlib/ps5_*",
+    "cards/anyps5_*",
+    "docs/ANYPS5*",
+    "tools/seed_anyps5.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "AnyPS5 read as cards: its badge reproduced, its real coverage, every gap with the cause that keeps it open.",
+  "tier": 1,
+  "title": "AnyPS5 on cards"
+}

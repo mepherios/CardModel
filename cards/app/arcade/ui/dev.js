@@ -49,10 +49,15 @@ function projectHTML(p) {
   const builds = (p.builds || []).map((b) => (b.channel === "release"
     ? `<div class="build"><span class="chan">RELEASE</span> ${esc(b.version)} <span class="dim">build ${esc(b.build)}</span></div>`
     : `<div class="build"><span class="chan ea">EARLY ACCESS</span> ${esc(b.version)} <span class="dim">from ${esc(b.branch)}</span> ${earlyButton(b)}</div>`)).join("");
+  const d = p.detail || {}, card = p.card || {};
+  const list = (label, xs, n) => (xs && xs.length ? `<div class="dl"><span>${label}</span><ul>${xs.slice(0, n || 4).map((x) => `<li>${esc(x)}</li>`).join("")}${xs.length > (n || 4) ? `<li class="dim">and ${xs.length - (n || 4)} more</li>` : ""}</ul></div>` : "");
+  const det = `<div class="detail">${d.standing ? `<div class="status">${esc(d.standing)}</div>` : ""}
+    ${list("In progress", d.in_progress)}${list("Left", d.left)}${list("Blocked by", d.blockers)}${list("Next", d.next_steps, 3)}
+    <div class="owner dim">${d.owner ? `owned by ${esc(d.owner.name || d.owner.session)} &middot; ` : ""}card revised ${ago(tsOf(d.updated))}${card.stale ? ' <span class="stale">STALE</span>' : ""}</div></div>`;
   return `<div class="proj ${cls(p.phase)}">
     <div class="ph"><span class="phase ${cls(p.phase)}">${esc(p.phase)}</span><span class="kind">${esc(p.kind)}</span></div>
-    <h3>${esc(p.title)}</h3><div class="st">${esc(p.statement)}</div>
-    ${last}${changes}${branches}
+    <h3>${esc(p.title)}</h3><div class="st">${esc(d.goal || p.statement)}</div>
+    ${det}${last}${changes}${branches}
     ${p.metrics && p.metrics.length ? `<div class="metrics">${p.metrics.map(metricHTML).join("")}</div>` : ""}
     ${builds ? `<div class="builds">${builds}</div>` : ""}
     <div class="foot">${p.recent || 0} commit${p.recent === 1 ? "" : "s"} this week${p.repo && p.repo !== "cardmodel" ? ` &middot; ${esc(p.repo)}` : ""}${(p.docs || []).length ? ` &middot; ${p.docs.map(esc).join(", ")}` : ""}</div>
@@ -74,6 +79,11 @@ function devView() {
     <div class="devhead"><h2>In progress ${live}</h2>
       <span class="dim">updated ${ago(d.generated)} &middot; ${d.projects.length} projects &middot; ${(d.repos || []).length} repositories watched</span>
       <span class="filters">${[["all", "All"], ...groups].map(([k, l]) => `<a data-devfilter="${k}" class="${S.devFilter === k ? "on" : ""}">${l}</a>`).join("")}</span></div>
+    ${(d.waiting_on_you || []).length ? `<h2>Waiting on you</h2><div class="you">${d.waiting_on_you.map((a, i) => `<div class="ask">
+      <span class="n">${i + 1}</span><div><b>${esc(a.action)}</b><div class="dim">${esc(a.why)}</div>
+      <div class="tags">${a.unblocks.map((u) => `<span class="tag">unblocks: ${esc(u)}</span>`).join("")}</div>
+      <div class="dim">${esc(a.title)}${a.owner ? " &middot; " + esc(a.owner) : ""}</div></div></div>`).join("")}</div>` : ""}
+    ${(d.card_problems || []).length ? `<div class="cardprobs">${d.card_problems.length} project card problem${d.card_problems.length === 1 ? "" : "s"} (law CM41): ${d.card_problems.slice(0, 3).map(esc).join(" &middot; ")}</div>` : ""}
     ${early.length ? `<h2>Early access</h2><div class="early">${early.map((e) => `<div class="eacard">
       <div class="art" style="background-image:url('${esc(e.media.header_460x215 || e.media.capsule_231x87 || "")}')"></div>
       <div class="meta"><span class="chan ea">EARLY ACCESS</span><b>${esc(e.title)} ${esc(e.version)}</b>

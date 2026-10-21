@@ -69,6 +69,11 @@ moves, it pushes the new snapshot to the page as a server-sent event (`/api/even
 run in any checkout shows up in the feed within seconds. Uncommitted work is re-read every 60 s, and every
 5 minutes in the other repositories.
 
+**Detail and what waits on you (law CM41).** Each project card also carries its owner's detail: goal, where it stands,
+what is in progress and left, blockers, next steps, the owning session, and when the card was last revised. A
+card is marked STALE when the project changed since then. The page opens with **Waiting on you**: every user
+action the cards name, ordered by how much each unblocks. The format is in docs/INTEGRATION.md section 4b.
+
 **Early access.** A worktree's latest build of a game, when it differs from the release, is offered under its
 own library id (`<game>.early.<worktree>`). It is labelled with its branch and installs beside the release. The
 release channel (`/api/catalog`, the Store and Library tabs) never lists it. Its manifest and pictures come from

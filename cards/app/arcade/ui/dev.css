@@ -64,3 +64,16 @@
 .feed .ev.build .ek { color: #c79bf2; }
 .feed .et { color: var(--text); }
 .feed .em { color: var(--dim); font-size: 11px; }
+
+.you { display: grid; gap: 8px; }
+.ask { display: flex; gap: 12px; background: rgba(228,197,90,.08); border: 1px solid rgba(228,197,90,.3); border-radius: 3px; padding: 10px 14px; }
+.ask .n { color: var(--gold); font-size: 20px; font-weight: 600; width: 22px; text-align: center; flex: none; }
+.ask b { color: var(--white); font-weight: 500; }
+.cardprobs { margin-top: 10px; font-size: 12px; color: #f0a39a; background: rgba(208,71,58,.12); padding: 8px 12px; border-radius: 2px; }
+.detail { margin: 6px 0; }
+.detail .status { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.dl { display: flex; gap: 8px; font-size: 12px; margin: 2px 0; }
+.dl > span { color: var(--dim); width: 74px; flex: none; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; padding-top: 2px; }
+.dl ul { margin: 0; padding-left: 14px; }
+.owner { margin-top: 4px; }
+.stale { color: #f0a39a; background: rgba(208,71,58,.2); padding: 1px 5px; border-radius: 2px; font-size: 10px; letter-spacing: 1px; }

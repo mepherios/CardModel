@@ -87,6 +87,7 @@ IMPROVED_BY = {
     "roms_boot_fraction": "cardmodel machine survey DIR (its failures name the missing bank controllers)",
     "test_roms_pass_rate": "cardmodel machine testroms DIR",
     "capabilities_failing": "cardmodel self capabilities",
+    "project_card_problems": "revise the project cards verify names (docs/INTEGRATION.md: project cards)",
     "integrity_problems": "cardmodel verify --only integrity",
 }
 

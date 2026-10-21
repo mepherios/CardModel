@@ -1,0 +1,49 @@
+{
+  "blockers": [],
+  "branches": [],
+  "category": "project",
+  "done": [
+    "all 226 relinker tests pass",
+    "the MP3 check runs natively"
+  ],
+  "goal": "A copy of AnyPS5 the model's fixes go into, never the original.",
+  "in_progress": [
+    "host mappings"
+  ],
+  "kind": "program",
+  "left": [
+    "titles that need Rosetta"
+  ],
+  "metadata": {
+    "previous_content_hash": "78c62a87f4b2a41b464f7db0f3f0eb5e5c5e2dc2820d7daddf8e57f345159c84",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "metrics": [
+    {
+      "count": "dirs",
+      "git_files": "core/libs/prx/",
+      "label": "system libraries"
+    }
+  ],
+  "name": "anyps5_copy",
+  "next_steps": [
+    "host mappings for the full build"
+  ],
+  "order": 8,
+  "owner": {
+    "name": "cardmodel-anyps5",
+    "session": "local_cae4df41-9d25-4898-9bd6-d52bfafb23ba"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "repo": "~/Programmering/AnyPS5-cardmodel",
+  "statement": "The copy of AnyPS5 the model's fixes go into (~/Programmering/AnyPS5-cardmodel; the original is never written).",
+  "status": "Builds on macOS; its relinker tests pass with Ninja installed.",
+  "tier": 1,
+  "title": "AnyPS5 (working copy)",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
+}

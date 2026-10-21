@@ -1,11 +1,29 @@
 {
+  "blockers": [
+    "the readable-proof and definition work waits on MATH_CORE.md's approval"
+  ],
+  "branches": [],
   "category": "project",
   "docs": [
     "docs/KNOWLEDGE.md"
   ],
+  "done": [
+    "fail-closed batch checking",
+    "faithful import with Lean semantics",
+    "derivations as Lean terms"
+  ],
+  "goal": "Lean as the proof kernel of the model, with proofs a person can read.",
+  "in_progress": [],
   "kind": "research",
+  "left": [
+    "the other 67 rewrite rules",
+    "readable proofs (MATH_CORE.md)",
+    "proofs linking emitted code to definitions"
+  ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "d35d2506877c449c7624614e2175a90726b25790d1ac6e32eed0c76ab793c388",
+    "version": "2.0.0",
+    "version_bump_reason": "major"
   },
   "metrics": [
     {
@@ -23,7 +41,14 @@
     }
   ],
   "name": "lean_bridge",
+  "next_steps": [
+    "prove the remaining rewrite rules"
+  ],
   "order": 11,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
   "paths": [
     "cardmodel/emit/lean.py",
     "cardmodel/emit/lean_import.py",
@@ -35,7 +60,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
+  "standing": "1579 theorem cards proved, 1489 Lean core theorems read faithfully, 47 of 114 rewrite rules proved.",
   "statement": "Lean as the proof kernel: theorems, derivations and Lean's own library as cards, re-proved by the model's tactics.",
   "tier": 1,
-  "title": "The Lean bridge"
+  "title": "The Lean bridge",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
 }

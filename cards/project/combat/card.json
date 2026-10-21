@@ -1,11 +1,27 @@
 {
+  "blockers": [
+    "waits on the merged store (entries that launch a program)"
+  ],
+  "branches": [],
   "category": "project",
   "docs": [
     "game/DESIGN.md"
   ],
+  "done": [
+    "moves, stances and fighters as cards",
+    "exact rational simplex with a checked certificate",
+    "equilibrium and reader AIs, the terminal prototype (cardmodel game play)"
+  ],
+  "goal": "A fighting design whose balance is computed: every design law holds on the exact equilibrium.",
+  "in_progress": [],
   "kind": "game",
+  "left": [
+    "a store entry that launches the terminal prototype"
+  ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "a6a1da157615e61c5ed64f1e42166d9ba22d03992696235c21252ed0e8523e99",
+    "version": "2.0.0",
+    "version_bump_reason": "major"
   },
   "metrics": [
     {
@@ -19,7 +35,14 @@
     }
   ],
   "name": "combat",
+  "next_steps": [
+    "after the cartridge merge: a terminal-launch store entry"
+  ],
   "order": 4,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
   "paths": [
     "cardmodel/game/combat.py",
     "cardmodel/game/analysis.py",
@@ -36,7 +59,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
+  "standing": "8 of 8 design laws hold on the exact equilibrium; its rules ship as Vector Duel's.",
   "statement": "The combat design: moves, stances and fighters as cards; its design laws are computed on exact equilibria and its AIs read your vectors (cardmodel game play).",
   "tier": 1,
-  "title": "Vector Counter System"
+  "title": "Vector Counter System",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
 }
