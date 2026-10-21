@@ -195,10 +195,11 @@ CAPABILITIES = [
     ("live_hub", "The store follows everything in progress: project cards say what to watch and keep their owner's "
      "detail current (CM41); the hub computes each one's phase, branches, uncommitted work, metrics and builds from "
      "git and the model's records, read-only, gathers what waits on the user, and pushes changes to the launcher as "
-     "they happen; early-access builds install beside the release.",
+     "they happen; early access is a program's version on a branch, installed from its store page like a beta "
+     "(one mechanism with the store's branches).",
      L("CM01_honest_limits", "CM35_games_are_cards", "CM41_projects_keep_their_cards_current"),
      ["tests/test_hub.py::test_status_is_computed_from_git_and_state", "tests/test_hub.py::test_git_reads_never_write",
-      "tests/test_hub.py::test_changes_are_pushed", "tests/test_hub.py::test_early_access_is_separate_and_installable",
+      "tests/test_hub.py::test_changes_are_pushed", "tests/test_hub.py::test_early_access_is_the_branch_version",
       "tests/test_projects.py::test_missing_or_stale_project_cards_fail"],
      ["docs/STORE.md"], ["cardmodel arcade serve (the In progress page)"], ["cardmodel/arcade/hub.py"],
      "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."),
