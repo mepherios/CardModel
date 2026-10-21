@@ -67,6 +67,21 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   BIOS, direct boot; `cardmodel machine nds` measures coverage; the ARM9's ARM code is lifted through the same
   pipeline (`--lift`), identical to the interpreter in the differential run.
 
+## Done (2026-10-21, fourth build: the arcade)
+
+* 🔵 **Vector Duel**: a complete native game made of cards (data cards + card-language logic on the combat cards and
+  kernel), compiled through the C card; arcade ladder, training, versus, options, saves, achievements (CM35).
+* 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
+  and the arcade service that builds games from their cards into depots of checked chunks.
+
+## Arcade: next
+
+* 🟢 **More of the game**: duel-tree AI (several exchanges deep), multi-hit strings, bosses with phase stances,
+  the systemic world as a campaign map.
+* 🟢 **The Game Boy library in the launcher**: the same native shell runs a machine module (same interface), so
+  each ROM in the collection can be a library entry built from the machine cards.
+* 🟢 **Other platforms**: a platform card per OS (a shell and a bundle layout each).
+
 ## Machines: now and next
 
 * 🔵 **Hardware test suites**: Blargg, mooneye and acid2 through `cardmodel machine testroms`, the DMG's OAM

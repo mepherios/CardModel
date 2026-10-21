@@ -67,6 +67,10 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel arcade launcher --install
+```
+
+```bash
 cd tests && python3 -B -m unittest
 ```
 
@@ -83,6 +87,8 @@ and `game play` lets you fight the AI that reads your vectors.
 is hardware cards, its own code is lifted into the card IR and compiled natively, and the browser page around it
 is the effect shell (video, audio, keys, saves). `machine nds` boots a DS game on the ARM instruction cards and
 reports what runs and what is not modelled yet.
+`arcade launcher --install` puts Cardmodel Arcade in ~/Applications: a store, library and downloads for games the
+card model builds. Its first game, Vector Duel, is card-language logic on the combat cards, compiled to native code.
 `improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
 byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last
 command runs the test suite.
@@ -102,3 +108,4 @@ command runs the test suite.
 | [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md) | crystallised knowledge: logic, theorem cards, discovered laws, Lean import and re-proofs |
 | [game/DESIGN.md](game/DESIGN.md) | the game design (Vector Counter System): pillars, kernel, design laws, AIs, world |
 | [docs/MACHINES.md](docs/MACHINES.md) | machines as cards: instruction cards, hardware cards, lifting, the effect shell, the DS prototype |
+| [docs/ARCADE.md](docs/ARCADE.md) | native games built from cards (Vector Duel), the depot pipeline and the Cardmodel Arcade launcher |

@@ -1,0 +1,600 @@
+{
+  "about": [
+    "Every attack comes from a direction. Every guard faces one. Meet a slash with the right guard just before it lands and you redirect it: its momentum turns against the attacker.",
+    "Six opponents, each built from the same move cards and the same rules. The last ones read you: they track what you lean on and answer it, and they tell you what they think you do.",
+    "Every number in the game is a card. The equilibria the AIs play are computed exactly by the card model, and the whole game is card-language logic compiled to native code."
+  ],
+  "achievements": [
+    {
+      "description": "Win a round.",
+      "id": "first_blood",
+      "name": "First Blood"
+    },
+    {
+      "description": "Redirect an attack.",
+      "id": "redirector",
+      "name": "Redirector"
+    },
+    {
+      "description": "Break an opponent's posture.",
+      "id": "posture_breaker",
+      "name": "Posture Breaker"
+    },
+    {
+      "description": "Win a round without taking damage.",
+      "id": "untouchable",
+      "name": "Untouchable"
+    },
+    {
+      "description": "Defeat The Reader.",
+      "id": "mind_reader",
+      "name": "Mind Reader"
+    },
+    {
+      "description": "Defeat The Balance.",
+      "id": "balance",
+      "name": "Off Balance"
+    },
+    {
+      "description": "Clear the arcade ladder.",
+      "id": "arcade_clear",
+      "name": "Architect's Fall"
+    },
+    {
+      "description": "Land 10 attacks out of feints.",
+      "id": "feint_master",
+      "name": "Read the Read"
+    },
+    {
+      "description": "Evade 25 attacks.",
+      "id": "evasion",
+      "name": "Ghost"
+    },
+    {
+      "description": "Clear the arcade ladder on hard.",
+      "id": "hard_clear",
+      "name": "No Mercy"
+    }
+  ],
+  "arenas": {
+    "dusk": {
+      "floor": [
+        "0x3B2E3A",
+        "0x17121C"
+      ],
+      "lines": "0x46364A",
+      "name": "DUSK BRIDGE",
+      "orb": "moon",
+      "orb_col": "0xFFF2DC",
+      "ridge": [
+        "0x3A2850",
+        "0x2A1C3C"
+      ],
+      "sky": [
+        "0x1A1440",
+        "0xD8705A"
+      ],
+      "weather": "none"
+    },
+    "forge": {
+      "floor": [
+        "0x3A1E16",
+        "0x140A08"
+      ],
+      "lines": "0x5A2A1A",
+      "name": "EMBER FORGE",
+      "orb": "none",
+      "orb_col": "0xFF8040",
+      "ridge": [
+        "0x401410",
+        "0x2A0C0A"
+      ],
+      "sky": [
+        "0x2A0A08",
+        "0x8A2A10"
+      ],
+      "weather": "embers"
+    },
+    "hall": {
+      "floor": [
+        "0x2A1E36",
+        "0x100A16"
+      ],
+      "lines": "0x5A3A70",
+      "name": "THE ARCHITECT'S HALL",
+      "orb": "sun",
+      "orb_col": "0xFFD870",
+      "ridge": [
+        "0x2A1240",
+        "0x1A0A2A"
+      ],
+      "sky": [
+        "0x120822",
+        "0x4A1C5A"
+      ],
+      "weather": "cards"
+    },
+    "snow": {
+      "floor": [
+        "0xD8E0EC",
+        "0x96A4BC"
+      ],
+      "lines": "0xB8C4D6",
+      "name": "SNOW PASS",
+      "orb": "sun",
+      "orb_col": "0xFFFFF0",
+      "ridge": [
+        "0xA8B6CC",
+        "0x7E8EAE"
+      ],
+      "sky": [
+        "0x6A7CA0",
+        "0xC8D4E6"
+      ],
+      "weather": "snow"
+    },
+    "storm": {
+      "floor": [
+        "0x34403C",
+        "0x141A18"
+      ],
+      "lines": "0x46524E",
+      "name": "STORM CLIFFS",
+      "orb": "none",
+      "orb_col": "0xE0F0FF",
+      "ridge": [
+        "0x2C3A38",
+        "0x1E2826"
+      ],
+      "sky": [
+        "0x1E2A2A",
+        "0x5A6A66"
+      ],
+      "weather": "rain"
+    },
+    "temple": {
+      "floor": [
+        "0x262A3A",
+        "0x0E1018"
+      ],
+      "lines": "0x343A52",
+      "name": "NIGHT TEMPLE",
+      "orb": "moon",
+      "orb_col": "0xDDE8FF",
+      "ridge": [
+        "0x141C38",
+        "0x0C1228"
+      ],
+      "sky": [
+        "0x050A1C",
+        "0x22305A"
+      ],
+      "weather": "stars"
+    }
+  },
+  "audio": {
+    "array": "audio",
+    "count": "audio_n",
+    "format": "s16le stereo",
+    "rate": 48000
+  },
+  "category": "game",
+  "changelog": [
+    {
+      "notes": [
+        "The duel: every move card, the combat kernel, guards, evades, redirects, posture and stamina.",
+        "Arcade ladder of six opponents, training, options, saves.",
+        "The native shell: window, keyboard, gamepads, sound."
+      ],
+      "title": "First playable",
+      "version": "0.1.0"
+    },
+    {
+      "notes": [
+        "A red arc shows where each cut comes from, and flashes white in the frames where a guard makes a redirect; your guard is a blue arc.",
+        "Each fighter has their own look: the Warden's crest, the Duelist's hat, cape and long blade, the Brute's horns and bulk.",
+        "The first opponent is gentler, and every opponent moves in and out instead of standing still.",
+        "How to duel: on the ladder, and along the bottom of the screen in your first fight.",
+        "Redirects and knockouts flash the screen; heavy hits knock you back; louder sound."
+      ],
+      "title": "Readable vectors",
+      "version": "0.2.0"
+    },
+    {
+      "notes": [
+        "Every arcade stage has its own arena and weather: the dusk bridge, a night temple, a snow pass, an ember forge, storm cliffs and the Architect's hall.",
+        "Each opponent introduces itself, and the readers tell you after the duel what they learned about you.",
+        "The Architect adapts when it is losing: past half its health it reads sharper.",
+        "Training: pick what the dummy does from the pause menu, and read your last move's frame data and outcome."
+      ],
+      "title": "Six arenas and The Architect",
+      "version": "0.3.0"
+    }
+  ],
+  "developer": "the card model",
+  "entry": {
+    "frame": "game_frame",
+    "fullscreen": "fullscreen_req",
+    "init": "game_init",
+    "quit": "quit_req"
+  },
+  "fighters": [
+    "warden",
+    "duelist",
+    "brute"
+  ],
+  "font": "asset/font_5x7",
+  "genre": [
+    "Action",
+    "Fighting",
+    "Indie"
+  ],
+  "input": {
+    "bits": [
+      "up",
+      "down",
+      "left",
+      "right",
+      "attack",
+      "heavy",
+      "guard",
+      "evade",
+      "feint",
+      "catch",
+      "pause",
+      "confirm",
+      "back"
+    ],
+    "gamepad": {
+      "attack": "a",
+      "back": "b",
+      "catch": "leftShoulder",
+      "confirm": "a",
+      "evade": "b",
+      "feint": "y",
+      "guard": "rightShoulder",
+      "heavy": "x",
+      "pause": "menu"
+    },
+    "global_args": [
+      "input",
+      "input2"
+    ],
+    "keys": {
+      "attack": [
+        "j"
+      ],
+      "back": [
+        "escape",
+        "backspace",
+        "k"
+      ],
+      "catch": [
+        "i"
+      ],
+      "confirm": [
+        "return",
+        "j"
+      ],
+      "down": [
+        "s",
+        "down"
+      ],
+      "evade": [
+        "space"
+      ],
+      "feint": [
+        "u"
+      ],
+      "guard": [
+        "l"
+      ],
+      "heavy": [
+        "k"
+      ],
+      "left": [
+        "a",
+        "left"
+      ],
+      "pause": [
+        "escape"
+      ],
+      "right": [
+        "d",
+        "right"
+      ],
+      "up": [
+        "w",
+        "up"
+      ]
+    },
+    "keys2": {
+      "attack": [
+        "keypad1"
+      ],
+      "catch": [
+        "keypad5"
+      ],
+      "down": [
+        "down"
+      ],
+      "evade": [
+        "keypad0"
+      ],
+      "feint": [
+        "keypad4"
+      ],
+      "guard": [
+        "keypad3"
+      ],
+      "heavy": [
+        "keypad2"
+      ],
+      "left": [
+        "left"
+      ],
+      "right": [
+        "right"
+      ],
+      "up": [
+        "up"
+      ]
+    }
+  },
+  "kernel": "stdlib/combat.card",
+  "kind": "game",
+  "ladder": [
+    {
+      "ai": "habit",
+      "arena": "dusk",
+      "fighter": "brute",
+      "intro": "S_IN_1",
+      "level": 1,
+      "name": "S_AI_HABIT"
+    },
+    {
+      "ai": "greedy",
+      "arena": "temple",
+      "fighter": "duelist",
+      "intro": "S_IN_2",
+      "level": 2,
+      "name": "S_AI_GREEDY"
+    },
+    {
+      "ai": "reader",
+      "arena": "snow",
+      "fighter": "warden",
+      "intro": "S_IN_3",
+      "level": 3,
+      "name": "S_AI_READER"
+    },
+    {
+      "ai": "reader",
+      "arena": "forge",
+      "fighter": "brute",
+      "intro": "S_IN_4",
+      "level": 4,
+      "name": "S_AI_READER"
+    },
+    {
+      "ai": "equilibrium",
+      "arena": "storm",
+      "fighter": "duelist",
+      "intro": "S_IN_5",
+      "level": 5,
+      "name": "S_AI_EQUILIBRIUM"
+    },
+    {
+      "ai": "boss",
+      "arena": "hall",
+      "fighter": "warden",
+      "intro": "S_IN_6",
+      "level": 6,
+      "name": "S_AI_BOSS"
+    }
+  ],
+  "logic": [
+    "core.card",
+    "gfx.card",
+    "duel.card",
+    "ai.card",
+    "draw.card",
+    "screens.card",
+    "audio.card",
+    "save.card"
+  ],
+  "music": [
+    {
+      "bass": "A2 . . . . . . . A2 . . . . . . . F2 . . . . . . . F2 . . . . . . . C3 . . . . . . . C3 . . . . . . . E2 . . . . . . . E2 . . . . . . .",
+      "bpm": 80,
+      "drums": "k . . . h . . . . . . . h . . . k . . . h . . . . . . . h . . . k . . . h . . . . . . . h . . . k . . . h . . . k . . . h . h .",
+      "lead": "A4 . . . C5 . E5 . A5 . G5 . E5 . C5 . D5 . . . F5 . A5 . G5 . F5 . E5 . D5 . C5 . . . E5 . G5 . C6 . B5 . G5 . E5 . B4 . . . E5 . G#5 . B5 . . . E5 . . .",
+      "name": "title"
+    },
+    {
+      "bass": "A2 A2 A3 A2 A2 A2 G2 A2 A2 A2 A3 A2 A2 A2 G2 A2 F2 F2 F3 F2 F2 F2 E2 F2 F2 F2 F3 F2 F2 F2 E2 F2 G2 G2 G3 G2 G2 G2 F2 G2 G2 G2 G3 G2 G2 G2 F2 G2 E2 E2 E3 E2 E2 E2 G#2 E2 E2 E2 E3 E2 E2 E2 G#2 E2",
+      "bpm": 132,
+      "drums": "k . h . s . h . k k h . s . h . k . h . s . h . k k h . s . h . k . h . s . h . k k h . s . h . k . h . s . h . k . s . s s s s",
+      "lead": "A4 . . C5 . . E5 . D5 . C5 . B4 . . . A4 . . C5 . . F5 . E5 . D5 . C5 . . . B4 . . D5 . . G5 . F5 . E5 . D5 . . . E5 . . . G#4 . B4 . E5 . . . . . . .",
+      "name": "duel"
+    },
+    {
+      "bass": "D2 D2 D3 D2 D2 D2 C3 D2 D2 D2 D3 D2 D2 D2 C3 D2 Bb1 Bb1 Bb2 Bb1 Bb1 Bb1 A1 Bb1 Bb1 Bb1 Bb2 Bb1 Bb1 Bb1 A1 Bb1 C2 C2 C3 C2 C2 C2 Bb1 C2 C2 C2 C3 C2 C2 C2 Bb1 C2 A1 A1 A2 A1 A1 A1 C#2 A1 A1 A1 A2 A1 A1 A1 C#2 A1",
+      "bpm": 144,
+      "drums": "k . h k s . h . k . h k s . h h k . h k s . h . k . h k s . h h k . h k s . h . k . h k s . h h k . h k s . h . k s k s s s s s",
+      "lead": "D5 . . F5 . . A5 . G5 . F5 . E5 . . . D5 . . F5 . . Bb5 . A5 . G5 . F5 . . . E5 . . G5 . . C6 . Bb5 . A5 . G5 . . . A5 . . . C#5 . E5 . A5 . . . . . . .",
+      "name": "boss"
+    },
+    {
+      "bass": "C3 . . . . . . . C3 . . . . . . . F2 . . . . . . . G2 . . . . . . . A2 . . . . . . . F2 . . . . . . . G2 . . . . . . . C3 . . . . . . .",
+      "bpm": 96,
+      "drums": "k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h h",
+      "lead": "C5 . E5 . G5 . E5 . C5 . G4 . A4 . B4 . F5 . E5 . D5 . C5 . D5 . . . G4 . . . A4 . C5 . E5 . C5 . F5 . E5 . D5 . C5 . D5 . . . G5 . . . C5 . . . . . . .",
+      "name": "credits"
+    }
+  ],
+  "name": "vector_duel",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "game/DESIGN.md (the Vector Counter System)"
+  },
+  "save": {
+    "array": "save",
+    "bytes": 512,
+    "dirty": "save_dirty"
+  },
+  "screen": {
+    "array": "fb",
+    "format": "rgba8",
+    "height": 270,
+    "scale": 3,
+    "width": 480
+  },
+  "short_description": "Read the vector, not the button. A sword duel decided by directions, timing and reads, where an AI learns what you lean on.",
+  "statement": "A one-on-one sword duel where every attack is a vector and every answer is a vector too: read the direction, guard it, redirect it. The rules are the Vector Counter System's cards (moves, fighters, the combat kernel); the game itself is card-language logic compiled to native code.",
+  "strings": {
+    "S_ACH": "ACHIEVEMENT UNLOCKED",
+    "S_ACTIVE": "ACTIVE",
+    "S_ADAPTS": "THE ARCHITECT ADAPTS",
+    "S_AI_BOSS": "THE ARCHITECT",
+    "S_AI_EQUILIBRIUM": "THE BALANCE",
+    "S_AI_GREEDY": "OPPORTUNIST",
+    "S_AI_HABIT": "CREATURE OF HABIT",
+    "S_AI_READER": "THE READER",
+    "S_ARCADE": "ARCADE",
+    "S_BACK": "BACK",
+    "S_BEST": "BEST",
+    "S_BLOCK": "BLOCK",
+    "S_BROKEN": "POSTURE BROKEN!",
+    "S_BRUTE": "BRUTE",
+    "S_BRUTE_D": "HEAVY. BIG SWINGS, ARMOUR AND GRABS.",
+    "S_C1": "DESIGN: THE VECTOR COUNTER SYSTEM",
+    "S_C2": "KERNEL: STDLIB/COMBAT.CARD",
+    "S_C3": "EVERY MOVE, FIGHTER AND RULE IS A CARD",
+    "S_C4": "EQUILIBRIA COMPUTED EXACTLY BY THE MODEL",
+    "S_C5": "COMPILED TO NATIVE CODE THROUGH THE C CARD",
+    "S_CAUGHT": "CAUGHT!",
+    "S_CHOOSE": "CHOOSE YOUR FIGHTER",
+    "S_CLEAR": "ARCADE CLEAR",
+    "S_CONTINUE": "CONTINUE",
+    "S_CONTROLS": "CONTROLS",
+    "S_COUNTER": "COUNTER",
+    "S_CPU": "CPU",
+    "S_CREDITS": "CREDITS",
+    "S_CRITICAL": "CRITICAL!",
+    "S_DEFLECT": "DEFLECT",
+    "S_DIFFICULTY": "DIFFICULTY",
+    "S_DRAW": "DRAW",
+    "S_DUELIST": "DUELIST",
+    "S_DUELIST_D": "FAST. THRUSTS, FEINTS AND A QUICK FOOT.",
+    "S_DUMMY": "DUMMY",
+    "S_DUMMY_IS": "DUMMY",
+    "S_D_ATTACK": "ATTACKS",
+    "S_D_DIAG": "DIAGONAL",
+    "S_D_EVADING": "EVADING",
+    "S_D_GRABS": "GRABS",
+    "S_D_GUARD": "GUARDS",
+    "S_D_GUARDING": "GUARDING",
+    "S_D_IDLE": "STANDS",
+    "S_D_LEFT": "LEFT",
+    "S_D_OVERHEAD": "OVERHEAD",
+    "S_D_READER": "READS YOU",
+    "S_D_RIGHT": "RIGHT",
+    "S_D_RISING": "RISING",
+    "S_D_THRUST": "THRUST",
+    "S_EASY": "EASY",
+    "S_EVADED": "EVADED",
+    "S_EVERY": "EVERY RULE IS A CARD",
+    "S_FEINT": "FEINT!",
+    "S_FIGHT": "FIGHT!",
+    "S_FRAMES": "FRAMES",
+    "S_GRABBED": "GRABBED",
+    "S_HARD": "HARD",
+    "S_HIT": "HIT",
+    "S_HOW": "HOW TO DUEL",
+    "S_HOW1": "A RED ARC SHOWS WHERE THE CUT COMES FROM",
+    "S_HOW2": "HOLD L AND PRESS THAT DIRECTION TO GUARD IT",
+    "S_HOW3": "GUARD AS THE ARC FLASHES WHITE: REDIRECT!",
+    "S_HOW4": "J + DIRECTION ATTACKS. K HEAVY, U FEINT, SPACE EVADES",
+    "S_HP": "HP",
+    "S_IN_1": "THE BRUTE SWINGS FROM ABOVE. GUARD HIGH, CUT FROM THE SIDE.",
+    "S_IN_2": "THE OPPORTUNIST PUNISHES EVERY MISS. WAIT, THEN ANSWER.",
+    "S_IN_3": "THE READER COUNTS WHAT YOU DO. VARY IT.",
+    "S_IN_4": "A READER WITH A HEAVY HAND. ITS OVERHEAD HAS ARMOUR.",
+    "S_IN_5": "THE BALANCE PLAYS THE EQUILIBRIUM: THERE IS NOTHING TO READ.",
+    "S_IN_6": "THE ARCHITECT WROTE THE CARDS. IT ADAPTS WHEN IT LOSES.",
+    "S_KO": "K.O.",
+    "S_K_ATK": "J: ATTACK  K: HEAVY  U: FEINT",
+    "S_K_DEF": "L: GUARD (HOLD)  SPACE: EVADE  I: CATCH",
+    "S_K_DIR": "W A S D / ARROWS: VECTOR AND WALK",
+    "S_K_SYS": "ESC: PAUSE  F: FULL SCREEN",
+    "S_K_TIP": "GUARD THE SIDE THE RED VECTOR SHOWS. JUST BEFORE IT LANDS: REDIRECT.",
+    "S_LAST": "LAST MOVE",
+    "S_LEARNED": "IT LEARNED: YOU ATTACK",
+    "S_MADE": "MADE WITH THE CARD MODEL",
+    "S_MOVES": "MOVE LIST",
+    "S_MUSIC": "MUSIC",
+    "S_NEXT": "NEXT DUEL",
+    "S_NONE": "-",
+    "S_NORMAL": "NORMAL",
+    "S_OF": "OF",
+    "S_OFF": "OFF",
+    "S_ON": "ON",
+    "S_OPTIONS": "OPTIONS",
+    "S_OUTCOME": "OUTCOME",
+    "S_O_BLOCK": "BLOCK",
+    "S_O_CAUGHT": "CAUGHT",
+    "S_O_DEFLECT": "DEFLECT",
+    "S_O_EVADED": "EVADED",
+    "S_O_HIT": "HIT",
+    "S_O_PIERCE": "PIERCED",
+    "S_O_REDIRECT": "REDIRECT",
+    "S_P1": "YOU",
+    "S_P2": "P2",
+    "S_P2_KEYS": "P2: ARROWS + 1 2 3 0 (NUMPAD)",
+    "S_PAUSED": "PAUSED",
+    "S_PERFECT": "PERFECT",
+    "S_PIERCE": "PIERCED",
+    "S_POSTURE": "POSTURE",
+    "S_PRESS": "PRESS J OR ENTER",
+    "S_QUIT": "QUIT",
+    "S_READS": "IT READS:",
+    "S_RECOVERY": "RECOVERY",
+    "S_REDIRECT": "REDIRECT!",
+    "S_RESTART": "RESTART",
+    "S_RESUME": "RESUME",
+    "S_RETRY": "RETRY",
+    "S_RINGS": "VECTOR ARCS",
+    "S_ROUND": "ROUND",
+    "S_SFX": "SOUND",
+    "S_STAGE": "STAGE",
+    "S_STAMINA": "STAMINA",
+    "S_STARTUP": "STARTUP",
+    "S_STATS": "REDIRECTS   DEFLECTS   HITS",
+    "S_TAGLINE": "READ THE VECTOR, NOT THE BUTTON",
+    "S_THANKS": "THANK YOU FOR PLAYING",
+    "S_TIME": "TIME",
+    "S_TITLE": "VECTOR DUEL",
+    "S_TO_TITLE": "TITLE SCREEN",
+    "S_TRAINING": "TRAINING",
+    "S_TRAINING_T": "TRAINING: THE DUMMY NEVER FALLS",
+    "S_VERSUS": "VERSUS",
+    "S_VS": "VS",
+    "S_WARDEN": "WARDEN",
+    "S_WARDEN_D": "BALANCED. EVERY DIRECTION, EVERY ANSWER.",
+    "S_WINS": "WINS",
+    "S_YOU_LOSE": "DEFEAT",
+    "S_YOU_WIN": "VICTORY"
+  },
+  "tags": [
+    "Swordplay",
+    "Skill-based",
+    "Singleplayer",
+    "Local versus",
+    "Pixel art",
+    "Precision"
+  ],
+  "tier": 1,
+  "title": "Vector Duel",
+  "version": "0.3.0"
+}

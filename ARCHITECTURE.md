@@ -59,6 +59,9 @@ cardmodel/                      the repository IS the model (its home)
 │   │                           (per-instruction conformance), asm.py (an assembler from the cards), gb.py, nds.py
 │   │                           (hosts for the Game Boy and the DS prototype), lift.py (ROM blocks -> specialised IR ->
 │   │                           native), diff.py, survey.py, testroms.py, shell.py (the effect shell), cli.py
+│   ├── arcade/                 games as cards: gen.py (data cards -> tables, exact equilibria), game.py (a game
+│   │                           card -> one IR module; headless runs), build.py (native package, store media, depot),
+│   │                           server.py (the content service), cli.py (`cardmodel arcade`)
 ├── stdlib/                     card-language sources the program runs: self.card (its laws), program.card,
 │                               combat.card (the combat kernel), world.card (the systemic world),
 │                               algebra.card (identities between algorithm cards, generated)

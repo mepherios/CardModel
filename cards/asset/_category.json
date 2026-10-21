@@ -1,0 +1,5 @@
+{
+  "name": "asset",
+  "tier": 1,
+  "description": "Data a game draws or plays: fonts, palettes, sprites and music as cards (the build turns them into tables the game's card-language logic reads)."
+}

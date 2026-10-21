@@ -577,6 +577,8 @@ def register(sub) -> None:
     game_cli.register(sub)
     from .machine import cli as machine_cli
     machine_cli.register(sub)
+    from .arcade import cli as arcade_cli
+    arcade_cli.register(sub)
 
 
 __all__ = ["register"]

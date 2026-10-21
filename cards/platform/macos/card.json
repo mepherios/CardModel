@@ -1,0 +1,85 @@
+{
+  "bundle": {
+    "executable_dir": "Contents/MacOS",
+    "frameworks_dir": "Contents/Frameworks",
+    "icon_file": "AppIcon.icns",
+    "info_plist": {
+      "CFBundleDisplayName": "{title}",
+      "CFBundleExecutable": "{title}",
+      "CFBundleIconFile": "AppIcon",
+      "CFBundleIdentifier": "org.cardmodel.arcade.{id}",
+      "CFBundleName": "{title}",
+      "CFBundlePackageType": "APPL",
+      "CFBundleShortVersionString": "{version}",
+      "CFBundleVersion": "{build}",
+      "GCSupportsControllerUserInteraction": true,
+      "LSApplicationCategoryType": "public.app-category.games",
+      "LSMinimumSystemVersion": "13.0",
+      "NSHighResolutionCapable": true
+    },
+    "resources_dir": "Contents/Resources",
+    "spec_file": "game.json",
+    "suffix": ".app"
+  },
+  "category": "platform",
+  "effect_shell": {
+    "compile": [
+      "{exe}",
+      "-O",
+      "-swift-version",
+      "5",
+      "-o",
+      "{out}",
+      "{srcs}",
+      "-framework",
+      "AppKit",
+      "-framework",
+      "AVFoundation",
+      "-framework",
+      "GameController"
+    ],
+    "sources": [
+      "GameShell.swift"
+    ]
+  },
+  "icon": {
+    "compile": [
+      "{exe}",
+      "-c",
+      "icns",
+      "-o",
+      "{out}",
+      "{iconset}"
+    ],
+    "probe": {
+      "kind": "executable",
+      "name": "iconutil"
+    },
+    "sizes": [
+      16,
+      32,
+      128,
+      256,
+      512
+    ]
+  },
+  "kind": "platform",
+  "library": {
+    "file": "game.dylib",
+    "language": "c"
+  },
+  "name": "macos",
+  "probe": {
+    "kind": "executable",
+    "name": "swiftc",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "saves": "~/Library/Application Support/Cardmodel Arcade/saves/{id}",
+  "statement": "A native macOS application bundle: the game's card-IR module emitted through a language card and compiled to a shared library (Contents/Frameworks/game.dylib), and this card's effect shell (window, keyboard, gamepads, sound, the save file) compiled as the executable. The shell reads game.json, which the build writes from the game card, and knows nothing else about the game.",
+  "tier": 1
+}
