@@ -1,0 +1,198 @@
+{
+  "category": "hardware",
+  "controllers": {
+    "mbc1": {
+      "bank2": "4000-5FFF (2 bits: ROM bits 5-6 or RAM bank)",
+      "mode": "6000-7FFF",
+      "ram_enable": "0000-1FFF (low nibble 0xA)",
+      "rom_bank_low5": "2000-3FFF (0 -> 1)"
+    },
+    "mbc2": {
+      "control": "0000-3FFF: address bit 8 clear = RAM enable, set = ROM bank (4 bits, 0 -> 1)",
+      "ram": "512 x 4 bits, upper nibble reads 1"
+    },
+    "mbc3": {
+      "latch": "6000-7FFF (0 then 1)",
+      "ram_bank_or_rtc": "4000-5FFF (0-7 RAM, 8-C RTC S M H DL DH)",
+      "ram_enable": "0000-1FFF",
+      "rom_bank": "2000-3FFF (7 bits, 0 -> 1)"
+    },
+    "mbc5": {
+      "ram_bank": "4000-5FFF (4 bits)",
+      "ram_enable": "0000-1FFF (0x0A)",
+      "rom_bank_bit8": "3000-3FFF",
+      "rom_bank_low8": "2000-2FFF"
+    }
+  },
+  "header": {
+    "cgb_flag": 323,
+    "global_checksum": [
+      334,
+      335
+    ],
+    "header_checksum": 333,
+    "ram_size": 329,
+    "rom_size": 328,
+    "title": [
+      308,
+      323
+    ],
+    "type": 327
+  },
+  "logic": [
+    "cart.card"
+  ],
+  "machine": "gameboy",
+  "mbc_kind": {
+    "mbc1": 1,
+    "mbc2": 2,
+    "mbc3": 3,
+    "mbc5": 5,
+    "none": 0
+  },
+  "name": "gb_cartridge",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "ram_size_bytes": {
+    "0": 0,
+    "1": 2048,
+    "2": 8192,
+    "3": 32768,
+    "4": 131072,
+    "5": 65536
+  },
+  "rom_size_bytes": "32768 << value",
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "Cartridge ROM (up to 8 MiB) and RAM (up to 128 KiB) behind a memory bank controller. The header at 0x100-0x14F describes it; `types` maps the cartridge type byte (0x147) to a controller and its features.",
+  "tier": 1,
+  "timing": {
+    "rtc_dots_per_second": 4194304,
+    "rtc_hz": 32768
+  },
+  "types": {
+    "0x00": {
+      "mbc": "none"
+    },
+    "0x01": {
+      "mbc": "mbc1"
+    },
+    "0x02": {
+      "mbc": "mbc1",
+      "ram": true
+    },
+    "0x03": {
+      "battery": true,
+      "mbc": "mbc1",
+      "ram": true
+    },
+    "0x05": {
+      "mbc": "mbc2",
+      "ram": true
+    },
+    "0x06": {
+      "battery": true,
+      "mbc": "mbc2",
+      "ram": true
+    },
+    "0x08": {
+      "mbc": "none",
+      "ram": true
+    },
+    "0x09": {
+      "battery": true,
+      "mbc": "none",
+      "ram": true
+    },
+    "0x0B": {
+      "mbc": "mmm01",
+      "unsupported": true
+    },
+    "0x0C": {
+      "mbc": "mmm01",
+      "unsupported": true
+    },
+    "0x0D": {
+      "mbc": "mmm01",
+      "unsupported": true
+    },
+    "0x0F": {
+      "battery": true,
+      "mbc": "mbc3",
+      "rtc": true
+    },
+    "0x10": {
+      "battery": true,
+      "mbc": "mbc3",
+      "ram": true,
+      "rtc": true
+    },
+    "0x11": {
+      "mbc": "mbc3"
+    },
+    "0x12": {
+      "mbc": "mbc3",
+      "ram": true
+    },
+    "0x13": {
+      "battery": true,
+      "mbc": "mbc3",
+      "ram": true
+    },
+    "0x19": {
+      "mbc": "mbc5"
+    },
+    "0x1A": {
+      "mbc": "mbc5",
+      "ram": true
+    },
+    "0x1B": {
+      "battery": true,
+      "mbc": "mbc5",
+      "ram": true
+    },
+    "0x1C": {
+      "mbc": "mbc5",
+      "rumble": true
+    },
+    "0x1D": {
+      "mbc": "mbc5",
+      "ram": true,
+      "rumble": true
+    },
+    "0x1E": {
+      "battery": true,
+      "mbc": "mbc5",
+      "ram": true,
+      "rumble": true
+    },
+    "0x20": {
+      "mbc": "mbc6",
+      "unsupported": true
+    },
+    "0x22": {
+      "mbc": "mbc7",
+      "unsupported": true
+    },
+    "0xFC": {
+      "mbc": "camera",
+      "unsupported": true
+    },
+    "0xFD": {
+      "mbc": "tama5",
+      "unsupported": true
+    },
+    "0xFE": {
+      "mbc": "huc3",
+      "unsupported": true
+    },
+    "0xFF": {
+      "mbc": "huc1",
+      "unsupported": true
+    }
+  }
+}

@@ -1,15 +1,32 @@
 {
   "category": "language",
   "codegen": {
+    "array": {
+      "int": "static int64_t {name}[{size}];",
+      "u8": "static uint8_t {name}[{size}];"
+    },
+    "array_export": {
+      "int": "int64_t {name}[{size}];",
+      "u8": "uint8_t {name}[{size}];"
+    },
+    "array_init": {
+      "int": "static int64_t {name}[{size}] = {{{values}}};",
+      "u8": "static uint8_t {name}[{size}] = {{{values}}};"
+    },
     "assign": "{name} = {value};",
     "break": "break;",
     "continue": "continue;",
     "declare": "{type} {name} = {value};",
+    "do": "{value};",
     "else": "}} else {{",
     "empty": ";",
     "end_if": "}}",
     "end_while": "}}",
+    "export_prefix": "cmx_",
     "func": "static {ret} {name}({params}) {{\n{body}}}\n",
+    "func_export": "{ret} {name}({params}) {{\n{body}}}\n",
+    "global": "static {type} {name} = {value};",
+    "global_export": "{type} {name} = {value};",
     "harness": {
       "bench_call": "cm_acc += {truthy};",
       "bench_main": "int main(void) {{\n    int64_t cm_acc = 0;\n    for (int64_t cm_r = 0; cm_r < {reps}; cm_r++) {{\n{calls}    }}\n    printf(\"%\" PRId64 \"\\n\", cm_acc);\n    return 0;\n}}\n",
@@ -50,6 +67,10 @@
       "int": "INT64_C({v})",
       "true": "true"
     },
+    "load": {
+      "int": "{arr}[{idx}]",
+      "u8": "{arr}[{idx}]"
+    },
     "opaque": {
       "bool": "cm_opaque_b({v})",
       "float": "cm_opaque_f({v})",
@@ -58,12 +79,27 @@
     "param": "{type} {name}",
     "prelude": "#include <stdio.h>\n#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n#include <inttypes.h>\n@imports@\n",
     "prototype": "static {ret} {name}({params});",
+    "prototype_export": "{ret} {name}({params});",
     "return": "return {value};",
+    "return_void": "return;",
+    "store": {
+      "int": "{arr}[{idx}] = {value};",
+      "u8": "{arr}[{idx}] = (uint8_t)({value});"
+    },
     "style": "braces",
+    "switch": {
+      "body_close": "}} break;",
+      "body_open": "{{",
+      "case": "case {v}:",
+      "default": "default:",
+      "head": "switch ({value}) {{",
+      "tail": "}}"
+    },
     "types": {
       "bool": "bool",
       "float": "double",
-      "int": "int64_t"
+      "int": "int64_t",
+      "void": "void"
     },
     "while": "while ({cond}) {{",
     "zero": {
@@ -87,6 +123,24 @@
       "'"
     ]
   },
+  "embed": {
+    "compile": [
+      "{exe}",
+      "-O2",
+      "-std=c11",
+      "-shared",
+      "-fPIC",
+      "-fwrapv",
+      "-w",
+      "-o",
+      "{lib}",
+      "{src}",
+      "-lm"
+    ],
+    "file": "machine.c",
+    "kind": "cabi",
+    "statement": "a shared library loaded with ctypes: int64 arguments and results, exported symbols carry the codegen export_prefix, arrays are reachable with in_dll"
+  },
   "extensions": [
     ".c",
     ".h"
@@ -94,7 +148,9 @@
   "family": "c_like",
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "a16ac8a99135aff35d7aab77176733f359f55dacad51a50a7f2414b94cc9c9e7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "c",
   "probe": {
@@ -148,7 +204,61 @@
     "true",
     "false",
     "main",
-    "printf"
+    "printf",
+    "abs",
+    "div",
+    "exp",
+    "log",
+    "pow",
+    "sqrt",
+    "floor",
+    "ceil",
+    "round",
+    "trunc",
+    "fabs",
+    "fmod",
+    "sin",
+    "cos",
+    "tan",
+    "y0",
+    "y1",
+    "j0",
+    "j1",
+    "jn",
+    "yn",
+    "gamma",
+    "log2",
+    "exp2",
+    "isnan",
+    "isinf",
+    "signbit",
+    "nan",
+    "rint",
+    "remainder",
+    "time",
+    "read",
+    "write",
+    "index",
+    "rand",
+    "random",
+    "signal",
+    "sync",
+    "close",
+    "open",
+    "free",
+    "malloc",
+    "exit",
+    "puts",
+    "putc",
+    "getc",
+    "remove",
+    "rename",
+    "stdin",
+    "stdout",
+    "stderr",
+    "NULL",
+    "assert",
+    "halt"
   ],
   "runner": {
     "compile": [

@@ -1,0 +1,38 @@
+{
+  "buttons": [
+    "right",
+    "left",
+    "up",
+    "down",
+    "a",
+    "b",
+    "select",
+    "start"
+  ],
+  "category": "hardware",
+  "logic": [
+    "joypad.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_joypad",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "rw",
+      "address": 65280,
+      "name": "P1",
+      "post_boot_cgb": 207,
+      "post_boot_dmg": 207,
+      "read_or": 192
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "P1 (FF00): bits 4/5 select direction/action keys (0 = selected), low nibble 0 = pressed. A selected line going low requests the joypad interrupt and ends STOP.",
+  "tier": 1
+}

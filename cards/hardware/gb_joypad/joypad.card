@@ -1,0 +1,30 @@
+-- The joypad: P1 (FF00). Bits 4 and 5 select the direction or the action keys (0 = selected); the low nibble
+-- reads 0 for a pressed key. The shell sets `buttons` (bit 0 right, 1 left, 2 up, 3 down, 4 A, 5 B, 6 select,
+-- 7 start; 1 = pressed); a selected line going low requests the joypad interrupt and ends STOP mode.
+global p1_sel: Int = 0x30
+export global buttons: Int = 0
+global stopped: Int = 0
+
+fn joypad_lines() -> Int {
+  var lo = 0x0F
+  if (p1_sel & 0x10) == 0 {
+    lo = lo & (0x0F ^ (buttons & 0x0F))
+  }
+  if (p1_sel & 0x20) == 0 {
+    lo = lo & (0x0F ^ ((buttons >> 4) & 0x0F))
+  }
+  return lo
+}
+fn p1_read() -> Int = 0xC0 | p1_sel | joypad_lines()
+export fn set_buttons(mask: Int) {
+  let before = joypad_lines()
+  buttons = mask & 0xFF
+  let after = joypad_lines()
+  if (before & (0x0F ^ after)) != 0 {
+    request_irq(IRQ_JOYPAD)
+  }
+  if stopped != 0 and (mask & 0xFF) != 0 {
+    stopped = 0
+  }
+  next_event = now
+}

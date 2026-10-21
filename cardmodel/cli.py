@@ -176,6 +176,9 @@ def cmd_verify(args) -> int:
 def _failures(sec: str, r: dict):
     if sec == "kernel":
         return {k: r[k] for k in ("load_errors", "schema_errors", "unresolved_references", "registry_errors") if r[k]}
+    if sec == "machine":
+        return {k: {"drifted": v.get("drifted"), "failing": v.get("failing")} for k, v in r["isas"].items()
+                if v["status"] == "fail"}
     if sec == "conformance":
         return {lang: {n: c for n, c in lr["cells"].items() if c["status"] in ("fail", "error")}
                 for lang, lr in r["languages"].items()}

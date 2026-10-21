@@ -1,0 +1,96 @@
+-- OAM DMA (FF46): 160 bytes from XX00 to OAM, one byte per M-cycle after one M-cycle of startup; while it runs
+-- the CPU cannot use OAM (reads give 0xFF). CGB HDMA (FF51-FF55): general-purpose DMA copies (n+1)*16 bytes at
+-- once and stalls the CPU 8 M-cycles per 16 bytes; H-blank DMA copies 16 bytes at the start of every H-blank.
+global dma_reg: Int = 0xFF
+global dma_active: Int = 0
+global dma_src: Int = 0
+global dma_t0: Int = 0
+global dma_n: Int = 0
+global hdma_src: Int = 0
+global hdma_dst: Int = 0
+global hdma_len: Int = 0
+global hdma_on: Int = 0
+global stall: Int = 0
+
+fn dma_start(v: Int) {
+  dma_sync()
+  dma_reg = v
+  dma_src = v << 8
+  if dma_src >= 0xE000 {
+    dma_src -= 0x2000
+  }
+  dma_active = 1
+  dma_t0 = now + 2 * md
+  dma_n = 0
+}
+fn dma_sync() {
+  if dma_active == 0 {
+    return
+  }
+  while dma_n < 160 and dma_t0 + dma_n * md <= now {
+    oam[dma_n] = peek8(dma_src + dma_n)
+    dma_n += 1
+  }
+  if dma_n >= 160 {
+    dma_active = 0
+  }
+}
+fn dma_blocks(a: Int) -> Bool {
+  dma_sync()
+  return dma_active != 0 and now >= dma_t0 and a >= 0xFE00 and a < 0xFEA0
+}
+fn hdma_block() {
+  for i in 0 .. 16 {
+    vram[(vbk << 13) | ((hdma_dst + i) & 0x1FFF)] = peek8((hdma_src + i) & 0xFFFF)
+  }
+  hdma_src = (hdma_src + 16) & 0xFFF0
+  hdma_dst = (hdma_dst + 16) & 0x1FF0
+}
+fn hdma_hblank() {
+  if hdma_on != 0 {
+    hdma_block()
+    stall += 8 * md
+    if hdma_len == 0 {
+      hdma_on = 0
+      hdma_len = 0x7F
+    } else {
+      hdma_len -= 1
+    }
+  }
+}
+fn hdma_read() -> Int {
+  if hdma_on != 0 {
+    return hdma_len
+  }
+  return 0x80 | hdma_len
+}
+fn hdma_write(r: Int, v: Int) {
+  if r == 0x51 {
+    hdma_src = (v << 8) | (hdma_src & 0xF0)
+  } elif r == 0x52 {
+    hdma_src = (hdma_src & 0xFF00) | (v & 0xF0)
+  } elif r == 0x53 {
+    hdma_dst = ((v & 0x1F) << 8) | (hdma_dst & 0xF0)
+  } elif r == 0x54 {
+    hdma_dst = (hdma_dst & 0x1F00) | (v & 0xF0)
+  } else {
+    if hdma_on != 0 and (v & 0x80) == 0 {
+      hdma_on = 0
+      hdma_len = v & 0x7F
+    } elif (v & 0x80) != 0 {
+      hdma_len = v & 0x7F
+      hdma_on = 1
+      if lcd_on() and mode == 0 {
+        hdma_hblank()
+      }
+    } else {
+      var n = (v & 0x7F) + 1
+      while n > 0 {
+        hdma_block()
+        stall += 8 * md
+        n -= 1
+      }
+      hdma_len = 0x7F
+    }
+  }
+}

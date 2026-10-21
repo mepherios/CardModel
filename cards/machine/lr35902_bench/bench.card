@@ -1,0 +1,47 @@
+-- A bench for one LR35902 instruction at a time: 64 KiB of flat RAM and a trace of every M-cycle
+-- (kind 1 read, 2 write, 3 internal), so an instruction card's data (cycles, mcycles) can be checked against
+-- what its semantics do, and the same run compared across engines (reference interpreter, Python, C).
+const TRACE_MAX = 64
+global now: Int = 0
+global halt_calls: Int = 0
+global stop_calls: Int = 0
+global ntrace: Int = 0
+array ram: Byte[0x10000]
+array trace_kind: Int[TRACE_MAX]
+array trace_addr: Int[TRACE_MAX]
+array trace_val: Int[TRACE_MAX]
+
+fn note(kind: Int, a: Int, v: Int) {
+  if ntrace < TRACE_MAX {
+    trace_kind[ntrace] = kind
+    trace_addr[ntrace] = a
+    trace_val[ntrace] = v
+    ntrace += 1
+  }
+  now += 4
+}
+fn rd8(a: Int) -> Int {
+  let v = ram[a & 0xFFFF]
+  note(1, a & 0xFFFF, v)
+  return v
+}
+fn wr8(a: Int, v: Int) {
+  ram[a & 0xFFFF] = v
+  note(2, a & 0xFFFF, v & 0xFF)
+}
+fn idle() {
+  note(3, 0, 0)
+}
+fn halt() {
+  halt_calls += 1
+}
+fn stop() {
+  stop_calls += 1
+}
+fn hang() {
+  locked = 1
+}
+export fn run_one() {
+  ntrace = 0
+  exec_op(fetch8())
+}

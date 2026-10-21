@@ -1,0 +1,10 @@
+{
+  "category": "law",
+  "metadata": {"version": "1.0.0"},
+  "name": "CM32_machines_are_cards",
+  "origins": ["user requirement 2026-10-21 (run the games through the card model only)", "Pheros L41", "rea-cards backends as forms"],
+  "provenance": {"origin": "cardmodel"},
+  "statement": "A CPU is its instruction cards and a machine is its hardware cards: every instruction card's semantics compile to the card IR and run identically in the reference interpreter and every embedded engine; its cycle-level timing (cycles, mcycles) and flag effects are data the bench checks against what the semantics do; a planted wrong instruction is caught; the machine module is all the emulator there is.",
+  "tier": 0,
+  "witness": "tests/test_machine.py::test_instruction_cards_conform_in_every_engine"
+}

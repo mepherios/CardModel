@@ -1,0 +1,46 @@
+-- Interrupts: IE (FFFF) and IF (FF0F), five sources in priority order (bit 0 highest). Dispatch takes five
+-- M-cycles; the vector is chosen after the high byte of PC is pushed, so a push that clears IE cancels the
+-- dispatch and the CPU jumps to 0x0000.
+const IRQ_VBLANK = 0x01
+const IRQ_STAT = 0x02
+const IRQ_TIMER = 0x04
+const IRQ_SERIAL = 0x08
+const IRQ_JOYPAD = 0x10
+global ie_reg: Int = 0
+global if_reg: Int = 0x01
+
+fn request_irq(bit: Int) {
+  if_reg = if_reg | bit
+}
+fn pending_irq() -> Int = ie_reg & if_reg & 0x1F
+fn halt() {
+  if ime == 0 and pending_irq() != 0 {
+    halt_bug = 1
+  } else {
+    halted = 1
+  }
+}
+fn hang() {
+  locked = 1
+}
+fn dispatch_irq() {
+  ime = 0
+  idle()
+  idle()
+  SP = (SP - 1) & 0xFFFF
+  wr8(SP, (PC >> 8) & 0xFF)
+  let p = pending_irq()
+  SP = (SP - 1) & 0xFFFF
+  wr8(SP, PC & 0xFF)
+  if p == 0 {
+    PC = 0
+  } else {
+    var bit = 0
+    while (p & (1 << bit)) == 0 {
+      bit += 1
+    }
+    if_reg = if_reg & (0x1F ^ (1 << bit))
+    PC = 0x40 + bit * 8
+  }
+  idle()
+}

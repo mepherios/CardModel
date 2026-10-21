@@ -1,0 +1,120 @@
+-- The timer: a 16-bit counter advancing one per CPU T-cycle (DIV is its high byte). TIMA counts falling edges of
+-- (counter bit b AND TAC enable), b = 9, 3, 5, 7 for TAC & 3 = 0..3 (4096, 262144, 65536, 16384 Hz). On overflow
+-- TIMA reads 0 for 4 T-cycles, then is reloaded from TMA and the timer interrupt is requested. Writing DIV clears
+-- the counter and writing TAC can itself make a falling edge. The timer catches up lazily: edges are computed,
+-- not stepped.
+global div_counter: Int = 0xABCC
+global tima: Int = 0
+global tma: Int = 0
+global tac: Int = 0
+global timer_last: Int = 0       -- dot time the counter was last brought up to date
+global tima_reload: Int = -1     -- counter value at which a pending overflow reloads TIMA (-1: none)
+
+fn timer_bit() -> Int {
+  let t = tac & 3
+  if t == 0 {
+    return 9
+  }
+  if t == 1 {
+    return 3
+  }
+  if t == 2 {
+    return 5
+  }
+  return 7
+}
+fn timer_signal() -> Int {
+  if (tac & 4) == 0 {
+    return 0
+  }
+  return (div_counter >> timer_bit()) & 1
+}
+fn tima_increment() {
+  tima += 1
+  if tima > 0xFF {
+    tima = 0
+    tima_reload = div_counter + 4
+  }
+}
+fn timer_advance(target: Int) {
+  var going = true
+  while going {
+    if tima_reload >= 0 and tima_reload <= target {
+      div_counter = tima_reload
+      tima = tma
+      tima_reload = -1
+      request_irq(IRQ_TIMER)
+    } elif (tac & 4) == 0 {
+      div_counter = target
+      going = false
+    } else {
+      let edge = ((div_counter >> (timer_bit() + 1)) + 1) << (timer_bit() + 1)
+      if edge > target {
+        div_counter = target
+        going = false
+      } else {
+        div_counter = edge
+        tima_increment()
+      }
+    }
+  }
+}
+fn timer_sync() {
+  if now > timer_last {
+    timer_advance(div_counter + ((now - timer_last) << ds))
+    timer_last = now
+  }
+}
+-- dots until the timer next requests an interrupt (FAR when it cannot)
+fn timer_next() -> Int {
+  var target = -1
+  if tima_reload >= 0 {
+    target = tima_reload
+  } elif (tac & 4) != 0 {
+    let k = 0x100 - tima
+    let s = timer_bit() + 1
+    target = (((div_counter >> s) + k) << s) + 4
+  }
+  if target < 0 {
+    return FAR
+  }
+  let step = 1 << ds
+  return now + ((target - div_counter + step - 1) >> ds)
+}
+fn timer_read(r: Int) -> Int {
+  if r == 0x04 {
+    return (div_counter >> 8) & 0xFF
+  }
+  if r == 0x05 {
+    return tima
+  }
+  if r == 0x06 {
+    return tma
+  }
+  return 0xF8 | tac
+}
+fn timer_write(r: Int, v: Int) {
+  if r == 0x04 {
+    if timer_signal() == 1 {
+      tima_increment()
+    }
+    apu_div_reset()
+    if tima_reload >= 0 {
+      tima_reload = tima_reload - div_counter
+    }
+    div_counter = 0
+  } elif r == 0x05 {
+    if tima_reload >= 0 {
+      tima_reload = -1
+    }
+    tima = v
+  } elif r == 0x06 {
+    tma = v
+  } else {
+    let before = timer_signal()
+    tac = v & 7
+    if before == 1 and timer_signal() == 0 {
+      tima_increment()
+    }
+  }
+}

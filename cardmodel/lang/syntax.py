@@ -31,6 +31,18 @@ logic clauses run to their final ``.``. In logic, a name starting with an
 upper-case letter or ``_`` is a variable and any other name is a symbol;
 ``_`` alone is a fresh anonymous variable.
 
+Machine state (for hardware and CPUs written as cards):
+
+    const LCDC = 0xFF40                          -- a compile-time integer (may read card fields:
+    const DOTS = card.hardware.gb_ppu.dots_per_line      --   card.<registry>.<name>.<field>...)
+    global ly: Int = 0                           -- module state, visible in every function
+    array vram: Byte[0x4000]                     -- Byte (0..255, stores keep the low 8 bits) or Int
+    export fn run_frame() { ... }                -- export: the host may call it / read it
+    fn tick(n: Int) { cyc += n }                 -- no `-> T` and no value returned: a void function
+    vram[a & 0x3FFF] = v                         -- array store (also |= &= ^= <<= >>= += -=)
+    tick(4)                                      -- a call as a statement
+    switch op { case 0x00 { nop() } case 1, 2 { ... } default { ... } }
+
 Honest limits (L1): no user-defined types, strings, lists or closures in
 functions (the IR's int/float/bool subset; see ROADMAP); no operator
 overloading; errors stop at the first syntax error in a declaration.
@@ -41,15 +53,19 @@ from dataclasses import dataclass, field
 
 KEYWORDS = {"module", "use", "fn", "let", "var", "if", "elif", "else", "while", "for", "in", "by", "return",
             "break", "continue", "and", "or", "not", "true", "false", "fact", "rule", "never", "constraint",
-            "query", "theorem", "law", "requires", "test", "card", "then", "match", "with", "theory"}
+            "query", "theorem", "law", "requires", "test", "card", "then", "match", "with", "theory", "switch",
+            "case", "default", "global", "array", "const", "export"}
 EXPR_KEYWORDS = {"if", "then", "else", "match", "with", "and", "or", "not", "true", "false", "in", "by", "let",
                  "var", "return", "while", "for", "elif", "break", "continue", "requires"}
 AGG = ("count", "sum", "min", "max")
 TYPES = {"Int": "int", "int": "int", "Float": "float", "float": "float", "Bool": "bool", "bool": "bool",
          "Nat": "nat", "nat": "nat"}
-OPS = sorted(["==>", "<=>", "//=", "..", "**", "//", "==", "!=", "<=", ">=", "<-", ":-", "->", "+=", "-=", "*=",
-              "%=", "<<", ">>", "&&", "||", "+", "-", "*", "/", "%", "<", ">", "=", "(", ")", "{", "}", "[", "]",
-              ",", ":", ";", ".", "?", "!", "|", "&", "^", "~", "@"], key=len, reverse=True)
+ELEM_TYPES = {"Byte": "u8", "Int": "int"}
+ASSIGN_OPS = ("=", "+=", "-=", "*=", "//=", "%=", "|=", "&=", "^=", "<<=", ">>=")
+OPS = sorted(["==>", "<=>", "//=", "<<=", ">>=", "..", "**", "//", "==", "!=", "<=", ">=", "<-", ":-", "->", "+=",
+              "-=", "*=", "%=", "|=", "&=", "^=", "<<", ">>", "&&", "||", "+", "-", "*", "/", "%", "<", ">", "=",
+              "(", ")", "{", "}", "[", "]", ",", ":", ";", ".", "?", "!", "|", "&", "^", "~", "@"],
+             key=len, reverse=True)
 
 
 class CardSyntaxError(ValueError):
@@ -183,9 +199,10 @@ def lex(text: str, path: str | None = None) -> list[Tok]:
 # -- declarations (surface syntax) ----------------------------------------------------------------
 @dataclass
 class Decl:
-    kind: str                      # module use fn clause query theorem test card theory
+    kind: str                      # module use fn clause query theorem test card theory const global array
     line: int
     data: dict = field(default_factory=dict)
+    path: str | None = None
 
 
 class Parser:
@@ -273,7 +290,9 @@ class Parser:
         decls = []
         self.skip_nl()
         while not self.at("EOF"):
-            decls.append(self.decl())
+            d = self.decl()
+            d.path = self.path
+            decls.append(d)
             self.skip_nl()
         return decls
 
@@ -299,8 +318,57 @@ class Parser:
                     names.append(self.expect_name("a module name"))
                 self.end_of_line()
                 return Decl("use", line, {"names": names})
+            if kw == "export":
+                self.next()
+                d = self.decl()
+                if d.kind not in ("fn", "global", "array"):
+                    self.err("`export` goes before fn, global or array")
+                d.data["export"] = True
+                return d
             if kw == "fn":
                 return self.fn_decl()
+            if kw == "const":
+                self.next()
+                name = self.expect_name("a constant name")
+                self.expect_op("=")
+                e = self.expr(ctx="fn")
+                self.end_of_line()
+                return Decl("const", line, {"name": name, "expr": e})
+            if kw == "global":
+                self.next()
+                name = self.expect_name("a global name")
+                self.expect_op(":")
+                typ = self.type_name()
+                init = ("num", 0) if typ != "bool" else ("bool", False)
+                if self.accept_op("="):
+                    init = self.expr(ctx="fn")
+                self.end_of_line()
+                return Decl("global", line, {"name": name, "type": typ, "init": init})
+            if kw == "array":
+                self.next()
+                name = self.expect_name("an array name")
+                self.expect_op(":")
+                et = self.peek()
+                elem = self.expect_name("an element type (Byte, Int)")
+                if elem not in ELEM_TYPES:
+                    self.err(f"unknown element type {elem!r} (Byte, Int)", et)
+                self.expect_op("[")
+                size = self.expr(ctx="fn")
+                self.expect_op("]")
+                init = None
+                if self.accept_op("="):
+                    self.expect_op("[")
+                    init = []
+                    self.skip_nl()
+                    while not self.at_op("]"):
+                        init.append(self.expr(ctx="fn"))
+                        self.skip_nl()
+                        if not self.accept_op(","):
+                            break
+                        self.skip_nl()
+                    self.expect_op("]")
+                self.end_of_line()
+                return Decl("array", line, {"name": name, "elem": ELEM_TYPES[elem], "size": size, "init": init})
             if kw in ("fact",):
                 self.next()
                 return self.clause(line, label=None, fact_only=True)
@@ -634,9 +702,35 @@ class Parser:
             return ("for", var, start, stop, step, body, line)
         if self.at_kw("return"):
             self.next()
+            if self.at("NL") or self.at_op("}"):
+                self._stmt_end()
+                return ("return", None, line)
             e = self.expr(ctx="fn")
             self._stmt_end()
             return ("return", e, line)
+        if self.at_kw("switch"):
+            self.next()
+            value = self.expr(ctx="fn")
+            self.expect_op("{")
+            cases, default = [], None
+            self.skip_nl()
+            while not self.at_op("}"):
+                ct = self.peek()
+                if self.accept_kw("case"):
+                    vals = [self.expr(ctx="fn")]
+                    while self.accept_op(","):
+                        vals.append(self.expr(ctx="fn"))
+                    cases.append((vals, self.block(), ct.line))
+                elif self.accept_kw("default"):
+                    if default is not None:
+                        self.err("a switch has one default", ct)
+                    default = self.block()
+                else:
+                    self.err(f"expected `case` or `default` in a switch, found {self._show(ct)}", ct)
+                self.skip_nl()
+            self.expect_op("}")
+            self._stmt_end()
+            return ("switch", value, cases, default, line)
         if self.at_kw("break", "continue"):
             k = self.next().value
             self._stmt_end()
@@ -664,8 +758,23 @@ class Parser:
             self._stmt_end()
             return ("passign", names, exprs, line)
         if t.kind == "NAME" and t.value not in KEYWORDS:
+            if self.at_op_k(1, "("):
+                e = self.expr(ctx="fn")
+                if e[0] != "call":
+                    self.err("a statement that starts with a call must be just the call")
+                self._stmt_end()
+                return ("call", e, line)
             name = self.next().value
-            for op in ("=", "+=", "-=", "*=", "//=", "%="):
+            if self.accept_op("["):
+                idx = self.expr(ctx="fn")
+                self.expect_op("]")
+                for op in ASSIGN_OPS:
+                    if self.accept_op(op):
+                        e = self.expr(ctx="fn")
+                        self._stmt_end()
+                        return ("store", name, idx, op, e, line)
+                self.err(f"expected an assignment to {name}[...]")
+            for op in ASSIGN_OPS:
                 if self.accept_op(op):
                     e = self.expr(ctx="fn")
                     self._stmt_end()
@@ -903,6 +1012,11 @@ class Parser:
                 return self.call_args(name, ctx, t)
             if "." in name:
                 return ("ref", name)
+            if ctx == "fn" and self.at_op("["):
+                self.next()
+                idx = self.expr(ctx)
+                self.expect_op("]")
+                return ("index", name, idx)
             return ("name", name)
         self.err(f"expected an expression, found {self._show(t)}", t)
 
@@ -932,4 +1046,5 @@ def parse_body(text: str) -> list:
     return lits
 
 
-__all__ = ["AGG", "CardSyntaxError", "Decl", "KEYWORDS", "Parser", "TYPES", "lex", "parse", "parse_body"]
+__all__ = ["AGG", "ASSIGN_OPS", "CardSyntaxError", "Decl", "ELEM_TYPES", "KEYWORDS", "Parser", "TYPES", "lex",
+           "parse", "parse_body"]

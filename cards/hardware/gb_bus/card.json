@@ -1,0 +1,97 @@
+{
+  "category": "hardware",
+  "logic": [
+    "bus.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_bus",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "regions": [
+    {
+      "end": 16383,
+      "name": "ROM bank 0",
+      "owner": "gb_cartridge",
+      "start": 0
+    },
+    {
+      "end": 32767,
+      "name": "ROM bank N",
+      "owner": "gb_cartridge",
+      "start": 16384
+    },
+    {
+      "end": 40959,
+      "name": "VRAM (CGB: 2 banks)",
+      "owner": "gb_ppu",
+      "start": 32768
+    },
+    {
+      "end": 49151,
+      "name": "external RAM / RTC",
+      "owner": "gb_cartridge",
+      "start": 40960
+    },
+    {
+      "end": 53247,
+      "name": "WRAM bank 0",
+      "owner": "gb_bus",
+      "start": 49152
+    },
+    {
+      "end": 57343,
+      "name": "WRAM bank 1 (CGB: 1-7)",
+      "owner": "gb_bus",
+      "start": 53248
+    },
+    {
+      "end": 65023,
+      "name": "echo of C000-DDFF",
+      "owner": "gb_bus",
+      "start": 57344
+    },
+    {
+      "end": 65183,
+      "name": "OAM (40 objects x 4 bytes)",
+      "owner": "gb_ppu",
+      "start": 65024
+    },
+    {
+      "end": 65279,
+      "name": "unusable (reads 0x00 on the DMG)",
+      "owner": "gb_bus",
+      "start": 65184
+    },
+    {
+      "end": 65407,
+      "name": "I/O registers",
+      "owner": "various",
+      "start": 65280
+    },
+    {
+      "end": 65534,
+      "name": "HRAM",
+      "owner": "gb_bus",
+      "start": 65408
+    },
+    {
+      "end": 65535,
+      "name": "IE",
+      "owner": "gb_interrupts",
+      "start": 65535
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "The Game Boy memory map: 64 KiB address space, every CPU access one M-cycle (4 dots; 2 in CGB double speed). Components are synced lazily: before their registers or memory are touched, and at instruction boundaries once `now` passes `next_event`.",
+  "tier": 1,
+  "timing": {
+    "clock_hz": 4194304,
+    "dots_per_mcycle": 4,
+    "dots_per_mcycle_double_speed": 2
+  }
+}

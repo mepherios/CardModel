@@ -1,0 +1,244 @@
+-- The cartridge: ROM (up to 8 MiB), external RAM (up to 128 KiB) and the memory bank controller that maps them
+-- (none, MBC1, MBC2, MBC3 with its real-time clock, MBC5). The shell reads the header with this card's `types`
+-- table and sets mbc_kind, rom_mask, ram_mask and has_rtc; everything after that is here.
+const MBC_NONE = 0
+const MBC1 = 1
+const MBC2 = 2
+const MBC3 = 3
+const MBC5 = 5
+const DOTS_PER_SECOND = 4194304
+export array rom: Byte[0x800000]
+export array cram: Byte[0x20000]
+export global mbc_kind: Int = 0
+export global rom_mask: Int = 0x7FFF
+export global ram_mask: Int = -1          -- -1: no external RAM
+export global has_rtc: Int = 0
+export global cram_dirty: Int = 0
+global ram_on: Int = 0
+global rom_off0: Int = 0
+global rom_off1: Int = 0x4000
+global ram_off: Int = 0
+global bank_lo: Int = 1
+global bank_hi: Int = 0
+global mbc_mode: Int = 0
+global rtc_sel: Int = 0
+export global rtc_s: Int = 0
+export global rtc_m: Int = 0
+export global rtc_h: Int = 0
+export global rtc_dl: Int = 0
+export global rtc_dh: Int = 0
+export global rtc_ls: Int = 0
+export global rtc_lm: Int = 0
+export global rtc_lh: Int = 0
+export global rtc_ldl: Int = 0
+export global rtc_ldh: Int = 0
+global rtc_last: Int = 0
+global rtc_sub: Int = 0
+global rtc_latch: Int = 1
+
+fn rom_read(a: Int) -> Int {
+  if a < 0x4000 {
+    return rom[(rom_off0 | a) & rom_mask]
+  }
+  return rom[(rom_off1 | (a & 0x3FFF)) & rom_mask]
+}
+fn mbc_map() {
+  if mbc_kind == MBC1 {
+    var lo = bank_lo & 0x1F
+    if lo == 0 {
+      lo = 1
+    }
+    rom_off1 = (((bank_hi & 3) << 5) | lo) << 14
+    if mbc_mode == 1 {
+      rom_off0 = ((bank_hi & 3) << 5) << 14
+      ram_off = (bank_hi & 3) << 13
+    } else {
+      rom_off0 = 0
+      ram_off = 0
+    }
+  } elif mbc_kind == MBC2 {
+    var b = bank_lo & 0x0F
+    if b == 0 {
+      b = 1
+    }
+    rom_off1 = b << 14
+  } elif mbc_kind == MBC3 {
+    var b = bank_lo & 0x7F
+    if b == 0 {
+      b = 1
+    }
+    rom_off1 = b << 14
+    ram_off = (rtc_sel & 7) << 13
+  } elif mbc_kind == MBC5 {
+    rom_off1 = (((bank_hi & 1) << 8) | (bank_lo & 0xFF)) << 14
+    ram_off = (rtc_sel & 0x0F) << 13
+  }
+}
+fn mbc_write(a: Int, v: Int) {
+  if mbc_kind == MBC_NONE {
+    return
+  }
+  if mbc_kind == MBC2 {
+    if a < 0x4000 {
+      if (a & 0x100) == 0 {
+        ram_on = if (v & 0x0F) == 0x0A then 1 else 0
+      } else {
+        bank_lo = v & 0x0F
+      }
+    }
+  } elif a < 0x2000 {
+    ram_on = if (v & 0x0F) == 0x0A then 1 else 0
+  } elif a < 0x4000 {
+    if mbc_kind == MBC5 {
+      if a < 0x3000 {
+        bank_lo = v
+      } else {
+        bank_hi = v & 1
+      }
+    } else {
+      bank_lo = v
+    }
+  } elif a < 0x6000 {
+    if mbc_kind == MBC1 {
+      bank_hi = v & 3
+    } else {
+      rtc_sel = v & 0x0F
+    }
+  } else {
+    if mbc_kind == MBC1 {
+      mbc_mode = v & 1
+    } elif mbc_kind == MBC3 {
+      if rtc_latch == 0 and v == 1 {
+        rtc_sync()
+        rtc_ls = rtc_s
+        rtc_lm = rtc_m
+        rtc_lh = rtc_h
+        rtc_ldl = rtc_dl
+        rtc_ldh = rtc_dh
+      }
+      rtc_latch = v
+    }
+  }
+  mbc_map()
+}
+fn cart_ram_read(a: Int) -> Int {
+  if ram_on == 0 {
+    return 0xFF
+  }
+  if mbc_kind == MBC3 and rtc_sel >= 8 {
+    if has_rtc == 0 {
+      return 0xFF
+    }
+    return rtc_read()
+  }
+  if ram_mask < 0 {
+    return 0xFF
+  }
+  if mbc_kind == MBC2 {
+    return 0xF0 | (cram[a & 0x1FF] & 0x0F)
+  }
+  return cram[(ram_off | (a & 0x1FFF)) & ram_mask]
+}
+fn cart_ram_write(a: Int, v: Int) {
+  if ram_on == 0 {
+    return
+  }
+  if mbc_kind == MBC3 and rtc_sel >= 8 {
+    if has_rtc != 0 {
+      rtc_write(v)
+    }
+    return
+  }
+  if ram_mask < 0 {
+    return
+  }
+  if mbc_kind == MBC2 {
+    cram[a & 0x1FF] = v & 0x0F
+  } else {
+    cram[(ram_off | (a & 0x1FFF)) & ram_mask] = v
+  }
+  cram_dirty = 1
+}
+
+-- MBC3 real-time clock: 32768 Hz crystal, counted here in dots (4194304 per second, independent of CPU speed)
+fn rtc_tick_second() {
+  rtc_s = (rtc_s + 1) & 0x3F
+  if rtc_s == 60 {
+    rtc_s = 0
+    rtc_m = (rtc_m + 1) & 0x3F
+    if rtc_m == 60 {
+      rtc_m = 0
+      rtc_h = (rtc_h + 1) & 0x1F
+      if rtc_h == 24 {
+        rtc_h = 0
+        let d = (((rtc_dh & 1) << 8) | rtc_dl) + 1
+        rtc_dl = d & 0xFF
+        rtc_dh = (rtc_dh & 0xFE) | ((d >> 8) & 1)
+        if d > 0x1FF {
+          rtc_dh = rtc_dh | 0x80
+        }
+      }
+    }
+  }
+}
+fn rtc_sync() {
+  if has_rtc == 0 {
+    rtc_last = now
+    return
+  }
+  if (rtc_dh & 0x40) != 0 {
+    rtc_last = now
+    return
+  }
+  rtc_sub += now - rtc_last
+  rtc_last = now
+  while rtc_sub >= DOTS_PER_SECOND {
+    rtc_sub -= DOTS_PER_SECOND
+    rtc_tick_second()
+  }
+}
+-- the shell adds the wall-clock time that passed while the game was not running
+export fn rtc_add_seconds(n: Int) {
+  if (rtc_dh & 0x40) != 0 {
+    return
+  }
+  var k = n
+  while k > 0 {
+    rtc_tick_second()
+    k -= 1
+  }
+}
+fn rtc_read() -> Int {
+  if rtc_sel == 8 {
+    return rtc_ls
+  }
+  if rtc_sel == 9 {
+    return rtc_lm
+  }
+  if rtc_sel == 10 {
+    return rtc_lh
+  }
+  if rtc_sel == 11 {
+    return rtc_ldl
+  }
+  if rtc_sel == 12 {
+    return rtc_ldh | 0x3E
+  }
+  return 0xFF
+}
+fn rtc_write(v: Int) {
+  rtc_sync()
+  if rtc_sel == 8 {
+    rtc_s = v & 0x3F
+    rtc_sub = 0
+  } elif rtc_sel == 9 {
+    rtc_m = v & 0x3F
+  } elif rtc_sel == 10 {
+    rtc_h = v & 0x1F
+  } elif rtc_sel == 11 {
+    rtc_dl = v
+  } elif rtc_sel == 12 {
+    rtc_dh = v & 0xC1
+  }
+  cram_dirty = 1
+}

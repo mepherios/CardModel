@@ -9,6 +9,21 @@ Statements (key "k"): assign {target, value} · return {value} ·
 if {cond, then, else} · while {cond, body} ·
 for_range {var, start, stop, step(int literal != 0), body} · break · continue.
 
+Machine state (the extension a CPU or a piece of hardware needs; optional, so a
+plain function module is unchanged):
+
+    module["globals"] = [{"name": "A", "type": "int", "init": 1, "export": false}, ...]
+    module["arrays"]  = [{"name": "vram", "elem": "u8" | "int", "size": 16384,
+                          "init": [..optional..], "export": false}, ...]
+
+A name that is not a parameter or a local of the function is a global. More
+statements: store {array, index, value} (a u8 element keeps ``value & 0xFF``) ·
+do {value} (evaluate a call for its effect) · switch {value, cases: [{match:
+[ints], body}], default} (no fall-through; ``break`` may not appear directly in a
+case) · return without value (functions declared ``"returns": "void"``). One
+more expression: ``["LOAD", array, index]`` (an index outside the array is an
+error here and undefined in fixed-size targets, so machine code masks indices).
+
 Expressions are JSON lists ``[op, *args]``. Leaves: ``["var", name]``,
 ``["int", v]``, ``["float", v]``, ``["bool", v]``. Every other head names an
 op card (``cards/op/<name>``): the card's ``eval`` is the reference
@@ -27,8 +42,10 @@ from dataclasses import dataclass, field
 
 LEAVES = ("var", "int", "float", "bool")
 MAX_INT_BITS = 1 << 22          # 4 Mbit (512 KiB) per integer: far beyond any real input, far below a crash
-SPECIAL = ("AND", "OR", "IF_EXPR", "CALL")
+SPECIAL = ("AND", "OR", "IF_EXPR", "CALL", "LOAD")
 TYPES = ("int", "float", "bool")
+ELEMS = ("u8", "int")
+NESTED = ("then", "else", "body", "default")
 
 
 class IRError(Exception):
@@ -92,7 +109,7 @@ _EVAL_NS = {"__builtins__": {"abs": abs, "min": min, "max": max, "pow": pow, "fl
 def walk_expr(e):
     yield e
     if isinstance(e, list) and e and e[0] not in LEAVES:
-        start = 2 if e[0] == "CALL" else 1
+        start = 2 if e[0] in ("CALL", "LOAD") else 1
         for a in e[start:]:
             yield from walk_expr(a)
 
@@ -100,20 +117,36 @@ def walk_expr(e):
 def walk_stmts(body):
     for s in body:
         yield s
-        for key in ("then", "else", "body"):
+        for key in NESTED:
             if key in s:
                 yield from walk_stmts(s[key])
+        for case in s.get("cases") or ():
+            yield from walk_stmts(case["body"])
+
+
+EXPR_KEYS = ("value", "cond", "start", "stop", "step", "index")
 
 
 def ops_used(fn: dict) -> set[str]:
     used: set[str] = set()
     for s in walk_stmts(fn["body"]):
-        for key in ("value", "cond", "start", "stop", "step"):
+        for key in EXPR_KEYS:
             if key in s and isinstance(s[key], list):
                 for e in walk_expr(s[key]):
                     if isinstance(e, list) and e and e[0] not in LEAVES:
                         used.add(e[0])
     return used
+
+
+def new_array(spec: dict):
+    """A fresh array for the reference interpreter: bytearray for u8, list for int."""
+    size = int(spec["size"])
+    init = list(spec.get("init") or [])
+    if spec.get("elem", "u8") == "u8":
+        a = bytearray(size)
+        a[:len(init)] = bytes(v & 0xFF for v in init)
+        return a
+    return init + [0] * (size - len(init))
 
 
 class _Return(Exception):
@@ -138,6 +171,11 @@ class Interpreter:
         self.step_limit = step_limit
         self.steps = 0
         self.max_bits = 0
+        self.globals = {g["name"]: g.get("init", 0) for g in module.get("globals") or []}
+        self.arrays = {a["name"]: new_array(a) for a in module.get("arrays") or []}
+        self.elems = {a["name"]: a.get("elem", "u8") for a in module.get("arrays") or []}
+        self._locals = {n: {p["name"] for p in f["params"]} | set(f.get("locals") or {})
+                        for n, f in self.funcs.items()}
 
     def call(self, name: str, args: list):
         self.steps = 0
@@ -151,11 +189,22 @@ class Interpreter:
         if fn is None:
             raise IRError(f"unknown function {name!r}")
         env = {p["name"]: a for p, a in zip(fn["params"], args)}
+        env["\0locals"] = self._locals[name]
         try:
             self._block(fn["body"], env, depth)
         except _Return as r:
             return r.value
+        if fn.get("returns") == "void":
+            return None
         raise IRError(f"{name}: fell off the end without return")
+
+    def _assign(self, target, v, env):
+        if target in env["\0locals"]:
+            env[target] = v
+        elif target in self.globals:
+            self.globals[target] = v
+        else:
+            raise IRError(f"assignment to {target!r}: neither a local nor a global")
 
     def _tick(self):
         self.steps += 1
@@ -177,9 +226,28 @@ class Interpreter:
             self._tick()
             k = s["k"]
             if k == "assign":
-                env[s["target"]] = self._expr(s["value"], env, depth)
+                self._assign(s["target"], self._expr(s["value"], env, depth), env)
             elif k == "return":
-                raise _Return(self._expr(s["value"], env, depth))
+                raise _Return(self._expr(s["value"], env, depth) if "value" in s else None)
+            elif k == "store":
+                arr = self.arrays.get(s["array"])
+                if arr is None:
+                    raise IRError(f"store to unknown array {s['array']!r}")
+                i = self._expr(s["index"], env, depth)
+                v = self._expr(s["value"], env, depth)
+                if not 0 <= i < len(arr):
+                    raise IRError(f"store {s['array']}[{i}] outside 0..{len(arr) - 1}")
+                arr[i] = v & 0xFF if self.elems[s["array"]] == "u8" else self._note(v)
+            elif k == "do":
+                self._expr(s["value"], env, depth)
+            elif k == "switch":
+                v = self._expr(s["value"], env, depth)
+                for case in s["cases"]:
+                    if v in case["match"]:
+                        self._block(case["body"], env, depth)
+                        break
+                else:
+                    self._block(s.get("default") or [], env, depth)
             elif k == "if":
                 self._block(s["then"] if self._expr(s["cond"], env, depth) else s.get("else", []), env, depth)
             elif k == "while":
@@ -197,7 +265,7 @@ class Interpreter:
                 step = self._expr(s["step"], env, depth)
                 for i in range(start, stop, step):
                     self._tick()
-                    env[s["var"]] = self._note(i)
+                    self._assign(s["var"], self._note(i), env)
                     try:
                         self._block(s["body"], env, depth)
                     except _Break:
@@ -214,9 +282,19 @@ class Interpreter:
     def _expr(self, e, env, depth):
         head = e[0]
         if head == "var":
-            if e[1] not in env:
-                raise IRError(f"variable {e[1]!r} read before assignment")
-            return env[e[1]]
+            if e[1] in env:
+                return env[e[1]]
+            if e[1] in self.globals and e[1] not in env["\0locals"]:
+                return self.globals[e[1]]
+            raise IRError(f"variable {e[1]!r} read before assignment")
+        if head == "LOAD":
+            arr = self.arrays.get(e[1])
+            if arr is None:
+                raise IRError(f"load from unknown array {e[1]!r}")
+            i = self._expr(e[2], env, depth)
+            if not 0 <= i < len(arr):
+                raise IRError(f"load {e[1]}[{i}] outside 0..{len(arr) - 1}")
+            return arr[i]
         if head in ("int", "float", "bool"):
             return e[1]
         if head == "AND":

@@ -16,6 +16,9 @@ Sections (all on by default; ``only`` selects):
   lang          every card-language program (examples/lang, stdlib) runs and passes (CM26)
   theorems      every theorem card is re-witnessed with this seed; a status must match its evidence (CM23)
   game          the design_law cards on the exact equilibrium of the neutral exchange, and the world (CM28, CM29)
+  machine       every ISA's instruction cards: stored IR in sync with their semantics, and per-instruction
+                conformance on the ISA's bench in every engine (reference interpreter, host, native), with their
+                cycle and flag data checked (CM32)
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
 it). ``record=True`` also writes each card's verdict into the card
@@ -35,9 +38,9 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "logic", "lang", "theorems", "game", "forms", "vectors", "rules", "redefinitions",
+SECTIONS = ("kernel", "logic", "lang", "theorems", "game", "machine", "forms", "vectors", "rules", "redefinitions",
             "conformance", "functions", "proofs", "selfcheck", "portability")
-QUICK = ["kernel", "logic", "lang", "theorems", "game", "forms", "vectors", "rules", "redefinitions"]
+QUICK = ["kernel", "logic", "lang", "theorems", "game", "machine", "forms", "vectors", "rules", "redefinitions"]
 
 
 def _kernel(ctx: Ctx) -> dict:
@@ -170,6 +173,31 @@ def _game(ctx: Ctx) -> dict:
             "world_final_facts": len(w["final"])}
 
 
+def _machine(ctx: Ctx, seed: int) -> dict:
+    """Instruction cards: IR in sync with semantics; one-instruction runs agree across engines and with the data."""
+    from ..machine import bench, isa
+    out = {}
+    for card in ctx.store.cards("isa"):
+        if card.get("kind") != "isa":
+            continue
+        sync = isa.in_sync(ctx, card.name)
+        res = {"cards": sync["cards"], "drifted": sync["drifted"][:10]}
+        if ctx.store.get(f"machine/{card.name}_bench") is not None:
+            conf = bench.conformance(ctx, card.name, seed=seed, samples=2)
+            res.update({"engines": conf["engines"], "unavailable": conf["unavailable"], "passed": conf["passed"],
+                        "failed": conf["failed"], "runs": conf["runs"],
+                        "failing": {k: v["problems"][:3] for k, v in conf["per_card"].items()
+                                    if v["status"] != "pass"}})
+            res["status"] = "fail" if sync["drifted"] or conf["status"] == "fail" else conf["status"]
+        else:
+            res["status"] = "fail" if sync["drifted"] else "pass"
+        out[card.name] = res
+    st = [r["status"] for r in out.values()]
+    return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"), "isas": out,
+            "summary": {k: f"{v.get('passed', v['cards'])}/{v['cards']} in {','.join(v.get('engines', []))}"
+                        for k, v in out.items()}}
+
+
 def _redefinitions(ctx: Ctx, seed: int) -> dict:
     out = {c.qualified: redefs.verify(c, seed=seed) for c in ctx.store.cards("redefinition")}
     st = [r["verdict"] for r in out.values()]
@@ -214,6 +242,8 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
             res = _theorems(ctx, seed, max(40, samples))
         elif sec == "game":
             res = _game(ctx)
+        elif sec == "machine":
+            res = _machine(ctx, seed)
         elif sec == "forms":
             res = _forms(ctx, seed, samples)
         elif sec == "vectors":

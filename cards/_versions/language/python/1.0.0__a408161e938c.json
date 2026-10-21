@@ -1,0 +1,138 @@
+{
+  "call_runner": "inprocess",
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value}",
+    "break": "break",
+    "continue": "continue",
+    "declare": "{name} = {value}",
+    "else": "else:",
+    "empty": "pass",
+    "end_if": "",
+    "end_while": "",
+    "func": "def {name}({params}) -> {ret}:\n{body}\n",
+    "harness": {
+      "bench_call": "cm_acc += {truthy}",
+      "bench_main": "def _cm_main():\n    cm_acc = 0\n    for _cm_r in range({reps}):\n{calls}    print(cm_acc)\n\n_cm_main()\n",
+      "main": "def _cm_main():\n{calls}    pass\n\n_cm_main()\n",
+      "print": {
+        "bool": "print('b:' + ('true' if {e} else 'false'))",
+        "float": "print('f:' + repr({e}))",
+        "int": "print('i:' + str({e}))"
+      },
+      "truthy": {
+        "bool": "(1 if ({e}) else 0)",
+        "float": "(1 if ({e}) > 0.0 else 0)",
+        "int": "(1 if ({e}) != 0 else 0)"
+      }
+    },
+    "hoist": false,
+    "if": "if {cond}:",
+    "import": "import @name@\n",
+    "indent": "    ",
+    "lib_prelude": "@imports@",
+    "lit": {
+      "false": "False",
+      "float": "{v}",
+      "int": "{v}",
+      "true": "True"
+    },
+    "native_for_range": "for {var} in range({start}, {stop}, {step}):",
+    "param": "{name}: {type}",
+    "prelude": "@imports@",
+    "return": "return {value}",
+    "style": "indent",
+    "types": {
+      "bool": "bool",
+      "float": "float",
+      "int": "int"
+    },
+    "underscore_ok": true,
+    "while": "while {cond}:",
+    "zero": {
+      "bool": "False",
+      "float": "0.0",
+      "int": "0"
+    }
+  },
+  "comments": {
+    "block": [],
+    "line": [
+      "#"
+    ],
+    "strings": [
+      "\"\"\"",
+      "'''",
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".py"
+  ],
+  "family": "python",
+  "frontend": "cardmodel.engines.frontend_python",
+  "int_bits": null,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python",
+  "probe": {
+    "kind": "executable",
+    "name": "python3",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "False",
+    "None",
+    "True",
+    "and",
+    "as",
+    "assert",
+    "async",
+    "await",
+    "break",
+    "class",
+    "continue",
+    "def",
+    "del",
+    "elif",
+    "else",
+    "except",
+    "finally",
+    "for",
+    "from",
+    "global",
+    "if",
+    "import",
+    "in",
+    "is",
+    "lambda",
+    "nonlocal",
+    "not",
+    "or",
+    "pass",
+    "raise",
+    "return",
+    "try",
+    "while",
+    "with",
+    "yield"
+  ],
+  "runner": {
+    "file": "main.py",
+    "run": [
+      "{exe}",
+      "-B",
+      "{src}"
+    ]
+  },
+  "statement": "Python 3: reference semantics of the IR (int is unbounded, floor division).",
+  "tier": 0
+}

@@ -1,0 +1,157 @@
+-- The Game Boy memory map. Every CPU access is one M-cycle: 4 dots (2 in CGB double speed). A component is
+-- brought up to date ("synced") before its registers or memory are touched, so what the CPU sees is exact at
+-- M-cycle granularity even though components otherwise advance lazily.
+const FAR = 0x1000000000000000
+global now: Int = 0              -- dots (4.194304 MHz) since power-on
+global md: Int = 4               -- dots per M-cycle (2 in CGB double speed)
+global ds: Int = 0               -- CGB double speed
+global next_event: Int = 0       -- earliest dot at which a component may change IF or the frame may end
+global cgb: Int = 0              -- 1: running as a Game Boy Color
+global wram_bank: Int = 1
+array wram: Byte[0x8000]
+array hram: Byte[0x80]
+
+fn rd8(a: Int) -> Int {
+  let v = bus_read(a)
+  now += md
+  return v
+}
+fn wr8(a: Int, v: Int) {
+  bus_write(a, v & 0xFF)
+  now += md
+}
+fn idle() {
+  now += md
+}
+fn wram_index(a: Int) -> Int {
+  if a < 0xD000 {
+    return a - 0xC000
+  }
+  return (wram_bank << 12) + (a - 0xD000)
+}
+fn bus_read(a: Int) -> Int {
+  if dma_active != 0 and a < 0xFF80 {
+    if dma_blocks(a) {
+      return 0xFF
+    }
+  }
+  if a < 0x8000 {
+    return rom_read(a)
+  }
+  if a < 0xA000 {
+    return vram_read(a)
+  }
+  if a < 0xC000 {
+    return cart_ram_read(a)
+  }
+  if a < 0xE000 {
+    return wram[wram_index(a)]
+  }
+  if a < 0xFE00 {
+    return wram[wram_index(a - 0x2000)]
+  }
+  if a < 0xFEA0 {
+    return oam_read(a)
+  }
+  if a < 0xFF00 {
+    return 0
+  }
+  if a < 0xFF80 {
+    return io_read(a)
+  }
+  if a < 0xFFFF {
+    return hram[a - 0xFF80]
+  }
+  return ie_reg
+}
+fn bus_write(a: Int, v: Int) {
+  if dma_active != 0 and a < 0xFF80 {
+    if dma_blocks(a) {
+      return
+    }
+  }
+  if a < 0x8000 {
+    mbc_write(a, v)
+    next_event = now
+  } elif a < 0xA000 {
+    vram_write(a, v)
+  } elif a < 0xC000 {
+    cart_ram_write(a, v)
+  } elif a < 0xE000 {
+    wram[wram_index(a)] = v
+  } elif a < 0xFE00 {
+    wram[wram_index(a - 0x2000)] = v
+  } elif a < 0xFEA0 {
+    oam_write(a, v)
+  } elif a < 0xFF00 {
+    return
+  } elif a < 0xFF80 {
+    io_write(a, v)
+    next_event = now
+  } elif a < 0xFFFF {
+    hram[a - 0xFF80] = v
+  } else {
+    ie_reg = v
+    next_event = now
+  }
+}
+-- what DMA and the debugger read: the bus without side effects or timing
+fn peek8(a: Int) -> Int {
+  if a < 0x8000 {
+    return rom_read(a)
+  }
+  if a < 0xA000 {
+    return vram[vram_index(a)]
+  }
+  if a < 0xC000 {
+    return cart_ram_read(a)
+  }
+  if a < 0xE000 {
+    return wram[wram_index(a)]
+  }
+  return wram[wram_index((a - 0x2000) & 0xFFFF)]
+}
+
+-- I/O registers FF00-FF7F: sync every component, then dispatch to the owner
+fn io_read(a: Int) -> Int {
+  full_sync()
+  let r = a & 0xFF
+  if r == 0x00 {
+    return p1_read()
+  }
+  if r < 0x03 {
+    return serial_read(r)
+  }
+  if r < 0x08 {
+    return timer_read(r)
+  }
+  if r == 0x0F {
+    return 0xE0 | if_reg
+  }
+  if r >= 0x10 and r < 0x40 {
+    return apu_read(r)
+  }
+  if r >= 0x40 and r < 0x4C {
+    return ppu_read(r)
+  }
+  return cgb_read(r)
+}
+fn io_write(a: Int, v: Int) {
+  full_sync()
+  let r = a & 0xFF
+  if r == 0x00 {
+    p1_sel = v & 0x30
+  } elif r < 0x03 {
+    serial_write(r, v)
+  } elif r < 0x08 {
+    timer_write(r, v)
+  } elif r == 0x0F {
+    if_reg = v & 0x1F
+  } elif r >= 0x10 and r < 0x40 {
+    apu_write(r, v)
+  } elif r >= 0x40 and r < 0x4C {
+    ppu_write(r, v)
+  } else {
+    cgb_write(r, v)
+  }
+}

@@ -1,0 +1,268 @@
+-- The Game Boy / Game Boy Color: the LR35902 instruction cards plus the hardware cards, one module. The host
+-- (the effect shell) loads the ROM into `rom`, configures the cartridge from the header, calls power_on, then
+-- run_frame once per frame; it reads `frame` (RGB888), drains `audio`, sets `buttons`, saves `cram`.
+const FRAME_DOTS = 70224
+export global model: Int = 0
+export global frame_deadline: Int = 0
+export global instructions: Int = 0
+-- lifted code (cardmodel/machine/lift.py replaces run_block with a switch over the ROM's lifted blocks)
+export global lifted_on: Int = 0
+export global block_runs: Int = 0
+export global profiling: Int = 0
+global fall_pc: Int = -1
+export array seen: Byte[0x100000]        -- 1 bit per ROM byte: an instruction started there
+export array entries: Byte[0x100000]     -- 1 bit per ROM byte: reached other than by falling through
+
+fn full_sync() {
+  timer_sync()
+  dma_sync()
+  ppu_sync()
+  serial_sync()
+  apu_sync()
+  var t = ppu_irq_next()
+  let tn = timer_next()
+  if tn < t {
+    t = tn
+  }
+  let sn = serial_next()
+  if sn < t {
+    t = sn
+  }
+  if frame_deadline < t {
+    t = frame_deadline
+  }
+  next_event = t
+}
+-- skip whole M-cycles up to dot t (HALT and STOP wait this way)
+fn skip_to(t: Int) {
+  if t > now {
+    let n = (t - now + md - 1) // md
+    now += n * md
+  }
+}
+-- the instruction boundary: sync when an event is due, stalls, STOP, HALT, interrupt dispatch; true when the
+-- CPU should now execute an instruction
+fn boundary() -> Bool {
+  if now >= next_event {
+    full_sync()
+  }
+  if stall > 0 {
+    now += stall
+    stall = 0
+    return false
+  }
+  if stopped != 0 {
+    skip_to(next_event)
+    return false
+  }
+  let pend = pending_irq()
+  if halted != 0 {
+    if pend == 0 {
+      skip_to(next_event)
+      return false
+    }
+    halted = 0
+    idle()
+  }
+  if ime != 0 and pend != 0 {
+    dispatch_irq()
+    fall_pc = -1
+    return false
+  }
+  return true
+}
+fn rom_phys(pc: Int) -> Int {
+  if pc < 0x4000 {
+    return (rom_off0 | pc) & rom_mask
+  }
+  return (rom_off1 | (pc & 0x3FFF)) & rom_mask
+}
+-- a block key: the ROM byte offset and which half of the address space it runs in
+fn block_key(pc: Int) -> Int = (rom_phys(pc) << 1) | (pc >> 14)
+fn run_block(key: Int) -> Int {
+  return 0
+}
+fn profile_mark() {
+  let phys = rom_phys(PC)
+  seen[phys >> 3] = seen[phys >> 3] | (1 << (phys & 7))
+  if PC != fall_pc {
+    entries[phys >> 3] = entries[phys >> 3] | (1 << (phys & 7))
+  }
+}
+fn interp_one() {
+  if profiling != 0 and PC < 0x8000 {
+    profile_mark()
+  }
+  exec_op(fetch8())
+  instructions += 1
+  fall_pc = PC
+  if ime_delay != 0 {
+    ime_delay -= 1
+    if ime_delay == 0 {
+      ime = 1
+    }
+  }
+}
+export fn step() {
+  if not boundary() {
+    return
+  }
+  if lifted_on != 0 and PC < 0x8000 and halt_bug == 0 and ime_delay == 0 {
+    if run_block(block_key(PC)) != 0 {
+      block_runs += 1
+      fall_pc = -1
+      return
+    }
+  }
+  interp_one()
+}
+-- run until the PPU enters V-blank (or one frame of time when the LCD is off); returns the dots that passed
+export fn run_frame() -> Int {
+  let start = now
+  frame_done = 0
+  frame_deadline = start + FRAME_DOTS + DOTS_PER_LINE
+  next_event = now
+  while frame_done == 0 and now < frame_deadline and locked == 0 {
+    step()
+  }
+  full_sync()
+  return now - start
+}
+export fn run_dots(n: Int) {
+  frame_deadline = now + n
+  next_event = now
+  while now < frame_deadline and locked == 0 {
+    step()
+  }
+  full_sync()
+}
+fn clear_memory() {
+  for i in 0 .. 0x8000 {
+    wram[i] = 0
+  }
+  for i in 0 .. 0x4000 {
+    vram[i] = 0
+  }
+  for i in 0 .. 0xA0 {
+    oam[i] = 0
+  }
+  for i in 0 .. 0x80 {
+    hram[i] = 0
+  }
+  for i in 0 .. 0x30 {
+    nr[i] = 0
+  }
+}
+-- the state after the boot ROM (which is not used: it is not ours to ship)
+export fn power_on(want_cgb: Int) {
+  cgb = want_cgb
+  model = want_cgb
+  if cgb != 0 {
+    A = 0x11
+    F = 0x80
+    B = 0x00
+    C = 0x00
+    D = 0xFF
+    E = 0x56
+    H = 0x00
+    L = 0x0D
+  } else {
+    A = 0x01
+    F = 0xB0
+    B = 0x00
+    C = 0x13
+    D = 0x00
+    E = 0xD8
+    H = 0x01
+    L = 0x4D
+  }
+  SP = 0xFFFE
+  PC = 0x0100
+  ime = 0
+  ime_delay = 0
+  halted = 0
+  halt_bug = 0
+  locked = 0
+  now = 0
+  md = 4
+  ds = 0
+  ie_reg = 0
+  if_reg = 0x01
+  div_counter = if cgb != 0 then 0x1EA0 else 0xABCC
+  timer_last = 0
+  tima = 0
+  tma = 0
+  tac = 0
+  tima_reload = -1
+  lcdc = 0x91
+  stat_sel = 0
+  ly = 0
+  lyc = 0
+  scy = 0
+  scx = 0
+  wy = 0
+  wx = 0
+  bgp = 0xFC
+  obp0 = 0xFF
+  obp1 = 0xFF
+  mode = 2
+  line_start = 0
+  ppu_next = MODE2_DOTS
+  win_line = 0
+  stat_line = 0
+  vbk = 0
+  wram_bank = 1
+  svbk = 0
+  key1 = 0
+  p1_sel = 0x30
+  sb = 0
+  sc = 0x7E
+  serial_end = -1
+  dma_active = 0
+  dma_reg = 0xFF
+  hdma_on = 0
+  hdma_len = 0x7F
+  stall = 0
+  stopped = 0
+  apu_last = 0
+  fs_next = FS_DOTS - (div_counter & (FS_DOTS - 1))
+  fs_step = 0
+  apu_on = 1
+  clear_memory()
+  nr[0x10 - 0x10] = 0x80
+  nr[0x11 - 0x10] = 0xBF
+  nr[0x12 - 0x10] = 0xF3
+  nr[0x14 - 0x10] = 0xBF
+  nr[0x16 - 0x10] = 0x3F
+  nr[0x19 - 0x10] = 0xBF
+  nr[0x1A - 0x10] = 0x7F
+  nr[0x1B - 0x10] = 0xFF
+  nr[0x1C - 0x10] = 0x9F
+  nr[0x1E - 0x10] = 0xBF
+  nr[0x20 - 0x10] = 0xFF
+  nr[0x23 - 0x10] = 0xBF
+  nr[0x24 - 0x10] = 0x77
+  nr[0x25 - 0x10] = 0xF3
+  c1_on = 1
+  ram_on = 0
+  bank_lo = 1
+  bank_hi = 0
+  mbc_mode = 0
+  rtc_sel = 0
+  rtc_last = 0
+  mbc_map()
+  frame_done = 0
+  frames = 0
+  instructions = 0
+  serial_n = 0
+  audio_n = 0
+  for i in 0 .. 69120 {
+    frame[i] = 0xFF
+  }
+  if cgb != 0 {
+    for i in 0 .. 64 {
+      bgpal[i] = 0xFF
+    }
+  }
+  next_event = 0
+}

@@ -1,0 +1,58 @@
+{
+  "category": "hardware",
+  "logic": [
+    "dma.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_dma",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "w",
+      "address": 65361,
+      "name": "HDMA1",
+      "read_or": 255
+    },
+    {
+      "access": "w",
+      "address": 65362,
+      "name": "HDMA2",
+      "read_or": 255
+    },
+    {
+      "access": "w",
+      "address": 65363,
+      "name": "HDMA3",
+      "read_or": 255
+    },
+    {
+      "access": "w",
+      "address": 65364,
+      "name": "HDMA4",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65365,
+      "name": "HDMA5",
+      "post_boot_cgb": 255,
+      "read_or": 0
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "OAM DMA (FF46): 160 bytes, one per M-cycle after one M-cycle of startup, OAM blocked meanwhile. CGB HDMA (FF51-FF55): general-purpose (all at once, 8 M-cycles of CPU stall per 16 bytes) or one 16-byte block per H-blank.",
+  "tier": 1,
+  "timing": {
+    "hdma_block_bytes": 16,
+    "hdma_stall_mcycles_per_block": 8,
+    "oam_dma_bytes": 160,
+    "oam_dma_mcycles_per_byte": 1,
+    "oam_dma_startup_mcycles": 1
+  }
+}
