@@ -3,9 +3,19 @@
 -- 64 Hz), mixed by NR51 (panning) and NR50 (master volume). Samples (signed 16-bit stereo, little endian) go to
 -- `audio` at `sample_rate` Hz; the shell drains it. sample_rate = 0 keeps every register-visible behaviour
 -- (status bits, lengths, envelopes) and skips waveform synthesis.
+--
+-- The quirks Blargg's dmg_sound / cgb_sound check (as gbdev's "obscure behaviour" and SameBoy describe them):
+-- enabling a length counter while the frame sequencer's next step does not clock length clocks it once, and a
+-- trigger then loads one less than the maximum; leaving sweep negate mode after a negate calculation disables
+-- channel 1; power-off clears every register and the channels' internal state (lengths too on the CGB); the
+-- wave channel's first fetch after a trigger comes 6 dots late, and while it plays, wave RAM is the byte it is
+-- playing (on the DMG only in the very dot it fetches it: otherwise reads give 0xFF and writes are lost, and a
+-- trigger in that dot rewrites the first bytes of wave RAM).
 const FS_DOTS = 8192
 const CPU_HZ = 4194304
 const AUDIO_BYTES = 16384
+const WAVE_TICK = 2                -- the wave channel counts in 2 MHz ticks
+const WAVE_TRIGGER_DELAY = 6       -- 3 ticks more before the first fetch after a trigger
 export global sample_rate: Int = 48000
 export global audio_n: Int = 0
 export array audio: Byte[AUDIO_BYTES]
@@ -32,6 +42,7 @@ global c1_freq: Int = 0
 global sw_on: Int = 0
 global sw_timer: Int = 0
 global sw_shadow: Int = 0
+global sw_negated: Int = 0        -- a sweep calculation in negate mode happened since the trigger
 global c2_on: Int = 0
 global c2_len: Int = 0
 global c2_timer: Int = 0
@@ -43,6 +54,7 @@ global c3_len: Int = 0
 global c3_timer: Int = 0
 global c3_pos: Int = 0
 global c3_sample: Int = 0
+global c3_fetched: Int = -1       -- the dot of the wave channel's latest fetch from wave RAM
 global c4_on: Int = 0
 global c4_len: Int = 0
 global c4_timer: Int = 0
@@ -68,10 +80,22 @@ fn apu_read(r: Int) -> Int {
     return 0x70 | (apu_on << 7) | c1_on | (c2_on << 1) | (c3_on << 2) | (c4_on << 3)
   }
   if r >= 0x30 {
-    return nr[r - 0x10]
+    if not wave_open() {
+      return 0xFF
+    }
+    return nr[wave_index(r)]
   }
   return nr[r - 0x10] | nr_or[r - 0x10]
 }
+-- the wave RAM byte an access to r reaches: while the channel plays, the one it plays (wave_open says whether
+-- the access gets through at all)
+fn wave_index(r: Int) -> Int {
+  if c3_on == 0 {
+    return r - 0x10
+  }
+  return 0x20 + (c3_pos >> 1)
+}
+fn wave_open() -> Bool = c3_on == 0 or cgb != 0 or c3_fetched == now
 fn apu_power_off() {
   for i in 0 .. 0x16 {
     nr[i] = 0
@@ -81,11 +105,24 @@ fn apu_power_off() {
   c3_on = 0
   c4_on = 0
   sw_on = 0
+  c1_freq = 0
+  c1_pos = 0
+  c2_pos = 0
+  c3_pos = 0
+  c3_sample = 0
+  if cgb != 0 {
+    c1_len = 0
+    c2_len = 0
+    c3_len = 0
+    c4_len = 0
+  }
 }
 fn apu_write(r: Int, v: Int) {
   apu_sync()
   if r >= 0x30 {
-    nr[r - 0x10] = v
+    if wave_open() {
+      nr[wave_index(r)] = v
+    }
     return
   }
   if r == 0x26 {
@@ -105,10 +142,18 @@ fn apu_write(r: Int, v: Int) {
     }
     return
   }
+  let old = nr[r - 0x10]
   nr[r - 0x10] = v
   if r == 0x11 or r == 0x16 or r == 0x1B or r == 0x20 {
     length_load(r, v)
-  } elif r == 0x12 {
+  } elif r == 0x14 or r == 0x19 or r == 0x1E or r == 0x23 {
+    length_enable(r, old, v)
+  } elif r == 0x10 {
+    if (old & 8) != 0 and (v & 8) == 0 and sw_negated != 0 {
+      c1_on = 0
+    }
+  }
+  if r == 0x12 {
     if not dac1() {
       c1_on = 0
     }
@@ -145,6 +190,38 @@ fn apu_write(r: Int, v: Int) {
     }
   }
 }
+-- the frame sequencer's next step does not clock length (the first half of a length period)
+fn length_half() -> Bool = (fs_step & 1) == 1
+-- NRx4 written: enabling length in the first half of a period clocks it once (a channel it empties stops,
+-- unless this write also triggers it)
+fn length_enable(r: Int, old: Int, v: Int) {
+  if not length_half() or (old & 0x40) != 0 or (v & 0x40) == 0 {
+    return
+  }
+  if r == 0x14 and c1_len > 0 {
+    c1_len -= 1
+    if c1_len == 0 and (v & 0x80) == 0 {
+      c1_on = 0
+    }
+  } elif r == 0x19 and c2_len > 0 {
+    c2_len -= 1
+    if c2_len == 0 and (v & 0x80) == 0 {
+      c2_on = 0
+    }
+  } elif r == 0x1E and c3_len > 0 {
+    c3_len -= 1
+    if c3_len == 0 and (v & 0x80) == 0 {
+      c3_on = 0
+    }
+  } elif r == 0x23 and c4_len > 0 {
+    c4_len -= 1
+    if c4_len == 0 and (v & 0x80) == 0 {
+      c4_on = 0
+    }
+  }
+}
+-- the length a trigger loads into an empty counter
+fn length_full(r: Int, full: Int) -> Int = if (reg(r) & 0x40) != 0 and length_half() then full - 1 else full
 fn length_load(r: Int, v: Int) {
   if r == 0x11 {
     c1_len = 64 - (v & 0x3F)
@@ -161,6 +238,7 @@ fn sweep_calc() -> Int {
   var f = sw_shadow + d
   if (reg(0x10) & 8) != 0 {
     f = sw_shadow - d
+    sw_negated = 1
   }
   if f > 2047 {
     c1_on = 0
@@ -170,8 +248,9 @@ fn sweep_calc() -> Int {
 fn trigger1() {
   c1_on = if dac1() then 1 else 0
   if c1_len == 0 {
-    c1_len = 64
+    c1_len = length_full(0x14, 64)
   }
+  sw_negated = 0
   c1_timer = c1_period()
   c1_vol = reg(0x12) >> 4
   c1_env = reg(0x12) & 7
@@ -188,24 +267,36 @@ fn trigger1() {
 fn trigger2() {
   c2_on = if dac2() then 1 else 0
   if c2_len == 0 {
-    c2_len = 64
+    c2_len = length_full(0x19, 64)
   }
   c2_timer = c2_period()
   c2_vol = reg(0x17) >> 4
   c2_env = reg(0x17) & 7
 }
 fn trigger3() {
+  -- DMG: retriggered in the dot before a fetch, the byte about to be read (or its aligned group of four)
+  -- overwrites the start of wave RAM
+  if cgb == 0 and c3_on != 0 and c3_timer == WAVE_TICK {
+    let b = ((c3_pos + 1) >> 1) & 0x0F
+    if b < 4 {
+      nr[0x20] = nr[0x20 + b]
+    } else {
+      for k in 0 .. 4 {
+        nr[0x20 + k] = nr[0x20 + (b & 0x0C) + k]
+      }
+    }
+  }
   c3_on = if dac3() then 1 else 0
   if c3_len == 0 {
-    c3_len = 256
+    c3_len = length_full(0x1E, 256)
   }
-  c3_timer = c3_period()
+  c3_timer = c3_period() + WAVE_TRIGGER_DELAY
   c3_pos = 0
 }
 fn trigger4() {
   c4_on = if dac4() then 1 else 0
   if c4_len == 0 {
-    c4_len = 64
+    c4_len = length_full(0x23, 64)
   }
   c4_timer = c4_period()
   c4_vol = reg(0x21) >> 4
@@ -299,31 +390,40 @@ fn envelope(r: Int, vol: Int, which: Int) -> Int {
   }
   return vol
 }
-fn advance_channels(d: Int) {
+-- the channels' timers over the d dots that end at dot t: the squares and the wave channel in closed form (the
+-- wave position is register-visible), the noise LFSR step by step and only while samples are made
+fn advance_channels(d: Int, t: Int) {
   if c1_on != 0 {
     c1_timer -= d
-    while c1_timer <= 0 {
-      c1_timer += c1_period()
-      c1_pos = (c1_pos + 1) & 7
+    if c1_timer <= 0 {
+      let p1 = c1_period()
+      let n1 = (p1 - c1_timer) // p1
+      c1_timer += n1 * p1
+      c1_pos = (c1_pos + n1) & 7
     }
   }
   if c2_on != 0 {
     c2_timer -= d
-    while c2_timer <= 0 {
-      c2_timer += c2_period()
-      c2_pos = (c2_pos + 1) & 7
+    if c2_timer <= 0 {
+      let p2 = c2_period()
+      let n2 = (p2 - c2_timer) // p2
+      c2_timer += n2 * p2
+      c2_pos = (c2_pos + n2) & 7
     }
   }
   if c3_on != 0 {
     c3_timer -= d
-    while c3_timer <= 0 {
-      c3_timer += c3_period()
-      c3_pos = (c3_pos + 1) & 31
+    if c3_timer <= 0 {
+      let p3 = c3_period()
+      let n3 = (p3 - c3_timer) // p3
+      c3_timer += n3 * p3
+      c3_pos = (c3_pos + n3) & 31
+      c3_fetched = t + c3_timer - p3
       let b = nr[0x20 + (c3_pos >> 1)]
       c3_sample = if (c3_pos & 1) == 0 then b >> 4 else b & 0x0F
     }
   }
-  if c4_on != 0 {
+  if c4_on != 0 and sample_rate > 0 {
     c4_timer -= d
     while c4_timer <= 0 {
       c4_timer += c4_period()
@@ -429,8 +529,8 @@ fn apu_sync() {
       }
     }
     let d = t - apu_last
+    advance_channels(d, t)
     if sample_rate > 0 {
-      advance_channels(d)
       smp_acc += d * sample_rate
     }
     apu_last = t

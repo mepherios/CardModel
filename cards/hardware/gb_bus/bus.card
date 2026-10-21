@@ -122,6 +122,9 @@ fn io_read(a: Int) -> Int {
   if r < 0x03 {
     return serial_read(r)
   }
+  if r == 0x03 {
+    return 0xFF
+  }
   if r < 0x08 {
     return timer_read(r)
   }
@@ -143,7 +146,7 @@ fn io_write(a: Int, v: Int) {
     p1_sel = v & 0x30
   } elif r < 0x03 {
     serial_write(r, v)
-  } elif r < 0x08 {
+  } elif r > 0x03 and r < 0x08 {
     timer_write(r, v)
   } elif r == 0x0F {
     if_reg = v & 0x1F

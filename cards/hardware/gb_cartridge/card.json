@@ -55,6 +55,9 @@
     "origin": "cardmodel",
     "read_for": "this card's data and logic, written here"
   },
+  "mbc1_multicart": {"rom_bytes": 1048576, "logo": [260, 308], "second_logo_at": 262404, "wiring": "bank2 drives ROM bits 4-5 and the low register uses 4 bits (bank 0 -> 1 still looks at 5)", "note": "MBC1M boards (collections) are not marked in the header: the Nintendo logo repeated at bank 0x10's header gives them away"},
+  "ram_unsized_bytes": 8192,
+  "ram_unsized_note": "a cartridge type with RAM whose RAM-size byte says none (Blargg's test cartridges) has the smallest RAM chip",
   "ram_size_bytes": {
     "0": 0,
     "1": 2048,

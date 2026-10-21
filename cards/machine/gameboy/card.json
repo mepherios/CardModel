@@ -6,6 +6,8 @@
   "logic": ["gameboy.card"],
   "export_state": true,
   "models": {"dmg": 0, "cgb": 1},
+  "revisions": {"dmg": "dmgABC", "cgb": "cgbABCDE"},
+  "revisions_note": "the hardware revisions the two models stand for, named as the test suites name them; a DMG cartridge on the CGB model runs in CGB mode (no DMG-compatibility mode)",
   "clock_hz": 4194304,
   "frame_dots": 70224,
   "frame_hz": 59.7275,

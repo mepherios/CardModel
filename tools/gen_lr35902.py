@@ -221,8 +221,10 @@ if {CC_FN[cc]} {{
                                   "cycles and mcycles include this prefix byte's fetch", prefix_of="cb")
         if y == 6:
             return card(op, "DI", "misc", "ime = 0\nime_delay = 0", F)
-        return card(op, "EI", "misc", "ime_delay = 2", F,
-                    statement="EI: IME turns on after the next instruction (EI; DI never lets an interrupt in)")
+        return card(op, "EI", "misc", "if ime == 0 and ime_delay == 0 {\n  ime_delay = 2\n}", F,
+                    statement="EI: IME turns on after the next instruction; an EI while that is pending (or IME is "
+                              "on) changes nothing, so a run of EIs lets an interrupt in after the second (EI; DI "
+                              "never does)")
     if z == 4:
         cc = CC[y]
         return card(op, f"CALL {cc},nn", "call", f"""

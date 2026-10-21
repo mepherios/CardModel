@@ -13,6 +13,7 @@ export global mbc_kind: Int = 0
 export global rom_mask: Int = 0x7FFF
 export global ram_mask: Int = -1          -- -1: no external RAM
 export global has_rtc: Int = 0
+export global mbc1m: Int = 0              -- an MBC1 wired as a multicart (MBC1M)
 export global cram_dirty: Int = 0
 global ram_on: Int = 0
 global rom_off0: Int = 0
@@ -44,13 +45,17 @@ fn rom_read(a: Int) -> Int {
 }
 fn mbc_map() {
   if mbc_kind == MBC1 {
+    let shift = if mbc1m != 0 then 4 else 5
     var lo = bank_lo & 0x1F
     if lo == 0 {
       lo = 1
     }
-    rom_off1 = (((bank_hi & 3) << 5) | lo) << 14
+    if mbc1m != 0 {
+      lo = lo & 0x0F
+    }
+    rom_off1 = (((bank_hi & 3) << shift) | lo) << 14
     if mbc_mode == 1 {
-      rom_off0 = ((bank_hi & 3) << 5) << 14
+      rom_off0 = ((bank_hi & 3) << shift) << 14
       ram_off = (bank_hi & 3) << 13
     } else {
       rom_off0 = 0

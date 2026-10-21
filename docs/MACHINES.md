@@ -25,6 +25,10 @@ the ROM survey, differential runs, DS coverage) are in `COVERAGE.md` and come fr
 ```
 
 ```bash
+./bin/cardmodel machine testroms ~/Downloads/gb-test-suites   # Blargg, mooneye, acid2: their own verdicts
+```
+
+```bash
 ./bin/cardmodel machine nds "Pokemon Diamond.nds" --frames 300   # the DS prototype and its coverage
 ```
 
@@ -82,9 +86,12 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   controller is modelled. "Runs" is evidence of booting, not of correctness.
 * **Differential runs** (`machine/diff.py`): lifted engine vs interpreter on the same input, state hash (registers,
   time, frame, WRAM, HRAM) compared after every frame (CM33).
-* **Test ROMs** (`machine/testroms.py`): Blargg's suites report over serial and at 0xA000; mooneye leaves
-  3 5 8 13 21 34 in B..L. The suites are freely licensed but not on this machine; downloading them needs the
-  user's go-ahead.
+* **Test ROMs** (`machine/testroms.py`): the freely licensed suites, read where they are (the user downloaded
+  them outside the repository). Blargg's report over serial and at 0xA000; mooneye leaves 3 5 8 13 21 34 in
+  B..L; dmg-acid2 and cgb-acid2 must draw their reference image pixel for pixel (DMG shades mapped through the
+  PPU card's shade table). Each test runs on the model whose hardware revision its name gives (mooneye's
+  `-dmgABC`, `-GS`, `-C`... against the machine card's `revisions`); a test for other hardware, or one that is
+  not self-checking, is reported as skipped and not counted.
 
 ## 3. The Game Boy machine
 
@@ -101,6 +108,15 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   output capacitor).
 * **Boot**: no boot ROM (it is not ours to ship); the documented post-boot state, DMG or CGB per the header; the
   CGB hands over in V-blank (games touch VRAM at once), the DMG at the start of line 0.
+* **What the test suites pinned down** (each a card, each witnessed by the tests named in it): OAM DMA blocks
+  OAM from its first transfer through the M-cycle of the last, and a restart keeps it blocked; a run of EIs
+  enables IME after the second; a running CPU takes a PPU interrupt raised exactly at an instruction boundary at
+  the next one; the CPU sees PPU mode changes a dot late (STAT, VRAM and OAM access), writes land later in their
+  M-cycle than reads, the first line after LCD enable is 4 dots short and starts in mode 0; line 144 also raises
+  the mode 2 STAT source; LY=LYC is held while the LCD is off; objects lengthen mode 3 by Pan Docs' rule; a TIMA
+  write in the reload M-cycle is lost and a TMA write there is what TIMA gets; the serial clock is a bit of the
+  system counter; the APU's length, sweep, power-off and wave-RAM quirks; MBC1 multicarts; P1 reads 0xCF after
+  boot.
 
 ## 4. Lifting ROM code (REA-style, kept internal)
 
@@ -160,9 +176,12 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 
 ## 8. Honest limits
 
-* PPU: a scanline renderer (mid-mode-3 changes apply to the whole line); the LY=153 quirk, the blank first frame
-  after LCD enable and exact mode-3 lengths are not modelled.
-* APU: point sampled; some edge cases (length-enable extra clock, wave RAM access window) are not modelled.
+* PPU: a scanline renderer (mid-mode-3 changes apply to the whole line); the window's exact mode-3 cost, the
+  LY=153 quirk and the blank first frame after LCD enable are not modelled.
+* APU: point sampled (no band limiting); the noise channel's LFSR only steps while samples are made.
+* The DMG's OAM corruption bug (16-bit increments of an address in FE00-FEFF during mode 2) is not modelled:
+  Blargg's oam_bug tests are the open ones.
+* A DMG cartridge on the CGB runs in CGB mode (no DMG-compatibility mode), so tests for that case are skipped.
 * No MMM01, MBC6, MBC7, HuC1/HuC3, TAMA5, camera, or unlicensed multicart mappers.
 * DMG games on a CGB run as DMG (no boot ROM colourisation).
 * Lifting: code in RAM, code right after EI and the HALT/STOP/illegal opcodes always run in the interpreter.

@@ -51,10 +51,17 @@ def header(rom: bytes, store) -> dict:
         ram_size = 512
     if not info.get("ram") and info.get("mbc") != "mbc2":
         ram_size = 0
+    elif info.get("ram") and not ram_size:
+        ram_size = int(card.get("ram_unsized_bytes") or 0)
+    multi = card.get("mbc1_multicart") or {}
+    lo, hi = multi.get("logo") or (0, 0)
+    at = int(multi.get("second_logo_at") or 0)
+    mbc1m = (info.get("mbc") == "mbc1" and len(rom) == multi.get("rom_bytes") and hi > lo
+             and rom[at:at + hi - lo] == rom[lo:hi])
     chk = 0
     for b in rom[0x134:0x14D]:
         chk = (chk - b - 1) & 0xFF
-    return {"title": title, "type": t, "mbc": info.get("mbc"), "supported": not info.get("unsupported"),
+    return {"title": title, "type": t, "mbc": info.get("mbc"), "mbc1m": mbc1m, "supported": not info.get("unsupported"),
             "battery": bool(info.get("battery")), "rtc": bool(info.get("rtc")), "rumble": bool(info.get("rumble")),
             "cgb_flag": rom[0x143], "cgb": rom[0x143] in (0x80, 0xC0), "cgb_only": rom[0x143] == 0xC0,
             "sgb": rom[0x146] == 0x03, "rom_size": 32768 << rom[0x148] if rom[0x148] < 9 else len(rom),
@@ -104,6 +111,7 @@ class GameBoy:
         m.set("mbc_kind", info["mbc_kind"])
         m.set("ram_mask", (info["ram_size"] - 1) if info["ram_size"] else -1)
         m.set("has_rtc", 1 if info["rtc"] else 0)
+        m.set("mbc1m", 1 if info["mbc1m"] else 0)
         m.set("sample_rate", self.sample_rate)
         m.write("cram", bytes(0x20000))
         m.call("power_on", self.cgb)
@@ -190,6 +198,68 @@ def png(rgb: bytes, width: int = 160, height: int = 144, scale: int = 1) -> byte
 
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width * scale, height * scale, 8, 2, 0, 0, 0))
             + chunk(b"IDAT", zlib.compress(raw, 6)) + chunk(b"IEND", b""))
+
+
+def png_read(data: bytes) -> tuple[int, int, bytes]:
+    """(width, height, RGB888) of a non-interlaced PNG: greyscale, RGB, palette, with or without alpha, 1-8 bits per
+    sample (stdlib zlib). Reference screenshots of test ROMs come in these forms."""
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("not a PNG file")
+    pos, idat, plte, hdr = 8, [], b"", None
+    while pos + 8 <= len(data):
+        n, tag = struct.unpack(">I4s", data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + n]
+        pos += 12 + n
+        if tag == b"IHDR":
+            hdr = struct.unpack(">IIBBBBB", body)
+        elif tag == b"PLTE":
+            plte = body
+        elif tag == b"IDAT":
+            idat.append(body)
+        elif tag == b"IEND":
+            break
+    if hdr is None:
+        raise ValueError("PNG without IHDR")
+    w, h, depth, ctype, _, _, interlace = hdr
+    if interlace or depth > 8 or ctype not in (0, 2, 3, 4, 6):
+        raise ValueError("interlaced or 16-bit PNGs are not read")
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ctype]
+    bpp = max(1, channels * depth // 8)
+    stride = (w * channels * depth + 7) // 8
+    raw = zlib.decompress(b"".join(idat))
+    out, prev = bytearray(), bytearray(stride)
+    top = (1 << depth) - 1
+    for y in range(h):
+        base = y * (stride + 1)
+        f, line = raw[base], bytearray(raw[base + 1:base + 1 + stride])
+        for i in range(stride):
+            a = line[i - bpp] if i >= bpp else 0
+            b = prev[i]
+            c = prev[i - bpp] if i >= bpp else 0
+            if f == 1:
+                line[i] = (line[i] + a) & 0xFF
+            elif f == 2:
+                line[i] = (line[i] + b) & 0xFF
+            elif f == 3:
+                line[i] = (line[i] + (a + b) // 2) & 0xFF
+            elif f == 4:
+                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
+                line[i] = (line[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 0xFF
+        prev = line
+        if depth == 8:
+            samples = line
+        else:
+            samples = [(line[k * depth // 8] >> (8 - depth - (k * depth) % 8)) & top for k in range(w * channels)]
+        for x in range(w):
+            v = samples[x * channels]
+            if ctype == 3:
+                out += plte[v * 3:v * 3 + 3]
+            elif ctype in (0, 4):
+                g = v * 255 // top
+                out += bytes((g, g, g))
+            else:
+                out += bytes(samples[x * channels:x * channels + 3])
+    return w, h, bytes(out)
 
 
 def wav(pcm: bytes, rate: int) -> bytes:

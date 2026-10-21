@@ -170,6 +170,19 @@ class GameBoy(unittest.TestCase):
         self.assertLess(g.m.get("PC"), 0x8000)
         self.assertIn(g.m.read("hram", 0, 1)[0], (5, 6, 7), "one V-blank handler run per frame")
 
+    def test_a_run_of_eis_lets_the_interrupt_in_after_the_second(self):
+        """EI only schedules IME; a second EI does not push it back (mooneye ei_sequence): with an interrupt
+        pending, the handler's return address is the third EI's."""
+        prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 0x08), ("LDH (n),A", 0xFF), ("LDH (n),A", 0x0F)] + \
+               [("EI",)] * 5 + [("label", "end"), ("HALT",), ("JR e", "end")]
+        third_ei = 0x150 + 3 + 2 + 2 + 2 + 2
+        handler = asm.assemble(self.ctx.store, [("POP BC",), ("LD A,B",), ("LDH (n),A", 0x80), ("LD A,C",),
+                                                ("LDH (n),A", 0x81), ("label", "h"), ("JR e", "h")], org=0x58)
+        rom = asm.rom(self.ctx.store, prog, title="EISEQ", extra={0x58: handler})
+        g = gb.GameBoy(self.ctx, rom, "native", sample_rate=0, fresh=True)
+        g.run_frame()
+        self.assertEqual(list(g.m.read("hram", 0, 2)), [third_ei >> 8, third_ei & 0xFF])
+
     def test_cgb_hands_over_with_vram_open(self):
         """The CGB hands over in V-blank, so a Color game can probe the second VRAM bank at once (Trouballs does,
         within the first scanline's time, which a hand-over at the start of line 0 would put in mode 3)."""
@@ -221,8 +234,93 @@ class GameBoy(unittest.TestCase):
         self.assertEqual(by, {"blank.gb": "blank", "locks.gb": "locked", "runs.gb": "static"})
 
 
-if __name__ == "__main__":
-    unittest.main()
+def _png_filtered(rows, depth=2):
+    """A greyscale PNG whose rows use filters 0..4 in turn (the reader must undo each)."""
+    import struct
+    import zlib
+    w = len(rows[0])
+    raw, prev = b"", bytes((w * depth + 7) // 8)
+    for y, row in enumerate(rows):
+        packed = bytearray((w * depth + 7) // 8)
+        for x, v in enumerate(row):
+            packed[x * depth // 8] |= v << (8 - depth - (x * depth) % 8)
+        f = y % 5
+        line = bytearray()
+        for i, cur in enumerate(packed):
+            a = packed[i - 1] if i else 0
+            b = prev[i]
+            c = prev[i - 1] if i else 0
+            pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
+            pred = (0, a, b, (a + b) // 2, a if pa <= pb and pa <= pc else b if pb <= pc else c)[f]
+            line.append((cur - pred) & 0xFF)
+        raw += bytes([f]) + line
+        prev = bytes(packed)
+
+    def chunk(tag, data):
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, len(rows), depth, 0, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
+
+
+class TestROMs(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_revisions_in_file_names(self):
+        from cardmodel.machine import testroms as T
+        self.assertEqual(T.revisions_named("boot_div-dmgABCmgb"), {"dmgABC", "mgb"})
+        self.assertEqual(T.revisions_named("di_timing-GS"), {"dmg0", "dmgABC", "mgb", "sgb", "sgb2"})
+        self.assertEqual(T.revisions_named("boot_regs-cgb"), {"cgb0", "cgbABCDE"})
+        for stem in ("01-read_timing", "dmg-acid2", "add_sp_e_timing", "02-len ctr"):
+            self.assertIsNone(T.revisions_named(stem), stem)
+
+    def test_tests_for_other_hardware_are_skipped(self):
+        from pathlib import Path
+        from cardmodel.machine import testroms as T
+        dmg_cart, cgb_cart = {"cgb": False}, {"cgb": True}
+        self.assertEqual(T.model_for(self.ctx, Path("a/boot_regs-dmgABC.gb"), dmg_cart), ("dmg", ""))
+        self.assertEqual(T.model_for(self.ctx, Path("a/ei_sequence.gb"), dmg_cart), ("auto", ""))
+        self.assertEqual(T.model_for(self.ctx, Path("b/oam_bug/1-lcd_sync.gb"), cgb_cart), ("dmg", ""))
+        self.assertIsNone(T.model_for(self.ctx, Path("a/boot_regs-sgb2.gb"), dmg_cart)[0])
+        self.assertIsNone(T.model_for(self.ctx, Path("a/boot_regs-cgb.gb"), dmg_cart)[0],
+                          "a DMG cartridge on a CGB needs the compatibility mode")
+        self.assertIsNone(T.model_for(self.ctx, Path("m/utils/dump_boot_hwio.gb"), dmg_cart)[0])
+
+    def test_png_reader_undoes_every_filter(self):
+        rows = [[(x * 7 + y * 3) % 4 for x in range(13)] for y in range(10)]
+        w, h, rgb = gb.png_read(_png_filtered(rows))
+        self.assertEqual((w, h), (13, 10))
+        self.assertEqual([rgb[(y * w + x) * 3] for y in range(h) for x in range(w)],
+                         [v * 85 for row in rows for v in row])
+
+    def test_screen_test_against_a_reference(self):
+        """A screen test passes when the picture equals the reference (DMG shades as the reference's greys) and
+        fails, naming the pixels, when one pixel differs."""
+        import tempfile
+        from pathlib import Path
+        from cardmodel.machine import testroms as T
+        rom = graphics_rom(self.ctx)
+        g = gb.GameBoy(self.ctx, rom, "native", sample_rate=0, fresh=True)
+        for _ in range(T.SCREEN_FRAMES):
+            g.run_frame()
+        shades = {bytes(c): i for i, c in enumerate(self.ctx.store.get("hardware/gb_ppu").get("dmg_shades_rgb"))}
+        f = g.frame()
+        greys = bytearray(b"".join(bytes((T.DMG_GREYS[shades[f[i:i + 3]]],) * 3) for i in range(0, len(f), 3)))
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_screen_"))
+        (d / "img").mkdir()
+        (d / "screen-test.gb").write_bytes(rom)
+        (d / "img" / "reference-dmg.png").write_bytes(gb.png(bytes(greys)))
+        r = T.run_one(self.ctx, d / "screen-test.gb", root=d)
+        self.assertEqual(r["verdict"], "pass", r)
+        greys[(5 * 160 + 7) * 3:(5 * 160 + 7) * 3 + 3] = bytes((0x55,) * 3) if greys[(5 * 160 + 7) * 3] != 0x55 \
+            else bytes((0xAA,) * 3)
+        (d / "img" / "reference-dmg.png").write_bytes(gb.png(bytes(greys)))
+        r = T.run_one(self.ctx, d / "screen-test.gb", root=d)
+        self.assertEqual(r["verdict"], "fail")
+        self.assertIn("1 of 23040 pixels differ", r["detail"])
+        self.assertIn("x=7 y=5", r["detail"])
 
 
 def busy_rom(ctx):
@@ -506,3 +604,7 @@ class ArmLifting(unittest.TestCase):
         ml.set("lifted_on", 1)
         ml.call("run_frame")
         self.assertNotEqual(int.from_bytes(ml.read("mram", 0x100000, 4), "little"), 55)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -14,9 +14,16 @@ export array seen: Byte[0x100000]        -- 1 bit per ROM byte: an instruction s
 export array entries: Byte[0x100000]     -- 1 bit per ROM byte: reached other than by falling through
 
 fn full_sync() {
+  sync_components(now)
+}
+-- every component up to now, the PPU up to ppu_until
+fn sync_components(ppu_until: Int) {
   timer_sync()
   dma_sync()
+  let t = now
+  now = ppu_until
   ppu_sync()
+  now = t
   serial_sync()
   apu_sync()
   var t = ppu_irq_next()
@@ -41,10 +48,16 @@ fn skip_to(t: Int) {
   }
 }
 -- the instruction boundary: sync when an event is due, stalls, STOP, HALT, interrupt dispatch; true when the
--- CPU should now execute an instruction
+-- CPU should now execute an instruction. A running CPU samples interrupts at the boundary, and a PPU interrupt
+-- reaches it a little after the dot it is raised on: one raised exactly at this boundary is taken at the next
+-- (mooneye di_timing, halt_ime1_timing2). A halted CPU sees it at once and spends one M-cycle waking up.
 fn boundary() -> Bool {
   if now >= next_event {
-    full_sync()
+    if halted != 0 or stopped != 0 {
+      full_sync()
+    } else {
+      sync_components(now - 1)
+    }
   }
   if stall > 0 {
     now += stall
@@ -227,7 +240,7 @@ export fn power_on(want_cgb: Int) {
   wram_bank = 1
   svbk = 0
   key1 = 0
-  p1_sel = 0x30
+  p1_sel = 0x00
   sb = 0
   sc = 0x7E
   serial_end = -1

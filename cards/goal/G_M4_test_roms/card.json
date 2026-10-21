@@ -3,14 +3,16 @@
   "category": "goal",
   "direction": "higher",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "7ac09cd3dc565aac5652ca6680dd7887ee873c49e9db6fc618675ab78bacb965",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "metric": "test_roms_pass_rate",
   "name": "G_M4_test_roms",
   "provenance": {
     "origin": "cardmodel"
   },
-  "statement": "Fraction of hardware test ROMs (Blargg, mooneye) passing in the last `cardmodel machine testroms`.",
+  "statement": "Fraction of hardware test ROMs (Blargg, mooneye, acid2) passing in the last `cardmodel machine testroms`; tests for hardware revisions the machine does not model are skipped, not counted.",
   "target": 1.0,
   "tier": 0
 }

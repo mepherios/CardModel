@@ -69,8 +69,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 ## Machines: now and next
 
-* 🟡 **Hardware test suites**: Blargg and mooneye through `cardmodel machine testroms` (needs the user's go-ahead
-  to download them).
+* 🔵 **Hardware test suites**: Blargg, mooneye and acid2 through `cardmodel machine testroms` (the timing they
+  pinned down is in docs/MACHINES.md §3; COVERAGE.md has the results).
+* 🟢 **The DMG OAM corruption bug** (Blargg oam_bug) and a **CGB DMG-compatibility mode** (mooneye misc).
 * 🟢 **The survey's remaining failures**: MBC7, HuC3 and camera bank controllers as cards; trace the static and
   blank titles.
 * 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); DMG colourisation

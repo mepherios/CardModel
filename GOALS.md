@@ -68,7 +68,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_M1_isa_conformance` | machines | instruction cards failing per-instruction conformance (engines, cycles, flags, vectors) | = 0 |
 | `G_M2_roms_boot` | machines | fraction of surveyed ROMs that boot and animate in the native engine | ≥ 0.95 |
 | `G_M3_lifted_identical` | machines | differential runs where lifted code and the interpreter disagree | = 0 |
-| `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye) passing | = 1.0 |
+| `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye, acid2) passing | = 1.0 |
 | `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
 
 ### What "done" would mean on each axis

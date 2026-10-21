@@ -9,6 +9,8 @@ global tma: Int = 0
 global tac: Int = 0
 global timer_last: Int = 0       -- dot time the counter was last brought up to date
 global tima_reload: Int = -1     -- counter value at which a pending overflow reloads TIMA (-1: none)
+global tima_reloaded: Int = -1   -- counter value of the last reload: a TIMA write in that M-cycle is lost, a TMA
+                                 -- write in it is what TIMA gets
 
 fn timer_bit() -> Int {
   let t = tac & 3
@@ -42,6 +44,7 @@ fn timer_advance(target: Int) {
     if tima_reload >= 0 and tima_reload <= target {
       div_counter = tima_reload
       tima = tma
+      tima_reloaded = tima_reload
       tima_reload = -1
       request_irq(IRQ_TIMER)
     } elif (tac & 4) == 0 {
@@ -103,13 +106,17 @@ fn timer_write(r: Int, v: Int) {
       tima_reload = tima_reload - div_counter
     }
     div_counter = 0
+    tima_reloaded = -1
   } elif r == 0x05 {
-    if tima_reload >= 0 {
+    if tima_reloaded != div_counter {
       tima_reload = -1
+      tima = v
     }
-    tima = v
   } elif r == 0x06 {
     tma = v
+    if tima_reloaded == div_counter {
+      tima = v
+    }
   } else {
     let before = timer_signal()
     tac = v & 7

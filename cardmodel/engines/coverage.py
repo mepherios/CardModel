@@ -118,7 +118,10 @@ def machines(ctx: Ctx, secs: dict) -> dict:
                                       "frames": sum(d.get("frames_compared", 0) for d in diffs.values())}
     tr = ctx.load_state("emu_testroms")
     if tr:
-        out["test_roms"] = {"total": tr.get("total"), "passed": tr.get("passed")}
+        out["test_roms"] = {"total": tr.get("total"), "passed": tr.get("passed"), "skipped": tr.get("skipped"),
+                            "suites": tr.get("suites") or {},
+                            "failing": [r["file"].rsplit("/", 1)[-1] for r in tr.get("rows", [])
+                                        if r.get("verdict") not in ("pass", "skipped")][:12]}
     nds = ctx.load_state("nds_coverage")
     if nds:
         ld = nds.get("lifted_differential") or {}
@@ -309,7 +312,10 @@ def markdown(rep: dict) -> str:
                      f"({d['frames']} frames compared).")
         if mc.get("test_roms"):
             t = mc["test_roms"]
-            L.append(f"* **test ROMs**: {t['passed']} of {t['total']} pass.")
+            per = ", ".join(f"{k} {v['passed']}/{v['total']}" for k, v in (t.get("suites") or {}).items())
+            L.append(f"* **test ROMs**: {t['passed']} of {t['total']} pass ({per}); {t.get('skipped') or 0} skipped "
+                     f"(for other hardware revisions, or not self-checking)"
+                     + (f"; failing: {', '.join(t['failing'])}." if t.get("failing") else "."))
         else:
             L.append("* **test ROMs**: not run yet (`cardmodel machine testroms DIR`; the suites are not on this "
                      "machine).")

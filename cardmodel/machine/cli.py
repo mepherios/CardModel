@@ -176,9 +176,12 @@ def cmd_machine(args) -> int:
     if args.action == "testroms":
         from . import testroms
         r = testroms.run(ctx, args.target, engine=args.engine)
-        lines = [f"{r['passed']}/{r['total']} test ROMs pass ({r['engine']})"]
-        for row in r["rows"]:
-            lines.append(f"  {row['verdict']:<8} {row['file']}  {row.get('detail', '')[:100]}")
+        lines = [f"{r['passed']}/{r['total']} test ROMs pass ({r['engine']}); {r['skipped']} skipped (other "
+                 f"hardware or not self-checking)"]
+        lines += [f"  {k}: {v['passed']}/{v['total']}" for k, v in r["suites"].items()]
+        for row in sorted(r["rows"], key=lambda x: (x["verdict"] == "pass", x["verdict"] == "skipped")):
+            lines.append(f"  {row['verdict']:<8} {row.get('model', '-'):<4} {row['file']}  "
+                         f"{row.get('detail', '')[:110]}")
         ctx.save_state("emu_testroms", r)
         _out(args, r, "\n".join(lines))
         return 0 if r["total"] and r["passed"] == r["total"] else 1
