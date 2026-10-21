@@ -1,0 +1,52 @@
+{
+  "blockers": [
+    "MATH_CORE.md decides its place"
+  ],
+  "branches": [],
+  "category": "project",
+  "done": [
+    "translation-gap cards for go, python and rust to LLVM IR"
+  ],
+  "goal": "Identity of functions across languages through LLVM IR.",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "decide whether MATH_CORE's semantic core replaces this line"
+  ],
+  "metadata": {
+    "previous_content_hash": "ba49306dea793759ff1ea4514736049fdd92ff3f138cb07bbee01f0615cc458f",
+    "version": "2.0.0",
+    "version_bump_reason": "major"
+  },
+  "metrics": [
+    {
+      "cards": "translation_gap",
+      "label": "LLVM-IR translation gaps recorded",
+      "match": "*llvm*"
+    },
+    {
+      "cards": "xleq",
+      "label": "cross-language equivalences learned"
+    }
+  ],
+  "name": "llvm_ir_identity",
+  "next_steps": [],
+  "order": 13,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "*llvm*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "Not started in the card model: three translation-gap cards record what LLVM IR lacks.",
+  "statement": "Identity of functions across languages through LLVM IR (the Pheros line of work). The card model holds the translation-gap cards for LLVM IR it carried over, and no LLVM code yet; its nearest working pieces are lifted machine code and the cross-language equivalence cards the learning step writes.",
+  "tier": 1,
+  "title": "LLVM-IR identity",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
+}

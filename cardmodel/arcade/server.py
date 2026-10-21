@@ -8,6 +8,9 @@
     GET  /chunk/SHA256[?rate=B]          one chunk (content-addressed), at most B bytes a second when asked
     GET  /media/ID/BUILD/FILE            store and library pictures (drawn by the game)
     GET  /ui/...                         the launcher's pages (the app card's ui folder)
+    GET  /api/dev                        everything in progress: projects, activity, early-access builds (hub.py)
+    GET  /api/events                     the same, pushed as server-sent events whenever it changes (hub.py)
+    GET  /early/WORKTREE/ID/BUILD/...    an early-access build's manifest and pictures, from a worktree's depot
 
 A build is due when the hash of the game's sources (its cards, its logic, the platform shell, the arcade build
 code) differs from the latest build's. The service only reads the cards and writes under state/arcade.
@@ -153,6 +156,9 @@ class Handler(BaseHTTPRequestHandler):
         parts = [p for p in u.path.split("/") if p]
         q = parse_qs(u.query)
         ctx = self.ctx
+        from . import hub
+        if hub.route(self, parts, q):                    # in development, live events, early access
+            return
         if parts[:1] == ["api"]:
             with _lock:
                 fresh(ctx)

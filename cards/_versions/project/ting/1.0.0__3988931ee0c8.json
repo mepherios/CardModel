@@ -1,0 +1,23 @@
+{
+  "category": "project",
+  "kind": "program",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "git_files": "",
+      "label": "files committed"
+    }
+  ],
+  "name": "ting",
+  "order": 9,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "repo": "~/Programmering/ting",
+  "statement": "The encrypted community platform (~/Programmering/ting), read here only.",
+  "tier": 1,
+  "title": "Ting"
+}

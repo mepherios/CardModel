@@ -72,8 +72,15 @@ class Improve(unittest.TestCase):
 
     def test_affine_match(self):
         f = self.rep["functions"]["xp"]
-        self.assertTrue(f["action"].startswith("algorithm_affine:algorithm/sum_of_squares#"), (f, seed_note(self)))
-        self.assertIn("10 * xp__sum_of_squares", f["new_source"])
+        # 10 * sum of squares is matched as an affine use of the algorithm card; the function algebra's polynomial
+        # closed form is an equally verified candidate, and whichever measures faster on this machine is used
+        affine = [c for c in f["candidates"] if c["kind"] == "algorithm_affine"
+                  and c["card"] == "algorithm/sum_of_squares"]
+        self.assertEqual([(c["scale"], c["shift"]) for c in affine], [(10, 0)], (f, seed_note(self)))
+        self.assertTrue(f["action"].startswith(("algorithm_affine:algorithm/sum_of_squares#", "algebra:")),
+                        (f, seed_note(self)))
+        if f["action"].startswith("algorithm_affine:"):
+            self.assertIn("10 * xp__sum_of_squares", f["new_source"])
 
     def test_decoy_and_lookalike_not_substituted(self):
         self.assertEqual(self.rep["functions"]["looks_prime"]["action"], "kept", seed_note(self))

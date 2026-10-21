@@ -1,0 +1,65 @@
+{
+  "blockers": [
+    "the restructuring waits on MATH_CORE.md's approval"
+  ],
+  "branches": [],
+  "category": "project",
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "done": [
+    "canonical forms from behaviour",
+    "exact Gödel encode/decode",
+    "GCD of functions, cofactor identities"
+  ],
+  "goal": "Functions as algebra: canonical forms with Gödel numbers, and the common factors that carry logic.",
+  "in_progress": [
+    "the expanding Gödel model's definition (GOALS.md)"
+  ],
+  "kind": "research",
+  "left": [
+    "the prime ledger",
+    "Gödel vectors on every card",
+    "homomorphism cards",
+    "the physics set"
+  ],
+  "metadata": {
+    "previous_content_hash": "7e8169abed8f4c8a3fa01c310847f7d41085661b72ad899c8a06016832ec5757",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "metrics": [
+    {
+      "goal": "G_K6_functional_identities",
+      "label": "identities between functions"
+    },
+    {
+      "cards": "functional_identity",
+      "label": "functional identity cards"
+    }
+  ],
+  "name": "godel_functions",
+  "next_steps": [
+    "the prime ledger (append-only)"
+  ],
+  "order": 12,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cardmodel/engines/funcalg.py",
+    "stdlib/algebra.card",
+    "cards/functional_identity"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Functions as algebra: canonical forms, Gödel numbers, the GCD of functions and the identities that carry between them.",
+  "status": "Canonical forms, exact Gödel numbering, the GCD of functions and their identities are built; the expanding Gödel model (GOALS.md) is the next layer.",
+  "tier": 1,
+  "title": "Gödel-numbered functions",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "capabilities_failing",
+  "name": "G_A4_capabilities_failing",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Core capabilities whose smoke check fails (latest verify or self-run).",
+  "target": 0,
+  "tier": 0
+}

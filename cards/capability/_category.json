@@ -1,0 +1,7 @@
+{
+  "card_type": "capability",
+  "defined_by": "tools/seed_self.py",
+  "description": "The model's core: what it can do, the laws each capability carries, a smoke check of the real engine (engines/capabilities.py) that runs in every verify and self-run, its witness tests, docs and commands (CM37).",
+  "name": "capability",
+  "tier": 0
+}

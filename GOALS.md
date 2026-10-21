@@ -1,5 +1,60 @@
 # GOALS
 
+## What the card model is: a universal Gödel model that keeps expanding
+
+In the user's words (2026-10-22): *Gödel numbers are fact, but we can have different and infinitely expanding Gödel
+sets; that is where it becomes special. We have basis Gödel numbers, then we use the same logic for programming
+languages, and math, and physics, and we make them carry over infinitely: a universal Gödel expanding model. That is
+what the card model is supposed to be.* Made precise:
+
+1. **Atoms get primes, forever.** A basis set B₀ numbers the primitive concepts (logic, equality, arithmetic, bit
+   operations). Each atom gets a prime that is never renumbered or reused: the ledger only grows.
+2. **Every domain is a Gödel set extending B₀**: programming languages, mathematics, physics, and any domain to
+   come. A new atomic concept (a card) takes the next unused prime. There are infinitely many primes (Euclid), so
+   every set expands without limit.
+3. **Two numberings, two jobs.**
+   * *Content* is a concept's factorization: the product of its constituents, with multiplicity (an exponent
+     vector). With negative exponents allowed, products have inverses: the positive rationals, i.e. the free abelian
+     group on the primes. Physics is the cleanest witness. The base units (s, m, kg, A, K, mol, cd) are primes and a
+     derived quantity is a product (N = kg·m·s⁻²), so dimensional analysis is exactly this algebra. GCD and LCM are
+     the shared and the combined content of two concepts.
+   * *Structure* is Gödel's own positional numbering (∏ pᵢ^code(symbolᵢ), nested for trees). It keeps order and
+     arrangement and decodes exactly, so a concept's identity is its structural number. Content forgets arrangement:
+     f(g(x)) and g(f(x)) have the same factors.
+4. **Carry-over is a homomorphism.** A map between two sets is fixed by where it sends each prime. It preserves
+   products and divisibility, and maps compose, so knowledge carries along any chain (a language to the IR to
+   another language; mathematics to physics). A map preserves every GCD exactly when it sends distinct primes to
+   coprime images. The source primes a map cannot send are that translation's gap: a concept splits into the part
+   that carries and a residual factor. Every set embeds in one universal ledger (the direct limit), where GCD and
+   LCM find the logic any domains share.
+5. **Laws, each with a witness, when built:**
+   * the ledger is append-only;
+   * every card carries its Gödel vector in each set it belongs to;
+   * every translation is a homomorphism card, checked to preserve products, with its GCD condition computed;
+   * a translation's correctness is still witnessed by behaviour (equal outputs on seeded inputs);
+   * a `translation_gap` card is the residual factor a map leaves.
+
+**Already in the model:**
+* positional Gödel numbers of canonical forms, with exact decoding (CM31, `engines/funcalg.py`);
+* the GCD of functions (shared annihilators, common factors);
+* translation-gap cards per language pair;
+* cross-language equivalence cards from learning;
+* op cards as the atoms of computation;
+* content hashes as every card's identity.
+
+**Not built yet:**
+* the prime ledger;
+* Gödel vectors on every card;
+* homomorphism cards;
+* the physics set (units, dimensional analysis).
+
+ROADMAP "Gödel model" has the steps.
+
+**Honest limits.** A factor multiset forgets arrangement, so the structural number stays the identity. GCD carries
+over only under the coprimality condition above. What a factor means depends on canonicalization: two equivalent
+constructions share factors only once both reduce to the same atoms (canonical forms and rewrite rules do that
+for functions).
+
 ## Purpose
 
 **cardmodel** is the card model as one self-contained program. Every structure is a card: languages, operators, rules,
@@ -27,13 +82,13 @@ filesystem registry. The program takes part in software development in any proje
 11. **account for a real system**: AnyPS5 (a PS5 relinker and its reimplemented system libraries) read as cards,
     its badge reproduced, its real coverage computed, every gap given the cause that keeps it open, and its pure
     code witnessed against semantics derived from public standards (docs/ANYPS5.md).
-11. **run machines**: a CPU is its instruction cards and a console is its hardware cards; their card-language
+12. **run machines**: a CPU is its instruction cards and a console is its hardware cards; their card-language
     semantics compile to the card IR, run in every engine, and a ROM's own code is lifted into the same IR and
-    emitted natively, behind an effect shell for video, audio, input and saves (docs/MACHINES.md).
-12. **ship products**: games made of cards, built natively and served by the arcade's store, every listed game
-    launched through the store on every cycle (docs/ARCADE.md, docs/ARCADE_INVENTORY.md).
-13. **run as one unit**: one bounded cycle runs every part at once, keeps its core (the ledger) and every law
-    upheld, compares each run with the last, and says where it is weak and what to do next (docs/CYCLE.md).
+    emitted natively, behind an effect shell for video, audio, input and saves (docs/MACHINES.md); games made of
+    cards ship through the Cardmodel Arcade store (docs/ARCADE.md, docs/STORE.md).
+13. **run itself as one unit**: every use can start a cycle that checks the core capabilities and the program's
+    integrity, verifies, learns, rediscovers, measures and computes every goal, then ranks its own flaws and
+    weaknesses; the core capabilities are cards that carry every law, so none is lost (docs/AUTONOMY.md).
 
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
@@ -70,6 +125,11 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_K5_programs_pass` | knowledge | card-language programs (examples/lang, stdlib) that pass | ≥ 6 |
 | `G_K6_functional_identities` | knowledge | identities between functions found from behaviour | ≥ 5 |
 | `G_A3_memory_bounded` | autonomy | peak memory of the cardmodel process in the last verify (MB) | ≤ 1024 |
+| `G_A4_capabilities_failing` | autonomy | core capabilities whose smoke check fails (CM37) | = 0 |
+| `G_A5_integrity_problems` | autonomy | integrity problems: duplicate numbers, uncarried laws, undescribed commands, sections or docs, drift (CM39) | = 0 |
+| `G_A6_laws_carried` | autonomy | laws that no capability card carries | = 0 |
+| `G_A7_self_run_fresh` | autonomy | hours since the last self-run cycle finished (CM38) | ≤ 24 |
+| `G_A8_project_cards_current` | autonomy | project cards missing detail, stale, or missing for a branch with unmerged work (CM41) | = 0 |
 | `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
 | `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
 | `G_P1_anyps5_badge_reproduced` | computation | libraries where the model's reading of AnyPS5's counting rule differs from AnyPS5's own tool | = 0 |
@@ -82,10 +142,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_M3_lifted_identical` | machines | differential runs where lifted code and the interpreter disagree | = 0 |
 | `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye, acid2) passing | = 1.0 |
 | `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
-| `G_A4_core_kept` | autonomy | laws, goals, registries, commands and verify sections lost, changed or weakened against the core ledger without an accepted amendment | = 0 |
-| `G_A5_laws_upheld` | autonomy | law cards whose witness test fails, errs or is missing in the last cycle | = 0 |
-| `G_A6_no_regressions` | autonomy | regressions the last cycle found against the run before it | = 0 |
-| `G_S1_store_launches` | products | catalogue items that do not install, verify, repair and launch through the arcade's store | = 0 |
+| `G_A9_law_witnesses_pass` | autonomy | law cards whose witness test fails, errs or is missing in the last self-run's `law_witnesses` step (CM20, CM38) | = 0 |
+| `G_S1_store_launches` | products | catalogue items that do not install, verify, repair and launch through the arcade's store in the last check (CM42) | = 0 |
 
 ### What "done" would mean on each axis
 
@@ -105,8 +163,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
   the observation, boundary or measurement that would close it. `G_P4` stays below its target as long as the console's
   undocumented behaviour, its hardware and its services are part of what AnyPS5 must reproduce: that part closes by
   observation (Pheros L102), not by construction (docs/ANYPS5.md says exactly what remains and why).
-* **Autonomy, as one unit.** The core ledger never loses anything silently, every law's witness passes in every
-  cycle, and a cycle finds no regression against the last.
+* **Autonomy, as one unit.** Every law's witness test passes in every self-run that runs them.
 * **Products.** Every game in the store's catalogue builds from its cards and launches through the store.
 * **Machines.** Every instruction card agrees with its own data and across engines; the hardware test suites pass;
   every game in a collection boots, and lifted code is frame-for-frame identical to the interpreter; for the DS,

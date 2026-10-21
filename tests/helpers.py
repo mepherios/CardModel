@@ -11,6 +11,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# tests see the model's cards only: no self layer, no background self-run cycles (CM38), in this process and in
+# every CLI subprocess a test starts (they inherit the environment)
+os.environ["CARDMODEL_SELF"] = "0"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

@@ -83,36 +83,51 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
   and the arcade service that builds games from their cards into depots of checked chunks.
 
-## Done (2026-10-21, fifth build: the model as one unit)
+## Done (2026-10-21, fifth build: the model runs itself)
 
-* 🔵 **The cycle** (CM38): `cardmodel cycle run` runs every part of the model in one bounded loop (core ledger,
-  verify, every law's witness test, learning on its own code and the targets, a seeded arena and measured cost
-  anchors, the store, the goals, the generated documents, the test suite) under the resource governor, keeps
-  the evidence in `state/cycle`, compares each run with the last and writes the weakness report (WEAKNESSES.md).
-  Using any command starts one in the background when it is due; a launchd schedule is one command away.
-* 🔵 **The core ledger** (CM37): every law, goal, registry, command and verify section is recorded; `verify` fails
-  when one is lost, changed or a goal weakened until the change is accepted with a reason.
-* 🔵 **The store end to end** (CM39): `cardmodel arcade check` launches every catalogue item through the store's own
-  protocol (checked download, verify, repair, native run); `arcade inventory` lists everything that goes into the
-  store and what the model contributes (docs/ARCADE_INVENTORY.md); the launcher installs against the main checkout;
-  headless runs never touch the player's save.
-* 🔵 Fixed on the way (found by running the loop): the model could not observe its own code (`in` in a conditional
-  expression crashed the observer); a partial `verify` erased the sections it did not run from
-  `last_verify.json`; the learning loop called the original source before the step-bounded interpreter, so a
-  function that never returns for some inputs (the arena framework's `set_bits` on a negative number) hung it;
-  an interrupted `resources.run` left its process group running.
+* 🔵 **Integration**: the AnyPS5, games, OAM and two fix branches merged into main (AnyPS5's law renumbered
+  CM36); the rules, the number registry and the log in docs/INTEGRATION.md; the integrity check (CM39) in every
+  quick verify.
+* 🔵 **The core as cards** (CM37): 26 capability cards carry all the laws; their smoke checks run in every verify
+  and self-run; LAWS.md lists them.
+* 🔵 **The self-run** (CM38): `cardmodel self run|status|report|capabilities|auto|corpus|adopt`; background cycles
+  on use (governed, every 6 h); learning into the self layer, quarantine, findings and a ranked plan
+  (docs/AUTONOMY.md); docs/STORE.md lists everything in the store and what the model does for it.
 
-## The cycle: next
+## Done (2026-10-22, the self-run's deep checks and the store end to end)
 
-* 🟢 **Work WEAKNESSES.md from the top**: the four redefinitions whose witnesses find no valid points (G_C4), the
-  named fraction of the model's own code (G_U3), the language gaps per language card.
-* 🟢 **Trends, not only the last run**: regressions against a window of runs (history.jsonl), so a seeded metric's
-  slow drift shows.
-* 🟢 **The cycle acts on more of its own actions**: today it regenerates documents, records ledger growth and
-  promotes learned function cards when recording; next, `optimize --apply` for contradicted anchors, and new
-  algorithm cards proposed from the arena's misses.
-* 🟢 **The launcher drives its own check**: a headless `--check` mode in Launcher.swift, so the native client's
-  install and play code runs in the cycle, not only its protocol.
+* 🔵 **Deep checks as self-run steps**: `law_witnesses` runs every law card's witness test in a child process with
+  the cycle's seed (G_A9); `store` launches every catalogue item through the store's own protocol (checked
+  download, verify, a damaged file repaired, a native headless run; `cardmodel arcade check`, CM42, G_S1);
+  `tests` runs the whole suite weekly. Every step runs under a deadline, so a step that does not return is stopped
+  and reported instead of holding the cycle.
+* 🔵 Fixed on the way: observing the model's own code crashed (`in` inside a conditional expression); a partial
+  `verify` erased the sections it did not run from `last_verify.json`; the learning loop called the original source
+  before the step-bounded interpreter, so a function that never returns for some inputs (the arena framework's
+  `set_bits` on a negative number) hung it; an interrupted `resources.run` left its process group running; the
+  named-fraction goal (G_U3) could read an observation of `examples/` instead of the model's own code.
+* 🔵 The launcher installs against the main checkout when built from a worktree (`--home` to choose); headless
+  `arcade run --frames` never touches the player's save.
+
+## Gödel model: next (GOALS.md "What the card model is")
+
+* 🟢 **The prime ledger**: an append-only pack of atoms with their primes (B₀ from the op cards and logic
+  primitives first); a test that compares it with its git history so no prime is ever renumbered.
+* 🟢 **Gödel vectors on cards**: content vectors computed from constituents (a function card from its IR's ops),
+  beside the structural number funcalg already gives canonical forms.
+* 🟢 **The physics set**: SI base units as primes, derived units as cards with exponent vectors, and a dimensional
+  analysis witness for equations.
+* 🟢 **Homomorphism cards**: maps between sets (language → IR, mathematics → physics) with the product law checked
+  on samples, the GCD condition computed, and the residual factor written as the translation gap.
+
+## Self-run: next
+
+* 🟢 **Learn from the user's projects**: add them as corpora (`cardmodel self corpus add PATH`) and adopt what the
+  cycles promote after review.
+* 🟢 **Adoption with evidence in git**: `self adopt` into a branch of its own, with the cycle's report as the
+  commit message, so learned knowledge reaches main through the same gate as code (docs/INTEGRATION.md).
+* 🟢 **A plan that learns**: weight the plan by what fixed goals fastest in past cycles (the run records hold the
+  history), instead of fixed severity rules.
 
 ## Arcade: next
 
@@ -126,11 +141,14 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 * 🔵 **Hardware test suites**: Blargg, mooneye and acid2 through `cardmodel machine testroms`, the DMG's OAM
   corruption bug included (the timing they pinned down is in docs/MACHINES.md §3; COVERAGE.md has the results).
-* 🟢 **A CGB DMG-compatibility mode** (the skipped mooneye misc tests).
+* 🔵 **The CGB's DMG compatibility mode** (2026-10-21): a DMG cartridge on the CGB model runs as the CGB's boot
+  ROM leaves it (KEY0, OPRI, the CGB-mode registers locked, the default compatibility palette as card data, the
+  CGB's line-144 STAT timing); mooneye's misc -C tests and dmg-acid2's CGB picture pass (docs/MACHINES.md §3).
 * 🟢 **The survey's remaining failures**: MBC7, HuC3 and camera bank controllers as cards; trace the static and
   blank titles.
-* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); DMG colourisation
-  palettes for DMG games on the CGB (from data, not the boot ROM).
+* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); the boot ROM's
+  per-title colourisation palettes for Nintendo's DMG games on the CGB (from data, not the boot ROM; the default
+  palette is done).
 * 🟢 **DS, as its coverage report asks**: SPI (firmware user settings, touchscreen, power), RTC, sound status,
   VRAM banks and the 2D engines (a first picture), then 3D; wait states; Thumb and ARM7 lifting, cheaper guards.
 * 🟢 **Lifting further**: superblocks through not-taken branches, a fast path for dynamic WRAM/HRAM accesses,
@@ -154,8 +172,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **Strings and lists in the IR.** Types `str` and `list[int]`, plus op cards for len/index/slice/concat. Each new
   op needs per-language templates and conformance cells. This is the biggest coverage gain for real code; Pheros
   `string_ops` gives the vocabulary.
-* 🔵 **Recorded verification on a schedule** (2026-10-21): `cardmodel cycle schedule --profile full --record
-  --commit --install`; `--record-verdicts` also writes verify's per-card verdicts (hub L18).
+* 🟡 **Recorded verification in CI form.** The self-run now verifies on every cycle (a full verify daily) and keeps
+  the record in `state/self/`; what is left is writing verdicts into the cards (`verify --record`) as part of an
+  adoption, so the history of evidence lives in git (hub L18: autonomous by default).
 
 ## Next
 

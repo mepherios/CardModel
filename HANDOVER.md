@@ -30,16 +30,15 @@ cd ~/Programmering/cardmodel
 ```
 
 ```bash
-./bin/cardmodel cycle run
+./bin/cardmodel self run
 ```
 
 * `probe` shows which toolchains this machine has (Python, Node, C, C++, Rust, Go, Swift, Java, Ruby, Lua, Lean, …).
-* `verify --quick` runs the kernel, the core ledger, forms, vectors, rules and redefinitions (about 20 seconds).
-* Plain `verify` adds the op × language matrix, the function cards and the Lean proofs (about 1.5 minutes).
+* `verify --quick` runs the kernel, forms, vectors, rules and redefinitions (about 1 minute).
+* Plain `verify` adds the op × language matrix, the function cards and the Lean proofs (several minutes).
 * `cover --write` regenerates the coverage report and the goal values.
-* `cycle run` runs every part of the model at once (§3h): the core ledger, every witness, every law's witness test,
-  learning, optimisation, the store, the goals and the documents, and writes the weakness report. Using any command
-  starts one in the background when it is due.
+* `self run` runs one cycle of the model on itself (§3i): its core capabilities, integrity, verify, learning, every
+  law's witness test, the store, measurements and every goal, then its flaws, weaknesses and a ranked plan.
 
 To use it from any folder, put the shim on PATH (it resolves symlinks):
 
@@ -314,7 +313,7 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   upstream instead of mixing with it (`scan_cards`), and `anyps5 cover --compare` sets the two side by side.
   ~/Programmering/AnyPS5-cardmodel is such a copy (its own git repository: the MP3 header fix, the relinker build,
   `docs/dev/CARDMODEL.md`).
-## 3f. Machines: Game Boy, Game Boy Color, and the DS prototype (third build)
+## 3g. Machines: Game Boy, Game Boy Color, and the DS prototype (third build)
 
 ```bash
 ./bin/cardmodel emu "~/Downloads/GB_GBC/Game Boy/Tetris (World) (Rev A).zip"     # opens the browser page
@@ -358,7 +357,7 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   `verify` checks every instruction card in every engine; `machine diff` checks lifting; `machine survey` the
   collection.
 
-## 3g. The arcade: a native game built from cards, and its launcher (fourth build)
+## 3h. The arcade: a native game built from cards, and its launcher (fourth build)
 
 ```bash
 ./bin/cardmodel arcade launcher --install
@@ -380,52 +379,47 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   ~/Library/Application Support/Cardmodel Arcade.
 * **Shipping an update**: change the game's cards, bump `version` and add a `changelog` entry in its card.json; the
   launcher shows Update with the notes, and the service compiles the new build when the player asks for it.
-* Witnesses: `tests/test_arcade.py` (CM35, CM39).
-* **Checking the store end to end**: `cardmodel arcade check` launches every catalogue item through the service
-  exactly as the launcher does (install with every chunk and file checked, verify, a damaged file repaired, a
-  headless run drawing a frame); `--launcher` also compiles the launcher. The cycle runs it every time (CM39).
-* **What goes into the store**: `cardmodel arcade inventory` lists every piece (cards, logic, kernel, font, platform
-  shell, launcher, pages, service, pipeline, witnesses), its size and what the model contributes to it;
-  docs/ARCADE_INVENTORY.md is that list, generated (a test keeps it in sync).
-* **Which checkout the launcher uses**: installing from a linked worktree points the launcher at the main
-  checkout (worktrees are deleted with their sessions); `--home PATH` chooses another. The launcher installed on
-  this Mac on 2026-10-21 still points at the worktree `sad-sanderson-482207`: run
-  `./bin/cardmodel arcade launcher --install` once from `~/Programmering/cardmodel` to move it.
-* Headless runs (`arcade run --frames N`) use a temporary save folder, never the player's save.
+* Witnesses: `tests/test_arcade.py` (CM35, CM42).
+* What is in the store and what the model does for each piece: docs/STORE.md. Install the launcher from this
+  checkout (`main`), not from a worktree: the app records the checkout it was installed from. Run from a linked
+  worktree, `arcade launcher --install` now points the app at the main checkout anyway (`--home PATH` chooses
+  another).
+* **Checking the store end to end** (CM42): `cardmodel arcade check` launches every catalogue item through the
+  service exactly as the launcher does (a download with every chunk's and file's SHA-256 checked, verify, a damaged
+  file repaired with only that file fetched again, a headless native run that must draw a frame); `--launcher` also
+  compiles the launcher. The self-run's `store` step runs it on every cycle. Headless runs (`arcade run --frames N`)
+  use a temporary save folder, never the player's save.
 
-## 3h. The model as one unit: the cycle (fifth build)
+## 3i. The model runs itself (fifth build)
 
 ```bash
-./bin/cardmodel cycle run                       # standard profile; --profile quick|full; --record; --commit
+./bin/cardmodel self run
 ```
 
 ```bash
-./bin/cardmodel cycle report                    # the weakness report of the last cycle
+./bin/cardmodel self report
 ```
 
-```bash
-./bin/cardmodel cycle ledger                    # the core ledger: what must never be lost (CM37)
-```
-
-* One bounded loop runs every part of the model together and keeps the evidence (CM38): `core` (the ledger),
-  `verify`, `laws` (every law card's witness test), `learn` (the model observing its own code; the learning loop;
-  what each language card cannot express yet), `optimize` (a seeded arena, cost anchors measured), `store` (every
-  catalogue item launched through the store), `goals`, `docs`, and in the full profile the whole test suite.
-  Profiles and budgets are the card `cards/cycle/default`. docs/CYCLE.md has the details.
-* The weakness report (`state/cycle/report.md`; `WEAKNESSES.md` when recording) lists, most severe first, lost or
-  changed core, broken laws, failing and vacuous witnesses, regressions against the last run, unmet goals with what
-  would move them, unmeasured goals, language gaps, stale documents, the strengths, the next actions the cycle
-  chooses, and where development falls short (every engine's declared limits and the ROADMAP's open items).
-* **Automatically**: any command starts `cycle run --auto` in the background when one is due (at most hourly; the
-  run returns at once when nothing changed in a day), never while another cycle runs, with little free memory, a
-  busy machine, in a nested cardmodel process or a linked worktree. `cardmodel cycle auto off` or
-  `CARDMODEL_AUTO_CYCLE=0` turns it off. `cardmodel cycle schedule [--install]` sets up launchd (not installed by
-  default).
-* **The core ledger** (`cards/ledger/core`): every law (statement hash, witness), goal (metric, direction, target),
-  registry, command and verify section. `verify` and the cycle fail on a loss, a change or a weakened goal until
-  `cardmodel cycle ledger --accept --reason "..."` records the amendment; growth is accepted by recording cycles.
-* `--record` writes what lasts (ledger growth, learned function cards, the generated documents, WEAKNESSES.md);
-  `--commit` commits exactly that locally when the tree was clean before; nothing is pushed.
+* **The core is cards** (CM37): 26 `capability` cards, each with the laws it carries, a smoke check of the real
+  engine (`engines/capabilities.py`), its witness tests and docs. `verify` runs the checks (sections
+  `capabilities` and `integrity`, both in `--quick`); LAWS.md lists them under the laws; every law is carried by
+  at least one (the integrity check and `stdlib/self.card` both enforce it).
+* **The cycle** (CM38, `engines/selfrun.py`, the `self_step` cards): capabilities, integrity, verify (full every
+  24 h), learning from changed source trees (`cardmodel self corpus add PATH` adds yours), laws and identities
+  when their cards change, the arena (daily), measurements (weekly) and every goal, then findings (flaws,
+  weaknesses, strengths) and a ranked plan in `state/self/SELF.md`. Any other command starts one in the
+  background when one is due (every 6 h), under the resource governor; `CARDMODEL_SELF=0` or `self auto off`
+  stops that.
+* **The self layer**: what cycles learn goes to `state/self/cards` (untracked; loaded read-only by every
+  command); a layer that breaks verify is quarantined; `cardmodel self adopt` moves it into `cards/` for a commit.
+* **One program** (CM39, `engines/integrity.py`, docs/INTEGRATION.md): unique law and goal numbers (the registry is
+  in docs/INTEGRATION.md), every command in the help, every section and doc described, generated docs in sync,
+  no merge markers, no publishing calls. docs/INTEGRATION.md also has the merge procedure and the integration
+  log.
+* **Deep checks as steps**: `law_witnesses` runs every law card's witness test in a child process with the cycle's
+  seed (daily); `store` launches the catalogue through the store (every cycle); `tests` runs the whole suite
+  (weekly). Each step runs under a deadline, so one that does not return is stopped and reported.
+* Witnesses: `tests/test_self.py`, `tests/test_self_steps.py`. How it works and how to extend it: docs/AUTONOMY.md.
 
 ## 4. How to add things
 
@@ -565,26 +559,24 @@ bindings cover the pure code a public standard fixes, not all of it.
 **Real since the third build (machines):** the IR and the card language carry machine state (globals, arrays, void
 functions, switch, an evaluation-order pass); the LR35902 and ARMv5TE/ARMv4T instruction cards with per-instruction
 conformance in three engines (reference interpreter, Python, C) and their timing/flag data checked; the Game Boy /
-Color machine from hardware cards; ROM code lifted into card IR and run natively, frame-for-frame identical to the
-interpreter in the differential runs; the effect shell (browser page, headless runs, saves, the RTC); the ROM
-survey; a DS machine prototype that direct-boots and reports its coverage.
+Color machine from hardware cards (a DMG cartridge on the CGB runs in DMG compatibility mode); ROM code lifted
+into card IR and run natively, frame-for-frame identical to the interpreter in the differential runs; the effect
+shell (browser page, headless runs, saves, the RTC); the ROM survey; a DS machine prototype that direct-boots and
+reports its coverage.
 
-**Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; MMM01, MBC6/7, HuC1/3, TAMA5,
-the camera and unlicensed multicart mappers are missing; the hardware test suites (Blargg, mooneye, acid2) all
-pass except what is skipped: tests for other hardware revisions, for a CGB in DMG mode, and one Blargg single that
-overflows its own log (docs/MACHINES.md section 2); the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted
-(COVERAGE.md has the numbers).
+**Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; DMG compatibility mode has the
+boot ROM's default palette only (not its per-title ones); MMM01, MBC6/7, HuC1/3, TAMA5, the camera and unlicensed
+multicart mappers are missing; the hardware test suites (Blargg, mooneye, acid2) all pass except what is skipped:
+tests for other hardware revisions and one Blargg single that overflows its own log (docs/MACHINES.md section 2);
+the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted (COVERAGE.md
+has the numbers).
 
-**Real since the fifth build (the model as one unit):** the cycle runs every part of the model under the resource
-governor and compares each run with the last (regressions, improvements, strengths, next actions); the core ledger
-fails verify when a law, goal, registry, command or verify section is lost or changed; every law's witness test
-runs in each standard cycle; the store's catalogue is launched through the store's own protocol on every cycle; a
-partial `verify` keeps the sections it did not run.
+**Real since the self-run's deep checks:** every law's witness test runs in the self-run (`law_witnesses`); the
+store's catalogue is launched through the store's own protocol on every cycle (`store`); a partial `verify` keeps
+the sections it did not run.
 
-**Partial (fifth build):** regressions are against the previous run only; the background cycle is gated by load
-and free memory but still shares the machine; the store check replays the launcher's protocol in Python and
-compiles the launcher, but does not drive its window; a stage's deadline cannot interrupt one long C-level
-operation.
+**Partial (the self-run's deep checks):** the store check replays the launcher's protocol in Python and compiles
+the launcher, but does not drive its window; a step's deadline cannot interrupt one long C-level operation.
 
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
@@ -606,56 +598,47 @@ a native (ctypes) path inside improved modules (ROADMAP).
   `state/emu/`, saves in `saves/` (both gitignored). Nothing decrypts or patches DRM or anti-cheat; a DS image with
   an encrypted secure area is refused.
 * A machine module performs no I/O; everything that touches the world is `machine/shell.py` (CM21, CM34).
-* The core is kept (CM37): removing or rewording a law, removing a goal, registry, command or verify section, or
-  lowering a goal's bar fails `verify` until it is accepted with a reason in the core ledger.
-* Automation never pushes and never commits someone else's work: `cycle run --commit` commits only what the cycle
-  wrote, and only when the tree was clean before it started.
+* Background self-run cycles write only under `state/self/` (CM38); tests run with `CARDMODEL_SELF=0`
+  (`tests/helpers.py`), so they see the tracked cards only.
+* Law and goal numbers come from the registry in docs/INTEGRATION.md; every law is carried by a capability (CM37).
 
 ---
 
 ## 8. Concrete next steps (in order)
 
+Start with `cardmodel self report`: the model's own ranked list of its flaws and weaknesses, with the command for
+each. Beyond that:
+
 1. **stdin harnesses** (ROADMAP Now): add `read_*` templates to every language card, switch the harness, and confirm
    the build cache hits across seeds. Verify then gets several times faster.
 2. **Strings and lists in the IR.** Start with `len`, indexing and a `for x in xs` loop on `list[int]`. Each op is a
-   card, and the conformance matrix tells you when a language row is green.
-3. **A C frontend** (lift C functions into the same IR), which gives C → Python/Rust/Go translation with the same
-   witness.
-4. **Run `cardmodel learn --promote` on your real projects** (Ting, rea-cards, the hub's config/) and commit the
-   project `.cardmodel/` directories. Then use `cardmodel cover` there to pick the next card to write: the top
-   fallback calls.
-5. **Schedule the cycle** if you want evidence in git history: `cardmodel cycle schedule --profile full --record
-   --commit --install` (launchd; prints the agent without `--install`). The cycle already runs by itself whenever
-   the model is used (§3h); WEAKNESSES.md is its last recorded report: work it from the top.
-6. **Games natively (proposed as its own session).** Game Boy / Game Boy Color first, then Nintendo DS. The pieces
-   follow the same pattern:
-   * an `isa` registry: one op card per CPU instruction (LR35902, later ARMv4T/ARMv5TE), with IR semantics and
-     conformance against free test ROMs;
-   * a machine-code frontend that lifts ROM basic blocks into the IR (REA-style distillation, kept internal);
-   * native emission through the language cards;
-   * a launcher.
-
-   The effect shell (input, audio, video, saves, link/online) stays in the runtime unchanged (CM21). ROMs stay local
-   test inputs and are never copied into a repository.
-7. **AnyPS5: done (section 3f, docs/ANYPS5.md).** What remains there: the pending blockers `anyps5 blocks`
-   ranks, host mappings for the standard host functions, the string/list IR for the standard data functions,
-   and console observations for the rest (each named with its file, line and debt entry). Fixes go into the copy
-   ~/Programmering/AnyPS5-cardmodel, never into ~/Documents/AnyPS5-main.
-6. **Games natively: the next pieces** (the machine model is built; docs/MACHINES.md, ROADMAP "Machines").
+   card, and the conformance matrix tells you when a language row is green. AnyPS5's standard data functions and
+   the game's text both wait on this.
+3. **A C frontend** (lift C functions into the same IR), which gives C -> Python/Rust/Go translation with the same
+   witness, and lets the learning step learn from C trees, not only observe them.
+4. **Learn from your real projects**: `cardmodel self corpus add ~/Programmering/ting` (and the others you want);
+   the self-run learns from a tree whenever it changes. Review what it learned with `cardmodel list` and
+   `cardmodel self adopt --dry-run`, then adopt and commit.
+5. **Games natively: the next pieces** (the machine model is built; docs/MACHINES.md, ROADMAP "Machines").
    * The hardware test suites are in `~/Downloads/gb-test-suites` (downloaded with the user's go-ahead; run
-     `cardmodel machine testroms ~/Downloads/gb-test-suites`). What is left there: a CGB DMG-compatibility mode
-     (the skipped mooneye misc/*-C tests).
+     `cardmodel machine testroms ~/Downloads/gb-test-suites`). Every runnable test passes, the CGB's DMG
+     compatibility mode included (mooneye's misc -C tests, dmg-acid2's CGB picture); what is skipped is for
+     other hardware revisions (dmg0, mgb, sgb, cgb0, agb) or not self-checking. Next there: the boot ROM's
+     per-title compatibility palettes for Nintendo's DMG games, as card data (Pan Docs documents how they are
+     chosen), if colourised DMG games are wanted.
    * Close the survey's remaining failures (`cardmodel machine survey` lists them): the missing bank controllers
      (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (the gameboy machine card
      exports `step` and `peek`: `gb.GameBoy(ctx, rom).m.call("step")`, `.m.call("peek", addr)`).
    * The DS, in the order its coverage report asks for it: SPI devices (firmware user settings, touchscreen,
      power), RTC, sound channel status, VRAM banks and the 2D engines (a first picture), then 3D. ARM9 blocks are
      already lifted (`machine nds ROM --lift`); Thumb, the ARM7 and cheaper word guards are next there.
-7. **AnyPS5 on the card model (proposed as its own session).** One card per PRX export/NID (implemented, throws, or
-   unknown signature) and one card per debt entry. That gives the real coverage behind its 95 % badge and an honest
-   account of why the rest is missing: unknown console behaviour can only be closed by observation, which is Pheros
-   L102. Then the card-native mechanisms that make the missing pieces explicit, witnessed obligations instead of
-   prose.
+   * Game Boy / Color titles as store products (the games session's Game Boy Player, on its branch).
+6. **AnyPS5** (section 3f, docs/ANYPS5.md): the pending blockers `anyps5 blocks` ranks, host mappings for the
+   standard host functions, the string/list IR for the standard data functions, and console observations for
+   the rest (each named with its file, line and debt entry). Fixes go into the copy ~/Programmering/AnyPS5-cardmodel,
+   never into ~/Documents/AnyPS5-main.
+7. **Proofs**: the full verify proves 47 of 114 rewrite rules in Lean; the rest are witnessed only. Each one
+   proved moves knowledge up the ladder (CM23).
 
 ---
 

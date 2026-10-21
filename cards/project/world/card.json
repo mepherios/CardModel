@@ -1,0 +1,57 @@
+{
+  "blockers": [
+    "waits on the merged store (entries that launch a program)"
+  ],
+  "branches": [],
+  "category": "project",
+  "docs": [
+    "game/DESIGN.md"
+  ],
+  "done": [
+    "world rules in the card language",
+    "explanations back to the actions",
+    "counterfactual impact"
+  ],
+  "goal": "A systemic world where every consequence carries and explains its cause.",
+  "in_progress": [],
+  "kind": "game",
+  "left": [
+    "a campaign map in Vector Duel",
+    "a store entry that launches it"
+  ],
+  "metadata": {
+    "previous_content_hash": "46bc550fb06c3527e97c053b2991e6279e3a30b6e3b14ef33d868d8f673c364a",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "format": "{world_final_facts} facts carried to the end",
+      "label": "world run",
+      "verify": "game"
+    }
+  ],
+  "name": "world",
+  "next_steps": [
+    "after the cartridge merge: a store entry"
+  ],
+  "order": 5,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cardmodel/game/world.py",
+    "stdlib/world.card"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "Facts carry between ticks, every event explains its cause, each action's impact is measured.",
+  "statement": "A world whose events carry between ticks and explain their causes (cardmodel game world).",
+  "tier": 1,
+  "title": "The systemic world",
+  "updated": "2026-10-22T00:30:00+02:00",
+  "user_actions": []
+}

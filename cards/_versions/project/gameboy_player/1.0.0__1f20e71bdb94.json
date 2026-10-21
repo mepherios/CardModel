@@ -1,0 +1,50 @@
+{
+  "category": "project",
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "games": [
+    "gameboy_player"
+  ],
+  "kind": "game",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "goal": "G_M2_roms_boot",
+      "label": "surveyed ROMs that boot"
+    },
+    {
+      "goal": "G_M4_test_roms",
+      "label": "hardware test ROMs passing"
+    },
+    {
+      "format": "{passed}/{total}",
+      "label": "test ROMs (count)",
+      "state": "emu_testroms"
+    }
+  ],
+  "name": "gameboy_player",
+  "order": 2,
+  "paths": [
+    "cardmodel/machine/gb.py",
+    "cardmodel/machine/lift.py",
+    "cardmodel/machine/shell.py",
+    "cardmodel/machine/survey.py",
+    "cardmodel/machine/testroms.py",
+    "cards/hardware",
+    "cards/machine/gameboy",
+    "cards/isa/lr35902",
+    "cards/game/gameboy_player",
+    "cards/player",
+    "cards/cartridge"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
+  "tier": 1,
+  "title": "Game Boy Player"
+}

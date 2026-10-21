@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 24,
+  "measures": "arena_unsound_runs, arena_recall, arena_geomean_speedup",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "arena",
+  "on_change": [],
+  "order": 80,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "arena",
+  "statement": "a small arena run: soundness, recall and speed of the optimizer",
+  "tier": 0
+}

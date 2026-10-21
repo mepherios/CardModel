@@ -1,0 +1,34 @@
+{
+  "category": "capability",
+  "check": "logic",
+  "commands": [
+    "cardmodel logic query",
+    "cardmodel logic why"
+  ],
+  "core": true,
+  "docs": [
+    "docs/LANGUAGE.md"
+  ],
+  "laws": [
+    "law/CM24_logic_carries"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/logic.py"
+  ],
+  "name": "logic",
+  "order": 12,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Logic as cards: rules with recursion, negation, aggregates and constraints derive facts, each with a minimum-height proof.",
+  "tests": [
+    "tests/test_logic.py::test_proofs_have_minimum_height",
+    "tests/test_logic.py::test_constraint_violation_carries_a_proof"
+  ],
+  "tier": 0,
+  "usefulness": "If x and y then z, written once, explained every time."
+}

@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 0,
+  "measures": "verify sections",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "verify",
+  "on_change": [],
+  "order": 30,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "verify",
+  "statement": "verify --quick; quarantines the self layer if it breaks a section",
+  "tier": 0
+}

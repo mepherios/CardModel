@@ -673,3 +673,23 @@ def _q_card(q_text: str, inner: str) -> str:
     out = q_text.replace("^", " ** ")
     out = re.sub(r"\bx\b", f"({inner})", out)
     return out
+
+
+def identity_cards(scan: dict) -> list[dict]:
+    """The functional_identity cards of a ``scan_algorithms`` result: one per relation, one per canonical form."""
+    prov = {"origin": "cardmodel algebra scan", "engine": "engines/funcalg.py"}
+    cards = []
+    for rel in scan["relations"]:
+        cards.append({"name": f"{rel['f']}__{rel['g']}", "category": "functional_identity",
+                      "statement": " | ".join(str(rel[k]) for k in ("shift", "composition", "composition_rev",
+                                                                    "cross_identity", "basis_change") if k in rel),
+                      "f": f"algorithm/{rel['f']}", "g": f"algorithm/{rel['g']}",
+                      **{k: v for k, v in rel.items() if k not in ("f", "g")},
+                      "depends_on": [f"algorithm/{rel['f']}", f"algorithm/{rel['g']}"], "provenance": prov})
+    for n, i in scan["forms"].items():
+        cards.append({"name": f"form__{n}", "category": "functional_identity", "kind": "canonical_form",
+                      "statement": f"algorithm/{n}: {i['canonical']}", "canonical": i["canonical"],
+                      "godel": i["godel"], "implementations": i["forms"], "checked": i["checked"],
+                      "depends_on": [f"algorithm/{n}"], "provenance": prov})
+    return cards
+

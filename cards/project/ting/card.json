@@ -1,0 +1,41 @@
+{
+  "blockers": [],
+  "branches": [],
+  "category": "project",
+  "done": [],
+  "goal": "The encrypted community platform.",
+  "in_progress": [],
+  "kind": "program",
+  "left": [],
+  "metadata": {
+    "previous_content_hash": "e071b7aa6431d7bd8d4381b69a81f9b5006b129ce6b0c2a0aac49d3dec4cae74",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "git_files": "",
+      "label": "files committed"
+    }
+  ],
+  "name": "ting",
+  "next_steps": [
+    "publish .cardmodel/project.json"
+  ],
+  "order": 9,
+  "owner": {
+    "name": "Ting",
+    "session": "local_4c2cfa52-7ff4-4dca-b7c1-a768d03ad476"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "repo": "~/Programmering/ting",
+  "standing": "Kept by its own session; its detail belongs in ~/Programmering/ting/.cardmodel/project.json.",
+  "statement": "The encrypted community platform (~/Programmering/ting), read here only.",
+  "tier": 1,
+  "title": "Ting",
+  "updated": "2026-10-22T00:30:00+02:00",
+  "user_actions": []
+}

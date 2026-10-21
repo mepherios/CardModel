@@ -1,0 +1,50 @@
+{
+  "applies_to": [
+    "self_step"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "self_step",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "schema": {
+    "properties": {
+      "auto": {
+        "type": "boolean"
+      },
+      "every_hours": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "measures": {
+        "type": "string"
+      },
+      "on_change": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "order": {
+        "type": "integer"
+      },
+      "run": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "statement",
+      "run",
+      "order"
+    ],
+    "type": "object"
+  },
+  "statement": "A step of the self-run cycle: the function it runs and when it is due (CM38).",
+  "tier": 0
+}

@@ -15,6 +15,13 @@
   cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
   cardmodel show CARD | list [REGISTRY] | probe | new REGISTRY NAME | docs [--check] | clean
 
+  the model runs itself (engines/selfrun.py, docs/AUTONOMY.md):
+  cardmodel self run [--only STEPS] [--force]   one cycle: capabilities, integrity, verify, learn, laws, algebra,
+                                           arena, optimize, goals -> strengths, weaknesses, flaws, a ranked plan
+  cardmodel self status | report [--write F] | capabilities [--only N] | auto on|off | corpus add|remove|list [P]
+  cardmodel self adopt [--dry-run]         move what the cycles learned (state/self/cards) into cards/
+  Any other command starts a background cycle when one is due (every 6 h; CARDMODEL_SELF=0 turns it off).
+
   the card language, logic and proofs (cli_ext.py):
   cardmodel run FILE.card [--lean]       run a program: tests, queries, theorems (witnessed, Lean-proved)
   cardmodel lang check|build|emit FILE   check it, turn it into cards (--save), or emit it (--lang rust)
@@ -31,11 +38,9 @@
   cardmodel isa build|check|list [ISA]   instruction cards: compile semantics, conformance in every engine
   cardmodel machine survey|lift|diff|info|testroms TARGET   boot many ROMs, lift one, differential runs
 
-  the arcade and the model as one unit (arcade/cli.py, cycle/cli.py):
-  cardmodel arcade list|build|serve|launcher|run|check|inventory   games built from cards, and their store
-  cardmodel cycle run|report|status|ledger|schedule|auto   run every part of the model at once, keep the core
-                                         (the ledger), find weaknesses and regressions, improve with evidence;
-                                         using any command starts a cycle in the background when one is due
+  games and the store (arcade/cli.py, docs/ARCADE.md, docs/STORE.md):
+  cardmodel arcade list|build|serve|launcher|run [GAME]   native games from cards, the Cardmodel Arcade launcher
+  cardmodel arcade check|inventory       every catalogue item launched through the store; what goes into the store
 
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.
@@ -61,14 +66,16 @@ def _out(args, data, text: str | None = None) -> None:
 
 
 def _ctx(args):
+    from .engines import selfrun
     from .engines.context import Ctx
     extra = args.cards or []
+    learned = selfrun.active()          # the self layer: what the model's own cycles learned (read-only here)
     if args.no_project:
-        store = open_store(project=False, extra=extra)
+        store = open_store(project=False, extra=extra, include_self=learned)
     elif args.project:
-        store = open_store(project=args.project, extra=extra)
+        store = open_store(project=args.project, extra=extra, include_self=learned)
     else:
-        store = open_store(project=True, extra=extra)
+        store = open_store(project=True, extra=extra, include_self=learned)
     return Ctx(store)
 
 
@@ -108,7 +115,15 @@ def cmd_status(args) -> int:
              "layers           " + "  ".join(f"{n}={p}" for n, p in data["layers"]),
              f"cards            {data['cards']} in {data['registries']} registries",
              "codegen targets  " + " ".join(f"{k}{'' if v else '(missing)'}" for k, v in data["languages"].items()),
-             f"last verify      {data['last_verify'] or 'never (run cardmodel verify)'}", "", "goals:"]
+             f"last verify      {data['last_verify'] or 'never (run cardmodel verify)'}"]
+    from .engines import selfrun
+    last = selfrun._read(selfrun.self_dir() / "last.json") or {}
+    data["self_run"] = {"last": last.get("finished"), "status": last.get("status"), "next": (last.get("plan") or [])[:3]}
+    lines.append(f"last self-run    {last.get('finished') or 'never (cardmodel self run)'}"
+                 + (f" ({last.get('status')}; cardmodel self report)" if last else ""))
+    for p_ in data["self_run"]["next"]:
+        lines.append(f"  next {p_['rank']}. [{p_['severity']}] {p_['area']}: {p_['what']}")
+    lines += ["", "goals:"]
     for g in rep["goals"]:
         mark = "·" if g["met"] is None else ("✓" if g["met"] else "✗")
         val = "not run yet" if g["value"] is None else g["value"]
@@ -150,13 +165,87 @@ def cmd_verify(args) -> int:
     rep = verify.run(ctx, seed=args.seed, only=only, langs=langs, samples=args.samples, record=args.record)
     lines = [f"seed {rep['seed']} (reproduce with --seed {rep['seed']})"]
     for sec, r in rep["sections"].items():
-        lines.append(f"  {sec:<14} {r.get('status', '?'):<8} {verify.summary_line(sec, r)}  [{rep['timings_s'].get(sec)}s]")
+        extra = r.get("counts") or r.get("rate") or r.get("summary") or ""
+        if sec == "kernel":
+            extra = (f"{r['cards']} cards, {r['schema_error_cards']} schema errors, {len(r['load_errors'])} load "
+                     f"errors, {len(r['unresolved_references'])} unresolved refs, {len(r['registry_errors'])} registry errors")
+        if sec == "portability":
+            extra = ", ".join(f"{x['version']} {x['status']}" for x in r.get("runs", []))
+        if sec == "selfcheck":
+            sb = r.get("sandbox") or {}
+            extra = (f"static problems {len(r['static_problems'])}; sandbox "
+                     f"{'ok' if sb.get('ok') else sb.get('reason') or 'FAILED'} with {len(r['denied'])} source folders denied")
+        if sec == "proofs":
+            extra = (f"{r.get('proved')} of {r.get('total')} rules proved ({r.get('backend')})" if r.get("total")
+                     else r.get("reason", ""))
+        if sec == "logic":
+            extra = (f"{(r.get('stats') or {}).get('given')} facts about the store, {r.get('rules')} rules, "
+                     f"{r.get('violation_count')} violations")
+        if sec == "lang":
+            extra = f"programs {r.get('counts')}"
+        if sec == "theorems":
+            extra = f"{r.get('cards')} theorem cards {r.get('counts')}; {len(r.get('problems') or {})} problems"
+        if sec == "game" and r.get("laws_total"):
+            extra = (f"{r['laws_passed']}/{r['laws_total']} design laws, equilibrium value {r['equilibrium']['value']} "
+                     f"over {len(r['equilibrium']['row_mix'])} options (certificate "
+                     f"{'ok' if r['equilibrium']['certificate'] else 'FAILED'})")
+        if sec == "anyps5" and r.get("declared"):
+            extra = (f"{r['complete']}/{r['declared']} exports complete ({r['witnessed']} witnessed), "
+                     f"{r['gap_items']} gaps, {r['unclassified']} unclassified, {r['witness_disagreements']} "
+                     f"witness disagreements")
+        if sec == "capabilities" and r.get("counts"):
+            extra = f"{r['counts']}" + (f"; LOST: {', '.join(r['failing'])}" if r["failing"] else "") + \
+                (f"; unavailable here: {', '.join(r['unavailable'])}" if r["unavailable"] else "")
+        if sec == "projects" and "cards" in r:
+            extra = (f"{r['cards']} project cards, {sum(1 for x in r['projects'].values() if x['stale'])} stale; "
+                     f"{len(r['problems'])} problems")
+        if sec == "integrity" and "laws" in r:
+            extra = (f"{r['laws']} laws, {r['goals']} goals, {r['capabilities']} capabilities, {r['commands']} commands, "
+                     f"{r['sections']} sections, {r['docs']} docs; {len(r['problems'])} problems")
+        if sec == "forms" and r.get("hub_claims"):
+            extra = f"{r['counts']} · hub's original domain claims: {r['hub_claims']}"
+        lines.append(f"  {sec:<14} {r.get('status', '?'):<8} {extra}  [{rep['timings_s'].get(sec)}s]")
     for sec, r in rep["sections"].items():
         if r.get("status") == "fail":
-            lines.append(f"FAIL {sec}: " + json.dumps(verify.failures(sec, r), default=str)[:1500])
+            lines.append(f"FAIL {sec}: " + json.dumps(_failures(sec, r), default=str)[:1500])
     lines.append(f"overall {rep['status']} — details in {ctx.state_root / 'last_verify.json'}")
     _out(args, rep, "\n".join(lines))
     return 0 if rep["status"] == "pass" else 1
+
+
+def _failures(sec: str, r: dict):
+    if sec == "kernel":
+        return {k: r[k] for k in ("load_errors", "schema_errors", "unresolved_references", "registry_errors") if r[k]}
+    if sec == "machine":
+        return {k: {"drifted": v.get("drifted"), "failing": v.get("failing")} for k, v in r["isas"].items()
+                if v["status"] == "fail"}
+    if sec == "conformance":
+        return {lang: {n: c for n, c in lr["cells"].items() if c["status"] in ("fail", "error")}
+                for lang, lr in r["languages"].items()}
+    if sec == "logic":
+        return r.get("violations")
+    if sec == "lang":
+        return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
+    if sec == "theorems":
+        return r.get("problems")
+    if sec in ("anyps5", "integrity", "projects"):
+        return r.get("problems")
+    if sec == "capabilities":
+        return {n: c.get("reason") for n, c in r["capabilities"].items() if c["status"] == "fail"}
+    cards = r.get("cards", {})
+    bad = {}
+    for q, c in cards.items():
+        if c.get("status") in ("fail", "error") or c.get("verdict") == "refuted":
+            bad[q] = c
+        elif "forms" in c and isinstance(c["forms"], dict):
+            f = {k: v for k, v in c["forms"].items() if v.get("status") in ("fail", "error")}
+            if f:
+                bad[q] = f
+        elif "languages" in c:
+            f = {k: v for k, v in c["languages"].items() if v.get("status") in ("fail", "error")}
+            if f or c.get("lift_mismatches"):
+                bad[q] = f or {"lift_mismatches": c["lift_mismatches"]}
+    return bad
 
 
 def cmd_cover(args) -> int:
@@ -502,6 +591,92 @@ def cmd_clean(args) -> int:
     return 0
 
 
+def cmd_self(args) -> int:
+    from .engines import selfrun as S
+    if args.action == "run":
+        if args.auto:
+            try:
+                os.setpriority(os.PRIO_PROCESS, 0, 15)
+            except (OSError, AttributeError):
+                pass
+        only = args.only.split(",") if args.only else None
+        rep = S.cycle(only=only, auto=args.auto, force=args.force, say=lambda m: print(m, file=sys.stderr))
+        if rep.get("status") == "busy":
+            _out(args, rep, f"a cycle is already running ({rep['reason']})")
+            return 0
+        lines = [f"self-run {rep['status']} in {rep['seconds']} s (seed {rep['seed']}): "
+                 f"{len(rep['steps'])} steps run, {len(rep['skipped'])} not due, {len(rep['left'])} left"]
+        kinds = {k: sum(1 for f in rep["findings"] if f["kind"] == k) for k in ("flaw", "weakness", "strength")}
+        lines.append(f"findings: {kinds['flaw']} flaws, {kinds['weakness']} weaknesses, {kinds['strength']} strengths")
+        for p in rep["plan"][:10]:
+            lines.append(f"  {p['rank']:>2}. [{p['severity']}] {p['area']}: {p['what']}  ->  {p['action']}")
+        lines.append(f"report: {S.self_dir() / 'SELF.md'}  (cardmodel self report)")
+        _out(args, rep, "\n".join(lines))
+        return 1 if rep["status"] == "fail" else 0
+    if args.action == "status":
+        st = S.status()
+        lines = [f"self layer {'on' if st['active'] else 'off (CARDMODEL_SELF=0)'}, automatic cycles "
+                 f"{'on' if st['auto'] else 'off'} every {st['interval_hours']} h, "
+                 f"{'a cycle is running' if st['busy'] else 'idle'}",
+                 f"last cycle {st['last_cycle'] or 'never'} ({st['last_status'] or '-'}); last automatic start "
+                 f"{st['last_auto_start'] or 'never'}; self layer {st['self_layer_files']} files",
+                 f"learning corpora: {', '.join(st['corpora']) or 'none'}", "steps:"]
+        lines += [f"  {n:<14} {why}" for n, why in st["due"].items()]
+        if st["plan"]:
+            lines.append("next:")
+            lines += [f"  {p['rank']}. [{p['severity']}] {p['area']}: {p['what']}" for p in st["plan"]]
+        _out(args, st, "\n".join(lines))
+        return 0
+    if args.action == "report":
+        f = S.self_dir() / "SELF.md"
+        if not f.is_file():
+            print("no cycle has run yet (cardmodel self run)", file=sys.stderr)
+            return 1
+        text = f.read_text(encoding="utf-8")
+        if args.write:
+            Path(args.write).write_text(text, encoding="utf-8")
+            text = f"wrote {args.write}"
+        _out(args, {"report": str(f)}, text)
+        return 0
+    if args.action == "capabilities":
+        from .engines import capabilities
+        from .engines import values as V
+        seed = V.fresh_seed() if args.seed is None else args.seed
+        r = capabilities.run(_ctx(args), seed, args.only.split(",") if args.only else None)
+        lines = [f"seed {seed}: {r['counts']}"]
+        for n, c in r["capabilities"].items():
+            lines.append(f"  {n:<17} {c['status']:<12} {c['seconds']:>5} s  {c.get('evidence') or c.get('reason', '')}")
+        _out(args, r, "\n".join(lines))
+        return 1 if r["status"] == "fail" else 0
+    if args.action == "auto":
+        if args.target not in (["on"], ["off"]):
+            print("usage: cardmodel self auto on|off", file=sys.stderr)
+            return 2
+        cfg = S.config()
+        cfg["auto"] = args.target == ["on"]
+        S.save_config(cfg)
+        _out(args, cfg, f"automatic cycles {'on' if cfg['auto'] else 'off'}")
+        return 0
+    if args.action == "corpus":
+        cfg = S.config()
+        verb, *rest = args.target or ["list"]
+        paths_ = [str(Path(p).expanduser().resolve()) for p in rest]
+        if verb == "add":
+            cfg["corpora"] = sorted(set(cfg.get("corpora") or []) | set(paths_))
+        elif verb == "remove":
+            cfg["corpora"] = [p for p in cfg.get("corpora") or [] if p not in paths_]
+        elif verb != "list":
+            print("usage: cardmodel self corpus add|remove|list [PATH...]", file=sys.stderr)
+            return 2
+        S.save_config(cfg)
+        _out(args, {"corpora": [str(p) for p in S.corpora(cfg)]}, "\n".join(str(p) for p in S.corpora(cfg)))
+        return 0
+    rep = S.adopt(dry_run=args.dry_run)
+    _out(args, rep, f"{'would move' if args.dry_run else 'moved'} {len(rep['moved'])} cards and {len(rep['packs'])} "
+                    f"packs into cards/: " + ", ".join(rep["moved"][:20] + rep["packs"][:10]))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="cardmodel", description=__doc__.splitlines()[0],
                                 formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
@@ -554,6 +729,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_new)
     s = sub.add_parser("docs"); s.add_argument("--check", action="store_true"); s.set_defaults(fn=cmd_docs)
     s = sub.add_parser("clean"); s.set_defaults(fn=cmd_clean)
+    s = sub.add_parser("self", help="the model runs itself: a cycle of checks, learning and optimization, a ranked plan")
+    s.add_argument("action", choices=["run", "status", "report", "capabilities", "auto", "corpus", "adopt"])
+    s.add_argument("target", nargs="*"); s.add_argument("--only"); s.add_argument("--force", action="store_true")
+    s.add_argument("--auto", action="store_true"); s.add_argument("--write"); s.add_argument("--seed", type=int)
+    s.add_argument("--dry-run", action="store_true"); s.set_defaults(fn=cmd_self)
     from . import cli_ext
     cli_ext.register(sub)
     return p
@@ -561,10 +741,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     sys.dont_write_bytecode = True
-    from .cycle import hook
-    hook.enter()
     args = build_parser().parse_args(argv)
-    hook.before(args)                 # one line when the last self-cycle found serious problems
-    code = args.fn(args)
-    hook.after(args)                  # using the model starts a cycle in the background when one is due
-    return code
+    from .engines import selfrun
+    selfrun.maybe_start(args.cmd)       # every use can start a background cycle when one is due (CM38)
+    return args.fn(args)

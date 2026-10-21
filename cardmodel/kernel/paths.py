@@ -28,6 +28,11 @@ def model_cards() -> Path:
     return home() / "cards"
 
 
+def self_cards() -> Path:
+    """The self layer: cards the model's own cycles learned (engines/selfrun.py); untracked, under state/."""
+    return home() / "state" / "self" / "cards"
+
+
 def state_dir(store_root: Path) -> Path:
     """Cache directory next to a cards root (not a source of truth; safe to delete)."""
     return store_root.parent / "state"

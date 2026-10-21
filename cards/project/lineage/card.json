@@ -1,0 +1,49 @@
+{
+  "blockers": [],
+  "branches": [],
+  "category": "project",
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "done": [
+    "the five lineage cards"
+  ],
+  "goal": "Where the model's methods come from, as cards.",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "the lineage of the four sources (MATH_CORE.md)"
+  ],
+  "metadata": {
+    "previous_content_hash": "b80eecd8f41f41d5eeb8ebe17426071059d237b44d71af112b81265aa2c4b643",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "cards": "lineage",
+      "label": "lineage cards"
+    }
+  ],
+  "name": "lineage",
+  "next_steps": [],
+  "order": 14,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cards/lineage",
+    "tools/seed_knowledge.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "Five lineage cards: Servois, Peacock, Boole, Hankel, Gödel.",
+  "statement": "Where the model's methods come from: Servois, Peacock, Boole, Hankel, Gödel.",
+  "tier": 1,
+  "title": "The lineage cards",
+  "updated": "2026-10-22T00:30:00+02:00",
+  "user_actions": []
+}

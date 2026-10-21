@@ -1,0 +1,21 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": null,
+  "measures": "theorems_proved",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "laws",
+  "on_change": [
+    "op"
+  ],
+  "order": 60,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "laws",
+  "statement": "rediscover laws when the op cards change (witness, Lean, rules)",
+  "tier": 0
+}
