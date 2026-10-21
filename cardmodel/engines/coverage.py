@@ -10,7 +10,8 @@ Questions answered (rea-cards coverage.py style: one number per question):
   6. machines        instruction cards per ISA and their conformance (last verify), the last ROM survey, lifted
                      differential runs, test ROMs and the DS coverage report (state files written by the
                      `cardmodel machine ...` commands; ROM titles never leave the state directory)
-  7. goals           every goal card's metric against its target
+  7. goals           every goal card's metric against its target (the cycle's numbers -- law witnesses, the store,
+                     regressions, the model observing its own code -- come from cycle/evidence.py)
 
 Inputs: the store and ``state/last_verify.json`` (written by ``cardmodel
 verify``). Numbers that need a verify run say "not run yet" instead of 0.
@@ -178,8 +179,24 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
         r = secs.get("rules")
         return (r.get("counts") or {}).get("pass") if r else None
     if name == "named_fraction":
+        # the model's own code: the newest observation of cardmodel/ (a card, or the cycle's, which observes it
+        # on every run); an observation of some other folder never stands in for it while one exists
         obs = sorted(st.cards("observation"), key=lambda c: c.get("observed_at", ""))
-        return obs[-1]["totals"]["named_fraction"] if obs else None
+        seen = [(c.get("observed_at", ""), c["totals"]["named_fraction"]) for c in obs if c.get("root") == "cardmodel"]
+        from ..cycle import evidence
+        mine = evidence.self_observation(ctx)
+        if mine.get("named_fraction") is not None:
+            seen.append((mine.get("observed_at") or "", mine["named_fraction"]))
+        if not seen and obs:
+            return obs[-1]["totals"]["named_fraction"]
+        return max(seen)[1] if seen else None
+    if name == "core_ledger_breaks":
+        from ..cycle import ledger
+        r = ledger.check(ctx)
+        return None if r["status"] == "vacuous" else sum(r["counts"][k] for k in ledger.FAILING)
+    if name in ("law_witnesses_failing", "store_items_failing", "cycle_regressions"):
+        from ..cycle import evidence
+        return evidence.summary(ctx).get({"cycle_regressions": "regressions"}.get(name, name))
     if name == "schema_errors":
         k = secs.get("kernel")
         return k["schema_error_cards"] if k else None

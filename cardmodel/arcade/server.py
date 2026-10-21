@@ -28,6 +28,7 @@ from urllib.parse import parse_qs, urlparse
 from . import build as B
 from . import game as G
 
+ENDPOINTS = ("/api/status", "/api/catalog", "/api/game", "/api/build")   # what the pages may ask (client.pages)
 _builds: dict[str, dict] = {}
 _lock = threading.Lock()
 _seen = {"mark": None}

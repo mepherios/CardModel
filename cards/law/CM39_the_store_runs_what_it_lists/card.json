@@ -1,0 +1,17 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM39_the_store_runs_what_it_lists",
+  "origins": [
+    "user requirement 2026-10-21 (a Steam-like store that runs our games and the products of our software, working as one software)",
+    "CM35"
+  ],
+  "provenance": {
+    "origin": "cardmodel cycle"
+  },
+  "statement": "The store runs what it lists: every game in the arcade's catalogue is built from its cards, served by the arcade service, downloaded with every chunk's and file's SHA-256 checked, installed, verified, repaired after damage, and launched natively, drawing a frame; a catalogue item that cannot do all of that is a failure the cycle reports, never a listing.",
+  "tier": 0,
+  "witness": "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store"
+}

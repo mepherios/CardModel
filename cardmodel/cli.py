@@ -31,6 +31,12 @@
   cardmodel isa build|check|list [ISA]   instruction cards: compile semantics, conformance in every engine
   cardmodel machine survey|lift|diff|info|testroms TARGET   boot many ROMs, lift one, differential runs
 
+  the arcade and the model as one unit (arcade/cli.py, cycle/cli.py):
+  cardmodel arcade list|build|serve|launcher|run|check|inventory   games built from cards, and their store
+  cardmodel cycle run|report|status|ledger|schedule|auto   run every part of the model at once, keep the core
+                                         (the ledger), find weaknesses and regressions, improve with evidence;
+                                         using any command starts a cycle in the background when one is due
+
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.
 """
@@ -144,76 +150,13 @@ def cmd_verify(args) -> int:
     rep = verify.run(ctx, seed=args.seed, only=only, langs=langs, samples=args.samples, record=args.record)
     lines = [f"seed {rep['seed']} (reproduce with --seed {rep['seed']})"]
     for sec, r in rep["sections"].items():
-        extra = r.get("counts") or r.get("rate") or r.get("summary") or ""
-        if sec == "kernel":
-            extra = (f"{r['cards']} cards, {r['schema_error_cards']} schema errors, {len(r['load_errors'])} load "
-                     f"errors, {len(r['unresolved_references'])} unresolved refs, {len(r['registry_errors'])} registry errors")
-        if sec == "portability":
-            extra = ", ".join(f"{x['version']} {x['status']}" for x in r.get("runs", []))
-        if sec == "selfcheck":
-            sb = r.get("sandbox") or {}
-            extra = (f"static problems {len(r['static_problems'])}; sandbox "
-                     f"{'ok' if sb.get('ok') else sb.get('reason') or 'FAILED'} with {len(r['denied'])} source folders denied")
-        if sec == "proofs":
-            extra = (f"{r.get('proved')} of {r.get('total')} rules proved ({r.get('backend')})" if r.get("total")
-                     else r.get("reason", ""))
-        if sec == "logic":
-            extra = (f"{(r.get('stats') or {}).get('given')} facts about the store, {r.get('rules')} rules, "
-                     f"{r.get('violation_count')} violations")
-        if sec == "lang":
-            extra = f"programs {r.get('counts')}"
-        if sec == "theorems":
-            extra = f"{r.get('cards')} theorem cards {r.get('counts')}; {len(r.get('problems') or {})} problems"
-        if sec == "game" and r.get("laws_total"):
-            extra = (f"{r['laws_passed']}/{r['laws_total']} design laws, equilibrium value {r['equilibrium']['value']} "
-                     f"over {len(r['equilibrium']['row_mix'])} options (certificate "
-                     f"{'ok' if r['equilibrium']['certificate'] else 'FAILED'})")
-        if sec == "anyps5" and r.get("declared"):
-            extra = (f"{r['complete']}/{r['declared']} exports complete ({r['witnessed']} witnessed), "
-                     f"{r['gap_items']} gaps, {r['unclassified']} unclassified, {r['witness_disagreements']} "
-                     f"witness disagreements")
-        if sec == "forms" and r.get("hub_claims"):
-            extra = f"{r['counts']} · hub's original domain claims: {r['hub_claims']}"
-        lines.append(f"  {sec:<14} {r.get('status', '?'):<8} {extra}  [{rep['timings_s'].get(sec)}s]")
+        lines.append(f"  {sec:<14} {r.get('status', '?'):<8} {verify.summary_line(sec, r)}  [{rep['timings_s'].get(sec)}s]")
     for sec, r in rep["sections"].items():
         if r.get("status") == "fail":
-            lines.append(f"FAIL {sec}: " + json.dumps(_failures(sec, r), default=str)[:1500])
+            lines.append(f"FAIL {sec}: " + json.dumps(verify.failures(sec, r), default=str)[:1500])
     lines.append(f"overall {rep['status']} — details in {ctx.state_root / 'last_verify.json'}")
     _out(args, rep, "\n".join(lines))
     return 0 if rep["status"] == "pass" else 1
-
-
-def _failures(sec: str, r: dict):
-    if sec == "kernel":
-        return {k: r[k] for k in ("load_errors", "schema_errors", "unresolved_references", "registry_errors") if r[k]}
-    if sec == "machine":
-        return {k: {"drifted": v.get("drifted"), "failing": v.get("failing")} for k, v in r["isas"].items()
-                if v["status"] == "fail"}
-    if sec == "conformance":
-        return {lang: {n: c for n, c in lr["cells"].items() if c["status"] in ("fail", "error")}
-                for lang, lr in r["languages"].items()}
-    if sec == "logic":
-        return r.get("violations")
-    if sec == "lang":
-        return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
-    if sec == "theorems":
-        return r.get("problems")
-    if sec == "anyps5":
-        return r.get("problems")
-    cards = r.get("cards", {})
-    bad = {}
-    for q, c in cards.items():
-        if c.get("status") in ("fail", "error") or c.get("verdict") == "refuted":
-            bad[q] = c
-        elif "forms" in c and isinstance(c["forms"], dict):
-            f = {k: v for k, v in c["forms"].items() if v.get("status") in ("fail", "error")}
-            if f:
-                bad[q] = f
-        elif "languages" in c:
-            f = {k: v for k, v in c["languages"].items() if v.get("status") in ("fail", "error")}
-            if f or c.get("lift_mismatches"):
-                bad[q] = f or {"lift_mismatches": c["lift_mismatches"]}
-    return bad
 
 
 def cmd_cover(args) -> int:
@@ -618,5 +561,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     sys.dont_write_bytecode = True
+    from .cycle import hook
+    hook.enter()
     args = build_parser().parse_args(argv)
-    return args.fn(args)
+    hook.before(args)                 # one line when the last self-cycle found serious problems
+    code = args.fn(args)
+    hook.after(args)                  # using the model starts a cycle in the background when one is due
+    return code

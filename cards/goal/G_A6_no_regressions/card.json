@@ -1,0 +1,13 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "cycle_regressions",
+  "name": "G_A6_no_regressions",
+  "statement": "Regressions the last cycle found against the run before it: stages, verify sections, goals, law witnesses, tests and store items that got worse (CM38).",
+  "target": 0,
+  "tier": 0
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "named_fraction",
+  "name": "G_U3_named_fraction",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Named-card fraction on the last observation (card_coverage).",
+  "target": 0.6,
+  "tier": 0
+}

@@ -19,6 +19,10 @@ the group is killed (callers keep their handling).
 ``guard()`` raises ``MemoryBudget`` once this process's peak resident memory passes its cap. Hot loops (logic
 rounds, witnesses, arena, function algebra) call it, so a runaway becomes a clean error, not a frozen machine.
 
+``spawn_detached`` starts a background process that outlives this one (the self-improvement cycle the CLI starts
+when one is due): its own session, a lower priority, output to a log file. It has no timeout of its own: what it
+starts must bound itself (the cycle's budget and its machine-wide lock do).
+
 Honest limits (L1): the watchdog samples every POLL_S seconds, so a child can briefly exceed its cap between
 samples; peak memory (ru_maxrss) never goes down, so once the self cap trips this process stays tripped.
 """
@@ -256,4 +260,19 @@ def run(args, *, timeout: float, heavy: bool = True, mem_cap_mb: int | None = No
             slot.__exit__(None, None, None)
 
 
-__all__ = ["MemoryBudget", "available_mb", "guard", "max_parallel", "peak_mb", "policy", "run", "total_ram_mb"]
+def spawn_detached(args, *, log_path, cwd=None, env=None) -> int:
+    """Start ``args`` in the background, detached from this process (own session, niced, stdin closed, output
+    appended to ``log_path``); returns its pid. A thread reaps it if this process lives longer than the child."""
+    with open(log_path, "ab") as log:
+        p = subprocess.Popen(args, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                             start_new_session=True)
+    try:
+        os.setpriority(os.PRIO_PROCESS, p.pid, _POLICY["nice"])
+    except (OSError, AttributeError):
+        pass
+    threading.Thread(target=p.wait, daemon=True).start()
+    return p.pid
+
+
+__all__ = ["MemoryBudget", "available_mb", "guard", "max_parallel", "peak_mb", "policy", "run", "spawn_detached",
+           "total_ram_mb"]

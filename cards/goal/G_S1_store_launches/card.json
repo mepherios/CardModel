@@ -1,0 +1,13 @@
+{
+  "axis": "products",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "store_items_failing",
+  "name": "G_S1_store_launches",
+  "statement": "Catalogue items that do not install, verify, repair and launch through the arcade's store in the last check (CM39).",
+  "target": 0,
+  "tier": 0
+}

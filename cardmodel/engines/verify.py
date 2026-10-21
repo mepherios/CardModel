@@ -2,6 +2,8 @@
 
 Sections (all on by default; ``only`` selects):
   kernel        load errors, card-type schema validation, closure (CM10/CM11)
+  ledger        the core ledger: no law, goal, registry, command or verify section lost, changed or a goal
+                weakened without an accepted amendment (CM37, cycle/ledger.py)
   forms         op / call / re_operation forms vs their reference (witness.verify_forms)
   vectors       known-answer vectors (crypto atoms, detect_format, ...)
   rules         rewrite rules on seeded integers
@@ -23,7 +25,10 @@ Sections (all on by default; ``only`` selects):
                 cycle and flag data checked (CM32)
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
-it). ``record=True`` also writes each card's verdict into the card
+it). A run of some sections keeps the other sections of the saved report,
+each marked ``carried`` with the seed and start of the run that produced it,
+so a partial run (``--only rules``, ``--quick``) never erases evidence it did
+not replace. ``record=True`` also writes each card's verdict into the card
 (``verification`` field, versioned save). Hub-claim refutations are
 informational: they document an overstated original claim, while the
 card's declared domain is what must pass.
@@ -40,9 +45,9 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms", "vectors", "rules",
-            "redefinitions", "conformance", "functions", "proofs", "selfcheck", "portability")
-QUICK = ["kernel", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms", "vectors", "rules",
+SECTIONS = ("kernel", "ledger", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms", "vectors",
+            "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck", "portability")
+QUICK = ["kernel", "ledger", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms", "vectors", "rules",
          "redefinitions"]
 
 
@@ -65,6 +70,11 @@ def _kernel(ctx: Ctx) -> dict:
             "schema_error_cards": len(schema_errors), "warnings": sum(len(v["warnings"]) for v in findings.values()),
             "unresolved_references": unresolved, "registry_errors": reg_errors,
             "cards": len(ctx.store.ALL), "registries": len(ctx.store.views)}
+
+
+def _ledger(ctx: Ctx) -> dict:
+    from ..cycle import ledger
+    return ledger.check(ctx)
 
 
 def _forms(ctx: Ctx, seed: int, samples: int) -> dict:
@@ -266,6 +276,8 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         t0 = time.perf_counter()
         if sec == "kernel":
             res = _kernel(ctx)
+        elif sec == "ledger":
+            res = _ledger(ctx)
         elif sec == "logic":
             res = _logic(ctx)
         elif sec == "lang":
@@ -305,10 +317,112 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
     from ..kernel import resources
     report["peak_memory_mb"] = round(resources.peak_mb(), 1)
     report["status"] = "fail" if any(r.get("status") == "fail" for r in report["sections"].values()) else "pass"
-    ctx.save_state("last_verify", report)
+    save_report(ctx, report)
     if record:
         record_results(ctx, report)
     return report
+
+
+def save_report(ctx: Ctx, report: dict) -> dict:
+    """Save ``report`` as last_verify.json, keeping the saved sections it did not run (marked ``carried``)."""
+    saved = dict(report)
+    missing = [s for s in SECTIONS if s not in report["sections"]]
+    if missing:
+        try:
+            old = ctx.load_state("last_verify") or {}
+        except ValueError:
+            old = {}
+        secs = dict(report["sections"])
+        for sec in missing:
+            r = (old.get("sections") or {}).get(sec)
+            if r is not None:
+                secs[sec] = dict(r, carried=r.get("carried") or {"seed": old.get("seed"), "started": old.get("started")})
+        saved["sections"] = secs
+        saved["timings_s"] = {**{k: v for k, v in (old.get("timings_s") or {}).items() if k in missing},
+                              **report.get("timings_s", {})}
+    ctx.save_state("last_verify", saved)
+    return saved
+
+
+def summary_line(sec: str, r: dict) -> str:
+    """One line saying what a section found (the CLI's verify table and the cycle's report)."""
+    extra = r.get("counts") or r.get("rate") or r.get("summary") or ""
+    if sec == "kernel":
+        extra = (f"{r['cards']} cards, {r['schema_error_cards']} schema errors, {len(r['load_errors'])} load "
+                 f"errors, {len(r['unresolved_references'])} unresolved refs, {len(r['registry_errors'])} registry errors")
+    if sec == "ledger":
+        p, c = r.get("protected") or r.get("now") or {}, r.get("counts") or {}
+        extra = (r.get("reason") or "") if r.get("status") == "vacuous" else (
+            f"{p.get('laws')} laws, {p.get('goals')} goals, {p.get('registries')} registries, {p.get('commands')} "
+            f"commands, {p.get('verify_sections')} verify sections kept; lost {c.get('lost', 0)}, changed "
+            f"{c.get('changed', 0)}, weakened {c.get('weakened', 0)}, new {c.get('new', 0)}")
+    if sec == "portability":
+        extra = ", ".join(f"{x['version']} {x['status']}" for x in r.get("runs", []))
+    if sec == "selfcheck":
+        sb = r.get("sandbox") or {}
+        extra = (f"static problems {len(r['static_problems'])}; sandbox "
+                 f"{'ok' if sb.get('ok') else sb.get('reason') or 'FAILED'} with {len(r['denied'])} source folders denied")
+    if sec == "proofs":
+        extra = (f"{r.get('proved')} of {r.get('total')} rules proved ({r.get('backend')})" if r.get("total")
+                 else r.get("reason", ""))
+    if sec == "logic":
+        extra = (f"{(r.get('stats') or {}).get('given')} facts about the store, {r.get('rules')} rules, "
+                 f"{r.get('violation_count')} violations")
+    if sec == "lang":
+        extra = f"programs {r.get('counts')}"
+    if sec == "theorems":
+        extra = f"{r.get('cards')} theorem cards {r.get('counts')}; {len(r.get('problems') or {})} problems"
+    if sec == "game" and r.get("laws_total"):
+        extra = (f"{r['laws_passed']}/{r['laws_total']} design laws, equilibrium value {r['equilibrium']['value']} "
+                 f"over {len(r['equilibrium']['row_mix'])} options (certificate "
+                 f"{'ok' if r['equilibrium']['certificate'] else 'FAILED'})")
+    if sec == "anyps5" and r.get("declared"):
+        extra = (f"{r['complete']}/{r['declared']} exports complete ({r['witnessed']} witnessed), "
+                 f"{r['gap_items']} gaps, {r['unclassified']} unclassified, {r['witness_disagreements']} "
+                 f"witness disagreements")
+    if sec == "forms" and r.get("hub_claims"):
+        extra = f"{r['counts']} · hub's original domain claims: {r['hub_claims']}"
+    if r.get("status") == "skipped" and not extra:
+        extra = r.get("reason", "")
+    return str(extra)
+
+
+def failures(sec: str, r: dict):
+    """What failed in a section, compact enough to print."""
+    if sec == "kernel":
+        return {k: r[k] for k in ("load_errors", "schema_errors", "unresolved_references", "registry_errors") if r[k]}
+    if sec == "ledger":
+        return {k: r[k] for k in ("lost", "changed", "weakened") if r.get(k)}
+    if sec == "machine":
+        return {k: {"drifted": v.get("drifted"), "failing": v.get("failing")} for k, v in r["isas"].items()
+                if v["status"] == "fail"}
+    if sec == "conformance":
+        return {lang: {n: c for n, c in lr["cells"].items() if c["status"] in ("fail", "error")}
+                for lang, lr in r["languages"].items()}
+    if sec == "logic":
+        return r.get("violations")
+    if sec == "lang":
+        return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
+    if sec == "theorems":
+        return r.get("problems")
+    if sec == "anyps5":
+        return r.get("problems")
+    if sec in ("selfcheck", "portability"):
+        return {k: r.get(k) for k in ("static_problems", "sandbox", "failures", "runs") if r.get(k)}
+    cards = r.get("cards", {})
+    bad = {}
+    for q, c in cards.items():
+        if c.get("status") in ("fail", "error") or c.get("verdict") == "refuted":
+            bad[q] = c
+        elif "forms" in c and isinstance(c["forms"], dict):
+            f = {k: v for k, v in c["forms"].items() if v.get("status") in ("fail", "error")}
+            if f:
+                bad[q] = f
+        elif "languages" in c:
+            f = {k: v for k, v in c["languages"].items() if v.get("status") in ("fail", "error")}
+            if f or c.get("lift_mismatches"):
+                bad[q] = f or {"lift_mismatches": c["lift_mismatches"]}
+    return bad
 
 
 def record_results(ctx: Ctx, report: dict) -> int:

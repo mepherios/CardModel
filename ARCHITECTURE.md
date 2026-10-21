@@ -232,6 +232,16 @@ Design decisions:
 * **Engines are embed blocks.** How a host loads emitted code is card data (`embed.kind`), so the machine package
   names no language.
 
+## The model as one unit (fifth build)
+
+`cardmodel/cycle/` ties the parts together: `ledger.py` (the core ledger, CM37), `stages.py` (what a cycle runs),
+`report.py` (findings, regressions, strengths, next actions, shortfalls), `run.py` (the bounded run: a machine-wide
+lock, the budget, state under `state/cycle`, recording and the local commit), `hook.py` (the CLI starts a cycle in
+the background when one is due; the launchd schedule), `evidence.py` (the numbers the goals read) and
+`witness_runner.py` (law witnesses and the suite in a child process, test by test). The cycle's settings are the
+card `cards/cycle/default`. `arcade/client.py` replays the launcher's protocol for the store check and
+`arcade/inventory.py` lists what goes into the store. docs/CYCLE.md describes all of it.
+
 ## What was not carried over
 
 * **Hub laws about the hub itself:** GUI conventions, hub reachability, hub folder budgets, autopilot, impact tree,

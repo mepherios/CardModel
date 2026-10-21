@@ -30,6 +30,10 @@ filesystem registry. The program takes part in software development in any proje
 11. **run machines**: a CPU is its instruction cards and a console is its hardware cards; their card-language
     semantics compile to the card IR, run in every engine, and a ROM's own code is lifted into the same IR and
     emitted natively, behind an effect shell for video, audio, input and saves (docs/MACHINES.md).
+12. **ship products**: games made of cards, built natively and served by the arcade's store, every listed game
+    launched through the store on every cycle (docs/ARCADE.md, docs/ARCADE_INVENTORY.md).
+13. **run as one unit**: one bounded cycle runs every part at once, keeps its core (the ledger) and every law
+    upheld, compares each run with the last, and says where it is weak and what to do next (docs/CYCLE.md).
 
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
@@ -50,7 +54,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_C5_functions_translated` | computation | function cards whose forms agree in ≥ 3 implementations | ≥ 20 |
 | `G_U1_closure` | understanding | unresolved `depends_on` references (L45) | = 0 |
 | `G_U2_rules_witnessed` | understanding | rewrite rules with a passing numeric witness | ≥ 12 |
-| `G_U3_named_fraction` | understanding | named-card fraction of the last observation (hub card_coverage) | ≥ 0.6 |
+| `G_U3_named_fraction` | understanding | named-card fraction of the model's own code (`cardmodel/`), newest observation of it (hub card_coverage) | ≥ 0.6 |
 | `G_U4_valid_cards` | understanding | cards failing their card-type schema | = 0 |
 | `G_L1_learned_cards` | learning | cards promoted by the learning loop with cited evidence | ≥ 10 |
 | `G_O1_measured_forms` | optimization | forms with a host measurement (metric card) | ≥ 30 |
@@ -78,6 +82,10 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_M3_lifted_identical` | machines | differential runs where lifted code and the interpreter disagree | = 0 |
 | `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye, acid2) passing | = 1.0 |
 | `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
+| `G_A4_core_kept` | autonomy | laws, goals, registries, commands and verify sections lost, changed or weakened against the core ledger without an accepted amendment | = 0 |
+| `G_A5_laws_upheld` | autonomy | law cards whose witness test fails, errs or is missing in the last cycle | = 0 |
+| `G_A6_no_regressions` | autonomy | regressions the last cycle found against the run before it | = 0 |
+| `G_S1_store_launches` | products | catalogue items that do not install, verify, repair and launch through the arcade's store | = 0 |
 
 ### What "done" would mean on each axis
 
@@ -97,6 +105,9 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
   the observation, boundary or measurement that would close it. `G_P4` stays below its target as long as the console's
   undocumented behaviour, its hardware and its services are part of what AnyPS5 must reproduce: that part closes by
   observation (Pheros L102), not by construction (docs/ANYPS5.md says exactly what remains and why).
+* **Autonomy, as one unit.** The core ledger never loses anything silently, every law's witness passes in every
+  cycle, and a cycle finds no regression against the last.
+* **Products.** Every game in the store's catalogue builds from its cards and launches through the store.
 * **Machines.** Every instruction card agrees with its own data and across engines; the hardware test suites pass;
   every game in a collection boots, and lifted code is frame-for-frame identical to the interpreter; for the DS,
   every executed instruction decodes and the unmodelled hardware the games touch shrinks to nothing.

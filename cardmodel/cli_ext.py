@@ -581,6 +581,8 @@ def register(sub) -> None:
     machine_cli.register(sub)
     from .arcade import cli as arcade_cli
     arcade_cli.register(sub)
+    from .cycle import cli as cycle_cli
+    cycle_cli.register(sub)
 
 
 __all__ = ["register"]

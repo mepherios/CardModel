@@ -1,0 +1,6 @@
+{
+  "defined_by": "cardmodel",
+  "description": "What the model must never silently lose: the core ledger names every law (statement and witness), goal (metric, direction, target), registry, command and verify section; verify and the cycle fail when one is lost, changed or a goal weakened without an accepted amendment (CM37).",
+  "name": "ledger",
+  "tier": 0
+}

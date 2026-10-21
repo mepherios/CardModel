@@ -29,10 +29,17 @@ cd ~/Programmering/cardmodel
 ./bin/cardmodel cover --write COVERAGE.md
 ```
 
+```bash
+./bin/cardmodel cycle run
+```
+
 * `probe` shows which toolchains this machine has (Python, Node, C, C++, Rust, Go, Swift, Java, Ruby, Lua, Lean, …).
-* `verify --quick` runs the kernel, forms, vectors, rules and redefinitions (about 1 minute).
-* Plain `verify` adds the op × language matrix, the function cards and the Lean proofs (several minutes).
+* `verify --quick` runs the kernel, the core ledger, forms, vectors, rules and redefinitions (about 20 seconds).
+* Plain `verify` adds the op × language matrix, the function cards and the Lean proofs (about 1.5 minutes).
 * `cover --write` regenerates the coverage report and the goal values.
+* `cycle run` runs every part of the model at once (§3h): the core ledger, every witness, every law's witness test,
+  learning, optimisation, the store, the goals and the documents, and writes the weakness report. Using any command
+  starts one in the background when it is due.
 
 To use it from any folder, put the shim on PATH (it resolves symlinks):
 
@@ -373,7 +380,52 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   ~/Library/Application Support/Cardmodel Arcade.
 * **Shipping an update**: change the game's cards, bump `version` and add a `changelog` entry in its card.json; the
   launcher shows Update with the notes, and the service compiles the new build when the player asks for it.
-* Witnesses: `tests/test_arcade.py` (CM35).
+* Witnesses: `tests/test_arcade.py` (CM35, CM39).
+* **Checking the store end to end**: `cardmodel arcade check` launches every catalogue item through the service
+  exactly as the launcher does (install with every chunk and file checked, verify, a damaged file repaired, a
+  headless run drawing a frame); `--launcher` also compiles the launcher. The cycle runs it every time (CM39).
+* **What goes into the store**: `cardmodel arcade inventory` lists every piece (cards, logic, kernel, font, platform
+  shell, launcher, pages, service, pipeline, witnesses), its size and what the model contributes to it;
+  docs/ARCADE_INVENTORY.md is that list, generated (a test keeps it in sync).
+* **Which checkout the launcher uses**: installing from a linked worktree points the launcher at the main
+  checkout (worktrees are deleted with their sessions); `--home PATH` chooses another. The launcher installed on
+  this Mac on 2026-10-21 still points at the worktree `sad-sanderson-482207`: run
+  `./bin/cardmodel arcade launcher --install` once from `~/Programmering/cardmodel` to move it.
+* Headless runs (`arcade run --frames N`) use a temporary save folder, never the player's save.
+
+## 3h. The model as one unit: the cycle (fifth build)
+
+```bash
+./bin/cardmodel cycle run                       # standard profile; --profile quick|full; --record; --commit
+```
+
+```bash
+./bin/cardmodel cycle report                    # the weakness report of the last cycle
+```
+
+```bash
+./bin/cardmodel cycle ledger                    # the core ledger: what must never be lost (CM37)
+```
+
+* One bounded loop runs every part of the model together and keeps the evidence (CM38): `core` (the ledger),
+  `verify`, `laws` (every law card's witness test), `learn` (the model observing its own code; the learning loop;
+  what each language card cannot express yet), `optimize` (a seeded arena, cost anchors measured), `store` (every
+  catalogue item launched through the store), `goals`, `docs`, and in the full profile the whole test suite.
+  Profiles and budgets are the card `cards/cycle/default`. docs/CYCLE.md has the details.
+* The weakness report (`state/cycle/report.md`; `WEAKNESSES.md` when recording) lists, most severe first, lost or
+  changed core, broken laws, failing and vacuous witnesses, regressions against the last run, unmet goals with what
+  would move them, unmeasured goals, language gaps, stale documents, the strengths, the next actions the cycle
+  chooses, and where development falls short (every engine's declared limits and the ROADMAP's open items).
+* **Automatically**: any command starts `cycle run --auto` in the background when one is due (at most hourly; the
+  run returns at once when nothing changed in a day), never while another cycle runs, with little free memory, a
+  busy machine, in a nested cardmodel process or a linked worktree. `cardmodel cycle auto off` or
+  `CARDMODEL_AUTO_CYCLE=0` turns it off. `cardmodel cycle schedule [--install]` sets up launchd (not installed by
+  default).
+* **The core ledger** (`cards/ledger/core`): every law (statement hash, witness), goal (metric, direction, target),
+  registry, command and verify section. `verify` and the cycle fail on a loss, a change or a weakened goal until
+  `cardmodel cycle ledger --accept --reason "..."` records the amendment; growth is accepted by recording cycles.
+* `--record` writes what lasts (ledger growth, learned function cards, the generated documents, WEAKNESSES.md);
+  `--commit` commits exactly that locally when the tree was clean before; nothing is pushed.
 
 ## 4. How to add things
 
@@ -523,6 +575,16 @@ pass except what is skipped: tests for other hardware revisions, for a CGB in DM
 overflows its own log (docs/MACHINES.md section 2); the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted
 (COVERAGE.md has the numbers).
 
+**Real since the fifth build (the model as one unit):** the cycle runs every part of the model under the resource
+governor and compares each run with the last (regressions, improvements, strengths, next actions); the core ledger
+fails verify when a law, goal, registry, command or verify section is lost or changed; every law's witness test
+runs in each standard cycle; the store's catalogue is launched through the store's own protocol on every cycle; a
+partial `verify` keeps the sections it did not run.
+
+**Partial (fifth build):** regressions are against the previous run only; the background cycle is gated by load
+and free memory but still shares the machine; the store check replays the launcher's protocol in Python and
+compiles the launcher, but does not drive its window.
+
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
 
@@ -543,6 +605,10 @@ a native (ctypes) path inside improved modules (ROADMAP).
   `state/emu/`, saves in `saves/` (both gitignored). Nothing decrypts or patches DRM or anti-cheat; a DS image with
   an encrypted secure area is refused.
 * A machine module performs no I/O; everything that touches the world is `machine/shell.py` (CM21, CM34).
+* The core is kept (CM37): removing or rewording a law, removing a goal, registry, command or verify section, or
+  lowering a goal's bar fails `verify` until it is accepted with a reason in the core ledger.
+* Automation never pushes and never commits someone else's work: `cycle run --commit` commits only what the cycle
+  wrote, and only when the tree was clean before it started.
 
 ---
 
@@ -557,7 +623,9 @@ a native (ctypes) path inside improved modules (ROADMAP).
 4. **Run `cardmodel learn --promote` on your real projects** (Ting, rea-cards, the hub's config/) and commit the
    project `.cardmodel/` directories. Then use `cardmodel cover` there to pick the next card to write: the top
    fallback calls.
-5. **Schedule `cardmodel verify --record`** (cron or launchd), so evidence accumulates in git history.
+5. **Schedule the cycle** if you want evidence in git history: `cardmodel cycle schedule --profile full --record
+   --commit --install` (launchd; prints the agent without `--install`). The cycle already runs by itself whenever
+   the model is used (§3h); WEAKNESSES.md is its last recorded report: work it from the top.
 6. **Games natively (proposed as its own session).** Game Boy / Game Boy Color first, then Nintendo DS. The pieces
    follow the same pattern:
    * an `isa` registry: one op card per CPU instruction (LR35902, later ARMv4T/ARMv5TE), with IR semantics and

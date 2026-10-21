@@ -1,0 +1,553 @@
+{
+  "accepted": "2026-10-21T21:30:41+00:00",
+  "accepted_reason": "first ledger: the core as of the cycle's introduction (CM37)",
+  "amendments": [],
+  "category": "ledger",
+  "core": {
+    "commands": {
+      "algebra": [
+        "form",
+        "gcd",
+        "godel",
+        "scan",
+        "total"
+      ],
+      "anyps5": [
+        "blocks",
+        "cover",
+        "gaps",
+        "scan",
+        "why",
+        "witness"
+      ],
+      "arcade": [
+        "build",
+        "check",
+        "inventory",
+        "launcher",
+        "list",
+        "run",
+        "serve"
+      ],
+      "arena": [],
+      "clean": [],
+      "cover": [],
+      "cycle": [
+        "auto",
+        "ledger",
+        "report",
+        "run",
+        "schedule",
+        "status"
+      ],
+      "docs": [],
+      "emit": [],
+      "emu": [],
+      "game": [
+        "balance",
+        "check",
+        "duel",
+        "kernel",
+        "matrix",
+        "play",
+        "sensitivity",
+        "tournament",
+        "world"
+      ],
+      "improve": [],
+      "init": [],
+      "isa": [
+        "build",
+        "check",
+        "list"
+      ],
+      "lang": [
+        "build",
+        "check",
+        "emit"
+      ],
+      "laws": [],
+      "lean": [
+        "check",
+        "import"
+      ],
+      "learn": [],
+      "list": [],
+      "logic": [
+        "code",
+        "mine",
+        "query",
+        "self",
+        "why"
+      ],
+      "machine": [
+        "diff",
+        "info",
+        "lift",
+        "nds",
+        "survey",
+        "testroms"
+      ],
+      "new": [],
+      "observe": [],
+      "optimize": [],
+      "probe": [],
+      "repl": [],
+      "rewrite": [],
+      "run": [],
+      "show": [],
+      "status": [],
+      "translate": [],
+      "verify": []
+    },
+    "goals": {
+      "G_A1_self_contained": {
+        "direction": "lower",
+        "metric": "external_dependencies",
+        "target": 0
+      },
+      "G_A2_runs_on_every_python": {
+        "direction": "lower",
+        "metric": "python_failures",
+        "target": 0
+      },
+      "G_A3_memory_bounded": {
+        "direction": "lower",
+        "metric": "peak_memory_mb",
+        "target": 1024
+      },
+      "G_A4_core_kept": {
+        "direction": "lower",
+        "metric": "core_ledger_breaks",
+        "target": 0
+      },
+      "G_A5_laws_upheld": {
+        "direction": "lower",
+        "metric": "law_witnesses_failing",
+        "target": 0
+      },
+      "G_A6_no_regressions": {
+        "direction": "lower",
+        "metric": "cycle_regressions",
+        "target": 0
+      },
+      "G_C1_languages_verified": {
+        "direction": "higher",
+        "metric": "languages_fully_conformant",
+        "target": 10
+      },
+      "G_C2_op_conformance": {
+        "direction": "higher",
+        "metric": "op_conformance_rate",
+        "target": 1.0
+      },
+      "G_C3_forms_witnessed": {
+        "direction": "higher",
+        "metric": "forms_witnessed_rate",
+        "target": 1.0
+      },
+      "G_C4_redefinitions_verified": {
+        "direction": "higher",
+        "metric": "redefinitions_verified",
+        "target": 111
+      },
+      "G_C5_functions_translated": {
+        "direction": "higher",
+        "metric": "functions_translated",
+        "target": 20
+      },
+      "G_D1_design_laws": {
+        "direction": "lower",
+        "metric": "design_laws_failing",
+        "target": 0
+      },
+      "G_D2_equilibrium_support": {
+        "direction": "higher",
+        "metric": "equilibrium_support",
+        "target": 8
+      },
+      "G_K1_theorems_proved": {
+        "direction": "higher",
+        "metric": "theorems_proved",
+        "target": 150
+      },
+      "G_K2_lean_imported": {
+        "direction": "higher",
+        "metric": "lean_imported",
+        "target": 300
+      },
+      "G_K3_lean_mismatches": {
+        "direction": "lower",
+        "metric": "lean_mismatches",
+        "target": 0
+      },
+      "G_K4_self_violations": {
+        "direction": "lower",
+        "metric": "self_violations",
+        "target": 0
+      },
+      "G_K5_programs_pass": {
+        "direction": "higher",
+        "metric": "card_programs_passing",
+        "target": 6
+      },
+      "G_K6_functional_identities": {
+        "direction": "higher",
+        "metric": "functional_identities",
+        "target": 5
+      },
+      "G_L1_learned_cards": {
+        "direction": "higher",
+        "metric": "learned_cards",
+        "target": 10
+      },
+      "G_M1_isa_conformance": {
+        "direction": "lower",
+        "metric": "isa_cards_failing",
+        "target": 0
+      },
+      "G_M2_roms_boot": {
+        "direction": "higher",
+        "metric": "roms_boot_fraction",
+        "target": 0.95
+      },
+      "G_M3_lifted_identical": {
+        "direction": "lower",
+        "metric": "lifted_runs_differing",
+        "target": 0
+      },
+      "G_M4_test_roms": {
+        "direction": "higher",
+        "metric": "test_roms_pass_rate",
+        "target": 1.0
+      },
+      "G_M5_ds_decoded": {
+        "direction": "lower",
+        "metric": "ds_undecodable_executed",
+        "target": 0
+      },
+      "G_O1_measured_forms": {
+        "direction": "higher",
+        "metric": "measured_forms",
+        "target": 30
+      },
+      "G_O2_arena_sound": {
+        "direction": "lower",
+        "metric": "arena_unsound_runs",
+        "target": 0
+      },
+      "G_O3_arena_recall": {
+        "direction": "higher",
+        "metric": "arena_recall",
+        "target": 0.9
+      },
+      "G_O4_arena_speedup": {
+        "direction": "higher",
+        "metric": "arena_geomean_speedup",
+        "target": 10
+      },
+      "G_P1_anyps5_badge_reproduced": {
+        "direction": "lower",
+        "metric": "anyps5_parity_mismatches",
+        "target": 0
+      },
+      "G_P2_anyps5_gaps_unclassified": {
+        "direction": "lower",
+        "metric": "anyps5_gaps_unclassified",
+        "target": 0
+      },
+      "G_P3_anyps5_closable_open": {
+        "direction": "lower",
+        "metric": "anyps5_closable_open",
+        "target": 0
+      },
+      "G_P4_anyps5_complete_fraction": {
+        "direction": "higher",
+        "metric": "anyps5_complete_fraction",
+        "target": 1.0
+      },
+      "G_P5_anyps5_witness_disagreements": {
+        "direction": "lower",
+        "metric": "anyps5_witness_disagreements",
+        "target": 0
+      },
+      "G_S1_store_launches": {
+        "direction": "lower",
+        "metric": "store_items_failing",
+        "target": 0
+      },
+      "G_U1_closure": {
+        "direction": "lower",
+        "metric": "unresolved_references",
+        "target": 0
+      },
+      "G_U2_rules_witnessed": {
+        "direction": "higher",
+        "metric": "rules_witnessed",
+        "target": 12
+      },
+      "G_U3_named_fraction": {
+        "direction": "higher",
+        "metric": "named_fraction",
+        "target": 0.6
+      },
+      "G_U4_valid_cards": {
+        "direction": "lower",
+        "metric": "schema_errors",
+        "target": 0
+      }
+    },
+    "laws": {
+      "CM01_honest_limits": {
+        "statement": "216633d43c7d715f",
+        "witness": "tests/test_laws.py::test_engines_state_honest_limits"
+      },
+      "CM02_everything_is_a_card": {
+        "statement": "22d6e868ede83665",
+        "witness": "tests/test_kernel.py::test_registry_contract"
+      },
+      "CM03_unknown_fields_survive": {
+        "statement": "6e0ac03fcf1eb517",
+        "witness": "tests/test_kernel.py::test_unknown_fields_round_trip"
+      },
+      "CM04_compose_with_evidence": {
+        "statement": "16318568bde87e26",
+        "witness": "tests/test_learn.py::test_promotion_needs_evidence"
+      },
+      "CM05_cheapest_available_form": {
+        "statement": "7307d7f7e9be5496",
+        "witness": "tests/test_rewrite.py::test_cheapest_respects_domain_and_availability"
+      },
+      "CM06_random_seeds": {
+        "statement": "39728dd694c942b8",
+        "witness": "tests/test_laws.py::test_verify_prints_and_accepts_seed"
+      },
+      "CM07_no_vacuous_success": {
+        "statement": "5f334d435d164541",
+        "witness": "tests/test_witness.py::test_wrong_form_is_caught"
+      },
+      "CM08_executable_claims_have_witnesses": {
+        "statement": "aa76333cda0f3f8b",
+        "witness": "tests/test_witness.py::test_builtin_runnable_forms_are_witnessed"
+      },
+      "CM09_measure_before_claiming": {
+        "statement": "618bd9bd63510a96",
+        "witness": "tests/test_optimize.py::test_measure_writes_metric_cards"
+      },
+      "CM10_fail_loud": {
+        "statement": "db7138727991d7fb",
+        "witness": "tests/test_kernel.py::test_malformed_card_is_reported"
+      },
+      "CM11_closure_under_definition": {
+        "statement": "72ba591033f4a0a4",
+        "witness": "tests/test_kernel.py::test_builtin_closure"
+      },
+      "CM12_capabilities_are_probed": {
+        "statement": "5b77b5fff2230786",
+        "witness": "tests/test_probes.py::test_unavailable_is_reported"
+      },
+      "CM13_self_contained": {
+        "statement": "41acfbc008836c61",
+        "witness": "tests/test_self_contained.py::test_sources_unreachable"
+      },
+      "CM14_versioned_writes": {
+        "statement": "653c976407dd098b",
+        "witness": "tests/test_kernel.py::test_versioning_archives_previous"
+      },
+      "CM15_observations_are_ground_truth": {
+        "statement": "2e649df36d1c04aa",
+        "witness": "tests/test_learn.py::test_learned_cards_cite_evidence"
+      },
+      "CM16_languages_are_cards": {
+        "statement": "94926b3df5c33f7b",
+        "witness": "tests/test_laws.py::test_engines_have_no_language_branches"
+      },
+      "CM17_translation_coverage_is_measured": {
+        "statement": "e789982d9fe311da",
+        "witness": "tests/test_conformance.py::test_conformance_matrix"
+      },
+      "CM18_bounded_work": {
+        "statement": "78f588f4f96383ad",
+        "witness": "tests/test_laws.py::test_subprocesses_have_timeouts"
+      },
+      "CM19_never_publish_unasked": {
+        "statement": "24c65934003e9c83",
+        "witness": "tests/test_laws.py::test_no_publishing_calls"
+      },
+      "CM20_laws_are_cards": {
+        "statement": "4fd12975839197dd",
+        "witness": "tests/test_laws.py::test_laws_md_in_sync"
+      },
+      "CM21_effects_are_boundaries": {
+        "statement": "249e4b37319ce1eb",
+        "witness": "tests/test_improve.py::test_effect_shell_is_byte_identical"
+      },
+      "CM22_optimizations_self_correct": {
+        "statement": "9037a515af4da4d9",
+        "witness": "tests/test_improve.py::test_refuted_substitution_is_reverted"
+      },
+      "CM23_crystallised_knowledge": {
+        "statement": "87ec5d5e81afa0eb",
+        "witness": "tests/test_theorems.py::test_status_follows_evidence"
+      },
+      "CM24_logic_carries": {
+        "statement": "1e24ab1ef08115d5",
+        "witness": "tests/test_logic.py::test_derivations_are_kernel_checked"
+      },
+      "CM25_laws_carry_into_optimization": {
+        "statement": "6d27214e17136889",
+        "witness": "tests/test_laws_discovery.py::test_simplifying_laws_become_rules"
+      },
+      "CM26_one_language": {
+        "statement": "c67b639a495afa36",
+        "witness": "tests/test_lang.py::test_function_cards_verify_in_languages"
+      },
+      "CM27_the_model_checks_itself": {
+        "statement": "e12f22cc56c90e1b",
+        "witness": "tests/test_logic.py::test_self_theory_holds_and_catches_breaks"
+      },
+      "CM28_design_is_computed": {
+        "statement": "79a57b2423b11a86",
+        "witness": "tests/test_game.py::test_design_laws_hold_and_catch_imbalance"
+      },
+      "CM29_everything_carries": {
+        "statement": "25ac6f23d44b1dfe",
+        "witness": "tests/test_game.py::test_world_effects_carry_and_explain"
+      },
+      "CM30_resources_are_bounded": {
+        "statement": "e04c933d8cd25805",
+        "witness": "tests/test_resources.py::test_child_over_its_cap_is_killed"
+      },
+      "CM31_behaviour_is_numbered": {
+        "statement": "d7ca5c169b84185a",
+        "witness": "tests/test_funcalg.py::test_canonical_forms_carry_between_functions"
+      },
+      "CM32_machines_are_cards": {
+        "statement": "ac7f48e78e09221b",
+        "witness": "tests/test_machine.py::test_instruction_cards_conform_in_every_engine"
+      },
+      "CM33_lifted_code_is_the_cards": {
+        "statement": "34d4e2c0561577cc",
+        "witness": "tests/test_machine.py::test_lifted_blocks_match_the_interpreter"
+      },
+      "CM34_emulation_effects_are_the_shell": {
+        "statement": "aec475e2353ad19e",
+        "witness": "tests/test_machine.py::test_shell_is_the_only_effect"
+      },
+      "CM35_games_are_cards": {
+        "statement": "7f76cae405655166",
+        "witness": "tests/test_arcade.py::test_a_timed_guard_redirects"
+      },
+      "CM36_unknowns_are_observation_obligations": {
+        "statement": "1ef696f0fbbf55a2",
+        "witness": "tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"
+      },
+      "CM37_the_core_is_kept": {
+        "statement": "e830364ab5bf7e5c",
+        "witness": "tests/test_cycle.py::test_a_lost_law_fails_the_cycle"
+      },
+      "CM38_the_model_runs_as_one": {
+        "statement": "4a9aeefcc675a3aa",
+        "witness": "tests/test_cycle.py::test_the_cycle_runs_every_stage_and_finds_regressions"
+      },
+      "CM39_the_store_runs_what_it_lists": {
+        "statement": "88ee2a6f77d9b4ad",
+        "witness": "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store"
+      }
+    },
+    "registries": [
+      "algorithm",
+      "anyps5_cause",
+      "anyps5_debt",
+      "anyps5_domain",
+      "anyps5_export",
+      "anyps5_instruction",
+      "anyps5_library",
+      "anyps5_semantics",
+      "anyps5_snapshot",
+      "anyps5_standard",
+      "anyps5_witness",
+      "app",
+      "arena_run",
+      "asset",
+      "call",
+      "card_type",
+      "cipher_suite",
+      "computation",
+      "crypto_atom",
+      "cycle",
+      "design_law",
+      "domain",
+      "fact",
+      "fighter",
+      "format",
+      "function",
+      "functional_identity",
+      "game",
+      "goal",
+      "hardware",
+      "isa",
+      "language",
+      "language_semantics",
+      "law",
+      "ledger",
+      "lib",
+      "lineage",
+      "logic_rule",
+      "machine",
+      "metric",
+      "move",
+      "observation",
+      "op",
+      "payoff",
+      "pheros_meta",
+      "platform",
+      "precedent",
+      "program",
+      "proposal",
+      "re_operation",
+      "redefinition",
+      "redefinition_note",
+      "rewrite_rule",
+      "shape",
+      "stance",
+      "suggestion",
+      "theorem",
+      "theory",
+      "ting_card_type",
+      "tool",
+      "translation_gap",
+      "xleq",
+      "xleq_observed"
+    ],
+    "verify_sections": [
+      "kernel",
+      "ledger",
+      "logic",
+      "lang",
+      "theorems",
+      "game",
+      "anyps5",
+      "machine",
+      "forms",
+      "vectors",
+      "rules",
+      "redefinitions",
+      "conformance",
+      "functions",
+      "proofs",
+      "selfcheck",
+      "portability"
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "core",
+  "provenance": {
+    "origin": "cardmodel cycle ledger",
+    "witness": "tests/test_cycle.py"
+  },
+  "statement": "The core the model must never silently lose: every law with its statement and witness, every goal with its target, every registry, command and verify section. A cycle or verify that finds one missing, changed or a goal weakened fails until the change is accepted with a reason (CM37).",
+  "tier": 0
+}

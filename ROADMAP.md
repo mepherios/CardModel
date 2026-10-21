@@ -83,6 +83,34 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
   and the arcade service that builds games from their cards into depots of checked chunks.
 
+## Done (2026-10-21, fifth build: the model as one unit)
+
+* 🔵 **The cycle** (CM38): `cardmodel cycle run` runs every part of the model in one bounded loop (core ledger,
+  verify, every law's witness test, learning on its own code and the targets, a seeded arena and measured cost
+  anchors, the store, the goals, the generated documents, the test suite) under the resource governor, keeps
+  the evidence in `state/cycle`, compares each run with the last and writes the weakness report (WEAKNESSES.md).
+  Using any command starts one in the background when it is due; a launchd schedule is one command away.
+* 🔵 **The core ledger** (CM37): every law, goal, registry, command and verify section is recorded; `verify` fails
+  when one is lost, changed or a goal weakened until the change is accepted with a reason.
+* 🔵 **The store end to end** (CM39): `cardmodel arcade check` launches every catalogue item through the store's own
+  protocol (checked download, verify, repair, native run); `arcade inventory` lists everything that goes into the
+  store and what the model contributes (docs/ARCADE_INVENTORY.md); the launcher installs against the main checkout;
+  headless runs never touch the player's save.
+* 🔵 Fixed on the way: the model could not observe its own code (`in` in a conditional expression crashed the
+  observer); a partial `verify` erased the sections it did not run from `last_verify.json`.
+
+## The cycle: next
+
+* 🟢 **Work WEAKNESSES.md from the top**: the four redefinitions whose witnesses find no valid points (G_C4), the
+  named fraction of the model's own code (G_U3), the language gaps per language card.
+* 🟢 **Trends, not only the last run**: regressions against a window of runs (history.jsonl), so a seeded metric's
+  slow drift shows.
+* 🟢 **The cycle acts on more of its own actions**: today it regenerates documents, records ledger growth and
+  promotes learned function cards when recording; next, `optimize --apply` for contradicted anchors, and new
+  algorithm cards proposed from the arena's misses.
+* 🟢 **The launcher drives its own check**: a headless `--check` mode in Launcher.swift, so the native client's
+  install and play code runs in the cycle, not only its protocol.
+
 ## Arcade: next
 
 * 🟢 **More of the game**: duel-tree AI (several exchanges deep), multi-hit strings, bosses with phase stances,
@@ -123,8 +151,8 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **Strings and lists in the IR.** Types `str` and `list[int]`, plus op cards for len/index/slice/concat. Each new
   op needs per-language templates and conformance cells. This is the biggest coverage gain for real code; Pheros
   `string_ops` gives the vocabulary.
-* 🟢 **Recorded verification in CI form.** Run `cardmodel verify --record --seed $(date +%s)` on a schedule. Commit
-  the changed `verification` fields so the history of evidence lives in git (hub L18: autonomous by default).
+* 🔵 **Recorded verification on a schedule** (2026-10-21): `cardmodel cycle schedule --profile full --record
+  --commit --install`; `--record-verdicts` also writes verify's per-card verdicts (hub L18).
 
 ## Next
 

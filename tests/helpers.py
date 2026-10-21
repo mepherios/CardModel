@@ -18,6 +18,7 @@ from cardmodel.engines.context import Ctx  # noqa: E402
 from cardmodel.kernel.store import open_store  # noqa: E402
 
 SEED = int(os.environ.get("CARDMODEL_TEST_SEED", random.SystemRandom().randrange(2**32)))
+os.environ["CARDMODEL_AUTO_CYCLE"] = "0"     # tests never start the model's background cycle (CM38)
 SLOW = os.environ.get("CARDMODEL_SLOW") == "1"
 CLI = [sys.executable, "-B", "-m", "cardmodel"]
 
