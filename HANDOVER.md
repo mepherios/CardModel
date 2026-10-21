@@ -466,9 +466,9 @@ interpreter in the differential runs; the effect shell (browser page, headless r
 survey; a DS machine prototype that direct-boots and reports its coverage.
 
 **Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; MMM01, MBC6/7, HuC1/3, TAMA5,
-the camera and unlicensed multicart mappers are missing; of the hardware test suites (Blargg, mooneye, acid2)
-only Blargg's oam_bug tests fail (the DMG's OAM corruption bug is not modelled) and tests for a CGB in DMG mode are
-skipped; the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted
+the camera and unlicensed multicart mappers are missing; the hardware test suites (Blargg, mooneye, acid2) all
+pass except what is skipped: tests for other hardware revisions, for a CGB in DMG mode, and one Blargg single that
+overflows its own log (docs/MACHINES.md section 2); the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted
 (COVERAGE.md has the numbers).
 
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
@@ -508,9 +508,8 @@ a native (ctypes) path inside improved modules (ROADMAP).
 5. **Schedule `cardmodel verify --record`** (cron or launchd), so evidence accumulates in git history.
 6. **Games natively: the next pieces** (the machine model is built; docs/MACHINES.md, ROADMAP "Machines").
    * The hardware test suites are in `~/Downloads/gb-test-suites` (downloaded with the user's go-ahead; run
-     `cardmodel machine testroms ~/Downloads/gb-test-suites`). What is left: the DMG OAM corruption bug (Blargg
-     oam_bug: it needs an "IDU drives this address" hook in the LR35902 bus contract for INC/DEC rr, PUSH/CALL and
-     the reads that increment), then a CGB DMG-compatibility mode (mooneye misc/*-C).
+     `cardmodel machine testroms ~/Downloads/gb-test-suites`). What is left there: a CGB DMG-compatibility mode
+     (the skipped mooneye misc/*-C tests).
    * Close the survey's remaining failures (`cardmodel machine survey` lists them): the missing bank controllers
      (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (the gameboy machine card
      exports `step` and `peek`: `gb.GameBoy(ctx, rom).m.call("step")`, `.m.call("peek", addr)`).

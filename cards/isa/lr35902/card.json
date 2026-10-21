@@ -27,8 +27,10 @@
   "interface": "interface.card",
   "interface_functions": [
     "rd8",
+    "rd8_idu",
     "wr8",
     "idle",
+    "idu",
     "halt",
     "stop",
     "hang",

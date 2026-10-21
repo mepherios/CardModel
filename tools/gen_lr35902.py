@@ -114,14 +114,15 @@ if {CC_FN[cc]} {{
             ptxt = ["(BC)", "(DE)", "(HL+)", "(HL-)"][p]
             if q == 0:
                 return card(op, f"LD {ptxt},A", "ld8", f"wr8({addr}, A){post}", F + [f"write:{target}"])
-            return card(op, f"LD A,{ptxt}", "ld8", f"A = rd8({addr}){post}", F + [f"read:{target}"])
+            rd = "rd8_idu" if post else "rd8"
+            return card(op, f"LD A,{ptxt}", "ld8", f"A = {rd}({addr}){post}", F + [f"read:{target}"])
         if z == 3:
             r = RP[p]
             if q == 0:
-                return card(op, f"INC {r}", "alu16", SET16[r].format(v=f"({GET16[r]} + 1) & 0xFFFF") + "\nidle()",
-                            F + ["internal"])
-            return card(op, f"DEC {r}", "alu16", SET16[r].format(v=f"({GET16[r]} - 1) & 0xFFFF") + "\nidle()",
-                        F + ["internal"])
+                return card(op, f"INC {r}", "alu16", f"idu({GET16[r]})\n" + SET16[r].format(
+                    v=f"({GET16[r]} + 1) & 0xFFFF"), F + ["internal"])
+            return card(op, f"DEC {r}", "alu16", f"idu({GET16[r]})\n" + SET16[r].format(
+                v=f"({GET16[r]} - 1) & 0xFFFF"), F + ["internal"])
         if z in (4, 5):
             fn, mn, fl = ("inc8", "INC", "Z0H-") if z == 4 else ("dec8", "DEC", "Z1H-")
             r = R8[y]
@@ -230,7 +231,7 @@ if {CC_FN[cc]} {{
         return card(op, f"CALL {cc},nn", "call", f"""
 let a = fetch16()
 if {CC_FN[cc]} {{
-  idle()
+  idu(SP)
   push16(PC)
   PC = a
 }}""", {"taken": F + ["read:PC+1", "read:PC+2", "internal", "write:SP-1", "write:SP-2"],
@@ -238,14 +239,14 @@ if {CC_FN[cc]} {{
     if z == 5:
         if q == 0:
             r = RP2[p]
-            return card(op, f"PUSH {r}", "stack", f"idle()\npush16({GET16[r]})",
+            return card(op, f"PUSH {r}", "stack", f"idu(SP)\npush16({GET16[r]})",
                         F + ["internal", "write:SP-1", "write:SP-2"])
-        return card(op, "CALL nn", "call", "let a = fetch16()\nidle()\npush16(PC)\nPC = a",
+        return card(op, "CALL nn", "call", "let a = fetch16()\nidu(SP)\npush16(PC)\nPC = a",
                     F + ["read:PC+1", "read:PC+2", "internal", "write:SP-1", "write:SP-2"], nbytes=3)
     if z == 6:
         _, mn, sem, fl = ALU[y]
         return card(op, mn.format(s="n"), "alu8", sem.format(v="fetch8()"), F + ["read:PC+1"], fl, nbytes=2)
-    return card(op, f"RST {y * 8:02X}h", "call", f"idle()\npush16(PC)\nPC = 0x{y * 8:02X}",
+    return card(op, f"RST {y * 8:02X}h", "call", f"idu(SP)\npush16(PC)\nPC = 0x{y * 8:02X}",
                 F + ["internal", "write:SP-1", "write:SP-2"])
 
 
