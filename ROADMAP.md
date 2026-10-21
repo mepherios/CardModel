@@ -96,8 +96,11 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   protocol (checked download, verify, repair, native run); `arcade inventory` lists everything that goes into the
   store and what the model contributes (docs/ARCADE_INVENTORY.md); the launcher installs against the main checkout;
   headless runs never touch the player's save.
-* 🔵 Fixed on the way: the model could not observe its own code (`in` in a conditional expression crashed the
-  observer); a partial `verify` erased the sections it did not run from `last_verify.json`.
+* 🔵 Fixed on the way (found by running the loop): the model could not observe its own code (`in` in a conditional
+  expression crashed the observer); a partial `verify` erased the sections it did not run from
+  `last_verify.json`; the learning loop called the original source before the step-bounded interpreter, so a
+  function that never returns for some inputs (the arena framework's `set_bits` on a negative number) hung it;
+  an interrupted `resources.run` left its process group running.
 
 ## The cycle: next
 

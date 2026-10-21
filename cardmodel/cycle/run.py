@@ -16,9 +16,14 @@
 An ``auto`` run (started by the hook) first checks the model's fingerprint and returns at once when nothing
 changed since the last completed run and that run is younger than the card's ``max_interval_s``.
 
-Honest limits (L1): the budget is checked between stages and handed to the children, so a stage that runs in
-this process (verify, learn, optimize) can overrun it by its own length; the lock is advisory (flock on the
-system's temporary folder), so it coordinates the processes of one machine only.
+Every stage also runs under a deadline (the remaining budget, or the card's ``stage_limits_s`` when shorter): a
+stage that runs in this process and does not return in time is interrupted (``StageTimeout``), its children are
+killed, it is recorded as an error, and the next stage runs.
+
+Honest limits (L1): the deadline is a timer signal, so it interrupts Python code but not one long call inside C
+(a single huge integer operation finishes first); it needs the main thread (elsewhere stages run unbounded and
+the budget is checked between them); the lock is advisory (flock on the system's temporary folder), so it
+coordinates the processes of one machine only.
 """
 from __future__ import annotations
 
@@ -40,6 +45,30 @@ LOCK_NAME = "cardmodel-cycle.lock"
 
 class Busy(RuntimeError):
     """Another cycle holds the machine-wide lock."""
+
+
+class StageTimeout(Exception):
+    """A stage ran past its deadline."""
+
+
+@contextmanager
+def deadline_after(seconds: float | None):
+    """Interrupt the code inside after ``seconds`` (a real-time timer signal; main thread only)."""
+    import signal
+    import threading
+    if not seconds or not hasattr(signal, "setitimer") or threading.current_thread() is not threading.main_thread():
+        yield
+        return
+
+    def ring(signum, frame):
+        raise StageTimeout(f"ran past its deadline ({seconds:.0f} s)")
+    old = signal.signal(signal.SIGALRM, ring)
+    signal.setitimer(signal.ITIMER_REAL, float(seconds))
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old)
 
 
 def _now() -> str:
@@ -293,8 +322,13 @@ def run(profile: str | None = None, record: bool = False, record_verdicts: bool 
                 continue
             say(f"[{i}/{len(names)}] {name}")
             ts = time.perf_counter()
+            limit = min(max(30.0, deadline - time.monotonic()),
+                        float((cfg.get("stage_limits_s") or {}).get(name) or 1e9))
             try:
-                res = STAGES[name](env)
+                with deadline_after(limit):
+                    res = STAGES[name](env)
+            except StageTimeout as exc:
+                res = {"status": "error", "error": f"the {name} stage {exc}", "summary": f"stopped: {exc}"}
             except resources.MemoryBudget as exc:
                 res = {"status": "error", "error": str(exc), "summary": str(exc)}
                 stop = f"stopped after {name}: {exc}"
@@ -377,5 +411,5 @@ def _remember(state: Path, run: dict) -> None:
     os.replace(tmp, p)
 
 
-__all__ = ["Busy", "Env", "commit", "config", "cycle_dir", "fingerprint", "git_clean", "load_last", "machine_lock",
-           "model_ctx", "run", "running"]
+__all__ = ["Busy", "Env", "StageTimeout", "commit", "config", "cycle_dir", "deadline_after", "fingerprint",
+           "git_clean", "load_last", "machine_lock", "model_ctx", "run", "running"]

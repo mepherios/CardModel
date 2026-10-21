@@ -583,7 +583,8 @@ partial `verify` keeps the sections it did not run.
 
 **Partial (fifth build):** regressions are against the previous run only; the background cycle is gated by load
 and free memory but still shares the machine; the store check replays the launcher's protocol in Python and
-compiles the launcher, but does not drive its window.
+compiles the launcher, but does not drive its window; a stage's deadline cannot interrupt one long C-level
+operation.
 
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).

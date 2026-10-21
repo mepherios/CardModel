@@ -114,6 +114,15 @@
     "min_timing_s": 5.0,
     "timing_factor": 2.5
   },
+  "stage_limits_s": {
+    "core": 120,
+    "docs": 300,
+    "goals": 300,
+    "learn": 900,
+    "optimize": 1500,
+    "store": 900,
+    "verify": 1500
+  },
   "statement": "One bounded self-improvement cycle: the core ledger, every witness, every law's witness test, the learning loop on the model's own code and across the language cards, verified optimisation, the goals, the arcade's catalogue launched through its store, the generated documents and (full) the whole test suite; then the weakness report against the last run. Using the model starts the auto profile in the background when one is due.",
   "store": {
     "build_when_due": true,

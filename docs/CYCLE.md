@@ -59,7 +59,9 @@ The profiles, budgets and settings are a card, `cards/cycle/default` (edit the c
 
 Every stage runs under the resource governor (CM30): children take the machine-wide slots and memory caps, the
 cycle's own process stops with `MemoryBudget` before the machine runs short, the remaining budget caps each
-child's timeout, and one cycle at a time runs per machine (a lock in the system's temporary folder). A stage that
+child's timeout, and one cycle at a time runs per machine (a lock in the system's temporary folder). Every stage
+also has a deadline (the remaining budget, or `stage_limits_s` in the card when shorter): a stage that does not
+return in time is interrupted, its child processes are killed, and it is recorded as an error. A stage that
 raises is recorded as an error and the next stage still runs; a `MemoryBudget` stops the cycle.
 
 ## 3. Self-learning, across languages
@@ -134,8 +136,8 @@ deterministic.
 
 ## 8. Honest limits
 
-* The budget is checked between stages, so a stage that runs inside the cycle's process (verify, learn, optimize)
-  can overrun it by its own length; children get the remaining budget as their timeout.
+* A stage's deadline is a timer signal: it interrupts Python code, not one long operation inside C (a single huge
+  integer operation finishes first), and it needs the main thread.
 * "Nothing changed" is a fingerprint of file sizes and times; an edit that keeps both is seen after a day.
 * The ledger sees names, statements and targets, not behaviour; the `laws` stage runs every witness for that.
 * Regressions are against the previous run only, not a trend; `cardmodel cycle status` and `history.jsonl` show the

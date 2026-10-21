@@ -9,9 +9,9 @@
                                                 the launcher does it (install, verify, repair, play headless)
   cardmodel arcade inventory [--write FILE]     everything that goes into the store, and what the model gives each
 
-Honest limits (L1): the launcher remembers this checkout's path (to start the service): after moving the
+Honest limits (L1): the launcher remembers a checkout's path (to start the service): after moving the
 repository, run `cardmodel arcade launcher --install` again. Installing from a linked git worktree points the
-launcher at that worktree (a warning says so; `--home` names the checkout it should use instead).
+launcher at the main checkout (a worktree is deleted with its session; `--home` names another checkout).
 """
 from __future__ import annotations
 

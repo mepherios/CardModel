@@ -247,6 +247,12 @@ def run(args, *, timeout: float, heavy: bool = True, mem_cap_mb: int | None = No
             p.communicate()
             done.set()
             raise
+        except BaseException:      # interrupted (Ctrl-C, a caller's deadline): never leave the group running
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+            raise
         finally:
             done.set()
         if state["killed"]:

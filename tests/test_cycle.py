@@ -141,6 +141,43 @@ class Cycle(unittest.TestCase):
             S.STAGES.update(old)
             tp.cleanup()
 
+    def test_a_hanging_stage_is_stopped_and_the_next_one_runs(self):
+        tp = TempProject()
+        old = dict(S.STAGES)
+
+        def spin(env):
+            while True:
+                pass
+        try:
+            S.STAGES.update(self._fake_stages([]))
+            S.STAGES["learn"] = spin
+            cfg_card = dict(R.config(tp.ctx()), stage_limits_s={"learn": 1})
+            ctx = tp.ctx()
+            ctx.store.save(cfg_card, layer="project", category="cycle")
+            out = R.run(profile="standard", ctx=ctx, seed=SEED)
+            self.assertEqual(out["stages"]["learn"]["status"], "error")
+            self.assertIn("deadline", out["stages"]["learn"]["error"])
+            self.assertEqual(out["stages"]["optimize"]["status"], "pass", "the next stage still ran")
+        finally:
+            S.STAGES.clear()
+            S.STAGES.update(old)
+            tp.cleanup()
+
+    def test_learning_never_calls_a_source_on_an_input_where_it_hangs(self):
+        """`while n != 0: n >>= 1` never returns for a negative n: the step-bounded interpreter drops those inputs
+        before the original source is called (a cycle once hung here on the arena framework's set_bits)."""
+        from cardmodel.engines.frontend_python import lift_source, module_for
+        from cardmodel.engines.translate import reference_rows
+        src = "def set_bits(n: int) -> int:\n    c = 0\n    while n != 0:\n        c += n & 1\n        n >>= 1\n" \
+              "    return c\n"
+        ctx = model_ctx()
+        lifted = lift_source(src, ctx.ops)
+        ns: dict = {}
+        exec(src, ns)  # noqa: S102 -- the test's own source
+        with R.deadline_after(30):
+            rows = reference_rows(ctx, module_for("set_bits", lifted), ns["set_bits"], [[5], [-3], [0], [1 << 40]])
+        self.assertEqual([r["args"][0] for r in rows], [5, 0, 1 << 40])
+
     def test_one_cycle_at_a_time(self):
         with R.machine_lock({"pid": os.getpid(), "test": True}):
             self.assertIsNotNone(R.running())
