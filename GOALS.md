@@ -146,6 +146,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_M3_lifted_identical` | machines | differential runs where lifted code and the interpreter disagree | = 0 |
 | `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye, acid2) passing | = 1.0 |
 | `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
+| `G_M6_symbolic_instructions` | machines | instruction cards whose symbolic terms agree with their executable semantics (LR35902 and ARM) | ≥ 679 |
 
 ### What "done" would mean on each axis
 

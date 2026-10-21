@@ -51,7 +51,7 @@ Laws from the source sets that are not carried over (hub GUI/hub-folder/process 
 
 ## The core: capabilities that carry the laws (CM37)
 
-30 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
+31 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
 
 | capability | what the model can do | laws it carries | smoke check | witness tests |
 |---|---|---|---|---|
@@ -85,3 +85,4 @@ Laws from the source sets that are not carried over (hub GUI/hub-folder/process 
 | distillation | Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms land in one class, the cheapest term is the canonical one and its hash names it (MATH_CORE phase 0). | CM25 | `distillation` | `test_saturation_proves_and_canonicalizes`, `test_congruence` |
 | integration | One program: unique law and goal numbers, every law carried by a capability, every command, section and doc described, generated docs in sync. | CM20, CM39 | `integration` | `test_laws_md_in_sync`, `test_one_program_integrity` |
 | four_sources | The four sources: every algorithm and function has a definition (truth) with its term, canonical form, Gödel numbers and proof obligations; every implementation is an action linked to it by a witness or proof; identities are transformations; procedures are methods with their limits. | CM44 | `four_sources` | `test_every_artifact_traces_back` |
+| symbolic_instructions | Instruction cards as mathematics: symbolic execution gives each instruction's registers as terms over what it reads, with its bus effects and their conditions, checked against the executable semantics (MATH_CORE phase 0, F5). | CM32 | `symbolic_instructions` | `test_terms_agree_with_the_semantics`, `test_a_wrong_term_is_caught` |

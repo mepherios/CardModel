@@ -59,3 +59,12 @@
 {"atom": "op/MULADD", "category": "godel", "index": 59, "name": "p59__op__MULADD", "prime": 277, "set": "computation", "since": "2026-10-22"}
 {"atom": "op/SQRT", "category": "godel", "index": 60, "name": "p60__op__SQRT", "prime": 281, "set": "computation", "since": "2026-10-22"}
 {"atom": "op/SQUARE", "category": "godel", "index": 61, "name": "p61__op__SQUARE", "prime": 283, "set": "computation", "since": "2026-10-22"}
+{"atom": "effect/rd8", "category": "godel", "index": 62, "name": "p62__effect__rd8", "prime": 293, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/wr8", "category": "godel", "index": 63, "name": "p63__effect__wr8", "prime": 307, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/idle", "category": "godel", "index": 64, "name": "p64__effect__idle", "prime": 311, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/idu", "category": "godel", "index": 65, "name": "p65__effect__idu", "prime": 313, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/rd8_idu", "category": "godel", "index": 66, "name": "p66__effect__rd8_idu", "prime": 317, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/halt", "category": "godel", "index": 67, "name": "p67__effect__halt", "prime": 331, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/stop", "category": "godel", "index": 68, "name": "p68__effect__stop", "prime": 337, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/hang", "category": "godel", "index": 69, "name": "p69__effect__hang", "prime": 347, "set": "machines", "since": "2026-10-22"}
+{"atom": "effect/cb_dispatch", "category": "godel", "index": 70, "name": "p70__effect__cb_dispatch", "prime": 349, "set": "machines", "since": "2026-10-22"}

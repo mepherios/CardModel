@@ -496,6 +496,20 @@ def live_hub(ctx: Ctx, seed: int) -> str:
             "revised before the project's last change is stale")
 
 
+def symbolic_instructions(ctx: Ctx, seed: int) -> str:
+    from ..machine import symbolic as SY
+    some = ["LR35902_80", "LR35902_D8", "LR35902_C5", "LR35902_CB_11", "LR35902_27", "LR35902_E8"]
+    r = SY.check(ctx, "lr35902", seed=seed, samples=2, only=some)
+    _need(r["counts"].get("pass") == len(some), f"symbolic terms disagree with the semantics: {r['counts']} "
+          f"{ {k: v.get('problems') or v.get('reason') for k, v in r['cards'].items() if v['status'] != 'pass'} }")
+    res = r["results"]["LR35902_80"]
+    wrong = {**res, "state": {**res["state"], "A": ["BIT_AND", ["ADD", res["state"]["A"], ["int", 1]], ["int", 255]]}}
+    got = SY.evaluate(wrong, {"A": 1, "B": 2, "F": 0}, bytes(0x10000))
+    _need(got["regs"]["A"] == 4, "a planted wrong term was not evaluated as written")
+    return (f"{len(some)} instructions (ALU, conditional return, push, a CB rotate, DAA, ADD SP) agree with their "
+            f"executable semantics as terms")
+
+
 def four_sources(ctx: Ctx, seed: int) -> str:
     from . import sources as SO
     r = SO.check(ctx)
@@ -596,8 +610,8 @@ def integration(ctx: Ctx, seed: int) -> str:
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
-                                  world, machines, emulation, arcade, live_hub, godel_model, distillation,
-                                  four_sources, anyps5, self_run, integration)}
+                                  world, machines, symbolic_instructions, emulation, arcade, live_hub, godel_model,
+                                  distillation, four_sources, anyps5, self_run, integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

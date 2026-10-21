@@ -33,6 +33,7 @@
   cardmodel godel ledger|vector|gcd|number CARD...   the expanding Gödel model: primes, content, structure (CM43)
   cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
+  cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
 

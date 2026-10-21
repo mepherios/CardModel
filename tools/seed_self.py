@@ -211,6 +211,12 @@ CAPABILITIES = [
      ["tests/test_egraph.py::test_saturation_proves_and_canonicalizes", "tests/test_egraph.py::test_congruence"],
      ["docs/MATH_CORE.md"], ["cardmodel distill"], ["cardmodel/engines/egraph.py"],
      "Two pieces of code that mean the same thing are recognised as one, and the cheapest is chosen."),
+    ("symbolic_instructions", "Instruction cards as mathematics: symbolic execution gives each instruction's "
+     "registers as terms over what it reads, with its bus effects and their conditions, checked against the "
+     "executable semantics (MATH_CORE phase 0, F5).", L("CM32_machines_are_cards"),
+     ["tests/test_symbolic.py::test_terms_agree_with_the_semantics", "tests/test_symbolic.py::test_a_wrong_term_is_caught"],
+     ["docs/MATH_CORE.md", "docs/MACHINES.md"], ["cardmodel symbolic"], ["cardmodel/machine/symbolic.py"],
+     "A CPU's instructions are understood, not only run: each one is a formula the model can reason about."),
     ("four_sources", "The four sources: every algorithm and function has a definition (truth) with its term, "
      "canonical form, Gödel numbers and proof obligations; every implementation is an action linked to it by a "
      "witness or proof; identities are transformations; procedures are methods with their limits.",

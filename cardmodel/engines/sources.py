@@ -221,7 +221,7 @@ def check(ctx) -> dict:
         if st.get(d.get("subject") or "") is None:
             problems.append(f"{q}: its subject {d.get('subject')} does not exist")
         content = (d.get("godel") or {}).get("content")
-        if not content:
+        if content is None:                          # {} is content too: a move has no operations (number 1)
             problems.append(f"{q}: no Gödel content")
         elif set(content) - atoms:
             problems.append(f"{q}: atoms outside the ledger: {sorted(set(content) - atoms)[:3]}")
@@ -254,12 +254,15 @@ def check(ctx) -> dict:
             problems.append(f"{q}: a method states what it decides and its limits")
     subjects = [c.qualified for reg in ("algorithm", "function") for c in st.cards(reg)]
     covered = {d.get("subject") for d in defs.values()}
-    canon = sum(1 for d in defs.values() if (d.get("canonical") or {}).get("status") in ("canonical", "recurrence"))
+    fdefs = [d for d in defs.values() if (d.get("subject") or "").split("/")[0] in ("algorithm", "function")]
+    canon = sum(1 for d in fdefs if (d.get("canonical") or {}).get("status") in ("canonical", "recurrence"))
+    symbolic = sum(1 for d in defs.values() if (d.get("origin") or {}).get("kind") == "symbolic"
+                   and all(o.get("status") == "witnessed" for o in d.get("proof_obligations") or []))
     return {"status": "fail" if problems else ("pass" if defs else "vacuous"), "problems": problems,
             "definitions": len(defs), "actions": len(acts), "transformations": len(st.cards("transformation")),
             "methods": len(methods), "refuted": refuted,
             "coverage": round(sum(1 for s in subjects if s in covered) / len(subjects), 4) if subjects else None,
-            "canonical": round(canon / len(defs), 4) if defs else None,
+            "canonical": round(canon / len(fdefs), 4) if fdefs else None, "symbolic_instructions": symbolic,
             "actions_without_truth": sum(1 for a in acts.values() if a.get("truth") not in defs)}
 
 

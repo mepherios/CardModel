@@ -21,21 +21,23 @@
     "law CM41: detailed, current project cards (c8aeb4c)",
     "docs/MATH_CORE.md proposal (de22b52)",
     "MATH_CORE phase 0: prime ledger, content vectors (03b1c6e); e-graph distillation",
-    "MATH_CORE phase 1: the four sources, definitions for every algorithm and function"
+    "MATH_CORE phase 1: the four sources, definitions for every algorithm and function",
+    "MATH_CORE phase 0 F5: symbolic LR35902 instruction terms as definitions"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
-    "MATH_CORE phase 0 and phase 1"
+    "phase 2: distillation of lifted code and the semantic-hash library"
   ],
   "kind": "program",
   "left": [
-    "MATH_CORE phase 0 F5: symbolic LR35902 instruction terms",
-    "canonical forms for more definitions (G_U7 is 0.3 of 0.9)",
+    "the ARM instruction cards as terms (G_M6: 511 of 679)",
+    "canonical forms for more definitions (G_U7 0.3 of 0.9)",
+    "a polynomial normal form beside the e-graph",
     "one In progress tab after the cartridge merge"
   ],
   "metadata": {
-    "previous_content_hash": "81ea9ed38424aef21ecf94f0075e897b456cd03db496c8496556c58fe8f6f000",
-    "version": "2.0.4",
+    "previous_content_hash": "f3a39807753c6253a5cca92abe58ab40806b4eb2306618550f18f77fe6bdff70",
+    "version": "2.0.5",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -54,8 +56,9 @@
   ],
   "name": "cardmodel",
   "next_steps": [
-    "after the yes: start MATH_CORE phase 0 and 1",
-    "merge the branches the user approves"
+    "symbolic ARM terms",
+    "e-graph canonical forms of the instruction terms",
+    "the semantic-hash library and instant lookup (phase 2)"
   ],
   "order": 6,
   "owner": {
@@ -67,11 +70,11 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "MATH_CORE phases 0 and 1 are under way on main: the prime ledger and content vectors (CM43), an e-graph over 241 equalities, and the four sources (CM44): 40 definitions, 314 actions, 6 transformations, 9 methods. Symbolic instruction terms are next.",
+  "standing": "MATH_CORE phases 0 and 1 are on main: the prime ledger (70 atoms, CM43), an e-graph over 241 equalities, the four sources (CM44) with 552 definitions, and the 512 LR35902 instruction cards as symbolic terms (511 witnessed against their semantics, the CB prefix a dispatch).",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T01:10:18+02:00",
+  "updated": "2026-10-22T01:17:28+02:00",
   "user_actions": [
     {
       "action": "Decide what happens to claude/jolly-liskov-2d97a8",
