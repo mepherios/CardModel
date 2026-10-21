@@ -1,0 +1,41 @@
+{
+  "bank_div": 2,
+  "category": "move",
+  "depends_on": [
+    "precedent/virtua_fighter_duck"
+  ],
+  "evades": [
+    "high"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "iframes": [
+    2,
+    16
+  ],
+  "kind": "evade",
+  "metadata": {
+    "previous_content_hash": "864b15f2eebf0371d2c8b466a212a46252b6deae10e5aebb0374936fc7ccfc69",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 0,
+  "move": 0,
+  "name": "duck",
+  "precedent": [
+    "virtua_fighter_duck"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 6,
+  "stamina": 6,
+  "startup": 1,
+  "statement": "Under high cuts; anything mid or low still lands.",
+  "tier": 1,
+  "to": "neutral"
+}

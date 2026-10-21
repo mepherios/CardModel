@@ -1,0 +1,44 @@
+{
+  "active": 2,
+  "category": "move",
+  "damage": 6,
+  "depends_on": [
+    "precedent/street_fighter_frames"
+  ],
+  "dir": 8,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "mid",
+  "kind": "attack",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 2,
+  "name": "jab",
+  "poise": 0,
+  "posture": 4,
+  "precedent": [
+    "street_fighter_frames"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 9,
+  "stamina": 5,
+  "startup": 7,
+  "statement": "The fastest poke: interrupts startups, rewards little.",
+  "tags": [
+    "linear",
+    "mid",
+    "light"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

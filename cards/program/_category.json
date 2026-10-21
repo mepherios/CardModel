@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Card-language modules: source hash, what they declare, what they use.",
+  "name": "program",
+  "tier": 1
+}

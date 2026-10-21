@@ -231,6 +231,47 @@ To raise recall, add an algorithm card: a `signature`, a `precondition`, `genera
 `forms` (one with `role: suboptimal` lets the arena plant it). Run `cardmodel verify --only forms` to witness the forms
 and `cardmodel arena` to score the new card.
 
+## 3c. Logic, the card language, theorems and Lean (second build)
+
+```bash
+./bin/cardmodel run examples/lang/family.card              # facts, rules, negation, aggregates, constraints
+./bin/cardmodel run examples/lang/math.card --lean         # functions, theorems (witnessed + Lean), tests
+./bin/cardmodel logic why examples/lang/grammar.card 's(0, 6)' --lean    # a parse tree, kernel-checked
+./bin/cardmodel logic query examples/lang/hierarchy.card 'able(X, fly)'
+./bin/cardmodel logic mine examples/lang/family.card        # decipher the rules behind the facts
+./bin/cardmodel logic code arena/slowframework               # a code base as facts + stdlib/program.card
+./bin/cardmodel logic self                                   # the model's laws as logic over its own store
+./bin/cardmodel laws --save --global                         # discover, witness, prove, promote laws
+./bin/cardmodel lean import --core --save --global           # Lean's Nat/Int library as theorem cards
+./bin/cardmodel lean import MyProofs.lean                    # any Lean file in the fragment
+./bin/cardmodel lang emit stdlib/combat.card --lang cpp      # card-language functions in any language card
+```
+
+* A new theory is a `.card` file (docs/LANGUAGE.md). `lang build FILE --save` turns it into theory,
+  logic_rule, fact (pack), theorem, function and program cards in the project layer. `verify --only functions`
+  then checks its functions in every language.
+* A new law template is a few lines in `engines/laws.py::candidates`. A new Lean construct is a case in
+  `emit/lean_import.Elab` plus its rendering. The kernel's faithfulness check means a wrong case is rejected,
+  never imported.
+* Evidence rules (CM23): a status rises only with evidence, `verify` re-witnesses every theorem card with a
+  fresh seed, and every Lean batch goes through `emit/lean.check_batch` (fail-closed).
+
+## 3d. The game (Vector Counter System)
+
+```bash
+./bin/cardmodel game check            # 8 design laws on the exact equilibrium (certificate checked)
+./bin/cardmodel game play --vs reader # play; the reader tells you which vector it thinks you lean on
+./bin/cardmodel game tournament       # equilibrium, reader, greedy, habit, random
+./bin/cardmodel game sensitivity      # which number moves the structure most
+./bin/cardmodel game balance          # seeded search over move numbers under the design laws
+./bin/cardmodel game world --impact   # the systemic world: ticks, causes, counterfactual impact
+./bin/cardmodel game kernel --lang cpp --out Combat.h    # the kernel for an Unreal module
+```
+
+A move is a card (`cards/move`), an enemy is a fighter card, a design law is a card naming a check in
+`game/analysis.py`, and the kernel is `stdlib/combat.card`. Everything is described in game/DESIGN.md, including
+the balancing log of what the laws found.
+
 ## 4. How to add things
 
 **A card.** Run `cardmodel new <registry> <name> --statement "..."`, or write `cards/<registry>/<name>/card.json`
@@ -351,6 +392,15 @@ and `bidirectional`. `verify` witnesses it numerically and tries Lean (`grind`, 
 * Ting's documentation-only atoms (XChaCha20-Poly1305, Argon2id, ML-KEM, ML-DSA, X-Wing): their vectors are kept for
   future stdlib forms.
 
+**Real since the second build:** logic evaluation with proofs and Lean certificates; the card language (functions
+to every language card); theorem cards with the evidence ladder; law discovery promoting rewrite rules; the Lean
+core import with kernel-checked faithfulness and re-proofs; rule mining; the model's laws as logic; the combat
+engine, exact equilibria, design laws, AIs and the systemic world.
+
+**Partial (second build):** the Lean fragment is arithmetic (Nat/Int/Bool); logic terms are constants (no
+function symbols); the game is one-exchange deep (matrix games per state, not a duel-tree search); the world
+is a demonstration map; there is no graphics or engine integration yet beyond the C++ kernel.
+
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
 
@@ -403,8 +453,11 @@ a native (ctypes) path inside improved modules (ROADMAP).
 ## 9. Troubleshooting
 
 * **Lean.** The probe only uses toolchains already under `~/.elan/toolchains/*/bin/lean`. Calling the elan proxy
-  `lean` can start a network download of a newer toolchain. That happened once while this was built; the partial
-  download was removed. Override with `CARDMODEL_LEAN=/path/to/lean`.
+  `lean` can start a network download of a newer toolchain. That happened once while this was built, and the
+  download completed: `leanprover--lean4---v4.35.0` is installed beside v4.30.0, and the probe uses it. Every
+  proof records its toolchain. Delete that folder if you do not want it. Override with `CARDMODEL_LEAN=/path/to/lean`.
+* **Lean batches** set `maxErrors` high and attribute errors by line. A declaration counts as checked only if Lean
+  reached it without error (see `emit/lean.check_batch`).
 * **A slow full verify** comes from the baked-input compiles (see Now). Use `--quick` or `--langs python,javascript,c`
   while iterating.
 * **A conformance cell fails for one language.** The report has the arguments, expected and got. Fix the op card's

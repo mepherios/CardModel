@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Street Fighter",
+  "generalised_by": "Distance bands and reach on every attack; a backstep makes late attacks whiff.",
+  "limit": "",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "street_fighter_spacing",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Spacing and whiff punishing.",
+  "tier": 1,
+  "year": 1987
+}

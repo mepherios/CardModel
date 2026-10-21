@@ -1,0 +1,46 @@
+{
+  "category": "fighter",
+  "depends_on": [
+    "move/overhead",
+    "move/heavy_overhead",
+    "move/sweep",
+    "move/slash_right",
+    "move/slash_left",
+    "move/grab",
+    "move/guard_high",
+    "move/guard_right",
+    "move/guard_left",
+    "move/roll",
+    "move/advance",
+    "move/backstep",
+    "move/endure"
+  ],
+  "hp": 260,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "moves": [
+    "overhead",
+    "heavy_overhead",
+    "sweep",
+    "slash_right",
+    "slash_left",
+    "grab",
+    "guard_high",
+    "guard_right",
+    "guard_left",
+    "roll",
+    "advance",
+    "backstep",
+    "endure"
+  ],
+  "name": "brute",
+  "posture_max": 130,
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "stamina_max": 90,
+  "statement": "An enemy built from the same cards: heavy and armoured, no feint, no step_in.",
+  "tier": 1
+}

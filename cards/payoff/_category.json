@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_game.py",
+  "description": "How an exchange is scored for analysis and AI (weights per carried quantity).",
+  "name": "payoff",
+  "tier": 0
+}

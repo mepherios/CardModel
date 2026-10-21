@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Tekken 3",
+  "generalised_by": "sidestep evades linear and vertical; horizontal cuts track.",
+  "limit": "",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "tekken_sidestep",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Sidestep beats linear moves; tracking moves catch it.",
+  "tier": 1,
+  "year": 1997
+}

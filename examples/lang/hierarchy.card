@@ -1,0 +1,48 @@
+-- Structure and hierarchies: properties that carry down a taxonomy (with exceptions), authority that carries up
+-- an organisation, and damage that carries from a part to every whole that contains it.
+module hierarchy
+
+-- taxonomy: is_a carries, abilities are inherited unless an exception blocks them
+is_a(sparrow, bird). is_a(penguin, bird). is_a(bird, animal). is_a(bat, mammal). is_a(mammal, animal).
+is_a(tweety, sparrow). is_a(pingu, penguin). is_a(bruce, bat).
+can(bird, fly). can(bat, fly). can(animal, breathe).
+cannot(penguin, fly).
+
+kind(X, Y) <- is_a(X, Y).
+kind(X, Z) <- is_a(X, Y), kind(Y, Z).
+blocked(X, A) <- cannot(X, A).
+blocked(X, A) <- kind(X, Y), cannot(Y, A).
+able(X, A) <- kind(X, Y), can(Y, A), not blocked(X, A).
+
+test able(tweety, fly)
+test not able(pingu, fly)
+test able(pingu, breathe)
+test able(bruce, fly)
+
+-- organisation: authority carries upward; span of control is an aggregate
+reports_to(ann, cto). reports_to(bo, cto). reports_to(cy, ann). reports_to(di, ann). reports_to(ed, cy).
+reports_to(cto, ceo). reports_to(fay, ceo).
+above(B, E) <- reports_to(E, B).
+above(B, E) <- reports_to(E, M), above(B, M).
+person(P) <- reports_to(P, _).
+person(ceo).
+span(B, N) <- person(B), N = count { above(B, _) }.
+leaf(P) <- person(P), not reports_to(_, P).
+never: above(P, P).
+
+test span(ceo, 7)
+test span(ann, 3)
+test leaf(ed) and not leaf(cy)
+
+-- mereology: part_of carries, and so does failure
+part_of(piston, engine). part_of(engine, car). part_of(wheel, car). part_of(bolt, wheel). part_of(spark, engine).
+broken(spark).
+inside(X, Y) <- part_of(X, Y).
+inside(X, Z) <- part_of(X, Y), inside(Y, Z).
+fails(X) <- broken(X).
+fails(W) <- inside(P, W), broken(P).
+ok(X) <- inside(X, _), not fails(X).
+
+test fails(car) and fails(engine)
+test ok(wheel) and ok(bolt)
+query fails(W)?

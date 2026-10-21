@@ -1,0 +1,48 @@
+{
+  "active": 3,
+  "category": "move",
+  "damage": 15,
+  "depends_on": [
+    "precedent/sekiro_mikiri",
+    "precedent/tekken_sidestep"
+  ],
+  "dir": 8,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "mid",
+  "kind": "attack",
+  "lunge": 0,
+  "metadata": {
+    "previous_content_hash": "2e0a672a3ac7d3cec312b893681797c9a450d91e1e213a539316bca486436b07",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 5,
+  "name": "thrust",
+  "poise": 0,
+  "posture": 8,
+  "precedent": [
+    "sekiro_mikiri",
+    "tekken_sidestep"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    1,
+    2
+  ],
+  "recovery": 16,
+  "stamina": 10,
+  "startup": 10,
+  "statement": "Long reach, out of the plane: only a centre guard aligns with it; a sidestep slips it.",
+  "tags": [
+    "linear",
+    "mid"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

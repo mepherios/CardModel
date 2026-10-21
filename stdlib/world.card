@@ -1,0 +1,55 @@
+-- A systemic world where everything carries (game/DESIGN.md, "the world"). The state at tick T is facts;
+-- these rules derive the state at T + 1 (heads named next_*). cardmodel/game/world.py advances the ticks,
+-- keeps every derivation, and can explain any event back to the actions that caused it.
+module world
+
+-- the map (static)
+adjacent(tavern, cart). adjacent(cart, stable). adjacent(stable, barn). adjacent(barn, granary).
+adjacent(granary, gate). adjacent(gate, tower). adjacent(tavern, well). adjacent(well, granary).
+near(X, Y) <- adjacent(X, Y).
+near(X, Y) <- adjacent(Y, X).
+material(tavern, wood). material(cart, wood). material(stable, wood). material(barn, wood).
+material(granary, wood). material(gate, wood). material(tower, stone). material(well, stone).
+faction(warden_ann, watch). faction(warden_bo, watch). faction(miller, village).
+
+-- fire: burns three ticks, then ash; spreads to near wood after a tick; wind carries embers at once
+next_burning(P, A1) <- burning(P, A), A < 3, not doused(P), A1 = A + 1.
+next_ash(P) <- burning(P, 3).
+next_ash(P) <- ash(P).
+next_burning(Q, 0) <- burning(P, A), A >= 1, near(P, Q), flammable(Q).
+next_burning(Q, 0) <- burning(P, _), wind(P, Q), flammable(Q).
+next_burning(P, 0) <- act(ignite, P), flammable(P).
+flammable(Q) <- material(Q, wood), not burning(Q, _), not ash(Q), not wet(Q, _).
+
+-- water: a doused place stops burning and stays wet for four ticks (longer in rain)
+doused(P) <- act(douse, P).
+doused(P) <- rain, burning(P, _).
+doused(P) <- guard(G, P), alert(G), burning(P, A), A >= 1.          -- alert guards fight the fire they reach
+next_wet(P, 0) <- act(douse, P).
+next_wet(P, 0) <- doused(P), burning(P, _).
+next_wet(P, A1) <- wet(P, A), A < 4, A1 = A + 1.
+next_wet(P, A) <- wet(P, A), rain.
+
+-- people: guards see what is at or near their post, raise the alarm, run toward fire, and remember
+sees(G, P) <- guard(G, P).
+sees(G, P) <- guard(G, At), near(At, P).
+next_alert(G) <- guard(G, _), sees(G, P), burning(P, _).
+next_alert(G) <- alert(G).
+new_suspicion(G) <- act(ignite, P), guard(G, _), sees(G, P), not suspects(G, player).
+next_suspects(G, player) <- new_suspicion(G).
+next_suspects(G, X) <- suspects(G, X).
+fire_at(Q) <- burning(Q, _).
+fire_near(P) <- near(P, Q), fire_at(Q).
+-- an alert guard runs to the nearest fire (one choice: the first by name), otherwise holds the post
+heads_to(G, Q) <- guard(G, P), alert(G), not fire_at(P), Q = min Q2 { near(P, Q2), fire_at(Q2) }.
+next_guard(G, Q) <- heads_to(G, Q).
+next_guard(G, P) <- guard(G, P), not heads_to(G, _).
+
+-- reputation carries: each new suspicion costs the player standing with the guard's faction, once
+grudges(F, N) <- faction(_, F), N = count { new_suspicion(G), faction(G, F) }.
+next_standing(F, S1) <- standing(F, S), grudges(F, N), S1 = S - 10 * N.
+next_standing(F, S) <- standing(F, S), not faction(_, F).
+
+-- events worth showing a player
+event_spread(Q) <- next_burning(Q, 0), not act(ignite, Q).
+event_saved(P) <- doused(P), burning(P, _).

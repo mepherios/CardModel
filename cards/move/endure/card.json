@@ -1,0 +1,28 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/sekiro_deathblow"
+  ],
+  "from": [
+    "broken"
+  ],
+  "kind": "none",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 0,
+  "name": "endure",
+  "precedent": [
+    "sekiro_deathblow"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 0,
+  "stamina": 0,
+  "startup": 0,
+  "statement": "The only option of a broken posture: take the critical.",
+  "tier": 1,
+  "to": "neutral"
+}

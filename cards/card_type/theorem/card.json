@@ -1,0 +1,76 @@
+{
+  "applies_to": [
+    "theorem"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "theorem",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "concl": {
+        "items": {},
+        "minItems": 1,
+        "type": "array"
+      },
+      "evidence": {
+        "type": "object"
+      },
+      "hyps": {
+        "type": "array"
+      },
+      "proofs": {
+        "type": "array"
+      },
+      "semantics": {
+        "enum": [
+          "card",
+          "lean"
+        ]
+      },
+      "status": {
+        "enum": [
+          "conjecture",
+          "witnessed",
+          "proved",
+          "refuted",
+          "vacuous"
+        ]
+      },
+      "vars": {
+        "items": {
+          "properties": {
+            "type": {
+              "enum": [
+                "int",
+                "nat",
+                "bool",
+                "float"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "vars",
+      "concl",
+      "semantics",
+      "status"
+    ],
+    "type": "object"
+  },
+  "statement": "for all vars: hyps ==> concl. Terms are IR op trees; propositions have lower-case heads. ``semantics`` card = IR reference semantics, lean = Lean's operators (imported statements).",
+  "tier": 0
+}

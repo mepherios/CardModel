@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Sekiro",
+  "generalised_by": "broken is a forced stance in the movement graph with its own exit law (GL6).",
+  "limit": "Binary.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sekiro_deathblow",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Posture break opens a deathblow.",
+  "tier": 1,
+  "year": 2019
+}

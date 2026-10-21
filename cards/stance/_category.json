@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_game.py",
+  "description": "Stances: the movement graph. Allowed moves come from a stance; forced stances (recoil, broken) are where hits and counters send a fighter.",
+  "name": "stance",
+  "tier": 1
+}

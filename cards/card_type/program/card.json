@@ -1,0 +1,23 @@
+{
+  "applies_to": [
+    "program"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "program",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "required": [
+      "source",
+      "summary"
+    ],
+    "type": "object"
+  },
+  "statement": "A card-language module.",
+  "tier": 0
+}

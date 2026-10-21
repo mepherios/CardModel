@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "equilibrium_support",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL7_rich_equilibrium",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "The neutral equilibrium mixes at least 6 options, and the game value is 0 (symmetric fighters: neither side wins by construction).",
+  "threshold": 6,
+  "tier": 0
+}

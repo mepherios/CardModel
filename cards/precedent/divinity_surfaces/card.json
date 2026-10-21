@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Divinity: Original Sin 2",
+  "generalised_by": "Materials and elements are facts; combination rules are cards.",
+  "limit": "",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "divinity_surfaces",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Surfaces and elements combine.",
+  "tier": 1,
+  "year": 2017
+}

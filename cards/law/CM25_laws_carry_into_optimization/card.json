@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM25_laws_carry_into_optimization",
+  "origins": [
+    "user requirement 2026-10-21 (find the logic that carries, optimize it)",
+    "hub L27"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "The laws the op cards obey are discovered from templates, refuted or witnessed, and proved where Lean can; a law that simplifies becomes a rewrite rule that cites its theorem card, so knowledge carries into rewrite --optimize and improve.",
+  "tier": 0,
+  "witness": "tests/test_laws_discovery.py::test_simplifying_laws_become_rules"
+}

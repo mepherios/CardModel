@@ -36,9 +36,26 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── selfcheck.py        self-containment: static scan + macOS sandbox run
 │   │   ├── docs.py             LAWS.md generated from law cards
 │   │   ├── values.py           seeded generators, value comparison
-│   │   └── context.py          Ctx = store + op table + state directory
-│   ├── emit/                   lean.py (theorems + lint), proofs.py (backend choice), hints.py
+│   │   ├── context.py          Ctx = store + op table + state directory
+│   │   ├── logic.py            rules as cards: stratified fixpoint, negation, aggregates, proofs, budgets
+│   │   ├── theorems.py         theorem cards: witness (exhaustive + seeded), Lean statements, tactic portfolio
+│   │   ├── laws.py             law discovery over op cards; simplifying laws -> rewrite rules
+│   │   ├── mine.py             decipher rules from facts (support, confidence, counterexamples)
+│   │   ├── selflogic.py        the store as facts + stdlib/self.card (the model's laws as logic)
+│   │   └── codefacts.py        a Python code base as facts (calls, effects, liftable) for stdlib/program.card
+│   ├── lang/                   the card language: syntax.py (lexer, parser), compile.py (IR, logic, theorems,
+│   │                           cards, algorithm resolution), run.py (tests, queries, theorems, build, emit)
+│   ├── game/                   the Vector Counter System: combat.py (engine on the card-language kernel),
+│   │                           analysis.py (exact equilibria, design laws, sensitivity, balance), ai.py, world.py
+│   ├── emit/                   lean.py (theorems, fail-closed batch checker, lint), lean_logic.py (derivations
+│   │                           as Lean terms), lean_import.py (Lean theorems as cards, faithfulness), lean_chain.py
+│   │                           (rule-card chains as calc proofs), proofs.py, hints.py
+│   ├── cli_ext.py              run, lang, logic, laws, lean, repl (+ game via game/cli.py)
 │   └── cli.py                  init observe verify cover rewrite emit learn optimize translate status ...
+├── stdlib/                     card-language sources the program runs: self.card (its laws), program.card,
+│                               combat.card (the combat kernel), world.card (the systemic world)
+├── game/DESIGN.md              the game design, every claim computed
+├── examples/lang/              card-language programs: family, math, hierarchy, grammar
 ├── cards/                      the model's own registries (the knowledge; see COVERAGE.md for counts)
 ├── arena/                      optimization test environment: slowframework/ (+ its optimized output)
 ├── tests/                      unittest suites (stdlib), incl. the sandboxed self-containment test
@@ -147,6 +164,30 @@ verify ──► state/last_verify.json ──► coverage / goals ──► COV
 | Ting `crypto_atom`, `cipher_suite`, `card_type` | `cards/crypto_atom` (+ stdlib/node forms), `cipher_suite`, `ting_card_type` | Ting's vectors witness stdlib-only forms |
 | Ting `canon_json` twins, `test_cross_language.py` | `kernel/canon.py`, `crypto_atom/canon_json`, `tests/test_random_seed.py` | same algorithm and test |
 | rea-cards probes, dispatch, calibrate, coverage | `probes.py`, `rewrite.cheapest`, `optimize.py`, `coverage.py` | ported as lessons; `format/` + `re_operation/` as worked example |
+
+## The knowledge layer and the language (second build)
+
+```
+.card source --lang/syntax--> declarations --lang/compile--> IR functions ----codegen----> every language card
+                                                         \--> logic Program --engines/logic--> model + proofs
+                                                         \--> theorem cards --engines/theorems--> witness / Lean
+                                                         \--> cards (any registry)
+op cards --engines/laws (templates)--> theorem cards --simplifying--> rewrite_rule cards --> optimize / improve
+Lean file --emit/lean_import--> theorem cards (lean semantics) --kernel: faithful? witness? re-prove? chains?
+proof tree --emit/lean_logic--> Lean inductive encoding + constructor term --kernel checks the derivation
+store --engines/selflogic--> facts + stdlib/self.card --> the model's laws as logic (0 violations)
+move cards + stdlib/combat.card --game/combat--> exchanges --game/analysis--> exact equilibria, design laws
+```
+
+Every Lean check goes through `emit/lean.check_batch`, which attributes errors by line and fails closed. A
+declaration counts as checked only if Lean processed it without an error, and anything Lean did not reach
+(maxErrors, a crash, a timeout) is re-checked or reported unchecked. That rule exists because Lean stops after
+100 errors by default, and a batch that silently skipped the rest would otherwise have counted as passed.
+
+Ported for the language: the Pheros CL v0 compilation model (parse → typecheck → resolve → emit, with card
+references as atoms and `algorithm.NAME` resolved to the cheapest verified form) and its function form
+(`name : T -> T = match p with | ...`), which the card language accepts unchanged. Nothing was vendored; the
+grammar was read for alignment.
 
 ## What was not carried over
 

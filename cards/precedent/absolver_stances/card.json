@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Absolver",
+  "generalised_by": "Stances are cards; allowed moves come from the stance, forced stances from what happened to you (the movement graph).",
+  "limit": "Decks are static.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "absolver_stances",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Stance-based combat decks: each move starts in one stance and ends in another.",
+  "tier": 1,
+  "year": 2017
+}

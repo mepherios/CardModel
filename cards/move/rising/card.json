@@ -1,0 +1,46 @@
+{
+  "active": 3,
+  "category": "move",
+  "damage": 16,
+  "depends_on": [
+    "precedent/sekiro_perilous"
+  ],
+  "dir": 6,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "low",
+  "kind": "attack",
+  "lunge": 1,
+  "metadata": {
+    "previous_content_hash": "8ee0699ac771c7dfbaa74fecdbbc365deedc9205ea0caabaaca87340a78ded0b",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 7,
+  "name": "rising",
+  "poise": 0,
+  "posture": 14,
+  "precedent": [
+    "sekiro_perilous"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 16,
+  "stamina": 12,
+  "startup": 14,
+  "statement": "An upward cut that starts low: beats a high guard, loses to a low one.",
+  "tags": [
+    "vertical",
+    "low_start"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

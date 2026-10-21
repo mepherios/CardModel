@@ -1,0 +1,36 @@
+{
+  "applies_to": [
+    "theory"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "theory",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "imports": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "predicates": {
+        "type": "object"
+      },
+      "source": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "statement"
+    ],
+    "type": "object"
+  },
+  "statement": "A logic theory: a named set of facts and rules.",
+  "tier": 0
+}

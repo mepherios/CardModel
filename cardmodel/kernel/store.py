@@ -169,6 +169,22 @@ class Store:
         self.invalidate()
         return d
 
+    def save_pack(self, category: str, pack: str, cards: list[dict], layer: str | None = None,
+                  description: str = "") -> Path:
+        """Write bulk cards as one ``_pack_<pack>.jsonl`` (sorted, one card per line), replacing that pack whole.
+
+        Packs hold regenerated bulk data (imported theorems, discovered laws, facts): the pack is the unit of
+        change, so it is rewritten, not versioned card by card (directory cards keep CM14 versioning)."""
+        reg = self.ensure_registry(category, layer, description=description)
+        out = reg / f"_pack_{pack}.jsonl"
+        lines = sorted(json.dumps({**c, "category": category}, sort_keys=True, ensure_ascii=False, default=str)
+                       for c in cards)
+        tmp = out.with_name(f".{out.name}.tmp")
+        tmp.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+        tmp.replace(out)
+        self.invalidate()
+        return out
+
     def save(self, card: dict, layer: str | None = None, category: str | None = None) -> tuple[Card, bool]:
         """Create or update a card directory (with versioning). Returns (card, changed)."""
         category = category or card.get("category")

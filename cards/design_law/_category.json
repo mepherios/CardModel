@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_game.py",
+  "description": "Computable design laws: each names an analysis the engine runs (cardmodel game check) and the threshold that must hold.",
+  "name": "design_law",
+  "tier": 0
+}

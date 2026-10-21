@@ -1,0 +1,46 @@
+{
+  "applies_to": [
+    "goal"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "goal",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "axis": {
+        "enum": [
+          "computation",
+          "understanding",
+          "learning",
+          "optimization",
+          "autonomy"
+        ]
+      },
+      "direction": {
+        "enum": [
+          "higher",
+          "lower"
+        ]
+      },
+      "target": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "statement",
+      "metric",
+      "target",
+      "direction",
+      "axis"
+    ],
+    "type": "object"
+  },
+  "statement": "A measurable goal.",
+  "tier": 0
+}

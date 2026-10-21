@@ -1,0 +1,17 @@
+{
+  "axis": "knowledge",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "self_violations",
+  "name": "G_K4_self_violations",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Violations of the model's own laws as logic (stdlib/self.card).",
+  "target": 0,
+  "tier": 0
+}

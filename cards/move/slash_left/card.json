@@ -1,0 +1,48 @@
+{
+  "active": 3,
+  "category": "move",
+  "damage": 14,
+  "depends_on": [
+    "precedent/for_honor_guard",
+    "precedent/mount_and_blade_directional"
+  ],
+  "dir": 4,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "high",
+  "kind": "attack",
+  "lunge": 0,
+  "metadata": {
+    "previous_content_hash": "127ba40d97d6c20d38f14ce980686021474380a32f02c19b72f4fcd4c299fa42",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 6,
+  "name": "slash_left",
+  "poise": 0,
+  "posture": 10,
+  "precedent": [
+    "for_honor_guard",
+    "mount_and_blade_directional"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 14,
+  "stamina": 10,
+  "startup": 12,
+  "statement": "A horizontal cut from the left at head height.",
+  "tags": [
+    "horizontal",
+    "high"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "design",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "equilibrium_support",
+  "name": "G_D2_equilibrium_support",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Options the exact neutral equilibrium mixes (richness of play).",
+  "target": 8,
+  "tier": 0
+}

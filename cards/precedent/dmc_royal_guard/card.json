@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Devil May Cry 3",
+  "generalised_by": "The bank is momentum: it lives in the same quantity that speeds or slows your next move.",
+  "limit": "A meter separate from movement.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "dmc_royal_guard",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Royal Guard stores damage for a release.",
+  "tier": 1,
+  "year": 2005
+}

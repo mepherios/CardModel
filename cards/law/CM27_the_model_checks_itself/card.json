@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM27_the_model_checks_itself",
+  "origins": [
+    "user requirement 2026-10-21 (my card law carries it)",
+    "Pheros L63"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "The model's own laws are logic over its card store (stdlib/self.card); they hold with zero violations, and a planted break is caught.",
+  "tier": 0,
+  "witness": "tests/test_logic.py::test_self_theory_holds_and_catches_breaks"
+}

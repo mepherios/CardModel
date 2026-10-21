@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM24_logic_carries",
+  "origins": [
+    "user requirement 2026-10-21 (if x, y -> z)",
+    "hub L45",
+    "Pheros L41"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Rules are cards. Every derived fact carries a proof of minimum height (rule, bindings, premises) that exports to a Lean term the kernel checks; unsafe or unstratifiable rules are reported, never evaluated; evaluation is bounded (L20).",
+  "tier": 0,
+  "witness": "tests/test_logic.py::test_derivations_are_kernel_checked"
+}

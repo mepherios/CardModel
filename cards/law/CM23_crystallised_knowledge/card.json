@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM23_crystallised_knowledge",
+  "origins": [
+    "user requirement 2026-10-21 (crystallised knowledge, never disobey true proof)",
+    "hub L1",
+    "Pheros L41"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "A statement is only as strong as its evidence: refuted (counterexample shown) < conjecture < witnessed (an exhaustive small-value phase plus seeded random values; the hypotheses must hold on enough inputs and must not pin a variable to one value) < proved (accepted by the Lean kernel). An imported Lean statement is kept only when the kernel accepts our reading as the original proposition.",
+  "tier": 0,
+  "witness": "tests/test_theorems.py::test_status_follows_evidence"
+}

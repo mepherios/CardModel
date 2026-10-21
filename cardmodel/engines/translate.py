@@ -152,10 +152,16 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
     seed = V.fresh_seed() if seed is None else seed
     module = card["ir"]
     entry = module["entry"]
-    ref_form = next(f for f in card["forms"] if f["name"] == "python_source")
-    ns: dict = {"__name__": "cardmodel_reference"}
-    exec(compile(ref_form["code"], "<reference>", "exec"), ns)  # noqa: S102
-    ref = ns[entry]
+    ref_form = next((f for f in card["forms"] if f["name"] == "python_source"), None)
+    if ref_form is None:                      # card-language functions: the IR itself is the reference
+        interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
+
+        def ref(*args):
+            return interp.call(entry, list(args))
+    else:
+        ns: dict = {"__name__": "cardmodel_reference"}
+        exec(compile(ref_form["code"], "<reference>", "exec"), ns)  # noqa: S102
+        ref = ns[entry]
     rng = random.Random(seed)
     fresh = V.inputs(card.get("generators") or [], samples, rng, edge=False)
     inputs = [v["args"] for v in card.get("vectors", [])] + [list(a) for a in fresh]
@@ -196,5 +202,5 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
         for lang, res in pool.map(one, langs):
             results["languages"][lang] = res
     passed = sorted(l for l, r in results["languages"].items() if r["status"] == "pass")
-    results["agreeing_languages"] = ["python_source", *passed]
+    results["agreeing_languages"] = ["python_source" if ref_form is not None else "ir", *passed]
     return results

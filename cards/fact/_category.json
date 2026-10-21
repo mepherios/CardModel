@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Ground facts of logic theories, one pack per theory (_pack_<theory>.jsonl).",
+  "name": "fact",
+  "tier": 1
+}

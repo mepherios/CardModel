@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Sekiro",
+  "generalised_by": "Every attack carries tags; every evade lists the tags it slips (jump: low, duck: high, sidestep: linear/vertical).",
+  "limit": "Three hard-coded kanji.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sekiro_perilous",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Perilous attacks (thrust, sweep, grab) each need a specific answer.",
+  "tier": 1,
+  "year": 2019
+}

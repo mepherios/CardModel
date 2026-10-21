@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "For Honor",
+  "generalised_by": "A feint is a move card with a cancel frame and a target move; it is slower than a direct attack, so speed beats it (GL8).",
+  "limit": "Feint-spam with fast cancels.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "for_honor_feint",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Feints cancel an attack into another.",
+  "tier": 1,
+  "year": 2017
+}

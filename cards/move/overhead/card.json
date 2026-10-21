@@ -1,0 +1,46 @@
+{
+  "active": 4,
+  "category": "move",
+  "damage": 22,
+  "depends_on": [
+    "precedent/dark_souls_poise"
+  ],
+  "dir": 2,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "high",
+  "kind": "attack",
+  "lunge": 1,
+  "metadata": {
+    "previous_content_hash": "c0dc77db0b8af3ead526b2fcdc457aca7e884e314852d58d1526f75435f1bc0e",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 10,
+  "name": "overhead",
+  "poise": 4,
+  "posture": 18,
+  "precedent": [
+    "dark_souls_poise"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 18,
+  "stamina": 16,
+  "startup": 16,
+  "statement": "A committed downward cut; poise 4 shrugs off light pokes.",
+  "tags": [
+    "vertical",
+    "high"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

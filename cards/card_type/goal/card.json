@@ -4,7 +4,9 @@
   ],
   "category": "card_type",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "7c11246d9a61b99d49559a0e7aed64d97d98abe4470a02f637486645b0bbc773",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "goal",
   "provenance": {
@@ -19,7 +21,9 @@
           "understanding",
           "learning",
           "optimization",
-          "autonomy"
+          "autonomy",
+          "knowledge",
+          "design"
         ]
       },
       "direction": {

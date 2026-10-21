@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_game.py",
+  "description": "Combat and systems mechanics from game history: what each got right, its limit, and which part of this design generalises it.",
+  "name": "precedent",
+  "tier": 1
+}

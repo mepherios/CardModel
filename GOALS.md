@@ -15,6 +15,16 @@ filesystem registry. The program takes part in software development in any proje
    core, leave the effect shell (I/O, network, login) byte-identical, and re-check the result. See
    docs/METHODOLOGY.md and the arena.
 
+7. **reason**: rules are cards (if x, y -> z) with proofs the Lean kernel checks; the model's own laws are
+   logic over its store; rules can be deciphered from data and from code;
+8. **know**: theorem cards climb an evidence ladder (refuted < conjecture < witnessed < proved), from discovered
+   laws, card-language theorems and Lean's own library (faithfully read, witnessed, re-proved), and the
+   simplifying laws carry into optimization (docs/KNOWLEDGE.md);
+9. **speak one language**: functions, logic, theorems, tests and cards in one source language that compiles to
+   cards and to every language card (docs/LANGUAGE.md);
+10. **design a game**: the Vector Counter System, whose design laws are computed on exact equilibria and whose
+    world carries every consequence with its cause (game/DESIGN.md).
+
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
 
@@ -43,6 +53,13 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_O2_arena_sound` | optimization | recorded arena runs that were not sound | = 0 |
 | `G_O3_arena_recall` | optimization | planted suboptimal functions improved in the latest arena run | ≥ 0.9 |
 | `G_O4_arena_speedup` | optimization | geometric-mean measured speedup in the latest arena run | ≥ 10 |
+| `G_K1_theorems_proved` | knowledge | theorem cards with a proof (Lean kernel or exhaustive) | ≥ 150 |
+| `G_K2_lean_imported` | knowledge | Lean core theorems read faithfully (kernel-checked reading) | ≥ 300 |
+| `G_K3_lean_mismatches` | knowledge | imported Lean-proved statements the card semantics refute | = 0 |
+| `G_K4_self_violations` | knowledge | violations of the model's own laws as logic (stdlib/self.card) | = 0 |
+| `G_K5_programs_pass` | knowledge | card-language programs (examples/lang, stdlib) that pass | ≥ 6 |
+| `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
+| `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
 
 ### What "done" would mean on each axis
 

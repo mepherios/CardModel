@@ -294,12 +294,7 @@ class Emitter:
         self.requires = set()
         fns = {f["name"]: f for f in module["functions"]}
         self.fn_returns = {n: f["returns"] for n, f in fns.items()}
-        protos = ""
-        if self.cg.get("prototype"):
-            sep0 = self.cg.get("param_sep", ", ")
-            protos = "".join(self.tmpl("prototype", name=self.ident(f["name"]), ret=self.T(f["returns"]), params=sep0.join(
-                self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
-                for p in f["params"])) + "\n" for f in module["functions"]) + "\n"
+        protos = self.prototypes(module)
         funcs = [self.function(f) for f in reversed(module["functions"])]
         entry_name = module.get("entry", module["functions"][0]["name"])
         sep = self.cg.get("call_sep", ", ")
@@ -344,6 +339,15 @@ class Emitter:
         text = self.cg.get(key, self.cg.get("prelude", ""))
         return text.replace("@imports@", imports)
 
+    def prototypes(self, module: dict, only: list[str] | None = None) -> str:
+        """Forward declarations, for languages whose card has a ``prototype`` template (C, C++)."""
+        if not self.cg.get("prototype"):
+            return ""
+        sep0 = self.cg.get("param_sep", ", ")
+        return "".join(self.tmpl("prototype", name=self.ident(f["name"]), ret=self.T(f["returns"]), params=sep0.join(
+            self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
+            for p in f["params"])) + "\n" for f in module["functions"] if only is None or f["name"] in only) + "\n"
+
     def module_source(self, module: dict, only: list[str] | None = None) -> str:
         """Just the functions (+ helpers), without a harness: what a translation emits.
         ``only``: emit just these functions; the others are known callees defined elsewhere."""
@@ -351,8 +355,10 @@ class Emitter:
         self.fn_returns = {f["name"]: f["returns"] for f in module["functions"]}
         funcs = "\n".join(self.function(f) for f in reversed(module["functions"])
                            if only is None or f["name"] in only)
+        protos = self.prototypes(module, only) if len([f for f in module["functions"]
+                                                        if only is None or f["name"] in only]) > 1 else ""
         helpers = self.helpers_for(funcs)
-        return self._prelude("lib_prelude") + helpers + funcs + self.cg.get("lib_epilogue", "")
+        return self._prelude("lib_prelude") + helpers + protos + funcs + self.cg.get("lib_epilogue", "")
 
     def helpers_for(self, code: str) -> str:
         """Helper functions referenced by ``code``, dependencies first.

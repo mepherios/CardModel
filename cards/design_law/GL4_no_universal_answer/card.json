@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "universal_answers",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL4_no_universal_answer",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "No defensive option breaks even against every attack.",
+  "threshold": 0,
+  "tier": 0
+}

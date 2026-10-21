@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Bloodborne",
+  "generalised_by": "Momentum bank: a redirected attack's momentum is banked and spent on your next attack.",
+  "limit": "Rally rewards aggression but not reading.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "bloodborne_quickstep",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Short quickstep and rally (regain health by attacking back).",
+  "tier": 1,
+  "year": 2015
+}

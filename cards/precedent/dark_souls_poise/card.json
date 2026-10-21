@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Dark Souls",
+  "generalised_by": "Poise is a move property compared with the incoming momentum, so armour is a choice per move, visible on its card.",
+  "limit": "Opaque numbers; trading becomes the dominant strategy when poise is high.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "dark_souls_poise",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Poise: heavy armour keeps you from being staggered.",
+  "tier": 1,
+  "year": 2011
+}

@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Street Fighter II",
+  "generalised_by": "Every move card is frame data; advantage carries into the next exchange.",
+  "limit": "Invisible to most players.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "street_fighter_frames",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Frame data: startup, active, recovery, advantage.",
+  "tier": 1,
+  "year": 1991
+}

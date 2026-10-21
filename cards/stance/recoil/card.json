@@ -1,0 +1,16 @@
+{
+  "category": "stance",
+  "exits_to": "neutral",
+  "forced": true,
+  "max_exchanges": 1,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "recoil",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Forced by a deflect or redirect: guards, evades and steps only, for one exchange.",
+  "tier": 1
+}

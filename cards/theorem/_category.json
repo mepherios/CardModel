@@ -1,0 +1,13 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Mathematical statements with evidence. Status: refuted < conjecture < witnessed < proved (Lean kernel). Discovered laws, card-language theorems and imported Lean theorems.",
+  "name": "theorem",
+  "status_values": [
+    "conjecture",
+    "witnessed",
+    "proved",
+    "refuted",
+    "vacuous"
+  ],
+  "tier": 1
+}

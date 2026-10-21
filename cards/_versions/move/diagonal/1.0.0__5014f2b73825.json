@@ -1,0 +1,43 @@
+{
+  "active": 3,
+  "category": "move",
+  "damage": 17,
+  "depends_on": [
+    "precedent/mount_and_blade_directional"
+  ],
+  "dir": 1,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "high",
+  "kind": "attack",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 7,
+  "name": "diagonal",
+  "poise": 0,
+  "posture": 12,
+  "precedent": [
+    "mount_and_blade_directional"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 15,
+  "stamina": 12,
+  "startup": 13,
+  "statement": "An upper-right diagonal: half-aligned with both the right and the high guard.",
+  "tags": [
+    "diagonal",
+    "high"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

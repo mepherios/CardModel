@@ -1,0 +1,52 @@
+{
+  "category": "fighter",
+  "depends_on": [
+    "move/thrust",
+    "move/jab",
+    "move/feint_overhead",
+    "move/diagonal",
+    "move/slash_right",
+    "move/slash_left",
+    "move/guard_center",
+    "move/guard_high",
+    "move/guard_right",
+    "move/guard_left",
+    "move/sidestep",
+    "move/duck",
+    "move/step_in",
+    "move/backstep",
+    "move/advance",
+    "move/endure"
+  ],
+  "hp": 170,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "moves": [
+    "thrust",
+    "jab",
+    "feint_overhead",
+    "diagonal",
+    "slash_right",
+    "slash_left",
+    "guard_center",
+    "guard_high",
+    "guard_right",
+    "guard_left",
+    "sidestep",
+    "duck",
+    "step_in",
+    "backstep",
+    "advance",
+    "endure"
+  ],
+  "name": "duelist",
+  "posture_max": 90,
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "stamina_max": 120,
+  "statement": "An enemy built from the same cards: fast, thrusts and feints, little armour.",
+  "tier": 1
+}

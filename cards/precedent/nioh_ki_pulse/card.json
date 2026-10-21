@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Nioh",
+  "generalised_by": "Stamina carries between exchanges; flow continues direction for a startup discount.",
+  "limit": "",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "nioh_ki_pulse",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Ki pulse: timing recovers stamina.",
+  "tier": 1,
+  "year": 2017
+}

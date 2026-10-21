@@ -49,6 +49,10 @@ def to_lean(tree) -> str:
         if head in ("FLOORDIV", "MOD"):
             fn = "Int.fdiv" if head == "FLOORDIV" else "Int.fmod"
             return f"({fn} {to_lean(tree[1])} {to_lean(tree[2])})"
+        if head in ("MIN", "MAX"):
+            return f"({head.lower()} {to_lean(tree[1])} {to_lean(tree[2])})"
+        if head == "ABS":
+            return f"(((Int.natAbs {to_lean(tree[1])}) : Nat) : Int)"
         if head in LEAN_INFIX:
             return f"({to_lean(tree[1])} {LEAN_INFIX[head]} {to_lean(tree[2])})"
     raise NotExpressible(f"no Lean form for {tree[0] if isinstance(tree, list) else tree}")
@@ -79,6 +83,66 @@ def check_source(source: str, exe: str) -> tuple[bool, str]:
     return p.returncode == 0 and "error" not in p.stdout, (p.stdout + p.stderr)[-800:]
 
 
+def check_batch(exe: str, items: list[tuple[str, str]], header: list[str] | None = None,
+                timeout_s: int = 900, rounds: int = 4) -> dict[str, str]:
+    """Check many independent declarations in one Lean file per round; fail closed.
+
+    Returns {key: "ok" | "error: <message>" | "unchecked: <why>"}. A declaration counts as ok only when
+    Lean processed it without an error: errors are attributed by line range; if Lean stops early
+    (maxErrors, a crash, a timeout) every declaration it may not have reached is re-checked in a new
+    round, and anything still unreached is "unchecked", never "ok"."""
+    result: dict[str, str] = {}
+    pending = list(items)
+    for _ in range(rounds):
+        if not pending:
+            break
+        head = list(header or [])
+        imports = [h for h in head if h.startswith("import ")]          # Lean wants imports first
+        lines = [*imports, "set_option maxErrors 1000000", *[h for h in head if not h.startswith("import ")]]
+        spans = []
+        for key, text in pending:
+            start = len(lines) + 1
+            lines.extend(text.split("\n"))
+            spans.append((start, len(lines), key))
+        with tempfile.TemporaryDirectory(prefix="cardmodel_lean_") as d:
+            f = Path(d) / "Batch.lean"
+            f.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            try:
+                p = subprocess.run([exe, str(f)], capture_output=True, text=True, timeout=timeout_s,
+                                   stdin=subprocess.DEVNULL)
+                log, code = p.stdout + p.stderr, p.returncode
+            except subprocess.TimeoutExpired:
+                log, code = "timeout", -1
+        errors: dict[str, str] = {}
+        last_line = 0
+        for m in re.finditer(r":(\d+):\d+: error[^:]*: ?(.*)", log):
+            ln = int(m.group(1))
+            last_line = max(last_line, ln)
+            for start, end, key in spans:
+                if start <= ln <= end:
+                    errors.setdefault(key, m.group(2)[:300])
+                    break
+        stopped = code == -1 or "maximum number of errors" in log or (code != 0 and not errors)
+        retry = []
+        for start, end, key in spans:
+            if key in errors:
+                result[key] = "error: " + errors[key]
+            elif stopped and start > last_line:
+                retry.append((key, dict(pending)[key]))
+            elif stopped and code == -1:
+                retry.append((key, dict(pending)[key]))
+            else:
+                result[key] = "ok"
+        if retry and len(retry) == len(pending) and not errors:
+            for key, _ in retry:
+                result[key] = "unchecked: " + ("timeout" if code == -1 else "Lean stopped before reaching it")
+            return result
+        pending = retry
+    for key, _ in pending:
+        result[key] = "unchecked: Lean stopped before reaching it"
+    return result
+
+
 def check_rules(ctx) -> dict:
     """Emit every rule as a theorem and let Lean check it (all tactics, one file per tactic round)."""
     exe = lean_exe()
@@ -98,17 +162,16 @@ def check_rules(ctx) -> dict:
     for tactic in TACTICS:
         if not pending:
             break
-        src = "\n".join(rule_theorem(c, tactic) for c in pending) + "\n"
-        ok, log = check_source(src, exe)
-        failed_lines = {int(m.group(1)) for m in re.finditer(r":(\d+):\d+: error", log)}
+        verdict = check_batch(exe, [(c.qualified, rule_theorem(c, tactic)) for c in pending])
         still = []
-        for i, card in enumerate(pending, 1):
-            if ok or i not in failed_lines:
+        for card in pending:
+            v = verdict.get(card.qualified, "unchecked")
+            if v == "ok":
                 out[card.qualified] = {"status": "proved", "tactic": tactic, "statement": rule_theorem(card, tactic)}
+            elif v.startswith("unchecked"):
+                out[card.qualified] = {"status": "unchecked", "detail": v}
             else:
                 still.append(card)
-        if not ok and not failed_lines:
-            break  # a failure we could not attribute to a line: leave the rest unproved
         pending = still
     for card in pending:
         out[card.qualified] = {"status": "unproved", "tried": list(TACTICS), "statement": rule_theorem(card, "sorry")}

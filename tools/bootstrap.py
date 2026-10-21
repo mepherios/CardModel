@@ -21,6 +21,8 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from cardmodel.kernel.store import open_store  # noqa: E402
 import seed_algorithms as SA  # noqa: E402
+import seed_game as SG  # noqa: E402
+import seed_knowledge as SK  # noqa: E402
 import seed_languages as SL  # noqa: E402
 import seed_ops as SO  # noqa: E402
 
@@ -189,7 +191,8 @@ CARD_TYPES = [
     {"name": "goal", "applies_to": ["goal"], "statement": "A measurable goal.",
      "schema": {"type": "object", "required": ["statement", "metric", "target", "direction", "axis"],
                 "properties": {"direction": {"enum": ["higher", "lower"]},
-                               "axis": {"enum": ["computation", "understanding", "learning", "optimization", "autonomy"]},
+                               "axis": {"enum": ["computation", "understanding", "learning", "optimization", "autonomy",
+                                                 "knowledge", "design"]},
                                "target": {"type": "number"}}}},
     {"name": "rewrite_rule", "applies_to": ["rewrite_rule"], "statement": "An identity usable as a rewrite.",
      "schema": {"type": "object", "required": ["lhs", "rhs", "vars"],
@@ -377,9 +380,12 @@ def _const_pow_chain(x: int, n: int) -> int:
 '''
 
 
+FORCE: set[str] = set()
+
+
 def put(store, card: dict, force: bool, stats: dict) -> None:
     existing = store.get(f"{card['category']}/{card['name']}")
-    if existing is not None and not force:
+    if existing is not None and not force and f"{card['category']}/{card['name']}" not in FORCE:
         stats["kept"] += 1
         return
     _, changed = store.save(card, layer="model")
@@ -389,14 +395,32 @@ def put(store, card: dict, force: bool, stats: dict) -> None:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("--force", action="store_true", help="rewrite existing built-in cards (versioned)")
+    ap.add_argument("--force-card", action="append", default=[], metavar="CATEGORY/NAME",
+                    help="rewrite just this built-in card (versioned); repeatable")
     args = ap.parse_args(argv)
+    FORCE.update(args.force_card)
     store = open_store(project=False)
     stats = {"written": 0, "kept": 0}
     for name, (desc, tier) in REGISTRIES.items():
         store.ensure_registry(name, layer="model", description=desc, tier=tier, defined_by="tools/bootstrap.py")
+    for name, (desc, tier) in SG.REGISTRIES.items():
+        store.ensure_registry(name, layer="model", description=desc, tier=tier, defined_by="tools/seed_game.py")
+    for cat, items in SG.cards().items():
+        for c in items:
+            put(store, c, args.force, stats)
+    for name, (desc, tier) in SK.REGISTRIES.items():
+        reg = store.ensure_registry(name, layer="model", description=desc, tier=tier, defined_by="tools/bootstrap.py")
+        if name in SK.STATUS_VALUES:
+            meta_file = Path(reg) / "_category.json"
+            meta = json.loads(meta_file.read_text(encoding="utf-8"))
+            if meta.get("status_values") != SK.STATUS_VALUES[name]:
+                meta["status_values"] = SK.STATUS_VALUES[name]
+                meta_file.write_text(json.dumps(meta, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
 
-    for t in CARD_TYPES:
+    for t in CARD_TYPES + SK.CARD_TYPES:
+        t.setdefault("metadata", {"version": "1.0.0"})
         put(store, {"category": "card_type", "tier": 0, "provenance": PROV, **t}, args.force, stats)
+    put(store, {"provenance": PROV, **SK.CARD_LANGUAGE}, args.force, stats)
     for d in DOMAINS:
         put(store, {"category": "domain", "tier": 0, "provenance": PROV, **d}, args.force, stats)
     for lang in SL.LANGUAGES:
@@ -421,10 +445,10 @@ def main(argv=None) -> int:
                     "domain": "int", "condition": cond, "bidirectional": bidi,
                     "statement": f"{lhs} == {rhs}" + (f" when {cond}" if cond else ""),
                     "provenance": {"origin": origin, **PROV}}, args.force, stats)
-    for name, statement, origins, witness in LAWS:
+    for name, statement, origins, witness in LAWS + SK.LAWS:
         put(store, {"name": name, "category": "law", "tier": 0, "statement": statement, "origins": origins,
                     "witness": witness, "provenance": PROV}, args.force, stats)
-    for name, axis, statement, metric, target, direction in GOALS:
+    for name, axis, statement, metric, target, direction in GOALS + SK.GOALS:
         put(store, {"name": name, "category": "goal", "tier": 0, "axis": axis, "statement": statement,
                     "metric": metric, "target": target, "direction": direction, "provenance": PROV}, args.force, stats)
     for a in SA.ALGORITHMS:

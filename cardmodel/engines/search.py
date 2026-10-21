@@ -76,6 +76,14 @@ def _key(e) -> str:
     return repr(e)
 
 
+def _unbound(e) -> bool:
+    if isinstance(e, str):
+        return e.startswith("?")
+    if isinstance(e, list):
+        return any(_unbound(x) for x in e)
+    return False
+
+
 def rewrites(expr, rules: list[Rule]):
     """Every (rule name, expression) reachable by applying one rule at one position."""
     out = []
@@ -85,7 +93,10 @@ def rewrites(expr, rules: list[Rule]):
         for r in rules:
             b = match(r.lhs, node)
             if b is not None:
-                new = rebuild(instantiate(r.rhs, b))
+                sub = instantiate(r.rhs, b)
+                if _unbound(sub):
+                    continue            # a variable that occurs only on the other side: not a rewrite
+                new = rebuild(sub)
                 k = _key(new)
                 if k not in seen:
                     seen.add(k)
@@ -203,6 +214,8 @@ def optimize(expr, rules: list[Rule], costs: dict[str, float], max_depth: int = 
                 best = c
             q.append((new, d + 1))
     chain = _chain(_key(best[2]), parents, exprs)
+    conds = {r.card: r.condition for r in rules if r.condition}
+    used = {r.split("~")[0] for r, _ in chain[1:]}
     return {"input": to_text(expr), "input_cost": expr_cost(expr, costs), "best": to_text(best[2]),
             "best_tree": best[2], "best_cost": best[0], "steps": [(r, to_text(e)) for r, e in chain],
-            "nodes": nodes}
+            "nodes": nodes, "valid_when": sorted({f"{u}: {conds[u]}" for u in used if u in conds})}

@@ -1,0 +1,17 @@
+{
+  "axis": "knowledge",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "lean_mismatches",
+  "name": "G_K3_lean_mismatches",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Imported Lean-proved statements that the card semantics refute.",
+  "target": 0,
+  "tier": 0
+}

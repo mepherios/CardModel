@@ -1,0 +1,39 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/tekken_sidestep"
+  ],
+  "evades": [
+    "linear",
+    "vertical"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "iframes": [
+    2,
+    12
+  ],
+  "kind": "evade",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 0,
+  "move": 0,
+  "name": "sidestep",
+  "precedent": [
+    "tekken_sidestep"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 8,
+  "stamina": 8,
+  "startup": 1,
+  "statement": "Slips thrusts and vertical cuts; horizontal cuts track it.",
+  "tier": 1,
+  "to": "neutral"
+}

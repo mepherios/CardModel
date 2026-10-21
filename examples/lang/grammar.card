@@ -1,0 +1,31 @@
+-- Language as logic: a grammar is a set of rules over positions in a sentence (chart parsing). A parse is a
+-- proof; `cardmodel logic why examples/lang/grammar.card 's(0, 6)' --lean` has the Lean kernel check it.
+module grammar
+
+-- the sentence "the old cat sees a dog", one word per position
+word(0, the). word(1, old). word(2, cat). word(3, sees). word(4, a). word(5, dog).
+-- a second sentence starting at 10: "dogs sleep"
+word(10, dogs). word(11, sleep).
+
+lexicon(the, det). lexicon(a, det). lexicon(old, adj). lexicon(cat, noun). lexicon(dog, noun).
+lexicon(dogs, noun). lexicon(sees, verb_t). lexicon(sleep, verb_i).
+
+cat_at(C, I, J) <- word(I, W), lexicon(W, C), J = I + 1.
+
+-- phrase structure: each rule says which spans combine
+nbar(I, J) <- cat_at(noun, I, J).
+nbar(I, K) <- cat_at(adj, I, J), nbar(J, K).
+np(I, K) <- cat_at(det, I, J), nbar(J, K).
+np(I, J) <- nbar(I, J).
+vp(I, K) <- cat_at(verb_t, I, J), np(J, K).
+vp(I, J) <- cat_at(verb_i, I, J).
+s(I, K) <- np(I, J), vp(J, K).
+
+sentence_end(0, 6). sentence_end(10, 12).
+grammatical(I) <- sentence_end(I, K), s(I, K).
+
+test s(0, 6)
+test grammatical(10)
+test not s(0, 5)
+test np(0, 3) and vp(3, 6)
+query s(I, K)?

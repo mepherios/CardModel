@@ -1,0 +1,42 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/dark_souls_roll",
+    "precedent/bloodborne_quickstep"
+  ],
+  "evades": [
+    "all"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "iframes": [
+    3,
+    14
+  ],
+  "kind": "evade",
+  "metadata": {
+    "previous_content_hash": "9d2ad2b41adc22039a075b7d20069eef909d3b1c25ffd2b80e9e96e81d568e0e",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 0,
+  "move": 1,
+  "name": "roll",
+  "precedent": [
+    "dark_souls_roll",
+    "bloodborne_quickstep"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 16,
+  "stamina": 18,
+  "startup": 1,
+  "statement": "Invincible from frame 3 to 14 against anything, then a recovery and a step away: it saves you, it does not punish.",
+  "tier": 1,
+  "to": "neutral"
+}

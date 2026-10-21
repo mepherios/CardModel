@@ -1,0 +1,17 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM29_everything_carries",
+  "origins": [
+    "user requirement 2026-10-21 (if you do something in our world it carries)"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Effects carry instead of resetting: frame advantage, momentum (flow, bank, recoil), posture and stamina carry between exchanges; world facts carry between ticks; every world event has a cause chain back to the actions that made it, and each action's counterfactual impact is measured.",
+  "tier": 0,
+  "witness": "tests/test_game.py::test_world_effects_carry_and_explain"
+}

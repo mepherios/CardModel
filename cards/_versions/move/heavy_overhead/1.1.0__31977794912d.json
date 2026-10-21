@@ -1,0 +1,48 @@
+{
+  "active": 5,
+  "category": "move",
+  "damage": 38,
+  "depends_on": [
+    "precedent/dark_souls_poise",
+    "precedent/elden_ring_charged"
+  ],
+  "dir": 2,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "high",
+  "kind": "attack",
+  "metadata": {
+    "previous_content_hash": "0d43c2d9df5290d4ff9d563a5f5844b0fabd8be15f0e66014737c9fecb6b09ff",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 18,
+  "name": "heavy_overhead",
+  "poise": 14,
+  "posture": 30,
+  "precedent": [
+    "dark_souls_poise",
+    "elden_ring_charged"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 24,
+  "stamina": 24,
+  "startup": 26,
+  "statement": "Charged and armoured (poise 14, lunge=1): wins trades, loses everything to a read.",
+  "tags": [
+    "vertical",
+    "high",
+    "heavy"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

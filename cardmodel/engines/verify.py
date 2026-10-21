@@ -12,6 +12,10 @@ Sections (all on by default; ``only`` selects):
   selfcheck     no source-folder references in the code; on macOS the CLI re-runs with the source folders
                 (read from the vendored registries' provenance) unreadable
   portability   every Python 3 interpreter found on this machine runs `verify --only kernel,rules`
+  logic         the model's own laws as logic over its store (stdlib/self.card): zero violations (CM27)
+  lang          every card-language program (examples/lang, stdlib) runs and passes (CM26)
+  theorems      every theorem card is re-witnessed with this seed; a status must match its evidence (CM23)
+  game          the design_law cards on the exact equilibrium of the neutral exchange, and the world (CM28, CM29)
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
 it). ``record=True`` also writes each card's verdict into the card
@@ -31,8 +35,9 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "forms", "vectors", "rules", "redefinitions", "conformance", "functions", "proofs",
-            "selfcheck", "portability")
+SECTIONS = ("kernel", "logic", "lang", "theorems", "game", "forms", "vectors", "rules", "redefinitions",
+            "conformance", "functions", "proofs", "selfcheck", "portability")
+QUICK = ["kernel", "logic", "lang", "theorems", "game", "forms", "vectors", "rules", "redefinitions"]
 
 
 def _kernel(ctx: Ctx) -> dict:
@@ -92,6 +97,79 @@ def _rules(ctx: Ctx, seed: int) -> dict:
             "counts": {s: st.count(s) for s in sorted(set(st))}, "cards": out}
 
 
+def _logic(ctx: Ctx) -> dict:
+    from . import selflogic
+    r = selflogic.evaluate_self(ctx)
+    r.pop("model", None)
+    return r
+
+
+def card_programs(ctx: Ctx) -> list:
+    from ..kernel import paths
+    home = paths.home()
+    out = sorted((home / "examples" / "lang").glob("*.card")) + sorted((home / "stdlib").glob("*.card"))
+    return [p for p in out if p.name != "self.card"]
+
+
+def _lang(ctx: Ctx, seed: int) -> dict:
+    from ..lang.compile import CompileError, compile_file
+    from ..lang.run import run as run_module
+    from ..lang.syntax import CardSyntaxError
+    out = {}
+    for p in card_programs(ctx):
+        try:
+            mod = compile_file(p, ctx.ops, ctx.store)
+            rep = run_module(ctx, mod, seed=seed, samples=120)
+            out[p.name] = {"status": rep["status"], "counts": rep["counts"],
+                           "failing": [t for t in rep["tests"] if t["status"] != "pass"][:5],
+                           "refuted": [t["name"] for t in rep["theorems"] if t["status"] == "refuted"]}
+        except (CompileError, CardSyntaxError) as exc:
+            out[p.name] = {"status": "fail", "error": str(exc)}
+    st = [r["status"] for r in out.values()]
+    return {"status": "fail" if "fail" in st else ("pass" if st else "vacuous"),
+            "counts": {s: st.count(s) for s in sorted(set(st))}, "programs": out}
+
+
+def _theorems(ctx: Ctx, seed: int, samples: int) -> dict:
+    """Re-witness every theorem card; a refuted proved statement is a semantics bug (fail)."""
+    from . import theorems as T
+    out = {}
+    for card in ctx.store.cards("theorem"):
+        sem = card.get("semantics")
+        w = T.witness_card(card, ctx.ops, seed, samples)
+        claimed = card.get("status")
+        has_proof = any(p.get("ok") for p in card.get("proofs") or [])
+        problem = None
+        if w["status"] == "refuted" and claimed != "refuted":
+            problem = f"claimed {claimed} but refuted at {w.get('counterexample')}"
+        elif claimed == "proved" and not has_proof:
+            problem = "claimed proved without a proof"
+        elif claimed == "refuted" and w["status"] == "witnessed":
+            problem = "claimed refuted but the witness holds"
+        out[card.qualified] = {"claimed": claimed, "witness": w["status"], "problem": problem,
+                               "semantics": sem, "imported": T.imported(card)}
+    problems = {q: r["problem"] for q, r in out.items() if r["problem"]}
+    claimed = [r["claimed"] for r in out.values()]
+    return {"status": "fail" if problems else ("pass" if out else "vacuous"), "problems": problems,
+            "counts": {s: claimed.count(s) for s in sorted(set(claimed))},
+            "lean_mismatches": sum(1 for r in out.values() if r["imported"] and r["witness"] == "refuted"),
+            "cards": len(out)}
+
+
+def _game(ctx: Ctx) -> dict:
+    if not ctx.store.cards("move"):
+        return {"status": "skipped", "reason": "no move cards"}
+    from ..game import analysis as A
+    from ..game import world as W
+    from ..game.combat import Combat
+    r = A.check(Combat(ctx))
+    w = W.run(ctx)
+    failing = [n for n, law in r["laws"].items() if not law["ok"]]
+    return {"status": "fail" if failing else "pass", "laws_passed": r["passed"], "laws_total": r["total"],
+            "failing": failing, "equilibrium": r["equilibrium"], "options": r["moves"],
+            "world_final_facts": len(w["final"])}
+
+
 def _redefinitions(ctx: Ctx, seed: int) -> dict:
     out = {c.qualified: redefs.verify(c, seed=seed) for c in ctx.store.cards("redefinition")}
     st = [r["verdict"] for r in out.values()]
@@ -128,6 +206,14 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         t0 = time.perf_counter()
         if sec == "kernel":
             res = _kernel(ctx)
+        elif sec == "logic":
+            res = _logic(ctx)
+        elif sec == "lang":
+            res = _lang(ctx, seed)
+        elif sec == "theorems":
+            res = _theorems(ctx, seed, max(40, samples))
+        elif sec == "game":
+            res = _game(ctx)
         elif sec == "forms":
             res = _forms(ctx, seed, samples)
         elif sec == "vectors":

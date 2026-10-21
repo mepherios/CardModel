@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "answers_per_attack",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL3_two_answers_per_attack",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Every attack has at least two different kinds of answer (guard, evade, catch, attack, step) that do not lose to it.",
+  "threshold": 2,
+  "tier": 0
+}

@@ -1,0 +1,31 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/street_fighter_spacing"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "kind": "step",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 0,
+  "move": 1,
+  "name": "backstep",
+  "precedent": [
+    "street_fighter_spacing"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 6,
+  "stamina": 4,
+  "startup": 3,
+  "statement": "Open one distance band; attacks that land after frame 4 must reach the new distance.",
+  "tier": 1,
+  "to": "neutral"
+}

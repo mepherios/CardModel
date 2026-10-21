@@ -1,0 +1,31 @@
+-- Logic as cards: facts, rules ("if x, y -> z"), negation, aggregates, constraints, queries, tests.
+module family
+
+parent(alice, bob).
+parent(bob, carol).
+parent(carol, dave).
+parent(eve, bob).
+born(alice, 1931). born(bob, 1958). born(carol, 1984). born(dave, 2011). born(eve, 1933).
+
+rule base: ancestor(X, Y) <- parent(X, Y).
+rule step: ancestor(X, Z) <- parent(X, Y), ancestor(Y, Z).
+
+-- negation (closed world): a root is a parent nobody is a parent of
+root(X) <- parent(X, _), not parent(_, X).
+
+-- arithmetic through op cards, and an aggregate
+age_gap(P, C, G) <- parent(P, C), born(P, A), born(C, B), G = B - A.
+descendants(X, N) <- root(X), N = count { ancestor(X, _) }.
+generation(X, 0) <- root(X).
+generation(Y, N) <- generation(X, M), parent(X, Y), N = M + 1.
+
+never: ancestor(X, X).                       -- the family tree has no cycles
+constraint parents_older: age_gap(P, C, G), G < 12.
+
+query ancestor(alice, Who)?
+query age_gap(P, C, G), G > 25?
+
+test ancestor(alice, dave)
+test not ancestor(dave, alice)
+test descendants(alice, 3)
+test generation(dave, 3)

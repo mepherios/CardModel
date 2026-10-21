@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "answer_risk",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL8_counters_are_reads",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "No answer is safe by itself: every defensive option loses to at least one attack.",
+  "threshold": 1,
+  "tier": 0
+}

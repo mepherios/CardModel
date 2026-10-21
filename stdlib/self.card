@@ -1,0 +1,42 @@
+-- The card model's own laws, as logic over its card store.
+-- `cardmodel logic self` loads every card as facts (card, in_registry, depends_on, status, law, ...) and
+-- evaluates these rules; a constraint that fires is a law the store breaks, with a proof of where.
+module self
+
+-- CM11 closure under definition: every depends_on reference resolves (vendored snapshots whose references
+-- point into a corpus that was not copied are marked external and exempt)
+unresolved(C, D) <- depends_on(C, D), not card(D), in_registry(C, R), not external_registry(R).
+never: unresolved(C, D).
+
+-- CM20 laws are cards with a witness test
+law_without_witness(L) <- law(L), not law_witness(L, _).
+never: law_without_witness(L).
+
+-- goals name a metric the program computes
+goal_without_metric(G) <- goal(G), not goal_metric(G, _).
+never: goal_without_metric(G).
+
+-- CM23 crystallised knowledge: a status is only as strong as its evidence
+proved_without_proof(T) <- theorem_status(T, proved), not has_proof(T).
+witnessed_without_evidence(T) <- theorem_status(T, witnessed), not has_evidence(T).
+never: proved_without_proof(T).
+never: witnessed_without_evidence(T).
+
+-- every IR op has reference semantics, except the special forms the interpreter evaluates itself
+special(and_op). special(or_op). special(if_op).
+never: op_ir(O), not op_eval(O), not special_op(O).
+
+-- CM08 every rewrite rule has a numeric witness (its variables are declared)
+never: rewrite_rule(R), not rule_vars(R).
+
+-- structure that carries: dependency reachability and the registries a card leans on
+depends_star(C, D) <- depends_on(C, D), card(D).
+depends_star(C, E) <- depends_on(C, D), depends_star(D, E).
+leans_on(C, R) <- depends_star(C, D), in_registry(D, R).
+cyclic(C) <- depends_star(C, C).
+
+-- the store in numbers
+registry_size(R, N) <- registry(R), N = count { in_registry(_, R) }.
+learned_in(R, N) <- registry(R), N = count { in_registry(C, R), learned(C) }.
+
+query cyclic(C)?

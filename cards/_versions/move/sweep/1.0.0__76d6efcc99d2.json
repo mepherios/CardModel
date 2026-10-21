@@ -1,0 +1,43 @@
+{
+  "active": 3,
+  "category": "move",
+  "damage": 12,
+  "depends_on": [
+    "precedent/hollow_knight_pogo"
+  ],
+  "dir": 0,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "low",
+  "kind": "attack",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 8,
+  "name": "sweep",
+  "poise": 0,
+  "posture": 16,
+  "precedent": [
+    "hollow_knight_pogo"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 17,
+  "stamina": 12,
+  "startup": 15,
+  "statement": "A low horizontal: jumpable, heavy on posture.",
+  "tags": [
+    "horizontal",
+    "low"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

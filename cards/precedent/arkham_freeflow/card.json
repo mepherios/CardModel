@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Batman: Arkham Asylum",
+  "generalised_by": "Anti-pattern this design forbids (GL4, GL8).",
+  "limit": "Counters need no read: trivial once learned.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "arkham_freeflow",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "One-button counters in freeflow combat.",
+  "tier": 1,
+  "year": 2009
+}

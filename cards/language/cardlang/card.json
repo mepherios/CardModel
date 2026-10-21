@@ -1,0 +1,30 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [
+      [
+        "(*",
+        "*)"
+      ]
+    ],
+    "line": [
+      "--",
+      "#"
+    ]
+  },
+  "extensions": [
+    ".card"
+  ],
+  "frontend": "cardmodel.lang",
+  "grammar": "cardmodel/lang/syntax.py (module docstring) and docs/LANGUAGE.md",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "cardlang",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "The card language: functions, logic (facts, rules, constraints, queries), theorems, tests and cards in one source file (cardmodel/lang). Functions compile to the card IR; the rest compiles to cards. Accepts the Pheros CL v0 function form (name : T -> T = match ...).",
+  "tier": 0
+}

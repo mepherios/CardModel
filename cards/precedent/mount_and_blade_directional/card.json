@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Mount & Blade",
+  "generalised_by": "Opposed swings within one frame clash (alignment <= -1): both recoil, the heavier momentum pushes through.",
+  "limit": "Chamber timing is hidden and hard to read.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "mount_and_blade_directional",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Directional attacks and blocks; chambering.",
+  "tier": 1,
+  "year": 2008
+}

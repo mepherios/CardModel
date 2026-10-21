@@ -1,0 +1,14 @@
+{
+  "category": "stance",
+  "forced": false,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "flow",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "After an attack: the residual momentum carries into the next move (faster if it continues the direction, slower if it reverses).",
+  "tier": 1
+}

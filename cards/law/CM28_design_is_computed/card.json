@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM28_design_is_computed",
+  "origins": [
+    "user requirement 2026-10-21 (superior counteraction design)",
+    "hub L1",
+    "Pheros L41"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Combat design claims are computed, not asserted: every design_law card holds on the exact equilibrium of the exchange (rational simplex with a checked certificate), a planted imbalance is caught, and the combat kernel's invariants are theorems of stdlib/combat.card.",
+  "tier": 0,
+  "witness": "tests/test_game.py::test_design_laws_hold_and_catch_imbalance"
+}

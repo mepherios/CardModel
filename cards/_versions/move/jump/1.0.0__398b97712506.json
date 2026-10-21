@@ -1,0 +1,41 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/sekiro_perilous",
+    "precedent/hollow_knight_pogo"
+  ],
+  "evades": [
+    "low",
+    "low_start"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "iframes": [
+    4,
+    14
+  ],
+  "kind": "evade",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 0,
+  "move": 0,
+  "name": "jump",
+  "precedent": [
+    "sekiro_perilous",
+    "hollow_knight_pogo"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 10,
+  "stamina": 8,
+  "startup": 1,
+  "statement": "Over sweeps and rising cuts.",
+  "tier": 1,
+  "to": "neutral"
+}

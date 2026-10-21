@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "dominance",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL1_no_dominant_option",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "No option weakly dominates every other option in the neutral exchange.",
+  "threshold": null,
+  "tier": 0
+}

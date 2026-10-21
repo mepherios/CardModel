@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Logic rules (if body then head) and constraints (never: body), one card each; learned ones carry their evidence (support, confidence).",
+  "name": "logic_rule",
+  "tier": 1
+}

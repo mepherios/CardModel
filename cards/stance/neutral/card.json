@@ -1,0 +1,14 @@
+{
+  "category": "stance",
+  "forced": false,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "neutral",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Everything is allowed.",
+  "tier": 1
+}

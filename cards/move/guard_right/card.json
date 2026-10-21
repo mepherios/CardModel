@@ -1,0 +1,37 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/for_honor_guard",
+    "precedent/sekiro_deflect",
+    "precedent/sf3_parry"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "good": 9,
+  "guard_dir": 0,
+  "kind": "guard",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 0,
+  "name": "guard_right",
+  "perfect": 4,
+  "precedent": [
+    "for_honor_guard",
+    "sekiro_deflect",
+    "sf3_parry"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 6,
+  "stamina": 3,
+  "startup": 2,
+  "statement": "Guard facing right: aligned with right slashes, half with diagonals.",
+  "tier": 1,
+  "to": "neutral"
+}

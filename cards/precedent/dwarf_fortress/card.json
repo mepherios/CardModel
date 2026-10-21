@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Dwarf Fortress",
+  "generalised_by": "Every derived event carries its proof tree: the game can explain why the gate burned.",
+  "limit": "Opaque causes.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "dwarf_fortress",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Simulation where everything carries consequences.",
+  "tier": 1,
+  "year": 2006
+}

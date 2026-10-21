@@ -1,0 +1,37 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/for_honor_feint"
+  ],
+  "dir": 2,
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "height": "high",
+  "into": "thrust",
+  "kind": "feint",
+  "metadata": {
+    "previous_content_hash": "cf30d4d3702de76a1e5241f899844c2e131bfd62f2cef441b88cba6b11729270",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 0,
+  "name": "feint_overhead",
+  "precedent": [
+    "for_honor_feint"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "stamina": 8,
+  "startup": 13,
+  "statement": "Shows an overhead, cancels at frame 13 into a thrust: beats guards and rolls timed to the overhead, loses to anything fast and to a centre guard.",
+  "tags": [
+    "vertical",
+    "feint"
+  ],
+  "tier": 1,
+  "to": "flow"
+}

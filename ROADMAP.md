@@ -24,6 +24,24 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   soundness, recall and speed; runs recorded as cards.
 * 🔵 Portability: verify runs under every Python 3.9+ on the machine; METHODOLOGY.md written.
 
+## Done (2026-10-21, second build: knowledge, language, game)
+
+* 🔵 **Logic as cards**: rules (if x, y -> z), stratified negation (with existential `_`), bindings and tests
+  through op cards, aggregates, constraints, minimum-height proofs, budgets; Lean certificates of derivations
+  (kernel-checked; a forged one is rejected); rule mining from data; the model's own laws as logic
+  (`stdlib/self.card`, 0 violations); programs as facts (`logic code`).
+* 🔵 **The card language**: functions (to the IR, so to every language card), logic, theorems, tests, cards
+  in one file; the Pheros CL v0 function form; `algorithm.` references resolved to the cheapest verified form;
+  `run`, `lang check|build|emit`, `repl`.
+* 🔵 **Crystallised knowledge**: theorem cards with an evidence ladder (refuted < conjecture < witnessed < proved;
+  exhaustive small-value phase, anti-vacuity, proof by exhaustion on finite boxes); law discovery (1,520
+  candidates → 161 laws, 90 Lean-proved, 96 simplifying rewrite rules); the Lean core import (1,489 faithful
+  readings, 0 semantic mismatches, 930 re-proved by the model's own tactics and rule chains).
+* 🔵 **The game foundation**: the Vector Counter System as cards (moves, stances, fighters, design laws,
+  precedents), its kernel in the card language (C++/Lean/any target), exact equilibria with certificates,
+  8 design laws holding, sensitivity, automated balancing, AIs (equilibrium, vector reader), a systemic world
+  with causes and counterfactual impact (`game/DESIGN.md`).
+
 ## Now
 
 * 🟢 **Native path inside improved modules.** Optionally call the C/Rust form of a pure function through
@@ -58,6 +76,14 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   Mathlib when a project provides one (probe a `lakefile` with Mathlib).
 * 🟢 **Crypto atoms without third-party code.** Pure-Python XChaCha20-Poly1305 (HChaCha20 + ChaCha20-Poly1305) and
   AES-GCM, so each of Ting's atoms has two runnable stdlib forms.
+
+* 🟢 **Game, next design steps.** Multi-hit strings (cancel windows as move-card edges), weapon move sets,
+  bosses as fighter cards with phase stances, a duel-tree AI (several exchanges deep), the Unreal module around
+  `game kernel --lang cpp`, and the story on the world's factions, memory and standing.
+* 🟢 **Lean fragment.** `∃`, `Int.gcd`/`emod` lemmas with casts, Bool lemmas; Mathlib projects when present
+  (probe a lakefile), which would turn many "witnessed" laws into "proved".
+* 🟢 **Logic.** Function symbols (lists, trees as terms) with a depth budget; magic-set rewriting for
+  goal-directed queries on large fact bases.
 
 ## Later
 

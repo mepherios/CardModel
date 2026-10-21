@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Logic theories: which facts and rules belong together, their predicates and arities.",
+  "name": "theory",
+  "tier": 1
+}

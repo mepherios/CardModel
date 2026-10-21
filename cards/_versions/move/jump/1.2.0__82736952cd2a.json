@@ -1,0 +1,47 @@
+{
+  "bank_div": 1,
+  "category": "move",
+  "depends_on": [
+    "precedent/sekiro_perilous",
+    "precedent/hollow_knight_pogo",
+    "precedent/fighting_game_throw"
+  ],
+  "evades": [
+    "low",
+    "low_start",
+    "grab"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "iframes": [
+    4,
+    14
+  ],
+  "kind": "evade",
+  "metadata": {
+    "previous_content_hash": "36184fc426c102bf1adc657d5ff66fcf301912360ff87c3783f072d7efcbb88d",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 0,
+  "move": 0,
+  "name": "jump",
+  "precedent": [
+    "sekiro_perilous",
+    "hollow_knight_pogo",
+    "fighting_game_throw"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 8,
+  "stamina": 8,
+  "startup": 1,
+  "statement": "Over sweeps, rising cuts and grabs; the attacker's whole momentum carries under you into a plunging counter (full bank).",
+  "tier": 1,
+  "to": "neutral"
+}

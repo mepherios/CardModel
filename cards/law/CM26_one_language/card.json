@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM26_one_language",
+  "origins": [
+    "user requirement 2026-10-21 (a real programming language)",
+    "Pheros CL v0"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Functions, rules, constraints, theorems, tests and cards share one source language; a module compiles to cards, and its functions compile to the same IR every language card emits and the conformance matrix checks.",
+  "tier": 0,
+  "witness": "tests/test_lang.py::test_function_cards_verify_in_languages"
+}

@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Virtua Fighter",
+  "generalised_by": "duck evades the high tag.",
+  "limit": "",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "virtua_fighter_duck",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Duck under high attacks.",
+  "tier": 1,
+  "year": 1993
+}

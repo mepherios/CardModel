@@ -1,0 +1,20 @@
+{
+  "advantage": 0.6,
+  "bank": 0.5,
+  "broken": 25.0,
+  "category": "payoff",
+  "hp": 1.0,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "default",
+  "posture": 0.4,
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recoil": 4.0,
+  "stamina": 0.05,
+  "statement": "Exchange value for the row fighter (the game is zero-sum: the column fighter's value is the negative).",
+  "tier": 0
+}

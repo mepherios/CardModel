@@ -1,0 +1,74 @@
+-- The combat kernel of the Vector Counter System (game/DESIGN.md), in the card language.
+-- Everything here is integer arithmetic, so it is exact, witnessed exhaustively on its whole domain, and emitted
+-- unchanged to every language card (C++ for an Unreal module, Rust, Swift, Lua, ...). The engine
+-- (cardmodel/game/combat.py) calls these functions; nothing about how a counter resolves lives anywhere else.
+module combat
+
+-- Directions: 0..7 are the eight swing directions on the plane facing the defender (0 = from the right,
+-- 2 = overhead, 4 = from the left, 6 = rising, odd = diagonals); 8 is a thrust (out of the plane).
+fn align(a: Int, g: Int) -> Int requires 0 <= a, a <= 8, 0 <= g, g <= 8 {
+  if a == 8 or g == 8 {
+    return if a == g then 2 else 0
+  }
+  let d = abs(a - g) % 8
+  let e = min(d, 8 - d)
+  return 2 - e
+}
+
+-- When the guard came up relative to the impact: -1 too late, 2 perfect, 1 good, 0 just holding guard
+fn timing_class(delta: Int, perfect: Int, good: Int) -> Int requires 0 <= perfect, perfect <= good =
+  if delta < 0 then -1 else if delta < perfect then 2 else if delta < good then 1 else 0
+
+-- Outcome classes: 0 hit, 1 pierce (guard on the wrong side), 2 block, 3 deflect, 4 redirect
+fn outcome(al: Int, tc: Int) -> Int requires -2 <= al, al <= 2, -1 <= tc, tc <= 2 {
+  if tc < 0 { return 0 }
+  if al < 0 { return 1 }
+  let q = al * tc
+  if q >= 4 { return 4 }
+  if q >= 2 { return 3 }
+  return 2
+}
+
+-- What reaches the defender: full on a hit, three quarters through a pierced guard, chip on a block
+fn damage_through(dmg: Int, oc: Int, al: Int) -> Int requires 0 <= dmg, dmg <= 1000, 0 <= oc, oc <= 4, -2 <= al, al <= 2 =
+  if oc == 0 then dmg else if oc == 1 then dmg * 3 // 4 else if oc == 2 then dmg * (2 - al) // 8 else 0
+
+-- Posture the defender takes when blocking: worse alignment, more posture
+fn block_posture(pdmg: Int, al: Int) -> Int requires 0 <= pdmg, pdmg <= 1000, 0 <= al, al <= 2 = pdmg * (3 - al) // 2
+
+-- Momentum carries: a deflect turns the attacker's momentum against them; a redirect banks most of it
+fn attacker_posture(momentum: Int, oc: Int) -> Int requires 0 <= momentum, momentum <= 100, 0 <= oc, oc <= 4 =
+  if oc == 4 then 2 * momentum + 4 else if oc == 3 then momentum + 2 else 0
+fn redirect_bank(momentum: Int) -> Int requires 0 <= momentum, momentum <= 100 = momentum * 3 // 4
+fn recoil_frames(momentum: Int, oc: Int) -> Int requires 0 <= momentum, momentum <= 100, 0 <= oc, oc <= 4 =
+  if oc == 4 then 8 + momentum else if oc == 3 then 3 + momentum // 2 else 0
+
+-- Flow: the residual momentum of the last move speeds a move that continues its direction and must be paid
+-- for (extra startup) when the next move reverses it. 9 means "no previous direction".
+fn flow_startup(startup: Int, residual: Int, last_dir: Int, next_dir: Int) -> Int requires 1 <= startup, startup <= 60, 0 <= residual, residual <= 100, 0 <= last_dir, last_dir <= 9, 0 <= next_dir, next_dir <= 9 {
+  if last_dir == 9 or next_dir == 9 or residual == 0 { return startup }
+  if last_dir == 8 or next_dir == 8 { return startup }
+  let al = align(last_dir, next_dir)
+  if al >= 1 { return max(1, startup - residual // 3) }
+  if al <= -1 { return startup + residual // 2 }
+  return startup
+}
+
+-- A banked redirect spent on the next attack: more damage, never more than double
+fn banked_damage(dmg: Int, bank: Int) -> Int requires 0 <= dmg, dmg <= 1000, 0 <= bank, bank <= 100 = min(2 * dmg, dmg + bank)
+
+-- Design invariants, checked on every run (the witness covers these small domains exhaustively)
+theorem align_symmetric(a: Int, g: Int) requires 0 <= a, a <= 8, 0 <= g, g <= 8: align(a, g) == align(g, a)
+theorem align_bounded(a: Int, g: Int) requires 0 <= a, a <= 8, 0 <= g, g <= 8: -2 <= align(a, g) and align(a, g) <= 2
+theorem perfect_alignment(a: Int) requires 0 <= a, a <= 8: align(a, a) == 2
+theorem opposite_fails(a: Int) requires 0 <= a, a <= 7: align(a, (a + 4) % 8) == -2
+theorem redirect_needs_both(al: Int, tc: Int) requires -2 <= al, al <= 2, -1 <= tc, tc <= 2: outcome(al, tc) == 4 ==> al == 2 and tc == 2
+theorem late_is_hit(al: Int) requires -2 <= al, al <= 2: outcome(al, -1) == 0
+theorem no_free_block(d: Int, al: Int) requires 1 <= d, d <= 1000, 0 <= al, al <= 1: damage_through(d, 2, al) >= 0 and block_posture(d, al) > 0
+theorem deflect_costs_attacker(m: Int) requires 0 <= m, m <= 100: attacker_posture(m, 3) > 0 and attacker_posture(m, 4) > attacker_posture(m, 3)
+theorem flow_never_free(s: Int, r: Int, a: Int, b: Int) requires 1 <= s, s <= 60, 0 <= r, r <= 100, 0 <= a, a <= 9, 0 <= b, b <= 9: flow_startup(s, r, a, b) >= 1
+theorem bank_capped(d: Int, k: Int) requires 0 <= d, d <= 1000, 0 <= k, k <= 100: banked_damage(d, k) <= 2 * d
+
+test align(2, 2) == 2 and align(2, 3) == 1 and align(2, 6) == -2 and align(8, 8) == 2 and align(8, 0) == 0
+test outcome(2, 2) == 4 and outcome(1, 2) == 3 and outcome(2, 1) == 3 and outcome(2, 0) == 2 and outcome(-1, 2) == 1
+test flow_startup(12, 9, 2, 3) == 9 and flow_startup(12, 9, 2, 6) == 16 and flow_startup(12, 9, 9, 2) == 12

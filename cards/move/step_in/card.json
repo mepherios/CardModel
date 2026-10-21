@@ -1,0 +1,38 @@
+{
+  "catches": [
+    "linear"
+  ],
+  "category": "move",
+  "depends_on": [
+    "precedent/sekiro_mikiri"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "kind": "catch",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 0,
+  "move": -1,
+  "name": "step_in",
+  "precedent": [
+    "sekiro_mikiri"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 12,
+  "stamina": 6,
+  "startup": 3,
+  "statement": "Steps onto a thrust and pins it: the thrust's momentum breaks the thruster's posture. Against anything else it walks into the blade.",
+  "tier": 1,
+  "to": "flow",
+  "window": [
+    3,
+    12
+  ]
+}

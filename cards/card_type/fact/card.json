@@ -1,0 +1,42 @@
+{
+  "applies_to": [
+    "fact"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "fact",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "args": {
+        "items": {
+          "type": [
+            "string",
+            "integer",
+            "number"
+          ]
+        },
+        "type": "array"
+      },
+      "pred": {
+        "type": "string"
+      },
+      "theory": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "theory",
+      "pred",
+      "args"
+    ],
+    "type": "object"
+  },
+  "statement": "A ground atom of a theory.",
+  "tier": 0
+}

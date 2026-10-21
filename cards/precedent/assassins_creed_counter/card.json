@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Assassin's Creed",
+  "generalised_by": "Anti-pattern this design forbids.",
+  "limit": "Same.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "assassins_creed_counter",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Counter-kill on a timed block.",
+  "tier": 1,
+  "year": 2007
+}

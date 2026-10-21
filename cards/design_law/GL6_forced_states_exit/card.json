@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "forced_exits",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL6_forced_states_exit",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Every forced stance exits within one exchange (no infinite forced loops).",
+  "threshold": 1,
+  "tier": 0
+}

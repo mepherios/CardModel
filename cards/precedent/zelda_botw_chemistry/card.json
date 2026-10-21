@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Zelda: Breath of the Wild",
+  "generalised_by": "World rules are logic cards; every consequence has a proof (stdlib/world.card).",
+  "limit": "Interactions are hand-coded per system.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "zelda_botw_chemistry",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Chemistry engine: fire, wind, water, electricity interact systemically.",
+  "tier": 1,
+  "year": 2017
+}

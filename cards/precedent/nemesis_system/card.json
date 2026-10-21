@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Middle-earth: Shadow of Mordor",
+  "generalised_by": "Memory is facts that persist across ticks; grudges and fear are rules over them.",
+  "limit": "Memory is scripted per enemy type.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "nemesis_system",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Enemies remember you and change.",
+  "tier": 1,
+  "year": 2014
+}

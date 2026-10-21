@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_game.py",
+  "description": "Fighters (player archetypes, enemies, bosses) as cards: a moveset and stats; everyone obeys the same move cards and the same kernel.",
+  "name": "fighter",
+  "tier": 1
+}

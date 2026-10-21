@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Dark Souls",
+  "generalised_by": "Evades cover classes of attack; only the roll covers all, at the price of the longest recovery (GL4/GL8).",
+  "limit": "One answer to everything; spacing and patience over reading.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "dark_souls_roll",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Roll with invincibility frames.",
+  "tier": 1,
+  "year": 2011
+}

@@ -35,11 +35,37 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel run examples/lang/math.card --lean
+```
+
+```bash
+./bin/cardmodel logic why examples/lang/grammar.card 's(0, 6)' --lean
+```
+
+```bash
+./bin/cardmodel lean import --core
+```
+
+```bash
+./bin/cardmodel game check
+```
+
+```bash
+./bin/cardmodel game play --vs reader
+```
+
+```bash
 cd tests && python3 -B -m unittest
 ```
 
 `probe` lists the toolchains found here. `verify --quick` witnesses the kernel, forms, vectors, rules and identities.
 `translate` runs Python → C, C++, Rust, Go, Swift, Java, JavaScript, TypeScript, Ruby, Lua and Lean, verified.
+`run` executes a program in the card language (functions, logic rules, theorems, tests and cards in one file):
+the theorems are witnessed and sent to Lean. `logic why` explains a derived fact and has the Lean kernel check
+the derivation (here, a parse tree). `lean import --core` reads Lean's own Nat/Int library into theorem cards,
+checks with the kernel that each reading is the original proposition, witnesses it, and re-proves it with the
+model's own tactics and rule chains. `game check` computes the combat design's laws on an exact equilibrium,
+and `game play` lets you fight the AI that reads your vectors.
 `improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
 byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last
 command runs the test suite.
@@ -55,3 +81,6 @@ command runs the test suite.
 | [docs/PROVENANCE.md](docs/PROVENANCE.md) | sources, commits, and what the witnesses found in them |
 | [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | pure core / effect shell, the optimization pipeline, guarantees, online play |
 | [arena/](arena/README.md) | the optimization test environment (hand-written slow framework + generator) |
+| [docs/LANGUAGE.md](docs/LANGUAGE.md) | the card language: functions, logic, theorems, tests and cards in one file |
+| [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md) | crystallised knowledge: logic, theorem cards, discovered laws, Lean import and re-proofs |
+| [game/DESIGN.md](game/DESIGN.md) | the game design (Vector Counter System): pillars, kernel, design laws, AIs, world |

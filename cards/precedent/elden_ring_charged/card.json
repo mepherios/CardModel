@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Elden Ring",
+  "generalised_by": "A redirect banks momentum; the counter is whatever move you choose next, boosted by the bank.",
+  "limit": "Guard counter is one input after any block.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "elden_ring_charged",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Charged heavy attacks and guard counters.",
+  "tier": 1,
+  "year": 2022
+}

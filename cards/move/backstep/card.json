@@ -1,0 +1,33 @@
+{
+  "category": "move",
+  "depends_on": [
+    "precedent/street_fighter_spacing"
+  ],
+  "from": [
+    "neutral",
+    "flow",
+    "recoil"
+  ],
+  "kind": "step",
+  "metadata": {
+    "previous_content_hash": "4b4b899c4de4bd332543a9e3051cf3e2ea9aa196e3b481026b65be5b2ba51727",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "momentum": 0,
+  "move": 1,
+  "name": "backstep",
+  "precedent": [
+    "street_fighter_spacing"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 10,
+  "stamina": 8,
+  "startup": 3,
+  "statement": "Open one distance band: attacks that do not lunge (or reach far) whiff; lunging attacks follow you.",
+  "tier": 1,
+  "to": "neutral"
+}

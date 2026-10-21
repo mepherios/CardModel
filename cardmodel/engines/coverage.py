@@ -150,6 +150,26 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "python_failures":
         pr = secs.get("portability")
         return len(pr.get("failures", [])) if pr else None
+    if name == "theorems_proved":
+        return sum(1 for c in st.cards("theorem") if c.get("status") == "proved")
+    if name == "lean_imported":
+        return sum(1 for c in st.cards("theorem") if (c.get("origin") or {}).get("kind") == "lean_core"
+                   and any(p.get("method") == "lean:original" and p.get("ok") for p in c.get("proofs") or []))
+    if name == "lean_mismatches":
+        t = secs.get("theorems")
+        return t.get("lean_mismatches") if t else None
+    if name == "self_violations":
+        lg = secs.get("logic")
+        return lg.get("violation_count") if lg else None
+    if name == "design_laws_failing":
+        gm = secs.get("game")
+        return len(gm.get("failing", [])) if gm and "failing" in gm else None
+    if name == "equilibrium_support":
+        gm = secs.get("game")
+        return len((gm.get("equilibrium") or {}).get("row_mix", {})) if gm and gm.get("equilibrium") else None
+    if name == "card_programs_passing":
+        lang = secs.get("lang")
+        return sum(1 for p in lang["programs"].values() if p["status"] == "pass") if lang else None
     runs = sorted(st.cards("arena_run"), key=lambda c: c["score"].get("finished", ""))
     if name == "arena_unsound_runs":
         return sum(1 for r in runs if not r["score"].get("sound")) if runs else None

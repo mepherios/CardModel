@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Street Fighter III: 3rd Strike",
+  "generalised_by": "Timing classes (perfect/good/held) multiplied by alignment: a perfect aligned guard redirects.",
+  "limit": "High/low only.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sf3_parry",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Parry: press toward the attack in a tiny window.",
+  "tier": 1,
+  "year": 1999
+}

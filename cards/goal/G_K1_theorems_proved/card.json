@@ -1,0 +1,17 @@
+{
+  "axis": "knowledge",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "theorems_proved",
+  "name": "G_K1_theorems_proved",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Theorem cards whose statement the Lean kernel accepted with a proof.",
+  "target": 150,
+  "tier": 0
+}

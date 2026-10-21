@@ -15,6 +15,15 @@
   cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
   cardmodel show CARD | list [REGISTRY] | probe | new REGISTRY NAME | docs [--check] | clean
 
+  the card language, logic and proofs (cli_ext.py):
+  cardmodel run FILE.card [--lean]       run a program: tests, queries, theorems (witnessed, Lean-proved)
+  cardmodel lang check|build|emit FILE   check it, turn it into cards (--save), or emit it (--lang rust)
+  cardmodel logic query|why|mine|self    ask a theory, explain a fact (--lean: kernel-checked), decipher rules
+  cardmodel laws [--save]                discover the laws the op cards obey; prove them; promote to rules
+  cardmodel lean import F.lean | --core  Lean theorems as cards: faithful reading, witness, re-proof
+  cardmodel repl                         interactive card language
+  cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
+
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.
 """
@@ -123,7 +132,7 @@ def cmd_verify(args) -> int:
     ctx = _ctx(args)
     only = args.only.split(",") if args.only else None
     if args.quick and not only:
-        only = ["kernel", "forms", "vectors", "rules", "redefinitions"]
+        only = list(verify.QUICK)
     langs = args.langs.split(",") if args.langs else None
     rep = verify.run(ctx, seed=args.seed, only=only, langs=langs, samples=args.samples, record=args.record)
     lines = [f"seed {rep['seed']} (reproduce with --seed {rep['seed']})"]
@@ -141,6 +150,17 @@ def cmd_verify(args) -> int:
         if sec == "proofs":
             extra = (f"{r.get('proved')} of {r.get('total')} rules proved ({r.get('backend')})" if r.get("total")
                      else r.get("reason", ""))
+        if sec == "logic":
+            extra = (f"{(r.get('stats') or {}).get('given')} facts about the store, {r.get('rules')} rules, "
+                     f"{r.get('violation_count')} violations")
+        if sec == "lang":
+            extra = f"programs {r.get('counts')}"
+        if sec == "theorems":
+            extra = f"{r.get('cards')} theorem cards {r.get('counts')}; {len(r.get('problems') or {})} problems"
+        if sec == "game" and r.get("laws_total"):
+            extra = (f"{r['laws_passed']}/{r['laws_total']} design laws, equilibrium value {r['equilibrium']['value']} "
+                     f"over {len(r['equilibrium']['row_mix'])} options (certificate "
+                     f"{'ok' if r['equilibrium']['certificate'] else 'FAILED'})")
         if sec == "forms" and r.get("hub_claims"):
             extra = f"{r['counts']} · hub's original domain claims: {r['hub_claims']}"
         lines.append(f"  {sec:<14} {r.get('status', '?'):<8} {extra}  [{rep['timings_s'].get(sec)}s]")
@@ -158,6 +178,12 @@ def _failures(sec: str, r: dict):
     if sec == "conformance":
         return {lang: {n: c for n, c in lr["cells"].items() if c["status"] in ("fail", "error")}
                 for lang, lr in r["languages"].items()}
+    if sec == "logic":
+        return r.get("violations")
+    if sec == "lang":
+        return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
+    if sec == "theorems":
+        return r.get("problems")
     cards = r.get("cards", {})
     bad = {}
     for q, c in cards.items():
@@ -569,6 +595,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_new)
     s = sub.add_parser("docs"); s.add_argument("--check", action="store_true"); s.set_defaults(fn=cmd_docs)
     s = sub.add_parser("clean"); s.set_defaults(fn=cmd_clean)
+    from . import cli_ext
+    cli_ext.register(sub)
     return p
 
 

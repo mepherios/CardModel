@@ -1,0 +1,70 @@
+-- Functions compile to the card IR (and from there to every language card); theorems are witnessed and
+-- sent to Lean; rules can call functions.
+module numbers
+
+fn fib(n: Int) -> Int requires 0 <= n, n <= 90 {
+  var a = 0
+  var b = 1
+  for i in 0 .. n {
+    (a, b) = (b, a + b)
+  }
+  return a
+}
+
+fn gcd2(a: Int, b: Int) -> Int requires 0 <= a, a <= 100000, 0 <= b, b <= 100000 {
+  while b != 0 {
+    (a, b) = (b, a % b)
+  }
+  return a
+}
+
+fn is_prime(n: Int) -> Bool requires 0 <= n, n <= 100000 {
+  if n < 2 { return false }
+  var d = 2
+  while d * d <= n {
+    if n % d == 0 { return false }
+    d += 1
+  }
+  return true
+}
+
+fn collatz_steps(n: Int) -> Int requires 1 <= n, n <= 10000 {
+  var steps = 0
+  while n != 1 {
+    n = if n % 2 == 0 then n // 2 else 3 * n + 1
+    steps += 1
+  }
+  return steps
+}
+
+-- Pheros CL v0 syntax, accepted as-is
+factorial : Int -> Int = match n with
+  | 0 -> 1
+  | k -> k * factorial(k - 1)
+
+-- a card reference: the resolver picks the algorithm card's cheapest verified form (fast doubling)
+fn fib_fast(n: Int) -> Int requires 0 <= n, n <= 90 = algorithm.fibonacci(n)
+
+-- logic over functions
+small(N) <- num(N).
+num(2). num(3). num(5). num(13). num(4). num(9). num(11). num(97). num(100).
+prime(N) <- num(N), is_prime(N).
+twin(P, Q) <- prime(P), prime(Q), Q = P + 2.
+
+theorem add_comm(a: Int, b: Int): a + b == b + a
+theorem mul_distrib(a: Int, b: Int, c: Int): a * (b + c) == a * b + a * c
+theorem floor_div_mod(a: Int, b: Int) requires b != 0: (a // b) * b + a % b == a
+theorem mod_sign(a: Int, b: Int) requires b > 0: 0 <= a % b and a % b < b
+theorem square_nonneg(x: Int): x * x >= 0
+theorem pred_lt(n: Nat) requires n > 0: n - 1 < n
+theorem bool_demorgan(p: Bool, q: Bool): not (p and q) <=> (not p or not q)
+theorem fib_add(n: Nat) requires n <= 60: fib(n + 2) == fib(n + 1) + fib(n)
+
+test fib(10) == 55
+test fib_fast(80) == fib(80)
+test gcd2(84, 36) == 12
+test factorial(10) == 3628800
+test collatz_steps(27) == 111
+test prime(97) and not prime(100)
+test not twin(9, 11)
+query twin(P, Q)?

@@ -1,0 +1,38 @@
+{
+  "active": 3,
+  "category": "move",
+  "damage": 10,
+  "depends_on": [
+    "precedent/for_honor_guardbreak",
+    "precedent/fighting_game_throw"
+  ],
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "kind": "grab",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 4,
+  "name": "grab",
+  "posture": 26,
+  "precedent": [
+    "for_honor_guardbreak",
+    "fighting_game_throw"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "reach": [
+    0,
+    1
+  ],
+  "recovery": 20,
+  "stamina": 12,
+  "startup": 18,
+  "statement": "Ignores guards (posture crush); loses to every attack and every evade.",
+  "tier": 1,
+  "to": "flow"
+}

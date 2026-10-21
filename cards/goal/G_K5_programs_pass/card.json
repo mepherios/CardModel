@@ -1,0 +1,17 @@
+{
+  "axis": "knowledge",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "card_programs_passing",
+  "name": "G_K5_programs_pass",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Card-language programs (examples/lang, stdlib) that pass.",
+  "target": 6,
+  "tier": 0
+}

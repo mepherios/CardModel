@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "For Honor",
+  "generalised_by": "grab: posture crush through any guard, loses to every attack and evade.",
+  "limit": "Becomes a reflex test.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "for_honor_guardbreak",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Guard break beats turtling.",
+  "tier": 1,
+  "year": 2017
+}

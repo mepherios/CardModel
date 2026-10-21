@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Sekiro: Shadows Die Twice",
+  "generalised_by": "Deflect quality = alignment x timing: the guard must face the attack's vector and come up in time; graded outcomes.",
+  "limit": "One button: direction never matters, so every attack is answered the same way.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sekiro_deflect",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Timing-based deflect builds the enemy's posture.",
+  "tier": 1,
+  "year": 2019
+}

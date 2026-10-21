@@ -1,0 +1,21 @@
+-- Programs as logic (with `cardmodel logic code PATH`): effects carry up the call graph, purity does not.
+-- This is the optimizer's pure-core / effect-shell split (CM21) restated as rules, so the two can be checked
+-- against each other.
+module program
+
+effectful(F) <- effect(F, _).
+effectful(F) <- calls(F, G), effectful(G).
+external_effect(F, C) <- calls(F, C), effect_name(C).
+reaches(F, G) <- calls(F, G).
+reaches(F, H) <- calls(F, G), reaches(G, H).
+recursive(F) <- reaches(F, F).
+pure(F) <- function(F), not effectful(F).
+optimizable(F) <- pure_core(F), not effectful(F).
+-- a function the IR frontend lifted must not have direct effects (the lifter fails closed on them)
+never: pure_core(F), effect(F, _).
+-- how far an effect travels: the functions an effectful leaf taints
+taints(G, F) <- effect(G, _), reaches(F, G).
+blast(G, N) <- effect(G, _), N = count { taints(G, _) }.
+module_effectful(M, N) <- in_module(_, M), N = count { in_module(F, M), effectful(F) }.
+
+effect_name(none).

@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_game.py",
+  "description": "Combat moves as cards: kind, direction vector, frames, reach, damage, posture, stamina, momentum, poise, which stances allow them and where they lead (Vector Counter System, game/DESIGN.md).",
+  "name": "move",
+  "tier": 1
+}

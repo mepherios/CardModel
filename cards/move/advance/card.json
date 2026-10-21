@@ -1,0 +1,26 @@
+{
+  "category": "move",
+  "depends_on": [],
+  "from": [
+    "neutral",
+    "flow"
+  ],
+  "kind": "step",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "momentum": 0,
+  "move": -1,
+  "name": "advance",
+  "precedent": [],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "recovery": 4,
+  "stamina": 2,
+  "startup": 4,
+  "statement": "Close one distance band.",
+  "tier": 1,
+  "to": "neutral"
+}

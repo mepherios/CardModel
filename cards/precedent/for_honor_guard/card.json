@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "For Honor",
+  "generalised_by": "Eight plane directions plus thrust; alignment is graded (2..-2), so near-misses block instead of failing.",
+  "limit": "Three directions; reading is a guess between three.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "for_honor_guard",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Directional guard (left, right, top).",
+  "tier": 1,
+  "year": 2017
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "design",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "design_laws_failing",
+  "name": "G_D1_design_laws",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Design laws (design_law cards) that fail on the neutral exchange.",
+  "target": 0,
+  "tier": 0
+}

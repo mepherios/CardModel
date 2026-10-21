@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "risk_reward",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL5_risk_scales_with_reward",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Rank correlation between an attack's damage and its whiff punish window (recovery) is at least 0.5.",
+  "threshold": 0.5,
+  "tier": 0
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "knowledge",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "lean_imported",
+  "name": "G_K2_lean_imported",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Lean core theorems imported with a faithful reading (the kernel accepts our statement as the original).",
+  "target": 300,
+  "tier": 0
+}

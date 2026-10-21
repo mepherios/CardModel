@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Exanima / Hellish Quart",
+  "generalised_by": "Integer momentum on every move: deterministic, provable, and still carried.",
+  "limit": "Hard to read and to balance.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "exanima_physics",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Physically simulated momentum.",
+  "tier": 1,
+  "year": 2015
+}

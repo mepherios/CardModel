@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "best_response_coverage",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL2_no_dead_options",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Every option survives iterated elimination of strictly dominated strategies (by any mix of the others) in at least one representative state (distance 0/1/2, advantage -6/0/+6): nothing is dead weight.",
+  "threshold": 1.0,
+  "tier": 0
+}
