@@ -37,6 +37,7 @@ Machine state (for hardware and CPUs written as cards):
     const DOTS = card.hardware.gb_ppu.dots_per_line      --   card.<registry>.<name>.<field>...)
     global ly: Int = 0                           -- module state, visible in every function
     array vram: Byte[0x4000]                     -- Byte (0..255, stores keep the low 8 bits) or Int
+    array pal: Int[4] = card.hardware.gb_cgb.dmg_compat_palettes.bg    -- initial values from a card field
     export fn run_frame() { ... }                -- export: the host may call it / read it
     fn tick(n: Int) { cyc += n }                 -- no `-> T` and no value returned: a void function
     vram[a & 0x3FFF] = v                         -- array store (also |= &= ^= <<= >>= += -=)
@@ -357,16 +358,19 @@ class Parser:
                 self.expect_op("]")
                 init = None
                 if self.accept_op("="):
-                    self.expect_op("[")
-                    init = []
-                    self.skip_nl()
-                    while not self.at_op("]"):
-                        init.append(self.expr(ctx="fn"))
+                    if not self.at_op("["):
+                        init = self.expr(ctx="fn")      # a card field holding a list of integers
+                    else:
+                        self.expect_op("[")
+                        init = []
                         self.skip_nl()
-                        if not self.accept_op(","):
-                            break
-                        self.skip_nl()
-                    self.expect_op("]")
+                        while not self.at_op("]"):
+                            init.append(self.expr(ctx="fn"))
+                            self.skip_nl()
+                            if not self.accept_op(","):
+                                break
+                            self.skip_nl()
+                        self.expect_op("]")
                 self.end_of_line()
                 return Decl("array", line, {"name": name, "elem": ELEM_TYPES[elem], "size": size, "init": init})
             if kw in ("fact",):

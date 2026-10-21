@@ -13,32 +13,42 @@
     {
       "access": "w",
       "address": 65361,
+      "dmg_compat": "locked",
       "name": "HDMA1",
+      "post_boot_dmg_compat": 255,
       "read_or": 255
     },
     {
       "access": "w",
       "address": 65362,
+      "dmg_compat": "locked",
       "name": "HDMA2",
+      "post_boot_dmg_compat": 255,
       "read_or": 255
     },
     {
       "access": "w",
       "address": 65363,
+      "dmg_compat": "locked",
       "name": "HDMA3",
+      "post_boot_dmg_compat": 255,
       "read_or": 255
     },
     {
       "access": "w",
       "address": 65364,
+      "dmg_compat": "locked",
       "name": "HDMA4",
+      "post_boot_dmg_compat": 255,
       "read_or": 255
     },
     {
       "access": "rw",
       "address": 65365,
+      "dmg_compat": "locked",
       "name": "HDMA5",
       "post_boot_cgb": 255,
+      "post_boot_dmg_compat": 255,
       "read_or": 0
     }
   ],

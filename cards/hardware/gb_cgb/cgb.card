@@ -1,54 +1,88 @@
--- Game Boy Color registers: KEY1 (FF4D, the double-speed switch armed by bit 0 and done by STOP), VBK (FF4F,
--- VRAM bank), HDMA (FF51-FF55), BCPS/BCPD and OCPS/OCPD (FF68-FF6B: 8 background and 8 object palettes of four
--- RGB555 colours, auto-incrementing index), OPRI (FF6C), SVBK (FF70: WRAM bank 1-7 at D000), the undocumented
--- FF72-FF75. In DMG mode they read 0xFF and ignore writes.
+-- Game Boy Color registers: KEY0 (FF4C, the CPU mode the boot ROM chose), KEY1 (FF4D, the double-speed switch
+-- armed by bit 0 and done by STOP), VBK (FF4F, VRAM bank), HDMA (FF51-FF55), BCPS/BCPD and OCPS/OCPD (FF68-FF6B:
+-- 8 background and 8 object palettes of four RGB555 colours, auto-incrementing index), OPRI (FF6C), SVBK (FF70:
+-- WRAM bank 1-7 at D000), the undocumented FF72-FF75. On the DMG they read 0xFF and ignore writes.
+--
+-- DMG compatibility mode: for a DMG cartridge (header byte 0x143 without bit 7) the boot ROM writes 0x04 to KEY0
+-- and 1 to OPRI, loads the compatibility palettes and locks KEY0 when it unmaps itself. The CGB-mode registers
+-- then lock (the card's `dmg_compat` field, mooneye boot_hwio-C and unused_hwio-C): KEY1, HDMA, BCPD, OCPD,
+-- OPRI, SVBK and FF74 read 0xFF and ignore writes, VBK keeps reading its bank (0) and ignores writes; BCPS,
+-- OCPS, FF72, FF73, FF75 and PCM12/34 work as in CGB mode. `cgb` says the console is a Color, `cgb_mode` that
+-- its CGB features are on.
 const SPEED_SWITCH_MCYCLES = 2050
+const KEY0_DMG_COMPAT = 0x04
+global key0: Int = 0
+global cgb_mode: Int = 0
 global key1: Int = 0
 global svbk: Int = 0
 global ff72: Int = 0
 global ff73: Int = 0
 global ff74: Int = 0
 global ff75: Int = 0
+-- the default compatibility palette (card data, not the boot ROM's bytes)
+array compat_bg: Int[4] = card.hardware.gb_cgb.dmg_compat.palettes.bg
+array compat_obj0: Int[4] = card.hardware.gb_cgb.dmg_compat.palettes.obj0
+array compat_obj1: Int[4] = card.hardware.gb_cgb.dmg_compat.palettes.obj1
 
+-- what the boot ROM leaves in KEY0 for this cartridge, and the mode that follows (want_cgb: the console is a CGB)
+fn cgb_boot_mode(want_cgb: Int) {
+  key0 = 0
+  cgb_mode = 0
+  if want_cgb != 0 {
+    let flag = rom[0x143]
+    key0 = if (flag & 0x80) != 0 then flag else KEY0_DMG_COMPAT
+    cgb_mode = if (key0 & KEY0_DMG_COMPAT) == 0 then 1 else 0
+  }
+}
+-- the boot ROM's title checksum: the sum of the 16 title bytes for a Nintendo-licensed cartridge (old licensee
+-- 0x01, or 0x33 with new licensee "01"), else 0. It picks the compatibility palette (only the default one, for
+-- the titles it does not know, is modelled) and is left in B.
+fn title_checksum() -> Int {
+  let old = rom[0x14B]
+  if old != 0x01 and not (old == 0x33 and rom[0x144] == 0x30 and rom[0x145] == 0x31) {
+    return 0
+  }
+  var total = 0
+  for i in 0x134 .. 0x144 {
+    total += rom[i]
+  }
+  return total & 0xFF
+}
+-- the boot ROM's DMG compatibility set-up: OPRI = 1 (objects by X coordinate), then the compatibility palettes
+-- as it writes them: OBJ0 and OBJ1 through OCPD, then BG 0 through BCPD, each index register first set to 0x80
+-- (auto-increment), so OCPS is left at 16 and BCPS at 8
+fn boot_dmg_compat() {
+  opri = 1
+  for i in 0 .. 4 {
+    obpal[i * 2] = compat_obj0[i] & 0xFF
+    obpal[i * 2 + 1] = compat_obj0[i] >> 8
+    obpal[8 + i * 2] = compat_obj1[i] & 0xFF
+    obpal[8 + i * 2 + 1] = compat_obj1[i] >> 8
+    bgpal[i * 2] = compat_bg[i] & 0xFF
+    bgpal[i * 2 + 1] = compat_bg[i] >> 8
+  }
+  ocps = 0x80 | 16
+  bcps = 0x80 | 8
+}
 fn cgb_read(r: Int) -> Int {
   if cgb == 0 {
     return 0xFF
   }
-  if r == 0x4D {
-    return 0x7E | (ds << 7) | (key1 & 1)
-  }
+  -- in both modes
   if r == 0x4F {
     return 0xFE | vbk
-  }
-  if r == 0x55 {
-    return hdma_read()
   }
   if r == 0x68 {
     return 0x40 | bcps
   }
-  if r == 0x69 {
-    return bgpal[bcps & 0x3F]
-  }
   if r == 0x6A {
     return 0x40 | ocps
-  }
-  if r == 0x6B {
-    return obpal[ocps & 0x3F]
-  }
-  if r == 0x6C {
-    return 0xFE | opri
-  }
-  if r == 0x70 {
-    return 0xF8 | svbk
   }
   if r == 0x72 {
     return ff72
   }
   if r == 0x73 {
     return ff73
-  }
-  if r == 0x74 {
-    return ff74
   }
   if r == 0x75 {
     return 0x8F | ff75
@@ -59,27 +93,62 @@ fn cgb_read(r: Int) -> Int {
   if r == 0x77 {
     return apu_pcm34()
   }
+  if cgb_mode == 0 {
+    return 0xFF
+  }
+  -- CGB mode only
+  if r == 0x4D {
+    return 0x7E | (ds << 7) | (key1 & 1)
+  }
+  if r == 0x55 {
+    return hdma_read()
+  }
+  if r == 0x69 {
+    return bgpal[bcps & 0x3F]
+  }
+  if r == 0x6B {
+    return obpal[ocps & 0x3F]
+  }
+  if r == 0x6C {
+    return 0xFE | opri
+  }
+  if r == 0x70 {
+    return 0xF8 | svbk
+  }
+  if r == 0x74 {
+    return ff74
+  }
   return 0xFF
 }
 fn cgb_write(r: Int, v: Int) {
   if cgb == 0 {
     return
   }
-  if r == 0x4D {
+  -- in both modes
+  if r == 0x68 {
+    bcps = v & 0xBF
+  } elif r == 0x6A {
+    ocps = v & 0xBF
+  } elif r == 0x72 {
+    ff72 = v
+  } elif r == 0x73 {
+    ff73 = v
+  } elif r == 0x75 {
+    ff75 = v & 0x70
+  } elif cgb_mode == 0 {
+    return
+  -- CGB mode only
+  } elif r == 0x4D {
     key1 = v & 1
   } elif r == 0x4F {
     vbk = v & 1
   } elif r >= 0x51 and r <= 0x55 {
     hdma_write(r, v)
-  } elif r == 0x68 {
-    bcps = v & 0xBF
   } elif r == 0x69 {
     bgpal[bcps & 0x3F] = v
     if (bcps & 0x80) != 0 {
       bcps = 0x80 | ((bcps + 1) & 0x3F)
     }
-  } elif r == 0x6A {
-    ocps = v & 0xBF
   } elif r == 0x6B {
     obpal[ocps & 0x3F] = v
     if (ocps & 0x80) != 0 {
@@ -90,17 +159,12 @@ fn cgb_write(r: Int, v: Int) {
   } elif r == 0x70 {
     svbk = v & 7
     wram_bank = if svbk == 0 then 1 else svbk
-  } elif r == 0x72 {
-    ff72 = v
-  } elif r == 0x73 {
-    ff73 = v
   } elif r == 0x74 {
     ff74 = v
-  } elif r == 0x75 {
-    ff75 = v & 0x70
   }
 }
--- STOP: the CGB speed switch when KEY1 bit 0 is armed, else stop mode until a button is pressed
+-- STOP: the CGB speed switch when KEY1 bit 0 is armed (only CGB mode can arm it), else stop mode until a button
+-- is pressed
 fn stop() {
   if cgb != 0 and (key1 & 1) != 0 {
     full_sync()

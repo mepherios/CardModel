@@ -1,5 +1,56 @@
 {
   "category": "hardware",
+  "dmg_compat": {
+    "div_counter": 9848,
+    "div_note": "the system counter at hand-over (DIV 0x26); mooneye boot_div-cgbABCDE pins it to one M-cycle",
+    "palettes": {
+      "bg": [
+        32767,
+        7151,
+        24960,
+        0
+      ],
+      "obj0": [
+        32767,
+        16927,
+        7410,
+        0
+      ],
+      "obj1": [
+        32767,
+        16927,
+        7410,
+        0
+      ],
+      "sources": [
+        "Pan Docs, Power Up Sequence: compatibility palettes (palette ID 0 for unknown titles)",
+        "SameBoy's open-source CGB boot ROM, palette combination 0 = palettes 4, 4, 29",
+        "dmg-acid2 img/reference-cgb.png: exactly these six colours, (c << 3) | (c >> 2) per channel"
+      ],
+      "statement": "The default compatibility palette (the boot ROM's choice for a cartridge that is not Nintendo-licensed or whose title checksum it does not know; 'Right + A' when chosen by hand): four RGB555 colours each, white to black."
+    },
+    "post_boot_b_note": "B is the sum of the 16 title bytes when the old licensee code is 0x01 (or 0x33 with new licensee \"01\"), else 0; HL is 0x991A when that B is 0x43 or 0x58, else 0x007C",
+    "post_boot_registers": {
+      "A": 17,
+      "B": 0,
+      "C": 0,
+      "D": 0,
+      "E": 8,
+      "F": 128,
+      "H": 0,
+      "L": 124,
+      "PC": 256,
+      "SP": 65534
+    },
+    "statement": "A DMG cartridge (header byte 0x143 without bit 7) on the CGB: the boot ROM writes 0x04 to KEY0 (DMG compatibility mode) and 1 to OPRI (objects by X coordinate), loads the compatibility palettes (OBJ0, OBJ1 through OCPD, then BG through BCPD, with auto-increment) and hands over. The CGB-mode registers then lock: 'locked' ones read 0xFF and ignore writes, 'read-only' ones keep their value and ignore writes; the rest (BCPS/OCPS, FF72, FF73, FF75, PCM12/34) work as in CGB mode. The PPU draws the DMG way (no attributes, bank 0, LCDC bit 0 blanks the background) with BGP/OBP0/OBP1 indexing the CGB palettes BG 0 and OBJ 0/1.",
+    "witnesses": [
+      "mooneye misc/boot_regs-cgb",
+      "mooneye misc/boot_div-cgbABCDE",
+      "mooneye misc/boot_hwio-C",
+      "mooneye misc/bits/unused_hwio-C",
+      "dmg-acid2 against img/reference-cgb.png"
+    ]
+  },
   "logic": [
     "cgb.card"
   ],
@@ -11,78 +62,105 @@
   },
   "registers": [
     {
+      "access": "boot",
+      "address": 65356,
+      "name": "KEY0",
+      "note": "written by the boot ROM only (the header's CGB flag when its bit 7 is set, else 0x04: bit 2 = DMG compatibility mode) and locked by its write to FF50; reads 0xFF afterwards",
+      "post_boot_dmg_compat": 255,
+      "read_or": 255
+    },
+    {
       "access": "rw",
       "address": 65357,
+      "dmg_compat": "locked",
       "name": "KEY1",
       "post_boot_cgb": 126,
+      "post_boot_dmg_compat": 255,
       "read_or": 126
     },
     {
       "access": "rw",
       "address": 65359,
+      "dmg_compat": "read-only",
       "name": "VBK",
       "post_boot_cgb": 254,
+      "post_boot_dmg_compat": 254,
       "read_or": 254
     },
     {
       "access": "rw",
       "address": 65384,
       "name": "BCPS",
+      "post_boot_dmg_compat": 200,
       "read_or": 64
     },
     {
       "access": "rw",
       "address": 65385,
+      "dmg_compat": "locked",
       "name": "BCPD",
+      "post_boot_dmg_compat": 255,
       "read_or": 0
     },
     {
       "access": "rw",
       "address": 65386,
       "name": "OCPS",
+      "post_boot_dmg_compat": 208,
       "read_or": 64
     },
     {
       "access": "rw",
       "address": 65387,
+      "dmg_compat": "locked",
       "name": "OCPD",
+      "post_boot_dmg_compat": 255,
       "read_or": 0
     },
     {
       "access": "rw",
       "address": 65388,
+      "dmg_compat": "locked",
       "name": "OPRI",
+      "post_boot_dmg_compat": 255,
       "read_or": 254
     },
     {
       "access": "rw",
       "address": 65392,
+      "dmg_compat": "locked",
       "name": "SVBK",
       "post_boot_cgb": 248,
+      "post_boot_dmg_compat": 255,
       "read_or": 248
     },
     {
       "access": "rw",
       "address": 65394,
       "name": "FF72",
+      "post_boot_dmg_compat": 0,
       "read_or": 0
     },
     {
       "access": "rw",
       "address": 65395,
       "name": "FF73",
+      "post_boot_dmg_compat": 0,
       "read_or": 0
     },
     {
       "access": "rw",
       "address": 65396,
+      "dmg_compat": "locked",
       "name": "FF74",
+      "post_boot_dmg_compat": 255,
       "read_or": 0
     },
     {
       "access": "rw",
       "address": 65397,
       "name": "FF75",
+      "post_boot_dmg_compat": 143,
       "read_or": 143
     },
     {
@@ -99,10 +177,11 @@
     }
   ],
   "sources": [
+    "Gekkio, Game Boy: Complete Technical Reference",
     "Pan Docs (hardware reference)",
-    "Gekkio, Game Boy: Complete Technical Reference"
+    "mooneye-test-suite misc/*-C (verified on CGB hardware)"
   ],
-  "statement": "Game Boy Color registers: double speed (KEY1 + STOP), VRAM and WRAM banks, colour palettes, object priority mode, undocumented FF72-FF75.",
+  "statement": "Game Boy Color registers: KEY0 (the boot ROM's mode choice), double speed (KEY1 + STOP), VRAM and WRAM banks, colour palettes, object priority mode, undocumented FF72-FF75; DMG compatibility mode for DMG cartridges (dmg_compat).",
   "tier": 1,
   "timing": {
     "speed_switch_mcycles": 2050
