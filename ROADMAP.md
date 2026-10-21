@@ -119,6 +119,17 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 The launcher installs against the main checkout when built from a worktree (`--home` to choose); headless
   `arcade run --frames` never touches the player's save.
 
+## Done (2026-10-22, the Game Boy library in the store)
+
+* 🔵 **The Game Boy library in the launcher**: the store runs the user's Game Boy / Color cartridges through the
+  Game Boy Player (the machine cards plus `player.card`, built once like a game). Each cartridge in the user's
+  folders is a library entry read where it is, titled by its No-Intro name or its header, with the survey's
+  verdict and a title screen the machine draws; nothing derived from a cartridge leaves `state/`.
+* 🔵 **Every listed entry launches through the store**: `cardmodel arcade check` installs the player like a game,
+  plays it on the system card's check cartridge (assembled from the instruction cards), then starts every listed
+  cartridge in that installed player as the launcher does and compares its picture with the one its cards compute;
+  the self-run's `store` step counts the cartridges that do not launch (G_S1).
+
 ## Gödel model: next (GOALS.md "What the card model is")
 
 * 🟢 **The prime ledger**: an append-only pack of atoms with their primes (B₀ from the op cards and logic
@@ -143,8 +154,6 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 * 🟢 **More of the game**: weapons as move sets, strings inside the exchange model itself, the systemic world as a
   campaign map.
-* 🟢 **The Game Boy library in the launcher**: the same native shell runs a machine module (same interface), so
-  each ROM in the collection can be a library entry built from the machine cards.
 * 🟢 **The players, further**: lifted blocks in the Game Boy Player (built per cartridge on first play), a DS
   player once the DS picture hardware has cards, a CGB player choice for DMG cartridges (compatibility mode).
 * 🟢 **Other platforms**: a platform card per OS (a shell and a bundle layout each).

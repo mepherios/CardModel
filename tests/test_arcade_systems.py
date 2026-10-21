@@ -156,7 +156,8 @@ class Library(unittest.TestCase):
         (d / "untitled.gb").write_bytes(cart(self.ctx, title=""))
         got = {p: L.describe(self.ctx, card, d / p, (".gb",)) for p in ("my cartridge.gb", "Named Game (Europe).gb",
                                                                          "untitled.gb")}
-        self.assertEqual((got["my cartridge.gb"]["title"], got["my cartridge.gb"]["title_from"]), ("HEADERNAME", "header"))
+        mine = got["my cartridge.gb"]
+        self.assertEqual((mine["title"], mine["title_from"]), ("HEADERNAME", "header"))
         self.assertEqual((got["Named Game (Europe).gb"]["title"], got["Named Game (Europe).gb"]["title_from"]),
                          ("Named Game", "file name"))
         self.assertEqual((got["untitled.gb"]["title"], got["untitled.gb"]["title_from"]), ("untitled", "file name"))
@@ -283,6 +284,116 @@ class PlayerPackage(unittest.TestCase):
             ref.frame(0)
         self.assertEqual((w, h), (160, 144))
         self.assertEqual(rgb, ref.rgb(), "the native package shows what the module computes")
+
+
+
+@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+class CartridgesThroughTheStore(unittest.TestCase):
+    """Every cartridge the store's library lists launches through the store as Launcher.playRom launches it: the
+    Game Boy Player installed from its depot, the cartridge where it is (a plain file, a zip), its title, a save
+    folder per cartridge; it runs headless and shows the picture the player's cards compute for those bytes. A DS
+    cartridge is listed but has no player; a cartridge moved after the listing does not launch (the launcher's own
+    guard). The library is a temporary one with synthetic cartridges (the card assembler)."""
+
+    @classmethod
+    def setUpClass(cls):
+        from cardmodel.arcade import client
+        cls.client = client
+        cls.ctx = model_ctx()
+        cls.old = (B.ROOT_OVERRIDE, L.SETTINGS_OVERRIDE)
+        B.ROOT_OVERRIDE = Path(tempfile.mkdtemp(prefix="cardmodel_arcade_"))      # not the live depots
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_carts_"))
+        L.SETTINGS_OVERRIDE = d / "library.json"
+        gb, ds = d / "gb", d / "ds"
+        gb.mkdir()
+        ds.mkdir()
+        (gb / "Checker Board (World).gb").write_bytes(cart(cls.ctx))
+        with zipfile.ZipFile(gb / "Color Test (World).zip", "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("Color Test (World).gbc", cart(cls.ctx, 0x00, 0, 0x80, 0, "COLORTEST"))
+        (gb / "save test.gb").write_bytes(ram_writer(cls.ctx))       # titled by its header; writes battery RAM
+        (ds / "Some Game (Europe).nds").write_bytes(b"SOMEGAME\0\0\0\0ABCE" + bytes(0x200))
+        L.set_folder(cls.ctx, "gameboy", add=str(gb))
+        L.set_folder(cls.ctx, "nds", add=str(ds))
+        L.draw_covers(cls.ctx)                  # now, so no background drawing changes the listing under a test
+        cls.gb = gb
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        shutil.rmtree(B.ROOT_OVERRIDE, ignore_errors=True)
+        B.ROOT_OVERRIDE, L.SETTINGS_OVERRIDE = cls.old
+        L.scan(cls.ctx, force=True)
+
+    def test_every_listed_cartridge_launches_through_the_store(self):
+        L.scan(self.ctx, force=True)
+        rep = self.client.check_catalog(self.ctx, frames=90, only=["gameboy_player"])
+        self.assertEqual(rep["status"], "pass", json.dumps(rep, default=str)[:3000])
+        self.assertEqual(sorted(rep["items"]), ["gameboy_player"])
+        ct = rep["cartridges"]
+        self.assertEqual((ct["listed"], ct["checked"], ct["launched"], ct["failed"]), (4, 3, 3, 0), ct)
+        self.assertEqual(ct["unplayable"], {"nds": 1})
+        self.assertEqual(ct["players"]["gameboy_player"]["launched"], 3)
+        self.assertGreaterEqual(ct["players"]["gameboy_player"]["colourful"], 1)
+        self.assertEqual(ct["saves_written"], 1, "the battery cartridge's save is in its own folder")
+        self.assertTrue(rep["items"]["gameboy_player"]["verify_after_cartridges"]["ok"])
+        titles = sorted(r["title"] for r in L.scan(self.ctx)["roms"])
+        self.assertEqual(titles, ["Checker Board", "Color Test", "SAVECLOCK", "Some Game"])
+
+    def test_a_cartridge_moved_after_the_listing_does_not_launch(self):
+        L.scan(self.ctx, force=True)
+        moved = self.gb / "Checker Board (World).gb"
+        away = self.gb.parent / "elsewhere.gb"
+        moved.rename(away)
+        try:
+            rep = self.client.check_catalog(self.ctx, frames=30, only=["gameboy_player"])
+        finally:
+            away.rename(moved)
+        ct = rep["cartridges"]
+        self.assertEqual(rep["status"], "fail")
+        self.assertEqual((ct["launched"], ct["failed"]), (2, 1), ct)
+        self.assertIn("is not at", ct["failing"][0]["error"])
+        self.assertEqual(ct["failing"][0]["title"], "Checker Board")
+
+    def test_a_picture_the_cards_do_not_compute_fails(self):
+        """The comparison is what makes a launch count: when the cards' picture differs from the player's by one
+        pixel (the reference is altered here: for the listed cartridges only, then for the check cartridge too),
+        those launches fail; a player whose own check fails launches no cartridge."""
+        from unittest import mock
+        real = self.client.Reference.picture
+        check = S.check_cartridge(self.ctx, "gameboy")["bytes"]
+
+        def altered(also_check):
+            def picture(ref, rom, frames):
+                w, h, rgb = real(ref, rom, frames)
+                return (w, h, bytes([rgb[0] ^ 0xFF]) + rgb[1:]) if also_check or rom != check else (w, h, rgb)
+            return picture
+        L.scan(self.ctx, force=True)
+        with mock.patch.object(self.client.Reference, "picture", altered(False)):
+            rep = self.client.check_catalog(self.ctx, frames=30, only=["gameboy_player"])
+        ct = rep["cartridges"]
+        self.assertEqual(rep["status"], "fail")
+        self.assertTrue(rep["items"]["gameboy_player"]["ok"])
+        self.assertEqual((ct["launched"], ct["failed"]), (0, 3))
+        self.assertTrue(all("picture its cards do not compute" in f["error"] for f in ct["failing"]), ct["failing"])
+        with mock.patch.object(self.client.Reference, "picture", altered(True)):
+            rep = self.client.check_catalog(self.ctx, frames=30, only=["gameboy_player"])
+        self.assertFalse(rep["items"]["gameboy_player"]["play"]["same_as_cards"])
+        self.assertEqual(rep["cartridges"]["launched"], 0)
+        self.assertTrue(all("did not pass the store's own check" in f["error"] for f in rep["cartridges"]["failing"]))
+
+    def test_a_player_that_did_not_install_launches_nothing(self):
+        """check_cartridges on its own: with no player that passed its own store check, no cartridge is started."""
+        import shutil
+        L.scan(self.ctx, force=True)
+        base, stop = self.client.serve_here(self.ctx, None)
+        work = Path(tempfile.mkdtemp(prefix="cardmodel_store_"))
+        try:
+            ct = self.client.check_cartridges(self.ctx, base, work / "library", work, 30, set(), {})
+        finally:
+            stop()
+            shutil.rmtree(work, ignore_errors=True)
+        self.assertEqual((ct["launched"], ct["failed"]), (0, 3))
+        self.assertTrue(all("did not pass the store's own check" in f["error"] for f in ct["failing"]))
 
 
 if __name__ == "__main__":

@@ -149,8 +149,7 @@ def scan(ctx, force: bool = False) -> dict:
     with _lock:
         if _state["scan"] is not None and not force:
             return _state["scan"]
-    own = SETTINGS_OVERRIDE is not None or bool(os.environ.get("CARDMODEL_LIBRARY"))     # a test's library
-    cache_path = (settings_file(ctx).parent if own else ctx.state_root / "arcade") / "library-cache.json"
+    cache_path = state_dir(ctx) / "library-cache.json"
     try:
         cache = json.loads(cache_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -245,8 +244,14 @@ def describe(ctx, card, path: Path, exts) -> dict | None:
     return row
 
 
+def state_dir(ctx) -> Path:
+    """Where the library's cache and pictures go: the checkout's state/arcade, or beside a test's own library."""
+    own = SETTINGS_OVERRIDE is not None or bool(os.environ.get("CARDMODEL_LIBRARY"))
+    return settings_file(ctx).parent if own else ctx.state_root / "arcade"
+
+
 def cover_path(ctx, rom_id: str) -> Path:
-    return ctx.state_root / "arcade" / "covers" / f"{rom_id}.png"
+    return state_dir(ctx) / "covers" / f"{rom_id}.png"
 
 
 def cover(ctx, rom_id: str) -> bytes | None:

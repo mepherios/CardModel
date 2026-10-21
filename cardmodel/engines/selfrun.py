@@ -64,8 +64,9 @@ from . import values as V
 from .context import Ctx
 
 SEVERITY = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+# store_cartridges: how many of the library's cartridges the store step launches (None: every one, about 0.2 s each)
 DEFAULT_CONFIG = {"auto": True, "interval_hours": 6, "budget_minutes": 45, "corpora": [], "learn_max_functions": 12,
-                  "arena_count": 24}
+                  "arena_count": 24, "store_cartridges": None}
 KEEP_RUNS = 60
 KEEP_LOGS = 20
 QUIET = {"self", "clean", "verify", "cover", "docs", "learn", "laws", "arena", "optimize", "improve", "lean"}
@@ -516,16 +517,26 @@ def _observe_self(c: Cycle) -> dict:
 
 def _store(c: Cycle) -> dict:
     from ..arcade import client
+    limit = c.cfg.get("store_cartridges")            # None: every cartridge the library lists
     rep = client.check_catalog(c.ctx, frames=int(c.cfg.get("store_frames", 60)),
-                               progress=lambda m: c.say(f"[self]   store: {m}"))
+                               progress=lambda m: c.say(f"[self]   store: {m}"),
+                               cartridges=None if limit is None else int(limit))
     ok = sorted(g for g, r in rep["items"].items() if r.get("ok"))
-    result = {"status": rep["status"], "failing": rep.get("failing", []), "items": len(rep["items"]),
-              "launched": ok, "pages": (rep.get("pages") or {}).get("ok"), "reason": rep.get("reason")}
+    carts = rep.get("cartridges") or {}
+    # every entry the store lists that does not launch: its programs, then its cartridges (G_S1 counts both)
+    failing = list(rep.get("failing", [])) + [f"cartridge/{i}" for i in carts.get("failed_ids") or []]
+    result = {"status": rep["status"], "failing": failing, "items": len(rep["items"]),
+              "launched": ok, "pages": (rep.get("pages") or {}).get("ok"), "reason": rep.get("reason"),
+              "cartridges": {k: carts.get(k) for k in ("listed", "checked", "launched", "failed", "unplayable")}
+              if carts else None}
     c.state.setdefault("sections", {})["store"] = {"at": _iso(_now()), "seed": c.seed, "result": result}
     errors = {g: r.get("error") or r.get("play") for g, r in rep["items"].items() if not r.get("ok")}
-    return {**result, "errors": errors,
+    cart_errors = [f"{f['title']}: {f['error']}" for f in carts.get("failing") or []]
+    return {**result, "errors": errors, "cartridge_errors": cart_errors[:20],
             "summary": rep.get("reason") or (f"{len(ok)} of {len(rep['items'])} catalogue items installed, "
                                              f"verified, repaired and played through the store"
+                                             + (f"; {carts['launched']} of {carts['checked']} listed cartridges "
+                                                f"launched in their store-installed player" if carts else "")
                                              + ("" if result["pages"] else "; the launcher's pages are broken"))}
 
 
@@ -771,9 +782,14 @@ def _findings(rep: dict) -> list[dict]:
         out.append(_finding("strength", "info", "law_witnesses", "every law is upheld by its witness test",
                             lw.get("summary", "")))
     st = steps_.get("store") or {}
-    for g in st.get("failing") or []:
+    for g in [x for x in st.get("failing") or [] if not x.startswith("cartridge/")]:
         out.append(_finding("flaw", "high", f"store/{g}", f"{g} does not launch through the store",
                             str((st.get("errors") or {}).get(g, ""))[:400], f"cardmodel arcade check {g}"))
+    bad = [x for x in st.get("failing") or [] if x.startswith("cartridge/")]
+    if bad:
+        out.append(_finding("flaw", "high", "store/cartridges", f"{len(bad)} listed cartridges do not launch "
+                            "through the store", "; ".join(st.get("cartridge_errors") or [])[:400],
+                            "cardmodel arcade check gameboy_player"))
     if st.get("pages") is False:
         out.append(_finding("flaw", "high", "store/pages", "the launcher's pages are missing files or name "
                             "endpoints the service does not have", "", "cardmodel arcade check"))

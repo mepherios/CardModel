@@ -42,7 +42,9 @@ from . import library as L
 from . import system as S
 from . import work as W
 
-ENDPOINTS = ("/api/status", "/api/catalog", "/api/game", "/api/build")   # what the pages may ask (client.pages)
+# what the pages may ask (client.pages): this module, the library (library.py), the branches (work.py), the hub
+ENDPOINTS = ("/api/status", "/api/catalog", "/api/game", "/api/build", "/api/library", "/api/cover", "/api/work",
+             "/api/dev", "/api/events")
 _builds: dict[str, dict] = {}
 _lock = threading.Lock()
 _elock = threading.Lock()

@@ -30,7 +30,7 @@
     }
   ],
   "check_cartridge": {
-    "about": "A cartridge the store check assembles from the instruction cards (cardmodel/machine/asm.py) when it needs one that is no one's game: a checkerboard on screen and one byte written to battery RAM, so the installed player's picture and its save are both checked without any ROM.",
+    "about": "A cartridge the store check assembles from the instruction cards (cardmodel/machine/asm.py) when it needs one that is no one's game: a checkerboard of 4-pixel squares on screen and one byte written to battery RAM, so the installed player's picture and its save are both checked without any ROM.",
     "at": {"0x0040": [["LDH A,(n)", "0x44"], ["RETI"]]},
     "cart_type": "0x13",
     "file": "Cardmodel Check (World).gb",
@@ -46,7 +46,7 @@
       ["LD A,n", "0xE4"], ["LDH (n),A", "0x47"], ["LD A,n", "0x01"], ["LDH (n),A", "0xFF"],
       ["LD A,n", "0x91"], ["LDH (n),A", "0x40"], ["EI"],
       ["label", "idle"], ["HALT"], ["JR e", "idle"],
-      ["label", "tile"], ["db", ["0xAA", "0x55", "0xAA", "0x55", "0xAA", "0x55", "0xAA", "0x55", "0xAA", "0x55", "0xAA", "0x55", "0xAA", "0x55", "0xAA", "0x55"]]
+      ["label", "tile"], ["db", ["0xF0", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0xF0"]]
     ],
     "ram_size_code": 2,
     "save": {"byte": "0x5A", "offset": "0x0010"},

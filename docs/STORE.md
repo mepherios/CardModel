@@ -5,20 +5,29 @@ downloads, a content service, and games compiled from cards. This page lists eve
 the card model contributes to each piece, and which of the products the model makes run through it today. It is
 checked by the `arcade` capability (CM35, CM37) in every `cardmodel verify` and every self-run, and launched end to
 end by the self-run's `store` step (CM42, `cardmodel arcade check`): every catalogue item downloaded through the
-service with every chunk checked, verified, a damaged file repaired, and run natively until it draws a frame.
+service with every chunk checked, verified, a damaged file repaired, and run natively until it draws a frame; then
+every cartridge the library lists, started in its store-installed player as the launcher starts it, until it
+shows the picture its cards compute.
 
 Checked on main on 2026-10-21: `arcade build vector_duel` made build 0e79b9000ec8 in 3.4 s (465,705 bytes in 5
 chunks, 10 store pictures); `arcade serve` answered the catalog, the store page, the manifest, all 5 chunks (each
 equal to its SHA-256 name), the pictures and the launcher's pages; `arcade run vector_duel --frames 240` ran the
 built game natively; `arcade launcher` compiled the app in 4.5 s.
 
+Checked on `claude/frosty-lumiere-98e2b7` on 2026-10-22, with the user's library (971 Game Boy / Color cartridges
+in one folder, one DS cartridge in another): `arcade check` installed, verified and repaired Vector Duel 0.4.0 and
+the Game Boy Player through the store, played the player on its check cartridge (the picture its cards compute,
+the save kept), then launched 971 of 971 cartridges in the installed player as the launcher does, each showing
+exactly the picture its cards compute after 120 frames (927 of them more than one colour; 224 s in all, about
+0.23 s a cartridge); the DS cartridge is listed and has no player yet.
+
 ## 1. Products
 
 | product | what it is | how it runs | in the store |
 |---|---|---|---|
-| **Vector Duel** (`game/vector_duel`, v0.3.0) | a 1-v-1 fighting game: 3 fighters, 25 moves, 6 arenas, a 6-opponent arcade ladder, training, local versus, 10 achievements | compiled from cards to a native library + the macOS shell; `cardmodel arcade run vector_duel` without the launcher | yes: store page, screenshots, install / update / verify / play, achievements from its save |
+| **Vector Duel** (`game/vector_duel`, v0.4.0) | a 1-v-1 fighting game: 3 fighters, 24 moves, 7 arenas, a 7-opponent arcade ladder, training, local versus, 13 achievements | compiled from cards to a native library + the macOS shell; `cardmodel arcade run vector_duel` without the launcher | yes: store page, screenshots, install / update / verify / play, achievements from its save |
 | **Cardmodel Arcade** (`app/arcade`) | the launcher itself | `cardmodel arcade launcher [--install]` builds the app; it starts `cardmodel arcade serve` | it is the store |
-| **Game Boy Player** (`system/gameboy`, v1.0.0) and the user's Game Boy / Color games | the gameboy machine card plus a card-language player (CM40); the user's own cartridges, read where they are (never copied into the repository, a depot or the library) | built and installed like a game; `cardmodel arcade run gameboy_player --rom FILE`; `cardmodel emu ROM` is the browser shell | yes: the player is a store entry; every cartridge in the user's folders is in the library with the survey's verdict and a title screen the machine draws, and Play runs it in the installed player |
+| **Game Boy Player** (`system/gameboy`, v1.0.0) and the user's Game Boy / Color games | the gameboy machine card plus a card-language player (CM40); the user's own cartridges, read where they are (never copied into the repository, a depot or the library) | built and installed like a game; `cardmodel arcade run gameboy_player --rom FILE`; `cardmodel emu ROM` is the browser shell | yes: the player is a store entry; every cartridge in the user's folders is in the library (titled by its No-Intro name or its header) with the survey's verdict and a title screen the machine draws, and Play runs it in the installed player; `arcade check` launches every one through the store |
 | The DS prototype | both DS CPUs direct-booted, ARM9 code lifted, coverage measured | `cardmodel machine nds ROM` | listed: DS cartridges are in the library with their coverage, not playable (no graphics or sound yet) |
 | Work in progress | every session's branch of the repository and the programs on it | the launcher's Work tab; each program's Versions and branches card | yes: a branch's version installs like a beta, built there with the branch's own code and cards |
 | The combat prototype | the Vector Counter System in a terminal, against the model's AIs | `cardmodel game play`, `game duel`, `game tournament` | no: a terminal program (the native game is its successor) |
@@ -40,7 +49,8 @@ Any new `game` card appears in the store by itself: the service lists every card
 | the store pictures | rendered headless from the module | screenshots, header, capsule, hero and icon come from the game itself, not by hand |
 | the service | `arcade/server.py` (standard-library HTTP) | catalog, store pages, build progress, manifests, chunks with an optional bandwidth limit, pictures, the launcher's pages; it re-reads the cards when they change |
 | the launcher | `app/arcade` (`Launcher.swift`, `ui/`) | install / update / verify integrity / play, play time, achievements read from the game's save; installs from a branch; falls back to the last good build when the cards in progress do not build |
-| the players and the library | `system/*`, `arcade/system.py`, `arcade/library.py` | a console player is the machine cards plus card-language glue built through the same pipeline; the library reads every cartridge where it is and draws its title screen headless |
+| the players and the library | `system/*`, `arcade/system.py`, `arcade/library.py` | a console player is the machine cards plus card-language glue built through the same pipeline; the library reads every cartridge where it is and draws its title screen headless; the system card carries a check cartridge the model assembles from the instruction cards, so the player is checked on no one's game; nothing derived from a cartridge leaves `state/` |
+| the store check | `arcade/client.py` (`cardmodel arcade check`, the self-run's `store` step) | the launcher's protocol replayed in Python: install, verify, repair, play for every program; every listed cartridge started as `Launcher.playRom` starts it and compared with the picture the player module computes in the check's own process |
 | the branches | `arcade/work.py` | every worktree's commits, changes, areas and programs; a branch's build state from its own `arcade list`; builds there by its own `bin/cardmodel`, served from its state folder |
 | the guarantees | tests/test_arcade.py, capability `arcade`, the resource governor | a scripted redirect is a theorem of the kernel (CM35's witness); builds and compiles take machine slots and memory caps (CM30); the self-run checks the store on every cycle |
 
