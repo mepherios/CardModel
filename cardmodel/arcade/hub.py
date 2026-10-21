@@ -17,8 +17,9 @@ whose builds belong to it), ``metrics`` and ``docs``. Nothing on the card says h
              verify section (the newest record holding it), a state value (the newest record), a card count, a
              count of committed files in the project's repository, or the last self-run
   activity   commits and merges in every repository watched (7 days), verify runs, self-run cycles, new builds
-  early      early-access builds: the latest build of each game in every worktree's depot whose build differs from
-             the release, installable beside it under its own library id ``<game>.early.<worktree>``
+  early      early-access builds: the latest build of each game in the depot of every worktree whose branch has
+             unmerged work, when it differs from the release and is not an older version, installable beside it
+             under its own library id ``<game>.early.<worktree>``
   live       a watcher thread compares, every 2 s, the modification times of the git refs, HEADs and logs and of the
              records and depots it reads; when anything moved it recomputes and pushes the snapshot to every page
              listening on /api/events (server-sent events). Uncommitted changes are re-read every 60 s in this
@@ -117,6 +118,14 @@ def _ts(value) -> float | None:
         except ValueError:
             continue
     return None
+
+
+def _version(v) -> tuple:
+    """Dotted versions compare as numbers; no version sorts first."""
+    try:
+        return tuple(int(x) for x in str(v).split("."))
+    except ValueError:
+        return ()
 
 
 def _read(path: Path):
@@ -352,10 +361,14 @@ class Snapshot:
         return out
 
     def early(self) -> list[dict]:
+        """A worktree's build is early access while its branch has unmerged work and its version is not older than
+        the release: a merged branch's builds are the release's past, an older version is not early."""
         rel = self.releases()
+        own = self.repos[""]
+        ahead = {b["name"]: b["ahead"] for b in own.branches}
         out = []
         for co in self.checkouts:
-            if co.name == "main":
+            if co.name == "main" or not ahead.get(co.branch):
                 continue
             depots = co.state / "arcade" / "depots"
             for latest in sorted(depots.glob("*/latest")) if depots.is_dir() else []:
@@ -364,7 +377,8 @@ class Snapshot:
                 m = _read(latest.parent / build_dir / "manifest.json")
                 if not m or not SAFE.match(game) or not SAFE.match(build_dir) or not SAFE.match(co.name):
                     continue
-                if rel.get(game, {}).get("build") == m.get("build"):
+                if rel.get(game, {}).get("build") == m.get("build") or \
+                        _version(m.get("version")) < _version(rel.get(game, {}).get("version")):
                     continue
                 base = f"/early/{co.name}/{game}/{build_dir}"
                 out.append({"id": f"{game}{EARLY}{co.name}", "game": game, "title": m.get("title") or game,
