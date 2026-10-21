@@ -1,0 +1,43 @@
+{
+  "category": "project",
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "kind": "game",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "label": "instructions executed by the cards",
+      "state": "nds_coverage",
+      "sum": "cpus.*.instructions_executed"
+    },
+    {
+      "label": "lifted vs interpreter",
+      "path": "lifted_differential.verdict",
+      "state": "nds_coverage"
+    },
+    {
+      "goal": "G_M5_ds_decoded",
+      "label": "executed instructions no card decodes"
+    }
+  ],
+  "name": "ds_prototype",
+  "order": 3,
+  "paths": [
+    "cardmodel/machine/nds.py",
+    "cardmodel/machine/lift_arm.py",
+    "cards/machine/nds",
+    "cards/isa/armv5te",
+    "cards/machine/armv5te_bench",
+    "tools/gen_armv5te.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Both DS CPUs direct-booted on the ARM instruction cards, the ARM9's code lifted; no graphics or sound yet.",
+  "tier": 1,
+  "title": "Nintendo DS prototype"
+}

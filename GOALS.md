@@ -1,5 +1,60 @@
 # GOALS
 
+## What the card model is: a universal Gödel model that keeps expanding
+
+In the user's words (2026-10-22): *Gödel numbers are fact, but we can have different and infinitely expanding Gödel
+sets; that is where it becomes special. We have basis Gödel numbers, then we use the same logic for programming
+languages, and math, and physics, and we make them carry over infinitely: a universal Gödel expanding model. That is
+what the card model is supposed to be.* Made precise:
+
+1. **Atoms get primes, forever.** A basis set B₀ numbers the primitive concepts (logic, equality, arithmetic, bit
+   operations). Each atom gets a prime that is never renumbered or reused: the ledger only grows.
+2. **Every domain is a Gödel set extending B₀**: programming languages, mathematics, physics, and any domain to
+   come. A new atomic concept (a card) takes the next unused prime. There are infinitely many primes (Euclid), so
+   every set expands without limit.
+3. **Two numberings, two jobs.**
+   * *Content* is a concept's factorization: the product of its constituents, with multiplicity (an exponent
+     vector). With negative exponents allowed, products have inverses: the positive rationals, i.e. the free abelian
+     group on the primes. Physics is the cleanest witness. The base units (s, m, kg, A, K, mol, cd) are primes and a
+     derived quantity is a product (N = kg·m·s⁻²), so dimensional analysis is exactly this algebra. GCD and LCM are
+     the shared and the combined content of two concepts.
+   * *Structure* is Gödel's own positional numbering (∏ pᵢ^code(symbolᵢ), nested for trees). It keeps order and
+     arrangement and decodes exactly, so a concept's identity is its structural number. Content forgets arrangement:
+     f(g(x)) and g(f(x)) have the same factors.
+4. **Carry-over is a homomorphism.** A map between two sets is fixed by where it sends each prime. It preserves
+   products and divisibility, and maps compose, so knowledge carries along any chain (a language to the IR to
+   another language; mathematics to physics). A map preserves every GCD exactly when it sends distinct primes to
+   coprime images. The source primes a map cannot send are that translation's gap: a concept splits into the part
+   that carries and a residual factor. Every set embeds in one universal ledger (the direct limit), where GCD and
+   LCM find the logic any domains share.
+5. **Laws, each with a witness, when built:**
+   * the ledger is append-only;
+   * every card carries its Gödel vector in each set it belongs to;
+   * every translation is a homomorphism card, checked to preserve products, with its GCD condition computed;
+   * a translation's correctness is still witnessed by behaviour (equal outputs on seeded inputs);
+   * a `translation_gap` card is the residual factor a map leaves.
+
+**Already in the model:**
+* positional Gödel numbers of canonical forms, with exact decoding (CM31, `engines/funcalg.py`);
+* the GCD of functions (shared annihilators, common factors);
+* translation-gap cards per language pair;
+* cross-language equivalence cards from learning;
+* op cards as the atoms of computation;
+* content hashes as every card's identity.
+
+**Not built yet:**
+* the prime ledger;
+* Gödel vectors on every card;
+* homomorphism cards;
+* the physics set (units, dimensional analysis).
+
+ROADMAP "Gödel model" has the steps.
+
+**Honest limits.** A factor multiset forgets arrangement, so the structural number stays the identity. GCD carries
+over only under the coprimality condition above. What a factor means depends on canonicalization: two equivalent
+constructions share factors only once both reduce to the same atoms (canonical forms and rewrite rules do that
+for functions).
+
 ## Purpose
 
 **cardmodel** is the card model as one self-contained program. Every structure is a card: languages, operators, rules,

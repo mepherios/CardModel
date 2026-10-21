@@ -1,0 +1,36 @@
+{
+  "category": "project",
+  "docs": [
+    "docs/ARCADE.md",
+    "docs/STORE.md"
+  ],
+  "games": [
+    "vector_duel"
+  ],
+  "kind": "game",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "format": "{laws_passed}/{laws_total} design laws hold",
+      "label": "balance",
+      "verify": "game"
+    }
+  ],
+  "name": "vector_duel",
+  "order": 1,
+  "paths": [
+    "cards/game/vector_duel",
+    "cardmodel/arcade/gen.py",
+    "cardmodel/arcade/game.py",
+    "cardmodel/arcade/build.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "The native fighting game made of cards. Its next version is built on the games branch and offered as early access beside the release.",
+  "tier": 1,
+  "title": "Vector Duel"
+}

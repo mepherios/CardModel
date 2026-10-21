@@ -192,6 +192,14 @@ CAPABILITIES = [
       "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked"],
      ["docs/ARCADE.md", "docs/STORE.md"], ["cardmodel arcade"], ["cardmodel/arcade"],
      "Games made from the model's cards, and the user's own cartridges, ship through Cardmodel Arcade."),
+    ("live_hub", "The store follows everything in progress: project cards say what to watch; the hub computes each "
+     "one's phase, branches, uncommitted work, metrics and builds from git and the model's records, read-only, and "
+     "pushes changes to the launcher as they happen; early-access builds install beside the release.",
+     L("CM01_honest_limits", "CM35_games_are_cards"),
+     ["tests/test_hub.py::test_status_is_computed_from_git_and_state", "tests/test_hub.py::test_git_reads_never_write",
+      "tests/test_hub.py::test_changes_are_pushed", "tests/test_hub.py::test_early_access_is_separate_and_installable"],
+     ["docs/STORE.md"], ["cardmodel arcade serve (the In progress page)"], ["cardmodel/arcade/hub.py"],
+     "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],

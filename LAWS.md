@@ -49,7 +49,7 @@ Laws from the source sets that are not carried over (hub GUI/hub-folder/process 
 
 ## The core: capabilities that carry the laws (CM37)
 
-26 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
+27 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
 
 | capability | what the model can do | laws it carries | smoke check | witness tests |
 |---|---|---|---|---|
@@ -77,5 +77,6 @@ Laws from the source sets that are not carried over (hub GUI/hub-folder/process 
 | emulation | Lifted ROM code is the cards and the shell is the only effect: a ROM runs lifted, frame for frame equal to the interpreter. | CM33, CM34 | `emulation` | `test_lifted_blocks_match_the_interpreter`, `test_shell_is_the_only_effect` |
 | arcade | Games are cards: a game's tables, rules and logic compile into a native module that the store builds, serves and launches; a console player is the machine cards plus a card-language player, built the same way. | CM35, CM40 | `arcade` | `test_a_timed_guard_redirects`, `test_the_player_configures_a_cartridge_like_the_host`, `test_a_branch_version_is_listed_served_and_asked` |
 | anyps5 | AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation obligation, never a made-up success. | CM36 | `anyps5` | `test_unknown_gaps_are_observation_obligations` |
+| live_hub | The store follows everything in progress: project cards say what to watch; the hub computes each one's phase, branches, uncommitted work, metrics and builds from git and the model's records, read-only, and pushes changes to the launcher as they happen; early-access builds install beside the release. | CM01, CM35 | `live_hub` | `test_status_is_computed_from_git_and_state`, `test_git_reads_never_write`, `test_changes_are_pushed`, `test_early_access_is_separate_and_installable` |
 | self_run | The model runs itself: cycles of checks, learning and optimization with findings and a ranked plan; the core is never lost. | CM37, CM38 | `self_run` | `test_core_capabilities_are_never_lost`, `test_self_run_finds_flaws_and_ranks_them` |
 | integration | One program: unique law and goal numbers, every law carried by a capability, every command, section and doc described, generated docs in sync. | CM20, CM39 | `integration` | `test_laws_md_in_sync`, `test_one_program_integrity` |

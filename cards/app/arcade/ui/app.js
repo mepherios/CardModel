@@ -67,7 +67,7 @@ function when(t) {
   if (d.toDateString() === now.toDateString()) return "Today";
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
-function ago(t) {
+function since(t) {
   if (!t) return "";
   const s = Date.now() / 1000 - t;
   if (s < 90) return "just now";
@@ -269,6 +269,7 @@ function render() {
   else if (S.view === "work") v.innerHTML = workView();
   else if (S.view === "downloads") v.innerHTML = downloadsView();
   else if (S.view === "news") v.innerHTML = newsView();
+  else if (S.view === "dev") v.innerHTML = devView();          // dev.js: everything in progress, live
   else if (S.view === "profile") v.innerHTML = profileView();
   if (S.view === "library") v.querySelectorAll(".side, .gamepage").forEach((el, k) => { if (kept[k] != null) el.scrollTop = kept[k]; });
   bind();
@@ -631,7 +632,7 @@ function workView() {
   const chips = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 18);
   return `<div class="store work">
     <div class="workhead"><h2>Work in progress</h2>
-      <span class="dim">${plural(S.work.worktrees.length, "branch", "branches")} of this repository &middot; ${plural(S.work.worktrees.filter((w) => w.programs.length).length, "with programs", "with programs")} &middot; read ${ago(S.work.time)}</span>
+      <span class="dim">${plural(S.work.worktrees.length, "branch", "branches")} of this repository &middot; ${plural(S.work.worktrees.filter((w) => w.programs.length).length, "with programs", "with programs")} &middot; read ${since(S.work.time)}</span>
       <button class="btn small ghost" data-workreload="1">Refresh</button></div>
     <div class="chips"><a class="chip ${f ? "" : "on"}" data-area="">everything</a>${chips.map(([a, n]) => `<a class="chip ${f === a ? "on" : ""}" data-area="${esc(a)}">${esc(a)} <span>${n}</span></a>`).join("")}</div>
     ${busy.map(wtCard).join("") || `<div class="empty">No branch matches.</div>`}
@@ -644,13 +645,13 @@ function wtCard(w) {
   const last = w.ahead[0];
   return `<div class="card wt ${w.own ? "own" : ""}">
     <div class="wthead"><a class="bname" data-toggle="${esc(k("commits"))}">${esc(w.branch || "detached at " + w.head)}</a>
-      ${w.own ? `<span class="tag">the arcade's own checkout</span>` : ""}<span class="when">${esc(ago(Math.max(w.time, last ? last.time : 0)))}</span></div>
+      ${w.own ? `<span class="tag">the arcade's own checkout</span>` : ""}<span class="when">${esc(since(Math.max(w.time, last ? last.time : 0)))}</span></div>
     <div class="subject"><a data-commit="${esc(w.name)}" data-hash="${esc(w.head)}">${esc(w.subject || "(no commits)")}</a></div>
     <div class="wtstats"><a data-toggle="${esc(k("commits"))}">${plural(w.ahead_count, "commit")} not on main</a> &middot;
       <a data-toggle="${esc(k("files"))}">${plural(w.uncommitted, "uncommitted change")}</a> &middot;
       <a data-revealpath="${esc(w.path)}" title="${esc(w.path)}">${esc(w.name)}</a></div>
     ${w.areas.length ? `<div class="chips">${w.areas.map((a) => `<a class="chip small ${S.workFilter === a ? "on" : ""}" data-area="${esc(a)}">${esc(a)}</a>`).join("")}</div>` : ""}
-    ${S.open[k("commits")] ? `<div class="list">${w.ahead.map((c) => `<a class="li" data-commit="${esc(w.name)}" data-hash="${esc(c.hash)}"><code>${esc(c.hash)}</code> ${esc(c.subject)} <span class="dim">${esc(ago(c.time))}</span></a>`).join("")
+    ${S.open[k("commits")] ? `<div class="list">${w.ahead.map((c) => `<a class="li" data-commit="${esc(w.name)}" data-hash="${esc(c.hash)}"><code>${esc(c.hash)}</code> ${esc(c.subject)} <span class="dim">${esc(since(c.time))}</span></a>`).join("")
       || `<div class="dim">Nothing beyond main.</div>`}${w.ahead_count > w.ahead.length ? `<div class="dim">and ${w.ahead_count - w.ahead.length} older</div>` : ""}</div>` : ""}
     ${S.open[k("files")] ? `<div class="list">${w.uncommitted_files.map((p) => `<a class="li" data-revealpath="${esc(w.path + "/" + p)}"><code>${esc(p)}</code></a>`).join("")
       || `<div class="dim">Everything is committed.</div>`}${w.uncommitted > w.uncommitted_files.length ? `<div class="dim">and ${w.uncommitted - w.uncommitted_files.length} more</div>` : ""}</div>` : ""}

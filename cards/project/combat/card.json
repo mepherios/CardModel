@@ -1,0 +1,42 @@
+{
+  "category": "project",
+  "docs": [
+    "game/DESIGN.md"
+  ],
+  "kind": "game",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "format": "{laws_passed}/{laws_total} design laws hold",
+      "label": "design laws",
+      "verify": "game"
+    },
+    {
+      "goal": "G_D2_equilibrium_support",
+      "label": "options the equilibrium mixes"
+    }
+  ],
+  "name": "combat",
+  "order": 4,
+  "paths": [
+    "cardmodel/game/combat.py",
+    "cardmodel/game/analysis.py",
+    "cardmodel/game/ai.py",
+    "cards/move",
+    "cards/fighter",
+    "cards/stance",
+    "cards/design_law",
+    "cards/payoff",
+    "stdlib/combat.card",
+    "game/DESIGN.md"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "The combat design: moves, stances and fighters as cards; its design laws are computed on exact equilibria and its AIs read your vectors (cardmodel game play).",
+  "tier": 1,
+  "title": "Vector Counter System"
+}
