@@ -150,8 +150,8 @@ def regressions(run: dict, prev: dict | None, cfg: dict) -> tuple[list, list]:
     go = {g["goal"]: g for g in _stage(prev, "goals").get("goals") or []}
     for n, g in gs.items():
         o = go.get(n)
-        if not o or g["value"] is None or o["value"] is None:
-            continue
+        if not o or g["value"] is None or o["value"] is None or g["metric"] == "cycle_regressions":
+            continue                # the regressions goal is this very comparison: it is not compared with itself
         if o["met"] and g["met"] is False:
             reg.append(("high", f"goal/{n}", f"{n} was met ({o['value']}) and is not now ({g['value']}, "
                                              f"{g['direction']} {g['target']})"))

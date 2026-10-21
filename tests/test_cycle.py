@@ -197,6 +197,8 @@ class Cycle(unittest.TestCase):
             self.assertEqual(R.load_last(state)["seed"], SEED)
             rerun = R.run(profile="test", ctx=ctx, seed=SEED, stages=["core", "goals"])
             self.assertEqual(rerun["analysis"]["regressions"], 0, rerun["analysis"]["findings"])
+            g6 = next(g for g in rerun["stages"]["goals"]["goals"] if g["metric"] == "cycle_regressions")
+            self.assertEqual((g6["value"], g6["met"]), (0, True), "the regressions goal holds this run's own count")
         finally:
             tp.cleanup()
 

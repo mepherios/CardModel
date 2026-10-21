@@ -311,6 +311,8 @@ def run(profile: str | None = None, record: bool = False, record_verdicts: bool 
                "peak_memory_mb": round(resources.peak_mb(), 1),
                "shortfalls": {"limits": report.honest_limits(), "roadmap": report.roadmap_open()}}
         an = report.analyse(out, prev, cfg)
+        if _settle_regressions_goal(env.results.get("goals"), an["regressions"]):
+            an = report.analyse(out, prev, cfg)       # the regressions goal now holds this run's own count
         out["analysis"] = an
         out["status"] = an["status"]
         md = report.markdown(out, an, prev)
@@ -328,6 +330,26 @@ def run(profile: str | None = None, record: bool = False, record_verdicts: bool 
         _save(state, out, md, cfg)
         _remember(state, out)
     return out
+
+
+def _settle_regressions_goal(goals: dict | None, regressions: int) -> bool:
+    """The goals stage ran before the analysis, so the cycle_regressions goal read the last run's count; give it
+    this run's. True when a row changed."""
+    changed = False
+    for g in (goals or {}).get("goals") or []:
+        if g["metric"] == "cycle_regressions" and g["value"] != regressions:
+            g["value"] = regressions
+            g["met"] = regressions <= g["target"] if g["direction"] == "lower" else regressions >= g["target"]
+            changed = True
+    if changed:
+        rows = goals["goals"]
+        goals["met"] = sum(1 for g in rows if g["met"])
+        goals["unmet"] = [g["goal"] for g in rows if g["met"] is False]
+        goals["unknown"] = [g["goal"] for g in rows if g["met"] is None]
+        goals["status"] = "pass" if not goals["unmet"] and not goals["unknown"] else "partial"
+        goals["summary"] = (f"{goals['met']} of {len(rows)} goals met; unmet: {', '.join(goals['unmet']) or 'none'}"
+                            + (f"; not measured here: {len(goals['unknown'])}" if goals["unknown"] else ""))
+    return changed
 
 
 def _epoch(iso: str | None) -> float:
