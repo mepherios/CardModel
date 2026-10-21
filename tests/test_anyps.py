@@ -238,9 +238,77 @@ class Classifying(unittest.TestCase):
         self.assertIn("## The real coverage", V.markdown(rep))
 
 
+class Resolving(unittest.TestCase):
+    def test_a_host_call_is_not_the_guest_export(self):
+        """AnyPS5's own code calls the host's readlink; only the C++ name reaches the export readlink_nid_postfix."""
+        root = fixture_tree()
+        try:
+            extra = {"core/libs/prx/libc/src/Unistd.cpp":
+                     '#include "prx/libc/include/General.hpp"\nextern "C" {\nint APS5_VABI readlink_nid_postfix(const char* p) {\n'
+                     '    NotImplemented_nid_no_patch(__func__);\n    return -1;\n}\n'
+                     'int APS5_VABI readlinkat_nid_postfix(const char* p) { return readlink_nid_postfix(p); }\n}\n',
+                     "core/libs/prx/libSceSysmodule/Export.cpp":
+                     '#include "prx/libc/include/General.hpp"\n#include <unistd.h>\nextern "C" {\n'
+                     'int APS5_VABI sceSysmoduleHostPath(char* b) { return static_cast<int>(::readlink("/proc/self/exe", b, 64)); }\n}\n',
+                     "core/libs/tests/Host.cpp": 'int main() { char b[64]; return readlink("/proc/self/exe", b, 64) < 0; }\n'}
+            for rel, text in extra.items():
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text(text, encoding="utf-8")
+            names = {c["name"]: c for c in C.build(S.Scan(root))["anyps5_export"]}
+            self.assertNotIn("libc.readlink_nid_postfix", names["libSceSysmodule.sceSysmoduleHostPath"].get("uses") or [])
+            self.assertIn("libc.readlink_nid_postfix", names["libc.readlinkat_nid_postfix"].get("uses") or [])
+            self.assertFalse(names["libc.readlink_nid_postfix"].get("tests"))     # the test calls the host's readlink
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+
+class Layering(unittest.TestCase):
+    def test_a_project_scan_replaces_the_model_scan(self):
+        """A project scanning its own fixed checkout: its scan replaces the model's (an export it removed does not
+        linger from the lower layer), and the comparison shows both."""
+        upstream, fixed = fixture_tree(), fixture_tree()
+        ctx, cards = fixture_store(upstream)
+        project = Path(tempfile.mkdtemp(prefix="anyps5_project_"))
+        try:
+            rtc = fixed / "core/libs/prx/libSceRtc/Export.cpp"
+            rtc.write_text(RTC.replace("int APS5_VABI sceRtcStub() {\n    NotImplemented_nid_no_patch(__func__);\n",
+                                       "int APS5_VABI sceRtcStub() {\n")
+                           .replace("int APS5_VABI sceRtcInit() { return 0; }\n", ""), encoding="utf-8")
+            C.save(ctx.store, C.build(S.Scan(upstream)), layer="model")
+            pctx = Ctx(open_store(project=project, home_cards=cards))
+            C.save(pctx.store, C.build(S.Scan(fixed)), layer="project")
+            exports = C.scan_cards(pctx.store, "anyps5_export")
+            self.assertEqual({c.layer for c in exports}, {"project"})
+            self.assertNotIn("libSceRtc.sceRtcInit", {c.name for c in exports})
+            self.assertIn("libSceRtc.sceRtcInit", {c.name for c in C.scan_cards(ctx.store, "anyps5_export")})
+            base_cls, cls = K.classify(ctx, run_programs=False), K.classify(pctx, run_programs=False)
+            self.assertIn(("libSceRtc.sceRtcCallsStub", "reaches_stub"), {(e, k) for e, k, _ in base_cls.rel("cause")})
+            self.assertNotIn(("libSceRtc.sceRtcCallsStub", "reaches_stub"), {(e, k) for e, k, _ in cls.rel("cause")})
+            base, rep = V.report(ctx, base_cls), V.report(pctx, cls)
+            self.assertEqual([base["declared"], rep["declared"]], [15, 14])
+            self.assertGreater(rep["complete"], base["complete"])
+            md = V.comparison(base, rep, "upstream", "fixed")
+            self.assertIn("| declared exports | 15 | 14 | -1 |", md)
+            self.assertIn(f"| complete by AnyPS5's own records | {base['complete']} | {rep['complete']} | "
+                          f"{rep['complete'] - base['complete']:+d} |", md)
+        finally:
+            for d in (upstream, fixed, cards, project):
+                shutil.rmtree(d, ignore_errors=True)
+
+
 @unittest.skipIf(not probes.probe({"kind": "executable", "name": "c++", "env_override": "CXX"})[0],
                  "no C++ compiler on this host")
 class Witnessing(unittest.TestCase):
+    def test_a_build_is_cached_by_everything_that_makes_it(self):
+        ctx = model_ctx()
+        base = W.build_dir(ctx, "int main() {}", "h", "c++", ["-O1", "-Iupstream/core/libs"])
+        self.assertEqual(base, W.build_dir(ctx, "int main() {}", "h", "c++", ["-O1", "-Iupstream/core/libs"]))
+        for other in (W.build_dir(ctx, "int main() {}", "h", "c++", ["-O1", "-Iupstream/core/libs", "-arch", "x86_64"]),
+                      W.build_dir(ctx, "int main() {}", "h", "c++", ["-O1", "-Icopy/core/libs"]),
+                      W.build_dir(ctx, "int main() {}", "h", "clang++", ["-O1", "-Iupstream/core/libs"]),
+                      W.build_dir(ctx, "int main() {}", "h2", "c++", ["-O1", "-Iupstream/core/libs"])):
+            self.assertNotEqual(base, other)
+
     def test_agreement_and_a_planted_bug(self):
         root = fixture_tree()
         try:

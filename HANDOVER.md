@@ -302,6 +302,11 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   to it) plus its program in `stdlib/ps5_*.card`; run `anyps5 witness` and it counts.
 * docs/ANYPS5.md says why the result is not 100 % by construction (observation, boundaries, policy) and what
   would move it.
+* A checkout with fixes is a card-model project of its own: `cardmodel init` in it, then `anyps5 scan . --parity
+  --save` and `anyps5 witness .` write to its `.cardmodel/`. A scan in a higher layer replaces the model's scan of
+  upstream instead of mixing with it (`scan_cards`), and `anyps5 cover --compare` sets the two side by side.
+  ~/Programmering/AnyPS5-cardmodel is such a copy (its own git repository: the MP3 header fix, the relinker build,
+  `docs/dev/CARDMODEL.md`).
 
 ## 4. How to add things
 
@@ -482,7 +487,8 @@ a native (ctypes) path inside improved modules (ROADMAP).
    test inputs and are never copied into a repository.
 7. **AnyPS5: done (section 3f, docs/ANYPS5.md).** What remains there: the pending blockers `anyps5 blocks`
    ranks, host mappings for the standard host functions, the string/list IR for the standard data functions,
-   and console observations for the rest (each named with its file, line and debt entry).
+   and console observations for the rest (each named with its file, line and debt entry). Fixes go into the copy
+   ~/Programmering/AnyPS5-cardmodel, never into ~/Documents/AnyPS5-main.
 
 ---
 

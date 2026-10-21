@@ -19,8 +19,9 @@ Packs leave out optional fields that hold their default (None, False, 0, empty),
 its default.
 
 Honest limits (L1): a debt card keeps the bullet's whole text (``text``, quoted from AnyPS5's docs so the
-classification can be recomputed from the cards alone); ``uses`` is resolved by name as scan.py describes, so it can include a same-named function
-from another file when no closer definition exists.
+classification can be recomputed from the cards alone); ``uses`` is resolved by C++ name as scan.py describes
+(an export's PS5 symbol is never matched, since AnyPS5's own code calls the host's function by that name), so it
+can include a same-named function from another file when no closer definition exists.
 """
 from __future__ import annotations
 
@@ -42,6 +43,20 @@ REGISTRIES = {
     "anyps5_snapshot": "What an AnyPS5 scan read: content hash, badges, and the parity check against AnyPS5's "
                        "own progress tool.",
 }
+
+
+SCAN_REGISTRIES = ("anyps5_export", "anyps5_debt", "anyps5_library", "anyps5_instruction")
+
+
+def scan_cards(store, registry: str) -> list:
+    """The cards of one scan registry from the highest layer that holds any: a scan is regenerated whole, so a
+    project's scan of its own checkout replaces the model's scan of upstream instead of mixing with it."""
+    cards = store.cards(registry)
+    if not cards:
+        return []
+    order = [name for name, _ in store.layers]
+    top = max((c.layer for c in cards), key=lambda layer: order.index(layer) if layer in order else -1)
+    return [c for c in cards if c.layer == top]
 
 
 def export_name(library: str, definition: str) -> str:
@@ -95,11 +110,8 @@ class _Graph:
             for f in files:
                 self.by_file.setdefault((n["lib"], f, n["name"]), []).append(key)
             self.by_lib.setdefault((n["lib"], n["name"]), []).append(key)
-            if key[0] == "e":
-                self.global_exports.setdefault(n["name"], []).append(key)
-                sym = strip_symbol(n["name"])
-                if sym != n["name"]:
-                    self.global_exports.setdefault(sym, []).append(key)
+            if key[0] == "e":                 # by its C++ name only: `readlink(` in AnyPS5's own code is the
+                self.global_exports.setdefault(n["name"], []).append(key)   # host's, not readlink_nid_postfix
         self._memo: dict[tuple, tuple] = {}
 
     def packet(self, key: tuple, depth: int = 0) -> tuple[dict | None, list]:
@@ -214,7 +226,8 @@ def build(scan: Scan, parity: dict | None = None) -> dict[str, list[dict]]:
             uses, chain, generic, paths = graph.export(lib.name, name)
             packet, via = graph.packet(("e", lib.name, name))
             sym = strip_symbol(name)
-            test_files = sorted(set(tests.get(name, [])) | set(tests.get(sym, [])))
+            # a test names an export by its C++ name, or by its PS5 symbol when that cannot be a host function
+            test_files = sorted(set(tests.get(name, [])) | (set(tests.get(sym, [])) if sym.startswith("sce") else set()))
             card = {"name": export_name(lib.name, name), "library": lib.name, "symbol": sym if sym != name else None,
                     "kind": "function", "state": "implemented" if implemented else "pending",
                     "inert": name in lib.inert, "constant": first["constant"], "params": first["params"],
@@ -337,4 +350,5 @@ def save(store, cards: dict[str, list[dict]], layer: str | None = None) -> dict[
     return out
 
 
-__all__ = ["REGISTRIES", "build", "definition_of", "excerpt", "export_name", "save", "symbol_of"]
+__all__ = ["REGISTRIES", "SCAN_REGISTRIES", "build", "definition_of", "excerpt", "export_name", "save", "scan_cards",
+           "symbol_of"]

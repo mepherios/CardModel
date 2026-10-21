@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 
 from ..engines import logic as L
 from ..kernel import paths, resources
-from .cards import symbol_of
+from .cards import scan_cards, symbol_of
 
 PARTIAL_CUES = re.compile(r"\b(unsupported|not supported|not implemented|unimplemented|not modell?ed|not handled|"
                           r"unknown|other than|outside)\b", re.I)
@@ -100,7 +100,7 @@ def facts(ctx, run_programs: bool = True, program_status: dict | None = None) ->
     for s in standards:
         add("standard_cause", [s.name, s["cause"]])
     lib_domain = {}
-    for lib in st.cards("anyps5_library"):
+    for lib in scan_cards(st, "anyps5_library"):
         info["libraries"][lib.name] = lib
         add("library", [lib.name])
         if lib.get("empty"):
@@ -139,7 +139,7 @@ def facts(ctx, run_programs: bool = True, program_status: dict | None = None) ->
             elif r.get("disagree"):
                 disagree.add(e)
     agrees -= disagree
-    exports = [c for c in st.cards("anyps5_export") if c.get("kind") == "function"]
+    exports = [c for c in scan_cards(st, "anyps5_export") if c.get("kind") == "function"]
     by_lib_symbol = {(c["library"], symbol_of(c)): c for c in exports}
     for c in exports:
         resources.guard("anyps5 facts")
@@ -186,7 +186,7 @@ def facts(ctx, run_programs: bool = True, program_status: dict | None = None) ->
         if e in agrees:
             add("witness_agrees", [e])
     cue_tables = {name: [re.compile(p, re.I) for p in (c.get("cues") or [])] for name, c in causes.items()}
-    for d in st.cards("anyps5_debt"):
+    for d in scan_cards(st, "anyps5_debt"):
         resources.guard("anyps5 facts")
         info["debt"][d.name] = d
         add("debt", [d.name])

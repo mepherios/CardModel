@@ -124,10 +124,13 @@ These come from the cards and the witnesses (the generated report lists every in
 * **Constants proven.** GetSize exports that AnyPS5 marks behaviourally empty return exactly the bytes of the
   packet their emitter writes (directly or through `Agc::Command::Write*` helpers): the size law holds on
   every pair, so they are not gaps.
-* **A documented deviation, measured.** `sceAjmDecMp3ParseFrame` (taken from shadPS4, unconfirmed on a PS5)
-  treats every layer as layer III and rejects MPEG-2.5 above 64 kbit/s. The witness shows it disagrees with the
-  standard and with AnyPS5's own decoder path (`ParseMp3Frame`, which follows the standard) on those inputs and
-  agrees everywhere else. Which of the two the console does is an observation.
+* **A documented deviation, measured, then fixed in a copy.** `sceAjmDecMp3ParseFrame` (taken from shadPS4,
+  unconfirmed on a PS5) treats every layer as layer III and rejects MPEG-2.5 above 64 kbit/s. Over all 8,192
+  combinations of the header fields a parser reads, it differs from the standard on 3,000: 1,992 of the 2,016 valid
+  layer I and II headers, the 864 headers with the reserved layer value (which it accepts), and the 144 MPEG-2.5
+  layer III headers above 64 kbit/s (which it rejects). AnyPS5's own decoder path (`ParseMp3Frame`) follows the
+  standard for layer III and rejects layers I and II. The copy below reads all 8,192 as the standard does; how
+  the console reads them is still an observation.
 * **Recorded console behaviour, kept apart.** Outside the runtime ABI's domain, AnyPS5's builtins follow what
   it read from a title's `libc.prx` (wrapping `__addv*`, division by zero to 0 in `__udivsi3`, `__clzdi2(0)` =
   32, traps elsewhere). The model encodes those as observations, separate from the derived semantics, and the
@@ -138,10 +141,15 @@ These come from the cards and the witnesses (the generated report lists every in
 
 ## What it would take (in the order it pays)
 
-1. **The blockers.** A few pending exports are reached by many implemented ones (`cardmodel anyps5 blocks`):
-   implementing those (several are POSIX or C-standard, so derivable on the host) completes their callers.
+1. **The blockers.** Three pending exports are reached by implemented ones (`cardmodel anyps5 blocks`):
+   `sceAjmBatchJobRunSplit` (7 callers; pending because a helper in its file refuses a null buffer list with a
+   nonzero count, and what the console answers there is unmeasured: observation), `vfscanf` (2) and `vsscanf` (1)
+   (ISO C; the open branch is the 16-bit wide conversion on Linux, which waits for the string/list IR). An earlier
+   reading that `readlink` blocked 11 exports was an artifact of the scan: it resolved AnyPS5's own host call
+   `::readlink("/proc/self/exe")` to the guest export. Calls now resolve by C++ name only (test `Resolving`).
 2. **Host mappings for the standard host functions** (`derivable_standard_host`): POSIX/FreeBSD/HTTP behaviour
-   is specified; AnyPS5 maps it to the host and its ctest witnesses it.
+   is specified; AnyPS5 maps it to the host and its ctest witnesses it. This closes only the branches that ask
+   a host question; most open branches ask what the console does (next section).
 3. **The string/list IR** (ROADMAP): turns `derivable_standard_data` into programs the model can close with the
    standards' own test vectors (code pages, FFT, scanf, codec headers).
 4. **A C/C++ frontend** (ROADMAP): AnyPS5's pure code could then be lifted into the IR directly, so every
@@ -150,6 +158,66 @@ These come from the cards and the witnesses (the generated report lists every in
    console or title measurement recorded as an observation card (ground truth, CM15), after which the rules
    reclassify it.
 6. **Boundaries** stay boundaries; the report says what each would need, and DRM stays out by policy.
+
+## What was missing, why, and the fixed copy
+
+The checkout in `~/Documents/AnyPS5-main` stays read-only. Fixes go into a copy, `~/Programmering/AnyPS5-cardmodel`
+(its own git repository, imported from AnyPS5-main as downloaded on 2026-10-21). The copy builds and runs without
+the card model: a fix is plain C++ in AnyPS5's style with AnyPS5's own tests. The card model reads the copy as a
+project (`.cardmodel/` in it): its scan replaces the model's scan of upstream, and `anyps5 cover --compare` sets
+the two side by side (`docs/dev/CARDMODEL_COVERAGE.md` in the copy).
+
+| class | gap items | why it is open | fixed in the copy |
+|---|---:|---|---|
+| derivable | 316 | a standard fixes it, but most items have a branch that names a console fact or a host limit, or the code is string/array work the IR cannot hold yet | the MP3 header reading |
+| observation | 4,251 | only the console has the answer | nothing: a guess would break AnyPS5's rule against made-up results |
+| boundary | 2,677 | hardware, services, system processes; DRM by policy | nothing |
+| performance | 34 | a measurement on the target machine | nothing |
+
+Why the derivable class does not simply close:
+
+* **Host functions** (`derivable_standard_host`) are pending on branches such as fork and exec, absolute
+  symlinks, cpuset levels other than WHICH, or the real-time priority of another thread. POSIX says what a host
+  does there, not what the console does, so filling them in from the standard would guess.
+* **Where AnyPS5 follows the console against the standard**, the standard is the wrong reference: `seed48` and
+  `jrand48` reproduce measured PS5 behaviour that differs from POSIX.
+* **String and array work** (`derivable_standard_data`: scanf, code pages, codec headers) waits for the
+  string/list IR; scanf's open branch (16-bit wide conversion) is partly a host question as well.
+* **The one item with code to fix and a standard that settles it** was the MP3 header reading.
+
+**The fix** (copy commit 98c15c4, `fix(libSceAjm): read MP3 frame headers with the standard tables for every
+layer`):
+
+* `ParseMp3Header` takes the bitrate from the table of its version and layer (ISO/IEC 11172-3, 13818-3 and
+  MPEG-2.5), counts layer I frames in 4-byte slots of 384 samples and layer II frames as 1,152 samples, and rejects
+  the reserved layer value.
+* Over all 8,192 combinations of the fields a parser reads (40,960 field values, built for x86-64 and run under
+  Rosetta), upstream's export differs from the standard on 3,000 and the copy's on none. The copy's sampled witness agrees on all 3,005 inputs it tries;
+  upstream needed a separate check for its documented deviation (105 of 165 sampled inputs differed).
+* AnyPS5's tests (`core/libs/tests/GuestAjm.cpp`) gain six headers (MPEG-2.5 at 80 and 160 kbit/s, layers I and
+  II in MPEG-1 and MPEG-2) and the reserved layer, with values checked against `stdlib/ps5_mp3.card`. Those tests
+  need the full build (FFmpeg) and do not run on this Mac; the witness runs the same function.
+* The debt entry (libSceAjm.native L10) now says the tables follow the standards, while the signature and result
+  layout are still shadPS4's and the console's reading of layers I and II and of MPEG-2.5 above 64 kbit/s is not
+  measured.
+* The coverage numbers do not move, and should not. The export stays pending by AnyPS5's rule, because its
+  original-file-length lookup still refuses the layouts it does not know (L25). It also stays named by debt.
+
+| | upstream | the copy |
+|---|---:|---:|
+| implemented (AnyPS5's rule) | 4,332 | 4,332 |
+| complete by AnyPS5's own records | 2,467 | 2,467 |
+| exports agreeing with derived semantics | 138 | 138 |
+| MPEG header combinations read differently from the standard (all 8,192) | 3,000 | 0 |
+| documented deviations from a standard (sampled inputs) | 105 | 0 |
+
+**Running it.** The relinker builds on this Mac (AnyPS5's relinker-only mode: `cmake -S . -B build-relinker
+-DCMAKE_BUILD_TYPE=Release -DANYPS5_RELINKER_ONLY=ON -DBUILD_TESTING=ON`). The result is
+`build-relinker/core/relinker/relinker`, an arm64 executable, and 225 of its 226 tests pass. The other test,
+`shader_cache_runtime_sources`, configures a sub-build with Ninja, which is not installed here. The system
+libraries need AnyPS5's full build (Linux or Windows, submodules, FFmpeg, SDL, Vulkan), which means downloads and
+was not done. Their pure functions run in the witnesses instead; libm and the copy's MP3 parser are built for
+x86-64, the PS5's architecture, and run under Rosetta. Nothing here runs a title.
 
 ## Commands
 
@@ -175,6 +243,20 @@ cardmodel anyps5 why sceKeyboardGetKey2Char
 
 ```bash
 cardmodel anyps5 blocks
+```
+
+In the copy (the project layer):
+
+```bash
+cardmodel anyps5 scan . --parity --save
+```
+
+```bash
+cardmodel anyps5 witness .
+```
+
+```bash
+cardmodel anyps5 cover --compare --write docs/dev/CARDMODEL_COVERAGE.md
 ```
 
 ## Limits

@@ -2,7 +2,8 @@
 
   scan PATH [--parity] [--save] [--global]   read a checkout (read-only) into cards; --parity also runs AnyPS5's
                                              own tools/progress.py --json and compares, name by name
-  cover [--write FILE]                       the real coverage: the badge, the ladder, every gap by cause
+  cover [--write FILE] [--compare]           the real coverage: the badge, the ladder, every gap by cause; --compare
+                                             puts the model's scan (upstream) beside a project's scan of its checkout
   gaps [--cause C] [--library L] [--kind K]  list gap items with their cause and file:line
   why NAME                                   an export's or debt entry's gaps, causes and the proof of each
   blocks                                     pending exports ranked by the implemented exports that reach them
@@ -35,8 +36,8 @@ def _name(ctx, text: str) -> tuple[str, str] | None:
     for reg in ("anyps5_export", "anyps5_debt"):
         if st.get(f"{reg}/{text}") is not None:
             return reg, text
-    from .cards import symbol_of
-    hits = [c.name for c in st.cards("anyps5_export") if c.get("kind") == "function"
+    from .cards import scan_cards, symbol_of
+    hits = [c.name for c in scan_cards(st, "anyps5_export") if c.get("kind") == "function"
             and (symbol_of(c) == text or c.name.endswith("." + text))]
     return ("anyps5_export", hits[0]) if len(hits) == 1 else None
 
@@ -95,7 +96,16 @@ def cmd(args) -> int:
         return 2
     if act == "cover":
         rep = V.report(ctx, cls)
-        md = V.markdown(rep)
+        md = V.markdown(rep, **({"command": f"cardmodel anyps5 cover --write {args.write}"
+                                            + (" --compare" if args.compare else "")} if args.write else {}))
+        if args.compare:
+            from ..engines.context import Ctx
+            from ..kernel.store import open_store
+            base_ctx = Ctx(open_store(project=False, extra=args.cards or []))
+            base = V.report(base_ctx, K.classify(base_ctx))
+            md += "\n" + V.comparison(base, rep, "the model's scan (upstream)", "this project's scan")
+            rep["baseline"] = {k: base[k] for k in ("declared", "implemented", "complete", "witness_agreeing_exports",
+                                                    "gap_items", "classes")}
         if args.write:
             Path(args.write).write_text(md, encoding="utf-8")
         cli._out(args, rep, md if not args.write else f"wrote {args.write}")
@@ -173,6 +183,7 @@ def register(sub) -> None:
     s.add_argument("--limit", type=int, default=60); s.add_argument("--semantics")
     s.add_argument("--seed", type=int); s.add_argument("--samples", type=int, default=300)
     s.add_argument("--no-save", action="store_true")
+    s.add_argument("--compare", action="store_true", help="cover: also the model's scan, side by side with this project's")
     s.set_defaults(fn=cmd)
 
 

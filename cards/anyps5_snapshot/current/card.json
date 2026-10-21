@@ -12,7 +12,9 @@
     "libraries": 354
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "e5350cbff68bcf71820f36b759d75526c3ae8aa575e0183f0ba4ab7bb5735211",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "current",
   "parity": {
@@ -46,7 +48,7 @@
   },
   "root": "~/Documents/AnyPS5-main",
   "rule": "AnyPS5 docs/dev/PROGRESS.md (tools/progress.py), reproduced in cardmodel/anyps5/scan.py",
-  "scanned_at": "2026-10-21T17:50:56+00:00",
+  "scanned_at": "2026-10-21T19:41:10+00:00",
   "sha256": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
   "shader_badge": {
     "done": 1166,

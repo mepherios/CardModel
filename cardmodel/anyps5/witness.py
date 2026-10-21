@@ -234,6 +234,13 @@ def _compare(expect: str, how: str, ref, got) -> bool:
     return int(ref) == int(got)
 
 
+def build_dir(ctx, source: str, src_hash: str | None, exe: str, flags: list[str]) -> Path:
+    """Where a harness is built and cached: keyed on everything that goes into the binary (the harness source,
+    AnyPS5's files, the compiler and every flag), so a change of target or include root never reuses a binary."""
+    key = "\0".join([source, src_hash or "", exe, *flags])
+    return ctx.state_root / "build" / "anyps5" / hashlib.sha256(key.encode()).hexdigest()[:20]
+
+
 def run_semantics(ctx, sem, root: Path, seed: int, samples: int = 300) -> dict:
     """Run one semantics card's checks; returns the witness card (not yet saved)."""
     root = Path(root).expanduser().resolve()
@@ -277,14 +284,14 @@ def run_semantics(ctx, sem, root: Path, seed: int, samples: int = 300) -> dict:
         if exe is None:
             return _card(sem, seed, "skipped", [], {}, None, None, reason=f"no {lang} compiler: {why}")
         source, src_hash = harness_source(ctx, sem, root, plan)
-        d = ctx.state_root / "build" / "anyps5" / hashlib.sha256((source + src_hash).encode()).hexdigest()[:20]
-        d.mkdir(parents=True, exist_ok=True)
-        (d / "harness.cpp").write_text(source, encoding="utf-8")
         h = sem.get("harness") or {}
         flags = list(h.get("flags") or ["-std=c++20", "-O1", "-w"])
         flags += [f"-I{root / inc}" for inc in h.get("include_dirs") or ["core/libs"]]
         flags += list((h.get("link") or {}).get(sys.platform, []))
         flags += list((h.get("platform_flags") or {}).get(sys.platform, []))
+        d = build_dir(ctx, source, src_hash, exe, flags)
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "harness.cpp").write_text(source, encoding="utf-8")
         cmd = [exe, *flags, "-o", str(d / "harness"), str(d / "harness.cpp")]
         try:
             vp = resources.run([exe, "--version"], timeout=30, heavy=False, stdin=subprocess.DEVNULL)
@@ -371,8 +378,8 @@ def _settle(check: dict, got: list[str]) -> dict:
 
 def _size_law(ctx, interp, check: dict) -> dict:
     """Every implemented GetSize export returning a constant, whose emitter writes one fixed packet."""
-    from .cards import symbol_of
-    exports = {c.name: c for c in ctx.store.cards("anyps5_export") if c.get("kind") == "function"}
+    from .cards import scan_cards, symbol_of
+    exports = {c.name: c for c in scan_cards(ctx.store, "anyps5_export") if c.get("kind") == "function"}
     by_symbol = {(c["library"], symbol_of(c)): c for c in exports.values()}
     agree = disagree = 0
     examples, witnessed = [], {}
@@ -421,4 +428,4 @@ def run(ctx, root, names: list[str] | None = None, seed: int | None = None, samp
     return out
 
 
-__all__ = ["harness_source", "inputs", "run", "run_semantics"]
+__all__ = ["build_dir", "harness_source", "inputs", "run", "run_semantics"]
