@@ -69,7 +69,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T00:38:37+02:00",
+  "updated": "2026-10-22T00:57:20+02:00",
   "user_actions": [
     {
       "action": "Read the MATH_CORE summary and say yes, or what to change",
@@ -81,11 +81,13 @@
       "why": "moving from imitation (emulation, tests) to understanding (one semantic core, definitions, Gödel factors) changes how everything is built"
     },
     {
-      "action": "Decide what happens to claude/jolly-liskov-2d97a8",
+      "action": "Say whether to merge claude/jolly-liskov-2d97a8 into main",
       "unblocks": [
-        "merging or retiring that branch"
+        "the store's end-to-end check in every self-run",
+        "law witnesses run by the model itself",
+        "a learning step that cannot hang"
       ],
-      "why": "a second self-run built in parallel; its laws CM37-CM39 collide with main's"
+      "why": "it is now folded into `cardmodel self`: four new self-run steps (every law's witness test, the model observing its own code, every store item launched through the store, the whole suite weekly), a deadline on every step, law CM42 (the store runs what it lists) with goals G_A9 and G_S1, and fixes the self-run needs (learning hung on the arena framework's set_bits; observing cardmodel/ crashed; G_U3 could read the examples' observation; a partial verify erased other sections)"
     }
   ]
 }

@@ -49,10 +49,12 @@ range to this table in the same commit.
 | CM37–CM39 | main (self-run) | the core is never lost; the model runs itself; one program |
 | CM40 | games (`claude/sad-sanderson-482207`, from the OAM session's cartridge work) | players are cards (`CM36_players_are_cards` on `claude/festive-margulis-43fde7`, renumbered when the games branch merges it) |
 | CM41 | main | projects keep their cards current |
-| **CM42 onward** | free | take the next one (MATH_CORE's laws take theirs when the user approves it) |
+| CM42 | self-run steps (`claude/jolly-liskov-2d97a8`) | the store runs what it lists (CM39 on that branch before the fold) |
+| **CM43 onward** | free | take the next one (MATH_CORE's laws take theirs when the user approves it) |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U4, G_L1, G_O1–O4, G_A1–A8, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M5 (machines). The next free one is the axis's next number (G_A9, G_C6, G_K7, G_M6, G_P6 ...).
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U4, G_L1, G_O1–O4, G_A1–A9, G_K1–K6, G_D1–D2, G_P1–P5
+(AnyPS5), G_M1–M5 (machines), G_S1 (products: the store). The next free one is the axis's next number (G_A10,
+G_C6, G_K7, G_M6, G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened
@@ -72,7 +74,7 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main).
 | cardmodel-anyps5 | `claude/recursing-williams-ecc80a` | `cardmodel/anyps5`, `stdlib/ps5_*.card`, `cards/anyps5_*`, docs/ANYPS5*.md, tests/test_anyps.py, tools/seed_anyps5.py | up to 10c688f (merge 65a059c) |
 | model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | d4fb3c9 (merge 9469e58); 538f29c goes to main through the games branch |
 | game-boy-cgb-dmg-compati | `claude/strange-dewdney-f8f39d` | the CGB's DMG compatibility mode | 05178e1 (merge 7e4323a) |
-| self-running-improvement | `claude/jolly-liskov-2d97a8` | the same request as main's self-run, built in parallel (`cardmodel/cycle`, store inventory and launch checks); asked to build on `cardmodel self` | nothing yet (uncommitted when main's self-run landed) |
+| self-running-improvement | `claude/jolly-liskov-2d97a8` | folded into `cardmodel self`: the `law_witnesses`, `observe_self`, `store` and `tests` steps (`engines/selfrun.py`, `engines/witness_runner.py`), step deadlines (`kernel/resources.deadline`), the store's end-to-end check (`arcade/client.py`, `arcade check`, CM42, G_A9, G_S1), fixes in translate, exprs, coverage and verify | nothing yet (merge request on the cardmodel project card) |
 | fix-flaky-arena-test-dec | `claude/sharp-goldwasser-8b0d81` | the arena's triangular decoy | d9e2ba3 (merge 05c54ea) |
 | fix-flaky-numeric-check | `claude/brave-montalcini-19f1b8` | float rounding in the redefinition witness | 60e72ca (merge cf775f2) |
 

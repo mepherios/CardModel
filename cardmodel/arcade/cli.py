@@ -7,7 +7,6 @@
   cardmodel arcade run GAME [--frames N --shot PNG --input SCRIPT --save-dir DIR]   the latest build, natively
   cardmodel arcade check [GAME] [--launcher] [--no-build]   every catalogue item launched through the store as
                                                 the launcher does it (install, verify, repair, play headless)
-  cardmodel arcade inventory [--write FILE]     everything that goes into the store, and what the model gives each
 
 Honest limits (L1): the launcher remembers a checkout's path (to start the service): after moving the
 repository, run `cardmodel arcade launcher --install` again. Installing from a linked git worktree points the
@@ -230,9 +229,6 @@ def cmd_arcade(args) -> int:
         say = (lambda m: print(f"[store] {m}", file=sys.stderr)) if not args.json else (lambda m: None)
         rep = client.check_catalog(ctx, frames=args.frames or 120, only=[args.target] if args.target else None,
                                    build=not args.no_build, progress=say)
-        if rep["status"] != "skipped" and not args.target:
-            from ..cycle import evidence      # the store goal (G_S1) reads the latest whole-catalogue check
-            evidence.note(ctx, store_items_failing=len(rep["failing"]))
         if args.launcher and rep["status"] != "skipped":
             import time
             t0 = time.perf_counter()
@@ -263,21 +259,13 @@ def cmd_arcade(args) -> int:
         head = f"store check: {rep['status']}" + (f" ({rep.get('reason')})" if rep.get("reason") else "")
         cli._out(args, rep, "\n".join([head, *lines]))
         return 0 if rep["status"] == "pass" else (2 if rep["status"] == "skipped" else 1)
-    if args.action == "inventory":
-        from . import inventory
-        inv = inventory.compute(ctx)
-        md = inventory.markdown(inv)
-        if args.write:
-            Path(args.write).write_text(md, encoding="utf-8")
-        cli._out(args, inv, md if not args.write else f"wrote {args.write}")
-        return 0
     del G
     return 2
 
 
 def register(sub) -> None:
     s = sub.add_parser("arcade", help="games built from cards: build them natively, serve them to the launcher")
-    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "check", "inventory"])
+    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "check"])
     s.add_argument("target", nargs="?")
     s.add_argument("--port", type=int, default=8770)
     s.add_argument("--install", action="store_true")
@@ -288,7 +276,6 @@ def register(sub) -> None:
     s.add_argument("--save-dir", help="run: the save folder (headless runs default to a temporary one)")
     s.add_argument("--launcher", action="store_true", help="check: also compile the launcher")
     s.add_argument("--no-build", action="store_true", help="check: fail instead of building when cards changed")
-    s.add_argument("--write", help="inventory: write the markdown to this file")
     s.set_defaults(fn=cmd_arcade)
 
 

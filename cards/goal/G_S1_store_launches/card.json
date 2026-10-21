@@ -7,7 +7,7 @@
   },
   "metric": "store_items_failing",
   "name": "G_S1_store_launches",
-  "statement": "Catalogue items that do not install, verify, repair and launch through the arcade's store in the last check (CM39).",
+  "statement": "Catalogue items that do not install, verify, repair and launch through the arcade's store in the self-run's latest store step (CM42).",
   "target": 0,
   "tier": 0
 }

@@ -185,8 +185,10 @@ CAPABILITIES = [
      ["cardmodel/machine/lift.py", "cardmodel/machine/shell.py", "cardmodel/machine/gb.py"],
      "Your Game Boy / Color games run through the model, natively."),
     ("arcade", "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, "
-     "serves and launches.", L("CM35_games_are_cards"),
-     ["tests/test_arcade.py::test_a_timed_guard_redirects"], ["docs/ARCADE.md", "docs/STORE.md"],
+     "serves and launches; every game the store lists installs, verifies, repairs and runs through the store's own "
+     "protocol (the self-run's store step).", L("CM35_games_are_cards", "CM42_the_store_runs_what_it_lists"),
+     ["tests/test_arcade.py::test_a_timed_guard_redirects",
+      "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store"], ["docs/ARCADE.md", "docs/STORE.md"],
      ["cardmodel arcade"], ["cardmodel/arcade"], "Games made from the model's cards ship through Cardmodel Arcade."),
     ("live_hub", "The store follows everything in progress: project cards say what to watch and keep their owner's "
      "detail current (CM41); the hub computes each one's phase, branches, uncommitted work, metrics and builds from "
@@ -230,7 +232,14 @@ STEPS = [
      "functional_identities"),
     ("arena", 80, 24, [], True, "a small arena run: soundness, recall and speed of the optimizer",
      "arena_unsound_runs, arena_recall, arena_geomean_speedup"),
+    ("law_witnesses", 45, 24, [], True, "every law card's witness test, in a child process with the cycle's seed "
+     "(CM20)", "law_witnesses_failing"),
+    ("observe_self", 55, 0, [], True, "the model observes its own code (cardmodel/): the named fraction of what it is "
+     "made of", "named_fraction"),
+    ("store", 85, 0, [], True, "every catalogue item launched through the store as the launcher does it: a checked "
+     "download, verify, a repair, a native run (CM42)", "store_items_failing"),
     ("optimize", 90, 168, [], True, "measure the op cards' forms on this host (metric cards)", "measured_forms"),
+    ("tests", 95, 168, [], True, "the whole unit suite, test by test, in a child process", "the suite"),
     ("goals", 100, 0, [], True, "every goal from the latest result of each verify section; trend", "all goals"),
 ]
 
@@ -270,6 +279,8 @@ GOALS = [
      "laws_uncarried", 0, "lower"),
     ("G_A7_self_run_fresh", "autonomy", "Hours since the last self-run cycle finished.", "self_run_age_hours", 24,
      "lower"),
+    ("G_A9_law_witnesses_pass", "autonomy", "Law cards whose witness test fails, errs or is missing in the self-run's "
+     "latest law_witnesses step (CM20, CM38).", "law_witnesses_failing", 0, "lower"),
 ]
 
 

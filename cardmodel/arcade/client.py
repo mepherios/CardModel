@@ -1,5 +1,5 @@
 """client — the launcher's side of the arcade service in Python: what Cardmodel Arcade.app does, step for step, so
-the store can be checked end to end wherever the toolchains are (law CM39).
+the store can be checked end to end wherever the toolchains are (law CM42; the self-run's `store` step).
 
     install(base, gid, library)   ask the service to build when the cards changed (POST /api/build/ID, then poll
                                   its progress), fetch the manifest, download every chunk that is not already

@@ -16,17 +16,14 @@ CLAIMING = ["engines/frontend_python.py", "engines/conformance.py", "engines/tra
             "machine/isa.py", "machine/build.py", "machine/native.py", "machine/bench.py", "machine/gb.py",
             "machine/survey.py", "machine/asm.py", "machine/lift.py", "machine/shell.py", "machine/diff.py",
             "machine/testroms.py", "machine/nds.py", "machine/lift_arm.py", "arcade/gen.py", "arcade/game.py",
-            "arcade/build.py", "arcade/server.py", "arcade/cli.py", "arcade/client.py", "arcade/inventory.py",
-            "cycle/ledger.py", "cycle/stages.py", "cycle/report.py", "cycle/run.py", "cycle/hook.py",
-            "cycle/evidence.py", "cycle/witness_runner.py"]
+            "arcade/build.py", "arcade/server.py", "arcade/cli.py", "arcade/client.py", "engines/witness_runner.py"]
 NO_LANGUAGE_BRANCHES = ["engines/codegen.py", "engines/runners.py", "engines/conformance.py", "engines/translate.py",
                         "engines/witness.py", "engines/verify.py", "engines/optimize.py", "machine/native.py",
                         "machine/build.py", "machine/isa.py", "machine/bench.py", "machine/gb.py", "machine/survey.py",
                         "machine/asm.py", "machine/lift.py", "machine/shell.py", "machine/diff.py",
                         "machine/testroms.py", "machine/nds.py", "machine/lift_arm.py", "arcade/gen.py",
                         "arcade/game.py", "arcade/build.py", "arcade/server.py", "arcade/cli.py", "arcade/client.py",
-                        "arcade/inventory.py", "cycle/ledger.py", "cycle/stages.py", "cycle/report.py", "cycle/run.py",
-                        "cycle/hook.py", "cycle/evidence.py", "cycle/cli.py"]
+                        "engines/witness_runner.py"]
 
 
 class Laws(unittest.TestCase):

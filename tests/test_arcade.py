@@ -143,7 +143,7 @@ class Depot(unittest.TestCase):
             httpd.server_close()
 
     def test_every_catalogue_item_launches_from_the_store(self):
-        """CM39: every game the catalogue lists, through the service exactly as the launcher does it: installed
+        """CM42: every game the catalogue lists, through the service exactly as the launcher does it: installed
         with every chunk and file checked, verified, damaged and repaired (only the damaged file is fetched again),
         played natively headless with its own save folder, drawing a frame that is not one flat colour; the
         launcher's pages are served and name only endpoints the service has."""
@@ -170,15 +170,6 @@ class Depot(unittest.TestCase):
 
 
 class Store(unittest.TestCase):
-    def test_inventory_is_in_sync(self):
-        from cardmodel.arcade import inventory
-        from helpers import ROOT
-        ctx = model_ctx()
-        self.assertEqual((ROOT / "docs" / "ARCADE_INVENTORY.md").read_text(encoding="utf-8"),
-                         inventory.markdown(inventory.compute(ctx)),
-                         "docs/ARCADE_INVENTORY.md drifted: "
-                         "cardmodel arcade inventory --write docs/ARCADE_INVENTORY.md")
-
     def test_a_headless_run_never_writes_the_players_save(self):
         import argparse
         import tempfile

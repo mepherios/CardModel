@@ -1,6 +1,0 @@
-{
-  "defined_by": "cardmodel",
-  "description": "How the model runs itself as one unit: the cycle's profiles (which stages, which verify sections, the time budget), what the learning loop reads, how much optimisation each profile does, and when using the model starts a cycle by itself (cardmodel cycle, docs/CYCLE.md).",
-  "name": "cycle",
-  "tier": 0
-}

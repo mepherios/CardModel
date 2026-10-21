@@ -1,11 +1,12 @@
 """witness_runner — run test ids (or the whole suite) and report every test's outcome as one JSON line.
 
-    python3 -B -m cardmodel.cycle.witness_runner [--discover] [ID ...]      (run from the tests folder)
+    python3 -B -m cardmodel.engines.witness_runner [--discover] [ID ...]      (run from the tests folder)
 
-The cycle runs it in a child process (through the resource governor) for two stages: ``laws`` passes the witness
-test of every law card, ``tests`` discovers the whole suite. The last line of stdout is ``MARK`` followed by
-{test id: {"status": pass|fail|error|skip, "seconds", "detail"}}; a failure in setUpClass is reported under the
-class's id ("setUpClass (module.Class)") so the caller can charge it to every test of that class.
+The self-run runs it in a child process (through the resource governor) for two steps: ``law_witnesses`` passes
+the witness test of every law card, ``tests`` discovers the whole suite. The last line of stdout is ``MARK`` and
+{"tests": {test id: {"status": pass|fail|error|skip, "seconds", "detail"}}, "ran", "seconds"}; a failure in
+setUpClass is reported under the class's id ("setUpClass (module.Class)") so the caller can charge it to every test
+of that class.
 
 Honest limits (L1): a test that kills the interpreter (a segfault, os._exit) loses every outcome after it, and
 the caller sees those ids as not reported.
