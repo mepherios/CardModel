@@ -1,0 +1,17 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM39_one_program",
+  "origins": [
+    "user requirement 2026-10-21 (one software, one working module; document all work so nothing interferes)"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Parallel work lands as one program: law numbers and goal ids are unique and allocated in docs/INTEGRATION.md, every law is carried by a capability, every command is in the CLI help, every verify section and doc is described, generated docs are in sync and no merge markers remain; a branch is merged into main only when the tests, verify and this integrity check pass, and every integration is logged.",
+  "tier": 0,
+  "witness": "tests/test_self.py::test_one_program_integrity"
+}

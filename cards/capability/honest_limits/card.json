@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "honest_limits",
+  "commands": [
+    "cardmodel probe"
+  ],
+  "core": true,
+  "docs": [
+    "docs/METHODOLOGY.md"
+  ],
+  "laws": [
+    "law/CM01_honest_limits",
+    "law/CM07_no_vacuous_success",
+    "law/CM12_capabilities_are_probed"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/probes.py"
+  ],
+  "name": "honest_limits",
+  "order": 2,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Honest limits: what cannot run here is reported with its reason, a check with nothing to check is vacuous (never a pass), and every engine that claims something states its limits.",
+  "tests": [
+    "tests/test_laws.py::test_engines_state_honest_limits",
+    "tests/test_probes.py::test_unavailable_is_reported"
+  ],
+  "tier": 0,
+  "usefulness": "A pass can be trusted: the model never reports a success it did not check."
+}

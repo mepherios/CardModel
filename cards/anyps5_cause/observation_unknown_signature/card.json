@@ -1,0 +1,25 @@
+{
+  "category": "anyps5_cause",
+  "class": "observation",
+  "closes_with": "a title's call site or a header that states the signature, then an observation of the behaviour",
+  "cues": [
+    "\\bsignatures?\\b",
+    "\\bdeclared without parameters\\b",
+    "\\bwithout an implementation\\b",
+    "\\bparameters? (is|are) (unknown|assumed)\\b",
+    "\\bresult layout\\b",
+    "\\bstruct(ure)? layout\\b",
+    "\\blayout (is|was) (unknown|not known)\\b"
+  ],
+  "debt_priority": 4,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observation_unknown_signature",
+  "priority": 30,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "The parameters or result layout are unknown or assumed: a title's call site (or headers) would fix them."
+}

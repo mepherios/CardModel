@@ -4,7 +4,9 @@ Facts (one per card property): card(Q), registry(R), external_registry(R), in_re
 depends_on(Q, D) (bare names resolved like the kernel's closure), status(Q, S),
 learned(Q), law(L), law_witness(L, T), goal(G), goal_metric(G, M), theorem_status(T, S), has_proof(T),
 has_evidence(T), op_ir(O), op_eval(O), special_op(O), rewrite_rule(R), rule_vars(R), logic_rule(Q),
-language(L), codegen(L). Card names are qualified (``category/name``) so every fact is unambiguous.
+language(L), codegen(L), capability(C), core_capability(C), capability_check(C, K), capability_test(C, T),
+carries(C, L), self_step(S), step_runs(S, F). Card names are qualified (``category/name``) so every fact is
+unambiguous.
 
 Honest limits (L1): these facts cover the fields above, not every field of every card; the theory checks
 what its rules say and nothing else (the kernel's schema validation is still the authority on shapes).
@@ -70,6 +72,20 @@ def store_facts(store) -> L.Program:
         add("language", [c.qualified])
         if c.get("codegen") is not None:
             add("codegen", [c.qualified])
+    for c in store.cards("capability"):
+        add("capability", [c.qualified])
+        if c.get("core"):
+            add("core_capability", [c.qualified])
+        if c.get("check"):
+            add("capability_check", [c.qualified, c["check"]])
+        for t in c.get("tests") or []:
+            add("capability_test", [c.qualified, t])
+        for law in c.get("laws") or []:
+            add("carries", [c.qualified, law])
+    for c in store.cards("self_step"):
+        add("self_step", [c.qualified])
+        if c.get("run"):
+            add("step_runs", [c.qualified, c["run"]])
     return prog
 
 

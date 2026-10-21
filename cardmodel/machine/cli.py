@@ -1,12 +1,13 @@
 """cli — the machine commands.
 
   cardmodel emu ROM [--engine lifted|native|host|ir] [--model auto|dmg|cgb] [--port N] [--no-browser]
+                    (--model cgb runs a DMG cartridge in the CGB's DMG compatibility mode)
                     [--save-dir DIR] [--no-save] [--rate HZ] [--relift]
                     [--headless --frames N --input SCRIPT --png F --wav F]
   cardmodel isa build|check|list [ISA] [--samples N] [--seed S] [--engines ir,host,native]
-  cardmodel machine survey DIR [--frames N] [--engine E] [--limit N] [--shots DIR]
+  cardmodel machine survey DIR [--frames N] [--engine E] [--limit N] [--shots DIR] [--model auto|dmg|cgb]
   cardmodel machine lift ROM [--relift]         lift + compile a ROM's code, print the report
-  cardmodel machine diff ROM [--frames N]       lifted vs interpreter, frame by frame (state hashes)
+  cardmodel machine diff ROM [--frames N] [--model M]   lifted vs interpreter, frame by frame (state hashes)
   cardmodel machine info ROM                    the cartridge header, decoded with the cartridge card
   cardmodel machine testroms DIR                run test ROMs, read their verdicts (serial / screen / registers)
   cardmodel machine nds ROM [--frames N] [--lift]   the DS prototype: direct boot, both CPUs, measured coverage;
@@ -57,8 +58,10 @@ def cmd_emu(args) -> int:
             Path(args.wav).write_bytes(G.wav(r["pcm"], sess.gb.sample_rate))
         out = sess.close()
         data = {k: v for k, v in r.items() if k not in ("frame", "pcm")}
-        data.update({"title": info["title"], "engine": sess.gb.engine, "cgb": bool(sess.gb.cgb), **out})
-        _out(args, data, f"{info['title']} [{sess.gb.engine}{', CGB' if sess.gb.cgb else ''}]: {r['frames']} frames in "
+        data.update({"title": info["title"], "engine": sess.gb.engine, "cgb": bool(sess.gb.cgb),
+                     "model": sess.gb.model, **out})
+        shown = {"dmg": "", "cgb": ", CGB", "cgb-compat": ", CGB in DMG compatibility mode"}[sess.gb.model]
+        _out(args, data, f"{info['title']} [{sess.gb.engine}{shown}]: {r['frames']} frames in "
                          f"{r['seconds']} s ({r['speed']}x real time); frame sha1 {r['frame_sha1'][:16]}"
                          + (f"; serial {r['serial']!r}" if r["serial"] else "")
                          + ("; CPU LOCKED" if r["locked"] else ""))
@@ -112,9 +115,9 @@ def cmd_machine(args) -> int:
                 print(f"[{k}/{n}] {row['status']:<7} {row['file'][:70]}", file=sys.stderr)
 
         r = survey.run(ctx, args.target, frames=args.frames, engine=args.engine, limit=args.limit, shots_dir=shots,
-                       progress=prog)
-        ctx.save_state("emu_survey", {k: v for k, v in r.items()})
-        lines = [f"{r['folder_files']} ROMs, {r['frames']} frames each, engine {r['engine']}: {r['counts']} "
+                       progress=prog, model=args.model)
+        ctx.save_state("emu_survey" if args.model == "auto" else f"emu_survey_{args.model}", {k: v for k, v in r.items()})
+        lines = [f"{r['folder_files']} ROMs, {r['frames']} frames each, engine {r['engine']}, model {r['model']}: {r['counts']} "
                  f"(runs {r['runs_fraction']:.1%}); unsupported mappers {r['unsupported_mappers']}"]
         for row in r["rows"]:
             if row["status"] != "runs":
@@ -131,13 +134,14 @@ def cmd_machine(args) -> int:
     if args.action == "diff":
         from . import diff
         rom, name = G.open_rom(args.target)
-        r = diff.differential(ctx, rom, frames=args.frames)
+        r = diff.differential(ctx, rom, frames=args.frames, model=args.model)
         import hashlib
         diffs = ctx.load_state("emu_diffs") or {}
-        diffs[hashlib.sha1(rom).hexdigest()[:16]] = {k: r[k] for k in ("verdict", "frames_compared",
-                                                                       "first_difference", "speedup", "blocks")}
+        key = hashlib.sha1(rom).hexdigest()[:16] + ("" if args.model == "auto" else f"-{args.model}")
+        diffs[key] = {k: r[k] for k in ("verdict", "frames_compared", "first_difference", "speedup", "blocks",
+                                        "model")}
         ctx.save_state("emu_diffs", diffs)
-        _out(args, r, f"{name}: {r['verdict']} over {r['frames_compared']} frames"
+        _out(args, r, f"{name} ({r['model']}): {r['verdict']} over {r['frames_compared']} frames"
                       + (f" (first difference at frame {r['first_difference']})" if r.get("first_difference") is not None
                          else "") + f"; interpreter {r['interp_s']} s, lifted {r['lifted_s']} s "
                                     f"({r['speedup']}x); {r['blocks']} blocks")
@@ -180,7 +184,7 @@ def cmd_machine(args) -> int:
                  f"hardware or not self-checking)"]
         lines += [f"  {k}: {v['passed']}/{v['total']}" for k, v in r["suites"].items()]
         for row in sorted(r["rows"], key=lambda x: (x["verdict"] == "pass", x["verdict"] == "skipped")):
-            lines.append(f"  {row['verdict']:<8} {row.get('model', '-'):<4} {row['file']}  "
+            lines.append(f"  {row['verdict']:<8} {row.get('model', '-'):<10} {row['file']}  "
                          f"{row.get('detail', '')[:110]}")
         ctx.save_state("emu_testroms", r)
         _out(args, r, "\n".join(lines))
@@ -209,6 +213,8 @@ def register(sub) -> None:
     s.add_argument("--frames", type=int, default=1200); s.add_argument("--engine", default="native")
     s.add_argument("--limit", type=int); s.add_argument("--shots"); s.add_argument("--relift", action="store_true")
     s.add_argument("--lift", action="store_true", help="nds: also lift the ARM9's code and run a differential")
+    s.add_argument("--model", default="auto", choices=["auto", "dmg", "cgb"],
+                   help="survey/diff: the console (cgb runs DMG cartridges in DMG compatibility mode)")
     s.set_defaults(fn=cmd_machine)
 
 

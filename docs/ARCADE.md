@@ -102,7 +102,7 @@ menu), Downloads (rate graph, progress, pause, cancel), News, a profile, and set
   their reaction time, and only readable tells (startup of at least the payoff card's reaction frames). The
   reader counts what you lean on and says so on screen.
 
-## 5. Consoles: your own cartridges (law CM36)
+## 5. Consoles: your own cartridges (law CM40)
 
 A **system card** makes a console a player the launcher installs like a game. `system/gameboy` names the gameboy
 machine card (the LR35902 instruction cards and the hardware cards, checked by the hardware test suites, see

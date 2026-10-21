@@ -1,0 +1,176 @@
+{
+  "category": "anyps5_semantics",
+  "checks": [
+    {
+      "args": [
+        [
+          4292870144,
+          4294967295
+        ],
+        [
+          0,
+          4
+        ]
+      ],
+      "call": "Mp3Decoder({0}, {1})",
+      "edges": [
+        [
+          4294676580,
+          0
+        ],
+        [
+          4293103616,
+          4
+        ],
+        [
+          4294152192,
+          3
+        ]
+      ],
+      "export": null,
+      "fn": "mp3_field",
+      "note": "internal decoder path ParseMp3Frame",
+      "samples": 1500,
+      "where": "decoder_scope"
+    },
+    {
+      "args": [
+        [
+          4292870144,
+          4294967295
+        ],
+        [
+          0,
+          4
+        ]
+      ],
+      "call": "Mp3Export({0}, {1})",
+      "edges": [
+        [
+          4294676580,
+          0
+        ],
+        [
+          4294677092,
+          0
+        ],
+        [
+          4294676676,
+          1
+        ]
+      ],
+      "export": "libSceAjm.native.sceAjmDecMp3ParseFrame",
+      "fn": "mp3_field",
+      "samples": 1500,
+      "where": "export_follows_standard"
+    },
+    {
+      "args": [
+        [
+          4292870144,
+          4294967295
+        ],
+        [
+          0,
+          4
+        ]
+      ],
+      "call": "Mp3Export({0}, {1})",
+      "edges": [
+        [
+          4293103616,
+          4
+        ],
+        [
+          4294807652,
+          0
+        ],
+        [
+          4294938724,
+          0
+        ]
+      ],
+      "expect": "differs",
+      "export": "libSceAjm.native.sceAjmDecMp3ParseFrame",
+      "fn": "mp3_field",
+      "note": "debt libSceAjm.native.L10: the layer field is not checked and MPEG-2.5 stops at 64 kbit/s (shadPS4, unconfirmed on a PS5); the standard and AnyPS5's own decoder path disagree with it",
+      "samples": 1500,
+      "where": "export_documented_deviation"
+    }
+  ],
+  "closes": [],
+  "closes_debt": [],
+  "covers": [
+    "libSceAjm.native.sceAjmDecMp3ParseFrame"
+  ],
+  "derives": [
+    {
+      "export": "libSceAjm.native.sceAjmDecMp3ParseFrame",
+      "remaining": "the original-file-length paths it lacks (Xing/LAME, VBRI and Fraunhofer layouts, from shadPS4) and which reading of the header the console follows where the export and the standard differ (observation; debt libSceAjm.native.L10, L25)",
+      "remaining_cause": "observation_unmeasured",
+      "what": "the MPEG audio frame header for every version and layer (ISO/IEC 11172-3, 13818-3, MPEG-2.5): frame size, channels, samples, rate, bitrate (mp3_field)"
+    }
+  ],
+  "harness": {
+    "before_file": "before.hpp",
+    "extract": [
+      {
+        "file": "core/libs/prx/libSceAjm.native/src/Ajm.cpp",
+        "start": "^constexpr int SCE_AJM_ERROR_INVALID_PARAMETER\\b",
+        "until": "line"
+      },
+      {
+        "file": "core/libs/prx/libSceAjm.native/src/Ajm.cpp",
+        "start": "^constexpr std::uint32_t MP3_OFL_NONE\\b",
+        "until": "line"
+      },
+      {
+        "file": "core/libs/prx/libSceAjm.native/src/Ajm.cpp",
+        "start": "^struct Mp3Frame \\{",
+        "until": "braces;"
+      },
+      {
+        "file": "core/libs/prx/libSceAjm.native/src/Ajm.cpp",
+        "start": "^bool ParseMp3Frame\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceAjm.native/src/Ajm.cpp",
+        "start": "^int ParseMp3Header\\([^;]*\\{",
+        "until": "braces"
+      }
+    ],
+    "include_dirs": [
+      "core/libs"
+    ],
+    "language": "cpp",
+    "link": {
+      "darwin": [
+        "-Wl,-undefined,dynamic_lookup"
+      ],
+      "linux": [
+        "-Wl,--unresolved-symbols=ignore-all"
+      ]
+    },
+    "prelude_file": "harness.hpp"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "mp3_frame_header",
+  "observed": [
+    {
+      "debt": "libSceAjm.native.L10",
+      "what": "the export treats every layer as layer III and accepts MPEG-2.5 only up to 64 kbit/s, from shadPS4 and unconfirmed on a PS5"
+    }
+  ],
+  "program": "stdlib/ps5_mp3.card",
+  "provenance": {
+    "by": "the AnyPS5 session (hand-written binding)",
+    "origin": "cardmodel",
+    "written": "2026-10-21"
+  },
+  "source": "core/libs/prx/libSceAjm.native/src/Ajm.cpp",
+  "standard": "ISO/IEC 11172-3 2.4.2.3, ISO/IEC 13818-3, and the MPEG-2.5 extension",
+  "statement": "The MPEG audio frame header as both of AnyPS5's readers parse it: ParseMp3Frame (the decoder path) and ParseMp3Header (the export sceAjmDecMp3ParseFrame)."
+}

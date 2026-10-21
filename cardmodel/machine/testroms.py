@@ -13,13 +13,14 @@ Freely licensed test suites report results in ways a headless machine can read:
 Which model runs a test: mooneye names the hardware after the last ``-`` of the file name (revisions such as
 ``dmgABC``, ``cgb0``, groups such as ``G`` = DMG + MGB, or several joined: ``dmgABCmgb``, ``GS``). A test runs on
 the model whose revision (the machine card's ``revisions``) it names; one for other hardware is ``skipped``
-with the reason, not counted. Without a suffix the cartridge header decides.
+with the reason, not counted. Without a suffix the cartridge header decides. A DMG cartridge for a CGB runs in
+the CGB's DMG compatibility mode (mooneye's misc ``-C`` / ``-cgb`` tests). A screen test whose suite has a
+picture for each model (dmg-acid2: ``reference-dmg.png``, ``reference-cgb.png``) runs on both.
 
 ``run(ctx, folder)`` finds every .gb/.gbc below the folder and runs it until it reports (or a time limit),
 recording pass / fail / timeout / skipped with the detail. The ROMs are read where they are; nothing is copied.
 
-Honest limits (L1): a timeout is a failure to report, not a pass; a DMG test meant for a CGB in its
-DMG-compatibility mode is skipped (that mode is not modelled).
+Honest limits (L1): a timeout is a failure to report, not a pass.
 """
 from __future__ import annotations
 
@@ -71,14 +72,22 @@ def model_for(ctx, path: Path, info: dict) -> tuple[str | None, str]:
     if revs is not None:
         for model, rev in (ctx.store.get("machine/gameboy").get("revisions") or {}).items():
             if rev in revs:
-                if model == "cgb" and not info["cgb"]:
-                    return None, "for a CGB in DMG-compatibility mode (not modelled)"
                 return model, ""
         return None, "for other hardware: " + ", ".join(sorted(revs))
     for folder, model in FOLDER_MODEL.items():
         if folder in path.parts:
             return model, ""
     return "auto", ""
+
+
+def screen_models(path: Path, info: dict) -> list:
+    """The models a screen test runs on: its own (none when it has no reference picture), and the CGB too when a
+    DMG cartridge's suite also has the picture a CGB draws in DMG compatibility mode."""
+    if reference_image(path, info["cgb"]) is None:
+        return []
+    if not info["cgb"] and reference_image(path, True) is not None:
+        return ["dmg", "cgb"]
+    return ["auto"]
 
 
 def reference_image(path: Path, cgb: bool) -> Path | None:
@@ -132,20 +141,21 @@ def screen_verdict(ctx, g, ref: Path, shots: Path | None) -> tuple[str, str]:
         return "pass", f"screen identical to {ref.name}"
     if shots is not None:
         shots.mkdir(parents=True, exist_ok=True)
-        (shots / f"{ref.parent.parent.name}-{'cgb' if g.cgb else 'dmg'}.png").write_bytes(G.png(g.frame()))
+        (shots / f"{ref.parent.parent.name}-{g.model}.png").write_bytes(G.png(g.frame()))
     rows = sorted({p // 160 for p in bad})
     return "fail", (f"{len(bad)} of {w * h} pixels differ from {ref.name} (rows {rows[0]}-{rows[-1]}, "
                     f"first at x={bad[0] % 160} y={bad[0] // 160})")
 
 
 def run_one(ctx, path: Path, engine: str = "native", max_frames: int = 7200, root: Path | None = None,
-            shots: Path | None = None) -> dict:
+            shots: Path | None = None, model: str | None = None) -> dict:
     rom, _ = G.open_rom(path)
     name = str(path.relative_to(root)) if root else path.name
     info = G.header(rom, ctx.store)
-    model, why = model_for(ctx, path.relative_to(root) if root else Path(path.name), info)
     if model is None:
-        return {"file": name, "verdict": "skipped", "detail": why, "frames": 0}
+        model, why = model_for(ctx, path.relative_to(root) if root else Path(path.name), info)
+        if model is None:
+            return {"file": name, "verdict": "skipped", "detail": why, "frames": 0}
     g = G.GameBoy(ctx, rom, engine, model=model, sample_rate=0, fresh=True)
     ref = reference_image(path, bool(g.cgb))
     if ref is not None:
@@ -167,7 +177,7 @@ def run_one(ctx, path: Path, engine: str = "native", max_frames: int = 7200, roo
 
 
 def _model(g) -> str:
-    return "cgb" if g.cgb else "dmg"
+    return g.model
 
 
 def run(ctx, folder, engine: str = "native", max_frames: int = 7200) -> dict:
@@ -176,7 +186,10 @@ def run(ctx, folder, engine: str = "native", max_frames: int = 7200) -> dict:
     rows = []
     for p in sorted(root.rglob("*")):
         if p.is_file() and p.suffix.lower() in (".gb", ".gbc"):
-            rows.append(run_one(ctx, p, engine, max_frames, root=root, shots=shots))
+            info = G.header(G.open_rom(p)[0], ctx.store)
+            models = screen_models(p, info) if model_for(ctx, p.relative_to(root), info)[0] == "auto" else []
+            for model in models or [None]:
+                rows.append(run_one(ctx, p, engine, max_frames, root=root, shots=shots, model=model))
     ran = [r for r in rows if r["verdict"] != "skipped"]
     suites: dict = {}
     for r in ran:
@@ -188,4 +201,5 @@ def run(ctx, folder, engine: str = "native", max_frames: int = 7200) -> dict:
             "suites": {k: {"passed": v[0], "total": v[1]} for k, v in sorted(suites.items())}, "rows": rows}
 
 
-__all__ = ["model_for", "reference_image", "revisions_named", "run", "run_one", "screen_verdict", "verdict"]
+__all__ = ["model_for", "reference_image", "revisions_named", "run", "run_one", "screen_models", "screen_verdict",
+           "verdict"]

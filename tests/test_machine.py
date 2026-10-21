@@ -221,6 +221,105 @@ class GameBoy(unittest.TestCase):
         g.run_frame()
         self.assertEqual(list(g.m.read("hram", 0, 2)), [0x00, 0x5A], "bank 0 and bank 1 differ: a Color")
 
+    def test_cgb_raises_line_144s_mode2_source_a_cycle_before_vblank(self):
+        """Line 144 raises the mode 2 STAT source: with V-blank on the DMG, one M-cycle (4 dots) before it on the
+        CGB in either mode (mooneye vblank_stat_intr-GS and vblank_stat_intr-C are the hardware witnesses)."""
+        m = native.IRMachine(self.ctx, Bd.module(self.ctx, "gameboy"))
+        start = 100 * 456
+
+        def requests(cgb, cgb_mode):
+            for k, v in {"lcdc": 0x91, "ly": 143, "mode": 3, "first_line": 0, "line_start": start,
+                         "ppu_next": start + 80 + 172, "stat_sel": 0x20, "stat_line": 0, "if_reg": 0, "cgb": cgb,
+                         "cgb_mode": cgb_mode, "hdma_on": 0}.items():
+                m.set(k, v)
+            seen = []
+            for t in (451, 452, 455, 456):
+                m.set("now", start + t)
+                m.call("ppu_sync")
+                seen.append(m.get("if_reg") & 3)
+            return seen
+
+        self.assertEqual(requests(0, 0), [0, 0, 0, 3], "DMG: STAT (mode 2) and V-blank at the line's start")
+        self.assertEqual(requests(1, 1), [0, 2, 2, 3], "CGB mode: STAT 4 dots early")
+        self.assertEqual(requests(1, 0), [0, 2, 2, 3], "DMG compatibility mode: the same CGB PPU")
+
+    def test_dmg_cartridge_on_the_cgb_runs_in_compatibility_mode(self):
+        """A DMG cartridge on the CGB model runs as the CGB's boot ROM leaves it: KEY0 = 0x04 (DMG compatibility
+        mode), OPRI = 1, the CPU registers mooneye boot_regs-cgb measures, the default compatibility palette from
+        the gb_cgb card in BG 0 and OBJ 0/1, and the picture drawn through it. A CGB cartridge keeps CGB mode."""
+        rom = graphics_rom(self.ctx)
+        g = gb.GameBoy(self.ctx, rom, "native", model="cgb", sample_rate=0, fresh=True)
+        self.assertEqual(g.model, "cgb-compat")
+        regs = {r: g.m.get(r) for r in ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC")}
+        self.assertEqual(regs, {"A": 0x11, "F": 0x80, "B": 0, "C": 0, "D": 0, "E": 0x08, "H": 0, "L": 0x7C,
+                                "SP": 0xFFFE, "PC": 0x100})
+        self.assertEqual((g.m.get("key0"), g.m.get("opri"), g.m.get("cgb_mode")), (0x04, 1, 0))
+        pal = self.ctx.store.get("hardware/gb_cgb").get("dmg_compat")["palettes"]
+
+        def words(cs):
+            return b"".join(bytes((c & 0xFF, c >> 8)) for c in cs)
+
+        def rgb(c):
+            return bytes((v << 3) | (v >> 2) for v in (c & 31, (c >> 5) & 31, (c >> 10) & 31))
+
+        self.assertEqual(bytes(g.m.read("bgpal", 0, 8)), words(pal["bg"]))
+        self.assertEqual(bytes(g.m.read("obpal", 0, 16)), words(pal["obj0"] + pal["obj1"]))
+        for _ in range(4):
+            g.run_frame()
+        f = g.frame()
+        colours = {f[i:i + 3] for i in range(0, len(f), 3)}
+        self.assertLessEqual(colours, {rgb(c) for c in pal["bg"] + pal["obj0"]})
+        self.assertGreater(len(colours), 2)
+        host = gb.GameBoy(self.ctx, rom, "host", model="cgb", sample_rate=0)
+        for _ in range(4):
+            host.run_frame()
+        self.assertEqual(host.state_hash(), g.state_hash(), "the same machine in Python and in C")
+        cart = asm.rom(self.ctx.store, [("label", "x"), ("JR e", "x")], title="CGBCART", cgb=0x80)
+        h = gb.GameBoy(self.ctx, cart, "native", model="cgb", sample_rate=0, fresh=True)
+        self.assertEqual((h.model, h.m.get("key0"), h.m.get("cgb_mode"), h.m.get("D")), ("cgb", 0x80, 1, 0xFF))
+
+    def test_compatibility_mode_registers_follow_their_cards(self):
+        """In DMG compatibility mode every register a card gives a ``post_boot_dmg_compat`` value reads it after
+        the boot; a ``locked`` one reads 0xFF and ignores writes, a ``read-only`` one keeps its value. The card
+        data and the logic agree (mooneye boot_hwio-C and unused_hwio-C are the hardware witnesses)."""
+        regs = [r for name in ("gb_joypad", "gb_serial", "gb_cgb", "gb_dma")
+                for r in self.ctx.store.get(f"hardware/{name}").get("registers") if "post_boot_dmg_compat" in r]
+        self.assertGreaterEqual(len(regs), 20)
+        prog = [("LD SP,nn", 0xFFFE), ("LD HL,nn", 0xC000)]
+        want = []
+        for r in regs:
+            a = r["address"] & 0xFF
+            prog += [("LDH A,(n)", a), ("LD (HL+),A",)]
+            want.append((r["name"], r["post_boot_dmg_compat"]))
+            if r.get("dmg_compat"):
+                for v in (0x00, 0xFF):
+                    prog += [("LD A,n", v), ("LDH (n),A", a), ("LDH A,(n)", a), ("LD (HL+),A",)]
+                    want.append((r["name"] + f" after writing {v:#04x}",
+                                 0xFF if r["dmg_compat"] == "locked" else r["post_boot_dmg_compat"]))
+        prog += [("label", "end"), ("HALT",), ("JR e", "end")]
+        g = gb.GameBoy(self.ctx, asm.rom(self.ctx.store, prog, title="COMPATREGS"), "native", model="cgb",
+                       sample_rate=0, fresh=True)
+        g.run_frame()
+        got = list(g.m.read("wram", 0, len(want)))
+        self.assertEqual([(n, v) for (n, _), v in zip(want, got)], want)
+
+    def test_title_checksum_sets_b_and_hl(self):
+        """In DMG compatibility mode B is the boot ROM's title checksum (Nintendo-licensed cartridges only, old
+        licensee 0x01 or 0x33 with "01") and HL is 0x991A when it is 0x43 or 0x58, else 0x007C (Pan Docs)."""
+        def regs(title, old, new=b"\0\0"):
+            img = bytearray(asm.rom(self.ctx.store, [("label", "x"), ("JR e", "x")]))
+            img[0x134:0x144] = title.ljust(16, b"\0")
+            img[0x144:0x146] = new
+            img[0x14B] = old
+            g = gb.GameBoy(self.ctx, bytes(img), "native", model="cgb", sample_rate=0, fresh=True)
+            return g.m.get("B"), (g.m.get("H") << 8) | g.m.get("L")
+
+        self.assertEqual(regs(b"\x43", 0x01), (0x43, 0x991A))
+        self.assertEqual(regs(b"\x50\x08", 0x33, b"01"), (0x58, 0x991A))
+        self.assertEqual(regs(b"TETRIS", 0x01), (sum(b"TETRIS") & 0xFF, 0x007C))
+        self.assertEqual(regs(b"TETRIS", 0x00), (0, 0x007C))
+        self.assertEqual(regs(b"TETRIS", 0x33, b"52"), (0, 0x007C))
+
     def test_mbc1_and_mbc5_banking(self):
         r1 = mbc_rom(self.ctx, 0x01, 2, [(1, [(0x2000, 1)]), (2, [(0x2000, 2)]), (3, [(0x2000, 3)]),
                                          (0, [(0x2000, 0)])])
@@ -310,8 +409,8 @@ class TestROMs(unittest.TestCase):
         self.assertEqual(T.model_for(self.ctx, Path("a/ei_sequence.gb"), dmg_cart), ("auto", ""))
         self.assertEqual(T.model_for(self.ctx, Path("b/oam_bug/1-lcd_sync.gb"), cgb_cart), ("dmg", ""))
         self.assertIsNone(T.model_for(self.ctx, Path("a/boot_regs-sgb2.gb"), dmg_cart)[0])
-        self.assertIsNone(T.model_for(self.ctx, Path("a/boot_regs-cgb.gb"), dmg_cart)[0],
-                          "a DMG cartridge on a CGB needs the compatibility mode")
+        self.assertEqual(T.model_for(self.ctx, Path("a/boot_regs-cgb.gb"), dmg_cart), ("cgb", ""),
+                         "a DMG cartridge for a CGB runs in its DMG compatibility mode")
         self.assertIsNone(T.model_for(self.ctx, Path("m/utils/dump_boot_hwio.gb"), dmg_cart)[0])
 
     def test_png_reader_undoes_every_filter(self):
@@ -347,6 +446,38 @@ class TestROMs(unittest.TestCase):
         self.assertEqual(r["verdict"], "fail")
         self.assertIn("1 of 23040 pixels differ", r["detail"])
         self.assertIn("x=7 y=5", r["detail"])
+
+
+class ScreenModels(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_dmg_screen_test_runs_on_both_models(self):
+        """A DMG screen test whose suite also has the CGB's picture (dmg-acid2) runs on the DMG and on the CGB in
+        DMG compatibility mode, each against its own reference."""
+        import tempfile
+        from pathlib import Path
+        from cardmodel.machine import testroms as T
+        rom = graphics_rom(self.ctx)
+        frames = {}
+        for model in ("dmg", "cgb"):
+            g = gb.GameBoy(self.ctx, rom, "native", model=model, sample_rate=0, fresh=True)
+            for _ in range(T.SCREEN_FRAMES):
+                g.run_frame()
+            frames[model] = g.frame()
+        shades = {bytes(c): i for i, c in enumerate(self.ctx.store.get("hardware/gb_ppu").get("dmg_shades_rgb"))}
+        f = frames["dmg"]
+        greys = b"".join(bytes((T.DMG_GREYS[shades[f[i:i + 3]]],) * 3) for i in range(0, len(f), 3))
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_screens_"))
+        (d / "img").mkdir()
+        (d / "screen-test.gb").write_bytes(rom)
+        (d / "img" / "reference-dmg.png").write_bytes(gb.png(greys))
+        (d / "img" / "reference-cgb.png").write_bytes(gb.png(frames["cgb"]))
+        self.assertEqual(T.screen_models(d / "screen-test.gb", gb.header(rom, self.ctx.store)), ["dmg", "cgb"])
+        r = T.run(self.ctx, d)
+        self.assertEqual([(row["model"], row["verdict"]) for row in r["rows"]],
+                         [("dmg", "pass"), ("cgb-compat", "pass")], r["rows"])
 
 
 def busy_rom(ctx):

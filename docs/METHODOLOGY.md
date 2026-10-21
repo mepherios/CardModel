@@ -119,7 +119,23 @@ pipeline and scores it:
 Every run is a card in `cards/arena_run/`. Goals `G_O2`–`G_O4` track soundness, recall ≥ 0.9 and speedup ≥ ×10.
 Adding an algorithm card raises recall. Adding a decoy template makes the soundness test stricter.
 
-## 8. Machines: the same split at the scale of a console
+## 8. Derivation and observation (law CM36)
+
+A gap in a reimplementation of someone else's system (AnyPS5 reimplementing the PS5's libraries is the worked
+example, docs/ANYPS5.md) closes in one of two ways, and the model keeps them apart:
+
+* **Derivation.** A public standard (C, POSIX, IEEE 754, an RFC, an ISO codec, a hardware packet format) or the
+  model's own structure fixes the behaviour. The model writes it as a card-language program with theorems, runs
+  the reimplementation's own code next to it on seeded inputs, and records the run as a witness card.
+* **Observation.** The behaviour exists only in the original system: names, signatures, layouts, error codes,
+  constants, timing. Nothing derives it. The model classifies the gap with what observation would close it,
+  attaches it to its file, line and debt entry, and never fills it with a made-up success. An observation, once
+  recorded, is ground truth (CM15) and the rules reclassify the gap.
+
+Hardware, services and policy (DRM) are named as boundaries of the effect shell (CM21), with what a host mapping
+or the device would need. Rules decide every gap's cause (`stdlib/anyps5.card`), so each cause comes with the
+proof of how it was reached, and a constraint fails the verify when a gap has none.
+## 9. Machines: the same split at the scale of a console
 
 A console is a pure function too: its state and the buttons in, the next state, a frame and some audio samples
 out. That function is the machine module (docs/MACHINES.md): instruction cards and hardware cards compiled into
@@ -132,3 +148,14 @@ instruction cards' own IR specialised to constant bytes (no new semantics are wr
 provably equivalent to the instructions it replaces (it finishes before the next event and leaves after writes
 that could move one), and a differential run against the interpreter checks every frame (CM33). Speed comes
 second: a block that is not provably equivalent falls back to the interpreter.
+
+## 10. The model on itself (laws CM37, CM38, CM39)
+
+The same split applies to the model's own upkeep. The core is data: capability cards, each carrying laws, with
+a smoke check that runs the real engine (CM37). The upkeep is a cycle of `self_step` cards (CM38). Its effects
+are confined to one place: the self layer and the run records under `state/self/`, never the tracked tree. A
+cycle's verdicts follow the evidence rules of section 4. A lost capability or a failing section is a flaw with
+its evidence. An unmeasured goal is a weakness that names the command that measures it. Nothing is reported as
+better than it was measured. Parallel work keeps the same discipline at the level of the repository (CM39,
+docs/INTEGRATION.md): one number registry, one help text, one verify, one gate before every merge.
+docs/AUTONOMY.md has the details.

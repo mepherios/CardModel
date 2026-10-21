@@ -1,0 +1,58 @@
+{
+  "badge": {
+    "done": 4332,
+    "percent": 62.76,
+    "total": 6903
+  },
+  "category": "anyps5_snapshot",
+  "counts": {
+    "debt": 2398,
+    "exports": 7257,
+    "instructions": 1166,
+    "libraries": 354
+  },
+  "metadata": {
+    "previous_content_hash": "e5350cbff68bcf71820f36b759d75526c3ae8aa575e0183f0ba4ab7bb5735211",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "name": "current",
+  "parity": {
+    "agree": true,
+    "libraries": {
+      "ours": [
+        4332,
+        6903
+      ],
+      "theirs": [
+        4332,
+        6903
+      ]
+    },
+    "mismatch_count": 0,
+    "mismatches": [],
+    "shaders": {
+      "ours": [
+        1166,
+        1166
+      ],
+      "theirs": [
+        1166,
+        1166
+      ]
+    }
+  },
+  "provenance": {
+    "origin": "anyps5",
+    "tool": "cardmodel anyps5 scan"
+  },
+  "root": "~/Documents/AnyPS5-main",
+  "rule": "AnyPS5 docs/dev/PROGRESS.md (tools/progress.py), reproduced in cardmodel/anyps5/scan.py",
+  "scanned_at": "2026-10-21T19:41:10+00:00",
+  "sha256": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "shader_badge": {
+    "done": 1166,
+    "percent": 100.0,
+    "total": 1166
+  }
+}

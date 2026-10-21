@@ -1,0 +1,21 @@
+{
+  "category": "anyps5_domain",
+  "cause": "observation_proprietary",
+  "exports": [
+    {
+      "cause": "boundary_devkit",
+      "match": "^sceKernel(Debug\\w*|\\w*Coredump\\w*|Print\\w*Backtrace\\w*)$"
+    }
+  ],
+  "match": "^(libc|libkernel|libkernel_sys|libScePosixForWebKit|libSceLibcInternal|ulobjmgr)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "kernel",
+  "priority": 18,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "The kernel and C library: POSIX and C names are standards, sceKernel* are Sony's."
+}

@@ -1,0 +1,17 @@
+{
+  "category": "anyps5_cause",
+  "class": "derivable",
+  "closes_with": "implement it as the derived constant (the invariant holds on every implemented pair)",
+  "cues": [],
+  "debt_priority": 3,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "derivable_packet",
+  "priority": 3,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "A GetSize export whose emitter is implemented and writes one fixed packet: the size follows (4 bytes per dword, the header plus the payload)."
+}

@@ -3,7 +3,7 @@
   "metadata": {
     "version": "1.0.0"
   },
-  "name": "CM36_players_are_cards",
+  "name": "CM40_players_are_cards",
   "origins": [
     "user requirement 2026-10-21 (the user's own Game Boy and DS games in the arcade, run natively)",
     "CM32",

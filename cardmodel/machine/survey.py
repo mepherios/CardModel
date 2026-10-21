@@ -15,6 +15,9 @@ with a scripted input (START and A tapped periodically, so title screens move on
 ROMs and the differential runs. The report keeps titles and ROM hashes only in the state directory (user
 data); docs carry the aggregate counts.
 
+``model`` picks the console as ``cardmodel emu --model`` does: ``auto`` (the header decides), ``dmg``, or ``cgb``
+(DMG cartridges then run in the CGB's DMG compatibility mode).
+
 Honest limits (L1): a scripted input cannot play a game, so "runs" means it boots and animates; games that
 wait for a specific button sequence show up as ``static``.
 """
@@ -48,7 +51,8 @@ def roms_in(folder) -> list[Path]:
     return out
 
 
-def boot_one(ctx, machine, path: Path, frames: int = 1200, checkpoints: int = 8, shots_dir: Path | None = None) -> dict:
+def boot_one(ctx, machine, path: Path, frames: int = 1200, checkpoints: int = 8, shots_dir: Path | None = None,
+             model: str = "auto") -> dict:
     t0 = time.perf_counter()
     try:
         rom, name = G.open_rom(path)
@@ -58,7 +62,7 @@ def boot_one(ctx, machine, path: Path, frames: int = 1200, checkpoints: int = 8,
         info = G.header(rom, ctx.store)
     except ValueError as exc:
         return {"file": path.name, "status": "error", "reason": str(exc)}
-    g = G.GameBoy(ctx, rom, machine=machine, sample_rate=0)
+    g = G.GameBoy(ctx, rom, machine=machine, sample_rate=0, model=model)
     marks = sorted({int(frames * (k + 1) / checkpoints) - 1 for k in range(checkpoints)})
     hashes, stats = [], None
     for i in range(frames):
@@ -87,21 +91,21 @@ def boot_one(ctx, machine, path: Path, frames: int = 1200, checkpoints: int = 8,
         shots_dir.mkdir(parents=True, exist_ok=True)
         (shots_dir / f"{hashlib.sha1(rom).hexdigest()[:10]}_{status}.png").write_bytes(G.png(f))
     return {"file": path.name, "title": info["title"], "sha1": info["sha1"], "mbc": info["mbc"],
-            "cgb": info["cgb"], "supported": info["supported"], "status": status, "reason": reason,
+            "cgb": info["cgb"], "model": g.model, "supported": info["supported"], "status": status, "reason": reason,
             "frames": frames, "distinct_frames": distinct, "last_frame": st, "pc": machine.get("PC"),
             "instructions": machine.get("instructions"), "seconds": round(time.perf_counter() - t0, 3),
             "unsupported_mapper": not info["supported"], "checkpoint_stats": stats}
 
 
 def run(ctx, folder, frames: int = 1200, engine: str = "native", limit: int | None = None,
-        shots_dir: Path | None = None, progress=None) -> dict:
+        shots_dir: Path | None = None, progress=None, model: str = "auto") -> dict:
     ir = Bd.module(ctx, "gameboy")
     machine = N.load(ctx, ir, engine)
     rows = []
     paths = roms_in(folder)[:limit] if limit else roms_in(folder)
     for k, p in enumerate(paths):
         resources.guard("survey")
-        r = boot_one(ctx, machine, p, frames, shots_dir=shots_dir)
+        r = boot_one(ctx, machine, p, frames, shots_dir=shots_dir, model=model)
         rows.append(r)
         if progress:
             progress(k + 1, len(paths), r)
@@ -109,7 +113,7 @@ def run(ctx, folder, frames: int = 1200, engine: str = "native", limit: int | No
     for r in rows:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     unsupported = sum(1 for r in rows if r.get("unsupported_mapper"))
-    return {"folder_files": len(paths), "frames": frames, "engine": machine.engine, "counts": counts,
+    return {"folder_files": len(paths), "frames": frames, "engine": machine.engine, "model": model, "counts": counts,
             "unsupported_mappers": unsupported, "runs_fraction": round(counts.get("runs", 0) / max(1, len(rows)), 4),
             "rows": rows}
 

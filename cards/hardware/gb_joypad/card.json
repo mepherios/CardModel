@@ -26,6 +26,7 @@
       "name": "P1",
       "post_boot_cgb": 207,
       "post_boot_dmg": 207,
+      "post_boot_dmg_compat": 255,
       "read_or": 192
     }
   ],

@@ -7,13 +7,14 @@ cardmodel/                      the repository IS the model (its home)
 │   ├── kernel/                 the universal card contract
 │   │   ├── card.py             Card = dict + load facts (path, registry, layer, source)
 │   │   ├── registry.py         a directory with _category.json is a registry; ALL/get/all_names
-│   │   ├── store.py            layers (model < extra read-only < project), merged views, writes
+│   │   ├── store.py            layers (model < extra read-only < self read-only < project), merged views, writes
 │   │   ├── schema.py           dependency-free JSON-Schema subset validator
 │   │   ├── types.py            card types are cards; validation; closure (L45)
 │   │   ├── versioning.py       semver bump + archive + verify-before-overwrite
-│   │   ├── resources.py        bounded resources: machine-wide slots, child memory caps, self cap (CM30)
+│   │   ├── resources.py        bounded resources: machine-wide slots, child memory caps, self cap, background
+│   │   │                       spawns (CM30)
 │   │   ├── canon.py            canonical JSON (Ting) + card content hash
-│   │   └── paths.py            home and project discovery (.cardmodel/, like .git)
+│   │   └── paths.py            home, project discovery (.cardmodel/, like .git), the self layer (state/self/cards)
 │   ├── engines/
 │   │   ├── probes.py           capability probes as data (rea-cards lesson)
 │   │   ├── ir.py               the card IR: functions as trees of op cards + reference interpreter
@@ -26,7 +27,7 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── search.py           rewrite search: proofs (meet in the middle), cost-directed optimisation
 │   │   ├── exprs.py            expression strings <-> op trees, exact/real evaluation
 │   │   ├── witness.py          forms vs reference, known-answer vectors, rule witnesses, anti-vacuity
-│   │   ├── redefs.py           executable redefinitions: seeded numeric checks (+ sympy if present)
+│   │   ├── redefs.py           executable redefinitions: seeded checks, exact or high precision (+ sympy)
 │   │   ├── observe.py          source tree -> observation card (ast for Python, tokens elsewhere)
 │   │   ├── learn.py            observe -> propose -> verify -> promote
 │   │   ├── optimize.py         measurements -> metric cards -> calibrated cost anchors
@@ -44,16 +45,21 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── mine.py             decipher rules from facts (support, confidence, counterexamples)
 │   │   ├── selflogic.py        the store as facts + stdlib/self.card (the model's laws as logic)
 │   │   ├── codefacts.py        a Python code base as facts (calls, effects, liftable) for stdlib/program.card
-│   │   └── funcalg.py          functions as algebra: canonical forms, Gödel numbers, GCD of functions (CM31)
+│   │   ├── funcalg.py          functions as algebra: canonical forms, Gödel numbers, GCD of functions (CM31)
+│   │   ├── capabilities.py     the core as cards: one smoke check per capability card (CM37)
+│   │   ├── integrity.py        one program: numbers, carried laws, described commands/sections/docs (CM39)
+│   │   └── selfrun.py          the model runs itself: self_step cycle, self layer, findings, plan (CM38)
 │   ├── lang/                   the card language: syntax.py (lexer, parser), compile.py (IR, logic, theorems,
 │   │                           cards, algorithm resolution), run.py (tests, queries, theorems, build, emit)
 │   ├── game/                   the Vector Counter System: combat.py (engine on the card-language kernel),
 │   │                           analysis.py (exact equilibria, design laws, sensitivity, balance), ai.py, world.py
+│   ├── anyps5/                 AnyPS5 as cards: scan.py (a checkout, read-only, the badge's rule reproduced),
+│   │                           cards.py (packs with file and line), classify.py (facts + stdlib/anyps5.card: every
+│   │                           gap's cause), cover.py (the ladder, causes, findings), witness.py (AnyPS5's C++ next
+│   │                           to card-language semantics), cli.py
 │   ├── emit/                   lean.py (theorems, fail-closed batch checker, lint), lean_logic.py (derivations
 │   │                           as Lean terms), lean_import.py (Lean theorems as cards, faithfulness), lean_chain.py
 │   │                           (rule-card chains as calc proofs), proofs.py, hints.py
-│   ├── cli_ext.py              run, lang, logic, laws, lean, repl (+ game via game/cli.py)
-│   └── cli.py                  init observe verify cover rewrite emit learn optimize translate status ...
 │   ├── machine/                machines as cards: isa.py (instruction cards: IR, decode tables), build.py (a machine
 │   │                           card -> one IR module), native.py (engines: ir, host, cabi via ctypes), bench.py
 │   │                           (per-instruction conformance), asm.py (an assembler from the cards), gb.py, nds.py
@@ -62,9 +68,12 @@ cardmodel/                      the repository IS the model (its home)
 │   ├── arcade/                 games as cards: gen.py (data cards -> tables, exact equilibria), game.py (a game
 │   │                           card -> one IR module; headless runs), build.py (native package, store media, depot),
 │   │                           server.py (the content service), cli.py (`cardmodel arcade`)
+│   ├── cli_ext.py              run, lang, logic, laws, lean, repl, algebra (+ game, anyps5, machine, arcade CLIs)
+│   └── cli.py                  init observe verify cover rewrite emit learn optimize translate status self ...
 ├── stdlib/                     card-language sources the program runs: self.card (its laws), program.card,
 │                               combat.card (the combat kernel), world.card (the systemic world),
-│                               algebra.card (identities between algorithm cards, generated)
+│                               algebra.card (identities between algorithm cards, generated), anyps5.card (AnyPS5's
+│                               gaps and causes as rules), ps5_*.card (semantics derived from public standards)
 ├── game/DESIGN.md              the game design, every claim computed
 ├── examples/lang/              card-language programs: family, math, hierarchy, grammar
 ├── cards/                      the model's own registries (the knowledge; see COVERAGE.md for counts)
@@ -187,6 +196,8 @@ op cards --engines/laws (templates)--> theorem cards --simplifying--> rewrite_ru
 Lean file --emit/lean_import--> theorem cards (lean semantics) --kernel: faithful? witness? re-prove? chains?
 proof tree --emit/lean_logic--> Lean inductive encoding + constructor term --kernel checks the derivation
 store --engines/selflogic--> facts + stdlib/self.card --> the model's laws as logic (0 violations)
+AnyPS5 checkout --anyps5/scan (read-only)--> anyps5_* cards --anyps5/classify + stdlib/anyps5.card--> gaps, causes,
+    proofs --anyps5/cover--> docs/ANYPS5_COVERAGE.md;  stdlib/ps5_*.card + AnyPS5's C++ --anyps5/witness--> anyps5_witness
 move cards + stdlib/combat.card --game/combat--> exchanges --game/analysis--> exact equilibria, design laws
 ```
 
@@ -224,6 +235,31 @@ Design decisions:
   the simplicity.
 * **Engines are embed blocks.** How a host loads emitted code is card data (`embed.kind`), so the machine package
   names no language.
+
+## The model runs itself (fifth build)
+
+```
+any command --selfrun.maybe_start (due? lock free? memory?)--> detached `cardmodel self run --auto`
+      (background QoS, one slot, 2 GB cap)
+self_step cards, in order, when due --> capabilities (capability cards -> engines/capabilities.CHECKS)
+      --> integrity --> verify (quick; full daily) --> learn (changed trees) --> laws / algebra (on change)
+      --> arena (daily) --> optimize (weekly) --> goals (merged section results)
+      --> findings (flaw / weakness / strength + evidence + action) --> plan (ranked) --> trend
+      --> state/self/{last.json, runs/, SELF.md}
+learned cards --> state/self/cards (the self layer: read-only for every command; quarantined if it breaks verify;
+      `self adopt` --> cards/ for a commit)
+```
+
+Design decisions:
+
+* **A layer, not the tracked tree.** Background cycles write only the untracked self layer, so they can never
+  collide with a session's commit; adoption into `cards/` is a deliberate step. *Reconsider* if the model runs
+  where nobody adopts: then a cycle could open its own branch.
+* **No daemon.** Cycles start on use, rate-limited, so nothing runs while the model is idle and nothing needs
+  installing. *Reconsider* if the user wants evidence to accumulate while idle (a launchd job running
+  `cardmodel self run --auto`).
+* **Capabilities carry laws.** A law is kept alive by a check that runs, not by its text: the integrity check and
+  the self theory both fail on a law that no capability carries.
 
 ## What was not carried over
 

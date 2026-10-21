@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "anyps5_parity_mismatches",
+  "name": "G_P1_anyps5_badge_reproduced",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Libraries where the card model's reading of AnyPS5's counting rule differs from AnyPS5's own progress tool.",
+  "target": 0,
+  "tier": 1
+}

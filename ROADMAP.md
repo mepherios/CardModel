@@ -10,7 +10,7 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   JavaScript, TypeScript, C, C++, Rust, Go, Swift, Java, Ruby, Lua, Lean). It is verified by the op × language conformance matrix through the real
   toolchains on this Mac.
 * 🔵 Function translation with lift fidelity, inferred domains, overflow-aware comparison, and evidence cards (`xleq`).
-* 🔵 Witnesses for forms, known-answer vectors, rules, redefinitions (numeric + optional sympy) and Lean theorems
+* 🔵 Witnesses for forms, known-answer vectors, rules, redefinitions (exact rationals or high precision, + optional sympy) and Lean theorems
   (grind/omega). Anti-vacuity is built into each witness.
 * 🔵 Rewrite: cheapest form (domain, availability, measured), suggestions, cost-vector rank and pareto, rewrite search
   (proofs, optimisation).
@@ -49,6 +49,15 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   identities, fixed divisors, totals; verified fast forms in `improve` without algorithm cards; the lineage
   as cards (Servois 1814 to Gödel 1931).
 
+## Done (2026-10-21, AnyPS5)
+
+* 🔵 **AnyPS5 as cards** (CM36): every declared export, raw-NID alias, assembly export, debt entry, library and
+  shader instruction as cards with file and line; the libraries and shader badges reproduced name by name; the
+  real coverage ladder; every gap (exports, debt entries, empty modules) classified by rules in
+  `stdlib/anyps5.card` with proofs; the module graph's blockers; eight semantics bindings derived from public
+  standards, witnessed against AnyPS5's own C++ (docs/ANYPS5.md).
+* 🔵 Theorem witnesses sample inside the hypothesis box when it is too large to enumerate (multi-variable
+  bounded statements were vacuous before).
 ## Done (2026-10-21, third build: machines)
 
 * 🔵 **Machine state in the IR and the card language**: globals, byte/int arrays, void functions, call statements,
@@ -74,8 +83,28 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
   and the arcade service that builds games from their cards into depots of checked chunks.
 * 🔵 **Your own cartridges in the launcher**: the Game Boy Player (the machine cards plus a card-language player,
-  CM36) is installed like a game; every cartridge in the user's folders is a library entry, played where it is,
+  CM40) is installed like a game; every cartridge in the user's folders is a library entry, played where it is,
   with the survey's verdict and a title screen the machine draws; the DS is listed with its coverage.
+
+## Done (2026-10-21, fifth build: the model runs itself)
+
+* 🔵 **Integration**: the AnyPS5, games, OAM and two fix branches merged into main (AnyPS5's law renumbered
+  CM36); the rules, the number registry and the log in docs/INTEGRATION.md; the integrity check (CM39) in every
+  quick verify.
+* 🔵 **The core as cards** (CM37): 26 capability cards carry all the laws; their smoke checks run in every verify
+  and self-run; LAWS.md lists them.
+* 🔵 **The self-run** (CM38): `cardmodel self run|status|report|capabilities|auto|corpus|adopt`; background cycles
+  on use (governed, every 6 h); learning into the self layer, quarantine, findings and a ranked plan
+  (docs/AUTONOMY.md); docs/STORE.md lists everything in the store and what the model does for it.
+
+## Self-run: next
+
+* 🟢 **Learn from the user's projects**: add them as corpora (`cardmodel self corpus add PATH`) and adopt what the
+  cycles promote after review.
+* 🟢 **Adoption with evidence in git**: `self adopt` into a branch of its own, with the cycle's report as the
+  commit message, so learned knowledge reaches main through the same gate as code (docs/INTEGRATION.md).
+* 🟢 **A plan that learns**: weight the plan by what fixed goals fastest in past cycles (the run records hold the
+  history), instead of fixed severity rules.
 
 ## Arcade: next
 
@@ -89,11 +118,14 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 * 🔵 **Hardware test suites**: Blargg, mooneye and acid2 through `cardmodel machine testroms`, the DMG's OAM
   corruption bug included (the timing they pinned down is in docs/MACHINES.md §3; COVERAGE.md has the results).
-* 🟢 **A CGB DMG-compatibility mode** (the skipped mooneye misc tests).
+* 🔵 **The CGB's DMG compatibility mode** (2026-10-21): a DMG cartridge on the CGB model runs as the CGB's boot
+  ROM leaves it (KEY0, OPRI, the CGB-mode registers locked, the default compatibility palette as card data, the
+  CGB's line-144 STAT timing); mooneye's misc -C tests and dmg-acid2's CGB picture pass (docs/MACHINES.md §3).
 * 🟢 **The survey's remaining failures**: MBC7, HuC3 and camera bank controllers as cards; trace the static and
   blank titles.
-* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); DMG colourisation
-  palettes for DMG games on the CGB (from data, not the boot ROM).
+* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); the boot ROM's
+  per-title colourisation palettes for Nintendo's DMG games on the CGB (from data, not the boot ROM; the default
+  palette is done).
 * 🟢 **DS, as its coverage report asks**: SPI (firmware user settings, touchscreen, power), RTC, sound status,
   VRAM banks and the 2D engines (a first picture), then 3D; wait states; Thumb and ARM7 lifting, cheaper guards.
 * 🟢 **Lifting further**: superblocks through not-taken branches, a fast path for dynamic WRAM/HRAM accesses,
@@ -117,8 +149,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **Strings and lists in the IR.** Types `str` and `list[int]`, plus op cards for len/index/slice/concat. Each new
   op needs per-language templates and conformance cells. This is the biggest coverage gain for real code; Pheros
   `string_ops` gives the vocabulary.
-* 🟢 **Recorded verification in CI form.** Run `cardmodel verify --record --seed $(date +%s)` on a schedule. Commit
-  the changed `verification` fields so the history of evidence lives in git (hub L18: autonomous by default).
+* 🟡 **Recorded verification in CI form.** The self-run now verifies on every cycle (a full verify daily) and keeps
+  the record in `state/self/`; what is left is writing verdicts into the cards (`verify --record`) as part of an
+  adoption, so the history of evidence lives in git (hub L18: autonomous by default).
 
 ## Next
 

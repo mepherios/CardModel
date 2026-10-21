@@ -1,0 +1,14 @@
+{
+  "category": "anyps5_standard",
+  "cause": "derivable_standard_data",
+  "match": "^sceHttp(AddCookie|GetCookie|CookieExport|CookieImport|SetCookie\\w*|GetCookie\\w*)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "http_cookies",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "RFC 6265 (HTTP state management)."
+}

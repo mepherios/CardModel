@@ -1,0 +1,37 @@
+{
+  "category": "capability",
+  "check": "improve",
+  "commands": [
+    "cardmodel improve",
+    "cardmodel arena"
+  ],
+  "core": true,
+  "docs": [
+    "docs/METHODOLOGY.md"
+  ],
+  "laws": [
+    "law/CM21_effects_are_boundaries",
+    "law/CM22_optimizations_self_correct"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/improve.py",
+    "cardmodel/engines/arena.py"
+  ],
+  "name": "improve",
+  "order": 17,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Programs made faster: verified algorithm substitutions and rewrites, effectful code byte-identical, a refuted substitution reverted.",
+  "tests": [
+    "tests/test_improve.py::test_effect_shell_is_byte_identical",
+    "tests/test_improve.py::test_refuted_substitution_is_reverted",
+    "tests/test_arena.py::test_arena_run_is_sound_and_improves"
+  ],
+  "tier": 0,
+  "usefulness": "Faster code with the same behaviour, and file, network and login code left exactly as written."
+}

@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 0,
+  "measures": "all goals",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "goals",
+  "on_change": [],
+  "order": 100,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "goals",
+  "statement": "every goal from the latest result of each verify section; trend",
+  "tier": 0
+}

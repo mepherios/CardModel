@@ -1,0 +1,32 @@
+{
+  "category": "capability",
+  "check": "function_algebra",
+  "commands": [
+    "cardmodel algebra"
+  ],
+  "core": true,
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "laws": [
+    "law/CM31_behaviour_is_numbered"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/funcalg.py"
+  ],
+  "name": "function_algebra",
+  "order": 15,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Behaviour is numbered: canonical forms (annihilator and initial terms), Gödel numbers, the GCD of functions and the identities that carry between them.",
+  "tests": [
+    "tests/test_funcalg.py::test_canonical_forms_carry_between_functions"
+  ],
+  "tier": 0,
+  "usefulness": "Two functions that behave alike are recognised as one, whatever their code, and the faster one is used."
+}

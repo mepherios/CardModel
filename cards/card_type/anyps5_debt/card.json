@@ -1,0 +1,44 @@
+{
+  "applies_to": [
+    "anyps5_debt"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "anyps5_debt",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "schema": {
+    "properties": {
+      "component": {
+        "type": "string"
+      },
+      "exports": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "provenance": {
+        "required": [
+          "file",
+          "line"
+        ],
+        "type": "object"
+      },
+      "text": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "component",
+      "text",
+      "provenance"
+    ],
+    "type": "object"
+  },
+  "statement": "Fields every anyps5_debt card carries."
+}

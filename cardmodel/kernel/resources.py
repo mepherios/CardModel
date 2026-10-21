@@ -19,6 +19,9 @@ the group is killed (callers keep their handling).
 ``guard()`` raises ``MemoryBudget`` once this process's peak resident memory passes its cap. Hot loops (logic
 rounds, witnesses, arena, function algebra) call it, so a runaway becomes a clean error, not a frozen machine.
 
+``spawn_background`` starts a detached, low-priority process (background QoS on macOS) for the self-run's
+automatic cycles; it refuses to start one while memory is short.
+
 Honest limits (L1): the watchdog samples every POLL_S seconds, so a child can briefly exceed its cap between
 samples; peak memory (ru_maxrss) never goes down, so once the self cap trips this process stays tripped.
 """
@@ -256,4 +259,30 @@ def run(args, *, timeout: float, heavy: bool = True, mem_cap_mb: int | None = No
             slot.__exit__(None, None, None)
 
 
-__all__ = ["MemoryBudget", "available_mb", "guard", "max_parallel", "peak_mb", "policy", "run", "total_ram_mb"]
+def spawn_background(args, *, log_path, env: dict | None = None, cwd=None) -> int | None:
+    """Start a detached, low-priority process that may outlive this one (the self-run's automatic cycles).
+
+    It gets its own session (no terminal), background QoS where the system has it (``taskpolicy -b`` on macOS:
+    efficiency cores and throttled I/O), the policy's niceness plus 5, no stdin, and its output appended to
+    ``log_path``. Nothing here watches it: the child bounds itself (``guard`` under its own CARDMODEL_SELF_MB, the
+    machine-wide slots for its children). A thread reaps it if this process is still alive when it ends. Returns
+    its pid, or None (nothing started) while available memory is below twice the policy's floor."""
+    avail = available_mb()
+    if avail is not None and avail < 2 * _POLICY["min_free_mb"]:
+        return None
+    cmd = [str(a) for a in args]
+    if os.path.exists("/usr/sbin/taskpolicy"):
+        cmd = ["/usr/sbin/taskpolicy", "-b", *cmd]
+    with open(log_path, "ab") as log:
+        p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
+                             start_new_session=True, close_fds=True, env=env, cwd=cwd)
+    try:
+        os.setpriority(os.PRIO_PROCESS, p.pid, min(19, _POLICY["nice"] + 5))
+    except (OSError, AttributeError):
+        pass
+    threading.Thread(target=p.wait, daemon=True).start()
+    return p.pid
+
+
+__all__ = ["MemoryBudget", "available_mb", "guard", "max_parallel", "peak_mb", "policy", "run", "spawn_background",
+           "total_ram_mb"]

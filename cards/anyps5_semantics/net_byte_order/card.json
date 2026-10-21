@@ -1,0 +1,157 @@
+{
+  "category": "anyps5_semantics",
+  "checks": [
+    {
+      "args": [
+        [
+          0,
+          4294967295
+        ]
+      ],
+      "call": "sceNetHtonl_nid_postfix({0})",
+      "export": "libSceNet.sceNetHtonl_nid_postfix",
+      "fn": "htonl"
+    },
+    {
+      "args": [
+        [
+          0,
+          4294967295
+        ]
+      ],
+      "call": "sceNetNtohl_nid_postfix({0})",
+      "export": "libSceNet.sceNetNtohl_nid_postfix",
+      "fn": "ntohl"
+    },
+    {
+      "args": [
+        [
+          0,
+          65535
+        ]
+      ],
+      "call": "sceNetHtons_nid_postfix({0})",
+      "export": "libSceNet.sceNetHtons_nid_postfix",
+      "fn": "htons"
+    },
+    {
+      "args": [
+        [
+          0,
+          65535
+        ]
+      ],
+      "call": "sceNetNtohs_nid_postfix({0})",
+      "export": "libSceNet.sceNetNtohs_nid_postfix",
+      "fn": "ntohs"
+    },
+    {
+      "args": [
+        [
+          0,
+          18446744073709551615
+        ]
+      ],
+      "call": "sceNetHtonll({0})",
+      "export": "libSceNet.sceNetHtonll",
+      "fn": "htonll"
+    },
+    {
+      "args": [
+        [
+          0,
+          18446744073709551615
+        ]
+      ],
+      "call": "sceNetNtohll({0})",
+      "export": "libSceNet.sceNetNtohll",
+      "fn": "ntohll"
+    }
+  ],
+  "closes": [],
+  "closes_debt": [],
+  "covers": [
+    "libSceNet.sceNetHtonl_nid_postfix",
+    "libSceNet.sceNetHtonll",
+    "libSceNet.sceNetHtons_nid_postfix",
+    "libSceNet.sceNetNtohl_nid_postfix",
+    "libSceNet.sceNetNtohll",
+    "libSceNet.sceNetNtohs_nid_postfix"
+  ],
+  "harness": {
+    "before_file": "before.hpp",
+    "extract": [
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^std::uint16_t swap16\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^std::uint32_t swap32\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^std::uint64_t swap64\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^uint32_t APS5_VABI sceNetHtonl_nid_postfix\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^uint16_t APS5_VABI sceNetHtons_nid_postfix\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^uint64_t APS5_VABI sceNetHtonll\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^uint64_t APS5_VABI sceNetNtohll\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^uint32_t APS5_VABI sceNetNtohl_nid_postfix\\(",
+        "until": "braces"
+      },
+      {
+        "file": "core/libs/prx/libSceNet/Export.cpp",
+        "start": "^uint16_t APS5_VABI sceNetNtohs_nid_postfix\\(",
+        "until": "braces"
+      }
+    ],
+    "include_dirs": [
+      "core/libs"
+    ],
+    "language": "cpp",
+    "link": {
+      "darwin": [
+        "-Wl,-undefined,dynamic_lookup"
+      ],
+      "linux": [
+        "-Wl,--unresolved-symbols=ignore-all"
+      ]
+    },
+    "prelude_file": "harness.hpp"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "net_byte_order",
+  "program": "stdlib/ps5_net.card",
+  "provenance": {
+    "by": "the AnyPS5 session (hand-written binding)",
+    "origin": "cardmodel",
+    "written": "2026-10-21"
+  },
+  "source": "core/libs/prx/libSceNet/Export.cpp",
+  "standard": "RFC 1700 'Data notations' (network byte order is big-endian); POSIX htonl/ntohl; x86-64 is little-endian",
+  "statement": "libSceNet's host/network byte-order conversions for 16, 32 and 64-bit values."
+}

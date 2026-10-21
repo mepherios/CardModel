@@ -1,0 +1,45 @@
+{
+  "category": "capability",
+  "check": "card_store",
+  "commands": [
+    "cardmodel list",
+    "cardmodel show",
+    "cardmodel new",
+    "cardmodel status"
+  ],
+  "core": true,
+  "docs": [
+    "ARCHITECTURE.md"
+  ],
+  "laws": [
+    "law/CM02_everything_is_a_card",
+    "law/CM03_unknown_fields_survive",
+    "law/CM10_fail_loud",
+    "law/CM11_closure_under_definition",
+    "law/CM14_versioned_writes"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/kernel/store.py",
+    "cardmodel/kernel/schema.py",
+    "cardmodel/kernel/types.py"
+  ],
+  "name": "card_store",
+  "order": 1,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Everything is a card: registries of JSON cards in layers (model, self, project), a schema per card type, unknown fields kept, every write versioned, malformed and dangling cards reported.",
+  "tests": [
+    "tests/test_kernel.py::test_registry_contract",
+    "tests/test_kernel.py::test_unknown_fields_round_trip",
+    "tests/test_kernel.py::test_versioning_archives_previous",
+    "tests/test_kernel.py::test_malformed_card_is_reported",
+    "tests/test_kernel.py::test_builtin_closure"
+  ],
+  "tier": 0,
+  "usefulness": "One place for everything the model knows, with history: an update never loses the old version, and fields another tool adds survive."
+}

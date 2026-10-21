@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "arcade",
+  "commands": [
+    "cardmodel arcade"
+  ],
+  "core": true,
+  "docs": [
+    "docs/ARCADE.md",
+    "docs/STORE.md"
+  ],
+  "laws": [
+    "law/CM35_games_are_cards",
+    "law/CM40_players_are_cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/arcade"
+  ],
+  "name": "arcade",
+  "order": 23,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, serves and launches; a console player is the machine cards plus a card-language player, built the same way.",
+  "tests": [
+    "tests/test_arcade.py::test_a_timed_guard_redirects",
+    "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host"
+  ],
+  "tier": 0,
+  "usefulness": "Games made from the model's cards, and the user's own cartridges, ship through Cardmodel Arcade."
+}

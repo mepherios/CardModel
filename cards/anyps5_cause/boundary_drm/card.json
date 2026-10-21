@@ -1,0 +1,22 @@
+{
+  "category": "anyps5_cause",
+  "class": "boundary",
+  "closes_with": "nothing: out of scope by policy",
+  "cues": [
+    "\\bdrm\\b",
+    "\\bentitlements?\\b",
+    "\\blicen[cs]e[sd]?\\b",
+    "\\bapp ?checker\\b"
+  ],
+  "debt_priority": 5,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary_drm",
+  "priority": 5,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "DRM, entitlement or integrity checks: by policy the card model never derives, bypasses or emulates them; only the no-license path AnyPS5 implements counts."
+}

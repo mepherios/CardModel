@@ -3,14 +3,16 @@
 ``open_rom(path)`` reads a .gb/.gbc file or the first such member of a .zip (in memory; nothing is extracted or
 copied). ``header(rom, store)`` decodes the cartridge header with the ``hardware/gb_cartridge`` card's tables.
 ``GameBoy(ctx, rom, engine)`` builds (or reuses) the machine module, loads it in an engine, configures the
-cartridge from the header and powers on in DMG or CGB mode (``model``: auto = CGB when the header asks for it).
+cartridge from the header and powers on as a DMG or a CGB (``model``: auto = CGB when the header asks for it).
+A DMG cartridge on the CGB runs in DMG compatibility mode, as the CGB's boot ROM leaves it (``compat``).
 
 Everything here is plumbing between the host and the pure machine: bytes into ``rom``, header fields into four
 globals, ``run_frame`` per frame, ``frame``/``audio``/``cram`` out. The behaviour is the cards'.
 
 Honest limits (L1): MMM01, MBC6, MBC7, HuC1/HuC3, TAMA5 and the camera are reported as unsupported (the
-game runs as ROM-only and will likely misbehave); no boot ROM (the documented post-boot state is used, so DMG
-games on a CGB get no colourisation palette: they run in DMG mode).
+game runs as ROM-only and will likely misbehave); no boot ROM (the documented post-boot state is used). In DMG
+compatibility mode every cartridge gets the boot ROM's default palette: the per-title palettes it picks for
+Nintendo's own games are not modelled.
 """
 from __future__ import annotations
 
@@ -115,11 +117,17 @@ class GameBoy:
         m.set("sample_rate", self.sample_rate)
         m.write("cram", bytes(0x20000))
         m.call("power_on", self.cgb)
+        self.compat = bool(self.cgb and not m.get("cgb_mode"))
         if self.lift_report is not None:
             m.set("lifted_on", 1)
             m.set("profiling", 1)
 
     # -- per frame --------------------------------------------------------------------------------------
+    @property
+    def model(self) -> str:
+        """``dmg``, ``cgb``, or ``cgb-compat`` (a DMG cartridge on the CGB, in DMG compatibility mode)."""
+        return "cgb-compat" if self.compat else "cgb" if self.cgb else "dmg"
+
     def run_frame(self) -> int:
         return self.m.call("run_frame")
 

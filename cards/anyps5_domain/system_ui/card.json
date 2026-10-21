@@ -1,0 +1,16 @@
+{
+  "category": "anyps5_domain",
+  "cause": "boundary_system_ui",
+  "exports": [],
+  "match": "^libSce(CommonDialog|MsgDialog\\w*|ErrorDialog|SaveDataDialog\\w*|ImeDialog|Ime|ImeBackend|NetCtlApDialog|PlayGoDialog|UsbStorageDialog|HmdSetupDialog|Ps2EmuMenuDialog|Cdlg\\w*|\\w*Dialog)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "system_ui",
+  "priority": 8,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "System UI overlays and the IME."
+}

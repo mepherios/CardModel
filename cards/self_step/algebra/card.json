@@ -1,0 +1,21 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": null,
+  "measures": "functional_identities",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "algebra",
+  "on_change": [
+    "algorithm"
+  ],
+  "order": 70,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "algebra",
+  "statement": "canonical forms and identities when the algorithm cards change",
+  "tier": 0
+}

@@ -1,0 +1,25 @@
+{
+  "category": "anyps5_cause",
+  "class": "derivable",
+  "closes_with": "a host mapping in AnyPS5's C++ (e.g. shm_open to the host's shm_open), witnessed by AnyPS5's ctest on Linux and Windows",
+  "cues": [
+    "\\bposix\\b",
+    "\\bfreebsd\\b",
+    "\\bkqueue\\b",
+    "\\bkevent\\b",
+    "\\brfc ?\\d{3,5}\\b",
+    "\\bwebsocket\\b",
+    "\\bsockets?\\b"
+  ],
+  "debt_priority": 32,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "derivable_standard_host",
+  "priority": 6,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Fixed by a public standard (C, POSIX, FreeBSD, ELF, RFC), but an effect on the host (processes, shared memory, events, file system, sockets): it belongs in AnyPS5's effect shell, mapped to the host API (CM21)."
+}

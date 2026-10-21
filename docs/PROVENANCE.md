@@ -15,6 +15,15 @@ for every vendored registry are in each registry's `_category.json` (`provenance
 | Pheros `cards/_meta/{cl_grammar, cl_ir, cl_compilation_model}`, `language/cl` | read for alignment | the card language accepts CL v0's function form and follows its compilation model; nothing vendored |
 | Lean 4 core library (`~/.elan/toolchains/<toolchain>/src/lean/Init/Data/{Nat,Int}`), Apache-2.0, © Microsoft Corporation and contributors | theorem *statements* in the arithmetic fragment (proofs are not copied; each card cites the original declaration, file and toolchain, and its faithfulness is checked by the kernel against the original) | `cards/theorem/_pack_lean_core.jsonl` (`cardmodel lean import --core --save --global`) |
 
+## AnyPS5 (read 2026-10-21, read-only)
+
+| Source | Read | Became |
+|---|---|---|
+| `~/Documents/AnyPS5-main` (GPL-2.0; no git metadata in the checkout; content hash in `anyps5_snapshot/current`) | `core/libs/prx/**/*.cpp` (definitions, aliases, assembly exports, call graph, packet emitters), `docs/dev/TechnicalDebt.md`, `docs/dev/debt/*.md`, test files under `core/**/tests` (names only), `tools/rdna_isa.txt`, the shader decoder's opcode enum and translation sources, `tools/progress.py` (its opcode tables read as data with `ast.literal_eval`; the tool itself is run only by `anyps5 scan --parity`) | packs `anyps5_export`, `anyps5_debt` (each bullet's text, quoted for the classification), `anyps5_library`, `anyps5_instruction`; `anyps5_snapshot/current` |
+| the same checkout, at witness time | the files a semantics card names, included or extracted into a harness built in `state/` (never copied into the repository) | `anyps5_witness/*` (results only) |
+
+Nothing from AnyPS5 is vendored as code, and no firmware, key, NID-database download or game file was read.
+
 ## What the witnesses found in the sources (reproducible with `cardmodel verify --only forms,redefinitions`)
 
 * **Hub `card_redefinitions` domains.** Several forms declared domain `int` but are 32-bit
@@ -31,6 +40,12 @@ for every vendored registry are in each registry's `_category.json` (`provenance
   * Some were pairs of program names (`cat_original_c → cat_rewritten_rs`): references, not identities, so they were
     moved to `redefinition_note` (count: `docs/VENDOR_REPORT.json`, `name_pair_reference`).
   * Of the executable identities, none is refuted.
+  * The float witness used to refute true identities at some seeds: across 2002 seeds it gave 46 false
+    refutations on 23 cards, about one `verify` in 45. In 7 rational cards a target divides by a square such as
+    `(2*x**2*y - 4*x - 2)**2` that nearly vanishes. In 16 `tan(2x)` cards, squares of `tan(x)` cancel near x = ±pi/2.
+    Rational forms are now evaluated exactly, and any other float disagreement is decided again at high precision.
+    On the same seeds the result is 0 refutations, with the 31 disagreements on the `tan` cards resolved as
+    rounding artefacts.
   * Some auto-generated cards carry examples that bind only some variables (e.g. `x=1` for a form in `x, y`). The
     redefinition witness reports these as `examples.incomplete`, because they made the original L34 check vacuous.
 * **Ting vectors.** Every converted RFC/NIST vector passes in both the model's stdlib-Python forms (including
