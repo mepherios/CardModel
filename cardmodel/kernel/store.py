@@ -144,7 +144,8 @@ class Store:
     def layer_root(self, layer: str | None = None) -> Path:
         layer = layer or self.writable_layer()
         if layer in self.readonly:
-            raise PermissionError(f"layer {layer!r} is read-only (an --cards extra registry tree)")
+            raise PermissionError(f"layer {layer!r} is read-only (an --cards tree, or the self layer outside a "
+                                  "self-run)")
         for name, root in self.layers:
             if name == layer:
                 return root
@@ -204,16 +205,22 @@ class Store:
 
 
 def open_store(project: Path | str | None | bool = True, strict: bool = False,
-               home_cards: Path | None = None, extra: list[str | Path] | None = None) -> Store:
+               home_cards: Path | None = None, extra: list[str | Path] | None = None,
+               include_self: bool = False) -> Store:
     """project=True: discover from cwd; a path: use it; False/None: model layer only.
 
     ``extra``: other card trees (any directory of registries, e.g. another program's cards/) loaded
-    READ-ONLY between the model and the project; nothing is ever written into them."""
+    READ-ONLY between the model and the project; nothing is ever written into them.
+    ``include_self``: also the self layer (what the model's own cycles learned, engines/selfrun.py), READ-ONLY,
+    above the model and the extras and below the project; only the self-run writes it."""
     layers: list[tuple[str, Path]] = [("model", Path(home_cards) if home_cards else paths.model_cards())]
     readonly = set()
     for i, e in enumerate(extra or []):
         layers.append((f"extra{i}", Path(e).expanduser().resolve()))
         readonly.add(f"extra{i}")
+    if include_self and paths.self_cards().is_dir():
+        layers.append(("self", paths.self_cards()))
+        readonly.add("self")
     proj: Path | None = None
     if project is True:
         proj = paths.find_project()

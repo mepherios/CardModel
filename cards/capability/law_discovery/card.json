@@ -1,0 +1,32 @@
+{
+  "category": "capability",
+  "check": "law_discovery",
+  "commands": [
+    "cardmodel laws"
+  ],
+  "core": true,
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "laws": [
+    "law/CM25_laws_carry_into_optimization"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/laws.py"
+  ],
+  "name": "law_discovery",
+  "order": 9,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Laws are discovered from the op cards: templates witnessed, proved in Lean, and the simplifying ones promoted to rewrite rules.",
+  "tests": [
+    "tests/test_laws_discovery.py::test_simplifying_laws_become_rules"
+  ],
+  "tier": 0,
+  "usefulness": "New operations bring their own algebra with them."
+}

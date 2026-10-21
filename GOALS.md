@@ -27,9 +27,13 @@ filesystem registry. The program takes part in software development in any proje
 11. **account for a real system**: AnyPS5 (a PS5 relinker and its reimplemented system libraries) read as cards,
     its badge reproduced, its real coverage computed, every gap given the cause that keeps it open, and its pure
     code witnessed against semantics derived from public standards (docs/ANYPS5.md).
-11. **run machines**: a CPU is its instruction cards and a console is its hardware cards; their card-language
+12. **run machines**: a CPU is its instruction cards and a console is its hardware cards; their card-language
     semantics compile to the card IR, run in every engine, and a ROM's own code is lifted into the same IR and
-    emitted natively, behind an effect shell for video, audio, input and saves (docs/MACHINES.md).
+    emitted natively, behind an effect shell for video, audio, input and saves (docs/MACHINES.md); games made of
+    cards ship through the Cardmodel Arcade store (docs/ARCADE.md, docs/STORE.md).
+13. **run itself as one unit**: every use can start a cycle that checks the core capabilities and the program's
+    integrity, verifies, learns, rediscovers, measures and computes every goal, then ranks its own flaws and
+    weaknesses; the core capabilities are cards that carry every law, so none is lost (docs/AUTONOMY.md).
 
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
@@ -66,6 +70,10 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_K5_programs_pass` | knowledge | card-language programs (examples/lang, stdlib) that pass | ≥ 6 |
 | `G_K6_functional_identities` | knowledge | identities between functions found from behaviour | ≥ 5 |
 | `G_A3_memory_bounded` | autonomy | peak memory of the cardmodel process in the last verify (MB) | ≤ 1024 |
+| `G_A4_capabilities_failing` | autonomy | core capabilities whose smoke check fails (CM37) | = 0 |
+| `G_A5_integrity_problems` | autonomy | integrity problems: duplicate numbers, uncarried laws, undescribed commands, sections or docs, drift (CM39) | = 0 |
+| `G_A6_laws_carried` | autonomy | laws that no capability card carries | = 0 |
+| `G_A7_self_run_fresh` | autonomy | hours since the last self-run cycle finished (CM38) | ≤ 24 |
 | `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
 | `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
 | `G_P1_anyps5_badge_reproduced` | computation | libraries where the model's reading of AnyPS5's counting rule differs from AnyPS5's own tool | = 0 |

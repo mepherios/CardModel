@@ -1,0 +1,70 @@
+{
+  "applies_to": [
+    "capability"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "capability",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "schema": {
+    "properties": {
+      "check": {
+        "type": "string"
+      },
+      "commands": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "core": {
+        "type": "boolean"
+      },
+      "docs": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "laws": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "modules": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "order": {
+        "type": "integer"
+      },
+      "tests": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "usefulness": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "statement",
+      "check",
+      "laws",
+      "tests",
+      "core"
+    ],
+    "type": "object"
+  },
+  "statement": "A core capability: its smoke check must pass in every verify and self-run (CM37).",
+  "tier": 0
+}

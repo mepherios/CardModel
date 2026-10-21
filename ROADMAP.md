@@ -83,6 +83,26 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
   and the arcade service that builds games from their cards into depots of checked chunks.
 
+## Done (2026-10-21, fifth build: the model runs itself)
+
+* 🔵 **Integration**: the AnyPS5, games, OAM and two fix branches merged into main (AnyPS5's law renumbered
+  CM36); the rules, the number registry and the log in docs/INTEGRATION.md; the integrity check (CM39) in every
+  quick verify.
+* 🔵 **The core as cards** (CM37): 26 capability cards carry all the laws; their smoke checks run in every verify
+  and self-run; LAWS.md lists them.
+* 🔵 **The self-run** (CM38): `cardmodel self run|status|report|capabilities|auto|corpus|adopt`; background cycles
+  on use (governed, every 6 h); learning into the self layer, quarantine, findings and a ranked plan
+  (docs/AUTONOMY.md); docs/STORE.md lists everything in the store and what the model does for it.
+
+## Self-run: next
+
+* 🟢 **Learn from the user's projects**: add them as corpora (`cardmodel self corpus add PATH`) and adopt what the
+  cycles promote after review.
+* 🟢 **Adoption with evidence in git**: `self adopt` into a branch of its own, with the cycle's report as the
+  commit message, so learned knowledge reaches main through the same gate as code (docs/INTEGRATION.md).
+* 🟢 **A plan that learns**: weight the plan by what fixed goals fastest in past cycles (the run records hold the
+  history), instead of fixed severity rules.
+
 ## Arcade: next
 
 * 🟢 **More of the game**: duel-tree AI (several exchanges deep), multi-hit strings, bosses with phase stances,
@@ -123,8 +143,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **Strings and lists in the IR.** Types `str` and `list[int]`, plus op cards for len/index/slice/concat. Each new
   op needs per-language templates and conformance cells. This is the biggest coverage gain for real code; Pheros
   `string_ops` gives the vocabulary.
-* 🟢 **Recorded verification in CI form.** Run `cardmodel verify --record --seed $(date +%s)` on a schedule. Commit
-  the changed `verification` fields so the history of evidence lives in git (hub L18: autonomous by default).
+* 🟡 **Recorded verification in CI form.** The self-run now verifies on every cycle (a full verify daily) and keeps
+  the record in `state/self/`; what is left is writing verdicts into the cards (`verify --record`) as part of an
+  adoption, so the history of evidence lives in git (hub L18: autonomous by default).
 
 ## Next
 

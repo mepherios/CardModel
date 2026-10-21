@@ -148,3 +148,14 @@ instruction cards' own IR specialised to constant bytes (no new semantics are wr
 provably equivalent to the instructions it replaces (it finishes before the next event and leaves after writes
 that could move one), and a differential run against the interpreter checks every frame (CM33). Speed comes
 second: a block that is not provably equivalent falls back to the interpreter.
+
+## 10. The model on itself (laws CM37, CM38, CM39)
+
+The same split applies to the model's own upkeep. The core is data: capability cards, each carrying laws, with
+a smoke check that runs the real engine (CM37). The upkeep is a cycle of `self_step` cards (CM38). Its effects
+are confined to one place: the self layer and the run records under `state/self/`, never the tracked tree. A
+cycle's verdicts follow the evidence rules of section 4. A lost capability or a failing section is a flaw with
+its evidence. An unmeasured goal is a weakness that names the command that measures it. Nothing is reported as
+better than it was measured. Parallel work keeps the same discipline at the level of the repository (CM39,
+docs/INTEGRATION.md): one number registry, one help text, one verify, one gate before every merge.
+docs/AUTONOMY.md has the details.

@@ -1,0 +1,32 @@
+{
+  "category": "capability",
+  "check": "anyps5",
+  "commands": [
+    "cardmodel anyps5"
+  ],
+  "core": true,
+  "docs": [
+    "docs/ANYPS5.md"
+  ],
+  "laws": [
+    "law/CM36_unknowns_are_observation_obligations"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/anyps5"
+  ],
+  "name": "anyps5",
+  "order": 24,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation obligation, never a made-up success.",
+  "tests": [
+    "tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"
+  ],
+  "tier": 0,
+  "usefulness": "The real coverage of AnyPS5, and the cause of every gap."
+}

@@ -243,6 +243,21 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "ds_undecodable_executed":
         nds = ctx.load_state("nds_coverage")
         return sum(c.get("undecodable_executed", 0) for c in (nds.get("cpus") or {}).values()) if nds else None
+    if name == "capabilities_failing":
+        cap = secs.get("capabilities")
+        return len(cap.get("failing", [])) if cap and "failing" in cap else None
+    if name == "integrity_problems":
+        it = secs.get("integrity")
+        return len(it.get("problems", [])) if it and "problems" in it else None
+    if name == "laws_uncarried":
+        carried = {law for c in st.cards("capability") for law in c.get("laws") or []}
+        return sum(1 for law in st.cards("law") if law.qualified not in carried)
+    if name == "self_run_age_hours":
+        from . import selfrun
+        last = (selfrun._read(selfrun.self_dir() / "last.json") or {}).get("finished")
+        if not last:
+            return None
+        return round((datetime.now(timezone.utc) - datetime.fromisoformat(last)).total_seconds() / 3600, 1)
     runs = sorted(st.cards("arena_run"), key=lambda c: c["score"].get("finished", ""))
     if name == "arena_unsound_runs":
         return sum(1 for r in runs if not r["score"].get("sound")) if runs else None

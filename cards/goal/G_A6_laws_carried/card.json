@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "laws_uncarried",
+  "name": "G_A6_laws_carried",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Laws that no capability card carries (a law nothing runs can be forgotten).",
+  "target": 0,
+  "tier": 0
+}

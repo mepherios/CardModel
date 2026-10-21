@@ -1,0 +1,33 @@
+{
+  "category": "capability",
+  "check": "self_theory",
+  "commands": [
+    "cardmodel logic self"
+  ],
+  "core": true,
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "laws": [
+    "law/CM27_the_model_checks_itself"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/selflogic.py",
+    "stdlib/self.card"
+  ],
+  "name": "self_theory",
+  "order": 14,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The model checks itself: its laws as logic over its own store, with zero violations.",
+  "tests": [
+    "tests/test_logic.py::test_self_theory_holds_and_catches_breaks"
+  ],
+  "tier": 0,
+  "usefulness": "A broken rule of the model shows up with a proof of where."
+}

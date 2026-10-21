@@ -1,0 +1,32 @@
+{
+  "category": "capability",
+  "check": "world",
+  "commands": [
+    "cardmodel game world"
+  ],
+  "core": true,
+  "docs": [
+    "game/DESIGN.md"
+  ],
+  "laws": [
+    "law/CM29_everything_carries"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/game/world.py"
+  ],
+  "name": "world",
+  "order": 20,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Everything carries: the systemic world's facts carry between ticks, every event explains its causes and every action's impact is measured.",
+  "tests": [
+    "tests/test_game.py::test_world_effects_carry_and_explain"
+  ],
+  "tier": 0,
+  "usefulness": "What you do in the world stays done, and the world can say why."
+}

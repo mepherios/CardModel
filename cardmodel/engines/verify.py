@@ -2,6 +2,9 @@
 
 Sections (all on by default; ``only`` selects):
   kernel        load errors, card-type schema validation, closure (CM10/CM11)
+  integrity     one program (CM39): unique law and goal numbers, every law carried by a capability, every
+                command, section and doc described, LAWS.md / GOALS.md in sync, no merge markers, no publishing
+  capabilities  every capability card's smoke check: a core capability that no longer behaves fails (CM37)
   forms         op / call / re_operation forms vs their reference (witness.verify_forms)
   vectors       known-answer vectors (crypto atoms, detect_format, ...)
   rules         rewrite rules on seeded integers
@@ -40,10 +43,10 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms", "vectors", "rules",
-            "redefinitions", "conformance", "functions", "proofs", "selfcheck", "portability")
-QUICK = ["kernel", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms", "vectors", "rules",
-         "redefinitions"]
+SECTIONS = ("kernel", "integrity", "capabilities", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms",
+            "vectors", "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck", "portability")
+QUICK = ["kernel", "integrity", "capabilities", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms",
+         "vectors", "rules", "redefinitions"]
 
 
 def _kernel(ctx: Ctx) -> dict:
@@ -205,6 +208,8 @@ def _anyps5(ctx: Ctx, lang: dict | None) -> dict:
             "witness_disagreements": rep["witness_disagreements"], "stale_witnesses": rep["stale_witnesses"],
             "parity_mismatches": parity, "classes": rep["classes"], "badge": snap.get("badge"),
             "semantics": rep["semantics"]}
+
+
 def _machine(ctx: Ctx, seed: int) -> dict:
     """Instruction cards: IR in sync with semantics; one-instruction runs agree across engines and with the data."""
     from ..machine import bench, isa
@@ -255,7 +260,7 @@ def _functions(ctx: Ctx, seed: int, langs) -> dict:
 
 
 def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs: list[str] | None = None,
-        samples: int = 48, record: bool = False) -> dict:
+        samples: int = 48, record: bool = False, save: bool = True) -> dict:
     seed = V.fresh_seed() if seed is None else seed
     only = list(only or SECTIONS)
     report = {"seed": seed, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "sections": {}}
@@ -266,6 +271,12 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         t0 = time.perf_counter()
         if sec == "kernel":
             res = _kernel(ctx)
+        elif sec == "integrity":
+            from . import integrity
+            res = integrity.check(ctx)
+        elif sec == "capabilities":
+            from . import capabilities
+            res = capabilities.run(ctx, seed)
         elif sec == "logic":
             res = _logic(ctx)
         elif sec == "lang":
@@ -305,7 +316,8 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
     from ..kernel import resources
     report["peak_memory_mb"] = round(resources.peak_mb(), 1)
     report["status"] = "fail" if any(r.get("status") == "fail" for r in report["sections"].values()) else "pass"
-    ctx.save_state("last_verify", report)
+    if save:
+        ctx.save_state("last_verify", report)
     if record:
         record_results(ctx, report)
     return report

@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "integrity_problems",
+  "name": "G_A5_integrity_problems",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Integrity problems: duplicate law or goal numbers, laws no capability carries, undescribed commands, sections or docs, drifted generated docs, merge markers.",
+  "target": 0,
+  "tier": 0
+}

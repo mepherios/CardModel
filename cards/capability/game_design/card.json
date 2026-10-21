@@ -1,0 +1,33 @@
+{
+  "category": "capability",
+  "check": "game_design",
+  "commands": [
+    "cardmodel game check"
+  ],
+  "core": true,
+  "docs": [
+    "game/DESIGN.md"
+  ],
+  "laws": [
+    "law/CM28_design_is_computed"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/game/analysis.py",
+    "cardmodel/game/combat.py"
+  ],
+  "name": "game_design",
+  "order": 19,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Design is computed: the combat's design laws hold on the exact equilibrium of the exchange (rational simplex with a checked certificate).",
+  "tests": [
+    "tests/test_game.py::test_design_laws_hold_and_catch_imbalance"
+  ],
+  "tier": 0,
+  "usefulness": "Balance is a theorem, not a feeling: an imbalance is caught before anyone plays."
+}

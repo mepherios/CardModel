@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "self_run_age_hours",
+  "name": "G_A7_self_run_fresh",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Hours since the last self-run cycle finished.",
+  "target": 24,
+  "tier": 0
+}

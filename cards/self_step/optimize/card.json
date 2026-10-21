@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 168,
+  "measures": "measured_forms",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "optimize",
+  "on_change": [],
+  "order": 90,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "optimize",
+  "statement": "measure the op cards' forms on this host (metric cards)",
+  "tier": 0
+}

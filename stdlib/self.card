@@ -29,6 +29,18 @@ never: op_ir(O), not op_eval(O), not special_op(O).
 -- CM08 every rewrite rule has a numeric witness (its variables are declared)
 never: rewrite_rule(R), not rule_vars(R).
 
+-- CM37 the core is never lost: every law is carried by a capability; a core capability names its smoke check
+-- and a witness test, and carries only laws that exist
+uncarried(L) <- law(L), not carries(_, L).
+never: uncarried(L).
+never: core_capability(C), not capability_check(C, _).
+never: core_capability(C), not capability_test(C, _).
+carries_unknown_law(C, L) <- carries(C, L), not law(L).
+never: carries_unknown_law(C, L).
+
+-- CM38 every self-run step names the function it runs
+never: self_step(S), not step_runs(S, _).
+
 -- structure that carries: dependency reachability and the registries a card leans on
 depends_star(C, D) <- depends_on(C, D), card(D).
 depends_star(C, E) <- depends_on(C, D), depends_star(D, E).

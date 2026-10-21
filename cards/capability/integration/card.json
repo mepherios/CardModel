@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "integration",
+  "commands": [
+    "cardmodel verify --only integrity",
+    "cardmodel docs"
+  ],
+  "core": true,
+  "docs": [
+    "docs/INTEGRATION.md"
+  ],
+  "laws": [
+    "law/CM20_laws_are_cards",
+    "law/CM39_one_program"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/integrity.py"
+  ],
+  "name": "integration",
+  "order": 26,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "One program: unique law and goal numbers, every law carried by a capability, every command, section and doc described, generated docs in sync.",
+  "tests": [
+    "tests/test_laws.py::test_laws_md_in_sync",
+    "tests/test_self.py::test_one_program_integrity"
+  ],
+  "tier": 0,
+  "usefulness": "Parallel work lands as one working program, never as pieces."
+}
