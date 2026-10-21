@@ -1,0 +1,148 @@
+-- The save: 512 bytes the shell keeps on disk (it writes them when save_dirty is set). Settings, progress,
+-- lifetime stats and the achievements (one byte each from SAVE_ACH, which the launcher reads too).
+--   0..3 "VD", layout version, 0     4 music  5 sound  6 rings  7 difficulty  8 last fighter
+--   9 furthest stage   10 clears   11 clears on hard   12..15 duels   16..19 redirects   20..23 evades
+--   24..27 feint hits   28..31 posture breaks   32.. achievements   48..51 rounds won
+const SAVE_BYTES = 512
+const SAVE_ACH = 32
+const SAVE_LAYOUT = 1
+export array save: Byte[SAVE_BYTES]
+export global save_dirty: Int = 0
+global toast_ach: Int = -1
+global toast_t: Int = 0
+
+fn rd32(o: Int) -> Int = save[o] | (save[o + 1] << 8) | (save[o + 2] << 16) | (save[o + 3] << 24)
+fn wr32(o: Int, v: Int) {
+  save[o] = v & 0xFF
+  save[o + 1] = (v >> 8) & 0xFF
+  save[o + 2] = (v >> 16) & 0xFF
+  save[o + 3] = (v >> 24) & 0xFF
+}
+fn add32(o: Int, d: Int) {
+  wr32(o, min(0x7FFFFFFF, rd32(o) + d))
+  save_dirty = 1
+}
+fn save_valid() -> Bool = save[0] == 86 and save[1] == 68 and save[2] == SAVE_LAYOUT
+fn load_save() {
+  if not save_valid() {
+    for k in 0 .. SAVE_BYTES {
+      save[k] = 0
+    }
+    save[0] = 86
+    save[1] = 68
+    save[2] = SAVE_LAYOUT
+    save_settings()
+    return
+  }
+  vol_music = min(10, save[4])
+  vol_sfx = min(10, save[5])
+  rings_on = if save[6] != 0 then 1 else 0
+  difficulty = min(2, save[7])
+  player_ft = min(N_FIGHTERS - 1, save[8])
+}
+fn save_settings() {
+  save[4] = vol_music
+  save[5] = vol_sfx
+  save[6] = rings_on
+  save[7] = difficulty
+  save[8] = player_ft
+  save_dirty = 1
+}
+fn write_save() {
+  save_settings()
+}
+fn play_count() -> Int = rd32(12)
+fn note_duel_played() {
+  add32(12, 1)
+}
+fn record_win(s: Int) {
+  save[9] = max(save[9], min(255, s + 1))
+  save_dirty = 1
+  let kind = lad_ai[s]
+  if kind == AI_READER {
+    unlock(ACH_MIND_READER)
+  }
+  if kind == AI_EQUILIBRIUM {
+    unlock(ACH_BALANCE)
+  }
+}
+fn record_clear() {
+  save[10] = min(255, save[10] + 1)
+  if difficulty == 2 {
+    save[11] = min(255, save[11] + 1)
+    unlock(ACH_HARD_CLEAR)
+  }
+  unlock(ACH_ARCADE_CLEAR)
+  save_dirty = 1
+}
+fn ach_name(a: Int) -> Int = ach_str[a]
+fn unlocked(a: Int) -> Bool = save[SAVE_ACH + a] != 0
+fn unlock(a: Int) {
+  if training != 0 or versus != 0 {
+    return
+  }
+  if not unlocked(a) {
+    save[SAVE_ACH + a] = 1
+    save_dirty = 1
+    toast_ach = a
+    toast_t = 0
+    sfx(SFX_WIN)
+  }
+}
+fn human(i: Int) -> Bool = f_ctl[i] == AI_HUMAN
+fn achievement_round_won(i: Int, clean: Bool) {
+  if not human(i) {
+    return
+  }
+  add32(48, 1)
+  unlock(ACH_FIRST_BLOOD)
+  if clean {
+    unlock(ACH_UNTOUCHABLE)
+  }
+}
+fn achievement_progress_redirect(i: Int) {
+  if human(i) and training == 0 {
+    add32(16, 1)
+    unlock(ACH_REDIRECTOR)
+  }
+}
+fn achievement_progress_evade(i: Int) {
+  if human(i) and training == 0 {
+    add32(20, 1)
+    if rd32(20) >= 25 {
+      unlock(ACH_EVASION)
+    }
+  }
+}
+fn achievement_progress_break(i: Int) {
+  if human(i) and training == 0 {
+    add32(28, 1)
+    unlock(ACH_POSTURE_BREAKER)
+  }
+}
+fn achievement_progress_feint(i: Int) {
+  if human(i) and training == 0 {
+    add32(24, 1)
+    if rd32(24) >= 10 {
+      unlock(ACH_FEINT_MASTER)
+    }
+  }
+}
+fn draw_toast() {
+  if toast_ach < 0 {
+    return
+  }
+  toast_t += 1
+  if toast_t > 240 {
+    toast_ach = -1
+    return
+  }
+  let slide = if toast_t < 16 then (16 - toast_t) * 8 else (if toast_t > 220 then (toast_t - 220) * 8 else 0)
+  let x = SW - 214 + slide
+  let y = SH - 44
+  rect(x, y, 206, 36, 0x17141F)
+  frame_rect(x, y, 206, 36, 0xFFE070)
+  card_stack(x + 18, y + 18, 1, toast_t)
+  draw_str_sh(S_ACH, x + 36, y + 7, 1, 0xFFE070)
+  draw_str_sh(ach_name(toast_ach), x + 36, y + 20, 1, 0xFFFFFF)
+}

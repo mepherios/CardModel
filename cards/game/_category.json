@@ -1,0 +1,5 @@
+{
+  "name": "game",
+  "tier": 1,
+  "description": "Complete games as cards: the game card holds its data (strings, ladder, controls, achievements, store page, versions) and lists card-language logic files next to it; `cardmodel arcade build` compiles them through a language card into a native program for a platform card."
+}

@@ -1,0 +1,5 @@
+{
+  "name": "app",
+  "tier": 1,
+  "description": "Applications the card model builds for a platform that are not games: their native sources and pages are files next to card.json."
+}

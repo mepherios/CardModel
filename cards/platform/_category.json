@@ -1,0 +1,5 @@
+{
+  "name": "platform",
+  "tier": 1,
+  "description": "How a card-model program becomes a native program on an operating system: which language card emits it, which effect shell (window, input, sound, files) runs it, how the package is laid out. The shell's sources are files next to card.json."
+}

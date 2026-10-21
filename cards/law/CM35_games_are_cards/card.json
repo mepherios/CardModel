@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM35_games_are_cards",
+  "origins": [
+    "user requirement 2026-10-21 (a complete native game made purely through the card model, run through a launcher)",
+    "CM21",
+    "CM34"
+  ],
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "A game is its cards: data cards (moves, fighters, font, strings, music, ladder, achievements) and card-language logic, compiled through a language card into one module that decides everything the player sees, hears and plays against. The platform card's effect shell only moves pixels, samples, buttons and save bytes, and knows nothing of the game; the launcher and the arcade service build, ship and verify it but never change it.",
+  "tier": 0,
+  "witness": "tests/test_arcade.py::test_a_timed_guard_redirects"
+}

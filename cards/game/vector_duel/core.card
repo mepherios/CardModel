@@ -1,0 +1,96 @@
+-- Vector Duel: the frame loop. The shell calls game_init once, then game_frame once per frame (60 Hz) with the
+-- buttons held by each player (bits in the order of the game card's input.bits). It shows fb, plays audio and
+-- keeps save; it does nothing else. Everything the player sees, hears and decides against is decided here.
+const B_UP = 1
+const B_DOWN = 2
+const B_LEFT = 4
+const B_RIGHT = 8
+const B_ATTACK = 16
+const B_HEAVY = 32
+const B_GUARD = 64
+const B_EVADE = 128
+const B_FEINT = 256
+const B_CATCH = 512
+const B_PAUSE = 1024
+const B_CONFIRM = 2048
+const B_BACK = 4096
+const B_DIRS = 15
+const FPS = 60
+
+const SCR_BOOT = 0
+const SCR_TITLE = 1
+const SCR_SELECT = 2
+const SCR_LADDER = 3
+const SCR_DUEL = 4
+const SCR_RESULT = 5
+const SCR_OPTIONS = 6
+const SCR_CREDITS = 7
+
+export global frame_no: Int = 0
+export global quit_req: Int = 0
+export global fullscreen_req: Int = 0
+global scr: Int = 0
+global scr_t: Int = 0
+global held1: Int = 0
+global press1: Int = 0
+global prev1: Int = 0
+global held2: Int = 0
+global press2: Int = 0
+global prev2: Int = 0
+global rng: Int = 0x2545F491
+
+-- xorshift32: the one source of chance (seeded, so a duel replays exactly from its inputs)
+fn rnd(n: Int) -> Int {
+  var x = rng
+  x = x ^ ((x << 13) & 0xFFFFFFFF)
+  x = x ^ (x >> 17)
+  x = x ^ ((x << 5) & 0xFFFFFFFF)
+  rng = x & 0xFFFFFFFF
+  if n <= 0 {
+    return 0
+  }
+  return rng % n
+}
+fn go(s: Int) {
+  scr = s
+  scr_t = 0
+}
+fn pressed(b: Int) -> Bool = (press1 & b) != 0
+fn either_pressed(b: Int) -> Bool = ((press1 | press2) & b) != 0
+-- menus: up / down by one (with wrap), confirm, back
+fn menu_step(cur: Int, n: Int) -> Int {
+  var s = cur
+  if either_pressed(B_UP) {
+    s = (s + n - 1) % n
+    sfx(SFX_MOVE)
+  }
+  if either_pressed(B_DOWN) {
+    s = (s + 1) % n
+    sfx(SFX_MOVE)
+  }
+  return s
+}
+fn confirm_pressed() -> Bool = either_pressed(B_CONFIRM) or either_pressed(B_ATTACK)
+fn back_pressed() -> Bool = either_pressed(B_BACK)
+
+export fn game_init() {
+  fb_init()
+  load_save()
+  audio_init()
+  rng = 0x2545F491 ^ (play_count() * 7919)
+  go(SCR_BOOT)
+}
+export fn game_frame(input: Int, input2: Int) -> Int {
+  press1 = input & (~prev1)
+  prev1 = input
+  held1 = input
+  press2 = input2 & (~prev2)
+  prev2 = input2
+  held2 = input2
+  screens_update()
+  screens_draw()
+  audio_frame()
+  scr_t += 1
+  frame_no += 1
+  return quit_req
+}

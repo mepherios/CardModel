@@ -1,0 +1,258 @@
+-- Sound: 48 kHz stereo, signed 16-bit, little endian, 800 samples a frame into `audio` (the shell drains it).
+-- Four effect voices and three music voices (lead square, bass triangle, drum noise). A voice is a phase
+-- accumulator (65536 = one cycle; note_inc gives the step for a MIDI note), a slide, an envelope that decays
+-- to silence, and for effects an arpeggio of up to four notes. Music is the game card's tracks, stepped in
+-- sixteenths at the track's tempo.
+const RATE = 48000
+const SPF = 800
+const AUDIO_BYTES = 16384
+const NV = 7
+const VOICE_SFX = 4
+const W_SQUARE = 0
+const W_TRI = 1
+const W_NOISE = 2
+
+const SFX_MOVE = 0
+const SFX_CONFIRM = 1
+const SFX_BACK = 2
+const SFX_WINDUP = 3
+const SFX_SWING = 4
+const SFX_WHIFF = 5
+const SFX_STEP = 6
+const SFX_HIT = 7
+const SFX_HEAVY_HIT = 8
+const SFX_BLOCK = 9
+const SFX_CLASH = 10
+const SFX_REDIRECT = 11
+const SFX_BREAK = 12
+const SFX_FEINT = 13
+const SFX_BELL = 14
+const SFX_KO = 15
+const SFX_WIN = 16
+const SFX_LOSE = 17
+
+export array audio: Byte[AUDIO_BYTES]
+export global audio_n: Int = 0
+global vol_music: Int = 6
+global vol_sfx: Int = 8
+
+array v_wave: Int[7]
+array v_phase: Int[7]
+array v_inc: Int[7]
+array v_slide: Int[7]
+array v_vol: Int[7]
+array v_decay: Int[7]
+array v_left: Int[7]
+array v_duty: Int[7]
+array v_lfsr: Int[7]
+array v_noise: Int[7]
+array v_arp: Int[28]
+array v_arp_len: Int[7]
+array v_arp_t: Int[7]
+array v_arp_k: Int[7]
+array v_pan: Int[7]
+
+global mus_track: Int = -1
+global mus_step: Int = 0
+global mus_t: Int = 0
+global sfx_next: Int = 0
+
+fn audio_init() {
+  for v in 0 .. NV {
+    v_left[v] = 0
+    v_lfsr[v] = 0x7FFF
+    v_pan[v] = 128
+  }
+}
+fn ms(n: Int) -> Int = n * RATE // 1000
+-- start voice v: wave, note (MIDI), slide per sample (x 1/256 of the step), volume (0..4096), length in ms
+fn voice(v: Int, w: Int, note: Int, slide: Int, vol: Int, len_ms: Int) {
+  v_wave[v] = w
+  v_phase[v] = 0
+  v_inc[v] = note_inc[max(0, min(127, note))]
+  v_slide[v] = slide
+  v_vol[v] = vol * 256
+  v_left[v] = max(1, ms(len_ms))
+  v_decay[v] = v_vol[v] // v_left[v]
+  v_duty[v] = 32768
+  v_arp_len[v] = 0
+  v_noise[v] = 0
+}
+fn arp(v: Int, n0: Int, n1: Int, n2: Int, n3: Int, step_ms: Int) {
+  v_arp[v * 4] = n0
+  v_arp[v * 4 + 1] = n1
+  v_arp[v * 4 + 2] = n2
+  v_arp[v * 4 + 3] = n3
+  v_arp_len[v] = ms(step_ms)
+  v_arp_t[v] = 0
+  v_arp_k[v] = 0
+}
+fn sfx_voice() -> Int {
+  let v = sfx_next
+  sfx_next = (sfx_next + 1) % VOICE_SFX
+  return v
+}
+fn sfx(id: Int) {
+  if vol_sfx <= 0 {
+    return
+  }
+  let v = sfx_voice()
+  if id == SFX_MOVE {
+    voice(v, W_SQUARE, 84, 0, 700, 30)
+  } elif id == SFX_CONFIRM {
+    voice(v, W_SQUARE, 76, 0, 900, 120)
+    arp(v, 76, 83, 88, 88, 40)
+  } elif id == SFX_BACK {
+    voice(v, W_SQUARE, 70, 0, 800, 100)
+    arp(v, 70, 63, 58, 58, 35)
+  } elif id == SFX_WINDUP {
+    voice(v, W_NOISE, 60, 0, 350, 120)
+    v_noise[v] = 2
+  } elif id == SFX_SWING {
+    voice(v, W_NOISE, 96, -6, 1300, 110)
+  } elif id == SFX_WHIFF {
+    voice(v, W_NOISE, 90, -8, 600, 70)
+  } elif id == SFX_STEP {
+    voice(v, W_NOISE, 50, 0, 600, 30)
+    v_noise[v] = 3
+  } elif id == SFX_HIT {
+    voice(v, W_NOISE, 70, -2, 2200, 130)
+    let w = sfx_voice()
+    voice(w, W_SQUARE, 40, -3, 1500, 110)
+  } elif id == SFX_HEAVY_HIT {
+    voice(v, W_NOISE, 60, -2, 2800, 240)
+    let w = sfx_voice()
+    voice(w, W_TRI, 33, -2, 3200, 260)
+  } elif id == SFX_BLOCK {
+    voice(v, W_SQUARE, 90, 0, 1400, 90)
+    v_duty[v] = 12000
+    let w = sfx_voice()
+    voice(w, W_NOISE, 84, -4, 900, 60)
+  } elif id == SFX_CLASH {
+    voice(v, W_SQUARE, 95, 0, 1600, 200)
+    v_duty[v] = 9000
+    let w = sfx_voice()
+    voice(w, W_SQUARE, 101, 0, 1100, 160)
+  } elif id == SFX_REDIRECT {
+    voice(v, W_SQUARE, 84, 0, 1800, 460)
+    arp(v, 84, 88, 91, 96, 70)
+    let w = sfx_voice()
+    voice(w, W_SQUARE, 96, 0, 1200, 300)
+    v_duty[w] = 8000
+  } elif id == SFX_BREAK {
+    voice(v, W_SQUARE, 72, -10, 1800, 320)
+    let w = sfx_voice()
+    voice(w, W_NOISE, 66, -3, 1500, 260)
+  } elif id == SFX_FEINT {
+    voice(v, W_SQUARE, 88, 4, 800, 40)
+  } elif id == SFX_BELL {
+    voice(v, W_TRI, 45, 0, 3000, 950)
+    let w = sfx_voice()
+    voice(w, W_SQUARE, 57, 0, 700, 700)
+    v_duty[w] = 6000
+  } elif id == SFX_KO {
+    voice(v, W_TRI, 40, -1, 3400, 900)
+    let w = sfx_voice()
+    voice(w, W_NOISE, 55, -1, 1800, 600)
+  } elif id == SFX_WIN {
+    voice(v, W_SQUARE, 72, 0, 1600, 700)
+    arp(v, 72, 76, 79, 84, 110)
+  } elif id == SFX_LOSE {
+    voice(v, W_SQUARE, 72, 0, 1500, 800)
+    arp(v, 72, 68, 63, 60, 140)
+  }
+}
+fn music(t: Int) {
+  if t != mus_track {
+    mus_track = t
+    mus_step = 0
+    mus_t = 0
+  }
+}
+fn music_step() {
+  if mus_track < 0 or vol_music <= 0 {
+    return
+  }
+  let base = mus_track * MUS_STEPS + mus_step
+  let lead = mus_lead[base]
+  let bass = mus_bass[base]
+  let drum = mus_drum[base]
+  if lead > 0 {
+    voice(4, W_SQUARE, lead, 0, 700, 180)
+    v_duty[4] = 16384
+  }
+  if bass > 0 {
+    voice(5, W_TRI, bass, 0, 1500, 210)
+  }
+  if drum == 1 {
+    voice(6, W_TRI, 36, -40, 2600, 90)
+  } elif drum == 2 {
+    voice(6, W_NOISE, 80, 0, 1300, 90)
+  } elif drum == 3 {
+    voice(6, W_NOISE, 100, 0, 450, 25)
+  }
+  mus_step = (mus_step + 1) % mus_len[mus_track]
+}
+-- one sample of voice v (signed, about +-4096 at full volume)
+fn voice_sample(v: Int) -> Int {
+  if v_left[v] <= 0 {
+    return 0
+  }
+  v_left[v] -= 1
+  if v_arp_len[v] > 0 {
+    v_arp_t[v] += 1
+    if v_arp_t[v] >= v_arp_len[v] {
+      v_arp_t[v] = 0
+      v_arp_k[v] = min(3, v_arp_k[v] + 1)
+      v_inc[v] = note_inc[v_arp[v * 4 + v_arp_k[v]]]
+    }
+  }
+  v_inc[v] = max(1, v_inc[v] + v_inc[v] * v_slide[v] // 65536)
+  v_phase[v] = (v_phase[v] + v_inc[v]) & 0xFFFFFF
+  let ph = v_phase[v] & 0xFFFF
+  var s = 0
+  if v_wave[v] == W_SQUARE {
+    s = if ph < v_duty[v] then 4096 else -4096
+  } elif v_wave[v] == W_TRI {
+    s = if ph < 32768 then ph // 4 - 4096 else (65535 - ph) // 4 - 4096
+  } else {
+    if (v_phase[v] >> (16 - v_noise[v])) != ((v_phase[v] - v_inc[v]) >> (16 - v_noise[v])) {
+      let bit = (v_lfsr[v] ^ (v_lfsr[v] >> 1)) & 1
+      v_lfsr[v] = (v_lfsr[v] >> 1) | (bit << 14)
+    }
+    s = if (v_lfsr[v] & 1) != 0 then 4096 else -4096
+  }
+  let out = s * (v_vol[v] >> 8) // 4096
+  v_vol[v] = max(0, v_vol[v] - v_decay[v])
+  return out
+}
+fn audio_frame() {
+  if audio_n + SPF * 4 > AUDIO_BYTES {
+    audio_n = 0
+  }
+  let step_len = if mus_track >= 0 then RATE * 15 // max(40, mus_bpm[mus_track]) else 0
+  for n in 0 .. SPF {
+    if step_len > 0 {
+      mus_t += 1
+      if mus_t >= step_len {
+        mus_t = 0
+        music_step()
+      }
+    }
+    var sfx_mix = 0
+    for v in 0 .. VOICE_SFX {
+      sfx_mix += voice_sample(v)
+    }
+    var mus_mix = 0
+    for v in VOICE_SFX .. NV {
+      mus_mix += voice_sample(v)
+    }
+    var s = (sfx_mix * vol_sfx // 10 + mus_mix * vol_music * 6 // 100) * 3
+    s = max(-32767, min(32767, s))
+    audio[audio_n] = s & 0xFF
+    audio[audio_n + 1] = (s >> 8) & 0xFF
+    audio[audio_n + 2] = s & 0xFF
+    audio[audio_n + 3] = (s >> 8) & 0xFF
+    audio_n += 4
+  }
+}

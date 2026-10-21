@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardmodel Arcade</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header id="top">
+  <div class="drag"></div>
+  <div class="nav">
+    <button class="arrow" id="back" title="Back">&#8249;</button>
+    <button class="arrow" id="fwd" title="Forward">&#8250;</button>
+    <a data-view="store" class="tab">STORE</a>
+    <a data-view="library" class="tab">LIBRARY</a>
+    <a data-view="news" class="tab">NEWS</a>
+    <a data-view="profile" class="tab" id="usertab">YOU</a>
+  </div>
+  <div class="right">
+    <span id="service" class="dot" title="Arcade service"></span>
+    <span id="username"></span>
+    <button id="settings-btn" class="iconbtn" title="Settings">&#9881;</button>
+  </div>
+</header>
+
+<main id="view"></main>
+
+<footer id="bottom">
+  <a id="dl-link" class="dl">
+    <span class="dl-label">DOWNLOADS</span>
+    <span id="dl-mini">Manage</span>
+    <span class="dl-bar"><span id="dl-mini-fill"></span></span>
+  </a>
+  <span class="spacer"></span>
+  <span class="friends">Built from cards &middot; every rule is a card</span>
+</footer>
+
+<div id="modal" class="hidden"></div>
+<div id="toast" class="hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>

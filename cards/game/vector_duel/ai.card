@@ -1,0 +1,526 @@
+-- The opponents press buttons, like a player: ai_bits(i) is the controller of fighter i for this frame. They
+-- see what a player sees: the other fighter's tell (the direction its move shows, once the tell has been up
+-- for their reaction time, and only if the move is readable: startup of REACTION frames or more), its guard,
+-- its distance. Kinds (game card ladder):
+--   habit        overheads, and a high guard against everything
+--   greedy       punishes recoveries with its fastest attack, otherwise plays at random
+--   reader       counts which vector features you lean on (decaying), attacks where you do not guard,
+--                pre-guards where you attack, and mixes in the equilibrium a quarter of the time
+--   equilibrium  samples the exact equilibrium the model computed for this pair and distance (eq_w)
+--   boss         the reader with sharper reactions and timing
+--   dummy        training: what the training options say
+const AI_THINK = 9
+const READ_DECAY = 230
+const READ_ONE = 256
+
+array ai_plan: Int[2]          -- a move to start when able (-1 none)
+array ai_wait: Int[2]          -- frames before the next decision
+array ai_guard_dir: Int[2]     -- a guard being held (NO_DIR: none)
+array ai_guard_until: Int[2]   -- duel frame to hold it to
+array ai_raise_at: Int[2]      -- duel frame to raise it at
+array ai_reacted: Int[2]       -- the opponent's move this AI has already reacted to (its start frame)
+array ai_level: Int[2]
+array ai_walk: Int[2]
+-- what the reader has seen of the human (fighter index 0 normally): per direction 0..8 attacks and guards
+array rd_att: Int[18]
+array rd_grd: Int[18]
+array rd_kind: Int[16]
+global dummy_mode: Int = 0
+global difficulty: Int = 1
+
+fn ai_duel_setup() {
+  for k in 0 .. 18 {
+    rd_att[k] = 0
+    rd_grd[k] = 0
+  }
+  for k in 0 .. 16 {
+    rd_kind[k] = 0
+  }
+}
+fn ai_round_setup() {
+  for i in 0 .. 2 {
+    ai_plan[i] = -1
+    ai_wait[i] = 30 + rnd(20)
+    ai_guard_dir[i] = NO_DIR
+    ai_guard_until[i] = 0
+    ai_raise_at[i] = -1
+    ai_reacted[i] = -1
+    ai_walk[i] = 0
+  }
+}
+-- observer i saw the other start move m: the reader keeps a decaying count per feature
+fn ai_saw_attack(i: Int, m: Int) {
+  let d = mv_dir[m]
+  for k in 0 .. 9 {
+    rd_att[i * 9 + k] = rd_att[i * 9 + k] * READ_DECAY // 256
+  }
+  if d >= 0 and d <= 8 {
+    rd_att[i * 9 + d] += READ_ONE
+  }
+  rd_kind[i * 8 + mv_kind[m]] = rd_kind[i * 8 + mv_kind[m]] * READ_DECAY // 256 + READ_ONE
+}
+fn ai_saw_guard(i: Int, d: Int) {
+  for k in 0 .. 9 {
+    rd_grd[i * 9 + k] = rd_grd[i * 9 + k] * READ_DECAY // 256
+  }
+  if d >= 0 and d <= 8 {
+    rd_grd[i * 9 + d] += READ_ONE
+  }
+}
+-- what the reader thinks the other leans on: (direction, share x 100), NO_DIR when it has seen too little
+fn read_top(i: Int) -> Int {
+  var best = NO_DIR
+  var bv = 0
+  var total = 0
+  for k in 0 .. 9 {
+    total += rd_att[i * 9 + k]
+    if rd_att[i * 9 + k] > bv {
+      bv = rd_att[i * 9 + k]
+      best = k
+    }
+  }
+  if total < READ_ONE * 2 {
+    return NO_DIR
+  }
+  return best
+}
+fn read_share(i: Int) -> Int {
+  var total = 0
+  var bv = 0
+  for k in 0 .. 9 {
+    total += rd_att[i * 9 + k]
+    bv = max(bv, rd_att[i * 9 + k])
+  }
+  return if total > 0 then bv * 100 // total else 0
+}
+fn guard_share(i: Int, d: Int) -> Int {
+  var total = 1
+  for k in 0 .. 9 {
+    total += rd_grd[i * 9 + k]
+  }
+  return rd_grd[i * 9 + d] * 100 // total
+}
+
+-- how sharp each level is: reaction (frames), the chance to read the right vector and to time it perfectly
+fn ai_react(i: Int) -> Int = max(4, 22 - ai_level[i] * 3 - difficulty * 2)
+fn ai_accuracy(i: Int) -> Int = min(96, 30 + ai_level[i] * 10 + difficulty * 8)
+fn ai_perfect(i: Int) -> Int = min(85, ai_level[i] * 9 + difficulty * 8)
+
+-- the buttons that ask for move m (the inverse of `wanted`), facing included
+fn dir_bits(i: Int, d: Int) -> Int {
+  if d == 0 {
+    return B_RIGHT
+  }
+  if d == 1 {
+    return B_UP | B_RIGHT
+  }
+  if d == 2 {
+    return B_UP
+  }
+  if d == 3 {
+    return B_UP | B_LEFT
+  }
+  if d == 4 {
+    return B_LEFT
+  }
+  if d == 5 {
+    return B_DOWN | B_LEFT
+  }
+  if d == 6 {
+    return B_DOWN
+  }
+  if d == 7 {
+    return B_DOWN | B_RIGHT
+  }
+  return 0
+}
+fn fwd_bits(i: Int, w: Int) -> Int {
+  if w == 0 {
+    return 0
+  }
+  return if w * f_face[i] > 0 then B_RIGHT else B_LEFT
+}
+fn bits_for(i: Int, m: Int) -> Int {
+  let k = mv_kind[m]
+  if m == MV_ROLL {
+    return B_EVADE
+  }
+  if m == MV_JUMP {
+    return B_EVADE | B_UP
+  }
+  if m == MV_DUCK {
+    return B_EVADE | B_DOWN
+  }
+  if m == MV_SIDESTEP {
+    return B_EVADE | fwd_bits(i, 1)
+  }
+  if m == MV_BACKSTEP {
+    return B_EVADE | fwd_bits(i, -1)
+  }
+  if m == MV_ADVANCE {
+    return fwd_bits(i, 1)
+  }
+  if m == MV_STEP_IN {
+    return B_CATCH
+  }
+  if m == MV_FEINT_OVERHEAD {
+    return B_FEINT
+  }
+  if m == MV_GRAB {
+    return B_HEAVY | fwd_bits(i, 1)
+  }
+  if m == MV_JAB {
+    return B_HEAVY
+  }
+  if m == MV_HEAVY_OVERHEAD {
+    return B_HEAVY | B_UP
+  }
+  if m == MV_SWEEP {
+    return B_HEAVY | B_DOWN
+  }
+  if k == K_GUARD {
+    return B_GUARD | dir_bits(i, mv_dir[m])
+  }
+  if k == K_ATTACK {
+    if m == MV_DIAGONAL {
+      return B_ATTACK | B_UP | B_RIGHT
+    }
+    return B_ATTACK | dir_bits(i, mv_dir[m])
+  }
+  return 0
+}
+-- the guard that faces direction d best, among the fighter's guards
+fn best_guard(i: Int, d: Int) -> Int {
+  var best = -1
+  var bv = -9
+  for m in 0 .. N_MOVES {
+    if mv_kind[m] == K_GUARD and has_move(i, m) {
+      let a = align(min(8, d), mv_dir[m])
+      if a > bv {
+        bv = a
+        best = m
+      }
+    }
+  }
+  return best
+}
+-- a random move of kind k the fighter has (-1 none)
+fn some_move(i: Int, k: Int) -> Int {
+  var n = 0
+  for m in 0 .. N_MOVES {
+    if mv_kind[m] == k and has_move(i, m) {
+      n += 1
+    }
+  }
+  if n == 0 {
+    return -1
+  }
+  var pick_n = rnd(n)
+  for m in 0 .. N_MOVES {
+    if mv_kind[m] == k and has_move(i, m) {
+      if pick_n == 0 {
+        return m
+      }
+      pick_n -= 1
+    }
+  }
+  return -1
+}
+-- an attack whose reach covers the current distance; prefer direction d (NO_DIR: any)
+fn attack_in_reach(i: Int, avoid_dir: Int) -> Int {
+  let b = band()
+  var best = -1
+  var bv = -1
+  for m in 0 .. N_MOVES {
+    let k = mv_kind[m]
+    if (k == K_ATTACK or k == K_GRAB or k == K_FEINT) and has_move(i, m) and f_stam[i] >= mv_stamina[m] {
+      let reach_ok = (k == K_FEINT) or (b >= mv_reach_lo[m] and b <= mv_reach_hi[m] + mv_lunge[m])
+      if reach_ok {
+        var v = 40 + rnd(60)
+        if avoid_dir != NO_DIR and mv_dir[m] == avoid_dir {
+          v -= 50
+        }
+        if v > bv {
+          bv = v
+          best = m
+        }
+      }
+    }
+  }
+  return best
+}
+-- the equilibrium's choice for fighter i against the other at this distance
+fn eq_move(i: Int) -> Int {
+  let base = ((f_ft[i] * N_FIGHTERS + f_ft[other(i)]) * 3 + band()) * N_MOVES
+  var total = 0
+  for m in 0 .. N_MOVES {
+    total += eq_w[base + m]
+  }
+  if total <= 0 {
+    return -1
+  }
+  var r = rnd(total)
+  for m in 0 .. N_MOVES {
+    r -= eq_w[base + m]
+    if r < 0 {
+      return m
+    }
+  }
+  return -1
+}
+
+-- react to the other's tell: a guard toward what it shows (right with the AI's accuracy), raised so that it is
+-- up a few frames before the impact (perfect with the AI's timing), or an evade that slips it
+fn react(i: Int) {
+  let j = other(i)
+  let m = f_move[j]
+  if m < 0 or not in_startup(j) {
+    return
+  }
+  let start = duel_t - f_t[j]
+  if ai_reacted[i] == start {
+    return
+  }
+  if f_t[j] < ai_react(i) {
+    return
+  }
+  ai_reacted[i] = start
+  let readable = f_start[j] >= REACTION
+  let impact_at = start + f_start[j]
+  let kind = ai_kind(i)
+  let r_read = rnd(100)
+  let r_slip = rnd(100)
+  let r_time = rnd(100)
+  let r_dir = rnd(18)
+  if mv_kind[m] == K_GRAB {
+    if r_read < ai_accuracy(i) {
+      if has_move(i, MV_JUMP) {
+        ai_plan[i] = MV_JUMP
+      } elif has_move(i, MV_ROLL) {
+        ai_plan[i] = MV_ROLL
+      }
+    }
+    return
+  }
+  var d = f_shown[j]
+  if not readable or r_read >= ai_accuracy(i) {
+    d = if r_dir < 9 then 2 else r_dir - 9
+  }
+  if kind == AI_HABIT {
+    d = 2
+  }
+  -- sometimes slip it instead (the right evade for its tags)
+  if readable and kind != AI_HABIT and r_slip < 18 {
+    let tags = mv_tags[m]
+    if (tags & TAG_HIGH) != 0 and has_move(i, MV_DUCK) {
+      ai_plan[i] = MV_DUCK
+      return
+    }
+    if (tags & TAG_LINEAR) != 0 and has_move(i, MV_SIDESTEP) {
+      ai_plan[i] = MV_SIDESTEP
+      return
+    }
+    if (tags & (TAG_LOW | TAG_LOW_START)) != 0 and has_move(i, MV_JUMP) {
+      ai_plan[i] = MV_JUMP
+      return
+    }
+  }
+  let g = best_guard(i, d)
+  if g < 0 {
+    return
+  }
+  ai_guard_dir[i] = mv_dir[g]
+  -- perfect: up 1..3 frames before the impact (the guard takes its startup to come up)
+  if readable and r_time < ai_perfect(i) {
+    ai_raise_at[i] = impact_at - mv_startup[g] - 1 - rnd(3)
+  } else {
+    ai_raise_at[i] = duel_t
+  }
+  ai_guard_until[i] = impact_at + 8
+}
+
+fn ai_kind(i: Int) -> Int = f_ctl[i]
+
+fn ai_offense(i: Int) -> Int {
+  let j = other(i)
+  let kind = ai_kind(i)
+  let r_pick = rnd(6)
+  if kind == AI_HABIT {
+    if has_move(i, MV_OVERHEAD) and r_pick < 4 {
+      return MV_OVERHEAD
+    }
+    return attack_in_reach(i, NO_DIR)
+  }
+  if kind == AI_GREEDY {
+    -- the other is recovering: the fastest attack in reach
+    if f_move[j] >= 0 and f_t[j] > f_start[j] and not guard_up(j) {
+      var best = -1
+      var bs = 99
+      for m in 0 .. N_MOVES {
+        if mv_kind[m] == K_ATTACK and has_move(i, m) and band() >= mv_reach_lo[m] and band() <= mv_reach_hi[m] + mv_lunge[m] {
+          if mv_startup[m] < bs {
+            bs = mv_startup[m]
+            best = m
+          }
+        }
+      }
+      if best >= 0 {
+        return best
+      }
+    }
+    return attack_in_reach(i, NO_DIR)
+  }
+  if kind == AI_EQUILIBRIUM {
+    return eq_move(i)
+  }
+  if kind == AI_READER or kind == AI_BOSS {
+    if rnd(100) < 25 {
+      return eq_move(i)
+    }
+    -- attack where it guards least; a guard-heavy player gets grabbed or feinted
+    var guards = 0
+    var atks = 0
+    for k in 0 .. 9 {
+      guards += rd_grd[i * 9 + k]
+      atks += rd_att[i * 9 + k]
+    }
+    if guards > atks * 2 + READ_ONE * 2 {
+      if has_move(i, MV_GRAB) and r_pick < 3 {
+        return MV_GRAB
+      }
+      if has_move(i, MV_FEINT_OVERHEAD) {
+        return MV_FEINT_OVERHEAD
+      }
+    }
+    var most = 0
+    var most_d = NO_DIR
+    for k in 0 .. 9 {
+      if rd_grd[i * 9 + k] > most {
+        most = rd_grd[i * 9 + k]
+        most_d = k
+      }
+    }
+    return attack_in_reach(i, most_d)
+  }
+  return attack_in_reach(i, NO_DIR)
+}
+
+fn dummy_bits(i: Int) -> Int {
+  if dummy_mode == 0 {
+    return 0
+  }
+  if dummy_mode == 1 {
+    react(i)
+    return ai_guard_bits(i) | (if ai_guard_dir[i] == NO_DIR then B_GUARD | B_UP else 0)
+  }
+  if dummy_mode == 2 {
+    if idle(i) and band() <= 1 and duel_t % 50 == 0 {
+      return bits_for(i, attack_in_reach(i, NO_DIR))
+    }
+    if band() > 1 {
+      return fwd_bits(i, 1)
+    }
+    return 0
+  }
+  return reader_bits(i)
+}
+-- the held guard the plan asks for this frame
+fn ai_guard_bits(i: Int) -> Int {
+  if ai_guard_dir[i] == NO_DIR {
+    return 0
+  }
+  if duel_t > ai_guard_until[i] {
+    ai_guard_dir[i] = NO_DIR
+    return 0
+  }
+  if duel_t < ai_raise_at[i] {
+    return 0
+  }
+  return B_GUARD | dir_bits(i, ai_guard_dir[i])
+}
+fn reader_bits(i: Int) -> Int {
+  react(i)
+  let gb = ai_guard_bits(i)
+  if gb != 0 {
+    return gb
+  }
+  if ai_plan[i] >= 0 {
+    let m = ai_plan[i]
+    if idle(i) {
+      ai_plan[i] = -1
+      if allowed(i, m) {
+        return bits_for(i, m)
+      }
+    }
+    return 0
+  }
+  if not idle(i) {
+    return 0
+  }
+  ai_wait[i] -= 1
+  let b = band()
+  let j = other(i)
+  -- spacing: close in from far, sometimes give ground
+  if b == 2 {
+    if rnd(100) < 70 {
+      return fwd_bits(i, 1)
+    }
+    let r_far = rnd(4)
+    if ai_wait[i] <= 0 and has_move(i, MV_THRUST) and r_far == 0 {
+      ai_wait[i] = AI_THINK + rnd(14)
+      return bits_for(i, MV_THRUST)
+    }
+    return 0
+  }
+  if ai_wait[i] > 0 {
+    -- footwork: shuffle in and out while waiting (out when too close)
+    let r_step = rnd(100)
+    let r_way = rnd(2)
+    let r_len = 6 + rnd(14)
+    if ai_walk[i] == 0 and r_step < 4 {
+      ai_walk[i] = if b == 0 or r_way == 0 then -r_len else r_len
+    }
+    if ai_walk[i] != 0 {
+      let w = if ai_walk[i] > 0 then 1 else -1
+      ai_walk[i] -= w
+      return fwd_bits(i, w)
+    }
+    -- waiting: the reader pre-guards where you tend to attack
+    let kind = ai_kind(i)
+    let r_pre = rnd(100)
+    let r_back = rnd(30)
+    if (kind == AI_READER or kind == AI_BOSS) and read_top(i) != NO_DIR and not in_startup(j) and r_pre < 4 {
+      let g = best_guard(i, read_top(i))
+      if g >= 0 {
+        ai_guard_dir[i] = mv_dir[g]
+        ai_raise_at[i] = duel_t
+        ai_guard_until[i] = duel_t + 12
+      }
+    }
+    if f_stam[i] < f_stammax[i] // 4 and r_back == 0 {
+      return bits_for(i, MV_BACKSTEP)
+    }
+    return 0
+  }
+  ai_wait[i] = 16 + rnd(max(8, 64 - ai_level[i] * 9 - difficulty * 6))
+  let m = ai_offense(i)
+  if m < 0 {
+    return 0
+  }
+  if mv_kind[m] == K_GUARD {
+    ai_guard_dir[i] = mv_dir[m]
+    ai_raise_at[i] = duel_t
+    ai_guard_until[i] = duel_t + 16 + rnd(16)
+    return B_GUARD | dir_bits(i, mv_dir[m])
+  }
+  if allowed(i, m) {
+    return bits_for(i, m)
+  }
+  return 0
+}
+fn ai_bits(i: Int) -> Int {
+  if ai_kind(i) == AI_DUMMY {
+    return dummy_bits(i)
+  }
+  return reader_bits(i)
+}

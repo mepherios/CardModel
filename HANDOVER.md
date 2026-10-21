@@ -329,6 +329,30 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   `verify` checks every instruction card in every engine; `machine diff` checks lifting; `machine survey` the
   collection.
 
+## 3g. The arcade: a native game built from cards, and its launcher (fourth build)
+
+```bash
+./bin/cardmodel arcade launcher --install
+```
+
+```bash
+./bin/cardmodel arcade build vector_duel
+```
+
+* **Vector Duel** (`cards/game/vector_duel`): the game card holds the data (strings, music, ladder, achievements,
+  store text, versions); its eight `.card` files are the whole game (frame loop, software renderer, duel on the
+  move cards and the combat kernel, AIs, drawing, screens, synth, save). `arcade/gen.py` turns the data cards into
+  tables and solves the exact equilibria the equilibrium AI samples. docs/ARCADE.md describes it.
+* **The pipeline** (`arcade/build.py`): module -> C card -> `game.dylib`; the platform card's Swift effect shell;
+  store pictures drawn by the game; a bundle; a depot of SHA-256 chunks. **The service** (`arcade serve`) builds
+  on demand when the cards change and serves catalog, manifests, chunks, pictures and the launcher's pages.
+* **The launcher** (`cards/app/arcade`): downloads with every chunk checked, delta updates, verify, play time,
+  achievements from the save. It lives in ~/Applications and keeps its data in
+  ~/Library/Application Support/Cardmodel Arcade.
+* **Shipping an update**: change the game's cards, bump `version` and add a `changelog` entry in its card.json; the
+  launcher shows Update with the notes, and the service compiles the new build when the player asks for it.
+* Witnesses: `tests/test_arcade.py` (CM35).
+
 ## 4. How to add things
 
 **A card.** Run `cardmodel new <registry> <name> --statement "..."`, or write `cards/<registry>/<name>/card.json`
