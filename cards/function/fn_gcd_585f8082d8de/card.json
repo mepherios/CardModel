@@ -1,0 +1,571 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ABS",
+    "op/CMP_NE",
+    "op/MOD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef gcd(a: int, b: int) -> int:\n    while b != 0:\n        a, b = b, a % b\n    return abs(a)",
+      "cost": 1.0,
+      "entry": "gcd",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t gcd(int64_t a, int64_t b) {\n    int64_t cm_t1 = 0;\n    int64_t cm_t2 = 0;\n    while ((b != INT64_C(0))) {\n        cm_t1 = b;\n        cm_t2 = cm_floormod(a, b);\n        a = cm_t1;\n        b = cm_t2;\n    }\n    return cm_abs_i(a);\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_abs_i(a int64) int64 {\n\tif a < 0 {\n\t\treturn -a\n\t}\n\treturn a\n}\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc gcd(a int64, b int64) int64 {\n\tvar cm_t1 int64 = 0\n\t_ = cm_t1\n\tvar cm_t2 int64 = 0\n\t_ = cm_t2\n\tfor (b != int64(0)) {\n\t\tcm_t1 = b\n\t\tcm_t2 = cm_floormod(a, b)\n\t\ta = cm_t1\n\t\tb = cm_t2\n\t}\n\treturn cm_abs_i(a)\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction gcd(a, b) {\n    let cm_t1 = 0n;\n    let cm_t2 = 0n;\n    while ((b !== (0n))) {\n        cm_t1 = b;\n        cm_t2 = cm_floormod(a, b);\n        a = cm_t1;\n        b = cm_t2;\n    }\n    return cm_abs_i(a);\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def gcd(a: int, b: int) -> int:\n    while (b != 0):\n        cm_t1 = b\n        cm_t2 = (a % b)\n        a = cm_t1\n        b = cm_t2\n    return abs(a)\n\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_abs_i(a: i64) -> i64 { if a < 0 { -a } else { a } }\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn gcd(a: i64, b: i64) -> i64 {\n    let mut a: i64 = a;\n    let mut b: i64 = b;\n    let mut cm_t1: i64 = 0;\n    let mut cm_t2: i64 = 0;\n    while (b != (0i64)) {\n        cm_t1 = b;\n        cm_t2 = cm_floormod(a, b);\n        a = cm_t1;\n        b = cm_t2;\n    }\n    return cm_abs_i(a);\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t gcd(int64_t a, int64_t b) {\n    int64_t cm_t1 = 0;\n    int64_t cm_t2 = 0;\n    while ((b != INT64_C(0))) {\n        cm_t1 = b;\n        cm_t2 = cm_floormod(a, b);\n        a = cm_t1;\n        b = cm_t2;\n    }\n    return cm_abs_i(a);\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long gcd(long a, long b) {\n    long cm_t1 = 0L;\n    long cm_t2 = 0L;\n    while ((b != (0L))) {\n        cm_t1 = b;\n        cm_t2 = Math.floorMod(a, b);\n        a = cm_t1;\n        b = cm_t2;\n    }\n    return Math.abs(a);\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def gcd (a : Int) (b : Int) : Int := Id.run do\n  let mut a : Int := a\n  let mut b : Int := b\n  let mut cm_t1 : Int := 0\n  let mut cm_t2 : Int := 0\n  while (b != (0 : Int)) do\n    cm_t1 := b\n    cm_t2 := (Int.fmod a b)\n    a := cm_t1\n    b := cm_t2\n  return (Int.ofNat (Int.natAbs a))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function gcd(a, b)\n  local cm_t1 = 0\n  local cm_t2 = 0\n  while (b ~= (0)) do\n    cm_t1 = b\n    cm_t2 = (a % b)\n    a = cm_t1\n    b = cm_t2\n    ::cm_continue_1::\n  end\n  return math.abs(a)\nend\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def gcd(a, b)\n  cm_t1 = 0\n  cm_t2 = 0\n  while (b != (0))\n    cm_t1 = b\n    cm_t2 = (a % b)\n    a = cm_t1\n    b = cm_t2\n  end\n  return ((a).abs)\nend\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc gcd(_ a: Int, _ b: Int) -> Int {\n    var a: Int = a\n    var b: Int = b\n    var cm_t1: Int = 0\n    var cm_t2: Int = 0\n    while (b != (0)) {\n        cm_t1 = b\n        cm_t2 = cm_floormod(a, b)\n        a = cm_t1\n        b = cm_t2\n    }\n    return abs(a)\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction gcd(a: bigint, b: bigint): bigint {\n    let cm_t1: bigint = 0n;\n    let cm_t2: bigint = 0n;\n    while ((b !== (0n))) {\n        cm_t1 = b;\n        cm_t2 = cm_floormod(a, b);\n        a = cm_t1;\n        b = cm_t2;\n    }\n    return cm_abs_i(a);\n}\n",
+      "cost": 1.0,
+      "entry": "gcd",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "gcd",
+    "functions": [
+      {
+        "body": [
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "cm_t1",
+                "value": [
+                  "var",
+                  "b"
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "cm_t2",
+                "value": [
+                  "MOD",
+                  [
+                    "var",
+                    "a"
+                  ],
+                  [
+                    "var",
+                    "b"
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "a",
+                "value": [
+                  "var",
+                  "cm_t1"
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "b",
+                "value": [
+                  "var",
+                  "cm_t2"
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_NE",
+              [
+                "var",
+                "b"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "ABS",
+              [
+                "var",
+                "a"
+              ]
+            ]
+          }
+        ],
+        "locals": {
+          "cm_t1": "int",
+          "cm_t2": "int"
+        },
+        "name": "gcd",
+        "params": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_gcd_585f8082d8de",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "585f8082d8de"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "gcd(a: int, b: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        -1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -50,
+        -50
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        50,
+        50
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        -5,
+        28
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -19,
+        21
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        44,
+        -19
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        6,
+        12
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        2,
+        -5
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -20,
+        -33
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -36,
+        -15
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -21,
+        -11
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -47,
+        39
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -48,
+        -47
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -48,
+        9
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -49,
+        10
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        25,
+        31
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -26,
+        -47
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        27,
+        0
+      ],
+      "out": 27
+    },
+    {
+      "args": [
+        32,
+        3
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        6,
+        -36
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        -17,
+        17
+      ],
+      "out": 17
+    },
+    {
+      "args": [
+        49,
+        3
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        50,
+        -43
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        38,
+        -15
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        19,
+        40
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        20,
+        -12
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        -36,
+        -4
+      ],
+      "out": 4
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

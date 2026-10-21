@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Input domains: generators, sub-domain parents and reference projections (e.g. u32 = mod 2**32).",
+  "name": "domain",
+  "tier": 0
+}

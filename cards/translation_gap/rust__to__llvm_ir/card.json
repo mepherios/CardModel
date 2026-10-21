@@ -1,0 +1,56 @@
+{
+  "blockers": [],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED via W24-F E2E smoke: rustc 1.95.0 --emit=llvm-ir on hello.rs -> compiler_observer.observe (exit 0) -> output_to_cards.ingest -> 6 ir_node cards with correct mnemonic + semantic_class. The output_to_cards._handle_llvm_ir path is the same code path that processes clang LLVM IR for c__to__wasm/c__to__llvm_ir.",
+  "current_coverage_percent": 100,
+  "evidence": [
+    "rustc is the canonical authority for rust -> llvm_ir. The substrate observes this compilation via compiler_adapter_rust with --emit=llvm-ir (W24-F switch from --emit=obj) and extracts ir_node cards via output_to_cards._handle_llvm_ir. (L41 honest framing: 100% observability of rustc's LLVM IR emission, 0% substrate-emitted-without-rustc.)",
+    "cards/tool/compiler_adapter_rust/python.py — W24-F emit flag switched to llvm-ir; build_invocation outputs <stem>.ll; output_format_hint returns 'llvm_ir' for .ll suffix",
+    "cards/tool/output_to_cards/python.py — _handle_llvm_ir (lines 974-1034) parses .ll text line-by-line and emits one ir_node card per non-trivial line with mnemonic + operands + semantic_class",
+    "outputs/agent_w24_f.md W24-F E2E smoke: rustc 1.95.0 -> hello.rs (add+mul) -> 6 ir_node cards (add: arithmetic, mul: arithmetic, ret x2: control_flow, labels x2: unknown). Real cards, real mnemonics, real semantic classes."
+  ],
+  "last_verified_date": "2026-05-28",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rust__to__llvm_ir",
+  "notes": "L41 caveat: the 100% applies to observability of rustc's LLVM IR emission. The substrate's independent emission of llvm_ir from rust source (without rustc) is a separate, lower-coverage pair that is not yet a translation_gap card. Mirrors the python__to__cpython_bytecode framing.",
+  "optimal_solution_path": [
+    "scale the W15-E observation corpus on .rs samples so larger surface (closures, generics, lifetimes-through-LLVM, async desugar) is also witnessed",
+    "promote observed mapping_extractor pairs into closed-loop verified emission (substrate-emits-without-rustc, W15-G analogue)",
+    "publish a coverage report distinguishing 'observed via rustc' (current 100%) from 'substrate-emitted independently' (current 0%)"
+  ],
+  "optimization_paths": [
+    "cards/project_task/scale_rust_llvm_ir_corpus_to_100_samples"
+  ],
+  "required_tools": [
+    "cards/tool/compiler_observer",
+    "cards/tool/compiler_adapter_rust",
+    "cards/tool/source_to_cards",
+    "cards/tool/output_to_cards",
+    "cards/tool/learning_orchestrator"
+  ],
+  "self_autonomy_status": "autonomous",
+  "source_language": "rust",
+  "supported_constructs": [
+    "all_rustc_emitted_llvm_ir_nodes",
+    "function_def_to_define",
+    "binary_arithmetic_to_add_sub_mul_div",
+    "control_flow_to_br_ret",
+    "load_store",
+    "phi_nodes",
+    "icmp_fcmp",
+    "getelementptr",
+    "trunc_zext_sext",
+    "bitwise_ops",
+    "function_call_to_call",
+    "inline_asm_as_opaque"
+  ],
+  "target_language": "llvm_ir",
+  "unsupported_constructs": [
+    "rustc_specific_intermediate_representations_not_emitted_at_llvm_ir_layer",
+    "substrate_independent_emission_without_rustc"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/rust__to__llvm_ir",
+  "verification_provenance": "W24-F verified: rust adapter --emit=obj -> --emit=llvm-ir switch closes the W17-Diag empty-output-cards gap for Rust. E2E smoke at /tmp/w24f_rust_e2e produced ir_node cards with add/mul/ret/start mnemonics, arithmetic+control_flow semantic classes, format=llvm_ir."
+}

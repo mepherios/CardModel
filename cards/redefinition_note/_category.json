@@ -1,0 +1,25 @@
+{
+  "category_aliases": [
+    "redefinition"
+  ],
+  "defined_by": "tools/vendor_import.py",
+  "description": "Pheros redefinitions whose forms are prose or code in other languages (ABI/ISA/framework/paradigm translations): knowledge, not executable here.",
+  "name": "redefinition_note",
+  "provenance": {
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/redefinition",
+    "read_on": "2026-10-21"
+  },
+  "references": "external",
+  "status_values": [
+    "APPLIED_TO_COPY_ORIGINAL_UNTOUCHED",
+    "active",
+    "broken",
+    "healthy",
+    "quarantined",
+    "suspect",
+    "template",
+    "verified"
+  ],
+  "tier": 2
+}

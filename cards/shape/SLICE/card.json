@@ -1,0 +1,20 @@
+{
+  "category": "shape",
+  "cost": 2.0,
+  "fallback": true,
+  "match": {
+    "python": {
+      "node": [
+        "Slice"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "SLICE",
+  "provenance": {
+    "origin": "hub config/card_catalog.py walk_cards (V5 shapes)"
+  },
+  "statement": "a:b slice (fallback)"
+}

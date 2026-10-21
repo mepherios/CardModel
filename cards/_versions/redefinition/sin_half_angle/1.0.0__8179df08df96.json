@@ -1,0 +1,67 @@
+{
+  "category": "redefinition",
+  "condition": "(_x > -1e10) & (_x < 1e10)",
+  "cost_score": 25,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_x": 0
+      },
+      "source_eval": 0.0,
+      "target_eval": 0.0
+    },
+    {
+      "input": {
+        "_x": 3.141592653589793
+      },
+      "source_eval": 1.0,
+      "target_eval": 1.0
+    },
+    {
+      "input": {
+        "_x": 1.5707963267948966
+      },
+      "source_eval": 0.1464466094067262,
+      "target_eval": 0.1464466094067262
+    },
+    {
+      "input": {
+        "_x": "x"
+      },
+      "source_eval": "sin(x/2)**2",
+      "target_eval": "(1 - cos(x))/2"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "version": "1.0.0"
+  },
+  "name": "sin_half_angle",
+  "pheros_path": "redefinition/sin_half_angle",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:derived-from-cos-double-angle-cos(2y)=1-2sin(y)^2-with-y=x/2",
+  "provenance": "derived_from_card",
+  "source_form": "sin(_x/2)**2",
+  "tags": [
+    "half-angle",
+    "identity",
+    "rt-a5-seed",
+    "sin",
+    "trig"
+  ],
+  "target_form": "(1 - cos(_x))/2",
+  "witness_kind": "symbolic"
+}

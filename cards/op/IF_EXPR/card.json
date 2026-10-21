@@ -1,0 +1,89 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c_like": "({0} ? {1} : {2})",
+    "go": "func() {type} {{ if {0} {{ return {1} }}; return {2} }}()",
+    "lean": "(if {0} then {1} else {2})",
+    "lua": "(function() if {0} then return {1} else return {2} end end)()",
+    "python": "({1} if {0} else {2})",
+    "ruby": "({0} ? {1} : {2})",
+    "rust": "(if {0} {{ {1} }} else {{ {2} }})"
+  },
+  "forms": [
+    {
+      "code": "lambda c, a, b: a if c else b",
+      "cost": 1.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 3,
+    "domain": {
+      "int": [
+        {
+          "bool": true
+        },
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        }
+      ]
+    },
+    "special": true,
+    "types": [
+      [
+        "bool",
+        "int",
+        "int",
+        "int"
+      ],
+      [
+        "bool",
+        "float",
+        "float",
+        "float"
+      ],
+      [
+        "bool",
+        "bool",
+        "bool",
+        "bool"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "node": [
+        "IfExp"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "IF_EXPR",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "lazy conditional expression (x if c else y)",
+  "tier": 0
+}

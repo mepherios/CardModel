@@ -1,0 +1,25 @@
+{
+  "defined_by": "tools/vendor_import.py",
+  "description": "AST shapes the observer classifies; fallback shapes (CALL_GENERIC, ATTR, ...) count as unnamed in coverage (hub card_coverage.py definition).",
+  "name": "shape",
+  "provenance": {
+    "files": [
+      "~/Documents/Claude_Hub/config/bit_primitives.py",
+      "~/Documents/Claude_Hub/config/card_catalog.py",
+      "~/Documents/Claude_Hub/config/language_hints.py",
+      "~/Documents/Claude_Hub/config/card_redefinitions.py",
+      "~/Documents/Claude_Hub/config/rewrite_engine.py",
+      "~/Documents/Claude_Hub/config/rewrite_search.py",
+      "~/Documents/Claude_Hub/config/cross_language_equiv.py",
+      "~/Documents/Claude_Hub/config/lean_emitter.py",
+      "~/Documents/Claude_Hub/CARD_MODEL.md",
+      "~/Documents/Claude_Hub/LAWS.md"
+    ],
+    "method": "read-only; python parsed with ast, never imported",
+    "origin": "hub",
+    "path": "~/Documents/Claude_Hub",
+    "read_on": "2026-10-21",
+    "sha256": "eca111b57f7cd7c838394814c7dd51c9d9641bed5ba07cde165767e2792b0a56"
+  },
+  "tier": 1
+}

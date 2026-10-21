@@ -1,0 +1,62 @@
+{
+  "blockers": [
+    "cards/lacking_feature/macho_arm64_parser (Mach-O LC_SEGMENT_64 / LC_SYMTAB walker not implemented in o...)",
+    "cards/lacking_feature/isa_arm64_instruction_cards (no arm64 instruction-card materializer (parallel of cards/is...)",
+    "linker step (ld64) is not observed by compiler_observer adapter",
+    "Rust frontend is HIR-level only; lowering to native code requires rustc/LLVM in the pipeline"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED at 0% via W17-Diag (output_to_cards returns [] for Mach-O); needs Mach-O LC_SEGMENT_64 walker",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "outputs/agent_w17_diag.md — W17-Diag: Mach-O extraction returned empty output cards for Rust observations; rustc on macOS emits arm64 Mach-O which the substrate cannot currently parse",
+    "cards/tool/output_to_cards — currently handles ELF section dumps but Mach-O LC_SEGMENT_64 walker is absent",
+    "cards/lacking/macho_arm64_extraction (if present, see W17-Diag) — explicit gap card"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rust__to__arm64_macho",
+  "optimal_solution_path": [
+    "close cards/project_task/close_macho_arm64_extraction so output_to_cards can read Mach-O",
+    "build cards/isa/arm64 with the integer + load/store subset, mirroring cards/isa/rv64i",
+    "extend compiler_observer to wrap rustc + ld64 calls and harvest both .o and final binary",
+    "lower Rust integer subset to arm64 Mach-O .o through LLVM IR (use python__to__llvm_ir path as model)",
+    "smoke: rust 'fn main(){let x=2+3;}' -> arm64 .o -> bytes asserted byte-for-byte"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_macho_arm64_extraction",
+    "cards/project_task/lift_rust_to_arm64_via_llvm_ir"
+  ],
+  "required_isa_cards": [
+    "cards/isa/arm64"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/frontends/rust.py",
+    "cards/tool/output_to_cards",
+    "cards/tool/compiler_observer"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "rust",
+  "supported_constructs": [],
+  "target_language": "arm64_macho",
+  "unsupported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "return",
+    "int_variables",
+    "float_variables",
+    "struct",
+    "trait_dispatch",
+    "closures",
+    "async_fn",
+    "string_literal",
+    "panic_unwind"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/rust__to__arm64_macho",
+  "wave_23_audit_note": "0% MEASURED via W17-Diag; depends on close_macho_arm64_extraction"
+}

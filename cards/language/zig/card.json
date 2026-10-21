@@ -1,0 +1,32 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\""
+    ]
+  },
+  "extensions": [
+    ".zig"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "zig",
+  "probe": {
+    "kind": "executable",
+    "name": "zig",
+    "version_args": [
+      "version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "zig: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

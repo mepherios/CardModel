@@ -1,0 +1,37 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        ".items"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 12,
+    "files": 6,
+    "learned": true,
+    "spellings": {
+      "ctx.store.views.items": 2,
+      "ops.items": 2,
+      "rep.items": 2,
+      "rows.items": 2,
+      "v.items": 4
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_METHOD_ITEMS",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to .items (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

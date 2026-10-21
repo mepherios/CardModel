@@ -1,0 +1,257 @@
+{
+  "category": "tool",
+  "coverage_ref": "state/v_transpile_coverage.json",
+  "coverage_test": "cards/tool/v_transpile/tests/test_ir_coverage.py",
+  "declared_invariants": [
+    "python.py exposes transpile() and main() as documented public symbols.",
+    "CLI returns an exit code in the documented set {2,3,4,5} for the smoke-invoked usage path.",
+    "L41 differential: real and null inputs produce different transpile outputs."
+  ],
+  "declared_invariants_provenance": {
+    "authored_in": "W23-D",
+    "per_invariant": [
+      {
+        "invariant": "python.py exposes transpile() and main() as documented public symbols.",
+        "provenance": "derived from smoke.py `hasattr(mod, \"transpile\") and hasattr(mod, \"main\")`"
+      },
+      {
+        "invariant": "CLI returns an exit code in the documented set {2,3,4,5} for the smoke-invoked usage path.",
+        "provenance": "derived from smoke.py `r.returncode in (2, 3, 4, 5)`"
+      },
+      {
+        "invariant": "L41 differential: real and null inputs produce different transpile outputs.",
+        "provenance": "derived from smoke.py differential_probe `real_out != null_out`"
+      }
+    ],
+    "source_kind": "smoke_assertions"
+  },
+  "deferred_refs": [
+    "interacts_with: 'backend_gamecube' (orphan target as of 2026-05-22, dropped per L14 + W33)",
+    "interacts_with: 'must_do_w12_a_gamecube_backend' (orphan target as of 2026-05-22, dropped per L14 + W33)",
+    "interacts_with: 'process_devkitppc_toolchain_install' (orphan target as of 2026-05-22, dropped per L14 + W33)"
+  ],
+  "derivation_source": "substrate_self_definition",
+  "error_modes": [
+    "RuntimeError: path_convention not found"
+  ],
+  "flaws": [
+    "PV1 PARTIAL targets — when the V_Framework downstream emitter doesn't yet handle a lifted construct (e.g. class to C does not honour field declarations, lambda to C/CPP/JS emits a `/* unsupported: Lambda */` placeholder), the output compiles only when the constructs are absent; see state/v_transpile_coverage.json by_target matrix",
+    "lacking: round-trip semantic-equivalence tests — current matrix checks emit-success only, not behavioural equivalence (lifting_plan: add property-based tests via tool_property_tester once interaction schema lands in W10)",
+    "non-python frontends (c, cpp, rust, javascript, typescript, go) are still regex+heuristic — anything outside {fn def, simple decls, return, if/while/for, call/expr} becomes a raw verbatim node (lifting_plan: graduate per-frontend to a real recursive-descent parser; PV1 closed the Python frontend gap, the other six are queued)",
+    "monolingual: Python-only implementation; lifting_plan: add variant when needed"
+  ],
+  "former_provenance": "substrate_meta",
+  "inputs": [
+    {
+      "function": "transpile",
+      "l117_migration_provenance": "inferred_by_l117_migrator_v0.1",
+      "name": "source",
+      "type": "str"
+    },
+    {
+      "function": "transpile",
+      "l117_migration_provenance": "inferred_by_l117_migrator_v0.1",
+      "name": "target",
+      "type": "str"
+    },
+    {
+      "function": "transpile",
+      "l117_migration_provenance": "inferred_by_l117_migrator_v0.1",
+      "name": "transpilers_dir",
+      "type": "Path"
+    },
+    {
+      "function": "main",
+      "l117_migration_provenance": "inferred_by_l117_migrator_v0.1",
+      "name": "argv",
+      "type": "any"
+    }
+  ],
+  "interacts_with": [
+    "L01_complete_isolation",
+    "gui_v_transpile_html",
+    "origin_V_Framework",
+    "tool_code_synthesizer",
+    "L37_transpile_obligation_required",
+    "must_do_v_transpile_integration",
+    "transpile_js_swift_binary_search",
+    "transpile_rust_go_binary_search",
+    "transpile_swift_go_binary_search",
+    "transpile_python_go_binary_search",
+    "bridge_rewrite_to_transpile",
+    "transpile_rust_kotlin_binary_search",
+    "transpile_cpp_kotlin_binary_search",
+    "transpile_ts_kotlin_binary_search",
+    "transpile_ts_swift_binary_search",
+    "transpile_java_go_binary_search",
+    "transpile_ts_java_binary_search",
+    "transpile_c_go_binary_search",
+    "transpile_cpp_swift_binary_search",
+    "transpile_rust_swift_binary_search",
+    "transpile_go_java_binary_search",
+    "bridge_transpile_to_perf_benchmark",
+    "transpile_js_java_binary_search",
+    "transpile_c_ts_factorial",
+    "transpile_c_kotlin_binary_search",
+    "transpile_ts_go_binary_search",
+    "transpile_cpp_ts_binary_search",
+    "transpile_js_go_binary_search",
+    "bridge_code_to_algebra",
+    "transpile_kotlin_go_binary_search",
+    "transpile_java_swift_binary_search",
+    "transpile_c_swift_binary_search",
+    "transpile_java_ts_binary_search",
+    "transpile_swift_java_binary_search",
+    "transpile_c_ts_binary_search",
+    "transpile_c_kotlin_factorial",
+    "transpile_swift_kotlin_binary_search",
+    "transpile_go_kotlin_binary_search",
+    "transpile_python_kotlin_binary_search",
+    "transpile_c_java_factorial",
+    "transpile_python_ts_binary_search",
+    "transpile_c_swift_factorial",
+    "transpile_cpp_java_binary_search",
+    "transpile_swift_ts_binary_search",
+    "transpile_rust_ts_binary_search",
+    "transpile_python_swift_binary_search",
+    "transpile_c_go_factorial",
+    "transpile_kotlin_ts_binary_search",
+    "transpile_go_swift_binary_search",
+    "transpile_rust_java_binary_search",
+    "transpile_kotlin_swift_binary_search",
+    "transpile_js_kotlin_binary_search",
+    "transpile_js_ts_binary_search",
+    "transpile_cpp_go_binary_search",
+    "transpile_java_kotlin_binary_search",
+    "transpile_go_ts_binary_search",
+    "transpile_python_java_binary_search",
+    "transpile_c_java_binary_search",
+    "transpile_kotlin_java_binary_search",
+    "gui_tool_playground",
+    "tool_file_watcher",
+    "tool_program_rewriter",
+    "tool_c_to_rust_pipeline",
+    "tool_spec_migrate",
+    "tool_hub_status_server",
+    "tool_transpile_proof_obligation",
+    "tool_transpose",
+    "tool_transpile_watcher",
+    "tool_reverse_transpile",
+    "tool_perf_budgets",
+    "tool_math_optimize",
+    "tool_pipeline_transpile_to_redefinition",
+    "tool_transpile_equivalence",
+    "tool_card_type_check",
+    "tool_binary_to_ir",
+    "matrix_regression_detector",
+    "process_verified_compiler_plan",
+    "process_main_plan_substrate_as_organism",
+    "pivot_opportunities",
+    "process_riscv_toolchain_install",
+    "universal_program_rewrite_model",
+    "backend_rv64_object"
+  ],
+  "l117_authoring_needed": [
+    "declared_invariants",
+    "example_invocations"
+  ],
+  "l117_migration_status": "partially_complete_inferred",
+  "l117_migrator_version": "l117_migrator v0.1",
+  "last_l117_update": "2026-05-27T21:23:19Z",
+  "metadata": {
+    "budget_mb": 154,
+    "budget_measured_at": "2026-05-22T22:30:00Z",
+    "budget_measured_rss_mb": 119,
+    "budget_measured_wall_ms": 88,
+    "budget_ms": 132,
+    "completion_state": "partial",
+    "failure_modes": [
+      {
+        "code": "GENERIC_FAILURE",
+        "description": "Catch-all auto-stamped failure mode for tools that have not yet declared specific failure modes per L77.",
+        "recovery_hint": "Inspect stderr/stack and refine into specific failure_modes entries on next W49 wave; rerun with --json for structured output."
+      }
+    ],
+    "public_api_surface": {
+      "classes": [],
+      "functions": [
+        {
+          "args": [
+            {
+              "annotation": null,
+              "default": null,
+              "kind": "positional_or_keyword",
+              "name": "argv"
+            }
+          ],
+          "decorators": [],
+          "is_async": false,
+          "name": "main",
+          "return_annotation": null
+        },
+        {
+          "args": [
+            {
+              "annotation": "str",
+              "default": null,
+              "kind": "positional_or_keyword",
+              "name": "source"
+            },
+            {
+              "annotation": "str",
+              "default": null,
+              "kind": "positional_or_keyword",
+              "name": "target"
+            },
+            {
+              "annotation": "Path",
+              "default": null,
+              "kind": "positional_or_keyword",
+              "name": "transpilers_dir"
+            }
+          ],
+          "decorators": [],
+          "is_async": false,
+          "name": "transpile",
+          "return_annotation": "str"
+        }
+      ],
+      "module_docstring_present": true
+    },
+    "version": "1.0.0"
+  },
+  "name": "tool_v_transpile",
+  "outputs": [
+    {
+      "function": "transpile",
+      "l117_migration_provenance": "inferred_by_l117_migrator_v0.1",
+      "name": "transpile_return",
+      "type": "str"
+    }
+  ],
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios",
+    "ipad",
+    "iphone"
+  ],
+  "provenance": "derived_from_card",
+  "rationale": "Programmatic counterpart to gui_v_transpile_html. Lets tools (and the synthesizer) request multi-language output without spawning a browser. Many-to-many via a shared IR keeps the matrix at O(sources + targets) instead of O(sources * targets) emitters.",
+  "side_effects": [
+    "unknown_inferred_no_io_calls_found"
+  ],
+  "statement": "CLI any-source-to-any-target transpiler. Sources: python, c, cpp, rust, javascript, typescript, go. Targets: anything V_Framework's vendored/V_Framework/lib/transpilers/ provides (c, cpp, go, html, javascript, rust today). Architecture: parses source via cards/tool/v_transpile/frontends/<lang>.py into a minimal JSON IR, emits Python from the IR, then chains to python_to_<target>. PV1 extends the IR with try/with/class/async/await/decorator/comprehension/lambda/generator/fstring/walrus — see state/v_transpile_coverage.json (89.7% AST coverage).",
+  "substrate_role": "substrate machinery; ingest, observe, emit, validate",
+  "tags": [
+    "ir",
+    "multi-language",
+    "tool",
+    "transpiler"
+  ],
+  "tier": 0,
+  "tool_name": "v_transpile",
+  "vendored_from": "~/Documents/Pheros_Studio/cards/tool/v_transpile"
+}

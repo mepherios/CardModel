@@ -1,0 +1,123 @@
+{
+  "algebraic_carriers": [
+    {
+      "maps_to_algebra": "ring with overflow (NOT a field; signed-overflow is UB per ISO C, unsigned wraps mod 2^N forming Z/2^NZ - which IS a commutative ring but not a field)",
+      "type_in_language": "int"
+    },
+    {
+      "maps_to_algebra": "commutative_ring (Z/2^NZ - well-defined wrap; the canonical finite ring carrier in C)",
+      "type_in_language": "unsigned int"
+    },
+    {
+      "maps_to_algebra": "field (approximation_of_field strictly; IEEE-754 single-precision, same caveats as Python float)",
+      "type_in_language": "float"
+    },
+    {
+      "maps_to_algebra": "field (approximation; IEEE-754 double-precision)",
+      "type_in_language": "double"
+    },
+    {
+      "maps_to_algebra": "monoid (degenerate - struct is a product type; the substrate's monoid card carries the product-type representative until a product_type / cartesian algebra card lands in W22)",
+      "type_in_language": "struct"
+    },
+    {
+      "maps_to_algebra": "monoid (null-terminated string concatenation via strcat; pointer arithmetic semantics distinct from the operation)",
+      "type_in_language": "char*"
+    }
+  ],
+  "canonical_name": "C",
+  "category": "language",
+  "concurrency_model": [
+    {
+      "name": "pthread",
+      "primitives": [
+        "pthread_create",
+        "pthread_join",
+        "pthread_mutex_t",
+        "pthread_mutex_lock",
+        "pthread_cond_t",
+        "pthread_rwlock_t"
+      ]
+    },
+    {
+      "name": "atomic",
+      "primitives": [
+        "_Atomic",
+        "stdatomic.h",
+        "atomic_load",
+        "atomic_store",
+        "atomic_compare_exchange_strong",
+        "memory_order_seq_cst",
+        "memory_order_acquire",
+        "memory_order_release"
+      ]
+    },
+    {
+      "name": "c11_threads",
+      "primitives": [
+        "thrd_create",
+        "thrd_join",
+        "mtx_t",
+        "cnd_t",
+        "tss_t"
+      ]
+    }
+  ],
+  "evaluation_model": "eager_strict",
+  "flaws": [
+    "int-not-ring: signed integer overflow is UB in ISO C, so 'int' is *not* a ring under the strict definition (the operation isn't total). The 'ring with overflow' label is a substrate convention; a rigorous fix would split into 'signed_int_with_UB' (no algebra at all) vs. unsigned (commutative_ring). W22 follow-up.",
+    "struct-is-product-not-monoid: 'monoid' is honestly a placeholder; struct is a product type and the substrate lacks a product_type / cartesian_algebra card. W22 follow-up: add cards/algebra/product_type/card.json and retarget.",
+    "weak-typing: 'weak' is a coarse label - C permits implicit numeric conversions and void* casts but rejects most truly-arbitrary coercions. A finer-grained 'coercion_lattice' field is a W23+ idea.",
+    "C-frontend-subset: the linked c.py frontend covers ~80% of typical-coreutils C, not the full grammar - this card describes the LANGUAGE, not the substrate's parser coverage. Coverage gaps are tracked in c.py docstring."
+  ],
+  "informal_description": "C is a weakly-but-statically-typed imperative/procedural language with eager evaluation, fully permissive side effects, and explicit manual memory management via malloc/free. C exposes the machine: raw pointers, integer overflow (UB for signed, modular for unsigned), bit-level control of struct layout, and inline assembly. Concurrency was bolted on by POSIX (pthreads) and standardised in C11 (<threads.h>, <stdatomic.h>) - the original language had none. C int is a ring with overflow (signed: UB; unsigned: Z/2^NZ); float/double approximate a field. struct is a product type; array decay and pointer arithmetic break the abstraction barrier so C's type system is genuinely weak (no automatic coercion safety, no array-bounds checking, void* erases types). The transpile frontend at cards/tool/v_transpile/frontends/c.py is a regex-+-recursive-descent subset parser sufficient for typical leaf coreutils (cat, echo, true, false, sleep, ...) plus the UB4-D extensions (macros, function pointers, bit fields, designated initialisers). It does NOT parse the full C grammar - constructs outside the supported subset lift as raw nodes.",
+  "interacts_with": [
+    "category_language",
+    "schema_language_semantic_schema",
+    "L13_construction_through_cards",
+    "L41_no_vacuous_success",
+    "L114_terminal_decomposition",
+    "cards/algebra/ring/card.json",
+    "cards/algebra/commutative_ring/card.json",
+    "cards/algebra/field/card.json",
+    "cards/algebra/monoid/card.json",
+    "cards/tool/v_transpile/frontends/c.py",
+    "cards/postulate/c_operational_semantics_axiom/card.json"
+  ],
+  "kind": "language_semantic",
+  "memory_model": "manual",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c",
+  "notes": "C89/C99/C11/C17/C23 - this card describes the abstract language ~C11 (which standardised threads and atomics). The substrate's c.py frontend supports a working subset, not the full grammar.",
+  "operational_semantics_card": "cards/postulate/c_operational_semantics_axiom/card.json",
+  "paradigm": [
+    "imperative",
+    "procedural",
+    "low-level",
+    "systems"
+  ],
+  "side_effect_model": "permissive",
+  "standardization_body": "ISO/IEC 9899 (C89/C99/C11/C17/C23)",
+  "tags": [
+    "language",
+    "c",
+    "w21-d",
+    "static",
+    "weak-typing",
+    "manual-memory",
+    "systems",
+    "iso-c"
+  ],
+  "tier": 0,
+  "transpile_backends_available": [],
+  "transpile_frontend": "cards/tool/v_transpile/frontends/c.py",
+  "type_system": {
+    "dynamism": "static",
+    "strength": "weak",
+    "structure": "nominal"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/language/c",
+  "year_origin": 1972
+}

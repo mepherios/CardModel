@@ -1,0 +1,16 @@
+{
+  "category": "domain",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "prime_mod",
+  "parents": [
+    "modular"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "(a, p) with p prime and p not dividing a.",
+  "tier": 0
+}

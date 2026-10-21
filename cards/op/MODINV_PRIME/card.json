@@ -1,0 +1,121 @@
+{
+  "category": "op",
+  "cost": 15.0,
+  "filter": "lambda a, p: a % p != 0",
+  "forms": [
+    {
+      "code": "lambda a, p: pow(a, p - 2, p)",
+      "cost": 15.0,
+      "domain": "prime_mod",
+      "lang": "python",
+      "name": "fermat",
+      "notes": "Fermat; requires p prime",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, p: pow(a, -1, p)",
+      "cost": 25.0,
+      "domain": "prime_mod",
+      "lang": "python",
+      "name": "native_pow",
+      "notes": "same result when p is prime",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        1,
+        1000000
+      ]
+    },
+    {
+      "choice": [
+        3,
+        5,
+        7,
+        11,
+        13,
+        101,
+        1009,
+        10007,
+        65537,
+        1000003
+      ]
+    }
+  ],
+  "hints": {
+    "c": {
+      "imports": [
+        "gmp.h"
+      ],
+      "snippet": "mpz_powm(inv, a, p_minus_2, p)"
+    },
+    "python": {
+      "snippet": "pow(a, p - 2, p)"
+    },
+    "rust": {
+      "imports": [
+        "num_bigint::BigInt"
+      ],
+      "snippet": "a.modpow(&(p - 2), &p)"
+    },
+    "sage": {
+      "snippet": "a^(p - 2) % p"
+    }
+  },
+  "match": {
+    "python": {
+      "pattern": [
+        "POW_MOD",
+        "?a",
+        [
+          "SUB",
+          [
+            "var",
+            "?p"
+          ],
+          [
+            "int",
+            2
+          ]
+        ],
+        [
+          "var",
+          "?p"
+        ]
+      ]
+    }
+  },
+  "metadata": {
+    "hub_names": [
+      "MODINV_FERMAT"
+    ],
+    "previous_content_hash": "79c6dcbbece71db3a10eee88c0f2855e8fba6cc3973807624d518132d055ed23",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "MODINV_PRIME",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "modular inverse a^{-1} mod p where p is known prime",
+  "tier": 1,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "native_pow": {
+        "checks": 58,
+        "domain": "prime_mod",
+        "status": "pass"
+      }
+    }
+  }
+}

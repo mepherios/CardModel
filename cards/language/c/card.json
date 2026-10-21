@@ -1,0 +1,170 @@
+{
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value};",
+    "break": "break;",
+    "continue": "continue;",
+    "declare": "{type} {name} = {value};",
+    "else": "}} else {{",
+    "empty": ";",
+    "end_if": "}}",
+    "end_while": "}}",
+    "func": "static {ret} {name}({params}) {{\n{body}}}\n",
+    "harness": {
+      "bench_call": "cm_acc += {truthy};",
+      "bench_main": "int main(void) {{\n    int64_t cm_acc = 0;\n    for (int64_t cm_r = 0; cm_r < {reps}; cm_r++) {{\n{calls}    }}\n    printf(\"%\" PRId64 \"\\n\", cm_acc);\n    return 0;\n}}\n",
+      "main": "int main(void) {{\n{calls}    return 0;\n}}\n",
+      "print": {
+        "bool": "printf(\"b:%s\\n\", ({e}) ? \"true\" : \"false\");",
+        "float": "printf(\"f:%.17g\\n\", (double)({e}));",
+        "int": "printf(\"i:%\" PRId64 \"\\n\", (int64_t)({e}));"
+      },
+      "truthy": {
+        "bool": "(({e}) ? 1 : 0)",
+        "float": "((({e}) > 0.0) ? 1 : 0)",
+        "int": "((({e}) != 0) ? 1 : 0)"
+      }
+    },
+    "helpers": {
+      "cm_abs_i": "static @int@ cm_abs_i(@int@ a) { return a < 0 ? -a : a; }",
+      "cm_floordiv": "static @int@ cm_floordiv(@int@ a, @int@ b) { @int@ q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }",
+      "cm_floormod": "static @int@ cm_floormod(@int@ a, @int@ b) { @int@ r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }",
+      "cm_gcd": "static @int@ cm_gcd(@int@ a, @int@ b) { a = a < 0 ? -a : a; b = b < 0 ? -b : b; while (b != 0) { @int@ t = a % b; a = b; b = t; } return a; }",
+      "cm_ipow": "static @int@ cm_ipow(@int@ a, @int@ b) { @int@ r = 1; while (b > 0) { if (b & 1) r *= a; b >>= 1; if (b) a *= a; } return r; }",
+      "cm_max_f": "static @float@ cm_max_f(@float@ a, @float@ b) { return b > a ? b : a; }",
+      "cm_max_i": "static @int@ cm_max_i(@int@ a, @int@ b) { return b > a ? b : a; }",
+      "cm_min_f": "static @float@ cm_min_f(@float@ a, @float@ b) { return b < a ? b : a; }",
+      "cm_min_i": "static @int@ cm_min_i(@int@ a, @int@ b) { return b < a ? b : a; }",
+      "cm_opaque_b": "static @bool@ cm_opaque_b(@bool@ x) { volatile @bool@ v = x; return v; }",
+      "cm_opaque_f": "static @float@ cm_opaque_f(@float@ x) { volatile @float@ v = x; return v; }",
+      "cm_opaque_i": "static @int@ cm_opaque_i(@int@ x) { volatile @int@ v = x; return v; }",
+      "cm_powmod": "static @int@ cm_powmod(@int@ a, @int@ b, @int@ m) { @int@ r = cm_floormod(1, m); a = cm_floormod(a, m); while (b > 0) { if (b & 1) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1; } return r; }"
+    },
+    "if": "if ({cond}) {{",
+    "import": "#include <@name@>\n",
+    "indent": "    ",
+    "lib_prelude": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n@imports@\n",
+    "lit": {
+      "false": "false",
+      "float": "{v}",
+      "int": "INT64_C({v})",
+      "true": "true"
+    },
+    "opaque": {
+      "bool": "cm_opaque_b({v})",
+      "float": "cm_opaque_f({v})",
+      "int": "cm_opaque_i({v})"
+    },
+    "param": "{type} {name}",
+    "prelude": "#include <stdio.h>\n#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n#include <inttypes.h>\n@imports@\n",
+    "prototype": "static {ret} {name}({params});",
+    "return": "return {value};",
+    "style": "braces",
+    "types": {
+      "bool": "bool",
+      "float": "double",
+      "int": "int64_t"
+    },
+    "while": "while ({cond}) {{",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".c",
+    ".h"
+  ],
+  "family": "c_like",
+  "int_bits": 64,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c",
+  "probe": {
+    "env_override": "CC",
+    "kind": "executable",
+    "name": "cc",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "auto",
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "restrict",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+    "bool",
+    "true",
+    "false",
+    "main",
+    "printf"
+  ],
+  "runner": {
+    "compile": [
+      "{exe}",
+      "-O2",
+      "-std=c11",
+      "-o",
+      "{bin}",
+      "{src}",
+      "-lm"
+    ],
+    "file": "main.c",
+    "run": [
+      "{bin}"
+    ]
+  },
+  "statement": "C11 with int64_t / double; compiled by the host C compiler.",
+  "tier": 0
+}

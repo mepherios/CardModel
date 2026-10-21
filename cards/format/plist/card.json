@@ -1,0 +1,20 @@
+{
+  "category": "format",
+  "detect": {
+    "abstract": true,
+    "parents": [
+      "file"
+    ]
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "plist",
+  "statement": "Abstract parent of property-list encodings.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/plist"
+}

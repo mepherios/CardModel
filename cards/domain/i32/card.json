@@ -1,0 +1,22 @@
+{
+  "category": "domain",
+  "generator": {
+    "int": [
+      -2147483648,
+      2147483647
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "i32",
+  "parents": [
+    "int"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Signed 32-bit integers.",
+  "tier": 0
+}

@@ -1,0 +1,90 @@
+[
+ {
+  "name": "padme-1",
+  "args": [
+   1
+  ],
+  "source": "Ting vectors.json",
+  "out": 1
+ },
+ {
+  "name": "padme-2",
+  "args": [
+   2
+  ],
+  "source": "Ting vectors.json",
+  "out": 2
+ },
+ {
+  "name": "padme-3",
+  "args": [
+   3
+  ],
+  "source": "Ting vectors.json",
+  "out": 3
+ },
+ {
+  "name": "padme-7",
+  "args": [
+   7
+  ],
+  "source": "Ting vectors.json",
+  "out": 7
+ },
+ {
+  "name": "padme-8",
+  "args": [
+   8
+  ],
+  "source": "Ting vectors.json",
+  "out": 8
+ },
+ {
+  "name": "padme-9",
+  "args": [
+   9
+  ],
+  "source": "Ting vectors.json",
+  "out": 10
+ },
+ {
+  "name": "padme-100",
+  "args": [
+   100
+  ],
+  "source": "Ting vectors.json",
+  "out": 104
+ },
+ {
+  "name": "padme-1000",
+  "args": [
+   1000
+  ],
+  "source": "Ting vectors.json",
+  "out": 1024
+ },
+ {
+  "name": "padme-4097",
+  "args": [
+   4097
+  ],
+  "source": "Ting vectors.json",
+  "out": 4352
+ },
+ {
+  "name": "padme-65536",
+  "args": [
+   65536
+  ],
+  "source": "Ting vectors.json",
+  "out": 65536
+ },
+ {
+  "name": "padme-1000000",
+  "args": [
+   1000000
+  ],
+  "source": "Ting vectors.json",
+  "out": 1015808
+ }
+]

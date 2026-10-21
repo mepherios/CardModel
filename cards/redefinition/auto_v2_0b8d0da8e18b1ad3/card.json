@@ -1,0 +1,84 @@
+{
+  "_autogen_v2": {
+    "origin": "compose_v2",
+    "parents": [
+      "auto_v2_4630814878598331",
+      "auto_v2_a03508e4b469bf1d"
+    ],
+    "verifier_evidence": "real:PROVED(40/40)"
+  },
+  "category": "redefinition",
+  "condition": "((Ne(cos(_x), 0) & Ne(1 - tan(_x)**2, 0) & (_x > -1e15) & (_x < 1e15))) & (((Ne(cos(_x), 0) & Ne(1 - tan(_x)**2, 0) & (_x > -1e15) & (_x < 1e15))))",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_x": 2
+      },
+      "source_eval": 1.157821282,
+      "target_eval": 1.157821282
+    },
+    {
+      "input": {
+        "_x": 3
+      },
+      "source_eval": -0.291006191,
+      "target_eval": -0.291006191
+    },
+    {
+      "input": {
+        "_x": 5
+      },
+      "source_eval": 0.648360827,
+      "target_eval": 0.648360827
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "d8d812c990739fd7917396fe59741ade1b83ae845192c9ebad17254443987973",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_v2_0b8d0da8e18b1ad3",
+  "pheros_path": "redefinition/auto_v2_0b8d0da8e18b1ad3",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:compose_v2",
+  "provenance": "derived_from_card",
+  "source_form": "-(tan(_x) - 1/(2 - 2*tan(_x)**2))**2 + (tan(_x) + 1/(2 - 2*tan(_x)**2))**2",
+  "status": "healthy",
+  "tags": [
+    "auto_generated",
+    "autogen_v2",
+    "compose_v2",
+    "redefinition"
+  ],
+  "target_form": "-2*tan(_x)/(tan(_x)**2 - 1)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

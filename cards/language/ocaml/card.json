@@ -1,0 +1,36 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [
+      [
+        "(*",
+        "*)"
+      ]
+    ],
+    "line": [],
+    "strings": [
+      "\""
+    ]
+  },
+  "extensions": [
+    ".ml",
+    ".mli"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ocaml",
+  "probe": {
+    "kind": "executable",
+    "name": "ocaml",
+    "version_args": [
+      "-version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "ocaml: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

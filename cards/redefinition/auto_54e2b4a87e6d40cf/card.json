@@ -1,0 +1,73 @@
+{
+  "_autogen": {
+    "composition_kind": "direct",
+    "discovered_at": "2026-05-20T02:03:04+00:00",
+    "last_verifier_verdict": "PROVED",
+    "neighbor_of": "auto_composite_692cc63368aca533",
+    "origin": "composer:ba",
+    "partner": "auto_17508c5f2d946f74",
+    "verifier_evidence": "real:PROVED(60/60), integer:PROVED(60/60)"
+  },
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "symbolic_real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "3f0d50265d1fdad1a8c460c44517e1829ea03cc75541f5940fa4ad61a86487b2",
+    "tags_extra": [
+      "auto_discovered"
+    ],
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_54e2b4a87e6d40cf",
+  "pheros_path": "redefinition/auto_54e2b4a87e6d40cf",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autonomous_evolution:composer:ba",
+  "provenance": "derived_from_card",
+  "source_form": "-x**2*y**2 - 2*x",
+  "status": "healthy",
+  "tags": [
+    "auto_generated",
+    "autonomous_evolution",
+    "composer",
+    "redefinition"
+  ],
+  "target_form": "-(-(-x**2/8 - (x*y**2 + 2)**2/2 + (x*y**2 - x/2 + 2)**2/2 + 1/2)**2/2 + (x**2/8 + (x*y**2 + 2)**2/2 - (x*y**2 - x/2 + 2)**2/2 + 1/2)**2/2 + 1/2)**2 + ((-x**2/8 - (x*y**2 + 2)**2/2 + (x*y**2 - x/2 + 2)**2/2 + 1/2)**2/2 - (x**2/8 + (x*y**2 + 2)**2/2 - (x*y**2 - x/2 + 2)**2/2 + 1/2)**2/2 + 1/2)**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 1
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

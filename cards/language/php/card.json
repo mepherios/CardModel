@@ -1,0 +1,39 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//",
+      "#"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".php"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "php",
+  "probe": {
+    "kind": "executable",
+    "name": "php",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "php: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

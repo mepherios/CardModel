@@ -1,0 +1,35 @@
+{
+  "anchor": 1.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.061,
+  "median_ns": 31.914,
+  "metadata": {
+    "inputs_signature": "96b20528395fc437",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__IF_EXPR__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/IF_EXPR form native: 31.9 ns per call on this host",
+  "target_card": "op/IF_EXPR",
+  "tier": 3
+}

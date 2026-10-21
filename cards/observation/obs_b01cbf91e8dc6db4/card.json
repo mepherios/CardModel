@@ -1,0 +1,3983 @@
+{
+  "category": "observation",
+  "fallback_call_files": {
+    "<expression>": [
+      "__init__.py",
+      "cli.py",
+      "emit/hints.py",
+      "emit/lean.py",
+      "engines/codegen.py",
+      "engines/conformance.py",
+      "engines/context.py",
+      "engines/coverage.py",
+      "engines/docs.py",
+      "engines/exprs.py",
+      "engines/frontend_python.py",
+      "engines/ir.py",
+      "engines/learn.py",
+      "engines/observe.py",
+      "engines/optimize.py",
+      "engines/probes.py",
+      "engines/redefs.py",
+      "engines/rewrite.py",
+      "engines/runners.py",
+      "engines/search.py",
+      "engines/selfcheck.py",
+      "engines/translate.py",
+      "engines/values.py",
+      "engines/verify.py",
+      "engines/witness.py",
+      "kernel/canon.py",
+      "kernel/card.py",
+      "kernel/paths.py",
+      "kernel/registry.py",
+      "kernel/schema.py",
+      "kernel/store.py",
+      "kernel/types.py"
+    ],
+    "CallResult": [
+      "engines/runners.py"
+    ],
+    "CanonError": [
+      "kernel/canon.py"
+    ],
+    "Card": [
+      "kernel/card.py",
+      "kernel/registry.py",
+      "kernel/store.py"
+    ],
+    "CardLoadError": [
+      "kernel/registry.py",
+      "kernel/store.py"
+    ],
+    "EmitGap": [
+      "engines/codegen.py"
+    ],
+    "Emitter": [
+      "emit/hints.py",
+      "engines/codegen.py",
+      "engines/conformance.py",
+      "engines/optimize.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "EvalError": [
+      "engines/exprs.py"
+    ],
+    "IRError": [
+      "engines/ir.py"
+    ],
+    "Interpreter": [
+      "engines/conformance.py",
+      "engines/translate.py"
+    ],
+    "KeyError": [
+      "engines/witness.py",
+      "kernel/store.py"
+    ],
+    "L.append": [
+      "engines/coverage.py"
+    ],
+    "NotExpressible": [
+      "emit/lean.py"
+    ],
+    "ParseError": [
+      "engines/exprs.py"
+    ],
+    "ProgramRun": [
+      "engines/runners.py"
+    ],
+    "RuntimeError": [
+      "engines/optimize.py",
+      "engines/runners.py"
+    ],
+    "Unsupported": [
+      "engines/frontend_python.py"
+    ],
+    "V.finite": [
+      "engines/conformance.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "V.fits": [
+      "engines/conformance.py",
+      "engines/optimize.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "V.fresh_seed": [
+      "cli.py",
+      "engines/conformance.py",
+      "engines/learn.py",
+      "engines/redefs.py",
+      "engines/translate.py",
+      "engines/verify.py",
+      "engines/witness.py"
+    ],
+    "V.inputs": [
+      "engines/conformance.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "V.same": [
+      "engines/conformance.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "ValueError": [
+      "engines/context.py",
+      "engines/runners.py",
+      "engines/search.py",
+      "engines/values.py",
+      "engines/witness.py",
+      "kernel/schema.py",
+      "kernel/store.py"
+    ],
+    "_always_returns": [
+      "engines/frontend_python.py"
+    ],
+    "_ann_type": [
+      "engines/frontend_python.py"
+    ],
+    "_atomic_write": [
+      "kernel/versioning.py"
+    ],
+    "_chain": [
+      "engines/search.py"
+    ],
+    "_conv": [
+      "engines/exprs.py",
+      "engines/learn.py",
+      "engines/observe.py"
+    ],
+    "_ctx": [
+      "cli.py"
+    ],
+    "_encode": [
+      "kernel/canon.py"
+    ],
+    "_expand": [
+      "engines/probes.py"
+    ],
+    "_key": [
+      "engines/search.py"
+    ],
+    "_layer": [
+      "cli.py"
+    ],
+    "_out": [
+      "cli.py"
+    ],
+    "_stmts": [
+      "engines/codegen.py",
+      "engines/frontend_python.py"
+    ],
+    "_strip": [
+      "kernel/versioning.py"
+    ],
+    "args.langs.split": [
+      "cli.py"
+    ],
+    "available": [
+      "engines/coverage.py",
+      "engines/optimize.py",
+      "engines/rewrite.py",
+      "engines/witness.py"
+    ],
+    "base.get": [
+      "engines/codegen.py",
+      "kernel/versioning.py"
+    ],
+    "c.cost_vector.get": [
+      "engines/rewrite.py"
+    ],
+    "c.get": [
+      "cli.py",
+      "engines/coverage.py",
+      "engines/observe.py",
+      "kernel/versioning.py"
+    ],
+    "card.get": [
+      "cli.py",
+      "emit/hints.py",
+      "emit/lean.py",
+      "engines/codegen.py",
+      "engines/context.py",
+      "engines/coverage.py",
+      "engines/ir.py",
+      "engines/observe.py",
+      "engines/optimize.py",
+      "engines/redefs.py",
+      "engines/rewrite.py",
+      "engines/search.py",
+      "engines/translate.py",
+      "engines/verify.py",
+      "engines/witness.py",
+      "kernel/store.py",
+      "kernel/types.py"
+    ],
+    "card.read_variant": [
+      "engines/witness.py"
+    ],
+    "card_hash": [
+      "kernel/versioning.py"
+    ],
+    "cards.get": [
+      "engines/observe.py",
+      "kernel/registry.py"
+    ],
+    "comments.get": [
+      "engines/observe.py"
+    ],
+    "compile": [
+      "engines/ir.py",
+      "engines/runners.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "conformance.rate": [
+      "engines/coverage.py",
+      "engines/verify.py"
+    ],
+    "coverage.compute": [
+      "cli.py"
+    ],
+    "ctx.available": [
+      "cli.py",
+      "engines/conformance.py",
+      "engines/coverage.py",
+      "engines/optimize.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "ctx.codegen_languages": [
+      "emit/hints.py",
+      "engines/conformance.py",
+      "engines/translate.py"
+    ],
+    "ctx.language": [
+      "engines/conformance.py",
+      "engines/optimize.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "ctx.store.cards": [
+      "cli.py",
+      "emit/lean.py",
+      "engines/coverage.py",
+      "engines/learn.py",
+      "engines/observe.py",
+      "engines/verify.py"
+    ],
+    "ctx.store.get": [
+      "cli.py",
+      "engines/optimize.py",
+      "engines/verify.py",
+      "engines/witness.py"
+    ],
+    "ctx.store.save": [
+      "cli.py",
+      "engines/optimize.py",
+      "engines/verify.py"
+    ],
+    "ctx.store.views.items": [
+      "cli.py",
+      "engines/verify.py"
+    ],
+    "d.mkdir": [
+      "engines/context.py",
+      "engines/runners.py",
+      "kernel/store.py"
+    ],
+    "data.get": [
+      "engines/codegen.py",
+      "engines/optimize.py",
+      "engines/verify.py",
+      "kernel/registry.py"
+    ],
+    "data.setdefault": [
+      "engines/codegen.py",
+      "kernel/store.py"
+    ],
+    "datetime.now": [
+      "cli.py",
+      "engines/coverage.py",
+      "engines/observe.py",
+      "engines/verify.py"
+    ],
+    "decode": [
+      "engines/runners.py",
+      "engines/witness.py"
+    ],
+    "default_store": [
+      "__init__.py",
+      "engines/context.py"
+    ],
+    "emit_module": [
+      "cli.py",
+      "engines/translate.py"
+    ],
+    "encode": [
+      "engines/runners.py"
+    ],
+    "errors.append": [
+      "kernel/types.py"
+    ],
+    "errs.append": [
+      "kernel/schema.py"
+    ],
+    "eval": [
+      "engines/ir.py",
+      "engines/witness.py"
+    ],
+    "evaluate": [
+      "engines/exprs.py",
+      "engines/learn.py",
+      "engines/redefs.py",
+      "engines/witness.py"
+    ],
+    "exec": [
+      "engines/runners.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "expr_cost": [
+      "engines/search.py"
+    ],
+    "f.get": [
+      "engines/coverage.py",
+      "engines/optimize.py",
+      "engines/rewrite.py",
+      "engines/translate.py",
+      "engines/verify.py",
+      "engines/witness.py",
+      "kernel/card.py"
+    ],
+    "f.is_file": [
+      "engines/runners.py",
+      "kernel/registry.py",
+      "kernel/versioning.py"
+    ],
+    "f.read_text": [
+      "engines/selfcheck.py",
+      "kernel/registry.py",
+      "kernel/versioning.py"
+    ],
+    "f.write_text": [
+      "emit/lean.py",
+      "kernel/store.py"
+    ],
+    "fn": [
+      "engines/exprs.py",
+      "engines/optimize.py",
+      "engines/runners.py",
+      "engines/witness.py"
+    ],
+    "fn.get": [
+      "engines/codegen.py"
+    ],
+    "form.get": [
+      "engines/witness.py"
+    ],
+    "forms_of": [
+      "engines/coverage.py",
+      "engines/optimize.py",
+      "engines/rewrite.py",
+      "engines/witness.py"
+    ],
+    "interp.call": [
+      "engines/conformance.py",
+      "engines/translate.py"
+    ],
+    "ir.get": [
+      "emit/hints.py",
+      "engines/ir.py",
+      "engines/witness.py"
+    ],
+    "lang_card.get": [
+      "engines/conformance.py",
+      "engines/optimize.py",
+      "engines/runners.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "last.get": [
+      "engines/coverage.py"
+    ],
+    "lift_source": [
+      "cli.py",
+      "engines/learn.py",
+      "engines/observe.py",
+      "engines/translate.py"
+    ],
+    "lines.append": [
+      "cli.py",
+      "emit/lean.py",
+      "engines/codegen.py",
+      "engines/docs.py"
+    ],
+    "lits.get": [
+      "engines/codegen.py"
+    ],
+    "m.get": [
+      "engines/observe.py"
+    ],
+    "m.start": [
+      "emit/lean.py"
+    ],
+    "meta.pop": [
+      "kernel/store.py",
+      "kernel/versioning.py"
+    ],
+    "module_for": [
+      "cli.py",
+      "engines/translate.py"
+    ],
+    "name.startswith": [
+      "engines/codegen.py",
+      "engines/exprs.py"
+    ],
+    "obs.get": [
+      "engines/learn.py"
+    ],
+    "observe": [
+      "cli.py",
+      "engines/learn.py"
+    ],
+    "old.get": [
+      "kernel/versioning.py"
+    ],
+    "open_store": [
+      "cli.py",
+      "kernel/store.py"
+    ],
+    "ops.items": [
+      "engines/codegen.py",
+      "engines/conformance.py"
+    ],
+    "optimize.measure_function": [
+      "cli.py"
+    ],
+    "optimize.measure_python_forms": [
+      "cli.py"
+    ],
+    "os.access": [
+      "engines/probes.py"
+    ],
+    "os.environ.get": [
+      "engines/probes.py",
+      "kernel/paths.py"
+    ],
+    "os.getcwd": [
+      "cli.py",
+      "kernel/paths.py"
+    ],
+    "os.path.isfile": [
+      "engines/probes.py"
+    ],
+    "out.append": [
+      "engines/codegen.py",
+      "engines/context.py",
+      "engines/coverage.py",
+      "engines/frontend_python.py",
+      "engines/learn.py",
+      "engines/optimize.py",
+      "engines/rewrite.py",
+      "engines/runners.py",
+      "engines/search.py",
+      "engines/selfcheck.py",
+      "engines/values.py",
+      "kernel/canon.py",
+      "kernel/card.py",
+      "kernel/types.py"
+    ],
+    "out.values": [
+      "emit/lean.py",
+      "engines/verify.py"
+    ],
+    "p.get": [
+      "engines/learn.py",
+      "engines/probes.py"
+    ],
+    "p.read_text": [
+      "engines/context.py",
+      "engines/learn.py",
+      "engines/observe.py"
+    ],
+    "p.relative_to": [
+      "engines/learn.py",
+      "engines/observe.py"
+    ],
+    "parse": [
+      "emit/lean.py",
+      "engines/redefs.py",
+      "engines/search.py",
+      "engines/witness.py"
+    ],
+    "parts.append": [
+      "engines/codegen.py",
+      "engines/frontend_python.py",
+      "engines/observe.py"
+    ],
+    "paths.home": [
+      "cli.py",
+      "engines/selfcheck.py"
+    ],
+    "pending.append": [
+      "emit/lean.py",
+      "engines/learn.py"
+    ],
+    "platform.machine": [
+      "engines/optimize.py",
+      "engines/probes.py"
+    ],
+    "platform.system": [
+      "engines/optimize.py",
+      "engines/probes.py"
+    ],
+    "probe": [
+      "engines/probes.py"
+    ],
+    "probes.probe": [
+      "emit/lean.py",
+      "engines/context.py",
+      "engines/redefs.py",
+      "engines/rewrite.py",
+      "engines/runners.py"
+    ],
+    "problems.append": [
+      "emit/lean.py",
+      "engines/selfcheck.py",
+      "kernel/types.py"
+    ],
+    "python_callable": [
+      "engines/optimize.py",
+      "engines/witness.py"
+    ],
+    "r.get": [
+      "cli.py",
+      "engines/conformance.py",
+      "engines/coverage.py",
+      "engines/learn.py",
+      "engines/optimize.py",
+      "engines/runners.py",
+      "engines/verify.py",
+      "kernel/registry.py"
+    ],
+    "re.escape": [
+      "engines/codegen.py",
+      "engines/observe.py"
+    ],
+    "re.finditer": [
+      "emit/lean.py"
+    ],
+    "rep.get": [
+      "cli.py",
+      "engines/coverage.py"
+    ],
+    "rep.items": [
+      "cli.py",
+      "engines/learn.py"
+    ],
+    "resolve_language": [
+      "engines/codegen.py",
+      "engines/context.py",
+      "engines/rewrite.py"
+    ],
+    "results.values": [
+      "cli.py",
+      "engines/frontend_python.py"
+    ],
+    "root.is_dir": [
+      "engines/learn.py",
+      "engines/observe.py",
+      "kernel/store.py"
+    ],
+    "rows.append": [
+      "engines/conformance.py",
+      "engines/rewrite.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "rows.items": [
+      "cli.py"
+    ],
+    "rule_theorem": [
+      "emit/lean.py"
+    ],
+    "run_program": [
+      "engines/conformance.py",
+      "engines/optimize.py",
+      "engines/translate.py",
+      "engines/witness.py"
+    ],
+    "runner.get": [
+      "engines/runners.py"
+    ],
+    "s.add_argument": [
+      "cli.py"
+    ],
+    "s.get": [
+      "engines/codegen.py",
+      "engines/ir.py"
+    ],
+    "s.set_defaults": [
+      "cli.py"
+    ],
+    "sb.get": [
+      "cli.py",
+      "engines/selfcheck.py"
+    ],
+    "schema.get": [
+      "kernel/schema.py"
+    ],
+    "search.load_rules": [
+      "cli.py"
+    ],
+    "secs.get": [
+      "engines/coverage.py",
+      "engines/verify.py"
+    ],
+    "seen.add": [
+      "engines/learn.py",
+      "engines/rewrite.py",
+      "engines/search.py",
+      "engines/values.py"
+    ],
+    "self.T": [
+      "engines/codegen.py"
+    ],
+    "self._block": [
+      "engines/ir.py"
+    ],
+    "self._expr": [
+      "engines/ir.py"
+    ],
+    "self._fail": [
+      "kernel/registry.py"
+    ],
+    "self._note": [
+      "engines/ir.py"
+    ],
+    "self._prelude": [
+      "engines/codegen.py"
+    ],
+    "self._tick": [
+      "engines/ir.py"
+    ],
+    "self.apply": [
+      "engines/frontend_python.py"
+    ],
+    "self.assign": [
+      "engines/frontend_python.py"
+    ],
+    "self.block": [
+      "engines/codegen.py",
+      "engines/frontend_python.py"
+    ],
+    "self.cg.get": [
+      "engines/codegen.py"
+    ],
+    "self.cond": [
+      "engines/frontend_python.py"
+    ],
+    "self.env.get": [
+      "engines/frontend_python.py"
+    ],
+    "self.errors.append": [
+      "kernel/registry.py",
+      "kernel/store.py"
+    ],
+    "self.expr": [
+      "engines/codegen.py",
+      "engines/frontend_python.py"
+    ],
+    "self.fresh": [
+      "engines/frontend_python.py"
+    ],
+    "self.function": [
+      "engines/codegen.py"
+    ],
+    "self.get": [
+      "kernel/card.py",
+      "kernel/store.py"
+    ],
+    "self.helpers_for": [
+      "engines/codegen.py"
+    ],
+    "self.ident": [
+      "engines/codegen.py"
+    ],
+    "self.lang.get": [
+      "engines/codegen.py"
+    ],
+    "self.lit": [
+      "engines/codegen.py"
+    ],
+    "self.ops.get": [
+      "engines/codegen.py",
+      "engines/frontend_python.py",
+      "engines/ir.py"
+    ],
+    "self.registry": [
+      "kernel/store.py"
+    ],
+    "self.result_type": [
+      "engines/codegen.py",
+      "engines/ir.py"
+    ],
+    "self.tmpl": [
+      "engines/codegen.py"
+    ],
+    "self.var": [
+      "engines/codegen.py"
+    ],
+    "self.views.values": [
+      "kernel/store.py"
+    ],
+    "self.writable_layer": [
+      "kernel/store.py"
+    ],
+    "sep.join": [
+      "engines/codegen.py"
+    ],
+    "size": [
+      "engines/exprs.py",
+      "engines/learn.py",
+      "engines/search.py"
+    ],
+    "spec.card.get": [
+      "engines/codegen.py",
+      "engines/conformance.py"
+    ],
+    "spec.get": [
+      "engines/probes.py",
+      "engines/values.py"
+    ],
+    "spec.result_type": [
+      "engines/codegen.py",
+      "engines/frontend_python.py"
+    ],
+    "st.cards": [
+      "cli.py",
+      "engines/coverage.py"
+    ],
+    "st.count": [
+      "engines/conformance.py",
+      "engines/verify.py"
+    ],
+    "st.get": [
+      "cli.py",
+      "engines/coverage.py"
+    ],
+    "statistics.median": [
+      "engines/optimize.py"
+    ],
+    "store.cards": [
+      "engines/docs.py",
+      "engines/observe.py",
+      "engines/rewrite.py",
+      "engines/search.py",
+      "kernel/types.py"
+    ],
+    "store.get": [
+      "engines/codegen.py",
+      "engines/learn.py",
+      "engines/rewrite.py",
+      "kernel/types.py"
+    ],
+    "store.registry": [
+      "engines/ir.py",
+      "engines/observe.py",
+      "engines/rewrite.py",
+      "kernel/types.py"
+    ],
+    "store.save": [
+      "engines/learn.py"
+    ],
+    "sub.add_parser": [
+      "cli.py"
+    ],
+    "t.get": [
+      "engines/codegen.py",
+      "kernel/types.py"
+    ],
+    "t.shapes.get": [
+      "engines/observe.py"
+    ],
+    "text.encode": [
+      "engines/observe.py",
+      "kernel/canon.py"
+    ],
+    "text.replace": [
+      "engines/codegen.py"
+    ],
+    "texts.append": [
+      "cli.py"
+    ],
+    "to_lean": [
+      "emit/lean.py"
+    ],
+    "to_python_text": [
+      "engines/exprs.py",
+      "engines/ir.py"
+    ],
+    "to_text": [
+      "cli.py",
+      "engines/exprs.py",
+      "engines/search.py"
+    ],
+    "tpl.format": [
+      "emit/hints.py",
+      "engines/codegen.py"
+    ],
+    "translate.verify_function": [
+      "cli.py",
+      "engines/verify.py"
+    ],
+    "updates.setdefault": [
+      "engines/verify.py"
+    ],
+    "uses": [
+      "engines/codegen.py"
+    ],
+    "v.get": [
+      "cli.py",
+      "kernel/store.py"
+    ],
+    "v.items": [
+      "engines/learn.py",
+      "engines/runners.py",
+      "engines/verify.py"
+    ],
+    "validate": [
+      "engines/coverage.py",
+      "engines/verify.py",
+      "kernel/schema.py",
+      "kernel/types.py"
+    ],
+    "variables": [
+      "engines/exprs.py",
+      "engines/learn.py",
+      "engines/redefs.py"
+    ],
+    "vec.get": [
+      "engines/witness.py"
+    ],
+    "view.ALL.values": [
+      "engines/coverage.py",
+      "engines/ir.py",
+      "engines/observe.py"
+    ],
+    "view.meta.get": [
+      "engines/rewrite.py",
+      "kernel/types.py"
+    ],
+    "visit": [
+      "engines/codegen.py",
+      "engines/search.py"
+    ]
+  },
+  "fallback_calls_by_language": {
+    "python": {
+      "<expression>": 253,
+      "CallResult": 3,
+      "CanonError": 5,
+      "Card": 4,
+      "CardLoadError": 4,
+      "EmitGap": 14,
+      "Emitter": 9,
+      "EvalError": 5,
+      "IRError": 6,
+      "Interpreter": 3,
+      "KeyError": 4,
+      "L.append": 8,
+      "NotExpressible": 2,
+      "ParseError": 4,
+      "ProgramRun": 3,
+      "RuntimeError": 5,
+      "Unsupported": 42,
+      "V.finite": 3,
+      "V.fits": 7,
+      "V.fresh_seed": 9,
+      "V.inputs": 6,
+      "V.same": 13,
+      "ValueError": 7,
+      "_always_returns": 3,
+      "_ann_type": 5,
+      "_atomic_write": 3,
+      "_chain": 3,
+      "_conv": 14,
+      "_ctx": 15,
+      "_encode": 3,
+      "_expand": 4,
+      "_key": 14,
+      "_layer": 3,
+      "_out": 22,
+      "_stmts": 6,
+      "_strip": 6,
+      "args.langs.split": 2,
+      "available": 6,
+      "base.get": 2,
+      "c.cost_vector.get": 3,
+      "c.get": 13,
+      "card.get": 62,
+      "card.read_variant": 4,
+      "card_hash": 3,
+      "cards.get": 3,
+      "comments.get": 3,
+      "compile": 7,
+      "conformance.rate": 3,
+      "coverage.compute": 2,
+      "ctx.available": 7,
+      "ctx.codegen_languages": 3,
+      "ctx.language": 4,
+      "ctx.store.cards": 13,
+      "ctx.store.get": 14,
+      "ctx.store.save": 6,
+      "ctx.store.views.items": 2,
+      "d.mkdir": 3,
+      "data.get": 7,
+      "data.setdefault": 2,
+      "datetime.now": 4,
+      "decode": 6,
+      "default_store": 4,
+      "emit_module": 3,
+      "encode": 3,
+      "errors.append": 4,
+      "errs.append": 21,
+      "eval": 4,
+      "evaluate": 11,
+      "exec": 5,
+      "expr_cost": 4,
+      "f.get": 40,
+      "f.is_file": 4,
+      "f.read_text": 3,
+      "f.write_text": 2,
+      "fn": 5,
+      "fn.get": 2,
+      "form.get": 10,
+      "forms_of": 8,
+      "interp.call": 3,
+      "ir.get": 7,
+      "lang_card.get": 6,
+      "last.get": 3,
+      "lift_source": 5,
+      "lines.append": 18,
+      "lits.get": 3,
+      "m.get": 9,
+      "m.start": 3,
+      "meta.pop": 3,
+      "module_for": 2,
+      "name.startswith": 2,
+      "obs.get": 3,
+      "observe": 2,
+      "old.get": 3,
+      "open_store": 4,
+      "ops.items": 2,
+      "optimize.measure_function": 2,
+      "optimize.measure_python_forms": 2,
+      "os.access": 3,
+      "os.environ.get": 5,
+      "os.getcwd": 3,
+      "os.path.isfile": 3,
+      "out.append": 50,
+      "out.values": 6,
+      "p.get": 20,
+      "p.read_text": 3,
+      "p.relative_to": 3,
+      "parse": 13,
+      "parts.append": 4,
+      "paths.home": 4,
+      "pending.append": 2,
+      "platform.machine": 4,
+      "platform.system": 4,
+      "probe": 3,
+      "probes.probe": 7,
+      "problems.append": 6,
+      "python_callable": 4,
+      "r.get": 35,
+      "re.escape": 5,
+      "re.finditer": 2,
+      "rep.get": 4,
+      "rep.items": 2,
+      "resolve_language": 4,
+      "results.values": 2,
+      "root.is_dir": 4,
+      "rows.append": 4,
+      "rows.items": 2,
+      "rule_theorem": 6,
+      "run_program": 5,
+      "runner.get": 5,
+      "s.add_argument": 52,
+      "s.get": 2,
+      "s.set_defaults": 16,
+      "sb.get": 3,
+      "schema.get": 9,
+      "search.load_rules": 2,
+      "secs.get": 18,
+      "seen.add": 4,
+      "self.T": 8,
+      "self._block": 4,
+      "self._expr": 15,
+      "self._fail": 5,
+      "self._note": 3,
+      "self._prelude": 2,
+      "self._tick": 3,
+      "self.apply": 7,
+      "self.assign": 4,
+      "self.block": 11,
+      "self.cg.get": 43,
+      "self.cond": 3,
+      "self.env.get": 3,
+      "self.errors.append": 3,
+      "self.expr": 25,
+      "self.fresh": 3,
+      "self.function": 2,
+      "self.get": 12,
+      "self.helpers_for": 2,
+      "self.ident": 5,
+      "self.lang.get": 3,
+      "self.lit": 2,
+      "self.ops.get": 4,
+      "self.registry": 3,
+      "self.result_type": 2,
+      "self.tmpl": 10,
+      "self.var": 7,
+      "self.views.values": 3,
+      "self.writable_layer": 3,
+      "sep.join": 3,
+      "size": 4,
+      "spec.card.get": 3,
+      "spec.get": 3,
+      "spec.result_type": 3,
+      "st.cards": 7,
+      "st.count": 4,
+      "st.get": 3,
+      "statistics.median": 3,
+      "store.cards": 7,
+      "store.get": 11,
+      "store.registry": 6,
+      "store.save": 4,
+      "sub.add_parser": 16,
+      "t.get": 6,
+      "t.shapes.get": 5,
+      "text.encode": 4,
+      "text.replace": 2,
+      "texts.append": 4,
+      "to_lean": 8,
+      "to_python_text": 11,
+      "to_text": 6,
+      "tpl.format": 2,
+      "translate.verify_function": 2,
+      "updates.setdefault": 5,
+      "uses": 2,
+      "v.get": 3,
+      "v.items": 4,
+      "validate": 12,
+      "variables": 8,
+      "vec.get": 7,
+      "view.ALL.values": 3,
+      "view.meta.get": 4,
+      "visit": 4
+    }
+  },
+  "files": [
+    {
+      "cards": 11,
+      "language": "python",
+      "lines": 33,
+      "named": 2,
+      "path": "__init__.py",
+      "sha256_12": "79c16bf1ec1d",
+      "top": {
+        "ATTR": 3,
+        "CALL_GENERIC": 6,
+        "CMP_EQ": 1,
+        "SUBSCRIPT_VAR": 1
+      }
+    },
+    {
+      "cards": 3,
+      "language": "python",
+      "lines": 6,
+      "named": 1,
+      "path": "__main__.py",
+      "sha256_12": "13a1a5b340cd",
+      "top": {
+        "ATTR": 1,
+        "CALL_GENERIC": 1,
+        "SYS_EXIT": 1
+      }
+    },
+    {
+      "cards": 1139,
+      "language": "python",
+      "lines": 507,
+      "named": 379,
+      "path": "cli.py",
+      "sha256_12": "729e0d59883f",
+      "top": {
+        "ADD": 21,
+        "ATTR": 445,
+        "BUILTIN_PRINT": 17,
+        "CALL_GENERIC": 311,
+        "COMPREHENSION_GEN": 16,
+        "IF_EXPR": 38,
+        "OR": 19,
+        "SUBSCRIPT_STR": 120
+      }
+    },
+    {
+      "cards": 0,
+      "language": "python",
+      "lines": 1,
+      "named": 0,
+      "path": "emit/__init__.py",
+      "sha256_12": "e3b0c44298fc",
+      "top": {}
+    },
+    {
+      "cards": 45,
+      "language": "python",
+      "lines": 29,
+      "named": 27,
+      "path": "emit/hints.py",
+      "sha256_12": "52d28395ecd7",
+      "top": {
+        "ATTR": 10,
+        "CALL_GENERIC": 7,
+        "NEG": 3,
+        "OR": 2,
+        "SUBSCRIPT_INT": 3,
+        "SUBSCRIPT_SLICE": 2,
+        "SUBSCRIPT_STR": 4,
+        "SUBSCRIPT_VAR": 3
+      }
+    },
+    {
+      "cards": 187,
+      "language": "python",
+      "lines": 151,
+      "named": 96,
+      "path": "emit/lean.py",
+      "sha256_12": "6c4fc92c0671",
+      "top": {
+        "ATTR": 42,
+        "CALL_GENERIC": 43,
+        "CMP_EQ": 7,
+        "IF_EXPR": 6,
+        "MEMBER": 8,
+        "SUBSCRIPT": 5,
+        "SUBSCRIPT_INT": 18,
+        "SUBSCRIPT_STR": 5
+      }
+    },
+    {
+      "cards": 11,
+      "language": "python",
+      "lines": 21,
+      "named": 3,
+      "path": "emit/proofs.py",
+      "sha256_12": "29414a9e3975",
+      "top": {
+        "ATTR": 4,
+        "CALL_GENERIC": 3,
+        "CMP_NE": 1,
+        "NEG": 1,
+        "SUBSCRIPT": 1,
+        "SUBSCRIPT_STR": 1
+      }
+    },
+    {
+      "cards": 0,
+      "language": "python",
+      "lines": 1,
+      "named": 0,
+      "path": "engines/__init__.py",
+      "sha256_12": "e3b0c44298fc",
+      "top": {}
+    },
+    {
+      "cards": 847,
+      "language": "python",
+      "lines": 420,
+      "named": 310,
+      "path": "engines/codegen.py",
+      "sha256_12": "b66b7339936a",
+      "top": {
+        "ADD": 40,
+        "ATTR": 298,
+        "CALL_GENERIC": 235,
+        "CMP_EQ": 20,
+        "OR": 24,
+        "SUBSCRIPT_INT": 21,
+        "SUBSCRIPT_STR": 70,
+        "SUBSCRIPT_VAR": 23
+      }
+    },
+    {
+      "cards": 248,
+      "language": "python",
+      "lines": 161,
+      "named": 140,
+      "path": "engines/conformance.py",
+      "sha256_12": "0c62639e5ae3",
+      "top": {
+        "ATTR": 57,
+        "BUILTIN_LEN": 9,
+        "CALL_GENERIC": 47,
+        "CMP_EQ": 6,
+        "COMPREHENSION_LIST": 9,
+        "OR": 9,
+        "SUBSCRIPT_STR": 34,
+        "SUBSCRIPT_VAR": 12
+      }
+    },
+    {
+      "cards": 66,
+      "language": "python",
+      "lines": 58,
+      "named": 11,
+      "path": "engines/context.py",
+      "sha256_12": "1c7e7903eee2",
+      "top": {
+        "ATTR": 32,
+        "BUILTIN_SORTED": 1,
+        "CALL_GENERIC": 22,
+        "DIV": 2,
+        "NOT": 1,
+        "OR": 1,
+        "SUBSCRIPT_NDARRAY": 1,
+        "SUBSCRIPT_VAR": 1
+      }
+    },
+    {
+      "cards": 409,
+      "language": "python",
+      "lines": 205,
+      "named": 203,
+      "path": "engines/coverage.py",
+      "sha256_12": "6f083f1ecf84",
+      "top": {
+        "ATTR": 109,
+        "BUILTIN_LEN": 10,
+        "BUILTIN_SORTED": 7,
+        "CALL_GENERIC": 92,
+        "CMP_EQ": 14,
+        "IF_EXPR": 24,
+        "OR": 8,
+        "SUBSCRIPT_STR": 71
+      }
+    },
+    {
+      "cards": 16,
+      "language": "python",
+      "lines": 21,
+      "named": 6,
+      "path": "engines/docs.py",
+      "sha256_12": "ab497e64cf7d",
+      "top": {
+        "ATTR": 6,
+        "BUILTIN_LEN": 1,
+        "BUILTIN_SORTED": 1,
+        "CALL_GENERIC": 4,
+        "LAMBDA_PROJECTION": 1,
+        "SUBSCRIPT_STR": 3
+      }
+    },
+    {
+      "cards": 471,
+      "language": "python",
+      "lines": 245,
+      "named": 308,
+      "path": "engines/exprs.py",
+      "sha256_12": "9266971434b8",
+      "top": {
+        "AND": 29,
+        "ATTR": 115,
+        "BUILTIN_ISINSTANCE": 33,
+        "CALL_GENERIC": 43,
+        "CMP_EQ": 41,
+        "IF_EXPR": 13,
+        "MEMBER": 19,
+        "SUBSCRIPT_INT": 38
+      }
+    },
+    {
+      "cards": 851,
+      "language": "python",
+      "lines": 473,
+      "named": 380,
+      "path": "engines/frontend_python.py",
+      "sha256_12": "634c87ca9889",
+      "top": {
+        "AND": 34,
+        "ATTR": 322,
+        "BUILTIN_ISINSTANCE": 46,
+        "CALL_GENERIC": 140,
+        "CMP_EQ": 40,
+        "OR": 16,
+        "SUBSCRIPT_INT": 51,
+        "SUBSCRIPT_VAR": 23
+      }
+    },
+    {
+      "cards": 318,
+      "language": "python",
+      "lines": 264,
+      "named": 177,
+      "path": "engines/ir.py",
+      "sha256_12": "0e1bc4341e02",
+      "top": {
+        "AND": 10,
+        "ATTR": 65,
+        "CALL_GENERIC": 70,
+        "CMP_EQ": 23,
+        "MEMBER": 9,
+        "SUBSCRIPT_INT": 30,
+        "SUBSCRIPT_STR": 20,
+        "SUBSCRIPT_VAR": 10
+      }
+    },
+    {
+      "cards": 337,
+      "language": "python",
+      "lines": 234,
+      "named": 200,
+      "path": "engines/learn.py",
+      "sha256_12": "3c182e952858",
+      "top": {
+        "AND": 10,
+        "ATTR": 66,
+        "BUILTIN_LEN": 8,
+        "CALL_GENERIC": 68,
+        "CMP_GE": 11,
+        "IF_EXPR": 14,
+        "OR": 6,
+        "SUBSCRIPT_STR": 64
+      }
+    },
+    {
+      "cards": 674,
+      "language": "python",
+      "lines": 336,
+      "named": 267,
+      "path": "engines/observe.py",
+      "sha256_12": "f41902637a62",
+      "top": {
+        "AND": 16,
+        "ATTR": 262,
+        "BUILTIN_ISINSTANCE": 29,
+        "CALL_GENERIC": 128,
+        "IF_EXPR": 17,
+        "SUBSCRIPT_NDARRAY": 17,
+        "SUBSCRIPT_STR": 17,
+        "SUBSCRIPT_VAR": 15
+      }
+    },
+    {
+      "cards": 302,
+      "language": "python",
+      "lines": 207,
+      "named": 157,
+      "path": "engines/optimize.py",
+      "sha256_12": "437227951488",
+      "top": {
+        "ATTR": 73,
+        "BUILTIN_LEN": 6,
+        "CALL_GENERIC": 70,
+        "NOT": 8,
+        "OR": 7,
+        "SUBSCRIPT_INT": 9,
+        "SUBSCRIPT_STR": 37,
+        "SUBSCRIPT_VAR": 10
+      }
+    },
+    {
+      "cards": 240,
+      "language": "python",
+      "lines": 171,
+      "named": 97,
+      "path": "engines/probes.py",
+      "sha256_12": "29c602cdce0b",
+      "top": {
+        "AND": 9,
+        "ATTR": 79,
+        "BIT_OR": 5,
+        "CALL_GENERIC": 63,
+        "CMP_EQ": 10,
+        "NOT": 9,
+        "SUBSCRIPT_NDARRAY": 6,
+        "SUBSCRIPT_STR": 19
+      }
+    },
+    {
+      "cards": 204,
+      "language": "python",
+      "lines": 159,
+      "named": 136,
+      "path": "engines/redefs.py",
+      "sha256_12": "f800edf0f76d",
+      "top": {
+        "AND": 8,
+        "ATTR": 30,
+        "BUILTIN_ISINSTANCE": 10,
+        "CALL_GENERIC": 37,
+        "IF_EXPR": 10,
+        "OR": 11,
+        "SUBSCRIPT_STR": 19,
+        "TO_FLOAT": 8
+      }
+    },
+    {
+      "cards": 335,
+      "language": "python",
+      "lines": 222,
+      "named": 169,
+      "path": "engines/rewrite.py",
+      "sha256_12": "1b6267b1a851",
+      "top": {
+        "AND": 9,
+        "ATTR": 96,
+        "CALL_GENERIC": 68,
+        "CMP_EQ": 8,
+        "IF_EXPR": 11,
+        "NOT": 10,
+        "OR": 18,
+        "SUBSCRIPT_VAR": 11
+      }
+    },
+    {
+      "cards": 305,
+      "language": "python",
+      "lines": 259,
+      "named": 135,
+      "path": "engines/runners.py",
+      "sha256_12": "b740a44a08a0",
+      "top": {
+        "ATTR": 97,
+        "BUILTIN_ISINSTANCE": 9,
+        "CALL_GENERIC": 73,
+        "DIV": 8,
+        "NOT": 7,
+        "OR": 8,
+        "SUBSCRIPT_STR": 9,
+        "SUBSCRIPT_VAR": 7
+      }
+    },
+    {
+      "cards": 275,
+      "language": "python",
+      "lines": 209,
+      "named": 167,
+      "path": "engines/search.py",
+      "sha256_12": "2805c15e0cf3",
+      "top": {
+        "AND": 14,
+        "ATTR": 34,
+        "BUILTIN_ISINSTANCE": 11,
+        "CALL_GENERIC": 69,
+        "CMP_EQ": 7,
+        "MEMBER": 8,
+        "SUBSCRIPT_INT": 18,
+        "SUBSCRIPT_VAR": 29
+      }
+    },
+    {
+      "cards": 176,
+      "language": "python",
+      "lines": 117,
+      "named": 90,
+      "path": "engines/selfcheck.py",
+      "sha256_12": "a1c5039d87ed",
+      "top": {
+        "AND": 7,
+        "ATTR": 52,
+        "CALL_GENERIC": 33,
+        "IF_EXPR": 5,
+        "OR": 5,
+        "SUBSCRIPT_STR": 7,
+        "SUBSCRIPT_VAR": 7,
+        "TYPE_STR_CAST": 5
+      }
+    },
+    {
+      "cards": 300,
+      "language": "python",
+      "lines": 201,
+      "named": 186,
+      "path": "engines/translate.py",
+      "sha256_12": "67fafd3810f1",
+      "top": {
+        "ATTR": 56,
+        "BUILTIN_LEN": 15,
+        "CALL_GENERIC": 53,
+        "CMP_EQ": 6,
+        "COMPREHENSION_GEN": 8,
+        "COMPREHENSION_LIST": 9,
+        "SUBSCRIPT_STR": 48,
+        "SUBSCRIPT_VAR": 12
+      }
+    },
+    {
+      "cards": 165,
+      "language": "python",
+      "lines": 111,
+      "named": 127,
+      "path": "engines/values.py",
+      "sha256_12": "fc3feccf2d39",
+      "top": {
+        "AND": 10,
+        "ATTR": 20,
+        "BUILTIN_ISINSTANCE": 15,
+        "BUILTIN_LEN": 6,
+        "CALL_GENERIC": 17,
+        "MEMBER": 9,
+        "OR": 7,
+        "SUBSCRIPT_STR": 6
+      }
+    },
+    {
+      "cards": 356,
+      "language": "python",
+      "lines": 193,
+      "named": 158,
+      "path": "engines/verify.py",
+      "sha256_12": "a65f2a1a3b27",
+      "top": {
+        "ATTR": 107,
+        "CALL_GENERIC": 88,
+        "CMP_EQ": 12,
+        "COMPREHENSION_DICT": 12,
+        "IF_EXPR": 15,
+        "MEMBER": 12,
+        "OR": 11,
+        "SUBSCRIPT_STR": 36
+      }
+    },
+    {
+      "cards": 605,
+      "language": "python",
+      "lines": 385,
+      "named": 284,
+      "path": "engines/witness.py",
+      "sha256_12": "f9e9e4e922f4",
+      "top": {
+        "AND": 20,
+        "ATTR": 161,
+        "CALL_GENERIC": 157,
+        "IF_EXPR": 23,
+        "NOT": 21,
+        "OR": 26,
+        "SUBSCRIPT_STR": 54,
+        "SUBSCRIPT_VAR": 15
+      }
+    },
+    {
+      "cards": 0,
+      "language": "python",
+      "lines": 8,
+      "named": 0,
+      "path": "kernel/__init__.py",
+      "sha256_12": "dece3eeb2206",
+      "top": {}
+    },
+    {
+      "cards": 94,
+      "language": "python",
+      "lines": 100,
+      "named": 36,
+      "path": "kernel/canon.py",
+      "sha256_12": "36bc62b7c4db",
+      "top": {
+        "ADD": 3,
+        "ATTR": 26,
+        "BUILTIN_TYPE": 6,
+        "CALL_GENERIC": 32,
+        "CMP_IS": 6,
+        "CONTAINER_DICT_CAST": 2,
+        "JSON_DUMPS_CALL": 4,
+        "SUBSCRIPT_VAR": 2
+      }
+    },
+    {
+      "cards": 106,
+      "language": "python",
+      "lines": 120,
+      "named": 42,
+      "path": "kernel/card.py",
+      "sha256_12": "65b295758192",
+      "top": {
+        "AND": 3,
+        "ATTR": 42,
+        "BUILTIN_ISINSTANCE": 5,
+        "CALL_GENERIC": 22,
+        "IF_EXPR": 4,
+        "NOT": 3,
+        "OR": 8,
+        "SUBSCRIPT_VAR": 3
+      }
+    },
+    {
+      "cards": 50,
+      "language": "python",
+      "lines": 50,
+      "named": 21,
+      "path": "kernel/paths.py",
+      "sha256_12": "b1a9c3fb0ccf",
+      "top": {
+        "ATTR": 18,
+        "BIT_OR": 3,
+        "CALL_GENERIC": 11,
+        "CMP_EQ": 2,
+        "DIV": 7,
+        "IF_EXPR": 3,
+        "PATHLIB_PATH_CTOR": 4,
+        "SUBSCRIPT_INT": 1
+      }
+    },
+    {
+      "cards": 174,
+      "language": "python",
+      "lines": 150,
+      "named": 58,
+      "path": "kernel/registry.py",
+      "sha256_12": "8e1daaab77a1",
+      "top": {
+        "ATTR": 82,
+        "BIT_OR": 3,
+        "CALL_GENERIC": 32,
+        "NOT": 8,
+        "OR": 4,
+        "SUBSCRIPT_NDARRAY": 6,
+        "SUBSCRIPT_STR": 4,
+        "SUBSCRIPT_VAR": 5
+      }
+    },
+    {
+      "cards": 269,
+      "language": "python",
+      "lines": 160,
+      "named": 163,
+      "path": "kernel/schema.py",
+      "sha256_12": "78ea5d08ed62",
+      "top": {
+        "AND": 22,
+        "ATTR": 50,
+        "BUILTIN_ISINSTANCE": 16,
+        "CALL_GENERIC": 56,
+        "CMP_EQ": 11,
+        "MEMBER": 21,
+        "NOT": 15,
+        "SUBSCRIPT_STR": 30
+      }
+    },
+    {
+      "cards": 309,
+      "language": "python",
+      "lines": 225,
+      "named": 120,
+      "path": "kernel/store.py",
+      "sha256_12": "05c9bf100e09",
+      "top": {
+        "ATTR": 111,
+        "BIT_OR": 17,
+        "CALL_GENERIC": 68,
+        "MEMBER": 7,
+        "OR": 8,
+        "SUBSCRIPT": 7,
+        "SUBSCRIPT_NDARRAY": 13,
+        "SUBSCRIPT_VAR": 10
+      }
+    },
+    {
+      "cards": 182,
+      "language": "python",
+      "lines": 108,
+      "named": 74,
+      "path": "kernel/types.py",
+      "sha256_12": "73b98b88cdba",
+      "top": {
+        "AND": 7,
+        "ATTR": 63,
+        "CALL_GENERIC": 43,
+        "IF_EXPR": 7,
+        "MEMBER": 8,
+        "OR": 13,
+        "SUBSCRIPT_NDARRAY": 4,
+        "SUBSCRIPT_VAR": 7
+      }
+    },
+    {
+      "cards": 147,
+      "language": "python",
+      "lines": 118,
+      "named": 74,
+      "path": "kernel/versioning.py",
+      "sha256_12": "94aa4a9e0cb9",
+      "top": {
+        "AND": 4,
+        "ATTR": 29,
+        "CALL_GENERIC": 44,
+        "CONTAINER_DICT_CAST": 4,
+        "CONTAINER_SET_CAST": 8,
+        "DIV": 5,
+        "OR": 6,
+        "SUBSCRIPT_VAR": 6
+      }
+    }
+  ],
+  "functions": [
+    {
+      "file": "__init__.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 18,
+      "name": "get",
+      "reasons": [
+        "line 18: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "__init__.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 22,
+      "name": "all_names",
+      "reasons": [
+        "line 22: type annotation 'list[str]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "__init__.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 26,
+      "name": "__getattr__",
+      "reasons": [
+        "line 26: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 31,
+      "name": "_out",
+      "reasons": [
+        "line 31: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 38,
+      "name": "_ctx",
+      "reasons": [
+        "line 39: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 50,
+      "name": "_layer",
+      "reasons": [
+        "line 50: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 57,
+      "name": "cmd_init",
+      "reasons": [
+        "line 58: call to Path(args.path or os.getcwd()).resolve() (no op card or lifted function)"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 74,
+      "name": "cmd_status",
+      "reasons": [
+        "line 75: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 95,
+      "name": "cmd_observe",
+      "reasons": [
+        "line 96: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 118,
+      "name": "cmd_verify",
+      "reasons": [
+        "line 119: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 150,
+      "name": "_failures",
+      "reasons": [
+        "line 150: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 172,
+      "name": "cmd_cover",
+      "reasons": [
+        "line 173: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 183,
+      "name": "cmd_rewrite",
+      "reasons": [
+        "line 184: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 245,
+      "name": "cmd_emit",
+      "reasons": [
+        "line 247: expression Attribute"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 300,
+      "name": "cmd_translate",
+      "reasons": [
+        "line 301: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 332,
+      "name": "cmd_learn",
+      "reasons": [
+        "line 333: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 347,
+      "name": "cmd_optimize",
+      "reasons": [
+        "line 348: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 380,
+      "name": "cmd_show",
+      "reasons": [
+        "line 382: expression Attribute"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 393,
+      "name": "cmd_list",
+      "reasons": [
+        "line 395: expression Attribute"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 408,
+      "name": "cmd_probe",
+      "reasons": [
+        "line 410: expression Dict"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 419,
+      "name": "cmd_new",
+      "reasons": [
+        "line 421: expression Dict"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 431,
+      "name": "cmd_docs",
+      "reasons": [
+        "line 432: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 445,
+      "name": "cmd_clean",
+      "reasons": [
+        "line 446: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 453,
+      "name": "build_parser",
+      "reasons": [
+        "line 453: type annotation 'argparse.ArgumentParser' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "cli.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 503,
+      "name": "main",
+      "reasons": [
+        "line 503: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "emit/hints.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 14,
+      "name": "hints_for",
+      "reasons": [
+        "line 14: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "emit/lean.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 36,
+      "name": "to_lean",
+      "reasons": [
+        "line 36: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "emit/lean.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 57,
+      "name": "rule_theorem",
+      "reasons": [
+        "line 57: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "emit/lean.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 64,
+      "name": "lean_exe",
+      "reasons": [
+        "line 64: type annotation 'str | None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "emit/lean.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 70,
+      "name": "check_source",
+      "reasons": [
+        "line 70: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "emit/lean.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 82,
+      "name": "check_rules",
+      "reasons": [
+        "line 82: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "emit/lean.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 120,
+      "name": "emit_rules",
+      "reasons": [
+        "line 120: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "emit/lean.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 130,
+      "name": "lint",
+      "reasons": [
+        "line 130: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "emit/proofs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 14,
+      "name": "check_rules",
+      "reasons": [
+        "line 14: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/codegen.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 39,
+      "name": "resolve_language",
+      "reasons": [
+        "line 39: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/codegen.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 387,
+      "name": "_stmts",
+      "reasons": [
+        "line 388: for over 'body' (only range(...))"
+      ]
+    },
+    {
+      "file": "engines/codegen.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 395,
+      "name": "emit_module",
+      "reasons": [
+        "line 395: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/codegen.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 399,
+      "name": "emit_program",
+      "reasons": [
+        "line 399: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/codegen.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 403,
+      "name": "supported_ops",
+      "reasons": [
+        "line 403: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/conformance.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 33,
+      "name": "_domain_key",
+      "reasons": [
+        "line 33: type annotation 'list[str]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/conformance.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 41,
+      "name": "op_functions",
+      "reasons": [
+        "line 41: type annotation 'list[dict]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/conformance.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 54,
+      "name": "_cases",
+      "reasons": [
+        "line 56: expression Dict"
+      ]
+    },
+    {
+      "file": "engines/conformance.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 75,
+      "name": "run_language",
+      "reasons": [
+        "line 75: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/conformance.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 132,
+      "name": "matrix",
+      "reasons": [
+        "line 132: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/conformance.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 150,
+      "name": "rate",
+      "reasons": [
+        "line 150: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/coverage.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 26,
+      "name": "compute",
+      "reasons": [
+        "line 26: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/coverage.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 95,
+      "name": "_metric",
+      "reasons": [
+        "line 95: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/coverage.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 153,
+      "name": "goals",
+      "reasons": [
+        "line 153: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/coverage.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 163,
+      "name": "markdown",
+      "reasons": [
+        "line 163: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/docs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 9,
+      "name": "laws_md",
+      "reasons": [
+        "line 9: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/exprs.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 49,
+      "name": "parse",
+      "reasons": [
+        "line 49: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/exprs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 59,
+      "name": "_conv",
+      "reasons": [
+        "line 60: expression Attribute"
+      ]
+    },
+    {
+      "file": "engines/exprs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 123,
+      "name": "variables",
+      "reasons": [
+        "line 123: type annotation 'set[str]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/exprs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 134,
+      "name": "size",
+      "reasons": [
+        "line 135: name 'list' is not a parameter or an assigned local"
+      ]
+    },
+    {
+      "file": "engines/exprs.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 144,
+      "name": "evaluate",
+      "reasons": [
+        "line 144: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/exprs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 226,
+      "name": "to_text",
+      "reasons": [
+        "line 226: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/frontend_python.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 55,
+      "name": "_ann_type",
+      "reasons": [
+        "line 55: type annotation 'str | None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/frontend_python.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 385,
+      "name": "_always_returns",
+      "reasons": [
+        "line 385: type annotation 'list[dict]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/frontend_python.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 396,
+      "name": "lift_source",
+      "reasons": [
+        "line 396: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/frontend_python.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 437,
+      "name": "module_for",
+      "reasons": [
+        "line 437: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/frontend_python.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 453,
+      "name": "_stmts",
+      "reasons": [
+        "line 454: for over 'body' (only range(...))"
+      ]
+    },
+    {
+      "file": "engines/frontend_python.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 461,
+      "name": "_exprs_of",
+      "reasons": [
+        "line 462: for over \"('value', 'cond', 'start', 'stop', 'step')\" (only range(...))"
+      ]
+    },
+    {
+      "file": "engines/frontend_python.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 467,
+      "name": "_walk",
+      "reasons": [
+        "line 468: name 'list' is not a parameter or an assigned local"
+      ]
+    },
+    {
+      "file": "engines/ir.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 63,
+      "name": "op_table",
+      "reasons": [
+        "line 63: type annotation 'dict[str, OpSpec]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/ir.py",
+      "inferred_types": true,
+      "liftable": true,
+      "line": 81,
+      "name": "_floor_div",
+      "reasons": []
+    },
+    {
+      "file": "engines/ir.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 91,
+      "name": "walk_expr",
+      "reasons": [
+        "line 92: statement Expr"
+      ]
+    },
+    {
+      "file": "engines/ir.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 99,
+      "name": "walk_stmts",
+      "reasons": [
+        "line 100: for over 'body' (only range(...))"
+      ]
+    },
+    {
+      "file": "engines/ir.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 107,
+      "name": "ops_used",
+      "reasons": [
+        "line 107: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/ir.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 234,
+      "name": "to_python_text",
+      "reasons": [
+        "line 234: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/learn.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 49,
+      "name": "_ident",
+      "reasons": [
+        "line 49: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/learn.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 53,
+      "name": "propose_calls",
+      "reasons": [
+        "line 53: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/learn.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 91,
+      "name": "propose_functions",
+      "reasons": [
+        "line 91: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/learn.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 134,
+      "name": "propose_rewrites",
+      "reasons": [
+        "line 134: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/learn.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 194,
+      "name": "_nodes",
+      "reasons": [
+        "line 195: name 'list' is not a parameter or an assigned local"
+      ]
+    },
+    {
+      "file": "engines/learn.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 202,
+      "name": "learn",
+      "reasons": [
+        "line 202: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 99,
+      "name": "_fused",
+      "reasons": [
+        "line 99: type annotation 'Tables' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 113,
+      "name": "_dotted",
+      "reasons": [
+        "line 113: type annotation 'str | None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 124,
+      "name": "walk_python",
+      "reasons": [
+        "line 124: type annotation 'Tables' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 189,
+      "name": "stdlib_index",
+      "reasons": [
+        "line 189: type annotation 'dict[str, set[str]]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 203,
+      "name": "strip_comments",
+      "reasons": [
+        "line 203: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 221,
+      "name": "walk_tokens",
+      "reasons": [
+        "line 221: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 242,
+      "name": "language_by_extension",
+      "reasons": [
+        "line 242: type annotation 'dict[str, dict]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 250,
+      "name": "iter_files",
+      "reasons": [
+        "line 250: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/observe.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 265,
+      "name": "observe",
+      "reasons": [
+        "line 265: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 45,
+      "name": "host",
+      "reasons": [
+        "line 45: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 50,
+      "name": "_mad",
+      "reasons": [
+        "line 51: call to statistics.median() (no op card or lifted function)"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 55,
+      "name": "measure_python_forms",
+      "reasons": [
+        "line 55: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 96,
+      "name": "measure_function",
+      "reasons": [
+        "line 96: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 133,
+      "name": "write_metrics",
+      "reasons": [
+        "line 133: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 152,
+      "name": "unit_ns",
+      "reasons": [
+        "line 152: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 157,
+      "name": "verdicts",
+      "reasons": [
+        "line 157: type annotation 'list[dict]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/optimize.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 180,
+      "name": "apply_costs",
+      "reasons": [
+        "line 180: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 40,
+      "name": "_expand",
+      "reasons": [
+        "line 40: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 44,
+      "name": "_version_tuple",
+      "reasons": [
+        "line 44: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 52,
+      "name": "_run_version",
+      "reasons": [
+        "line 52: decorators"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 61,
+      "name": "_find_executable",
+      "reasons": [
+        "line 61: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 80,
+      "name": "probe",
+      "reasons": [
+        "line 80: type annotation 'dict | None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 85,
+      "name": "_cached",
+      "reasons": [
+        "line 85: decorators"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 89,
+      "name": "clear_cache",
+      "reasons": [
+        "line 89: type annotation 'None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 94,
+      "name": "_probe",
+      "reasons": [
+        "line 94: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/probes.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 159,
+      "name": "executable",
+      "reasons": [
+        "line 159: type annotation 'dict | None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/redefs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 41,
+      "name": "_close",
+      "reasons": [
+        "line 42: name 'complex' is not a parameter or an assigned local"
+      ]
+    },
+    {
+      "file": "engines/redefs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 50,
+      "name": "_num",
+      "reasons": [
+        "line 51: statement Try"
+      ]
+    },
+    {
+      "file": "engines/redefs.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 60,
+      "name": "check_examples",
+      "reasons": [
+        "line 60: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/redefs.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 81,
+      "name": "verify",
+      "reasons": [
+        "line 81: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/redefs.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 148,
+      "name": "_sympy_check",
+      "reasons": [
+        "line 148: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 46,
+      "name": "forms_of",
+      "reasons": [
+        "line 46: type annotation 'list[Form]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 58,
+      "name": "ancestors",
+      "reasons": [
+        "line 58: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 70,
+      "name": "accepts",
+      "reasons": [
+        "line 70: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 76,
+      "name": "available",
+      "reasons": [
+        "line 76: type annotation 'Form' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 93,
+      "name": "measured_ns",
+      "reasons": [
+        "line 93: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 98,
+      "name": "candidates",
+      "reasons": [
+        "line 98: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 118,
+      "name": "cheapest",
+      "reasons": [
+        "line 118: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 137,
+      "name": "suggest_rewrite",
+      "reasons": [
+        "line 137: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 154,
+      "name": "all_rewrites",
+      "reasons": [
+        "line 154: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 167,
+      "name": "enumerate_forms",
+      "reasons": [
+        "line 167: type annotation 'list[dict]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 178,
+      "name": "directions",
+      "reasons": [
+        "line 178: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 186,
+      "name": "rank",
+      "reasons": [
+        "line 186: type annotation 'list' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/rewrite.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 203,
+      "name": "pareto",
+      "reasons": [
+        "line 203: type annotation 'list' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 42,
+      "name": "encode",
+      "reasons": [
+        "line 43: expression Tuple"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 58,
+      "name": "decode",
+      "reasons": [
+        "line 59: name 'dict' is not a parameter or an assigned local"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 77,
+      "name": "call_python",
+      "reasons": [
+        "line 77: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 127,
+      "name": "call_node",
+      "reasons": [
+        "line 127: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 158,
+      "name": "parse_line",
+      "reasons": [
+        "line 158: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 177,
+      "name": "_fill",
+      "reasons": [
+        "line 177: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 181,
+      "name": "build_dir",
+      "reasons": [
+        "line 181: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 186,
+      "name": "run_program",
+      "reasons": [
+        "line 186: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/runners.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 251,
+      "name": "clean_build",
+      "reasons": [
+        "line 251: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 34,
+      "name": "load_rules",
+      "reasons": [
+        "line 34: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 50,
+      "name": "match",
+      "reasons": [
+        "line 50: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 67,
+      "name": "instantiate",
+      "reasons": [
+        "line 67: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 75,
+      "name": "_key",
+      "reasons": [
+        "line 75: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 79,
+      "name": "rewrites",
+      "reasons": [
+        "line 79: type annotation 'list[Rule]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 106,
+      "name": "prove",
+      "reasons": [
+        "line 106: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 142,
+      "name": "_chain",
+      "reasons": [
+        "line 143: expression List"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 152,
+      "name": "_join",
+      "reasons": [
+        "line 153: expression Subscript"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 164,
+      "name": "op_costs",
+      "reasons": [
+        "line 164: type annotation 'dict[str, float]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 173,
+      "name": "expr_cost",
+      "reasons": [
+        "line 173: type annotation 'dict[str, float]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/search.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 181,
+      "name": "optimize",
+      "reasons": [
+        "line 181: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/selfcheck.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 32,
+      "name": "static_check",
+      "reasons": [
+        "line 32: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/selfcheck.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 50,
+      "name": "sandbox_profile",
+      "reasons": [
+        "line 50: type annotation 'list[Path]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/selfcheck.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 55,
+      "name": "run_sandboxed",
+      "reasons": [
+        "line 55: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/selfcheck.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 68,
+      "name": "sandbox_check",
+      "reasons": [
+        "line 68: type annotation 'list[Path]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/selfcheck.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 85,
+      "name": "source_folders",
+      "reasons": [
+        "line 85: type annotation 'list[Path]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/selfcheck.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 101,
+      "name": "run",
+      "reasons": [
+        "line 101: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 41,
+      "name": "_gen_for",
+      "reasons": [
+        "line 41: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 51,
+      "name": "python_reference",
+      "reasons": [
+        "line 51: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 60,
+      "name": "infer_domain",
+      "reasons": [
+        "line 60: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 86,
+      "name": "reference_rows",
+      "reasons": [
+        "line 86: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 104,
+      "name": "lift_file_source",
+      "reasons": [
+        "line 104: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 108,
+      "name": "function_card",
+      "reasons": [
+        "line 108: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 144,
+      "name": "_ops_in",
+      "reasons": [
+        "line 144: type annotation 'set[str]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/translate.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 149,
+      "name": "verify_function",
+      "reasons": [
+        "line 149: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/values.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 21,
+      "name": "specials",
+      "reasons": [
+        "line 21: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/values.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 36,
+      "name": "draw",
+      "reasons": [
+        "line 36: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/values.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 50,
+      "name": "inputs",
+      "reasons": [
+        "line 50: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/values.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 82,
+      "name": "same",
+      "reasons": [
+        "line 83: name 'bool' is not a parameter or an assigned local"
+      ]
+    },
+    {
+      "file": "engines/values.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 99,
+      "name": "finite",
+      "reasons": [
+        "line 100: name 'float' is not a parameter or an assigned local"
+      ]
+    },
+    {
+      "file": "engines/values.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 103,
+      "name": "fits",
+      "reasons": [
+        "line 103: type annotation 'int | None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/values.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 109,
+      "name": "fresh_seed",
+      "reasons": [
+        "line 110: call to random.SystemRandom().randrange() (no op card or lifted function)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 37,
+      "name": "_kernel",
+      "reasons": [
+        "line 37: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 58,
+      "name": "_forms",
+      "reasons": [
+        "line 58: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 76,
+      "name": "_vectors",
+      "reasons": [
+        "line 76: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 87,
+      "name": "_rules",
+      "reasons": [
+        "line 87: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 94,
+      "name": "_redefinitions",
+      "reasons": [
+        "line 94: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 101,
+      "name": "_conformance",
+      "reasons": [
+        "line 101: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 109,
+      "name": "_functions",
+      "reasons": [
+        "line 109: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 118,
+      "name": "run",
+      "reasons": [
+        "line 118: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/verify.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 158,
+      "name": "record_results",
+      "reasons": [
+        "line 158: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 51,
+      "name": "time_limit",
+      "reasons": [
+        "line 51: decorators"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 70,
+      "name": "lib_namespace",
+      "reasons": [
+        "line 70: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 90,
+      "name": "python_callable",
+      "reasons": [
+        "line 90: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 108,
+      "name": "_projection",
+      "reasons": [
+        "line 108: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 114,
+      "name": "_generators",
+      "reasons": [
+        "line 114: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 135,
+      "name": "_arity",
+      "reasons": [
+        "line 136: constant 'ir'"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 150,
+      "name": "_reference",
+      "reasons": [
+        "line 151: constant 'forms'"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 163,
+      "name": "_run_python_form",
+      "reasons": [
+        "line 164: expression List"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 173,
+      "name": "_compare",
+      "reasons": [
+        "line 173: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 186,
+      "name": "_ref_rows",
+      "reasons": [
+        "line 187: expression List"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 198,
+      "name": "_raw_form_run",
+      "reasons": [
+        "line 198: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 214,
+      "name": "verify_forms",
+      "reasons": [
+        "line 214: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 272,
+      "name": "load_vectors",
+      "reasons": [
+        "line 272: type annotation 'list[dict]' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 287,
+      "name": "_decode_args",
+      "reasons": [
+        "line 288: statement ImportFrom"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 292,
+      "name": "verify_vectors",
+      "reasons": [
+        "line 292: type annotation 'Ctx' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "engines/witness.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 356,
+      "name": "verify_rule",
+      "reasons": [
+        "line 356: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 27,
+      "name": "_check_str",
+      "reasons": [
+        "line 27: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 34,
+      "name": "_utf16_key",
+      "reasons": [
+        "line 34: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 38,
+      "name": "_encode",
+      "reasons": [
+        "line 38: type annotation 'list' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 78,
+      "name": "canon",
+      "reasons": [
+        "line 78: type annotation 'bytes' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 84,
+      "name": "canon_str",
+      "reasons": [
+        "line 84: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 88,
+      "name": "compact",
+      "reasons": [
+        "line 88: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 92,
+      "name": "card_hash",
+      "reasons": [
+        "line 92: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/canon.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 97,
+      "name": "dumps_card",
+      "reasons": [
+        "line 97: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/paths.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 22,
+      "name": "home",
+      "reasons": [
+        "line 22: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/paths.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 27,
+      "name": "model_cards",
+      "reasons": [
+        "line 27: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/paths.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 31,
+      "name": "state_dir",
+      "reasons": [
+        "line 31: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/paths.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 36,
+      "name": "find_project",
+      "reasons": [
+        "line 36: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "kernel/schema.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 29,
+      "name": "_is_type",
+      "reasons": [
+        "line 29: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/schema.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 48,
+      "name": "_resolve",
+      "reasons": [
+        "line 48: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/schema.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 60,
+      "name": "validate",
+      "reasons": [
+        "line 60: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "kernel/store.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 32,
+      "name": "_walk_registries",
+      "reasons": [
+        "line 32: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/store.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 190,
+      "name": "open_store",
+      "reasons": [
+        "line 190: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "kernel/store.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 215,
+      "name": "default_store",
+      "reasons": [
+        "line 215: type annotation 'Store' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/store.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 222,
+      "name": "reset_default_store",
+      "reasons": [
+        "line 222: type annotation 'None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/types.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 27,
+      "name": "type_cards",
+      "reasons": [
+        "line 27: type annotation 'Store' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/types.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 32,
+      "name": "types_for",
+      "reasons": [
+        "line 32: type annotation 'Store' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/types.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 46,
+      "name": "_major",
+      "reasons": [
+        "line 46: type annotation 'str | None' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/types.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 50,
+      "name": "validate_card",
+      "reasons": [
+        "line 50: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "kernel/types.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 78,
+      "name": "validate_store",
+      "reasons": [
+        "line 78: type annotation 'Store' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/types.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 90,
+      "name": "closure",
+      "reasons": [
+        "line 90: varargs, defaults or keyword-only parameters"
+      ]
+    },
+    {
+      "file": "kernel/versioning.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 29,
+      "name": "_strip",
+      "reasons": [
+        "line 29: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/versioning.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 41,
+      "name": "_numeric",
+      "reasons": [
+        "line 42: expression Tuple"
+      ]
+    },
+    {
+      "file": "kernel/versioning.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 45,
+      "name": "bump_kind",
+      "reasons": [
+        "line 45: type annotation 'dict' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/versioning.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 57,
+      "name": "next_version",
+      "reasons": [
+        "line 57: type annotation 'str' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/versioning.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 69,
+      "name": "_atomic_write",
+      "reasons": [
+        "line 69: type annotation 'Path' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "kernel/versioning.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 76,
+      "name": "save",
+      "reasons": [
+        "line 76: varargs, defaults or keyword-only parameters"
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "obs_b01cbf91e8dc6db4",
+  "observed_at": "2026-10-21T02:53:19+00:00",
+  "provenance": {
+    "method": "ast (python) + token-level (others)",
+    "tool": "cardmodel observe"
+  },
+  "root": "cardmodel",
+  "tier": 3,
+  "top_cards": {
+    "ADD": 115,
+    "AND": 249,
+    "ATTR": 3063,
+    "BIT_OR": 96,
+    "BUILTIN_ISINSTANCE": 220,
+    "BUILTIN_LEN": 129,
+    "CALL_GENERIC": 2256,
+    "CMP_EQ": 274,
+    "CMP_IS": 103,
+    "CMP_NE": 61,
+    "COMPREHENSION_DICT": 55,
+    "COMPREHENSION_GEN": 94,
+    "COMPREHENSION_LIST": 97,
+    "DIV": 61,
+    "IF_EXPR": 246,
+    "MEMBER": 200,
+    "NEG": 59,
+    "NOT": 178,
+    "OR": 258,
+    "SUBSCRIPT": 87,
+    "SUBSCRIPT_INT": 226,
+    "SUBSCRIPT_NDARRAY": 87,
+    "SUBSCRIPT_SLICE": 69,
+    "SUBSCRIPT_STR": 707,
+    "SUBSCRIPT_VAR": 249
+  },
+  "top_fallback_calls": {
+    "<expression>": 253,
+    "EmitGap": 14,
+    "Emitter": 9,
+    "Unsupported": 42,
+    "V.fresh_seed": 9,
+    "V.same": 13,
+    "_conv": 14,
+    "_ctx": 15,
+    "_key": 14,
+    "_out": 22,
+    "c.get": 13,
+    "card.get": 62,
+    "ctx.store.cards": 13,
+    "ctx.store.get": 14,
+    "errs.append": 21,
+    "evaluate": 11,
+    "f.get": 40,
+    "form.get": 10,
+    "lines.append": 18,
+    "m.get": 9,
+    "out.append": 50,
+    "p.get": 20,
+    "parse": 13,
+    "r.get": 35,
+    "s.add_argument": 52,
+    "s.set_defaults": 16,
+    "schema.get": 9,
+    "secs.get": 18,
+    "self.T": 8,
+    "self._expr": 15,
+    "self.block": 11,
+    "self.cg.get": 43,
+    "self.expr": 25,
+    "self.get": 12,
+    "self.tmpl": 10,
+    "store.get": 11,
+    "sub.add_parser": 16,
+    "to_lean": 8,
+    "to_python_text": 11,
+    "validate": 12
+  },
+  "totals": {
+    "by_language": {
+      "python": 38
+    },
+    "cards_fired": 10227,
+    "files": 38,
+    "functions": 216,
+    "functions_liftable": 1,
+    "named": 4804,
+    "named_calls_and_ops": 2770,
+    "named_fraction": 0.4697
+  }
+}

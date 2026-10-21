@@ -1,0 +1,17 @@
+{
+  "category_aliases": [
+    "card_type"
+  ],
+  "defined_by": "tools/vendor_import.py",
+  "description": "Ting's built-in card types (schema-as-cards), validated with the model's schema engine; an example of an application registry.",
+  "name": "ting_card_type",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "c1906be402dcebadc85f2d9e0222fe973785023cdda2b19e231c50ab60ad193b"
+  },
+  "references": "external",
+  "tier": 2
+}

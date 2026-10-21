@@ -1,0 +1,64 @@
+{
+  "blockers": [
+    "Python's dynamic dispatch maps to Rust trait objects only when types are inferable; otherwise the path requires user-supplied annotations",
+    "monkey-patching has no Rust analogue and must be rejected with a clear error"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "estimate from DEV-5 reverse_transpile + emit_rust.py; 3/10 algorithm samples runtime-pass per UB5-B",
+  "current_coverage_percent": 50,
+  "evidence": [
+    "cards/tool/v_transpile/coverage.py — rust target: try=SUPPORTED, with=PARTIAL, class=SUPPORTED, async=SUPPORTED, decorator=PARTIAL, comprehension=PARTIAL, lambda=SUPPORTED, generator=PARTIAL, fstring=SUPPORTED, walrus=SUPPORTED",
+    "cards/tool/v_transpile/frontends/python.py + backends/* — UB5-A push to full IR coverage across 16 languages",
+    "cards/redefinition/* — UR-B paradigm rewrites cover Python OOP -> Rust struct+impl patterns"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python__to__rust",
+  "optimal_solution_path": [
+    "drive python -> rust against UB5-B's all-pairs matrix",
+    "promote PV1 PARTIAL entries to SUPPORTED for the type-annotated subset",
+    "publish honest unsupported-shapes catalog so users get a clear error rather than a wrong rewrite",
+    "rerun coverage estimate after 50-sample sweep"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_python_class_inheritance_to_rust_trait_dispatch",
+    "cards/project_task/close_python_decorator_to_rust_proc_macro"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/v_transpile/frontends/python.py"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "python",
+  "supported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "while_loop",
+    "for_range",
+    "return",
+    "int_variables",
+    "float_variables",
+    "fstring_basic",
+    "class_to_struct_plus_impl",
+    "lambda_to_closure",
+    "try_to_result_propagation",
+    "walrus_assignment",
+    "list_to_vec"
+  ],
+  "target_language": "rust",
+  "unsupported_constructs": [
+    "duck_typing_dynamic_dispatch",
+    "monkey_patching",
+    "multiple_inheritance_with_diamond",
+    "metaclass",
+    "decorator_arbitrary_runtime",
+    "dynamic_eval",
+    "import_star",
+    "module_level_side_effects_arbitrary"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/python__to__rust",
+  "wave_23_audit_note": "50% is from UB5-B lang-matrix python->rust=3/10; promotion needs the matrix re-run with type-annotated subset (OSP step 1) — not done in W23"
+}

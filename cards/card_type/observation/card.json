@@ -1,0 +1,24 @@
+{
+  "applies_to": [
+    "observation"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observation",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "required": [
+      "root",
+      "files",
+      "totals"
+    ],
+    "type": "object"
+  },
+  "statement": "What the observer saw in a source tree: ground truth, never edited by rules (Pheros L102).",
+  "tier": 0
+}

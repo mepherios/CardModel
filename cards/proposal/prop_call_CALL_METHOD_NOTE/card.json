@@ -1,0 +1,51 @@
+{
+  "candidate": {
+    "category": "call",
+    "cost": 1.5,
+    "match": {
+      "python": {
+        "call": [
+          "._note"
+        ]
+      }
+    },
+    "metadata": {
+      "confidence": "tentative",
+      "evidence_count": 3,
+      "files": 1,
+      "learned": true,
+      "spellings": {
+        "self._note": 3
+      }
+    },
+    "name": "CALL_METHOD_NOTE",
+    "provenance": {
+      "language": "python",
+      "learning_loop_refs": [
+        "observation/obs_b01cbf91e8dc6db4"
+      ]
+    },
+    "statement": "call to ._note (python), learned from observed code",
+    "tags": [
+      "learned"
+    ],
+    "tier": 3
+  },
+  "category": "proposal",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "prop_call_CALL_METHOD_NOTE",
+  "proposal_kind": "call",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "ready": false,
+  "reason": "needs >= 3 uses in >= 2 files (have 3 in 1)",
+  "seed": 1210246382,
+  "statement": "proposed call card CALL_METHOD_NOTE",
+  "tier": 3,
+  "xleq": null
+}

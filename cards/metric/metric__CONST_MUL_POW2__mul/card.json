@@ -1,0 +1,35 @@
+{
+  "anchor": 2.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "mul",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.15,
+  "median_ns": 54.952,
+  "metadata": {
+    "inputs_signature": "fb3f2f6e65cd4406",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__CONST_MUL_POW2__mul",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/CONST_MUL_POW2 form mul: 55.0 ns per call on this host",
+  "target_card": "op/CONST_MUL_POW2",
+  "tier": 3
+}

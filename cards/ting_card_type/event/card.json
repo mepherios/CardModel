@@ -1,0 +1,54 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "body.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "event",
+  "render": "event",
+  "schema": {
+    "properties": {
+      "about": {
+        "maxLength": 4000,
+        "type": "string"
+      },
+      "channel": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "ends": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "starts": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "title": {
+        "maxLength": 200,
+        "type": "string"
+      },
+      "where": {
+        "maxLength": 300,
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "starts",
+      "channel"
+    ],
+    "type": "object"
+  },
+  "summary": "Something happening at a time and place.",
+  "tier": 0,
+  "version": 1
+}

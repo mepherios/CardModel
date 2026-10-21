@@ -1,0 +1,61 @@
+{
+  "blockers": [
+    "cards/lacking_feature/wasm_backend_emitter_missing (no dedicated backends/wasm.py emitter; current path round-tr...)",
+    "WASI is required for any non-trivial syscall surface — not yet wired"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "estimate from DEEP-6 LLVM IR + WASM-target landing; auto-derive via wasm-as roundtrip sweep",
+  "current_coverage_percent": 35,
+  "evidence": [
+    "cards/tool/v_transpile/frontends/wasm.py — WASM frontend (DEEP-6: LLVM IR + WASM targets)",
+    "cards/tool/v_transpile/frontends/c.py — C frontend",
+    "no backends/wasm.py in production yet — emit is via the WASM frontend as a round-trip target, not a fresh emitter",
+    "DEEP-6 paper documents the WASM target as 'reached' but does not enumerate per-construct coverage"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__wasm",
+  "optimal_solution_path": [
+    "author cards/tool/v_transpile/backends/wasm.py as a first-class emitter",
+    "wire WASI adapter for filesystem + stdio",
+    "smoke: C 'int f(int x){return x+1;}' -> .wasm -> wasmtime run",
+    "expand to a 10-utility WASM emit sweep using leaf coreutils"
+  ],
+  "optimization_paths": [
+    "cards/project_task/author_backends_wasm_emitter",
+    "cards/project_task/wire_wasi_for_filesystem_and_syscalls",
+    "cards/project_task/close_translation_gap_c__to__wasm"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/frontends/c.py",
+    "cards/tool/v_transpile/frontends/wasm.py"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "c",
+  "supported_constructs": [
+    "function_def",
+    "binary_arithmetic_int",
+    "binary_arithmetic_float",
+    "if_else",
+    "while_loop",
+    "for_loop_index",
+    "return",
+    "int_variables",
+    "float_variables",
+    "linear_memory_load_store"
+  ],
+  "target_language": "wasm",
+  "unsupported_constructs": [
+    "preprocessor_macros",
+    "function_pointers",
+    "setjmp_longjmp",
+    "inline_assembly",
+    "syscall_unwrapped",
+    "host_filesystem_io_without_wasi",
+    "threads_without_wasi_threads_proposal"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__wasm",
+  "wave_23_audit_note": "35% via LLVM-IR roundtrip; promoting requires authoring backends/wasm.py as a first-class emitter (OSP step 1) — filed as project_task in W23"
+}

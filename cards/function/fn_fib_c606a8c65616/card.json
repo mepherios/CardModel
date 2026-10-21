@@ -1,0 +1,554 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef fib(n: int) -> int:\n    a, b = 0, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a",
+      "cost": 1.0,
+      "entry": "fib",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t fib(int64_t n) {\n    int64_t cm_t1 = 0;\n    int64_t cm_t2 = 0;\n    int64_t a = 0;\n    int64_t b = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it3 = 0;\n    int64_t cm_stop4 = 0;\n    int64_t cm_t5 = 0;\n    int64_t cm_t6 = 0;\n    cm_t1 = INT64_C(0);\n    cm_t2 = INT64_C(1);\n    a = cm_t1;\n    b = cm_t2;\n    cm_it3 = INT64_C(0);\n    cm_stop4 = n;\n    while ((cm_it3 < cm_stop4)) {\n        cm_u = cm_it3;\n        cm_it3 = (cm_it3 + INT64_C(1));\n        cm_t5 = b;\n        cm_t6 = (a + b);\n        a = cm_t5;\n        b = cm_t6;\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc fib(n int64) int64 {\n\tvar cm_t1 int64 = 0\n\t_ = cm_t1\n\tvar cm_t2 int64 = 0\n\t_ = cm_t2\n\tvar a int64 = 0\n\t_ = a\n\tvar b int64 = 0\n\t_ = b\n\tvar cm_u int64 = 0\n\t_ = cm_u\n\tvar cm_it3 int64 = 0\n\t_ = cm_it3\n\tvar cm_stop4 int64 = 0\n\t_ = cm_stop4\n\tvar cm_t5 int64 = 0\n\t_ = cm_t5\n\tvar cm_t6 int64 = 0\n\t_ = cm_t6\n\tcm_t1 = int64(0)\n\tcm_t2 = int64(1)\n\ta = cm_t1\n\tb = cm_t2\n\tcm_it3 = int64(0)\n\tcm_stop4 = n\n\tfor (cm_it3 < cm_stop4) {\n\t\tcm_u = cm_it3\n\t\tcm_it3 = (cm_it3 + int64(1))\n\t\tcm_t5 = b\n\t\tcm_t6 = (a + b)\n\t\ta = cm_t5\n\t\tb = cm_t6\n\t}\n\treturn a\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function fib(n) {\n    let cm_t1 = 0n;\n    let cm_t2 = 0n;\n    let a = 0n;\n    let b = 0n;\n    let cm_u = 0n;\n    let cm_it3 = 0n;\n    let cm_stop4 = 0n;\n    let cm_t5 = 0n;\n    let cm_t6 = 0n;\n    cm_t1 = (0n);\n    cm_t2 = (1n);\n    a = cm_t1;\n    b = cm_t2;\n    cm_it3 = (0n);\n    cm_stop4 = n;\n    while ((cm_it3 < cm_stop4)) {\n        cm_u = cm_it3;\n        cm_it3 = (cm_it3 + (1n));\n        cm_t5 = b;\n        cm_t6 = (a + b);\n        a = cm_t5;\n        b = cm_t6;\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def fib(n: int) -> int:\n    cm_t1 = 0\n    cm_t2 = 1\n    a = cm_t1\n    b = cm_t2\n    for _ in range(0, n, 1):\n        cm_t5 = b\n        cm_t6 = (a + b)\n        a = cm_t5\n        b = cm_t6\n    return a\n\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn fib(n: i64) -> i64 {\n    let mut cm_t1: i64 = 0;\n    let mut cm_t2: i64 = 0;\n    let mut a: i64 = 0;\n    let mut b: i64 = 0;\n    let mut cm_u: i64 = 0;\n    let mut cm_it3: i64 = 0;\n    let mut cm_stop4: i64 = 0;\n    let mut cm_t5: i64 = 0;\n    let mut cm_t6: i64 = 0;\n    cm_t1 = (0i64);\n    cm_t2 = (1i64);\n    a = cm_t1;\n    b = cm_t2;\n    cm_it3 = (0i64);\n    cm_stop4 = n;\n    while (cm_it3 < cm_stop4) {\n        cm_u = cm_it3;\n        cm_it3 = (cm_it3 + (1i64));\n        cm_t5 = b;\n        cm_t6 = (a + b);\n        a = cm_t5;\n        b = cm_t6;\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t fib(int64_t n) {\n    int64_t cm_t1 = 0;\n    int64_t cm_t2 = 0;\n    int64_t a = 0;\n    int64_t b = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it3 = 0;\n    int64_t cm_stop4 = 0;\n    int64_t cm_t5 = 0;\n    int64_t cm_t6 = 0;\n    cm_t1 = INT64_C(0);\n    cm_t2 = INT64_C(1);\n    a = cm_t1;\n    b = cm_t2;\n    cm_it3 = INT64_C(0);\n    cm_stop4 = n;\n    while ((cm_it3 < cm_stop4)) {\n        cm_u = cm_it3;\n        cm_it3 = (cm_it3 + INT64_C(1));\n        cm_t5 = b;\n        cm_t6 = (a + b);\n        a = cm_t5;\n        b = cm_t6;\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long fib(long n) {\n    long cm_t1 = 0L;\n    long cm_t2 = 0L;\n    long a = 0L;\n    long b = 0L;\n    long cm_u = 0L;\n    long cm_it3 = 0L;\n    long cm_stop4 = 0L;\n    long cm_t5 = 0L;\n    long cm_t6 = 0L;\n    cm_t1 = (0L);\n    cm_t2 = (1L);\n    a = cm_t1;\n    b = cm_t2;\n    cm_it3 = (0L);\n    cm_stop4 = n;\n    while ((cm_it3 < cm_stop4)) {\n        cm_u = cm_it3;\n        cm_it3 = (cm_it3 + (1L));\n        cm_t5 = b;\n        cm_t6 = (a + b);\n        a = cm_t5;\n        b = cm_t6;\n    }\n    return a;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def fib (n : Int) : Int := Id.run do\n  let mut cm_t1 : Int := 0\n  let mut cm_t2 : Int := 0\n  let mut a : Int := 0\n  let mut b : Int := 0\n  let mut cm_u : Int := 0\n  let mut cm_it3 : Int := 0\n  let mut cm_stop4 : Int := 0\n  let mut cm_t5 : Int := 0\n  let mut cm_t6 : Int := 0\n  cm_t1 := (0 : Int)\n  cm_t2 := (1 : Int)\n  a := cm_t1\n  b := cm_t2\n  cm_it3 := (0 : Int)\n  cm_stop4 := n\n  while (decide (cm_it3 < cm_stop4)) do\n    cm_u := cm_it3\n    cm_it3 := (cm_it3 + (1 : Int))\n    cm_t5 := b\n    cm_t6 := (a + b)\n    a := cm_t5\n    b := cm_t6\n  return a\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function fib(n)\n  local cm_t1 = 0\n  local cm_t2 = 0\n  local a = 0\n  local b = 0\n  local _ = 0\n  local cm_it3 = 0\n  local cm_stop4 = 0\n  local cm_t5 = 0\n  local cm_t6 = 0\n  cm_t1 = (0)\n  cm_t2 = (1)\n  a = cm_t1\n  b = cm_t2\n  cm_it3 = (0)\n  cm_stop4 = n\n  while (cm_it3 < cm_stop4) do\n    _ = cm_it3\n    cm_it3 = (cm_it3 + (1))\n    cm_t5 = b\n    cm_t6 = (a + b)\n    a = cm_t5\n    b = cm_t6\n    ::cm_continue_1::\n  end\n  return a\nend\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def fib(n)\n  cm_t1 = 0\n  cm_t2 = 0\n  a = 0\n  b = 0\n  cm_u = 0\n  cm_it3 = 0\n  cm_stop4 = 0\n  cm_t5 = 0\n  cm_t6 = 0\n  cm_t1 = (0)\n  cm_t2 = (1)\n  a = cm_t1\n  b = cm_t2\n  cm_it3 = (0)\n  cm_stop4 = n\n  while (cm_it3 < cm_stop4)\n    cm_u = cm_it3\n    cm_it3 = (cm_it3 + (1))\n    cm_t5 = b\n    cm_t6 = (a + b)\n    a = cm_t5\n    b = cm_t6\n  end\n  return a\nend\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc fib(_ n: Int) -> Int {\n    var cm_t1: Int = 0\n    var cm_t2: Int = 0\n    var a: Int = 0\n    var b: Int = 0\n    var cm_u: Int = 0\n    var cm_it3: Int = 0\n    var cm_stop4: Int = 0\n    var cm_t5: Int = 0\n    var cm_t6: Int = 0\n    cm_t1 = (0)\n    cm_t2 = (1)\n    a = cm_t1\n    b = cm_t2\n    cm_it3 = (0)\n    cm_stop4 = n\n    while (cm_it3 < cm_stop4) {\n        cm_u = cm_it3\n        cm_it3 = (cm_it3 + (1))\n        cm_t5 = b\n        cm_t6 = (a + b)\n        a = cm_t5\n        b = cm_t6\n    }\n    return a\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function fib(n: bigint): bigint {\n    let cm_t1: bigint = 0n;\n    let cm_t2: bigint = 0n;\n    let a: bigint = 0n;\n    let b: bigint = 0n;\n    let cm_u: bigint = 0n;\n    let cm_it3: bigint = 0n;\n    let cm_stop4: bigint = 0n;\n    let cm_t5: bigint = 0n;\n    let cm_t6: bigint = 0n;\n    cm_t1 = (0n);\n    cm_t2 = (1n);\n    a = cm_t1;\n    b = cm_t2;\n    cm_it3 = (0n);\n    cm_stop4 = n;\n    while ((cm_it3 < cm_stop4)) {\n        cm_u = cm_it3;\n        cm_it3 = (cm_it3 + (1n));\n        cm_t5 = b;\n        cm_t6 = (a + b);\n        a = cm_t5;\n        b = cm_t6;\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "fib",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "fib",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "cm_t1",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "cm_t2",
+            "value": [
+              "int",
+              1
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "a",
+            "value": [
+              "var",
+              "cm_t1"
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "b",
+            "value": [
+              "var",
+              "cm_t2"
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "cm_t5",
+                "value": [
+                  "var",
+                  "b"
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "cm_t6",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "a"
+                  ],
+                  [
+                    "var",
+                    "b"
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "a",
+                "value": [
+                  "var",
+                  "cm_t5"
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "b",
+                "value": [
+                  "var",
+                  "cm_t6"
+                ]
+              }
+            ],
+            "counter": "cm_it3",
+            "k": "for_range",
+            "start": [
+              "int",
+              0
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "var",
+              "n"
+            ],
+            "stop_var": "cm_stop4",
+            "var": "_"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "a"
+            ]
+          }
+        ],
+        "locals": {
+          "_": "int",
+          "a": "int",
+          "b": "int",
+          "cm_it3": "int",
+          "cm_stop4": "int",
+          "cm_t1": "int",
+          "cm_t2": "int",
+          "cm_t5": "int",
+          "cm_t6": "int"
+        },
+        "name": "fib",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_fib_c606a8c65616",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "c606a8c65616"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "fib(n: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 832040
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 89
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 4181
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 13
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 1597
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 28657
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 75025
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 377
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 610
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 233
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 514229
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 196418
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 21
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 121393
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 34
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 17711
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 317811
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 2584
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 6765
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 144
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 987
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 46368
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

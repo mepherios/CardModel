@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "op_conformance_rate",
+  "name": "G_C2_op_conformance",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Share of (op signature x available language) cells that pass, excluding cells a language card declares UNSUPPORTED.",
+  "target": 1.0,
+  "tier": 0
+}

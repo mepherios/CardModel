@@ -1,0 +1,33 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 44,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_mean3_88e3f7f9768e",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 1210246382,
+  "statement": "mean3: same outputs in 12 implementations",
+  "subject": "function/fn_mean3_88e3f7f9768e",
+  "tier": 3
+}

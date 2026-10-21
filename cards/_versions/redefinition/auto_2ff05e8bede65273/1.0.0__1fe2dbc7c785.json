@@ -1,0 +1,56 @@
+{
+  "_autogen": {
+    "composition_kind": "direct",
+    "discovered_at": "2026-05-20T02:03:08+00:00",
+    "last_verifier_verdict": "PROVED",
+    "neighbor_of": "auto_composite_f127f97bb7ed84f1",
+    "origin": "composer:ba",
+    "partner": "auto_319f4b559a6535c0",
+    "verifier_evidence": "real:PROVED(32/32), integer:PROVED(36/36)"
+  },
+  "category": "redefinition",
+  "condition": "x > 0",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "tags_extra": [
+      "auto_discovered"
+    ],
+    "version": "1.0.0"
+  },
+  "name": "auto_2ff05e8bede65273",
+  "pheros_path": "redefinition/auto_2ff05e8bede65273",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autonomous_evolution:composer:ba",
+  "provenance": "derived_from_card",
+  "source_form": "2*sqrt(1 - sin(x)**2)*sin(x)",
+  "tags": [
+    "auto_generated",
+    "autonomous_evolution",
+    "composer",
+    "redefinition"
+  ],
+  "target_form": "(2*(cos(x)**2)**(1/4)*sin(x) + (cos(x)**2)**(1/4)/2)**2 - 4*sqrt(cos(x)**2)*sin(x)**2 - sqrt(cos(x)**2)/4",
+  "witness_kind": "symbolic"
+}

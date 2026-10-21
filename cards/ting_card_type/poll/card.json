@@ -1,0 +1,54 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "body.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "poll",
+  "render": "poll",
+  "schema": {
+    "properties": {
+      "channel": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "closes": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "multi": {
+        "type": "boolean"
+      },
+      "options": {
+        "items": {
+          "maxLength": 200,
+          "type": "string"
+        },
+        "maxItems": 20,
+        "minItems": 2,
+        "type": "array"
+      },
+      "question": {
+        "maxLength": 300,
+        "type": "string"
+      }
+    },
+    "required": [
+      "question",
+      "options",
+      "channel"
+    ],
+    "type": "object"
+  },
+  "summary": "A question with options; members vote with vote cards.",
+  "tier": 0,
+  "version": 1
+}

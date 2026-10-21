@@ -1,0 +1,27 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "47475546",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "model_artifact",
+      "file"
+    ],
+    "priority": 50
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "gguf",
+  "statement": "GGUF model container.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/gguf"
+}

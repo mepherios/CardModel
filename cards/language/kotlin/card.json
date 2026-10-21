@@ -1,0 +1,39 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".kt",
+    ".kts"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "kotlin",
+  "probe": {
+    "kind": "executable",
+    "name": "kotlinc",
+    "version_args": [
+      "-version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "kotlin: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

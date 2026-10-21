@@ -1,0 +1,20 @@
+{
+  "category": "shape",
+  "cost": 1.0,
+  "fallback": false,
+  "match": {
+    "python": {
+      "subscript": [
+        "int"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "SUBSCRIPT_INT",
+  "provenance": {
+    "origin": "hub config/card_catalog.py walk_cards (V5 shapes)"
+  },
+  "statement": "x[3]"
+}

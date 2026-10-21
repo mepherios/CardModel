@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "-(-a)",
+  "metadata": {
+    "previous_content_hash": "09f814959b128806bf2ed29b09f8ac08478dc96b7be6627d1ab6db2d93bea6c3",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "neg_neg",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a",
+  "statement": "-(-a) == a",
+  "tier": 1,
+  "vars": [
+    "a"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_neg_neg (a : Int) : (-(-a)) = a := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "source_eval": "((_x+_y)/2)**2 - ((_x-_y)/2)**2",
+      "target_eval": "((_x+_y)/2)**2 - ((_x-_y)/2)**2"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "is_identity_redefinition": true,
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "297ee49b236338264bccdc94c4c37eb361126e13e7ae0a9570a3284033def542",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "multiplication__square_difference",
+  "pheros_path": "redefinition/multiplication__square_difference",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "redefinition_test_corpus",
+  "provenance": "derived_from_card",
+  "rationale_for_identity": "Corpus card (tag=test_corpus): represents one canonical member of an equivalence class. source_form == target_form is the identity element of the class, not a vacuous rewrite. Detector exempt per VAC-F heuristic refinement.",
+  "source_form": "((_x+_y)/2)**2 - ((_x-_y)/2)**2",
+  "status": "healthy",
+  "tags": [
+    "multiplication",
+    "square_difference",
+    "symbolic",
+    "test_corpus"
+  ],
+  "target_form": "((_x+_y)/2)**2 - ((_x-_y)/2)**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 0
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

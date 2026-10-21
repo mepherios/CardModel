@@ -1,0 +1,20 @@
+{
+  "category": "shape",
+  "cost": 2.0,
+  "fallback": false,
+  "match": {
+    "python": {
+      "slice": [
+        "prefix"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "SLICE_PREFIX",
+  "provenance": {
+    "origin": "hub config/card_catalog.py walk_cards (V5 shapes)"
+  },
+  "statement": "[:b]"
+}

@@ -1,0 +1,61 @@
+{
+  "blockers": [
+    "Verilog has no notion of dynamic memory or recursion — these are NOT_SUPPORTED_BY_DESIGN and require redefinition into FSM + RAM block",
+    "no synthesis-target board mapping — emit is RTL only; floating point requires explicit fixed-point lowering"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "estimate from W12 pong-shape demo; auto-derive by running V_T verilog backend over a synthesisable subset corpus",
+  "current_coverage_percent": 20,
+  "evidence": [
+    "cards/tool/v_transpile/backends/verilog.py — Verilog backend (T2: RISC-V asm + Verilog backends)",
+    "cards/tool/v_transpile/frontends/c.py — C frontend (UB3-A)",
+    "cards/tool/v_transpile/coverage.py — Verilog target inherits PV1 PARTIAL for arithmetic, NOT_SUPPORTED for general control flow",
+    "no end-to-end iverilog simulation smokes wired into substrate CI"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__verilog",
+  "optimal_solution_path": [
+    "lower C arithmetic + bounded for-loops to combinational + sequential always blocks",
+    "lower general control flow into an explicit FSM (state register + next-state logic)",
+    "add iverilog-based simulation smoke so the emit pipeline is closed-loop",
+    "honestly document recursion + dynamic memory as redefinition obligations, not direct support"
+  ],
+  "optimization_paths": [
+    "cards/project_task/wire_iverilog_simulation_into_substrate_ci",
+    "cards/project_task/lower_c_control_flow_to_verilog_fsm",
+    "cards/project_task/close_translation_gap_c__to__verilog"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/backends/verilog.py",
+    "cards/tool/v_transpile/frontends/c.py"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "c",
+  "supported_constructs": [
+    "function_def_as_module",
+    "binary_arithmetic_int",
+    "int_variables_as_reg",
+    "wire_input_output",
+    "synchronous_assignment_with_clock_implicit",
+    "comparison_operators_for_combinational"
+  ],
+  "target_language": "verilog",
+  "unsupported_constructs": [
+    "float_variables",
+    "pointer_general",
+    "dynamic_memory_allocation",
+    "function_call_recursive",
+    "string_literal_general",
+    "printf",
+    "filesystem_io",
+    "syscalls",
+    "preprocessor_macros",
+    "stack_frame",
+    "general_control_flow_with_arbitrary_loop_counts"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__verilog",
+  "wave_23_audit_note": "20% from W12 pong-shape demo; lowering general control flow into FSM + materializing a verilog backend not done in W23 — filed as project_task"
+}

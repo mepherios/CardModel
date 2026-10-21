@@ -1,0 +1,82 @@
+{
+  "category": "redefinition",
+  "condition": "(K > 0)",
+  "cost_score": 25,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "positive_real",
+  "examples": [
+    {
+      "comment": "tracking-error cost at e = 0.4, setpoint-equivalent r = 2, gain K = 5. Steady-state error e_ss = r/K = 0.4. Source: 0.5*5*0.16 - 2*0.4 = 0.4 - 0.8 = -0.4 -- matches -r^2/(2K) = -4/10 = -0.4.",
+      "input": {
+        "K": 5,
+        "e": 0.4,
+        "r": 2
+      },
+      "source_eval": -0.4,
+      "target_eval": -0.4
+    },
+    {
+      "comment": "K=2, e=1, r=2: source 0.5*2*1 - 2*1 = 1 - 2 = -1. Target 0.5*2*(1-1)^2 - 4/4 = 0 - 1 = -1.",
+      "input": {
+        "K": 2,
+        "e": 1,
+        "r": 2
+      },
+      "source_eval": -1.0,
+      "target_eval": -1.0
+    },
+    {
+      "comment": "zero forcing (r=0): the LQ cost reduces to pure quadratic penalty (K/2) e^2; off-zero error costs energy.",
+      "input": {
+        "K": 1,
+        "e": 3,
+        "r": 0
+      },
+      "source_eval": 4.5,
+      "target_eval": 4.5
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "canonical_postulate": "quadratic_extremum_canonical",
+    "control_interpretation": "For a plant with unity DC gain under a P-controller with gain K against a step disturbance r, the steady-state error is e_ss = r/K and the integrated quadratic cost is -r^2/(2K) below the e=0 reference. Adding an integrator drives e_ss to zero at the cost of a different transient response.",
+    "domain_framing": "engineering: scalar LQ (linear-quadratic) controller cost-to-go at steady state. e is the tracking error, K is the quadratic penalty on error, r is a linear forcing term capturing the setpoint coupling. The minimiser e_ss = r/K is the steady-state offset under a finite-gain integrator -- this is the classical 'integral term cannot reach zero error against persistent disturbance' result expressed as a quadratic-cost minimum.",
+    "first_order_condition": "K*e - r = 0",
+    "honest_scope": "This is the STEADY-STATE algebraic relationship only. Full LQR design (the dynamic Riccati equation) is out of scope; the canonical postulate handles only the static optimum, not the time-evolution. The vector LQR cost x^T Q x + u^T R u has the same first-order optimality structure but the matrices Q, R must be PSD/PD respectively -- that's the K > 0 condition generalised.",
+    "introduced_by": "W8-G",
+    "optimum": "r/K",
+    "optimum_value": "-r**2/(2*K)",
+    "variable_map_to_canonical": {
+      "K": "a",
+      "e": "z",
+      "r": "c"
+    },
+    "version": "1.0.0"
+  },
+  "name": "pi_control_steady_state_to_canonical_quadratic",
+  "pheros_path": "redefinition/pi_control_steady_state_to_canonical_quadratic",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "postulate:quadratic_extremum_canonical",
+  "provenance": "derived_from_card",
+  "source_form": "(K/2)*e**2 - r*e",
+  "tags": [
+    "engineering",
+    "control",
+    "lq-cost",
+    "steady-state",
+    "cross-domain",
+    "w8-g"
+  ],
+  "target_form": "(K/2)*(e - r/K)**2 - r**2/(2*K)",
+  "witness_kind": "symbolic"
+}

@@ -1,0 +1,73 @@
+{
+  "category": "op",
+  "cost": 3.5,
+  "forms": [
+    {
+      "code": "lambda a, b, c: a * b + c",
+      "cost": 3.5,
+      "domain": "any",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b, c: (a * b) + c",
+      "cost": 4.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "decomp",
+      "notes": "explicit decomp; CPython already fuses",
+      "runnable": true
+    },
+    {
+      "cost": 3.0,
+      "domain": "float",
+      "lang": "rust",
+      "name": "rust_hint",
+      "notes": "rust f32/f64 single-rounding FMA",
+      "runnable": false,
+      "str_impl": "a.mul_add(b, c)"
+    }
+  ],
+  "match": {
+    "python": {
+      "pattern_any": [
+        [
+          "ADD",
+          [
+            "MUL",
+            "?a",
+            "?b"
+          ],
+          "?c"
+        ],
+        [
+          "ADD",
+          "?c",
+          [
+            "MUL",
+            "?a",
+            "?b"
+          ]
+        ]
+      ]
+    }
+  },
+  "metadata": {
+    "hub_kind": "fused",
+    "version": "1.0.0"
+  },
+  "name": "MULADD",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "a*b + c (FMA)",
+  "tier": 1
+}

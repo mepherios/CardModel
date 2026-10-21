@@ -1,0 +1,68 @@
+{
+  "blockers": [
+    "C has no coroutines, so async/generator are NOT_SUPPORTED_BY_DESIGN — must be lowered via redefinition, not direct emission",
+    "Python int is arbitrary-precision; C int is 32/64-bit — overflow semantics differ"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "estimate from V_T emit_c.py regression count on 10 algorithm samples (4/10 compile + run per UB5-B)",
+  "current_coverage_percent": 55,
+  "evidence": [
+    "cards/tool/v_transpile/coverage.py — PV1 matrix shows c target: try=PARTIAL (setjmp), with=PARTIAL, class=PARTIAL (struct+functions, no inheritance), async=NOT_SUPPORTED_BY_DESIGN, decorator=PARTIAL, comprehension=PARTIAL, lambda=PARTIAL, generator=NOT_SUPPORTED_BY_DESIGN, fstring=SUPPORTED (snprintf), walrus=SUPPORTED",
+    "cards/tool/v_transpile/frontends/python.py — full Python AST lift",
+    "cards/redefinition/c_struct_to_python_dataclass and friends — coreutils path UB3-B drives python->c via rust intermediary"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python__to__c",
+  "optimal_solution_path": [
+    "decide on a fixed overflow contract (saturating / wrapping / bigint-stub) and document under cards/redefinition/",
+    "promote PV1 PARTIAL entries (class/lambda/decorator/comprehension) to SUPPORTED with regression smokes",
+    "lower async/generator via redefinition cards rather than direct emit",
+    "add a real python->c->gcc->run smoke for arithmetic + control flow + struct shapes"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_python_class_to_c_struct_inheritance",
+    "cards/project_task/close_python_comprehension_to_c_loop"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/v_transpile/frontends/python.py",
+    "cards/tool/v_transpile/backends"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "python",
+  "supported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "while_loop",
+    "for_range",
+    "return",
+    "int_variables",
+    "float_variables",
+    "fstring_basic",
+    "walrus_assignment",
+    "comparison_operators",
+    "logical_operators",
+    "list_indexing_basic"
+  ],
+  "target_language": "c",
+  "unsupported_constructs": [
+    "async_def",
+    "generator_yield",
+    "class_with_inheritance",
+    "class_with_metaclass",
+    "decorator_arbitrary",
+    "comprehension_full_general",
+    "lambda_capturing_closure_into_c_function_pointer",
+    "dynamic_dispatch",
+    "duck_typing_polymorphism",
+    "dynamic_eval",
+    "import_star",
+    "exception_with_python_traceback_object"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/python__to__c",
+  "wave_23_audit_note": "55% is from UB5-B lang-matrix python->c=4/10; promotion needs the overflow contract decision + PV1 PARTIAL->SUPPORTED promotions filed in OSP"
+}

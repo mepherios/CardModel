@@ -1,0 +1,52 @@
+{
+  "category": "re_operation",
+  "forms": [
+    {
+      "cost": 1.0,
+      "domain": "any",
+      "entry": "detect_format",
+      "file": "python.py",
+      "lang": "python",
+      "name": "format_cards",
+      "runnable": true
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "667b78222711ecfb1b37165ee482c591072568de532631f71fdc108ceef1258c",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "detect_format",
+  "provenance": {
+    "commit": "bfd0b0cb6da27e24871997b7037b3da13bc77a7e",
+    "origin": "rea-cards",
+    "path": "~/Programmering/rea-cards",
+    "rea_card": "cards/re_operation/detect_format",
+    "read_on": "2026-10-21",
+    "sha256": "a5db95491881141f430265a9e169a66dd0668bb72d53f8d95a1bc67607bdd2dd",
+    "upstream": "morluto/rea (MIT)"
+  },
+  "statement": "Name the most specific format card whose magic bytes / predicates match a file.",
+  "tier": 1,
+  "vectors": [
+    {
+      "args": [
+        "/bin/ls"
+      ],
+      "name": "ls_is_macho",
+      "out_one_of": [
+        "macho",
+        "macho_fat"
+      ]
+    }
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "vectors": {
+      "forms": {
+        "format_cards": "pass"
+      },
+      "status": "pass"
+    }
+  }
+}

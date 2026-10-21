@@ -1,0 +1,72 @@
+{
+  "_autogen_v2": {
+    "origin": "compose_v2",
+    "parents": [
+      "auto_91bd989dda8527ea",
+      "complete_the_square"
+    ],
+    "verifier_evidence": "real:PROVED(40/40)"
+  },
+  "category": "redefinition",
+  "condition": "((_x > -1e150) & (_x < 1e150) & (_b > -1e150) & (_b < 1e150) & (_c > -1e150) & (_c < 1e150))",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_b": 1,
+        "_c": 1,
+        "_x": 1
+      },
+      "source_eval": "3",
+      "target_eval": "3"
+    },
+    {
+      "input": {
+        "_b": 2,
+        "_c": 2,
+        "_x": 2
+      },
+      "source_eval": "10",
+      "target_eval": "10"
+    },
+    {
+      "input": {
+        "_b": 3,
+        "_c": 3,
+        "_x": 3
+      },
+      "source_eval": "21",
+      "target_eval": "21"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "auto_v2_07e0a6ba9cb3c2e5",
+  "pheros_path": "redefinition/auto_v2_07e0a6ba9cb3c2e5",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:compose_v2",
+  "provenance": "derived_from_card",
+  "source_form": "(-_b**2/8 + _c/2 + (_b/2 + _x)**2/2 + 1/2)**2 - (_b**2/8 - _c/2 - (_b/2 + _x)**2/2 + 1/2)**2",
+  "tags": [
+    "auto_generated",
+    "autogen_v2",
+    "compose_v2",
+    "redefinition"
+  ],
+  "target_form": "_b*_x + _c + _x**2",
+  "witness_kind": "symbolic"
+}

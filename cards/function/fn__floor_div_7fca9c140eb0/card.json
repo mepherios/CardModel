@@ -1,0 +1,501 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/FLOORDIV"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef _floor_div(a, b):\n    return a // b",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t _floor_div(int64_t a, int64_t b) {\n    return cm_floordiv(a, b);\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc _floor_div(a int64, b int64) int64 {\n\treturn cm_floordiv(a, b)\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction _floor_div(a, b) {\n    return cm_floordiv(a, b);\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def _floor_div(a: int, b: int) -> int:\n    return (a // b)\n\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn _floor_div(a: i64, b: i64) -> i64 {\n    return cm_floordiv(a, b);\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t _floor_div(int64_t a, int64_t b) {\n    return cm_floordiv(a, b);\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long _floor_div(long a, long b) {\n    return Math.floorDiv(a, b);\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def _floor_div (a : Int) (b : Int) : Int := Id.run do\n  return (Int.fdiv a b)\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function _floor_div(a, b)\n  return (a // b)\nend\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def _floor_div(a, b)\n  return (a / b)\nend\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc _floor_div(_ a: Int, _ b: Int) -> Int {\n    return cm_floordiv(a, b)\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction _floor_div(a: bigint, b: bigint): bigint {\n    return cm_floordiv(a, b);\n}\n",
+      "cost": 1.0,
+      "entry": "_floor_div",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "_floor_div",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "return",
+            "value": [
+              "FLOORDIV",
+              [
+                "var",
+                "a"
+              ],
+              [
+                "var",
+                "b"
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "_floor_div",
+        "params": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 42,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn__floor_div_7fca9c140eb0",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ],
+    "origin": "cardmodel/engines/ir.py",
+    "seed": 1210246382,
+    "source_sha256_12": "7fca9c140eb0"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "_floor_div(a: int, b: int) -> int lifted from cardmodel/engines/ir.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        -1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -50,
+        -50
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        50,
+        50
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -5,
+        28
+      ],
+      "out": -1
+    },
+    {
+      "args": [
+        -19,
+        21
+      ],
+      "out": -1
+    },
+    {
+      "args": [
+        44,
+        -19
+      ],
+      "out": -3
+    },
+    {
+      "args": [
+        6,
+        12
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        2,
+        -5
+      ],
+      "out": -1
+    },
+    {
+      "args": [
+        -20,
+        -33
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -36,
+        -15
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -21,
+        -11
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -47,
+        39
+      ],
+      "out": -2
+    },
+    {
+      "args": [
+        -48,
+        -47
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -48,
+        9
+      ],
+      "out": -6
+    },
+    {
+      "args": [
+        -49,
+        10
+      ],
+      "out": -5
+    },
+    {
+      "args": [
+        25,
+        31
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -26,
+        -47
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        32,
+        3
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        6,
+        -36
+      ],
+      "out": -1
+    },
+    {
+      "args": [
+        -17,
+        17
+      ],
+      "out": -1
+    },
+    {
+      "args": [
+        49,
+        3
+      ],
+      "out": 16
+    },
+    {
+      "args": [
+        50,
+        -43
+      ],
+      "out": -2
+    },
+    {
+      "args": [
+        38,
+        -15
+      ],
+      "out": -3
+    },
+    {
+      "args": [
+        19,
+        40
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        20,
+        -12
+      ],
+      "out": -2
+    },
+    {
+      "args": [
+        -36,
+        -4
+      ],
+      "out": 9
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 42,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 42,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

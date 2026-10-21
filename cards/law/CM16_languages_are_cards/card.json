@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM16_languages_are_cards",
+  "origins": [
+    "Pheros L01",
+    "Pheros L26",
+    "rea-cards forms"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Languages, operators and backends are cards: the codegen and runners contain no per-language branches; adding one is adding a card.",
+  "tier": 0,
+  "witness": "tests/test_laws.py::test_engines_have_no_language_branches"
+}

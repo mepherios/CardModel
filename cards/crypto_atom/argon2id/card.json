@@ -1,0 +1,44 @@
+{
+  "category": "crypto_atom",
+  "flaws": [
+    "no stdlib/node:crypto form yet: vectors kept, nothing executes here"
+  ],
+  "forms": [
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "lang": "javascript",
+      "name": "ting_noble",
+      "notes": "needs a third-party package; documentation-only here",
+      "runnable": false,
+      "str_impl": "static/app/crypto/atoms.js#argon2id"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_cryptography",
+      "notes": "needs a third-party package; documentation-only here",
+      "runnable": false,
+      "str_impl": "core/suites_ref.py#argon2id"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "argon2id",
+  "operation": "password_kdf",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b",
+    "ting_card": "cards/crypto_atom/argon2id"
+  },
+  "purity": "pure",
+  "statement": "RFC 9106",
+  "status": "suspect",
+  "tier": 1,
+  "ting_vectors": "ting_vectors.json"
+}

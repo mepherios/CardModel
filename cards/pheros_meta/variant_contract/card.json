@@ -1,0 +1,24 @@
+{
+  "category": "meta_definition",
+  "interacts_with": [
+    "card_type",
+    "L01_complete_isolation",
+    "L09_no_silent_monoglots"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "variant_contract",
+  "rationale": "The variant contract is what makes L1 mechanical. Adding a new language to the system means: drop one file with the language's extension into each card directory that should support it. No central registration. The kernel discovers variants by reading directory contents.",
+  "statement": "A variant is a file inside a card's directory whose name selects the language or format. The variant's contents are an alternative expression of the card. All variants of one card express the same claim; the witness verifies cross-variant equivalence where possible.",
+  "tags": [
+    "axiom",
+    "L1",
+    "polyglot"
+  ],
+  "tier": 0,
+  "variants": {
+    "filename_conventions.md": "# Variant filename conventions\n\nEach card directory may contain any of the following files. None are required; presence indicates the card supports that variant.\n\n| filename        | meaning                                                  |\n|-----------------|----------------------------------------------------------|\n| `card.json`     | the card record itself (REQUIRED)                        |\n| `README.md`     | human-readable summary (REQUIRED for cards/, optional in _meta) |\n| `schema.json`   | JSON Schema for cards whose claim IS a schema            |\n| `python.py`     | Python implementation variant                            |\n| `lean.lean`     | Lean 4 specification/proof variant                       |\n| `rust.rs`       | Rust implementation variant                              |\n| `typescript.ts` | TypeScript implementation variant                        |\n| `<lang>.<ext>`  | any other language variant by its file extension         |\n| `witness.py`    | Python witness predicate (or `witness.<lang>` in another language) |\n| `gui.html`      | HTML rendering of this card for the hub                  |\n| `mcp.json`      | MCP tool definition exposing this card to AI agents      |\n| `tests/`        | per-variant tests                                        |\n| `examples/`     | usage examples                                           |\n\nNew filename conventions are added by writing a card in `cards/_meta/` whose `interacts_with` includes `variant_contract`. The kernel does not need to be edited — the convention's existence is what makes it legal.\n"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/_meta/variant_contract"
+}

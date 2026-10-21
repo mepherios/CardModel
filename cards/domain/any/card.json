@@ -1,0 +1,14 @@
+{
+  "category": "domain",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "any",
+  "parents": [],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "No restriction (requests for 'any' accept every form).",
+  "tier": 0
+}

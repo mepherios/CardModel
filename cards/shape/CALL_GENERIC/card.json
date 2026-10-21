@@ -1,0 +1,20 @@
+{
+  "category": "shape",
+  "cost": 1.0,
+  "fallback": true,
+  "match": {
+    "python": {
+      "node": [
+        "Call"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CALL_GENERIC",
+  "provenance": {
+    "origin": "hub config/card_catalog.py walk_cards (V5 shapes)"
+  },
+  "statement": "a call with no named card (fallback)"
+}

@@ -1,0 +1,117 @@
+{
+  "category": "language",
+  "codegen": {
+    "declare": "let {name}: {type} = {value};",
+    "func": "function {name}({params}): {ret} {{\n{body}}}\n",
+    "param": "{name}: {type}"
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extends": "javascript",
+  "extensions": [
+    ".ts",
+    ".mts"
+  ],
+  "family": "c_like",
+  "int_bits": null,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "typescript",
+  "probe": {
+    "kind": "executable",
+    "min_version": "23.6.0",
+    "name": "node",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "export",
+    "extends",
+    "finally",
+    "for",
+    "function",
+    "if",
+    "import",
+    "in",
+    "instanceof",
+    "new",
+    "return",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
+    "let",
+    "static",
+    "enum",
+    "await",
+    "implements",
+    "package",
+    "protected",
+    "interface",
+    "private",
+    "public",
+    "null",
+    "true",
+    "false",
+    "undefined",
+    "NaN",
+    "Infinity",
+    "arguments",
+    "eval",
+    "any",
+    "number",
+    "string",
+    "boolean",
+    "type",
+    "declare",
+    "namespace",
+    "module"
+  ],
+  "runner": {
+    "file": "main.ts",
+    "run": [
+      "{exe}",
+      "--no-warnings",
+      "{src}"
+    ]
+  },
+  "statement": "TypeScript run by Node's built-in type stripping (no tsc): same semantics as javascript.",
+  "tier": 1
+}

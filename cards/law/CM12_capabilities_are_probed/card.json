@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM12_capabilities_are_probed",
+  "origins": [
+    "rea-cards probes",
+    "Pheros pheros-learn adapters"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Toolchains and backends are used only after a probe passes on this host; an unavailable form is reported with its reason, never skipped silently.",
+  "tier": 0,
+  "witness": "tests/test_probes.py::test_unavailable_is_reported"
+}

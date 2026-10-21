@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "cl_interpreter",
+  "description": "How the CL compiler is invoked. This file is the contract every CL toolchain implementation must satisfy: same entry point, same arguments, same exit codes. Implementations may be Python, Rust, Lean, or otherwise; the calling convention is fixed.",
+  "name": "cl",
+  "kind": "compiler",
+  "entrypoint": {
+    "v0_python": {
+      "invocation": "python3 cards/tool/cl_compile/python.py",
+      "status": "planned",
+      "owner": "Agent D",
+      "notes": "First-cut compiler. Lives at cards/tool/cl_compile/python.py once written. Reads a .cl source file, emits target code per --target."
+    }
+  },
+  "arguments": {
+    "positional": [
+      {
+        "name": "source",
+        "description": "Path to a .cl source file (or '-' for stdin).",
+        "required": true
+      }
+    ],
+    "options": [
+      {
+        "flag": "--target",
+        "values": ["python", "rust", "lean", "typescript", "cuda", "wasm", "c", "shell", "qasm", "json", "lean4"],
+        "default": "python",
+        "description": "Primary emit language. Matches ResolveContext.target_language."
+      },
+      {
+        "flag": "--optimize",
+        "values": ["speed", "memory", "clarity", "energy", "parallelism"],
+        "default": "clarity",
+        "description": "Optimisation axis the resolver prefers."
+      },
+      {
+        "flag": "--hardware",
+        "value_kind": "json_file",
+        "description": "Path to a JSON file matching cl_compilation_model schema's hardware field. If absent, the compiler probes the host: arch, os, cores, gpu_present."
+      },
+      {
+        "flag": "--emit-ir",
+        "value_kind": "path",
+        "description": "Write the resolved IR (cl_ir schema) to this path alongside the target code. Useful for tooling and audits."
+      },
+      {
+        "flag": "--out",
+        "value_kind": "path",
+        "default": "stdout",
+        "description": "Where to write target code. May be a file or '-' for stdout."
+      },
+      {
+        "flag": "--check",
+        "value_kind": "boolean",
+        "description": "Stop after typecheck; do not emit. Exits 0 if the program typechecks."
+      },
+      {
+        "flag": "--feature-flag",
+        "value_kind": "key_value_repeatable",
+        "description": "Set a feature flag in the ResolveContext, e.g. --feature-flag use_simd=true."
+      }
+    ]
+  },
+  "exit_codes": {
+    "0": "success",
+    "1": "parse error",
+    "2": "typecheck error",
+    "3": "resolve error (no variant satisfies the context)",
+    "4": "emit error (target language template missing)",
+    "5": "I/O error (source not found, output not writable)",
+    "10": "internal compiler bug — please report"
+  },
+  "examples": [
+    {
+      "description": "Emit Python from a CL source.",
+      "command": "python3 cards/tool/cl_compile/python.py examples/factorial.cl --target python --out factorial.py"
+    },
+    {
+      "description": "Typecheck only, do not emit.",
+      "command": "python3 cards/tool/cl_compile/python.py examples/factorial.cl --check"
+    },
+    {
+      "description": "Multi-target emit driven by per-decl overrides.",
+      "command": "python3 cards/tool/cl_compile/python.py pipeline.cl --target python --hardware hw_lab.json --emit-ir pipeline.ir.json --out build/"
+    }
+  ],
+  "determinism": "For a fixed (source, --target, --optimize, --hardware, --feature-flag*) tuple, the compiler MUST produce byte-identical output. Two runs that disagree are a bug.",
+  "interacts_with": [
+    "cl",
+    "cl_grammar",
+    "cl_ir",
+    "cl_compilation_model"
+  ]
+}

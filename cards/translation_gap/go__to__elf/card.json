@@ -1,0 +1,60 @@
+{
+  "blockers": [
+    "cards/lacking_feature/go_archive_parser (Go's compiler produces an archive (.a) with object members a...)",
+    "Go runtime (gc, goroutine scheduler) is large; even the smallest Go program drags in ~MB of init code, so byte-asserted regression is harder than C",
+    "cards/lacking_feature/go_archive_parser (no cards/tool/compiler_observer/adapters/go.py)"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "no path on substrate; go object archive is unrecognized by output_to_cards",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "outputs/agent_w17_diag.md — W17-Diag: Go archive format unparsed; output_to_cards returns empty cards for Go observations",
+    "cards/tool/v_transpile/frontends/go.py — Go frontend exists at the IR-lift level",
+    "cards/tool/output_to_cards — handles ELF section dumps for C/Rust but Go's archive bundling pattern (.a with object members) is not unwrapped",
+    "cards/tool/compiler_observer/adapters — no Go adapter promoted to production (W15-F covered C/Python/Rust)"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "go__to__elf",
+  "optimal_solution_path": [
+    "build a Go compiler_observer adapter wrapping `go tool compile` + `go tool link`",
+    "extend output_to_cards to walk Go's archive format and extract per-symbol object code",
+    "lift Go integer-arithmetic subset through the existing frontend; emit ELF via reused C->ELF path",
+    "smoke: go 'func main(){}' -> ELF -> bytes asserted against `go build`",
+    "honestly document goroutine/channel as out-of-scope for the first cut"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_go_archive_parsing",
+    "cards/project_task/build_go_compiler_observer_adapter",
+    "cards/project_task/close_translation_gap_go__to__elf"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/frontends/go.py",
+    "cards/tool/output_to_cards",
+    "cards/tool/compiler_observer"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "go",
+  "supported_constructs": [],
+  "target_language": "elf",
+  "unsupported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "for_loop",
+    "goroutine",
+    "channel",
+    "struct",
+    "interface",
+    "defer",
+    "panic_recover",
+    "select",
+    "string_literal",
+    "slice",
+    "map"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/go__to__elf",
+  "wave_23_audit_note": "0% MEASURED: Go archive parser missing from output_to_cards — filed as project_task"
+}

@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": "k >= 0",
+  "domain": "int",
+  "lhs": "a // (1 << k)",
+  "metadata": {
+    "previous_content_hash": "8b64854dcc4ce4cb65fc8ec3840d96af988025ecda696d1a64c61bc04db42626",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "floordiv_pow2_as_shift",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a >> k",
+  "statement": "a // (1 << k) == a >> k when k >= 0",
+  "tier": 1,
+  "vars": [
+    "a",
+    "k"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "detail": "no Lean form for SHIFT_LEFT",
+      "status": "not_expressible"
+    }
+  }
+}

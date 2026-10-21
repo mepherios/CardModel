@@ -1,0 +1,33 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        "run_program"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 5,
+    "files": 4,
+    "learned": true,
+    "spellings": {
+      "run_program": 5
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_RUN_PROGRAM",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to run_program (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

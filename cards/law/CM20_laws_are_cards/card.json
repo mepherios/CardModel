@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM20_laws_are_cards",
+  "origins": [
+    "Pheros L63",
+    "hub L19",
+    "hub L38"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Laws are cards with a witness test; LAWS.md is generated from them and a test fails when it drifts.",
+  "tier": 0,
+  "witness": "tests/test_laws.py::test_laws_md_in_sync"
+}

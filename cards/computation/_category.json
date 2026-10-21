@@ -1,0 +1,20 @@
+{
+  "category_aliases": [
+    "computation",
+    "computation_primitive",
+    "language_inventory_entry",
+    "std_library"
+  ],
+  "defined_by": "tools/vendor_import.py",
+  "description": "Pheros computation primitives (18-category taxonomy, synthesized primitives, harvested std_library entries), packed. Spec-level knowledge: backend mappings and semantics, mostly without runnable forms.",
+  "name": "computation",
+  "provenance": {
+    "files": 2666,
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/computation",
+    "read_on": "2026-10-21",
+    "sha256": "cdeba5473c7f0c29468f6e465c6cce458a71c6ebc08836df6ce5aee5bf963012"
+  },
+  "references": "external",
+  "tier": 2
+}

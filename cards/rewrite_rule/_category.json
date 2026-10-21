@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Rewrite rules (identities) used by rewrite search and the optimizer; each is witnessed numerically and emitted to Lean.",
+  "name": "rewrite_rule",
+  "tier": 1
+}

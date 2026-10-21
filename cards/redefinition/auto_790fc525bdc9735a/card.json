@@ -1,0 +1,69 @@
+{
+  "_autogen": {
+    "length_source": 8,
+    "length_target": 6,
+    "novel": true,
+    "transformation": "factor",
+    "verifier_evidence": "real:PROVED(50/50), integer:PROVED(50/50)"
+  },
+  "category": "redefinition",
+  "cost_score": 37,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "symbolic_real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c2_narrowed": true,
+    "previous_content_hash": "eb919f3d08a28102d3a27595e7bde99af3c7498bb1d4d50cd22ca59ae42add2d",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_790fc525bdc9735a",
+  "pheros_path": "redefinition/auto_790fc525bdc9735a",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen:factor",
+  "provenance": "derived_from_card",
+  "source_form": "-x**2 - 2*x",
+  "status": "healthy",
+  "tags": [
+    "auto_discovered",
+    "auto_generated",
+    "factor",
+    "redefinition"
+  ],
+  "target_form": "-x*(x + 2)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 1,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 1
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

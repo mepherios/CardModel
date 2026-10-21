@@ -1,0 +1,70 @@
+{
+  "category": "redefinition",
+  "condition": "(_a > 0) & (_a < 1e150) & (_a > 1e-150) & (_b > -100) & (_b < 100)",
+  "cost_score": 20,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "positive_real",
+  "examples": [
+    {
+      "input": {
+        "_a": 2,
+        "_b": 3
+      },
+      "source_eval": 2.0794415416798357,
+      "target_eval": 2.0794415416798357
+    },
+    {
+      "input": {
+        "_a": 10,
+        "_b": 2
+      },
+      "source_eval": 4.605170185988092,
+      "target_eval": 4.605170185988092
+    },
+    {
+      "input": {
+        "_a": 2.718281828459045,
+        "_b": 5
+      },
+      "source_eval": 5.0,
+      "target_eval": 5.0
+    },
+    {
+      "input": {
+        "_a": "a",
+        "_b": "b"
+      },
+      "source_eval": "log(a**b)",
+      "target_eval": "b*log(a)"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "version": "1.0.0"
+  },
+  "name": "log_power",
+  "pheros_path": "redefinition/log_power",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:log-power-rule-via-repeated-log-product",
+  "provenance": "derived_from_card",
+  "source_form": "log(_a**_b)",
+  "tags": [
+    "log",
+    "logarithm",
+    "power-rule",
+    "rt-a5-seed"
+  ],
+  "target_form": "_b*log(_a)",
+  "witness_kind": "symbolic"
+}

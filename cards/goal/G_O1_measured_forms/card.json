@@ -1,0 +1,17 @@
+{
+  "axis": "optimization",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "measured_forms",
+  "name": "G_O1_measured_forms",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Runnable forms with a host measurement (metric card).",
+  "target": 30,
+  "tier": 0
+}

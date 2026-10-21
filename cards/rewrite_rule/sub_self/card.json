@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a - a",
+  "metadata": {
+    "previous_content_hash": "1a269f0087130f6f3fc38623b0ae9b870e689310e2f0490ab15e3a906b2d3728",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "sub_self",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "0",
+  "statement": "a - a == 0",
+  "tier": 1,
+  "vars": [
+    "a"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_sub_self (a : Int) : (a - a) = 0 := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

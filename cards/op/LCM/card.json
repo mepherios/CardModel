@@ -1,0 +1,72 @@
+{
+  "category": "op",
+  "cost": 8.0,
+  "forms": [
+    {
+      "code": "math.lcm",
+      "cost": 8.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native_math",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b: abs(a * b) // math.gcd(a, b) if a and b else 0",
+      "cost": 9.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "gcd_based",
+      "notes": "LCM(a,b) = |ab|/GCD(a,b)",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -100000,
+        100000
+      ]
+    },
+    {
+      "int": [
+        -100000,
+        100000
+      ]
+    }
+  ],
+  "match": {
+    "python": {
+      "call": [
+        "math.lcm"
+      ]
+    }
+  },
+  "metadata": {
+    "previous_content_hash": "79694c90a3bfe1991470e719349e28a9906a8939e24e3a6a86d252fd15cb8e72",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "LCM",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "least common multiple",
+  "tier": 1,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "gcd_based": {
+        "checks": 53,
+        "domain": "int",
+        "status": "pass"
+      }
+    }
+  }
+}

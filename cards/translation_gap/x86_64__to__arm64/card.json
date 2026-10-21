@@ -1,0 +1,67 @@
+{
+  "blockers": [
+    "no cards/isa/x86_64 (would need to materialize ~300 mainline instructions per W14-B pattern)",
+    "cards/lacking_feature/isa_arm64_instruction_cards (no cards/isa/arm64 instruction-card materialization)",
+    "flags register and SIMD lanes require semantic redefinitions, not 1:1 translation",
+    "this is the substrate-side blocker for the Elden-Ring-on-arm64 path; meanwhile box64/FEX-Emu is the external workaround"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED at 0%: no cards/isa/x86_64 materialized; box64/FEX is external",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "no cards/isa/x86_64 directory yet — there is rv32i, rv64i, n64 cards, but x86_64 ISA-card materialization has not happened",
+    "cards/redefinition/box64_fex_emu — GAME-E box64/FEX-emu cards documented but as prior-art, not as substrate-emitted translation",
+    "outputs/agent_game_b.md (Elden Ring on Ubuntu PC) — runs via Proton/box64 which is external; substrate does not emit arm64 from x86_64",
+    "cards/redefinition/* — no x86_64-to-arm64 redefinition cards exist"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "x86_64__to__arm64",
+  "notes": "This is the major blocker for the Elden Ring on arm64 path. Currently the user-facing answer is 'use box64/FEX-Emu', not 'substrate transpiles'. Honest framing.",
+  "optimal_solution_path": [
+    "materialize cards/isa/x86_64 from intel/amd manuals using the W14-B card_from_isa_spec pattern (~300 mainline instructions)",
+    "materialize cards/isa/arm64 with comparable coverage",
+    "author a binary-to-IR lifter per cards/tool/binary_to_ir for the x86_64 input side",
+    "lower IR to arm64 via the same card-emit path used by rv64_object",
+    "prove byte-equivalence on the smallest possible binaries first (an x86_64 'return 42' to arm64 'return 42')",
+    "publish the path as a clear-eyed competitor / fallback to box64/FEX-Emu"
+  ],
+  "optimization_paths": [
+    "cards/project_task/build_x86_64_isa_card_set",
+    "cards/project_task/build_arm64_isa_card_set",
+    "cards/project_task/build_x86_64_to_arm64_lifter",
+    "cards/project_task/close_translation_gap_x86_64__to__arm64"
+  ],
+  "required_isa_cards": [
+    "cards/isa/x86_64",
+    "cards/isa/arm64"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/output_to_cards"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "x86_64",
+  "supported_constructs": [],
+  "target_language": "arm64",
+  "unsupported_constructs": [
+    "mov_reg_reg",
+    "add_immediate",
+    "subtract_immediate",
+    "push_pop",
+    "call_return",
+    "conditional_jump",
+    "flags_register_semantics",
+    "simd_sse",
+    "simd_avx",
+    "memory_load_store",
+    "rip_relative_addressing",
+    "calling_convention_systemv",
+    "syscall_lowering",
+    "rep_string_ops"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/x86_64__to__arm64",
+  "wave_23_audit_note": "0% MEASURED: neither cards/isa/x86_64 nor cards/isa/arm64 fully materialized; would need ~300 + ~80 ISA cards before lowering — filed as project_task"
+}

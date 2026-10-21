@@ -1,0 +1,21 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a ** 2",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "square_as_mul",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a * a",
+  "statement": "a ** 2 == a * a",
+  "tier": 1,
+  "vars": [
+    "a"
+  ]
+}

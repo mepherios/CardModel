@@ -1,0 +1,35 @@
+{
+  "anchor": 40.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "bit",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 12.798,
+  "median_ns": 699.911,
+  "metadata": {
+    "inputs_signature": "668de0388451f562",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__ADD__bit",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/ADD form bit: 699.9 ns per call on this host",
+  "target_card": "op/ADD",
+  "tier": 3
+}

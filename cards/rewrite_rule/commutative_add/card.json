@@ -1,0 +1,38 @@
+{
+  "bidirectional": false,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a + b",
+  "metadata": {
+    "previous_content_hash": "85cc17ba9643371e434dd939fae3c45083d4d6cb3c22dfa78f4151c6ca66b53b",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "commutative_add",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "b + a",
+  "statement": "a + b == b + a",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_commutative_add (a b : Int) : (a + b) = (b + a) := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "category": "language",
+  "codegen": {},
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extends": "c",
+  "extensions": [
+    ".cpp",
+    ".cc",
+    ".cxx",
+    ".hpp"
+  ],
+  "family": "c_like",
+  "int_bits": 64,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "cpp",
+  "probe": {
+    "env_override": "CXX",
+    "kind": "executable",
+    "name": "c++",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "auto",
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "restrict",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+    "bool",
+    "true",
+    "false",
+    "main",
+    "printf",
+    "class",
+    "new",
+    "delete",
+    "namespace",
+    "template",
+    "this",
+    "throw",
+    "try",
+    "catch",
+    "public",
+    "private",
+    "protected",
+    "virtual",
+    "operator",
+    "friend",
+    "using",
+    "typename",
+    "explicit"
+  ],
+  "runner": {
+    "compile": [
+      "{exe}",
+      "-O2",
+      "-std=c++17",
+      "-o",
+      "{bin}",
+      "{src}"
+    ],
+    "file": "main.cpp",
+    "run": [
+      "{bin}"
+    ]
+  },
+  "statement": "C++17 using the C codegen (C-compatible subset).",
+  "tier": 1
+}

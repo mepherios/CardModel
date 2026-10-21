@@ -1,0 +1,505 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_EQ",
+    "op/SUB"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef ackermann_small(m: int, n: int) -> int:\n    if m == 0:\n        return n + 1\n    if n == 0:\n        return ackermann_small(m - 1, 1)\n    return ackermann_small(m - 1, ackermann_small(m, n - 1))",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t ackermann_small(int64_t m, int64_t n) {\n    if ((m == INT64_C(0))) {\n        return (n + INT64_C(1));\n    }\n    if ((n == INT64_C(0))) {\n        return ackermann_small((m - INT64_C(1)), INT64_C(1));\n    }\n    return ackermann_small((m - INT64_C(1)), ackermann_small(m, (n - INT64_C(1))));\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc ackermann_small(m int64, n int64) int64 {\n\tif (m == int64(0)) {\n\t\treturn (n + int64(1))\n\t}\n\tif (n == int64(0)) {\n\t\treturn ackermann_small((m - int64(1)), int64(1))\n\t}\n\treturn ackermann_small((m - int64(1)), ackermann_small(m, (n - int64(1))))\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function ackermann_small(m, n) {\n    if ((m === (0n))) {\n        return (n + (1n));\n    }\n    if ((n === (0n))) {\n        return ackermann_small((m - (1n)), (1n));\n    }\n    return ackermann_small((m - (1n)), ackermann_small(m, (n - (1n))));\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def ackermann_small(m: int, n: int) -> int:\n    if (m == 0):\n        return (n + 1)\n    if (n == 0):\n        return ackermann_small((m - 1), 1)\n    return ackermann_small((m - 1), ackermann_small(m, (n - 1)))\n\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn ackermann_small(m: i64, n: i64) -> i64 {\n    if (m == (0i64)) {\n        return (n + (1i64));\n    }\n    if (n == (0i64)) {\n        return ackermann_small((m - (1i64)), (1i64));\n    }\n    return ackermann_small((m - (1i64)), ackermann_small(m, (n - (1i64))));\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t ackermann_small(int64_t m, int64_t n) {\n    if ((m == INT64_C(0))) {\n        return (n + INT64_C(1));\n    }\n    if ((n == INT64_C(0))) {\n        return ackermann_small((m - INT64_C(1)), INT64_C(1));\n    }\n    return ackermann_small((m - INT64_C(1)), ackermann_small(m, (n - INT64_C(1))));\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long ackermann_small(long m, long n) {\n    if ((m == (0L))) {\n        return (n + (1L));\n    }\n    if ((n == (0L))) {\n        return ackermann_small((m - (1L)), (1L));\n    }\n    return ackermann_small((m - (1L)), ackermann_small(m, (n - (1L))));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def ackermann_small (m : Int) (n : Int) : Int := Id.run do\n  if (m == (0 : Int)) then\n    return (n + (1 : Int))\n  if (n == (0 : Int)) then\n    return (ackermann_small (m - (1 : Int)) (1 : Int))\n  return (ackermann_small (m - (1 : Int)) (ackermann_small m (n - (1 : Int))))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function ackermann_small(m, n)\n  if (m == (0)) then\n    return (n + (1))\n  end\n  if (n == (0)) then\n    return ackermann_small((m - (1)), (1))\n  end\n  return ackermann_small((m - (1)), ackermann_small(m, (n - (1))))\nend\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def ackermann_small(m, n)\n  if (m == (0))\n    return (n + (1))\n  end\n  if (n == (0))\n    return ackermann_small((m - (1)), (1))\n  end\n  return ackermann_small((m - (1)), ackermann_small(m, (n - (1))))\nend\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc ackermann_small(_ m: Int, _ n: Int) -> Int {\n    if (m == (0)) {\n        return (n + (1))\n    }\n    if (n == (0)) {\n        return ackermann_small((m - (1)), (1))\n    }\n    return ackermann_small((m - (1)), ackermann_small(m, (n - (1))))\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function ackermann_small(m: bigint, n: bigint): bigint {\n    if ((m === (0n))) {\n        return (n + (1n));\n    }\n    if ((n === (0n))) {\n        return ackermann_small((m - (1n)), (1n));\n    }\n    return ackermann_small((m - (1n)), ackermann_small(m, (n - (1n))));\n}\n",
+      "cost": 1.0,
+      "entry": "ackermann_small",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        6
+      ]
+    },
+    {
+      "int": [
+        0,
+        6
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "ackermann_small",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "CMP_EQ",
+              [
+                "var",
+                "m"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "n"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ]
+          },
+          {
+            "cond": [
+              "CMP_EQ",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "CALL",
+                  "ackermann_small",
+                  [
+                    "SUB",
+                    [
+                      "var",
+                      "m"
+                    ],
+                    [
+                      "int",
+                      1
+                    ]
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ]
+          },
+          {
+            "k": "return",
+            "value": [
+              "CALL",
+              "ackermann_small",
+              [
+                "SUB",
+                [
+                  "var",
+                  "m"
+                ],
+                [
+                  "int",
+                  1
+                ]
+              ],
+              [
+                "CALL",
+                "ackermann_small",
+                [
+                  "var",
+                  "m"
+                ],
+                [
+                  "SUB",
+                  [
+                    "var",
+                    "n"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "ackermann_small",
+        "params": [
+          {
+            "name": "m",
+            "type": "int"
+          },
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 24,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_ackermann_small_aec8df43a4ad",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "aec8df43a4ad"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "m",
+        "type": "int"
+      },
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "ackermann_small(m: int, n: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        2,
+        4
+      ],
+      "out": 11
+    },
+    {
+      "args": [
+        1,
+        4
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        1,
+        3
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        2,
+        6
+      ],
+      "out": 15
+    },
+    {
+      "args": [
+        0,
+        2
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        1,
+        6
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        2,
+        0
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        3,
+        0
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        1,
+        0
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        0,
+        5
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        2,
+        5
+      ],
+      "out": 13
+    },
+    {
+      "args": [
+        0,
+        6
+      ],
+      "out": 7
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 24,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 14,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 24,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

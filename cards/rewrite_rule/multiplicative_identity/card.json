@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a * 1",
+  "metadata": {
+    "previous_content_hash": "5feeae701a1c9655938130e01caa61cf63b751dbf5d2bceb291dd43557b88a96",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "multiplicative_identity",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a",
+  "statement": "a * 1 == a",
+  "tier": 1,
+  "vars": [
+    "a"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_multiplicative_identity (a : Int) : (a * 1) = a := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

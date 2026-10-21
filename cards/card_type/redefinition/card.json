@@ -1,0 +1,75 @@
+{
+  "applies_to": [
+    "redefinition"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "ported_from": [
+      "Pheros cards/_meta/redefinition_contract"
+    ],
+    "version": "1.0.0"
+  },
+  "name": "redefinition",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "condition": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "cost_score": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "number"
+      },
+      "domain": {
+        "enum": [
+          "real",
+          "complex",
+          "fp32",
+          "fp64",
+          "bitvec64",
+          "modular_n",
+          "positive_real",
+          "integer",
+          "symbolic_real",
+          "nonneg_integer"
+        ]
+      },
+      "examples": {
+        "type": "array"
+      },
+      "source_form": {
+        "type": "string"
+      },
+      "target_form": {
+        "type": "string"
+      },
+      "verification": {
+        "type": "object"
+      },
+      "witness_kind": {
+        "enum": [
+          "symbolic",
+          "numerical",
+          "exhaustive",
+          "axiomatic"
+        ]
+      }
+    },
+    "required": [
+      "source_form",
+      "target_form",
+      "domain",
+      "witness_kind"
+    ],
+    "type": "object"
+  },
+  "statement": "An executable identity source_form == target_form (Pheros redefinition_contract; domain enum extended with the model's domains). Prose redefinitions live in redefinition_note.",
+  "tier": 0
+}

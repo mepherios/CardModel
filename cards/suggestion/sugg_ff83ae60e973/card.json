@@ -1,0 +1,29 @@
+{
+  "category": "suggestion",
+  "cost_from": 3.0,
+  "cost_to": 1.0,
+  "file": "engines/codegen.py",
+  "from": "(ind2 * 2)",
+  "line": 331,
+  "metadata": {
+    "advisory": "the source file is not edited (hub L3)",
+    "confidence": "established",
+    "evidence_count": 24,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "sugg_ff83ae60e973",
+  "statement": "(ind2 * 2) -> (ind2 << 1)",
+  "steps": [
+    [
+      "start",
+      "(ind2 * 2)"
+    ],
+    [
+      "double_as_shift",
+      "(ind2 << 1)"
+    ]
+  ],
+  "tier": 3,
+  "to": "(ind2 << 1)"
+}

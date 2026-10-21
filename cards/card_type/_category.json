@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Card types as cards: JSON Schemas that cards are validated against (schema-as-data).",
+  "name": "card_type",
+  "tier": 0
+}

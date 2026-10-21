@@ -1,0 +1,52 @@
+{
+  "category": "cross_language_equivalence",
+  "caveat": "source shapes disagree across languages: c_to_llvm_ir=function, py_to_llvm_ir=BinOp, python=BinOp; skeleton match — housekeeping (memory ops, interpreter opcodes) stripped from both sides; arithmetic + control_flow tokens preserved. Tentative; not a proof of semantic equivalence.",
+  "confidence": "tentative",
+  "derivation": "skeleton_match",
+  "evidence_count": 3,
+  "extracted_at": "2026-05-22T18:14:45.424359+00:00",
+  "extracted_by": "cross_language_learner v0.1",
+  "first_observed": "2026-05-22T18:12:30.649116+00:00",
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "languages": [
+    "c_to_llvm_ir",
+    "py_to_llvm_ir",
+    "python"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_05c43c394226c3e9",
+  "output_pattern": "arithmetic:add;control_flow:ret|skel=W19",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "provenance": "derived_from_card",
+  "source_patterns_by_language": {
+    "c_to_llvm_ir": {
+      "evidence_obs_ids": [
+        "6c75359de2e6aa04"
+      ],
+      "pattern": "Function|pure_compute|name=<symbolic>|params=[int,int]|return=int|body=[Add]|opt=O0"
+    },
+    "py_to_llvm_ir": {
+      "evidence_obs_ids": [
+        "ed7a39382b50d68e"
+      ],
+      "pattern": "BinOp|pure_compute|skel=_id(_id('_id', _id()), _id(), _id('_id', _id()))|ops=[Add]|opt=Odefault"
+    },
+    "python": {
+      "evidence_obs_ids": [
+        "16eb847f3155f3e8"
+      ],
+      "pattern": "BinOp|pure_compute|skel=_id(_id('_id', _id()), _id(), _id('_id', _id()))|ops=[Add]|opt=Odefault"
+    }
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/cross_language_equivalence/xleq_05c43c394226c3e9"
+}

@@ -1,0 +1,81 @@
+{
+  "category": "op",
+  "cost": 3.0,
+  "forms": [
+    {
+      "code": "lambda x, n: x ** n",
+      "cost": 3.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda x, n: _const_pow_chain(x, n)",
+      "cost": 2.5,
+      "domain": "int",
+      "lang": "python",
+      "libs": [
+        "redef_helpers"
+      ],
+      "name": "chain",
+      "notes": "unrolled chain of MULs; wins for small n",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -1000,
+        1000
+      ]
+    },
+    {
+      "int": [
+        0,
+        16
+      ]
+    }
+  ],
+  "match": {
+    "python": {
+      "pattern": [
+        "POW",
+        "?x",
+        [
+          "int",
+          "?n"
+        ]
+      ]
+    }
+  },
+  "metadata": {
+    "hub_kind": "fused",
+    "previous_content_hash": "65e346b0cf9ed44745c8810afa5e68e0f69cf57db0bee05202980f64f5d01062",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "CONST_POW",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "x ** N where N is a small int",
+  "tier": 1,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "chain": {
+        "checks": 53,
+        "domain": "int",
+        "status": "pass"
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "anchor": 1.0,
+  "calls_per_sample": [
+    200,
+    2000
+  ],
+  "category": "metric",
+  "form": "python",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.0,
+  "median_ns": 207.742,
+  "metadata": {
+    "inputs_signature": "84f5f8c04391e173",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__fn_fib_c606a8c65616__python",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 6,
+  "startup_ms": 43.1,
+  "statement": "function/fn_fib_c606a8c65616 form python: 207.7 ns per call on this host",
+  "target_card": "function/fn_fib_c606a8c65616",
+  "tier": 3
+}

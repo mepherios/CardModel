@@ -1,0 +1,34 @@
+{
+  "category": "lib",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "module_alias": "bp",
+  "name": "bit_primitives",
+  "provenance": {
+    "files": [
+      "~/Documents/Claude_Hub/config/bit_primitives.py",
+      "~/Documents/Claude_Hub/config/card_catalog.py",
+      "~/Documents/Claude_Hub/config/language_hints.py",
+      "~/Documents/Claude_Hub/config/card_redefinitions.py",
+      "~/Documents/Claude_Hub/config/rewrite_engine.py",
+      "~/Documents/Claude_Hub/config/rewrite_search.py",
+      "~/Documents/Claude_Hub/config/cross_language_equiv.py",
+      "~/Documents/Claude_Hub/config/lean_emitter.py",
+      "~/Documents/Claude_Hub/CARD_MODEL.md",
+      "~/Documents/Claude_Hub/LAWS.md"
+    ],
+    "method": "read-only; python parsed with ast, never imported",
+    "origin": "hub",
+    "path": "~/Documents/Claude_Hub",
+    "read_on": "2026-10-21",
+    "sha256": "eca111b57f7cd7c838394814c7dd51c9d9641bed5ba07cde165767e2792b0a56"
+  },
+  "statement": "Decomposition of high-level ops into the universal bit basis (NAND/NOR/AND/OR/XOR/NOT/shifts), fixed 32-bit width; the forms named 'bit'/'nand' call it.",
+  "tier": 0,
+  "variants": {
+    "python.py": {
+      "kind": "file"
+    }
+  }
+}

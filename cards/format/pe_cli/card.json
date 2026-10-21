@@ -1,0 +1,29 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "4d5a",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "pe",
+      "native_binary",
+      "file"
+    ],
+    "predicate": "reacards.domains:is_pe_cli",
+    "priority": 60
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "pe_cli",
+  "statement": "Managed .NET PE/CLI assembly (CLR runtime header present).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/pe_cli"
+}

@@ -1,0 +1,125 @@
+{
+  "category": "op",
+  "cost": 0.8,
+  "emit": {
+    "c_like": {
+      "float": "cm_max_f({0}, {1})",
+      "int": "cm_max_i({0}, {1})"
+    },
+    "java": {
+      "float": "cm_max_f({0}, {1})",
+      "int": "Math.max({0}, {1})"
+    },
+    "lean": {
+      "int": "(max {0} {1})"
+    },
+    "lua": {
+      "float": "cm_max_f({0}, {1})",
+      "int": "cm_max_i({0}, {1})"
+    },
+    "python": "max({0}, {1})",
+    "ruby": {
+      "float": "cm_max_f({0}, {1})",
+      "int": "cm_max_i({0}, {1})"
+    }
+  },
+  "forms": [
+    {
+      "code": "lambda a, b: max(a, b)",
+      "cost": 0.8,
+      "domain": "any",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b: b if b > a else a",
+      "cost": 1.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "branch",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        },
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        }
+      ],
+      "int": [
+        {
+          "int": [
+            -5,
+            5
+          ]
+        },
+        {
+          "int": [
+            -5,
+            5
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: max(a, b)",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ],
+      [
+        "float",
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "call": [
+        "max"
+      ]
+    }
+  },
+  "metadata": {
+    "previous_content_hash": "73e29790c46c1b1989c16c612f58c0ee04c39c5390aa74e2a729d70704a48fcc",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "MAX",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "max(a, b) (Python order: b if b > a else a)",
+  "tier": 0,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "branch": {
+        "checks": 53,
+        "domain": "any",
+        "status": "pass"
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        ".result_type"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 5,
+    "files": 3,
+    "learned": true,
+    "spellings": {
+      "self.result_type": 2,
+      "spec.result_type": 3
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_METHOD_RESULT_TYPE",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to .result_type (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

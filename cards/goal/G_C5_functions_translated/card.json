@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "functions_translated",
+  "name": "G_C5_functions_translated",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Function cards whose forms agree in at least 3 languages.",
+  "target": 20,
+  "tier": 0
+}

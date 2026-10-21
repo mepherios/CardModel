@@ -1,0 +1,72 @@
+{
+  "category": "op",
+  "cost": 0.8,
+  "emit": {
+    "c": "((double)({0}))",
+    "go": "float64({0})",
+    "java": "((double)({0}))",
+    "javascript": "Number({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "({0} + 0.0)",
+    "python": "float({0})",
+    "ruby": "(({0}).to_f)",
+    "rust": "(({0}) as f64)",
+    "swift": "Double({0})"
+  },
+  "forms": [
+    {
+      "code": "float",
+      "cost": 0.8,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: float(a)",
+    "types": [
+      [
+        "int",
+        "float"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "call": [
+        "float"
+      ]
+    }
+  },
+  "metadata": {
+    "hub_names": [
+      "TYPE_FLOAT_CAST"
+    ],
+    "version": "1.0.0"
+  },
+  "name": "TO_FLOAT",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "int -> float conversion",
+  "tier": 0
+}

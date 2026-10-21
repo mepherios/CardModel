@@ -1,0 +1,35 @@
+{
+  "anchor": 3.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "twos",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 547.5,
+  "median_ns": 1078.571,
+  "metadata": {
+    "inputs_signature": "b24d0e0031a80940",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__NEG__twos",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/NEG form twos: 1078.6 ns per call on this host",
+  "target_card": "op/NEG",
+  "tier": 3
+}

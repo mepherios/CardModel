@@ -1,0 +1,34 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 43,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lean",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_isqrt_newton_e2cee9fea3a7",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 1210246382,
+  "statement": "isqrt_newton: same outputs in 13 implementations",
+  "subject": "function/fn_isqrt_newton_e2cee9fea3a7",
+  "tier": 3
+}

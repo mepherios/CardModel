@@ -1,0 +1,36 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a * 2",
+  "metadata": {
+    "previous_content_hash": "962f732efc51067d9ab6d50effa5abb08a6e166fb0827ee35840220631676351",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "double_as_shift",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a << 1",
+  "statement": "a * 2 == a << 1",
+  "tier": 1,
+  "vars": [
+    "a"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "detail": "no Lean form for SHIFT_LEFT",
+      "status": "not_expressible"
+    }
+  }
+}

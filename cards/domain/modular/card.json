@@ -1,0 +1,16 @@
+{
+  "category": "domain",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "modular",
+  "parents": [
+    "int"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Modular arithmetic inputs (generators come from the card).",
+  "tier": 0
+}

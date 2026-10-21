@@ -1,0 +1,183 @@
+{
+  "applies_to": [
+    "*"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "ported_from": [
+      "hub CARD_MODEL.md",
+      "Pheros cards/_meta/card_type/schema.json",
+      "Pheros cards/_meta/card_versioning/schema.json"
+    ],
+    "version": "1.0.0"
+  },
+  "name": "card",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "definitions": {
+      "form": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "cost_vector": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "entry": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "libs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "probe": {
+            "type": "object"
+          },
+          "runnable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      }
+    },
+    "properties": {
+      "category": {
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "type": "string"
+      },
+      "cost": {
+        "type": [
+          "number",
+          "object",
+          "null"
+        ]
+      },
+      "cost_vector": {
+        "additionalProperties": {
+          "type": "number"
+        },
+        "type": "object"
+      },
+      "depends": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "depends_on": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "dimension_direction": {
+        "additionalProperties": {
+          "enum": [
+            "lower",
+            "higher"
+          ]
+        },
+        "type": "object"
+      },
+      "flaws": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "forms": {
+        "items": {
+          "$ref": "#/definitions/form"
+        },
+        "type": "array"
+      },
+      "interacts_with": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "metadata": {
+        "properties": {
+          "previous_content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_.\\-]*$",
+        "type": "string"
+      },
+      "provenance": {
+        "type": [
+          "object",
+          "string"
+        ]
+      },
+      "statement": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string"
+      },
+      "tags": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "tier": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "variants": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "name",
+      "category"
+    ],
+    "type": "object"
+  },
+  "statement": "The universal card contract (hub CARD_MODEL.md + Pheros _meta/card_type). Unknown fields are allowed and ignored by consumers that do not know them. Names may contain '.' and '-' (vendored Pheros std_library names and Ting type names do); status must be healthy|suspect|broken|quarantined unless the registry declares its own status_values (checked by the kernel).",
+  "tier": 0
+}

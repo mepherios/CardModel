@@ -1,0 +1,386 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ABS",
+    "op/CMP_EQ",
+    "op/FLOORDIV",
+    "op/GCD",
+    "op/MUL",
+    "op/OR"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef lcm_iter(a: int, b: int) -> int:\n    if a == 0 or b == 0:\n        return 0\n    return abs(a * b) // gcd(a, b)",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_gcd(int64_t a, int64_t b) { a = a < 0 ? -a : a; b = b < 0 ? -b : b; while (b != 0) { int64_t t = a % b; a = b; b = t; } return a; }\nstatic int64_t lcm_iter(int64_t a, int64_t b) {\n    if (((a == INT64_C(0)) || (b == INT64_C(0)))) {\n        return INT64_C(0);\n    }\n    return cm_floordiv(cm_abs_i((a * b)), cm_gcd(a, b));\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_abs_i(a int64) int64 {\n\tif a < 0 {\n\t\treturn -a\n\t}\n\treturn a\n}\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc cm_gcd(a int64, b int64) int64 {\n\tif a < 0 {\n\t\ta = -a\n\t}\n\tif b < 0 {\n\t\tb = -b\n\t}\n\tfor b != 0 {\n\t\ta, b = b, a%b\n\t}\n\treturn a\n}\nfunc lcm_iter(a int64, b int64) int64 {\n\tif ((a == int64(0)) || (b == int64(0))) {\n\t\treturn int64(0)\n\t}\n\treturn cm_floordiv(cm_abs_i((a * b)), cm_gcd(a, b))\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_gcd(a, b) { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b !== 0n) { const t = a % b; a = b; b = t; } return a; }\nfunction lcm_iter(a, b) {\n    if (((a === (0n)) || (b === (0n)))) {\n        return (0n);\n    }\n    return cm_floordiv(cm_abs_i((a * b)), cm_gcd(a, b));\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "import math\ndef lcm_iter(a: int, b: int) -> int:\n    if ((a == 0) or (b == 0)):\n        return 0\n    return (abs((a * b)) // math.gcd(a, b))\n\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_abs_i(a: i64) -> i64 { if a < 0 { -a } else { a } }\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn cm_gcd(a: i64, b: i64) -> i64 { let mut a = if a < 0 { -a } else { a }; let mut b = if b < 0 { -b } else { b }; while b != 0 { let t = a % b; a = b; b = t; } a }\nfn lcm_iter(a: i64, b: i64) -> i64 {\n    if ((a == (0i64)) || (b == (0i64))) {\n        return (0i64);\n    }\n    return cm_floordiv(cm_abs_i((a * b)), cm_gcd(a, b));\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_gcd(int64_t a, int64_t b) { a = a < 0 ? -a : a; b = b < 0 ? -b : b; while (b != 0) { int64_t t = a % b; a = b; b = t; } return a; }\nstatic int64_t lcm_iter(int64_t a, int64_t b) {\n    if (((a == INT64_C(0)) || (b == INT64_C(0)))) {\n        return INT64_C(0);\n    }\n    return cm_floordiv(cm_abs_i((a * b)), cm_gcd(a, b));\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long cm_gcd(long a, long b) { a = Math.abs(a); b = Math.abs(b); while (b != 0) { long t = a % b; a = b; b = t; } return a; }\n    static long lcm_iter(long a, long b) {\n    if (((a == (0L)) || (b == (0L)))) {\n        return (0L);\n    }\n    return Math.floorDiv(Math.abs((a * b)), cm_gcd(a, b));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def lcm_iter (a : Int) (b : Int) : Int := Id.run do\n  if ((a == (0 : Int)) || (b == (0 : Int))) then\n    return (0 : Int)\n  return (Int.fdiv (Int.ofNat (Int.natAbs (a * b))) (Int.ofNat (Int.gcd a b)))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function cm_gcd(a, b)\n  a = math.abs(a)\n  b = math.abs(b)\n  while b ~= 0 do\n    a, b = b, a % b\n  end\n  return a\nend\nfunction lcm_iter(a, b)\n  if ((a == (0)) or (b == (0))) then\n    return (0)\n  end\n  return (math.abs((a * b)) // cm_gcd(a, b))\nend\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def lcm_iter(a, b)\n  if ((a == (0)) || (b == (0)))\n    return (0)\n  end\n  return ((((a * b)).abs) / ((a).gcd(b)))\nend\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc cm_gcd(_ a0: Int, _ b0: Int) -> Int { var a = a0 < 0 ? -a0 : a0; var b = b0 < 0 ? -b0 : b0; while b != 0 { let t = a % b; a = b; b = t }; return a }\nfunc lcm_iter(_ a: Int, _ b: Int) -> Int {\n    if ((a == (0)) || (b == (0))) {\n        return (0)\n    }\n    return cm_floordiv(abs((a * b)), cm_gcd(a, b))\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_gcd(a, b) { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b !== 0n) { const t = a % b; a = b; b = t; } return a; }\nfunction lcm_iter(a: bigint, b: bigint): bigint {\n    if (((a === (0n)) || (b === (0n)))) {\n        return (0n);\n    }\n    return cm_floordiv(cm_abs_i((a * b)), cm_gcd(a, b));\n}\n",
+      "cost": 1.0,
+      "entry": "lcm_iter",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -12,
+        12
+      ]
+    },
+    {
+      "int": [
+        -12,
+        12
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "lcm_iter",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "OR",
+              [
+                "CMP_EQ",
+                [
+                  "var",
+                  "a"
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ],
+              [
+                "CMP_EQ",
+                [
+                  "var",
+                  "b"
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "int",
+                  0
+                ]
+              }
+            ]
+          },
+          {
+            "k": "return",
+            "value": [
+              "FLOORDIV",
+              [
+                "ABS",
+                [
+                  "MUL",
+                  [
+                    "var",
+                    "a"
+                  ],
+                  [
+                    "var",
+                    "b"
+                  ]
+                ]
+              ],
+              [
+                "GCD",
+                [
+                  "var",
+                  "a"
+                ],
+                [
+                  "var",
+                  "b"
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "lcm_iter",
+        "params": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 3,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_lcm_iter_90e3375a10d4",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "90e3375a10d4"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "lcm_iter(a: int, b: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        7,
+        0
+      ],
+      "out": 0
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 3,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 2,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 3,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "anchor": 6.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "native_math",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.393,
+  "median_ns": 49.728,
+  "metadata": {
+    "inputs_signature": "7a08d9d2f6126a72",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__GCD__native_math",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/GCD form native_math: 49.7 ns per call on this host",
+  "target_card": "op/GCD",
+  "tier": 3
+}

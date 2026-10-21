@@ -1,0 +1,20 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM02_everything_is_a_card",
+  "origins": [
+    "hub L25",
+    "hub CARD_MODEL.md",
+    "Pheros registry_contract",
+    "Pheros L113"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Every structure is a card in a registry; a registry is a directory with _category.json; the filesystem is the index (ALL/get/all_names).",
+  "tier": 0,
+  "witness": "tests/test_kernel.py::test_registry_contract"
+}

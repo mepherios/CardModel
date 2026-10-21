@@ -1,0 +1,27 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "62706c6973743030",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "plist",
+      "file"
+    ],
+    "priority": 50
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "plist_binary",
+  "statement": "Binary property list (bplist00).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/plist_binary"
+}

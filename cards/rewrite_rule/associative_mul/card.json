@@ -1,0 +1,39 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "(a * b) * c",
+  "metadata": {
+    "previous_content_hash": "0034da39433d610223d66f59698ae3ff805004bcbf8f34a373e690baab872439",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "associative_mul",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a * (b * c)",
+  "statement": "(a * b) * c == a * (b * c)",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b",
+    "c"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_associative_mul (a b c : Int) : ((a * b) * c) = (a * (b * c)) := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

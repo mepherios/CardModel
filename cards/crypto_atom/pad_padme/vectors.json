@@ -1,0 +1,119 @@
+[
+ {
+  "name": "pad-padme-0",
+  "args": [
+   {
+    "$bytes": ""
+   },
+   "padme"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "80"
+  }
+ },
+ {
+  "name": "pad-padme-5",
+  "args": [
+   {
+    "$bytes": "ababababab"
+   },
+   "padme"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "ababababab80"
+  }
+ },
+ {
+  "name": "pad-padme-300",
+  "args": [
+   {
+    "$bytes": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+   },
+   "padme"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab80000000"
+  }
+ },
+ {
+  "name": "pad-buckets-0",
+  "args": [
+   {
+    "$bytes": ""
+   },
+   "buckets"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  }
+ },
+ {
+  "name": "pad-buckets-5",
+  "args": [
+   {
+    "$bytes": "ababababab"
+   },
+   "buckets"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "ababababab8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  }
+ },
+ {
+  "name": "pad-buckets-300",
+  "args": [
+   {
+    "$bytes": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+   },
+   "buckets"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+  }
+ },
+ {
+  "name": "pad-none-0",
+  "args": [
+   {
+    "$bytes": ""
+   },
+   "none"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "80"
+  }
+ },
+ {
+  "name": "pad-none-5",
+  "args": [
+   {
+    "$bytes": "ababababab"
+   },
+   "none"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "ababababab80"
+  }
+ },
+ {
+  "name": "pad-none-300",
+  "args": [
+   {
+    "$bytes": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+   },
+   "none"
+  ],
+  "source": "Ting vectors.json",
+  "out": {
+   "$bytes": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab80"
+  }
+ }
+]

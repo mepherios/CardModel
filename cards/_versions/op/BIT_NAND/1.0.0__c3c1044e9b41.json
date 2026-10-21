@@ -1,0 +1,74 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "forms": [
+    {
+      "code": "bp.bit_nand",
+      "cost": 1.0,
+      "domain": "u32",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b: (lambda na, nb: bp.bit_nor(bp.bit_nor(na, nb), bp.bit_nor(na, nb)))(bp.bit_nor(a, a), bp.bit_nor(b, b))",
+      "cost": 5.0,
+      "domain": "u32",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "nor_based",
+      "notes": "NAND from NOR: 5 NOR gates",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        4294967295
+      ]
+    },
+    {
+      "int": [
+        0,
+        4294967295
+      ]
+    }
+  ],
+  "hints": {
+    "c": {
+      "snippet": "~(a & b)"
+    },
+    "python": {
+      "snippet": "~(a & b)"
+    },
+    "rust": {
+      "snippet": "!(a & b)"
+    },
+    "verilog": {
+      "notes": "gate-level target -- useful for HDL emission",
+      "snippet": "~(a & b)"
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "BIT_NAND",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "NAND -- universal gate (32-bit)",
+  "tier": 0
+}

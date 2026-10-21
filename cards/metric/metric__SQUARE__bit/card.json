@@ -1,0 +1,35 @@
+{
+  "anchor": 40.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "bit",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 28164.167,
+  "median_ns": 85176.131,
+  "metadata": {
+    "inputs_signature": "2efa7a9dd0a149dd",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__SQUARE__bit",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/SQUARE form bit: 85176.1 ns per call on this host",
+  "target_card": "op/SQUARE",
+  "tier": 3
+}

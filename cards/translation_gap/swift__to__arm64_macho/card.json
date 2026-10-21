@@ -1,0 +1,61 @@
+{
+  "blockers": [
+    "Mach-O parser absent (same as rust__to__arm64_macho)",
+    "no swiftc adapter; Swift runtime + objc interop complicate observation",
+    "cards/isa/arm64 not yet materialized"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED at 0% via W17-Diag (output_to_cards returns [] for Mach-O)",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "cards/tool/v_transpile/frontends/swift.py + backends/swift.py — Swift lift/emit exists at source level (DEV-8)",
+    "outputs/agent_w17_diag.md — Mach-O extraction returned empty cards across all Apple-platform sources",
+    "RC-A actual arm64-apple-ios cross-compile was run but the bytes were not parsed into cards",
+    "no cards/tool/compiler_observer/adapters/swift.py"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "swift__to__arm64_macho",
+  "optimal_solution_path": [
+    "share the Mach-O parser work with rust__to__arm64_macho via cards/project_task/close_macho_arm64_extraction",
+    "build cards/tool/compiler_observer/adapters/swift.py wrapping swiftc",
+    "scope down to a Swift-without-objc-interop subset for the first cut",
+    "smoke: swift 'func f(x: Int)->Int{return x+1}' -> arm64 .o -> bytes asserted"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_macho_arm64_extraction",
+    "cards/project_task/build_swiftc_compiler_observer_adapter"
+  ],
+  "required_isa_cards": [
+    "cards/isa/arm64"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/frontends/swift.py",
+    "cards/tool/compiler_observer",
+    "cards/tool/output_to_cards"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "swift",
+  "supported_constructs": [],
+  "target_language": "arm64_macho",
+  "unsupported_constructs": [
+    "func_def",
+    "class",
+    "struct",
+    "enum_with_associated_values",
+    "protocol",
+    "extension",
+    "closure",
+    "optional_unwrap",
+    "guard_let",
+    "result_builder",
+    "property_wrapper",
+    "actor_isolation",
+    "async_await",
+    "objc_interop"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/swift__to__arm64_macho",
+  "wave_23_audit_note": "0% MEASURED via W17-Diag; depends on close_macho_arm64_extraction"
+}

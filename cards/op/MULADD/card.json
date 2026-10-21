@@ -1,0 +1,89 @@
+{
+  "category": "op",
+  "cost": 3.5,
+  "forms": [
+    {
+      "code": "lambda a, b, c: a * b + c",
+      "cost": 3.5,
+      "domain": "any",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b, c: (a * b) + c",
+      "cost": 4.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "decomp",
+      "notes": "explicit decomp; CPython already fuses",
+      "runnable": true
+    },
+    {
+      "cost": 3.0,
+      "domain": "float",
+      "lang": "rust",
+      "name": "rust_hint",
+      "notes": "rust f32/f64 single-rounding FMA",
+      "runnable": false,
+      "str_impl": "a.mul_add(b, c)"
+    }
+  ],
+  "match": {
+    "python": {
+      "pattern_any": [
+        [
+          "ADD",
+          [
+            "MUL",
+            "?a",
+            "?b"
+          ],
+          "?c"
+        ],
+        [
+          "ADD",
+          "?c",
+          [
+            "MUL",
+            "?a",
+            "?b"
+          ]
+        ]
+      ]
+    }
+  },
+  "metadata": {
+    "hub_kind": "fused",
+    "previous_content_hash": "18bb6498d3e1105db41728091ec399c5a6869b3aef3f2a818469b8116623a2da",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "MULADD",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "a*b + c (FMA)",
+  "tier": 1,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "decomp": {
+        "checks": 53,
+        "domain": "any",
+        "status": "pass"
+      },
+      "rust_hint": {
+        "reason": "documentation-only form (no code)",
+        "status": "documentation_only"
+      }
+    }
+  }
+}

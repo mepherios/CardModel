@@ -1,0 +1,35 @@
+{
+  "anchor": 20.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 1.027,
+  "median_ns": 58.756,
+  "metadata": {
+    "inputs_signature": "132926a6b1aa1247",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__POW__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/POW form native: 58.8 ns per call on this host",
+  "target_card": "op/POW",
+  "tier": 3
+}

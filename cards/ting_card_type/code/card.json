@@ -1,0 +1,71 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "body.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "code",
+  "render": "code",
+  "schema": {
+    "properties": {
+      "about": {
+        "maxLength": 4000,
+        "type": "string"
+      },
+      "card_ref": {
+        "maxLength": 64,
+        "type": "string"
+      },
+      "channel": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "entry": {
+        "maxLength": 64,
+        "type": "string"
+      },
+      "examples": {
+        "items": {
+          "properties": {
+            "args": {
+              "maxItems": 16,
+              "type": "array"
+            }
+          },
+          "required": [
+            "args"
+          ],
+          "type": "object"
+        },
+        "maxItems": 50,
+        "type": "array"
+      },
+      "title": {
+        "maxLength": 200,
+        "type": "string"
+      },
+      "variants": {
+        "maxProperties": 16,
+        "type": "object"
+      }
+    },
+    "required": [
+      "title",
+      "entry",
+      "variants",
+      "channel"
+    ],
+    "type": "object"
+  },
+  "summary": "An algorithm in several languages, with examples. The card model's variants + witness.",
+  "tier": 0,
+  "version": 1
+}

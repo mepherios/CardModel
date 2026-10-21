@@ -1,0 +1,35 @@
+{
+  "anchor": 15.0,
+  "calls_per_sample": 1480,
+  "category": "metric",
+  "form": "fermat",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.647,
+  "median_ns": 304.392,
+  "metadata": {
+    "inputs_signature": "e6a4bc33bf0fbb60",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__MODINV_PRIME__fermat",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/MODINV_PRIME form fermat: 304.4 ns per call on this host",
+  "target_card": "op/MODINV_PRIME",
+  "tier": 3
+}

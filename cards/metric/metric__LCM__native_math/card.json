@@ -1,0 +1,35 @@
+{
+  "anchor": 8.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "native_math",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.272,
+  "median_ns": 94.988,
+  "metadata": {
+    "inputs_signature": "745eb53caf84ef6c",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__LCM__native_math",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/LCM form native_math: 95.0 ns per call on this host",
+  "target_card": "op/LCM",
+  "tier": 3
+}

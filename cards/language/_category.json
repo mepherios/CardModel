@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Programming languages as cards: toolchain probe, runner, comment syntax and codegen syntax as data.",
+  "name": "language",
+  "tier": 0
+}

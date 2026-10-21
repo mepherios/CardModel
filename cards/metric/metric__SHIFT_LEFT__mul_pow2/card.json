@@ -1,0 +1,35 @@
+{
+  "anchor": 3.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "mul_pow2",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 33.545,
+  "median_ns": 97.494,
+  "metadata": {
+    "inputs_signature": "51ce5b6a87ce10d9",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__SHIFT_LEFT__mul_pow2",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/SHIFT_LEFT form mul_pow2: 97.5 ns per call on this host",
+  "target_card": "op/SHIFT_LEFT",
+  "tier": 3
+}

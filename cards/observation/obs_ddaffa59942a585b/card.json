@@ -1,0 +1,268 @@
+{
+  "category": "observation",
+  "fallback_call_files": {
+    "ackermann_small": [
+      "algos.py"
+    ],
+    "digit_sum": [
+      "algos.py"
+    ],
+    "is_prime": [
+      "algos.py"
+    ]
+  },
+  "fallback_calls_by_language": {
+    "python": {
+      "ackermann_small": 3,
+      "digit_sum": 1,
+      "is_prime": 1
+    }
+  },
+  "files": [
+    {
+      "cards": 121,
+      "language": "python",
+      "lines": 170,
+      "named": 116,
+      "path": "algos.py",
+      "sha256_12": "945eaaea78c4",
+      "top": {
+        "ADD": 11,
+        "CMP_EQ": 14,
+        "CMP_LE": 9,
+        "FLOORDIV": 9,
+        "MOD": 11,
+        "OR": 9,
+        "SQUARE": 7,
+        "SUB": 6
+      }
+    }
+  ],
+  "functions": [
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 4,
+      "name": "gcd",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 10,
+      "name": "fib",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 17,
+      "name": "is_prime",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 28,
+      "name": "collatz_steps",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 36,
+      "name": "digit_sum",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 45,
+      "name": "isqrt_newton",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 56,
+      "name": "count_primes",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 64,
+      "name": "mean3",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 68,
+      "name": "clamp",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 72,
+      "name": "sign_sum",
+      "reasons": [
+        "line 72: type annotation 'list' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 76,
+      "name": "tri",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 85,
+      "name": "power_mod",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 96,
+      "name": "binomial",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 106,
+      "name": "popcount",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 115,
+      "name": "lerp",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 119,
+      "name": "hypot_int",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 127,
+      "name": "triangle_kind",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 137,
+      "name": "sum_of_divisors",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 151,
+      "name": "lcm_iter",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 157,
+      "name": "digital_root",
+      "reasons": []
+    },
+    {
+      "file": "algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 164,
+      "name": "ackermann_small",
+      "reasons": []
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "obs_ddaffa59942a585b",
+  "observed_at": "2026-10-21T02:49:09+00:00",
+  "provenance": {
+    "method": "ast (python) + token-level (others)",
+    "tool": "cardmodel observe"
+  },
+  "root": "algorithms",
+  "tier": 3,
+  "top_cards": {
+    "ABS": 5,
+    "ADD": 11,
+    "AND": 1,
+    "BIT_AND": 1,
+    "BUILTIN_RANGE": 4,
+    "BUILTIN_SUM": 1,
+    "CALL_GENERIC": 5,
+    "CMP_EQ": 14,
+    "CMP_GE": 1,
+    "CMP_GT": 5,
+    "CMP_LE": 9,
+    "CMP_LT": 4,
+    "CMP_NE": 3,
+    "DIV": 1,
+    "FLOORDIV": 9,
+    "IF_EXPR": 1,
+    "MAX": 1,
+    "MIN": 2,
+    "MOD": 11,
+    "MUL": 4,
+    "MULADD": 3,
+    "NEG": 1,
+    "OR": 9,
+    "SQUARE": 7,
+    "SUB": 6
+  },
+  "top_fallback_calls": {
+    "ackermann_small": 3,
+    "digit_sum": 1,
+    "is_prime": 1
+  },
+  "totals": {
+    "by_language": {
+      "python": 1
+    },
+    "cards_fired": 121,
+    "files": 1,
+    "functions": 21,
+    "functions_liftable": 20,
+    "named": 116,
+    "named_calls_and_ops": 116,
+    "named_fraction": 0.9587
+  }
+}

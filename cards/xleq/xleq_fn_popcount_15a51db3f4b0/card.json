@@ -1,0 +1,33 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 45,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_popcount_15a51db3f4b0",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 1210246382,
+  "statement": "popcount: same outputs in 12 implementations",
+  "subject": "function/fn_popcount_15a51db3f4b0",
+  "tier": 3
+}

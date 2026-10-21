@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": "k >= 0",
+  "domain": "int",
+  "lhs": "a * (1 << k)",
+  "metadata": {
+    "previous_content_hash": "01e3e68e2b3ef7e89ec696923b2bc6feace9925fd2c08f8b58a2f1f2e0fd2037",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "mul_pow2_as_shift",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a << k",
+  "statement": "a * (1 << k) == a << k when k >= 0",
+  "tier": 1,
+  "vars": [
+    "a",
+    "k"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "detail": "no Lean form for SHIFT_LEFT",
+      "status": "not_expressible"
+    }
+  }
+}

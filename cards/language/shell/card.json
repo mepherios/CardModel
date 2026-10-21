@@ -1,0 +1,36 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [],
+    "line": [
+      "#"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".sh",
+    ".bash",
+    ".zsh"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "shell",
+  "probe": {
+    "kind": "executable",
+    "name": "sh",
+    "version_args": [
+      "-c",
+      "echo ok"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "shell: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

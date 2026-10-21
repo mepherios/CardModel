@@ -1,0 +1,60 @@
+{
+  "aead": "aes256gcm",
+  "category": "cipher_suite",
+  "cost_vector": {
+    "envelope_bytes": 101,
+    "fips_approved": 1,
+    "kem_ct_bytes": 33,
+    "kem_pk_bytes": 33,
+    "post_quantum": 0,
+    "sig_bytes": 64,
+    "sig_pk_bytes": 33
+  },
+  "depends_on": [
+    "p256_dh",
+    "aes256gcm_seal",
+    "ecdsa_p256_verify",
+    "hkdf_sha256"
+  ],
+  "dimension_direction": {
+    "envelope_bytes": "lower",
+    "fips_approved": "higher",
+    "kem_ct_bytes": "lower",
+    "kem_pk_bytes": "lower",
+    "post_quantum": "higher",
+    "sig_bytes": "lower",
+    "sig_pk_bytes": "lower"
+  },
+  "interacts_with": [
+    "comp_crypto_aead_encrypt",
+    "comp_crypto_aead_decrypt"
+  ],
+  "kdf": "hkdf_sha256",
+  "kem": "p256_kem",
+  "label": "NIST P-256 — ECDH · AES-256-GCM · ECDSA",
+  "lengths": {
+    "kem_ct": 33,
+    "kem_pk": 33,
+    "nonce": 12,
+    "sig": 64,
+    "sig_pk": 33,
+    "tag": 16
+  },
+  "metadata": {
+    "kem_mode": "ephemeral-static ECDH on compressed points; shared secret = x-coordinate",
+    "version": "1.0.0"
+  },
+  "name": "p256",
+  "sig": [
+    "ecdsa_p256"
+  ],
+  "status": "vetted",
+  "suite_id": "p256",
+  "summary": "Every primitive is FIPS-approved. 12-byte random nonces (fine at Ting's per-card keys).",
+  "tier": 1,
+  "variants": {
+    "js": "static/app/crypto/suites.js#p256",
+    "python": "core/suites_ref.py#SUITES['p256']"
+  },
+  "version": 1
+}

@@ -1,0 +1,39 @@
+{
+  "applies_to": [
+    "metric"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "metric",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "host": {
+        "type": "object"
+      },
+      "median_ns": {
+        "minimum": 0,
+        "type": "number"
+      },
+      "samples": {
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "target_card",
+      "form",
+      "median_ns",
+      "samples",
+      "host"
+    ],
+    "type": "object"
+  },
+  "statement": "A host measurement (L28 optimization axis / L59 reproducibility).",
+  "tier": 0
+}

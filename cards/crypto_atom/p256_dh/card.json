@@ -1,0 +1,65 @@
+{
+  "category": "crypto_atom",
+  "forms": [
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "entry": "p256_dh",
+      "file": "javascript.mjs",
+      "lang": "javascript",
+      "name": "node_crypto",
+      "notes": "node:crypto built-ins (no npm packages)",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "lang": "javascript",
+      "name": "ting_noble",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "static/app/crypto/atoms.js#p256_kem"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_cryptography",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "core/suites_ref.py#p256_*"
+    }
+  ],
+  "interacts_with": [],
+  "metadata": {
+    "previous_content_hash": "a13964595ae751168b128c6a7864af513fd21e307ba1ed07f752f0c5caf62c84",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "p256_dh",
+  "operation": "kem",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b",
+    "ting_card": "cards/crypto_atom/p256_kem"
+  },
+  "purity": "pure for keygen/dh; encap is pure:false",
+  "standard": "SP 800-56A ECDH on P-256 (compressed points; x-coordinate shared secret)",
+  "statement": "P-256 ECDH shared secret (x coordinate)",
+  "tier": 0,
+  "vectors": "vectors.json",
+  "verification": {
+    "date": "2026-10-21",
+    "vectors": {
+      "forms": {
+        "node_crypto": "pass",
+        "ting_cryptography": "documentation_only",
+        "ting_noble": "documentation_only"
+      },
+      "status": "pass"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "category": "shape",
+  "cost": 1.0,
+  "fallback": false,
+  "match": {
+    "python": {
+      "lambda": [
+        "projection"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "LAMBDA_PROJECTION",
+  "provenance": {
+    "origin": "hub config/card_catalog.py walk_cards (V5 shapes)"
+  },
+  "statement": "lambda x: x.k / x[k]"
+}

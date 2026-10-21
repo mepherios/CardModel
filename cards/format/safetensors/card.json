@@ -1,0 +1,22 @@
+{
+  "category": "format",
+  "detect": {
+    "parents": [
+      "model_artifact",
+      "file"
+    ],
+    "predicate": "reacards.domains:is_safetensors",
+    "priority": 40
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "safetensors",
+  "statement": "safetensors model container (u64 header length + JSON header).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/safetensors"
+}

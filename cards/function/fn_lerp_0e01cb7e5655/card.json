@@ -1,0 +1,552 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/MUL",
+    "op/SUB"
+  ],
+  "emit_gaps": {
+    "lean": "lean: no type for 'float'"
+  },
+  "forms": [
+    {
+      "code": "import math\n\ndef lerp(a: float, b: float, t: float) -> float:\n    return a + (b - a) * t",
+      "cost": 1.0,
+      "entry": "lerp",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic double lerp(double a, double b, double t) {\n    return (a + ((b - a) * t));\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc lerp(a float64, b float64, t float64) float64 {\n\treturn (a + ((b - a) * t))\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function lerp(a, b, t) {\n    return (a + ((b - a) * t));\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def lerp(a: float, b: float, t: float) -> float:\n    return (a + ((b - a) * t))\n\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn lerp(a: f64, b: f64, t: f64) -> f64 {\n    return (a + ((b - a) * t));\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic double lerp(double a, double b, double t) {\n    return (a + ((b - a) * t));\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static double lerp(double a, double b, double t) {\n    return (a + ((b - a) * t));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "function lerp(a, b, t)\n  return (a + ((b - a) * t))\nend\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def lerp(a, b, t)\n  return (a + ((b - a) * t))\nend\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc lerp(_ a: Double, _ b: Double, _ t: Double) -> Double {\n    return (a + ((b - a) * t))\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function lerp(a: number, b: number, t: number): number {\n    return (a + ((b - a) * t));\n}\n",
+      "cost": 1.0,
+      "entry": "lerp",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "float": [
+        -100.0,
+        100.0
+      ]
+    },
+    {
+      "float": [
+        -100.0,
+        100.0
+      ]
+    },
+    {
+      "float": [
+        -100.0,
+        100.0
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "lerp",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "return",
+            "value": [
+              "ADD",
+              [
+                "var",
+                "a"
+              ],
+              [
+                "MUL",
+                [
+                  "SUB",
+                  [
+                    "var",
+                    "b"
+                  ],
+                  [
+                    "var",
+                    "a"
+                  ]
+                ],
+                [
+                  "var",
+                  "t"
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "lerp",
+        "params": [
+          {
+            "name": "a",
+            "type": "float"
+          },
+          {
+            "name": "b",
+            "type": "float"
+          },
+          {
+            "name": "t",
+            "type": "float"
+          }
+        ],
+        "returns": "float"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 44,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_lerp_0e01cb7e5655",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "0e01cb7e5655"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "float"
+      },
+      {
+        "name": "b",
+        "type": "float"
+      },
+      {
+        "name": "t",
+        "type": "float"
+      }
+    ],
+    "returns": "float"
+  },
+  "statement": "lerp(a: float, b: float, t: float) -> float lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "out": 0.0
+    },
+    {
+      "args": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out": 1.0
+    },
+    {
+      "args": [
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "out": -1.0
+    },
+    {
+      "args": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "out": 0.5
+    },
+    {
+      "args": [
+        -29.280336772280208,
+        -51.50490468921798,
+        47.82824188579323
+      ],
+      "out": -1092.2423469108198
+    },
+    {
+      "args": [
+        -51.38640111598684,
+        -12.469793128452864,
+        61.24417006054969
+      ],
+      "out": 2332.0289566522906
+    },
+    {
+      "args": [
+        -17.35033253884903,
+        -28.19476594752217,
+        -52.572224835519
+      ],
+      "out": 552.765658835729
+    },
+    {
+      "args": [
+        -77.57988381460228,
+        -53.59709435526128,
+        -38.91922231197435
+      ],
+      "out": -1010.97139844397
+    },
+    {
+      "args": [
+        39.907169177166054,
+        -96.4746757988453,
+        -96.82807256894428
+      ],
+      "out": 13245.4983516009
+    },
+    {
+      "args": [
+        -97.6541690950804,
+        66.833911565817,
+        91.95535121401306
+      ],
+      "out": 15027.905058596652
+    },
+    {
+      "args": [
+        74.47377739375833,
+        86.25196313374414,
+        -62.41639401974746
+      ],
+      "out": -660.678104590967
+    },
+    {
+      "args": [
+        20.616701835750533,
+        28.130946191276394,
+        64.53534360694775
+      ],
+      "out": 505.5510432661796
+    },
+    {
+      "args": [
+        -12.163899672924416,
+        -47.474344783262865,
+        56.13945636052608
+      ],
+      "out": -1994.4730920155214
+    },
+    {
+      "args": [
+        82.9919379706557,
+        -88.40388701630502,
+        -45.16521760258658
+      ],
+      "out": 7824.121669681583
+    },
+    {
+      "args": [
+        41.415668357383794,
+        -39.57432062247159,
+        -77.28147005389532
+      ],
+      "out": 6300.4410763693895
+    },
+    {
+      "args": [
+        91.71172635738375,
+        48.84708093147398,
+        50.422068133968196
+      ],
+      "out": -2069.612345846227
+    },
+    {
+      "args": [
+        -67.51599875539162,
+        -35.27478169598521,
+        24.31909198136873
+      ],
+      "out": 716.5611245035875
+    },
+    {
+      "args": [
+        -92.89415043203088,
+        88.4484155063002,
+        60.08575019332736
+      ],
+      "out": 10803.209965955524
+    },
+    {
+      "args": [
+        -78.19667965701007,
+        72.99296055266385,
+        -13.785577338862126
+      ],
+      "out": -2162.4331576022087
+    },
+    {
+      "args": [
+        -66.47537001768997,
+        -6.953905421352076,
+        31.73639726129457
+      ],
+      "out": 1822.5214759857697
+    },
+    {
+      "args": [
+        88.30415971281138,
+        -3.138859291066254,
+        -68.28278791513496
+      ],
+      "out": 6332.288432674244
+    },
+    {
+      "args": [
+        72.20871857845691,
+        -18.78247563756601,
+        95.23320531037885
+      ],
+      "out": -8593.174361632611
+    },
+    {
+      "args": [
+        46.37015447688367,
+        96.5425208517012,
+        17.52724493805556
+      ],
+      "out": 925.7535090501731
+    },
+    {
+      "args": [
+        46.433118542793096,
+        29.268604796757103,
+        -81.18201925684212
+      ],
+      "out": 1439.8830040078185
+    },
+    {
+      "args": [
+        -54.33913245242723,
+        53.01116084455845,
+        20.888487019028943
+      ],
+      "out": 2188.046075570608
+    },
+    {
+      "args": [
+        -88.46556896277838,
+        -97.1506619511587,
+        -38.53811522774131
+      ],
+      "out": 246.24154538707046
+    },
+    {
+      "args": [
+        -51.915476662809866,
+        0.11690898515439585,
+        -16.277857829105272
+      ],
+      "out": -898.8912527495497
+    },
+    {
+      "args": [
+        91.95732633549684,
+        -19.086738048045632,
+        0.27819189899980756
+      ],
+      "out": 61.06576719198227
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 28,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 44,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

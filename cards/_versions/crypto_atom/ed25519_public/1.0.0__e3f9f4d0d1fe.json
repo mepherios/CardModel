@@ -1,0 +1,74 @@
+{
+  "category": "crypto_atom",
+  "forms": [
+    {
+      "cost": 50.0,
+      "domain": "python",
+      "entry": "ed25519_public",
+      "file": "python.py",
+      "lang": "python",
+      "name": "python_stdlib",
+      "notes": "pure-Python RFC reference algorithm: exact, slow, not constant-time",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "entry": "ed25519_public",
+      "file": "javascript.mjs",
+      "lang": "javascript",
+      "name": "node_crypto",
+      "notes": "node:crypto built-ins (no npm packages)",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "lang": "javascript",
+      "name": "ting_noble",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "static/app/crypto/atoms.js#ed25519Sig"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_cryptography",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "core/suites_ref.py#ed25519_*"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_pynacl",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "nacl.bindings.crypto_sign"
+    }
+  ],
+  "interacts_with": [
+    "comp_crypto_sign_ed25519",
+    "comp_crypto_verify_ed25519"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ed25519_public",
+  "operation": "signature",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b",
+    "ting_card": "cards/crypto_atom/ed25519"
+  },
+  "purity": "pure",
+  "standard": "RFC 8032 (strict: zip215 off, as in FIPS 186-5)",
+  "statement": "Ed25519 public key from a 32-byte seed (RFC 8032)",
+  "tier": 0,
+  "vectors": "vectors.json"
+}

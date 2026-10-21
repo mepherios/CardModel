@@ -1,0 +1,28 @@
+# LAWS (generated from cards/law by `cardmodel docs`; edit the cards, not this file)
+
+20 laws. Each one names the test that witnesses it (CM20); the origins column says which hub (LAWS.md L-numbers) or Pheros (cards/law) laws it consolidates.
+
+| id | law | origins | witness |
+|---|---|---|---|
+| CM01_honest_limits | Honest about what is mechanized: every engine states its limits, and every count, percentage or 'verified' in output or docs is computed from cards or runs, never typed by hand. | hub L1, hub L21, hub L38, Pheros L41 | `tests/test_laws.py::test_engines_state_honest_limits` |
+| CM02_everything_is_a_card | Every structure is a card in a registry; a registry is a directory with _category.json; the filesystem is the index (ALL/get/all_names). | hub L25, hub CARD_MODEL.md, Pheros registry_contract, Pheros L113 | `tests/test_kernel.py::test_registry_contract` |
+| CM03_unknown_fields_survive | Unknown fields are kept on save and ignored by consumers that do not know them (the infinite-extension guarantee). | hub CARD_MODEL.md, Ting CARD_MODEL_MAPPING | `tests/test_kernel.py::test_unknown_fields_round_trip` |
+| CM04_compose_with_evidence | Compose from existing cards first; a new card enters through the learning loop with evidence (>= 3 observations or a passing witness), never as a bare declaration. | hub L26, Pheros L100, Pheros L22 | `tests/test_learn.py::test_promotion_needs_evidence` |
+| CM05_cheapest_available_form | A choice between equivalent forms goes through cheapest(): domain match, runnable, available on this host, minimum cost; never 'first in list'. | hub L27, hub rewrite_engine.cheapest, rea-cards dispatch | `tests/test_rewrite.py::test_cheapest_respects_domain_and_availability` |
+| CM06_random_seeds | Randomised checks pick a fresh seed, print it, and accept --seed to reproduce. | hub L17, hub L28, Ting test_cross_language | `tests/test_laws.py::test_verify_prints_and_accepts_seed` |
+| CM07_no_vacuous_success | A witness that cannot fail is not a witness: every check runs a differential probe, and a deliberately wrong form must be caught. | Pheros L41, Pheros L45, Pheros L46, Pheros L50 | `tests/test_witness.py::test_wrong_form_is_caught` |
+| CM08_executable_claims_have_witnesses | Every runnable form, rewrite rule and executable redefinition has a witness that pins inputs to outputs (vectors or seeded equivalence). | hub L47, Pheros L34, Pheros L38 | `tests/test_witness.py::test_builtin_runnable_forms_are_witnessed` |
+| CM09_measure_before_claiming | Speed claims cite a metric card measured on this host (median, samples, seed, host fingerprint); cost anchors change only from measurements. | hub L4, Pheros L28, Pheros L59, rea-cards calibrate | `tests/test_optimize.py::test_measure_writes_metric_cards` |
+| CM10_fail_loud | Malformed cards and schema drift are reported, never silently skipped; broad excepts log what they caught. | hub L36, hub L39 | `tests/test_kernel.py::test_malformed_card_is_reported` |
+| CM11_closure_under_definition | Every depends_on reference resolves to a card; a gap is reported at the reference site. | hub L45, Pheros L14 | `tests/test_kernel.py::test_builtin_closure` |
+| CM12_capabilities_are_probed | Toolchains and backends are used only after a probe passes on this host; an unavailable form is reported with its reason, never skipped silently. | rea-cards probes, Pheros pheros-learn adapters | `tests/test_probes.py::test_unavailable_is_reported` |
+| CM13_self_contained | The program needs no folder outside its own tree and the project it works on; committed content carries no user paths. | user requirement 2026-10-21, hub L49, hub L50, Pheros L01, Pheros L03 | `tests/test_self_contained.py::test_sources_unreachable` |
+| CM14_versioned_writes | Overwriting a card archives the previous version first and verifies the archive (semver bump + previous_content_hash). | hub L35, Pheros card_versioning, Pheros L94 | `tests/test_kernel.py::test_versioning_archives_previous` |
+| CM15_observations_are_ground_truth | Observations are never edited by rules; learned cards cite the observations and runs they came from, with confidence and evidence_count. | Pheros L102, Pheros L56 | `tests/test_learn.py::test_learned_cards_cite_evidence` |
+| CM16_languages_are_cards | Languages, operators and backends are cards: the codegen and runners contain no per-language branches; adding one is adding a card. | Pheros L01, Pheros L26, rea-cards forms | `tests/test_laws.py::test_engines_have_no_language_branches` |
+| CM17_translation_coverage_is_measured | Translation coverage is the op-by-language conformance matrix and per-construct gaps, computed by running real toolchains. | Pheros L115, Pheros translation_gap | `tests/test_conformance.py::test_conformance_matrix` |
+| CM18_bounded_work | Every subprocess has a timeout, every search a node budget; independent work runs in parallel. | hub L20, hub L32 | `tests/test_laws.py::test_subprocesses_have_timeouts` |
+| CM19_never_publish_unasked | Nothing is pushed or published without an explicit request; the program only writes inside its own tree and the project's .cardmodel/. | hub L13, hub L76 | `tests/test_laws.py::test_no_publishing_calls` |
+| CM20_laws_are_cards | Laws are cards with a witness test; LAWS.md is generated from them and a test fails when it drifts. | Pheros L63, hub L19, hub L38 | `tests/test_laws.py::test_laws_md_in_sync` |
+
+Laws from the source sets that are not carried over (hub GUI/hub-folder/process laws, Pheros wave/daemon/hub-panel laws) are about those projects' own tooling; see ARCHITECTURE.md § What was not carried over.

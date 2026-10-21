@@ -1,0 +1,132 @@
+{
+  "category": "op",
+  "cost": 6.0,
+  "emit": {
+    "c_like": "cm_gcd({0}, {1})",
+    "lean": "(Int.ofNat (Int.gcd {0} {1}))",
+    "lua": "cm_gcd({0}, {1})",
+    "python": "math.gcd({0}, {1})",
+    "ruby": "(({0}).gcd({1}))"
+  },
+  "forms": [
+    {
+      "code": "math.gcd",
+      "cost": 6.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native_math",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b: a if b == 0 else math.gcd(b, a % b)",
+      "cost": 8.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "euclidean",
+      "notes": "recursive Euclid -- pedagogical; builtin is faster",
+      "runnable": true
+    },
+    {
+      "cost": 10.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "binary_gcd",
+      "notes": "avoids modulo; wins on hardware without fast div",
+      "runnable": false,
+      "str_impl": "Stein's algorithm -- shifts + subtractions"
+    }
+  ],
+  "hints": {
+    "c": {
+      "notes": "C++ STL; use mpz_gcd for big ints",
+      "snippet": "__gcd(a, b)"
+    },
+    "go": {
+      "imports": [
+        "math/big"
+      ],
+      "snippet": "new(big.Int).GCD(nil, nil, a, b)"
+    },
+    "python": {
+      "snippet": "math.gcd(a, b)"
+    },
+    "rust": {
+      "imports": [
+        "num::integer"
+      ],
+      "snippet": "num::integer::gcd(a, b)"
+    }
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: math.gcd(a, b)",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "call": [
+        "math.gcd",
+        "gcd"
+      ]
+    }
+  },
+  "metadata": {
+    "previous_content_hash": "117323b4a0b685a03de5d9e8320e389e7f0a3cc35b57317c210fcdf0cd4aaefe",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "GCD",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "requires": {
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "greatest common divisor (non-negative, gcd(0, 0) = 0)",
+  "tier": 1,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "binary_gcd": {
+        "reason": "documentation-only form (no code)",
+        "status": "documentation_only"
+      },
+      "euclidean": {
+        "checks": 53,
+        "domain": "int",
+        "status": "pass"
+      }
+    }
+  }
+}

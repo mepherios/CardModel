@@ -1,0 +1,38 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a ** 2 - b ** 2",
+  "metadata": {
+    "previous_content_hash": "520f275138d4de95fedd5fe08c92289c5a06950df7445ecde4a58bad17dbcd46",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "difference_of_squares",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "(a + b) * (a - b)",
+  "statement": "a ** 2 - b ** 2 == (a + b) * (a - b)",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_difference_of_squares (a b : Int) : ((a ^ 2) - (b ^ 2)) = ((a + b) * (a - b)) := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

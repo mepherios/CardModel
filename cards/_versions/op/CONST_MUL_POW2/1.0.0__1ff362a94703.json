@@ -1,0 +1,77 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "forms": [
+    {
+      "code": "lambda x, k: x << k",
+      "cost": 1.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "shift",
+      "notes": "k is bit_length(N) - 1",
+      "runnable": true
+    },
+    {
+      "code": "lambda x, k: x * (1 << k)",
+      "cost": 2.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "mul",
+      "notes": "baseline the shift replaces",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -1000000,
+        1000000
+      ]
+    },
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "match": {
+    "python": {
+      "pattern_any": [
+        [
+          "MUL",
+          "?x",
+          [
+            "int",
+            "?pow2"
+          ]
+        ],
+        [
+          "MUL",
+          [
+            "int",
+            "?pow2"
+          ],
+          "?x"
+        ]
+      ]
+    }
+  },
+  "metadata": {
+    "hub_kind": "fused",
+    "version": "1.0.0"
+  },
+  "name": "CONST_MUL_POW2",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "x * 2^k -> x << k",
+  "tier": 1
+}

@@ -1,0 +1,35 @@
+{
+  "anchor": 1.0,
+  "calls_per_sample": 1340,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 8.582,
+  "median_ns": 117.04,
+  "metadata": {
+    "inputs_signature": "4fd794b79a1c4942",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__BIT_NAND__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/BIT_NAND form native: 117.0 ns per call on this host",
+  "target_card": "op/BIT_NAND",
+  "tier": 3
+}

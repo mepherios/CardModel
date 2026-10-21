@@ -1,0 +1,34 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 24,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lean",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_ackermann_small_aec8df43a4ad",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 1210246382,
+  "statement": "ackermann_small: same outputs in 13 implementations",
+  "subject": "function/fn_ackermann_small_aec8df43a4ad",
+  "tier": 3
+}

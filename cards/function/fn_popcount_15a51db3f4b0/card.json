@@ -1,0 +1,529 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ABS",
+    "op/ADD",
+    "op/BIT_AND",
+    "op/CMP_NE",
+    "op/SHIFT_RIGHT"
+  ],
+  "emit_gaps": {
+    "lean": "lean: op BIT_AND on (int, int) has no template"
+  },
+  "forms": [
+    {
+      "code": "import math\n\ndef popcount(x: int) -> int:\n    x = abs(x)\n    c = 0\n    while x != 0:\n        c += x & 1\n        x >>= 1\n    return c",
+      "cost": 1.0,
+      "entry": "popcount",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t popcount(int64_t x) {\n    int64_t c = 0;\n    x = cm_abs_i(x);\n    c = INT64_C(0);\n    while ((x != INT64_C(0))) {\n        c = (c + (x & INT64_C(1)));\n        x = (x >> INT64_C(1));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_abs_i(a int64) int64 {\n\tif a < 0 {\n\t\treturn -a\n\t}\n\treturn a\n}\nfunc popcount(x int64) int64 {\n\tvar c int64 = 0\n\t_ = c\n\tx = cm_abs_i(x)\n\tc = int64(0)\n\tfor (x != int64(0)) {\n\t\tc = (c + (x & int64(1)))\n\t\tx = (x >> int64(1))\n\t}\n\treturn c\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction popcount(x) {\n    let c = 0n;\n    x = cm_abs_i(x);\n    c = (0n);\n    while ((x !== (0n))) {\n        c = (c + (x & (1n)));\n        x = (x >> (1n));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def popcount(x: int) -> int:\n    x = abs(x)\n    c = 0\n    while (x != 0):\n        c = (c + (x & 1))\n        x = (x >> 1)\n    return c\n\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_abs_i(a: i64) -> i64 { if a < 0 { -a } else { a } }\nfn popcount(x: i64) -> i64 {\n    let mut x: i64 = x;\n    let mut c: i64 = 0;\n    x = cm_abs_i(x);\n    c = (0i64);\n    while (x != (0i64)) {\n        c = (c + (x & (1i64)));\n        x = (x >> (1i64));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t popcount(int64_t x) {\n    int64_t c = 0;\n    x = cm_abs_i(x);\n    c = INT64_C(0);\n    while ((x != INT64_C(0))) {\n        c = (c + (x & INT64_C(1)));\n        x = (x >> INT64_C(1));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long popcount(long x) {\n    long c = 0L;\n    x = Math.abs(x);\n    c = (0L);\n    while ((x != (0L))) {\n        c = (c + (x & (1L)));\n        x = (x >> (1L));\n    }\n    return c;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "function popcount(x)\n  local c = 0\n  x = math.abs(x)\n  c = (0)\n  while (x ~= (0)) do\n    c = (c + (x & (1)))\n    x = (x // (1 << (1)))\n    ::cm_continue_1::\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def popcount(x)\n  c = 0\n  x = ((x).abs)\n  c = (0)\n  while (x != (0))\n    c = (c + (x & (1)))\n    x = (x >> (1))\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc popcount(_ x: Int) -> Int {\n    var x: Int = x\n    var c: Int = 0\n    x = abs(x)\n    c = (0)\n    while (x != (0)) {\n        c = (c + (x & (1)))\n        x = (x >> (1))\n    }\n    return c\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction popcount(x: bigint): bigint {\n    let c: bigint = 0n;\n    x = cm_abs_i(x);\n    c = (0n);\n    while ((x !== (0n))) {\n        c = (c + (x & (1n)));\n        x = (x >> (1n));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "popcount",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "popcount",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "x",
+            "value": [
+              "ABS",
+              [
+                "var",
+                "x"
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "c",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "c",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "c"
+                  ],
+                  [
+                    "BIT_AND",
+                    [
+                      "var",
+                      "x"
+                    ],
+                    [
+                      "int",
+                      1
+                    ]
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "x",
+                "value": [
+                  "SHIFT_RIGHT",
+                  [
+                    "var",
+                    "x"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_NE",
+              [
+                "var",
+                "x"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "c"
+            ]
+          }
+        ],
+        "locals": {
+          "c": "int"
+        },
+        "name": "popcount",
+        "params": [
+          {
+            "name": "x",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_popcount_15a51db3f4b0",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "15a51db3f4b0"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "x",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "popcount(x: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -50
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        50
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -5
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -19
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        44
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -20
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -33
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -36
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -15
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        -21
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -11
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -47
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        39
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        -48
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -49
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        10
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        31
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        -26
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 4
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "anchor": 4.0,
+  "calls_per_sample": 1360,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.152,
+  "median_ns": 34.957,
+  "metadata": {
+    "inputs_signature": "611d5ea71b9fb5b8",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__FLOORDIV__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/FLOORDIV form native: 35.0 ns per call on this host",
+  "target_card": "op/FLOORDIV",
+  "tier": 3
+}

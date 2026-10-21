@@ -1,0 +1,16 @@
+{
+  "category": "domain",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ec",
+  "parents": [
+    "any"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Elliptic-curve points (needs sage; documentation-only here).",
+  "tier": 0
+}

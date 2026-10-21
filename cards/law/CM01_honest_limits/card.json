@@ -1,0 +1,20 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM01_honest_limits",
+  "origins": [
+    "hub L1",
+    "hub L21",
+    "hub L38",
+    "Pheros L41"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Honest about what is mechanized: every engine states its limits, and every count, percentage or 'verified' in output or docs is computed from cards or runs, never typed by hand.",
+  "tier": 0,
+  "witness": "tests/test_laws.py::test_engines_state_honest_limits"
+}

@@ -1,0 +1,17 @@
+{
+  "category_aliases": [
+    "cross_language_equivalence"
+  ],
+  "defined_by": "tools/vendor_import.py",
+  "description": "Pheros cross-language equivalence observations (compiler-output skeleton matches; ground truth, never edited).",
+  "name": "xleq_observed",
+  "provenance": {
+    "files": 5,
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/cross_language_equivalence",
+    "read_on": "2026-10-21",
+    "sha256": "59eb75053636001a05602cef2100a956fc71618e53146ce9d48a344cea8399be"
+  },
+  "references": "external",
+  "tier": 2
+}

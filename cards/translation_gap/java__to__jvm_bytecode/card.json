@@ -1,0 +1,59 @@
+{
+  "blockers": [
+    "cards/lacking_feature/java_observer_adapter_missing (no javac adapter wrapping `javac -verbose` + `javap -c`)",
+    "cards/lacking_feature/java_observer_adapter_missing (Java .class format is well-specified but the substrate has n...)",
+    "cards/lacking_feature/java_observer_adapter_missing (no observed-execution corpus for Java)"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "no direct substrate path; javac is the canonical tool, but observe/learn loop not yet wired",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "cards/tool/v_transpile/frontends/java.py + backends/java.py — Java lift/emit exists at the source level (DEV-8)",
+    "no cards/tool/compiler_observer/adapters/java.py — javac invocations are not wrapped",
+    "no .class disassembly / mapping cards under state/learning_output for java provenance",
+    "no observed javac compilation in W15-E corpus"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "java__to__jvm_bytecode",
+  "optimal_solution_path": [
+    "wrap javac invocations under cards/tool/compiler_observer/adapters/java.py",
+    "extend cards/tool/output_to_cards to parse the .class file format (constant_pool + methods + code attribute)",
+    "feed a 50-sample Java corpus through learning_orchestrator",
+    "build mapping cards per JVM opcode via mapping_extractor"
+  ],
+  "optimization_paths": [
+    "cards/project_task/build_javac_compiler_observer_adapter",
+    "cards/project_task/parse_class_file_format_in_output_to_cards",
+    "cards/project_task/close_translation_gap_java__to__jvm_bytecode"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/frontends/java.py",
+    "cards/tool/compiler_observer"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "java",
+  "supported_constructs": [],
+  "target_language": "jvm_bytecode",
+  "unsupported_constructs": [
+    "class_def",
+    "interface",
+    "method_def",
+    "field_static",
+    "field_instance",
+    "constructor",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "for_each",
+    "switch",
+    "try_catch_finally",
+    "lambda",
+    "generics",
+    "annotation"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/java__to__jvm_bytecode",
+  "wave_23_audit_note": "0% MEASURED: javac adapter + .class parser missing — filed as project_task"
+}

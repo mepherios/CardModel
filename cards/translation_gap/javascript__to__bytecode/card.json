@@ -1,0 +1,59 @@
+{
+  "blockers": [
+    "cards/lacking_feature/javascript_observer_adapter_stub (W15-F shipped JS as a stub-only adapter; the real adapter re...)",
+    "cards/lacking_feature/javascript_observer_adapter_stub (JS has no single canonical bytecode — V8 Ignition vs SpiderM...)",
+    "cards/lacking_feature/javascript_observer_adapter_stub (no observed-execution corpus for JS)"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "v8/JSC bytecode is not stable across versions; the substrate has not modeled it",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "outputs/agent_w15_f.md — W15-F: stub javascript adapter; no real V8/Ignition bytecode observation wired",
+    "cards/tool/v_transpile/frontends/js.py — JS frontend lifts JS source into IR but does not emit any V8/SpiderMonkey bytecode",
+    "no cards/tool/compiler_observer/adapters/javascript.py — promoted adapter does not exist in production",
+    "no cards under cards/observed_executions/* with javascript provenance"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "javascript__to__bytecode",
+  "optimal_solution_path": [
+    "promote the W15-F stub to a real compiler_observer adapter wrapping `node --print-bytecode`",
+    "decide which target bytecode the substrate cares about first (recommend V8 Ignition as the most observable)",
+    "extract per-opcode mapping cards via mapping_extractor on a 50-sample JS corpus",
+    "smoke: js 'function f(x){return x+1}' -> Ignition bytecode -> mapping card -> regression"
+  ],
+  "optimization_paths": [
+    "cards/project_task/build_javascript_compiler_observer_adapter",
+    "cards/project_task/wire_v8_bytecode_disassembly_into_substrate",
+    "cards/project_task/close_translation_gap_javascript__to__bytecode"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/frontends/js.py",
+    "cards/tool/compiler_observer"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "javascript",
+  "supported_constructs": [],
+  "target_language": "v8_bytecode",
+  "unsupported_constructs": [
+    "function_def",
+    "arrow_function",
+    "class",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "for_of_loop",
+    "async_await",
+    "promise",
+    "destructuring",
+    "spread_operator",
+    "template_literal",
+    "regex",
+    "module_export"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/javascript__to__bytecode",
+  "wave_23_audit_note": "0% MEASURED: V8 Ignition observer adapter is W15-F stub — filed as project_task",
+  "wave_25_audit_note": "0% MEASURED holds in W25-E. Investigation: no portable JS bytecode format exists across runtimes (V8/JSC/SpiderMonkey/QuickJS/Hermes all disjoint). v8's --print-bytecode requires d8 with internals exposed. cards/lacking_feature/javascript_to_wasm_no_direct_path now formalizes the upstream gap. L41 forbids inflating without real verification; coverage stays at honest 0% until cards/tool/compiler_adapter_javascript_v8_ignition (not yet authored — would be vacuous) is grounded in a real d8/node-native bytecode dump."
+}

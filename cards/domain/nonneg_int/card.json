@@ -1,0 +1,22 @@
+{
+  "category": "domain",
+  "generator": {
+    "int": [
+      0,
+      1000000
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "nonneg_int",
+  "parents": [
+    "int"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Integers >= 0.",
+  "tier": 0
+}

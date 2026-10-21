@@ -1,0 +1,35 @@
+{
+  "anchor": 1.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.416,
+  "median_ns": 77.619,
+  "metadata": {
+    "inputs_signature": "0ef8724b1e33b2ad",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__BIT_NOT__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/BIT_NOT form native: 77.6 ns per call on this host",
+  "target_card": "op/BIT_NOT",
+  "tier": 3
+}

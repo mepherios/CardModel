@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a * 0",
+  "metadata": {
+    "previous_content_hash": "feefe8276d48d1829972c25953841d7a50bdee7626c58aec8eef965faebbdda3",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "mul_zero",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "0",
+  "statement": "a * 0 == 0",
+  "tier": 1,
+  "vars": [
+    "a"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_mul_zero (a : Int) : (a * 0) = 0 := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

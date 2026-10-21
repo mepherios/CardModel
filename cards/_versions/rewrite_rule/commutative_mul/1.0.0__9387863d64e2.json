@@ -1,0 +1,22 @@
+{
+  "bidirectional": false,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a * b",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "commutative_mul",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "b * a",
+  "statement": "a * b == b * a",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ]
+}

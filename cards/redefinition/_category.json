@@ -1,0 +1,15 @@
+{
+  "card_type": "redefinition",
+  "defined_by": "tools/vendor_import.py",
+  "description": "Executable identities source_form == target_form (Pheros redefinitions whose forms parse as expressions over a numeric domain). `cardmodel verify --redefinitions --record` writes each card's verification.",
+  "name": "redefinition",
+  "provenance": {
+    "files": 1480,
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/redefinition",
+    "read_on": "2026-10-21",
+    "sha256": "b2a85e67e038ee20fcb022846bbf799c3afcdd0d8a577c57e5764004bfdbbe93"
+  },
+  "references": "external",
+  "tier": 1
+}

@@ -1,0 +1,28 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "profile",
+  "render": "none",
+  "schema": {
+    "properties": {
+      "bio": {
+        "maxLength": 1000,
+        "type": "string"
+      },
+      "display": {
+        "maxLength": 64,
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "summary": "Your display name and bio in this space; your newest profile card wins.",
+  "tier": 0,
+  "version": 1
+}

@@ -1,0 +1,37 @@
+{
+  "applies_to": [
+    "redefinition_note"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "redefinition_note",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "source_form": {
+        "type": [
+          "string",
+          "object",
+          "array",
+          "null"
+        ]
+      },
+      "target_form": {
+        "type": [
+          "string",
+          "object",
+          "array",
+          "null"
+        ]
+      }
+    },
+    "type": "object"
+  },
+  "statement": "A redefinition whose forms are prose or code in other languages: knowledge, not executable here.",
+  "tier": 0
+}

@@ -1,0 +1,35 @@
+{
+  "anchor": 6.0,
+  "calls_per_sample": 1340,
+  "category": "metric",
+  "form": "reciprocal_mul",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.093,
+  "median_ns": 40.516,
+  "metadata": {
+    "inputs_signature": "1953493d520abd74",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__DIV__reciprocal_mul",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/DIV form reciprocal_mul: 40.5 ns per call on this host",
+  "target_card": "op/DIV",
+  "tier": 3
+}

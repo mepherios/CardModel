@@ -1,0 +1,51 @@
+{
+  "candidate": {
+    "category": "call",
+    "cost": 1.5,
+    "match": {
+      "python": {
+        "call": [
+          ".startswith"
+        ]
+      }
+    },
+    "metadata": {
+      "confidence": "tentative",
+      "evidence_count": 2,
+      "files": 2,
+      "learned": true,
+      "spellings": {
+        "name.startswith": 2
+      }
+    },
+    "name": "CALL_METHOD_STARTSWITH",
+    "provenance": {
+      "language": "python",
+      "learning_loop_refs": [
+        "observation/obs_b01cbf91e8dc6db4"
+      ]
+    },
+    "statement": "call to .startswith (python), learned from observed code",
+    "tags": [
+      "learned"
+    ],
+    "tier": 3
+  },
+  "category": "proposal",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "prop_call_CALL_METHOD_STARTSWITH",
+  "proposal_kind": "call",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "ready": false,
+  "reason": "needs >= 3 uses in >= 2 files (have 2 in 2)",
+  "seed": 1210246382,
+  "statement": "proposed call card CALL_METHOD_STARTSWITH",
+  "tier": 3,
+  "xleq": null
+}

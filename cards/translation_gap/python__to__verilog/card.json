@@ -1,0 +1,64 @@
+{
+  "blockers": [
+    "Python's dynamic typing must be statically resolved before any hardware lowering — this is a fundamental constraint",
+    "lists/dicts/strings cannot be lowered to RTL without a fixed-bound contract",
+    "shares c__to__verilog blockers for recursion and dynamic memory"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "estimate from T2 verilog backend; matches python_to_verilog_basic redefinition card",
+  "current_coverage_percent": 18,
+  "evidence": [
+    "cards/tool/v_transpile/backends/verilog.py — Verilog backend (T2)",
+    "cards/tool/v_transpile/frontends/python.py — Python frontend, full AST",
+    "cards/tool/v_transpile/coverage.py — Verilog target shares same NOT_SUPPORTED_BY_DESIGN entries as c__to__verilog for async/generator/recursion",
+    "no python -> verilog -> iverilog regression smoke in CI"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python__to__verilog",
+  "optimal_solution_path": [
+    "narrow scope to type-annotated Python (PEP 526) for the v0 emission",
+    "treat each class as a module with bound fields and methods as always blocks",
+    "share the FSM lowering pass with c__to__verilog so control-flow work is not duplicated",
+    "add an iverilog regression smoke to break the closed-loop"
+  ],
+  "optimization_paths": [
+    "cards/project_task/wire_iverilog_simulation_into_substrate_ci",
+    "cards/project_task/lower_python_classes_to_verilog_modules",
+    "cards/project_task/close_translation_gap_python__to__verilog"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/backends/verilog.py",
+    "cards/tool/v_transpile/frontends/python.py"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "python",
+  "supported_constructs": [
+    "function_def_as_module",
+    "binary_arithmetic_int",
+    "int_variables_as_reg",
+    "bounded_for_range_unrolled",
+    "comparison_operators_for_combinational",
+    "if_else_combinational"
+  ],
+  "target_language": "verilog",
+  "unsupported_constructs": [
+    "class",
+    "list_dynamic",
+    "dict",
+    "string_general",
+    "fstring",
+    "comprehension_unbounded",
+    "lambda_capturing_closure_into_hardware",
+    "generator",
+    "async",
+    "decorator",
+    "import",
+    "exception",
+    "dynamic_eval"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/python__to__verilog",
+  "wave_23_audit_note": "18% from T2 verilog backend; PEP 526 type-annotated subset emitter not authored — filed as project_task"
+}

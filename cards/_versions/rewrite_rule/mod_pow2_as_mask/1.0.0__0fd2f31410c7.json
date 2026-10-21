@@ -1,0 +1,22 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": "k >= 0",
+  "domain": "int",
+  "lhs": "a % (1 << k)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "mod_pow2_as_mask",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a & ((1 << k) - 1)",
+  "statement": "a % (1 << k) == a & ((1 << k) - 1) when k >= 0",
+  "tier": 1,
+  "vars": [
+    "a",
+    "k"
+  ]
+}

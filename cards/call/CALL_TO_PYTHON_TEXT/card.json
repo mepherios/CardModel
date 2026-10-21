@@ -1,0 +1,33 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        "to_python_text"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 11,
+    "files": 2,
+    "learned": true,
+    "spellings": {
+      "to_python_text": 11
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_TO_PYTHON_TEXT",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to to_python_text (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

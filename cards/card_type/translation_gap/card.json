@@ -1,0 +1,23 @@
+{
+  "applies_to": [
+    "translation_gap"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "translation_gap",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "required": [
+      "source_language",
+      "target_language"
+    ],
+    "type": "object"
+  },
+  "statement": "source -> target language coverage with supported/unsupported constructs (Pheros L115).",
+  "tier": 0
+}

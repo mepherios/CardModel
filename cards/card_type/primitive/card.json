@@ -1,0 +1,61 @@
+{
+  "applies_to": [],
+  "category": "card_type",
+  "metadata": {
+    "ported_from": [
+      "Pheros cards/_meta/primitive_contract/schema.json"
+    ],
+    "version": "1.0.0"
+  },
+  "name": "primitive",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "alternatives": {
+        "type": "array"
+      },
+      "complexity": {
+        "required": [
+          "time",
+          "space"
+        ],
+        "type": "object"
+      },
+      "composes_with": {
+        "type": "array"
+      },
+      "contract": {
+        "required": [
+          "inputs",
+          "outputs",
+          "preconditions",
+          "postconditions",
+          "side_effects"
+        ],
+        "type": "object"
+      },
+      "variants": {
+        "minProperties": 1,
+        "type": "object"
+      },
+      "witnesses": {
+        "type": "array"
+      }
+    },
+    "required": [
+      "statement",
+      "contract",
+      "complexity",
+      "alternatives",
+      "composes_with",
+      "witnesses",
+      "variants"
+    ],
+    "type": "object"
+  },
+  "statement": "Pheros primitive_contract: opt-in type for computation primitives (contract, complexity, alternatives, composes_with, witnesses, variants). Coverage reports how many cards satisfy it.",
+  "tier": 0
+}

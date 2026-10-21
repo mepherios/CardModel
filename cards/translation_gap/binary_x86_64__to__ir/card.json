@@ -1,0 +1,67 @@
+{
+  "blockers": [
+    "cards/isa/x86_64 is sparse - only what binary_to_ir's top-20 table covers",
+    "cards/lacking_feature/x86_64_decoder_partial (modrm/sib/displacement decoder is only partial; SIMD lanes n...)"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED via W14-D top-20 opcode-coverage report (20/~165 mainline x86_64 opcodes ~= 12%)",
+  "current_coverage_percent": 12,
+  "evidence": [
+    "cards/tool/binary_to_ir/python.py - W14-D extended binary_to_ir to emit cards-per-instruction (top-20 x86_64 opcodes)",
+    "cards/tool/binary_decompiler_pipeline - end-to-end pipeline scaffolding",
+    "outputs/agent_w14_d.md - documents which top-20 opcodes lift; full ISA is ~300 mainline instructions per intel manual"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "binary_x86_64__to__ir",
+  "optimal_solution_path": [
+    "expand binary_to_ir's top-20 opcode table to top-100 over a week (one opcode = one card, W14-B-style)",
+    "materialize cards/isa/x86_64 entries for the new opcodes",
+    "add modrm/sib full decoder so memory operands round-trip",
+    "smoke: lift a 1KB `int main(){return 42;}` x86_64 ELF and byte-assert the lifted IR roundtrips to the same opcodes",
+    "publish coverage_percent re-derived from opcode-coverage / total-opcodes"
+  ],
+  "optimization_paths": [
+    "cards/project_task/materialize_full_x86_64_isa_card_set",
+    "cards/project_task/extend_binary_to_ir_modrm_decoder",
+    "cards/project_task/close_translation_gap_binary_x86_64__to__ir"
+  ],
+  "required_isa_cards": [
+    "cards/isa/x86_64"
+  ],
+  "required_tools": [
+    "cards/tool/binary_to_ir",
+    "cards/tool/binary_decompiler_pipeline"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "binary_x86_64",
+  "supported_constructs": [
+    "mov_reg_reg_top20",
+    "mov_reg_imm_top20",
+    "add_reg_reg_top20",
+    "sub_reg_reg_top20",
+    "push_reg_top20",
+    "pop_reg_top20",
+    "ret_top20",
+    "call_rel32_top20",
+    "jmp_rel32_top20",
+    "cmp_reg_reg_top20"
+  ],
+  "target_language": "ir",
+  "unsupported_constructs": [
+    "simd_sse",
+    "simd_avx",
+    "rip_relative_addressing_full",
+    "modrm_complex_addressing",
+    "rex_prefix_variants",
+    "flags_register_semantics_full",
+    "string_ops_rep",
+    "x87_fpu",
+    "atomics_lock_prefix",
+    "control_registers"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/binary_x86_64__to__ir",
+  "wave_23_audit_note": "12% MEASURED from W14-D top-20 opcode-coverage; expanding to ~100 opcodes via card_from_isa_spec — filed as project_task"
+}

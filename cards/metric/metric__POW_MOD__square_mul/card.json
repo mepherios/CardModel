@@ -1,0 +1,35 @@
+{
+  "anchor": 15.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "square_mul",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 373.037,
+  "median_ns": 611.986,
+  "metadata": {
+    "inputs_signature": "f525717c31ba0c68",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__POW_MOD__square_mul",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/POW_MOD form square_mul: 612.0 ns per call on this host",
+  "target_card": "op/POW_MOD",
+  "tier": 3
+}

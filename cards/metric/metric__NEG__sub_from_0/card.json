@@ -1,0 +1,35 @@
+{
+  "anchor": 1.0,
+  "calls_per_sample": 1500,
+  "category": "metric",
+  "form": "sub_from_0",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.25,
+  "median_ns": 41.667,
+  "metadata": {
+    "inputs_signature": "dc03502ba61215ba",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__NEG__sub_from_0",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/NEG form sub_from_0: 41.7 ns per call on this host",
+  "target_card": "op/NEG",
+  "tier": 3
+}

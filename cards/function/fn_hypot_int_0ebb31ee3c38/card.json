@@ -1,0 +1,603 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_GT",
+    "op/FLOORDIV",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef hypot_int(a: int, b: int) -> int:\n    s = a * a + b * b\n    r = s\n    while r * r > s:\n        r = (r + s // r) // 2\n    return r",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t hypot_int(int64_t a, int64_t b) {\n    int64_t s = 0;\n    int64_t r = 0;\n    s = ((a * a) + (b * b));\n    r = s;\n    while (((r * r) > s)) {\n        r = cm_floordiv((r + cm_floordiv(s, r)), INT64_C(2));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc hypot_int(a int64, b int64) int64 {\n\tvar s int64 = 0\n\t_ = s\n\tvar r int64 = 0\n\t_ = r\n\ts = ((a * a) + (b * b))\n\tr = s\n\tfor ((r * r) > s) {\n\t\tr = cm_floordiv((r + cm_floordiv(s, r)), int64(2))\n\t}\n\treturn r\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction hypot_int(a, b) {\n    let s = 0n;\n    let r = 0n;\n    s = ((a * a) + (b * b));\n    r = s;\n    while (((r * r) > s)) {\n        r = cm_floordiv((r + cm_floordiv(s, r)), (2n));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def hypot_int(a: int, b: int) -> int:\n    s = ((a * a) + (b * b))\n    r = s\n    while ((r * r) > s):\n        r = ((r + (s // r)) // 2)\n    return r\n\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn hypot_int(a: i64, b: i64) -> i64 {\n    let mut s: i64 = 0;\n    let mut r: i64 = 0;\n    s = ((a * a) + (b * b));\n    r = s;\n    while ((r * r) > s) {\n        r = cm_floordiv((r + cm_floordiv(s, r)), (2i64));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t hypot_int(int64_t a, int64_t b) {\n    int64_t s = 0;\n    int64_t r = 0;\n    s = ((a * a) + (b * b));\n    r = s;\n    while (((r * r) > s)) {\n        r = cm_floordiv((r + cm_floordiv(s, r)), INT64_C(2));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long hypot_int(long a, long b) {\n    long s = 0L;\n    long r = 0L;\n    s = ((a * a) + (b * b));\n    r = s;\n    while (((r * r) > s)) {\n        r = Math.floorDiv((r + Math.floorDiv(s, r)), (2L));\n    }\n    return r;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def hypot_int (a : Int) (b : Int) : Int := Id.run do\n  let mut s : Int := 0\n  let mut r : Int := 0\n  s := ((a * a) + (b * b))\n  r := s\n  while (decide ((r * r) > s)) do\n    r := (Int.fdiv (r + (Int.fdiv s r)) (2 : Int))\n  return r\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function hypot_int(a, b)\n  local s = 0\n  local r = 0\n  s = ((a * a) + (b * b))\n  r = s\n  while ((r * r) > s) do\n    r = ((r + (s // r)) // (2))\n    ::cm_continue_1::\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def hypot_int(a, b)\n  s = 0\n  r = 0\n  s = ((a * a) + (b * b))\n  r = s\n  while ((r * r) > s)\n    r = ((r + (s / r)) / (2))\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc hypot_int(_ a: Int, _ b: Int) -> Int {\n    var s: Int = 0\n    var r: Int = 0\n    s = ((a * a) + (b * b))\n    r = s\n    while ((r * r) > s) {\n        r = cm_floordiv((r + cm_floordiv(s, r)), (2))\n    }\n    return r\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction hypot_int(a: bigint, b: bigint): bigint {\n    let s: bigint = 0n;\n    let r: bigint = 0n;\n    s = ((a * a) + (b * b));\n    r = s;\n    while (((r * r) > s)) {\n        r = cm_floordiv((r + cm_floordiv(s, r)), (2n));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "hypot_int",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "hypot_int",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "s",
+            "value": [
+              "ADD",
+              [
+                "MUL",
+                [
+                  "var",
+                  "a"
+                ],
+                [
+                  "var",
+                  "a"
+                ]
+              ],
+              [
+                "MUL",
+                [
+                  "var",
+                  "b"
+                ],
+                [
+                  "var",
+                  "b"
+                ]
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "r",
+            "value": [
+              "var",
+              "s"
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "r",
+                "value": [
+                  "FLOORDIV",
+                  [
+                    "ADD",
+                    [
+                      "var",
+                      "r"
+                    ],
+                    [
+                      "FLOORDIV",
+                      [
+                        "var",
+                        "s"
+                      ],
+                      [
+                        "var",
+                        "r"
+                      ]
+                    ]
+                  ],
+                  [
+                    "int",
+                    2
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_GT",
+              [
+                "MUL",
+                [
+                  "var",
+                  "r"
+                ],
+                [
+                  "var",
+                  "r"
+                ]
+              ],
+              [
+                "var",
+                "s"
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "r"
+            ]
+          }
+        ],
+        "locals": {
+          "r": "int",
+          "s": "int"
+        },
+        "name": "hypot_int",
+        "params": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_hypot_int_0ebb31ee3c38",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "0ebb31ee3c38"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "hypot_int(a: int, b: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        -1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -50,
+        -50
+      ],
+      "out": 70
+    },
+    {
+      "args": [
+        50,
+        50
+      ],
+      "out": 70
+    },
+    {
+      "args": [
+        -5,
+        28
+      ],
+      "out": 28
+    },
+    {
+      "args": [
+        -19,
+        21
+      ],
+      "out": 28
+    },
+    {
+      "args": [
+        44,
+        -19
+      ],
+      "out": 47
+    },
+    {
+      "args": [
+        6,
+        12
+      ],
+      "out": 13
+    },
+    {
+      "args": [
+        2,
+        -5
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        -20,
+        -33
+      ],
+      "out": 38
+    },
+    {
+      "args": [
+        -36,
+        -15
+      ],
+      "out": 39
+    },
+    {
+      "args": [
+        -21,
+        -11
+      ],
+      "out": 23
+    },
+    {
+      "args": [
+        -47,
+        39
+      ],
+      "out": 61
+    },
+    {
+      "args": [
+        -48,
+        -47
+      ],
+      "out": 67
+    },
+    {
+      "args": [
+        -48,
+        9
+      ],
+      "out": 48
+    },
+    {
+      "args": [
+        -49,
+        10
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        25,
+        31
+      ],
+      "out": 39
+    },
+    {
+      "args": [
+        -26,
+        -47
+      ],
+      "out": 53
+    },
+    {
+      "args": [
+        27,
+        0
+      ],
+      "out": 27
+    },
+    {
+      "args": [
+        32,
+        3
+      ],
+      "out": 32
+    },
+    {
+      "args": [
+        6,
+        -36
+      ],
+      "out": 36
+    },
+    {
+      "args": [
+        -17,
+        17
+      ],
+      "out": 24
+    },
+    {
+      "args": [
+        49,
+        3
+      ],
+      "out": 49
+    },
+    {
+      "args": [
+        50,
+        -43
+      ],
+      "out": 65
+    },
+    {
+      "args": [
+        38,
+        -15
+      ],
+      "out": 40
+    },
+    {
+      "args": [
+        19,
+        40
+      ],
+      "out": 44
+    },
+    {
+      "args": [
+        20,
+        -12
+      ],
+      "out": 23
+    },
+    {
+      "args": [
+        -36,
+        -4
+      ],
+      "out": 36
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

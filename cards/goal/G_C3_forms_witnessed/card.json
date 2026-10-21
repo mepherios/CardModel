@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "forms_witnessed_rate",
+  "name": "G_C3_forms_witnessed",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Share of runnable Python forms of op cards that agree with their reference on seeded inputs.",
+  "target": 1.0,
+  "tier": 0
+}

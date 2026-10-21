@@ -1,0 +1,22 @@
+{
+  "category": "format",
+  "detect": {
+    "directory": true,
+    "parents": [
+      "directory"
+    ],
+    "priority": 50,
+    "suffix": ".app"
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "app_bundle",
+  "statement": "macOS/iOS application bundle directory (*.app).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/app_bundle"
+}

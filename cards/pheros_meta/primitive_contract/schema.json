@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pheros.studio/_meta/primitive_contract/schema.json",
+  "title": "PrimitiveCard",
+  "description": "Required shape for every card under cards/computation/. The schema is enforced by L24 (complexity) and by tool_create_card when the target category is computation.",
+  "type": "object",
+  "required": [
+    "name",
+    "category",
+    "statement",
+    "contract",
+    "complexity",
+    "alternatives",
+    "composes_with",
+    "witnesses",
+    "variants"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Snake-case unique identifier of the primitive."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "compute", "memory", "concurrency", "io", "control_flow",
+        "data_structure", "type_system", "compute_model",
+        "optimization", "verification", "persistence",
+        "communication", "resource", "time", "random",
+        "numeric", "graphics", "compilation"
+      ]
+    },
+    "statement": {
+      "type": "string",
+      "description": "One-paragraph claim of what this primitive is and does."
+    },
+    "contract": {
+      "type": "object",
+      "required": ["inputs", "outputs", "preconditions", "postconditions", "side_effects"],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {"type": "object", "required": ["name", "type"]}
+        },
+        "outputs": {
+          "type": "array",
+          "items": {"type": "object", "required": ["name", "type"]}
+        },
+        "preconditions": {"type": "array", "items": {"type": "string"}},
+        "postconditions": {"type": "array", "items": {"type": "string"}},
+        "side_effects": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Effect tags: 'none', 'memory_alloc', 'io', 'network', 'global_state', 'nondeterminism', 'time', 'resource_acquire', 'resource_release', etc."
+        }
+      }
+    },
+    "complexity": {
+      "type": "object",
+      "required": ["time", "space"],
+      "properties": {
+        "time": {"type": "string", "description": "Big-O or operational bound, e.g. 'O(n log n)', 'O(1) amortized', '~250 cycles'."},
+        "space": {"type": "string", "description": "Big-O or absolute bytes."},
+        "energy": {"type": "string", "description": "Optional energy claim, e.g. 'O(n)' joules or 'constant'."}
+      }
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Names of other primitive cards that solve the same problem with different trade-offs."
+    },
+    "composes_with": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Names of primitives this card commonly stacks with (per composition_rules)."
+    },
+    "witnesses": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Names of witness procedures that mechanically check this card's claims (correctness tests, complexity benchmarks, property tests, theorem proofs)."
+    },
+    "variants": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "At least one language/format variant of the primitive; the variant_contract card defines which extensions are recognized."
+    }
+  }
+}

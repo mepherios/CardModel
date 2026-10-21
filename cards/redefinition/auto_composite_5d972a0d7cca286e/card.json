@@ -1,0 +1,67 @@
+{
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "a_domain": "real",
+    "b_domain": "real",
+    "composed_from": [
+      "mul_via_mean_square",
+      "tan_double_angle"
+    ],
+    "composition_kind": "direct",
+    "previous_content_hash": "e9ac59f91d82782359efdca3ae37fcbef43ce468a28beca525053f300ce4086f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_composite_5d972a0d7cca286e",
+  "pheros_path": "redefinition/auto_composite_5d972a0d7cca286e",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "composer:verified_via_redefinition_verifier",
+  "provenance": "derived_from_card",
+  "source_form": "tan(2*_x)",
+  "status": "healthy",
+  "tags": [
+    "auto_composite",
+    "composer",
+    "direct"
+  ],
+  "target_form": "-(tan(_x) - 1/(2*(1 - tan(_x)**2)))**2 + (tan(_x) + 1/(2*(1 - tan(_x)**2)))**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 1
+      },
+      "seed": 1210246382,
+      "symbolic": "not_simplified_to_zero",
+      "valid_points": 40,
+      "verdict": "verified"
+    }
+  },
+  "witness_kind": "symbolic"
+}

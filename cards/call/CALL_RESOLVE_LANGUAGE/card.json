@@ -1,0 +1,33 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        "resolve_language"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 4,
+    "files": 3,
+    "learned": true,
+    "spellings": {
+      "resolve_language": 4
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_RESOLVE_LANGUAGE",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to resolve_language (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

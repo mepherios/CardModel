@@ -1,0 +1,166 @@
+{
+ "hub": {
+  "call_cards": 242,
+  "call_cards_dropped_as_op_duplicates": [
+   "POW_MOD",
+   "ABS",
+   "GCD",
+   "LCM",
+   "SQRT",
+   "MODINV",
+   "BIT_NAND",
+   "BIT_NOR"
+  ],
+  "hint_cards": 4,
+  "shape_cards": 27,
+  "skipped": {
+   "attr_access_cards": 227,
+   "project_specific:algebra": 38,
+   "project_specific:ast": 4,
+   "project_specific:automata": 3,
+   "project_specific:calculus": 1,
+   "project_specific:card": 11,
+   "project_specific:category": 6,
+   "project_specific:chemistry": 3,
+   "project_specific:dsp": 2,
+   "project_specific:enum": 1,
+   "project_specific:factory": 3,
+   "project_specific:formatter": 1,
+   "project_specific:functional": 1,
+   "project_specific:generic": 9,
+   "project_specific:geometry": 11,
+   "project_specific:graph": 5,
+   "project_specific:helper": 3,
+   "project_specific:logic": 7,
+   "project_specific:mechanics": 10,
+   "project_specific:meta": 4,
+   "project_specific:ml": 3,
+   "project_specific:numeric": 3,
+   "project_specific:optimization": 1,
+   "project_specific:order": 3,
+   "project_specific:parser": 9,
+   "project_specific:pattern": 1,
+   "project_specific:physics": 3,
+   "project_specific:prob": 3,
+   "project_specific:quantum": 5,
+   "project_specific:runtime": 1,
+   "project_specific:substrate": 12,
+   "project_specific:symbolic": 8,
+   "project_specific:tensor": 1,
+   "project_specific:topology": 5,
+   "project_specific:workflow": 4,
+   "unparsed_row": 35
+  }
+ },
+ "pheros": {
+  "computation_cards": 2666,
+  "computation_renamed_duplicates": 25,
+  "language_semantics": 4,
+  "meta_contracts": 6,
+  "redefinition_note_reasons": {
+   "domain:polyglot_program": 3,
+   "name_pair_reference": 154,
+   "prose_or_code": 1212
+  },
+  "redefinition_notes": 1369,
+  "redefinitions_executable": 111,
+  "tool_v_transpile": "card + README + ir.py (spec)",
+  "translation_gap": 28,
+  "xleq_observed": 5
+ },
+ "rea": {
+  "commit": "bfd0b0cb6da27e24871997b7037b3da13bc77a7e",
+  "format_cards": 23,
+  "operations": [
+   "list_strings",
+   "detect_format"
+  ]
+ },
+ "ting": {
+  "atoms": [
+   [
+    "sha256",
+    2
+   ],
+   [
+    "hmac_sha256",
+    1
+   ],
+   [
+    "hkdf_sha256",
+    2
+   ],
+   [
+    "canon_json",
+    8
+   ],
+   [
+    "padme",
+    11
+   ],
+   [
+    "pad_padme",
+    9
+   ],
+   [
+    "x25519_public",
+    2
+   ],
+   [
+    "x25519_dh",
+    3
+   ],
+   [
+    "ed25519_public",
+    3
+   ],
+   [
+    "ed25519_sign",
+    3
+   ],
+   [
+    "ed25519_verify",
+    5
+   ],
+   [
+    "aes256gcm_seal",
+    1
+   ],
+   [
+    "ecdsa_p256_verify",
+    2
+   ],
+   [
+    "p256_dh",
+    1
+   ],
+   [
+    "xchacha20poly1305",
+    0
+   ],
+   [
+    "argon2id",
+    0
+   ],
+   [
+    "ml_kem768",
+    0
+   ],
+   [
+    "ml_dsa65",
+    0
+   ],
+   [
+    "xwing_kem",
+    0
+   ],
+   [
+    "hybrid_ed25519_ml_dsa65",
+    0
+   ]
+  ],
+  "card_types": 18,
+  "cipher_suites": 3,
+  "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded"
+ }
+}

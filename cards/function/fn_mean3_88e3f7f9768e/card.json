@@ -1,0 +1,555 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/DIV",
+    "op/TO_FLOAT"
+  ],
+  "emit_gaps": {
+    "lean": "lean: no type for 'float'"
+  },
+  "forms": [
+    {
+      "code": "import math\n\ndef mean3(a: float, b: float, c: float) -> float:\n    return (a + b + c) / 3",
+      "cost": 1.0,
+      "entry": "mean3",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic double mean3(double a, double b, double c) {\n    return (((a + b) + c) / ((double)(INT64_C(3))));\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc mean3(a float64, b float64, c float64) float64 {\n\treturn (((a + b) + c) / float64(int64(3)))\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function mean3(a, b, c) {\n    return (((a + b) + c) / Number((3n)));\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def mean3(a: float, b: float, c: float) -> float:\n    return (((a + b) + c) / float(3))\n\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn mean3(a: f64, b: f64, c: f64) -> f64 {\n    return (((a + b) + c) / (((3i64)) as f64));\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic double mean3(double a, double b, double c) {\n    return (((a + b) + c) / ((double)(INT64_C(3))));\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static double mean3(double a, double b, double c) {\n    return (((a + b) + c) / ((double)((3L))));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "function mean3(a, b, c)\n  return (((a + b) + c) / ((3) + 0.0))\nend\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def mean3(a, b, c)\n  return (((a + b) + c) / (((3)).to_f))\nend\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc mean3(_ a: Double, _ b: Double, _ c: Double) -> Double {\n    return (((a + b) + c) / Double((3)))\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function mean3(a: number, b: number, c: number): number {\n    return (((a + b) + c) / Number((3n)));\n}\n",
+      "cost": 1.0,
+      "entry": "mean3",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "float": [
+        -100.0,
+        100.0
+      ]
+    },
+    {
+      "float": [
+        -100.0,
+        100.0
+      ]
+    },
+    {
+      "float": [
+        -100.0,
+        100.0
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "mean3",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "return",
+            "value": [
+              "DIV",
+              [
+                "ADD",
+                [
+                  "ADD",
+                  [
+                    "var",
+                    "a"
+                  ],
+                  [
+                    "var",
+                    "b"
+                  ]
+                ],
+                [
+                  "var",
+                  "c"
+                ]
+              ],
+              [
+                "TO_FLOAT",
+                [
+                  "int",
+                  3
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "mean3",
+        "params": [
+          {
+            "name": "a",
+            "type": "float"
+          },
+          {
+            "name": "b",
+            "type": "float"
+          },
+          {
+            "name": "c",
+            "type": "float"
+          }
+        ],
+        "returns": "float"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 44,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_mean3_88e3f7f9768e",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "88e3f7f9768e"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "float"
+      },
+      {
+        "name": "b",
+        "type": "float"
+      },
+      {
+        "name": "c",
+        "type": "float"
+      }
+    ],
+    "returns": "float"
+  },
+  "statement": "mean3(a: float, b: float, c: float) -> float lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "out": 0.0
+    },
+    {
+      "args": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out": 1.0
+    },
+    {
+      "args": [
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "out": -1.0
+    },
+    {
+      "args": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "out": 0.5
+    },
+    {
+      "args": [
+        -29.280336772280208,
+        -51.50490468921798,
+        47.82824188579323
+      ],
+      "out": -10.985666525234985
+    },
+    {
+      "args": [
+        -51.38640111598684,
+        -12.469793128452864,
+        61.24417006054969
+      ],
+      "out": -0.8706747279633381
+    },
+    {
+      "args": [
+        -17.35033253884903,
+        -28.19476594752217,
+        -52.572224835519
+      ],
+      "out": -32.70577444063007
+    },
+    {
+      "args": [
+        -77.57988381460228,
+        -53.59709435526128,
+        -38.91922231197435
+      ],
+      "out": -56.69873349394597
+    },
+    {
+      "args": [
+        39.907169177166054,
+        -96.4746757988453,
+        -96.82807256894428
+      ],
+      "out": -51.13185973020784
+    },
+    {
+      "args": [
+        -97.6541690950804,
+        66.833911565817,
+        91.95535121401306
+      ],
+      "out": 20.378364561583222
+    },
+    {
+      "args": [
+        74.47377739375833,
+        86.25196313374414,
+        -62.41639401974746
+      ],
+      "out": 32.76978216925167
+    },
+    {
+      "args": [
+        20.616701835750533,
+        28.130946191276394,
+        64.53534360694775
+      ],
+      "out": 37.76099721132489
+    },
+    {
+      "args": [
+        -12.163899672924416,
+        -47.474344783262865,
+        56.13945636052608
+      ],
+      "out": -1.1662626985537325
+    },
+    {
+      "args": [
+        82.9919379706557,
+        -88.40388701630502,
+        -45.16521760258658
+      ],
+      "out": -16.859055549411966
+    },
+    {
+      "args": [
+        41.415668357383794,
+        -39.57432062247159,
+        -77.28147005389532
+      ],
+      "out": -25.14670743966104
+    },
+    {
+      "args": [
+        91.71172635738375,
+        48.84708093147398,
+        50.422068133968196
+      ],
+      "out": 63.660291807608644
+    },
+    {
+      "args": [
+        -67.51599875539162,
+        -35.27478169598521,
+        24.31909198136873
+      ],
+      "out": -26.157229490002702
+    },
+    {
+      "args": [
+        -92.89415043203088,
+        88.4484155063002,
+        60.08575019332736
+      ],
+      "out": 18.546671755865557
+    },
+    {
+      "args": [
+        -78.19667965701007,
+        72.99296055266385,
+        -13.785577338862126
+      ],
+      "out": -6.329765481069448
+    },
+    {
+      "args": [
+        -66.47537001768997,
+        -6.953905421352076,
+        31.73639726129457
+      ],
+      "out": -13.897626059249157
+    },
+    {
+      "args": [
+        88.30415971281138,
+        -3.138859291066254,
+        -68.28278791513496
+      ],
+      "out": 5.627504168870057
+    },
+    {
+      "args": [
+        72.20871857845691,
+        -18.78247563756601,
+        95.23320531037885
+      ],
+      "out": 49.55314941708991
+    },
+    {
+      "args": [
+        46.37015447688367,
+        96.5425208517012,
+        17.52724493805556
+      ],
+      "out": 53.479973422213476
+    },
+    {
+      "args": [
+        46.433118542793096,
+        29.268604796757103,
+        -81.18201925684212
+      ],
+      "out": -1.8267653057639752
+    },
+    {
+      "args": [
+        -54.33913245242723,
+        53.01116084455845,
+        20.888487019028943
+      ],
+      "out": 6.520171803720054
+    },
+    {
+      "args": [
+        -88.46556896277838,
+        -97.1506619511587,
+        -38.53811522774131
+      ],
+      "out": -74.71811538055947
+    },
+    {
+      "args": [
+        -51.915476662809866,
+        0.11690898515439585,
+        -16.277857829105272
+      ],
+      "out": -22.692141835586913
+    },
+    {
+      "args": [
+        91.95732633549684,
+        -19.086738048045632,
+        0.27819189899980756
+      ],
+      "out": 24.382926728817008
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 44,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 28,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 44,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

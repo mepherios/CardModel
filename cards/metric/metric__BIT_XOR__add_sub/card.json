@@ -1,0 +1,35 @@
+{
+  "anchor": 4.0,
+  "calls_per_sample": 1500,
+  "category": "metric",
+  "form": "add_sub",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 1.694,
+  "median_ns": 245.639,
+  "metadata": {
+    "inputs_signature": "497d867c986d112e",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__BIT_XOR__add_sub",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/BIT_XOR form add_sub: 245.6 ns per call on this host",
+  "target_card": "op/BIT_XOR",
+  "tier": 3
+}

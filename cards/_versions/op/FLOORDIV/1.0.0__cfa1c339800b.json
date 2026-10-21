@@ -1,0 +1,99 @@
+{
+  "category": "op",
+  "cost": 4.0,
+  "domain_generators": {
+    "nonneg_int": [
+      {
+        "int": [
+          0,
+          1000000
+        ]
+      },
+      {
+        "int": [
+          1,
+          1000
+        ]
+      }
+    ]
+  },
+  "emit": {
+    "c_like": "cm_floordiv({0}, {1})",
+    "java": "Math.floorDiv({0}, {1})",
+    "lean": "(Int.fdiv {0} {1})",
+    "lua": "({0} // {1})",
+    "python": "({0} // {1})",
+    "ruby": "({0} / {1})"
+  },
+  "forms": [
+    {
+      "code": "lambda a, b: a // b",
+      "cost": 4.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "{0}.div_euclid({1})",
+      "cost": 4.0,
+      "domain": "nonneg_int",
+      "hub_domain": "int",
+      "lang": "rust",
+      "name": "rust_hint",
+      "notes": "div_euclid equals floor division when the divisor is positive; the hub note ('matches Python semantics for negative operands') is checked on negative divisors too",
+      "role": "hint",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            -1000,
+            1000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a // b",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "binop": [
+        "FloorDiv"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "FLOORDIV",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "integer floor division (Python semantics: rounds toward -inf)",
+  "tier": 0
+}

@@ -1,0 +1,21 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM13_self_contained",
+  "origins": [
+    "user requirement 2026-10-21",
+    "hub L49",
+    "hub L50",
+    "Pheros L01",
+    "Pheros L03"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "The program needs no folder outside its own tree and the project it works on; committed content carries no user paths.",
+  "tier": 0,
+  "witness": "tests/test_self_contained.py::test_sources_unreachable"
+}

@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM11_closure_under_definition",
+  "origins": [
+    "hub L45",
+    "Pheros L14"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Every depends_on reference resolves to a card; a gap is reported at the reference site.",
+  "tier": 0,
+  "witness": "tests/test_kernel.py::test_builtin_closure"
+}

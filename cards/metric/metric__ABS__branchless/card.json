@@ -1,0 +1,35 @@
+{
+  "anchor": 3.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "branchless",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 1.539,
+  "median_ns": 104.378,
+  "metadata": {
+    "inputs_signature": "edd7b3b922028973",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__ABS__branchless",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/ABS form branchless: 104.4 ns per call on this host",
+  "target_card": "op/ABS",
+  "tier": 3
+}

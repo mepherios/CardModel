@@ -1,0 +1,121 @@
+{
+  "algebraic_carriers": [
+    {
+      "maps_to_algebra": "ring (arbitrary-precision; Z under + and *)",
+      "type_in_language": "int"
+    },
+    {
+      "maps_to_algebra": "field (approximately - true field axioms violated by IEEE-754 rounding; see flaws)",
+      "type_in_language": "float"
+    },
+    {
+      "maps_to_algebra": "monoid (concatenation with empty-string identity)",
+      "type_in_language": "str"
+    },
+    {
+      "maps_to_algebra": "monoid (concatenation with [] identity)",
+      "type_in_language": "list"
+    },
+    {
+      "maps_to_algebra": "monoid (concatenation with () identity)",
+      "type_in_language": "tuple"
+    },
+    {
+      "maps_to_algebra": "monoid (union with frozenset() identity; approximates boolean_algebra over a finite universe but Python sets are unbounded so complement is not total)",
+      "type_in_language": "set"
+    },
+    {
+      "maps_to_algebra": "monoid (under | union operator since 3.9; identity {})",
+      "type_in_language": "dict"
+    }
+  ],
+  "canonical_name": "Python",
+  "category": "language",
+  "concurrency_model": [
+    {
+      "name": "thread",
+      "primitives": [
+        "threading.Thread",
+        "threading.Lock",
+        "threading.RLock",
+        "threading.Condition",
+        "threading.Event",
+        "queue.Queue"
+      ]
+    },
+    {
+      "name": "async",
+      "primitives": [
+        "asyncio",
+        "async def",
+        "await",
+        "asyncio.gather",
+        "asyncio.create_task"
+      ]
+    },
+    {
+      "name": "multiprocess",
+      "primitives": [
+        "multiprocessing.Pool",
+        "multiprocessing.Process",
+        "multiprocessing.Queue",
+        "concurrent.futures.ProcessPoolExecutor"
+      ]
+    }
+  ],
+  "evaluation_model": "eager_strict",
+  "flaws": [
+    "float-not-field: maps_to_algebra='field' for float is *approximate* - IEEE-754 floats violate associativity (1e20 + 1 - 1e20 != 1) so they're not a field in any rigorous sense. W22 follow-up: introduce an approximation_of_field algebra card and tighten this carrier.",
+    "set-not-boolean-algebra: Python sets approximate boolean_algebra over a finite universe but the universe is unbounded so complement (NOT) is not a total operation. Classified as monoid (union) honestly; boolean_algebra would require a finite-universe wrapper card.",
+    "GIL-elided: concurrency_model lists threading.Thread without flagging the GIL's impact on parallelism. A future python_gil_axiom card would capture this; for now see the python.py frontend docstring which calls it out explicitly.",
+    "version-fluid: minor-version differences (3.9 dict |, 3.10 match, 3.11 except*) not enumerated; this card describes the abstract language ~3.10."
+  ],
+  "informal_description": "Python is a strongly-but-dynamically-typed multi-paradigm language with eager evaluation, permissive side effects, reference-counting GC backed by a generational cycle collector (in CPython), and duck typing for structural compatibility checks. Concurrency is split three ways: native OS threads (constrained by the GIL in CPython so threading helps IO-bound but not CPU-bound code), cooperative async with asyncio for IO concurrency on a single thread, and multiprocessing for true parallelism by spawning OS processes. Python's int is arbitrary-precision and forms a ring under +/*; float approximates a field but is not one (IEEE-754 rounding breaks associativity); str/list/tuple/dict each form a monoid under concatenation or union. The transpile frontend at cards/tool/v_transpile/frontends/python.py uses ast.parse to lift CPython source into the substrate IR; constructs outside the IR's normalised set (e.g. metaclasses, __getattr__ hooks, send/throw on generators) lift opaquely as Raw nodes with structured warnings.",
+  "interacts_with": [
+    "category_language",
+    "schema_language_semantic_schema",
+    "L13_construction_through_cards",
+    "L41_no_vacuous_success",
+    "L114_terminal_decomposition",
+    "cards/algebra/ring/card.json",
+    "cards/algebra/field/card.json",
+    "cards/algebra/monoid/card.json",
+    "cards/tool/v_transpile/frontends/python.py",
+    "cards/postulate/python_operational_semantics_axiom/card.json"
+  ],
+  "kind": "language_semantic",
+  "memory_model": "garbage_collected",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python",
+  "notes": "CPython-centric. PyPy / Jython / GraalPython preserve the language semantics but vary the memory model (PyPy uses a real tracing GC; GraalPython uses the GraalVM GC). The async sub-language (PEP 492) is technically a separate evaluation model layered on top - async functions return coroutine objects and are *not* eagerly evaluated until awaited; we still classify the host language as eager_strict.",
+  "operational_semantics_card": "cards/postulate/python_operational_semantics_axiom/card.json",
+  "paradigm": [
+    "object-oriented",
+    "imperative",
+    "functional-influenced",
+    "duck-typed"
+  ],
+  "side_effect_model": "permissive",
+  "standardization_body": "PEP / CPython reference implementation",
+  "tags": [
+    "language",
+    "python",
+    "w21-d",
+    "dynamic",
+    "duck-typed",
+    "gc",
+    "permissive-effects"
+  ],
+  "tier": 0,
+  "transpile_backends_available": [],
+  "transpile_frontend": "cards/tool/v_transpile/frontends/python.py",
+  "type_system": {
+    "dynamism": "dynamic",
+    "strength": "strong",
+    "structure": "duck"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/language/python",
+  "year_origin": 1991
+}

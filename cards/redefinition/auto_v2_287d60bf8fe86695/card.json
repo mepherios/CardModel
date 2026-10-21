@@ -1,0 +1,90 @@
+{
+  "_autogen_v2": {
+    "origin": "sdo_promote",
+    "parents": [
+      "log_product",
+      "pi_control_steady_state_to_canonical_quadratic"
+    ],
+    "source": "idiom_cluster_compose",
+    "tool_name": "evolution_log_analyzer",
+    "verifier_evidence": "real:PROVED(5/5)"
+  },
+  "category": "redefinition",
+  "condition": "((_a > 0) & (_b > 0) & (_a < 1e150) & (_b < 1e150) & (_a > 1e-150) & (_b > 1e-150)) & ((K > 0))",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_a": 2,
+        "_b": 2
+      },
+      "source_eval": 1.386294361,
+      "target_eval": 1.386294361
+    },
+    {
+      "input": {
+        "_a": 3,
+        "_b": 3
+      },
+      "source_eval": 2.197224577,
+      "target_eval": 2.197224577
+    },
+    {
+      "input": {
+        "_a": 5,
+        "_b": 5
+      },
+      "source_eval": 3.218875825,
+      "target_eval": 3.218875825
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "cb8d3d5283f0d15ceb86a1f151a3103b6cb5cd95bb53061a1e3a8228a33345b1",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_v2_287d60bf8fe86695",
+  "pheros_path": "redefinition/auto_v2_287d60bf8fe86695",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:sdo:promote_from_sdo",
+  "provenance": "derived_from_card",
+  "source_form": "log(_a*_b)",
+  "status": "healthy",
+  "tags": [
+    "auto_generated",
+    "redefinition",
+    "autogen_v2",
+    "sdo_promotion",
+    "from_sdo_proposals_jsonl"
+  ],
+  "target_form": "log(_a) + log(_b)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "not_simplified_to_zero",
+      "valid_points": 38,
+      "verdict": "verified"
+    }
+  },
+  "witness_kind": "symbolic"
+}

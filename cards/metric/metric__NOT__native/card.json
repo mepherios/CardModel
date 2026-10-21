@@ -1,0 +1,35 @@
+{
+  "anchor": 0.5,
+  "calls_per_sample": 40,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 1.05,
+  "median_ns": 35.425,
+  "metadata": {
+    "inputs_signature": "e2aff7b349b63c91",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__NOT__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/NOT form native: 35.4 ns per call on this host",
+  "target_card": "op/NOT",
+  "tier": 3
+}

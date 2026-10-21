@@ -1,0 +1,65 @@
+{
+  "category": "op",
+  "cost": 25.0,
+  "filter": "lambda a, n: math.gcd(a, n) == 1",
+  "forms": [
+    {
+      "code": "lambda a, n: pow(a, -1, n)",
+      "cost": 25.0,
+      "domain": "coprime_mod",
+      "lang": "python",
+      "name": "native_pow",
+      "notes": "Python 3.8+ pow(a, -1, n); raises ValueError if no inverse",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, n: (lambda g, x, _: x % n if g == 1 else None)(*_xgcd(a, n))",
+      "cost": 12.0,
+      "domain": "coprime_mod",
+      "lang": "python",
+      "libs": [
+        "redef_helpers"
+      ],
+      "name": "xgcd",
+      "notes": "extended Euclidean; identical result when the inverse exists",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -100000,
+        100000
+      ]
+    },
+    {
+      "int": [
+        2,
+        100000
+      ]
+    }
+  ],
+  "match": {
+    "python": {
+      "call": [
+        "inverse_mod"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "MODINV",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "modular inverse a^{-1} mod n (requires gcd(a, n) = 1)",
+  "tier": 1
+}

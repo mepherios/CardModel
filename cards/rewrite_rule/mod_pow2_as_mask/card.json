@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": "k >= 0",
+  "domain": "int",
+  "lhs": "a % (1 << k)",
+  "metadata": {
+    "previous_content_hash": "0fd2f31410c791b2ed16492d4b0ba465f317dd6be339ed5555365608aceadc2e",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "mod_pow2_as_mask",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a & ((1 << k) - 1)",
+  "statement": "a % (1 << k) == a & ((1 << k) - 1) when k >= 0",
+  "tier": 1,
+  "vars": [
+    "a",
+    "k"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "detail": "no Lean form for SHIFT_LEFT",
+      "status": "not_expressible"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "blockers": [
+    "only int-binop-add proven; branch and jal cards exist but lowering wiring incomplete",
+    "no relocation table emission for cross-object calls"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED via outputs/agent_w14_e.md byte-asserted regression: only int-binop-add shape works end-to-end",
+  "current_coverage_percent": 15,
+  "evidence": [
+    "cards/tool/v_transpile/backends/riscv64.py — RISC-V backend present (T2)",
+    "cards/tool/v_transpile/backends/rv64_object — W14-E card-based RV64I .o emitter (substrate's first real machine code emitter)",
+    "outputs/agent_w14_e.md — emits real .o for the int-binop-add shape; passes byte-asserted regression",
+    "cards/isa/rv64i — instruction card set used by rv64_object"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__riscv64",
+  "optimal_solution_path": [
+    "wire rv64i branch + jal cards into the lowering pass so if/while compile",
+    "add stack-frame prologue/epilogue cards under cards/isa/rv64_calling_convention",
+    "emit relocations so two object files can be linked",
+    "smoke: C 'int f(int x){return x+1;}' -> rv64 .o, byte-asserted; expand to a control-flow shape",
+    "rerun coverage estimate against a 20-shape RISC-V regression sweep"
+  ],
+  "optimization_paths": [
+    "cards/project_task/extend_rv64_emitter_to_control_flow",
+    "cards/project_task/add_rv64_calling_convention_support",
+    "cards/project_task/close_translation_gap_c__to__riscv64"
+  ],
+  "required_isa_cards": [
+    "cards/isa/rv64i"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/backends/rv64_object",
+    "cards/tool/v_transpile/frontends/c.py"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "c",
+  "supported_constructs": [
+    "int_add",
+    "int_subtract",
+    "int_load_immediate_64",
+    "register_to_register_move",
+    "return_int_64"
+  ],
+  "target_language": "riscv64",
+  "unsupported_constructs": [
+    "function_call_general",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "memory_load_store_general",
+    "struct",
+    "float_variables",
+    "string_literal",
+    "printf",
+    "stack_frame_general",
+    "calling_convention_full",
+    "multiply_divide",
+    "branch_general",
+    "atomic_amo"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__riscv64",
+  "wave_23_audit_note": "15% MEASURED: only int-binop-add proven; branch+jal cards exist but lowering wiring incomplete — filed as project_task"
+}

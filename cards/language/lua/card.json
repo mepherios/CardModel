@@ -1,0 +1,136 @@
+{
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value}",
+    "break": "break",
+    "continue": "goto cm_continue_{loop}",
+    "declare": "local {name} = {value}",
+    "else": "else",
+    "empty": "",
+    "end_if": "end",
+    "end_while": "end",
+    "func": "function {name}({params})\n{body}end\n",
+    "harness": {
+      "bench_call": "cm_acc = cm_acc + {truthy}",
+      "bench_main": "local cm_acc = 0\nfor cm_r = 1, {reps} do\n{calls}end\nprint(cm_acc)\n",
+      "main": "{calls}",
+      "print": {
+        "bool": "print(\"b:\" .. tostring({e}))",
+        "float": "print(\"f:\" .. string.format(\"%.17g\", {e}))",
+        "int": "print(\"i:\" .. string.format(\"%d\", {e}))"
+      },
+      "truthy": {
+        "bool": "(({e}) and 1 or 0)",
+        "float": "((({e}) > 0.0) and 1 or 0)",
+        "int": "((({e}) ~= 0) and 1 or 0)"
+      }
+    },
+    "helpers": {
+      "cm_gcd": "function cm_gcd(a, b)\n  a = math.abs(a)\n  b = math.abs(b)\n  while b ~= 0 do\n    a, b = b, a % b\n  end\n  return a\nend",
+      "cm_ipow": "function cm_ipow(a, b)\n  local r = 1\n  while b > 0 do\n    if b % 2 == 1 then r = r * a end\n    b = b // 2\n    if b > 0 then a = a * a end\n  end\n  return r\nend",
+      "cm_max_f": "function cm_max_f(a, b) if b > a then return b else return a end end",
+      "cm_max_i": "function cm_max_i(a, b) if b > a then return b else return a end end",
+      "cm_min_f": "function cm_min_f(a, b) if b < a then return b else return a end end",
+      "cm_min_i": "function cm_min_i(a, b) if b < a then return b else return a end end",
+      "cm_powmod": "function cm_powmod(a, b, m)\n  local r = 1 % m\n  a = a % m\n  while b > 0 do\n    if b % 2 == 1 then r = (r * a) % m end\n    a = (a * a) % m\n    b = b // 2\n  end\n  return r\nend"
+    },
+    "if": "if {cond} then",
+    "indent": "  ",
+    "lib_prelude": "@imports@",
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v})",
+      "true": "true"
+    },
+    "loop_end_label": "::cm_continue_{loop}::",
+    "param": "{name}",
+    "prelude": "@imports@",
+    "return": "return {value}",
+    "style": "end",
+    "types": {
+      "bool": "boolean",
+      "float": "float",
+      "int": "integer"
+    },
+    "underscore_ok": true,
+    "while": "while {cond} do",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "--[[",
+        "]]"
+      ]
+    ],
+    "line": [
+      "--"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".lua"
+  ],
+  "family": "lua",
+  "int_bits": 64,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "lua",
+  "probe": {
+    "kind": "executable",
+    "min_version": "5.4",
+    "name": "lua",
+    "version_args": [
+      "-v"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "and",
+    "break",
+    "do",
+    "else",
+    "elseif",
+    "end",
+    "false",
+    "for",
+    "function",
+    "goto",
+    "if",
+    "in",
+    "local",
+    "nil",
+    "not",
+    "or",
+    "repeat",
+    "return",
+    "then",
+    "true",
+    "until",
+    "while",
+    "print",
+    "math",
+    "string"
+  ],
+  "runner": {
+    "file": "main.lua",
+    "run": [
+      "{exe}",
+      "{src}"
+    ]
+  },
+  "statement": "Lua 5.4: 64-bit integers with floor // and %, goto for continue.",
+  "tier": 1
+}

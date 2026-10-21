@@ -1,0 +1,20 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM09_measure_before_claiming",
+  "origins": [
+    "hub L4",
+    "Pheros L28",
+    "Pheros L59",
+    "rea-cards calibrate"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Speed claims cite a metric card measured on this host (median, samples, seed, host fingerprint); cost anchors change only from measurements.",
+  "tier": 0,
+  "witness": "tests/test_optimize.py::test_measure_writes_metric_cards"
+}

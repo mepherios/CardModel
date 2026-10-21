@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a ** 2",
+  "metadata": {
+    "previous_content_hash": "0d8331d4dc848595212f70fed48f70dfc82c7409955a3935ae23369cb8becfb7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "square_as_mul",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a * a",
+  "statement": "a ** 2 == a * a",
+  "tier": 1,
+  "vars": [
+    "a"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_square_as_mul (a : Int) : (a ^ 2) = (a * a) := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

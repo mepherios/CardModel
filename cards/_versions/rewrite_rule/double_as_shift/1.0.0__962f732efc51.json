@@ -1,0 +1,21 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a * 2",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "double_as_shift",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a << 1",
+  "statement": "a * 2 == a << 1",
+  "tier": 1,
+  "vars": [
+    "a"
+  ]
+}

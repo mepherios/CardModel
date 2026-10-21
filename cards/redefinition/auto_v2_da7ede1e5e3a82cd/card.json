@@ -1,0 +1,86 @@
+{
+  "_autogen_v2": {
+    "origin": "compose_v2",
+    "parents": [
+      "auto_5cf7095819575e0b",
+      "auto_v2_0124b91567a27cb1"
+    ],
+    "verifier_evidence": "real:PROVED(40/40)"
+  },
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "symbolic_real",
+  "examples": [
+    {
+      "input": {
+        "x": 1,
+        "y": 1
+      },
+      "source_eval": "-1",
+      "target_eval": "-1"
+    },
+    {
+      "input": {
+        "x": 2,
+        "y": 2
+      },
+      "source_eval": "4",
+      "target_eval": "4"
+    },
+    {
+      "input": {
+        "x": 3,
+        "y": 3
+      },
+      "source_eval": "21",
+      "target_eval": "21"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "8dd2ebade44175700f741be6a5293ae928de74f4b85701c57a972eb6b4210f8f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_v2_da7ede1e5e3a82cd",
+  "pheros_path": "redefinition/auto_v2_da7ede1e5e3a82cd",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:compose_v2",
+  "provenance": "derived_from_card",
+  "source_form": "x**2*y - 2*x",
+  "status": "healthy",
+  "tags": [
+    "auto_generated",
+    "autogen_v2",
+    "compose_v2",
+    "redefinition"
+  ],
+  "target_form": "256*x**8*y**4/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - 2048*x**7*y**3/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - 512*x**6*y**3/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) + 64*x**6*y**3/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) + 6144*x**6*y**2/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) + 3072*x**5*y**2/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - 384*x**5*y**2/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) - 8192*x**5*y/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - x**4*y**2/4 + 384*x**4*y**2/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - 48*x**4*y**2/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) - 16*x**4*y**2/(32*x**4*y**2 - 128*x**3*y - 64*x**2*y + 128*x**2 + 128*x + 32) - 6144*x**4*y/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) + 768*x**4*y/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) + 4096*x**4/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) + x**3*y - 1536*x**3*y/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) + 192*x**3*y/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) + 64*x**3*y/(32*x**4*y**2 - 128*x**3*y - 64*x**2*y + 128*x**2 + 128*x + 32) + 4096*x**3/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - 512*x**3/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) + x**2*y/2 - 128*x**2*y/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) + 20*x**2*y/(32*x**4*y**2 - 128*x**3*y - 64*x**2*y + 128*x**2 + 128*x + 32) - 4*x**2*y/(8*x**4*y**2 - 32*x**3*y - 16*x**2*y + 32*x**2 + 32*x + 8) - x**2 + 1536*x**2/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - 192*x**2/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) - 64*x**2/(32*x**4*y**2 - 128*x**3*y - 64*x**2*y + 128*x**2 + 128*x + 32) - x + 256*x/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) - 40*x/(32*x**4*y**2 - 128*x**3*y - 64*x**2*y + 128*x**2 + 128*x + 32) + 8*x/(8*x**4*y**2 - 32*x**3*y - 16*x**2*y + 32*x**2 + 32*x + 8) - 1/4 + 16/(1024*x**4*y**2 - 4096*x**3*y - 2048*x**2*y + 4096*x**2 + 4096*x + 1024) + 4/(128*x**4*y**2 - 512*x**3*y - 256*x**2*y + 512*x**2 + 512*x + 128) + 1/(64*x**4*y**2 - 256*x**3*y - 128*x**2*y + 256*x**2 + 256*x + 64) - 6/(32*x**4*y**2 - 128*x**3*y - 64*x**2*y + 128*x**2 + 128*x + 32) + 1/(8*x**4*y**2 - 32*x**3*y - 16*x**2*y + 32*x**2 + 32*x + 8) + 1/(4*x**4*y**2 - 16*x**3*y - 8*x**2*y + 16*x**2 + 16*x + 4)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

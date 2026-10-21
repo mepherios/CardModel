@@ -1,0 +1,10 @@
+#!/bin/sh
+# cardmodel -- run the card model from any directory (no install needed).
+# Resolves this script's real location so a symlink on PATH works.
+SELF="$0"
+while [ -L "$SELF" ]; do
+  LINK=$(readlink "$SELF")
+  case "$LINK" in /*) SELF="$LINK" ;; *) SELF="$(dirname "$SELF")/$LINK" ;; esac
+done
+HOME_DIR="$(cd "$(dirname "$SELF")/.." && pwd)"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$HOME_DIR${PYTHONPATH:+:$PYTHONPATH}" exec python3 -B -m cardmodel "$@"

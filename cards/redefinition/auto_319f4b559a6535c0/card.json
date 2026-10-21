@@ -1,0 +1,72 @@
+{
+  "_autogen": {
+    "discovered_at": "2026-05-20T02:03:05+00:00",
+    "last_verifier_verdict": "PROVED",
+    "neighbor_of": "trig_double_angle__sin_sqrt",
+    "origin": "autogen:source_form",
+    "verifier_evidence": "real:PROVED(28/28), integer:PROVED(25/25)"
+  },
+  "category": "redefinition",
+  "condition": "x > 0",
+  "cost_score": 38,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "2f9cee9d60aedb8f12d9d4efdfad654f06ef1110c5216af79b5220d97152ac93",
+    "tags_extra": [
+      "auto_discovered"
+    ],
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_319f4b559a6535c0",
+  "pheros_path": "redefinition/auto_319f4b559a6535c0",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autonomous_evolution:autogen:source_form",
+  "provenance": "derived_from_card",
+  "source_form": "2*sqrt(1 - sin(x)**2)*sin(x)",
+  "status": "healthy",
+  "tags": [
+    "auto_generated",
+    "autogen",
+    "autonomous_evolution",
+    "redefinition"
+  ],
+  "target_form": "2*sqrt(cos(x)**2)*sin(x)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 1,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 1
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

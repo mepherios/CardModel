@@ -1,0 +1,37 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        ".get"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 404,
+    "files": 29,
+    "learned": true,
+    "spellings": {
+      "card.get": 62,
+      "f.get": 40,
+      "p.get": 20,
+      "r.get": 35,
+      "self.cg.get": 43
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_METHOD_GET",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to .get (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

@@ -1,0 +1,39 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "cffaedfe",
+        "offset": 0
+      },
+      {
+        "hex": "cefaedfe",
+        "offset": 0
+      },
+      {
+        "hex": "feedfacf",
+        "offset": 0
+      },
+      {
+        "hex": "feedface",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "native_binary",
+      "file"
+    ],
+    "priority": 50
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "macho",
+  "statement": "Thin Mach-O image (32/64-bit, either byte order).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/macho"
+}

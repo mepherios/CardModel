@@ -1,0 +1,68 @@
+{
+  "_autogen_v2": {
+    "origin": "compose_v2",
+    "parents": [
+      "auto_488f83ca95cd8194",
+      "auto_6d43e0c5e3f47dbe"
+    ],
+    "verifier_evidence": "real:PROVED(40/40)"
+  },
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "symbolic_real",
+  "examples": [
+    {
+      "input": {
+        "x": 1,
+        "y": 1
+      },
+      "source_eval": "-3",
+      "target_eval": "-3"
+    },
+    {
+      "input": {
+        "x": 2,
+        "y": 2
+      },
+      "source_eval": "-12",
+      "target_eval": "-12"
+    },
+    {
+      "input": {
+        "x": 3,
+        "y": 3
+      },
+      "source_eval": "-33",
+      "target_eval": "-33"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "auto_v2_0124b91567a27cb1",
+  "pheros_path": "redefinition/auto_v2_0124b91567a27cb1",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:compose_v2",
+  "provenance": "derived_from_card",
+  "source_form": "-x*y**2 - 2*x",
+  "tags": [
+    "auto_generated",
+    "autogen_v2",
+    "compose_v2",
+    "redefinition"
+  ],
+  "target_form": "x**4*y**8/(4*x**2*y**4 + 16*x**2*y**2 + 16*x**2 + 8*x*y**2 + 16*x + 4) + x**4*y**6/(x**2*y**4/2 + 2*x**2*y**2 + 2*x**2 + x*y**2 + 2*x + 1/2) + 3*x**4*y**4/(x**2*y**4/2 + 2*x**2*y**2 + 2*x**2 + x*y**2 + 2*x + 1/2) + 2*x**4*y**2/(x**2*y**4/4 + x**2*y**2 + x**2 + x*y**2/2 + x + 1/4) + x**4/(x**2*y**4/4 + x**2*y**2 + x**2 + x*y**2/2 + x + 1/4) - x**2*y**4/4 - x**2*y**4/(2*x**2*y**4 + 8*x**2*y**2 + 8*x**2 + 4*x*y**2 + 8*x + 2) - x**2*y**2 - x**2*y**2/(x**2*y**4/2 + 2*x**2*y**2 + 2*x**2 + x*y**2 + 2*x + 1/2) - x**2 - x**2/(x**2*y**4/2 + 2*x**2*y**2 + 2*x**2 + x*y**2 + 2*x + 1/2) - x*y**2/2 - x - 1/4 + 1/(4*x**2*y**4 + 16*x**2*y**2 + 16*x**2 + 8*x*y**2 + 16*x + 4)",
+  "witness_kind": "symbolic"
+}

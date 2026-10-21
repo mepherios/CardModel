@@ -1,0 +1,51 @@
+{
+  "candidate": {
+    "category": "call",
+    "cost": 1.5,
+    "match": {
+      "python": {
+        "call": [
+          ".add_argument"
+        ]
+      }
+    },
+    "metadata": {
+      "confidence": "tentative",
+      "evidence_count": 52,
+      "files": 1,
+      "learned": true,
+      "spellings": {
+        "s.add_argument": 52
+      }
+    },
+    "name": "CALL_METHOD_ADD_ARGUMENT",
+    "provenance": {
+      "language": "python",
+      "learning_loop_refs": [
+        "observation/obs_b01cbf91e8dc6db4"
+      ]
+    },
+    "statement": "call to .add_argument (python), learned from observed code",
+    "tags": [
+      "learned"
+    ],
+    "tier": 3
+  },
+  "category": "proposal",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "prop_call_CALL_METHOD_ADD_ARGUMENT",
+  "proposal_kind": "call",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "ready": false,
+  "reason": "needs >= 3 uses in >= 2 files (have 52 in 1)",
+  "seed": 1210246382,
+  "statement": "proposed call card CALL_METHOD_ADD_ARGUMENT",
+  "tier": 3,
+  "xleq": null
+}

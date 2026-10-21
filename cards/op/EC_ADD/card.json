@@ -1,0 +1,42 @@
+{
+  "category": "op",
+  "cost": 12.0,
+  "forms": [
+    {
+      "cost": 12.0,
+      "domain": "ec",
+      "lang": "sage",
+      "name": "native",
+      "notes": "requires sage; 4 MULs + 1 INV + misc in affine form",
+      "runnable": false,
+      "str_impl": "G + P (sage EllipticCurvePoint)"
+    },
+    {
+      "cost": 8.0,
+      "domain": "ec",
+      "lang": "sage",
+      "name": "projective",
+      "notes": "no inverse; 12 MULs + 4 SQRs",
+      "runnable": false,
+      "str_impl": "Jacobian-projective addition"
+    }
+  ],
+  "metadata": {
+    "domain_specific": "elliptic curves (hub/Pheros research)",
+    "hub_kind": "fused",
+    "version": "1.0.0"
+  },
+  "name": "EC_ADD",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "elliptic-curve point addition",
+  "tier": 2
+}

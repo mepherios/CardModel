@@ -1,0 +1,53 @@
+{
+  "_autogen": {
+    "discovered_at": "2026-05-20T02:02:51+00:00",
+    "last_verifier_verdict": "PROVED",
+    "neighbor_of": "auto_composite_bfc879ae52211434",
+    "origin": "autogen:target_form",
+    "verifier_evidence": "real:PROVED(60/60), integer:PROVED(60/60)"
+  },
+  "category": "redefinition",
+  "cost_score": 12,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "tags_extra": [
+      "auto_discovered"
+    ],
+    "version": "1.0.0"
+  },
+  "name": "auto_91bd989dda8527ea",
+  "pheros_path": "redefinition/auto_91bd989dda8527ea",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autonomous_evolution:autogen:target_form",
+  "provenance": "derived_from_card",
+  "source_form": "(-_b**2/8 + _c/2 + (_b/2 + _x)**2/2 + 1/2)**2 - (_b**2/8 - _c/2 - (_b/2 + _x)**2/2 + 1/2)**2",
+  "tags": [
+    "auto_generated",
+    "autogen",
+    "autonomous_evolution",
+    "redefinition"
+  ],
+  "target_form": "_b*_x + _c + _x**2",
+  "witness_kind": "symbolic"
+}

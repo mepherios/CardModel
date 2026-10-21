@@ -1,0 +1,33 @@
+{
+  "category": "meta_definition",
+  "flaws": [
+    "lacking: lean.lean variant is a stub on day 1",
+    "lacking: rust.rs variant is a stub on day 1",
+    "lacking: typescript.ts variant is a stub on day 1"
+  ],
+  "interacts_with": [
+    "variant_contract",
+    "registry_contract",
+    "L01_complete_isolation"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "card_type",
+  "rationale": "Defining the Card type as a card (rather than as a Python class only) is what makes L1 operational. The JSON schema is normative; the python.py / lean.lean / typescript.ts / rust.rs files in this card's directory are variants. Adding a new language variant of Card means dropping a new file here — no edit to any other card.",
+  "statement": "The Card type itself. A Card is a named, structured record with a metadata extension point. Every directory under cards/ that is not a category is a Card; the directory's card.json instantiates this schema.",
+  "tags": [
+    "axiom",
+    "type",
+    "language-agnostic"
+  ],
+  "tier": 0,
+  "variants": {
+    "lean.lean": "-- Lean 4 variant of the Card type — STUB.\n-- Tracked as `lacking:lean_variant_for_card_type` until expanded.\n-- The schema in schema.json is normative; this file is one variant.\n\nstructure Card where\n  name           : String\n  category       : String\n  tier           : Nat\n  -- (remaining fields to be added; see schema.json)\n  deriving Repr\n",
+    "python.py": "\"\"\"python.py — Python variant of the Card type.\n\nOne of N language variants of the same type. The normative form is\nschema.json in this directory. Lean, Rust, TypeScript variants will\nlive alongside this file once they're written.\n\nL9: this variant exists. Other-language variants are tracked as\n`lacking:` cards until they exist too.\n\"\"\"\nfrom __future__ import annotations\nfrom dataclasses import dataclass, field\nfrom typing import Any, Callable, Optional\n\nSTATUS_VALUES = (\"healthy\", \"suspect\", \"broken\", \"quarantined\")\n\n\n@dataclass(frozen=True)\nclass Card:\n    name:           str\n    category:       str\n    tier:           int = 0\n    cost:           float = 0.0\n    statement:      str = \"\"\n    rationale:      str = \"\"\n    problem:        str = \"\"\n    solution:       str = \"\"\n    location:       str = \"\"\n    file_refs:      tuple[str, ...] = ()\n    depends_on:     tuple[str, ...] = ()\n    supersedes:     tuple[str, ...] = ()\n    interacts_with: tuple[str, ...] = ()\n    tags:           tuple[str, ...] = ()\n    status:         str = \"healthy\"\n    flaws:          tuple[str, ...] = ()\n    witness:        Optional[Callable[[], bool]] = None\n    variants:       dict[str, str] = field(default_factory=dict)\n    metadata:       dict[str, Any] = field(default_factory=dict)\n\n    def __post_init__(self):\n        if self.status not in STATUS_VALUES:\n            raise ValueError(f\"status must be one of {STATUS_VALUES}, got {self.status!r}\")\n",
+    "rust.rs": "// rust.rs — Rust variant of the Card type — STUB.\n// Tracked as `lacking:rust_variant_for_card_type` until expanded.\n// The schema in schema.json is normative; this file is one variant.\n\nuse std::collections::HashMap;\n\n#[derive(Debug, Clone)]\npub struct Card {\n    pub name: String,\n    pub category: String,\n    pub tier: u32,\n    // (remaining fields to be added; see schema.json)\n}\n",
+    "schema.json": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"$id\": \"https://pheros.studio/schemas/card.schema.json\",\n  \"title\": \"Card\",\n  \"description\": \"The universal Card record. Every card in Pheros_Studio conforms to this.\",\n  \"type\": \"object\",\n  \"required\": [\"name\", \"category\"],\n  \"properties\": {\n    \"name\":           { \"type\": \"string\", \"pattern\": \"^[a-zA-Z_][a-zA-Z0-9_]*$\" },\n    \"category\":       { \"type\": \"string\", \"pattern\": \"^[a-z][a-z0-9_]*$\" },\n    \"tier\":           { \"type\": \"integer\", \"minimum\": 0 },\n    \"cost\":           { \"type\": [\"number\", \"object\", \"null\"] },\n    \"statement\":      { \"type\": \"string\" },\n    \"rationale\":      { \"type\": \"string\" },\n    \"problem\":        { \"type\": \"string\" },\n    \"solution\":       { \"type\": \"string\" },\n    \"location\":       { \"type\": \"string\" },\n    \"file_refs\":      { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"depends_on\":     { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"supersedes\":     { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"interacts_with\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"tags\":           { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"status\":         { \"type\": \"string\", \"enum\": [\"healthy\", \"suspect\", \"broken\", \"quarantined\"] },\n    \"flaws\":          { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"witness\":        { \"type\": [\"string\", \"null\"], \"description\": \"qualified name of the witness predicate, or null\" },\n    \"variants\":       { \"type\": \"object\", \"description\": \"map of filename -> file content for language/format variants\" },\n    \"metadata\":       { \"type\": \"object\", \"description\": \"open extension point — registries MAY add fields; consumers MUST ignore unknown ones\" }\n  },\n  \"additionalProperties\": true\n}\n",
+    "typescript.ts": "// typescript.ts — TypeScript variant of the Card type — STUB.\n// Tracked as `lacking:ts_variant_for_card_type` until expanded.\n// The schema in schema.json is normative; this file is one variant.\n\nexport interface Card {\n  name: string;\n  category: string;\n  tier?: number;\n  cost?: number | Record<string, number>;\n  statement?: string;\n  rationale?: string;\n  problem?: string;\n  solution?: string;\n  location?: string;\n  file_refs?: string[];\n  depends_on?: string[];\n  supersedes?: string[];\n  interacts_with?: string[];\n  tags?: string[];\n  status?: \"healthy\" | \"suspect\" | \"broken\" | \"quarantined\";\n  flaws?: string[];\n  witness?: string | null;\n  variants?: Record<string, string>;\n  metadata?: Record<string, unknown>;\n}\n"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/_meta/card_type"
+}

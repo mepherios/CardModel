@@ -1,0 +1,97 @@
+{
+  "category": "redefinition",
+  "condition": "(_m > _n) & (_n >= 1) & (_m <= 1000) & (_n <= 1000)",
+  "cost_score": 35,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "integer",
+  "examples": [
+    {
+      "input": {
+        "_m": 2,
+        "_n": 1
+      },
+      "source_eval": 25,
+      "target_eval": 25
+    },
+    {
+      "input": {
+        "_m": 3,
+        "_n": 2
+      },
+      "source_eval": 169,
+      "target_eval": 169
+    },
+    {
+      "input": {
+        "_m": 4,
+        "_n": 1
+      },
+      "source_eval": 289,
+      "target_eval": 289
+    },
+    {
+      "input": {
+        "_m": 5,
+        "_n": 2
+      },
+      "source_eval": 841,
+      "target_eval": 841
+    },
+    {
+      "input": {
+        "_m": 7,
+        "_n": 4
+      },
+      "source_eval": 4225,
+      "target_eval": 4225
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "785ea739c0eda496baede3422ddc2b6f88ca664422ff619c54aec399dcaa0223",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "pythagorean_parametric",
+  "pheros_path": "redefinition/pythagorean_parametric",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:euclid-parametrization-of-primitive-pythagorean-triples-(m^2-n^2,2mn,m^2+n^2)",
+  "provenance": "derived_from_card",
+  "source_form": "(_m**2 - _n**2)**2 + (2*_m*_n)**2",
+  "status": "healthy",
+  "tags": [
+    "euclid-parametric",
+    "number-theory",
+    "pythagorean",
+    "rt-a5-seed",
+    "triples"
+  ],
+  "target_form": "(_m**2 + _n**2)**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 5,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 5
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 21,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "axiomatic"
+}

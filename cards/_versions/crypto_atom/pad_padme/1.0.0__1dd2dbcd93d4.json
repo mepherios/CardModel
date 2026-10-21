@@ -1,0 +1,61 @@
+{
+  "category": "crypto_atom",
+  "forms": [
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "entry": "pad",
+      "file": "python.py",
+      "lang": "python",
+      "name": "python_stdlib",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "entry": "pad",
+      "file": "javascript.mjs",
+      "lang": "javascript",
+      "name": "node_crypto",
+      "notes": "node:crypto built-ins (no npm packages)",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "lang": "javascript",
+      "name": "ting_js",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "static/app/crypto/cardcrypt.js#pad"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_python",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "core/suites_ref.py#pad"
+    }
+  ],
+  "interacts_with": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "pad_padme",
+  "operation": "padding",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b",
+    "ting_card": "cards/crypto_atom/padme"
+  },
+  "purity": "pure",
+  "standard": "Padmé (Nikitin et al., PURBs, PETS 2019) + 0x80 marker",
+  "statement": "Pad with 0x80 marker to padme/bucket length",
+  "tier": 0,
+  "vectors": "vectors.json"
+}

@@ -1,0 +1,35 @@
+{
+  "anchor": 3.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "demorgan",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 2.113,
+  "median_ns": 142.649,
+  "metadata": {
+    "inputs_signature": "d4b8ce656029befd",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__BIT_OR__demorgan",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/BIT_OR form demorgan: 142.6 ns per call on this host",
+  "target_card": "op/BIT_OR",
+  "tier": 3
+}

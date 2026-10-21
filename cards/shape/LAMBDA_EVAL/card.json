@@ -1,0 +1,20 @@
+{
+  "category": "shape",
+  "cost": 1.0,
+  "fallback": true,
+  "match": {
+    "python": {
+      "node": [
+        "Lambda"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "LAMBDA_EVAL",
+  "provenance": {
+    "origin": "hub config/card_catalog.py walk_cards (V5 shapes)"
+  },
+  "statement": "lambda (fallback)"
+}

@@ -1,0 +1,81 @@
+{
+  "category": "redefinition",
+  "condition": "(_a > -1e150) & (_a < 1e150) & (_b > -1e150) & (_b < 1e150)",
+  "cost_score": 10,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_a": 1,
+        "_b": 1
+      },
+      "source_eval": 0,
+      "target_eval": 0
+    },
+    {
+      "input": {
+        "_a": 3,
+        "_b": 2
+      },
+      "source_eval": 5,
+      "target_eval": 5
+    },
+    {
+      "input": {
+        "_a": "x",
+        "_b": 1
+      },
+      "source_eval": "(x + 1)*(x - 1)",
+      "target_eval": "x**2 - 1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "63f4fc91024c8f167f74c2de63e2f6a3d8300ef15238dcb181b5e87190e7d2b1",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "difference_of_squares",
+  "pheros_path": "redefinition/difference_of_squares",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic",
+  "provenance": "derived_from_card",
+  "source_form": "(_a + _b)*(_a - _b)",
+  "status": "healthy",
+  "tags": [
+    "algebra",
+    "binomial",
+    "expansion",
+    "factor-expand",
+    "polynomial"
+  ],
+  "target_form": "_a**2 - _b**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 2,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

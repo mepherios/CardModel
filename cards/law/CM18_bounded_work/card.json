@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM18_bounded_work",
+  "origins": [
+    "hub L20",
+    "hub L32"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Every subprocess has a timeout, every search a node budget; independent work runs in parallel.",
+  "tier": 0,
+  "witness": "tests/test_laws.py::test_subprocesses_have_timeouts"
+}

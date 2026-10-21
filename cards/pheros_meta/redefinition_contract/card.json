@@ -1,0 +1,43 @@
+{
+  "category": "meta_definition",
+  "derivation_source": "substrate_self_definition",
+  "flaws": [
+    "domain enum is closed; new domains require editing this card (acceptable: a closed enum is the point)",
+    "monolingual: schema in JSON only (lifting_plan: emit a Pydantic / dataclass variant once tool_card_codegen lands)"
+  ],
+  "former_provenance": "substrate_meta",
+  "interacts_with": [
+    "L34_redefinition_witness_required",
+    "card_type",
+    "process_redefinition_theory",
+    "theorem_card_contract"
+  ],
+  "metadata": {
+    "bypass_create_card": true,
+    "bypass_rationale": "axiom-tier meta card",
+    "version": "1.0.0"
+  },
+  "name": "redefinition_contract",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "provenance": "derived_from_card",
+  "rationale": "Without a contract, redefinition cards would drift in shape and the universal solver / discovery engine could not reliably load them. The contract is the schema half of L34: L34 enforces semantics (a witness exists and works); this card enforces structure (the fields are present and well-typed). Pairing them follows the same separation we already use for theorem_card_contract (structure) + L31 (semantics).",
+  "statement": "Contract every card under cards/redefinition/ MUST satisfy. Fields: name (snake_case), category (literal 'redefinition'), source_form (sympy-parseable string), target_form (sympy-parseable string), domain (enum), condition (sympy predicate or null), cost_score (integer 1-100), proof_ref (math card name, literal 'axiomatic', or null), witness_kind (enum), examples (non-empty list of {input, source_eval, target_eval} for symbolic/numerical), tags (list of strings). The contract is enforced by L34_redefinition_witness_required.",
+  "substrate_role": "substrate-internal definition",
+  "tags": [
+    "axiom",
+    "contract",
+    "redefinition",
+    "schema"
+  ],
+  "tier": 0,
+  "variants": {
+    "schema.json": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"title\": \"RedefinitionCard\",\n  \"description\": \"A card under cards/redefinition/<name>/ encoding one witnessed identity between two expressions in a declared domain.\",\n  \"type\": \"object\",\n  \"required\": [\"name\", \"category\", \"source_form\", \"target_form\", \"domain\", \"cost_score\", \"witness_kind\", \"examples\", \"tags\"],\n  \"properties\": {\n    \"name\": {\n      \"type\": \"string\",\n      \"pattern\": \"^[a-z][a-z0-9_]*$\",\n      \"description\": \"snake_case identifier unique within cards/redefinition/\"\n    },\n    \"category\": {\n      \"type\": \"string\",\n      \"const\": \"redefinition\"\n    },\n    \"source_form\": {\n      \"type\": \"string\",\n      \"description\": \"sympy-parseable LHS expression\"\n    },\n    \"target_form\": {\n      \"type\": \"string\",\n      \"description\": \"sympy-parseable RHS expression; the identity claimed is source_form == target_form on `domain` under `condition`\"\n    },\n    \"domain\": {\n      \"type\": \"string\",\n      \"enum\": [\"real\", \"complex\", \"fp32\", \"fp64\", \"bitvec64\", \"modular_n\", \"positive_real\", \"integer\"]\n    },\n    \"condition\": {\n      \"oneOf\": [\n        {\"type\": \"string\", \"description\": \"sympy-parseable predicate; identity holds only when this evaluates to True\"},\n        {\"type\": \"null\"}\n      ]\n    },\n    \"cost_score\": {\n      \"type\": \"integer\",\n      \"minimum\": 1,\n      \"maximum\": 100,\n      \"description\": \"relative cost in the substrate's default cost monoid; lower wins\"\n    },\n    \"proof_ref\": {\n      \"oneOf\": [\n        {\"type\": \"string\", \"description\": \"math card name OR the literal 'axiomatic'\"},\n        {\"type\": \"null\"}\n      ]\n    },\n    \"witness_kind\": {\n      \"type\": \"string\",\n      \"enum\": [\"symbolic\", \"numerical\", \"exhaustive\", \"axiomatic\"]\n    },\n    \"examples\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\"input\", \"source_eval\", \"target_eval\"],\n        \"properties\": {\n          \"input\": {\"type\": \"object\", \"description\": \"variable-name -> value\"},\n          \"source_eval\": {},\n          \"target_eval\": {}\n        }\n      }\n    },\n    \"tags\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"}\n    }\n  },\n  \"additionalProperties\": true\n}"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/_meta/redefinition_contract"
+}

@@ -1,0 +1,88 @@
+{
+  "category": "redefinition",
+  "condition": "(_a > 0) & (_b > 0) & (_a < 1e150) & (_b < 1e150) & (_a > 1e-150) & (_b > 1e-150)",
+  "cost_score": 20,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "positive_real",
+  "examples": [
+    {
+      "input": {
+        "_a": 8,
+        "_b": 2
+      },
+      "source_eval": 1.3862943611198906,
+      "target_eval": 1.3862943611198906
+    },
+    {
+      "input": {
+        "_a": 10,
+        "_b": 5
+      },
+      "source_eval": 0.6931471805599453,
+      "target_eval": 0.6931471805599453
+    },
+    {
+      "input": {
+        "_a": 1,
+        "_b": 4
+      },
+      "source_eval": -1.3862943611198906,
+      "target_eval": -1.3862943611198906
+    },
+    {
+      "input": {
+        "_a": "a",
+        "_b": "b"
+      },
+      "source_eval": "log(a/b)",
+      "target_eval": "log(a) - log(b)"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "39c6ed444f5ae0db9ec82f32bad3964f8d51c90dfff9a1d40849289e9ccd590a",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "log_quotient",
+  "pheros_path": "redefinition/log_quotient",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:log-product-rule-with-b->1/b",
+  "provenance": "derived_from_card",
+  "source_form": "log(_a/_b)",
+  "status": "healthy",
+  "tags": [
+    "log",
+    "logarithm",
+    "quotient-rule",
+    "rt-a5-seed"
+  ],
+  "target_form": "log(_a) - log(_b)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 4
+      },
+      "seed": 1210246382,
+      "symbolic": "not_simplified_to_zero",
+      "valid_points": 40,
+      "verdict": "verified"
+    }
+  },
+  "witness_kind": "symbolic"
+}

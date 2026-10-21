@@ -1,0 +1,125 @@
+{
+  "category": "op",
+  "cost": 15.0,
+  "emit": {
+    "c_like": "cm_powmod({0}, {1}, {2})",
+    "lean": "(cm_powmod {0} {1} {2})",
+    "lua": "cm_powmod({0}, {1}, {2})",
+    "python": "pow({0}, {1}, {2})",
+    "ruby": "(({0}).pow({1}, {2}))"
+  },
+  "forms": [
+    {
+      "code": "lambda a, b, n: pow(a, b, n)",
+      "cost": 15.0,
+      "domain": "modular",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b, n: pow(a, b, n)",
+      "cost": 15.0,
+      "domain": "modular",
+      "lang": "python",
+      "name": "square_mul",
+      "notes": "CPython already uses square-and-multiply internally",
+      "runnable": true
+    },
+    {
+      "cost": 15.0,
+      "domain": "modular",
+      "lang": "rust",
+      "name": "rust_hint",
+      "notes": "needs the num_modular crate",
+      "runnable": false,
+      "str_impl": "num_modular::ModularPow::powm(a, b, n)"
+    }
+  ],
+  "hints": {
+    "c": {
+      "imports": [
+        "gmp.h"
+      ],
+      "snippet": "mpz_powm(r, a, b, n)"
+    },
+    "go": {
+      "snippet": "new(big.Int).Exp(a, b, n)"
+    },
+    "js": {
+      "snippet": "(a ** b) % n  /* BigInt */"
+    },
+    "python": {
+      "snippet": "pow(a, b, n)"
+    },
+    "rust": {
+      "imports": [
+        "num_bigint::ModPow"
+      ],
+      "snippet": "modpow(a, b, n)"
+    },
+    "swift": {
+      "notes": "requires Numerics package",
+      "snippet": "pow(a, b, mod: n)"
+    }
+  },
+  "ir": {
+    "arity": 3,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            0,
+            200
+          ]
+        },
+        {
+          "int": [
+            2,
+            3000000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b, m: pow(a, b, m)",
+    "types": [
+      [
+        "int",
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "call": [
+        "pow/3"
+      ]
+    }
+  },
+  "metadata": {
+    "hub_card": "POW_MOD",
+    "hub_cost": 15.0,
+    "version": "1.0.0"
+  },
+  "name": "POW_MOD",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "pow(a, b, m) -- modular exponentiation (b >= 0, m > 0)",
+  "tier": 1
+}

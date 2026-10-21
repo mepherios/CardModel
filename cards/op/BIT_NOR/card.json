@@ -1,0 +1,47 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "forms": [
+    {
+      "code": "bp.bit_nor",
+      "cost": 1.0,
+      "domain": "u32",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "native",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        4294967295
+      ]
+    },
+    {
+      "int": [
+        0,
+        4294967295
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "BIT_NOR",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "NOR -- universal alternate basis (32-bit)",
+  "tier": 0
+}

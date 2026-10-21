@@ -1,0 +1,26 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "53514c69746520666f726d6174203300",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "file"
+    ],
+    "priority": 50
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "sqlite",
+  "statement": "SQLite 3 database file.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/sqlite"
+}

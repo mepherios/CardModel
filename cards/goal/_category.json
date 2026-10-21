@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Measurable goals: a metric the program computes, a target and a direction.",
+  "name": "goal",
+  "tier": 0
+}

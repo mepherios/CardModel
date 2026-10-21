@@ -1,0 +1,34 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [],
+    "line": [
+      "#"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".r",
+    ".R"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "r",
+  "probe": {
+    "kind": "executable",
+    "name": "Rscript",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "r: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

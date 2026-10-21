@@ -1,0 +1,166 @@
+{
+  "call_runner": "node",
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value};",
+    "break": "break;",
+    "continue": "continue;",
+    "declare": "let {name} = {value};",
+    "else": "}} else {{",
+    "empty": "",
+    "end_if": "}}",
+    "end_while": "}}",
+    "func": "function {name}({params}) {{\n{body}}}\n",
+    "harness": {
+      "bench_call": "cm_acc += {truthy};",
+      "bench_main": "let cm_acc = 0n;\nfor (let cm_r = 0; cm_r < {reps}; cm_r++) {{\n{calls}}}\nconsole.log(String(cm_acc));\n",
+      "main": "{calls}",
+      "print": {
+        "bool": "console.log('b:' + (({e}) ? 'true' : 'false'));",
+        "float": "console.log('f:' + String({e}));",
+        "int": "console.log('i:' + ({e}).toString());"
+      },
+      "truthy": {
+        "bool": "(({e}) ? 1n : 0n)",
+        "float": "((({e}) > 0) ? 1n : 0n)",
+        "int": "((({e}) !== 0n) ? 1n : 0n)"
+      }
+    },
+    "helpers": {
+      "cm_abs_i": "function cm_abs_i(a) { return a < 0n ? -a : a; }",
+      "cm_floordiv": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }",
+      "cm_floormod": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }",
+      "cm_gcd": "function cm_gcd(a, b) { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b !== 0n) { const t = a % b; a = b; b = t; } return a; }",
+      "cm_max_f": "function cm_max_f(a, b) { return b > a ? b : a; }",
+      "cm_max_i": "function cm_max_i(a, b) { return b > a ? b : a; }",
+      "cm_min_f": "function cm_min_f(a, b) { return b < a ? b : a; }",
+      "cm_min_i": "function cm_min_i(a, b) { return b < a ? b : a; }",
+      "cm_powmod": "function cm_powmod(a, b, m) { let r = cm_floormod(1n, m); a = cm_floormod(a, m); while (b > 0n) { if ((b & 1n) === 1n) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1n; } return r; }",
+      "cm_trunc_int": "function cm_trunc_int(x) { return BigInt(Math.trunc(x)); }"
+    },
+    "if": "if ({cond}) {{",
+    "indent": "    ",
+    "lib_epilogue": "",
+    "lib_prelude": "@imports@",
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v}n)",
+      "true": "true"
+    },
+    "param": "{name}",
+    "prelude": "@imports@",
+    "return": "return {value};",
+    "style": "braces",
+    "types": {
+      "bool": "boolean",
+      "float": "number",
+      "int": "bigint"
+    },
+    "while": "while ({cond}) {{",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0n"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".js",
+    ".mjs",
+    ".cjs"
+  ],
+  "family": "c_like",
+  "int_bits": null,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "javascript",
+  "probe": {
+    "kind": "executable",
+    "name": "node",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "export",
+    "extends",
+    "finally",
+    "for",
+    "function",
+    "if",
+    "import",
+    "in",
+    "instanceof",
+    "new",
+    "return",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
+    "let",
+    "static",
+    "enum",
+    "await",
+    "implements",
+    "package",
+    "protected",
+    "interface",
+    "private",
+    "public",
+    "null",
+    "true",
+    "false",
+    "undefined",
+    "NaN",
+    "Infinity",
+    "arguments",
+    "eval"
+  ],
+  "runner": {
+    "file": "main.mjs",
+    "run": [
+      "{exe}",
+      "{src}"
+    ]
+  },
+  "statement": "JavaScript on Node: int is BigInt (exact), float is Number.",
+  "tier": 0
+}

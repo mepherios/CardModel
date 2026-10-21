@@ -1,0 +1,35 @@
+{
+  "anchor": 12.0,
+  "calls_per_sample": 720,
+  "category": "metric",
+  "form": "xgcd",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 202.663,
+  "median_ns": 1222.454,
+  "metadata": {
+    "inputs_signature": "fb7857ab4e47ee93",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__MODINV__xgcd",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/MODINV form xgcd: 1222.5 ns per call on this host",
+  "target_card": "op/MODINV",
+  "tier": 3
+}

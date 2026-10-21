@@ -1,0 +1,34 @@
+[
+ {
+  "name": "rfc6979-A.2.5-sample-verify",
+  "args": [
+   {
+    "$bytes": "0360fed4ba255a9d31c961eb74c6356d68c049b8923b61fa6ce669622e60f29fb6"
+   },
+   {
+    "$bytes": "73616d706c65"
+   },
+   {
+    "$bytes": "efd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf3716f7cb1c942d657c41d436c7a1b6e29f65f3e900dbb9aff4064dc4ab2f843acda8"
+   }
+  ],
+  "source": "RFC 6979 \u00a7A.2.5 (high-S as published)",
+  "out": true
+ },
+ {
+  "name": "rfc6979-A.2.5-sample-sign-lowS",
+  "args": [
+   {
+    "$bytes": "0360fed4ba255a9d31c961eb74c6356d68c049b8923b61fa6ce669622e60f29fb6"
+   },
+   {
+    "$bytes": "73616d706c65"
+   },
+   {
+    "$bytes": "efd48b2aacb6a8fd1140dd9cd45e81d69d2c877b56aaf991c34d0ea84eaf37160834e36ad29a83bf2bc9385e491d6099c8fdf9d1ed67aa7ea5f51f93782857a9"
+   }
+  ],
+  "source": "RFC 6979 \u00a7A.2.5, s normalized to n\u2212s",
+  "out": true
+ }
+]

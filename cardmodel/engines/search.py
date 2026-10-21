@@ -1,0 +1,208 @@
+"""search — rewrite search over op trees: proof chains and cost-directed optimisation.
+
+Ported from the hub's rewrite_search.py (BFS, ?var pattern unification,
+rewriting at every position) with three changes:
+  * rules are cards (cards/rewrite_rule/*), loaded at run time (Pheros L33):
+    adding a rule never edits this file;
+  * ``prove`` searches from both sides and meets in the middle (rules are
+    equalities, so either direction is sound), with a node budget (L20);
+  * ``optimize`` uses the same moves to find the cheapest equivalent
+    expression, where cost = sum of op-card costs.
+
+Honest limits (L1): bounded breadth-first search, so a proof that needs
+more steps than ``max_depth`` (or more nodes than ``max_nodes``) is
+reported as not found -- that is not a disproof. Side conditions on rules
+(e.g. ``k >= 0``) are checked by the numeric witness, not during search.
+"""
+from __future__ import annotations
+
+from collections import deque
+from dataclasses import dataclass
+
+from .exprs import parse, size, to_text
+
+
+@dataclass
+class Rule:
+    name: str
+    lhs: object
+    rhs: object
+    card: str
+    condition: str | None = None
+
+
+def load_rules(store, names: list[str] | None = None) -> list[Rule]:
+    out = []
+    for card in store.cards("rewrite_rule"):
+        if names and card.name not in names:
+            continue
+        pv = card.get("vars") or []
+        try:
+            lhs, rhs = parse(card["lhs"], pv), parse(card["rhs"], pv)
+        except Exception as exc:  # noqa: BLE001 -- a malformed rule card is reported, not fatal
+            raise ValueError(f"rewrite_rule/{card.name}: {exc}") from exc
+        out.append(Rule(card.name, lhs, rhs, card.name, card.get("condition")))
+        if card.get("bidirectional"):
+            out.append(Rule(card.name + "~rev", rhs, lhs, card.name, card.get("condition")))
+    return out
+
+
+def match(pattern, expr, b: dict | None = None) -> dict | None:
+    b = {} if b is None else b
+    if isinstance(pattern, str) and pattern.startswith("?"):
+        if pattern in b:
+            return b if b[pattern] == expr else None
+        b[pattern] = expr
+        return b
+    if isinstance(pattern, list) and isinstance(expr, list):
+        if len(pattern) != len(expr) or pattern[0] != expr[0]:
+            return None
+        for p, e in zip(pattern[1:], expr[1:]):
+            if match(p, e, b) is None:
+                return None
+        return b
+    return b if pattern == expr else None
+
+
+def instantiate(pattern, b: dict):
+    if isinstance(pattern, str) and pattern.startswith("?"):
+        return b.get(pattern, pattern)
+    if isinstance(pattern, list):
+        return [instantiate(p, b) for p in pattern]
+    return pattern
+
+
+def _key(e) -> str:
+    return repr(e)
+
+
+def rewrites(expr, rules: list[Rule]):
+    """Every (rule name, expression) reachable by applying one rule at one position."""
+    out = []
+    seen = set()
+
+    def visit(node, rebuild):
+        for r in rules:
+            b = match(r.lhs, node)
+            if b is not None:
+                new = rebuild(instantiate(r.rhs, b))
+                k = _key(new)
+                if k not in seen:
+                    seen.add(k)
+                    out.append((r.name, new))
+        if isinstance(node, list) and node and node[0] not in ("var", "int", "float", "bool", "const"):
+            start = 2 if node[0] == "FN" else 1
+            for i in range(start, len(node)):
+                def rb(child, i=i, node=node, rebuild=rebuild):
+                    copy = list(node)
+                    copy[i] = child
+                    return rebuild(copy)
+                visit(node[i], rb)
+
+    visit(expr, lambda x: x)
+    return out
+
+
+def prove(lhs, rhs, rules: list[Rule], max_depth: int = 6, max_nodes: int = 50000) -> dict | None:
+    """Meet-in-the-middle BFS. Returns {"steps": [(rule, expr), ...], "nodes": n} or None."""
+    if isinstance(lhs, str) and not lhs.startswith("?"):
+        lhs = parse(lhs)
+    if isinstance(rhs, str) and not rhs.startswith("?"):
+        rhs = parse(rhs)
+    if _key(lhs) == _key(rhs):
+        return {"steps": [("start", lhs)], "nodes": 1}
+    parents = [{_key(lhs): None}, {_key(rhs): None}]
+    exprs = [{_key(lhs): lhs}, {_key(rhs): rhs}]
+    frontier = [deque([(lhs, 0)]), deque([(rhs, 0)])]
+    nodes = 2
+    side = 0
+    while (frontier[0] or frontier[1]) and nodes < max_nodes:
+        if not frontier[side]:
+            side = 1 - side
+            continue
+        layer_depth = frontier[side][0][1]
+        while frontier[side] and frontier[side][0][1] == layer_depth and nodes < max_nodes:
+            cur, d = frontier[side].popleft()
+            if d >= max_depth:
+                continue
+            for rule, new in rewrites(cur, rules):
+                k = _key(new)
+                if k in parents[side]:
+                    continue
+                parents[side][k] = (_key(cur), rule)
+                exprs[side][k] = new
+                nodes += 1
+                if k in parents[1 - side]:
+                    return {"steps": _join(k, parents, exprs, side), "nodes": nodes}
+                frontier[side].append((new, d + 1))
+        side = 1 - side
+    return None
+
+
+def _chain(k, parents, exprs):
+    out = []
+    while parents[k] is not None:
+        prev, rule = parents[k]
+        out.append((rule, exprs[k]))
+        k = prev
+    out.append(("start", exprs[k]))
+    return list(reversed(out))
+
+
+def _join(k, parents, exprs, side):
+    a = _chain(k, parents[side], exprs[side])        # start(side) ... k
+    b = _chain(k, parents[1 - side], exprs[1 - side])  # start(other) ... k
+    if side == 1:
+        a, b = b, a                                     # a: from lhs to k, b: from rhs to k
+    steps = list(a)
+    # walk back from k to rhs: the rule that produced b[i] (from b[i-1]) also maps b[i] -> b[i-1]
+    for i in range(len(b) - 1, 0, -1):
+        steps.append((b[i][0] + "~back", b[i - 1][1]))
+    return steps
+
+
+def op_costs(store) -> dict[str, float]:
+    out = {}
+    for card in store.cards("op"):
+        c = card.get("cost")
+        if isinstance(c, (int, float)):
+            out[card.name] = float(c)
+    return out
+
+
+def expr_cost(expr, costs: dict[str, float]) -> float:
+    if isinstance(expr, list) and expr and expr[0] not in ("var", "int", "float", "bool", "const"):
+        head = expr[0]
+        own = costs.get(head, 1.0) if head != "FN" else 5.0
+        return own + sum(expr_cost(a, costs) for a in expr[(2 if head == "FN" else 1):])
+    return 0.0
+
+
+def optimize(expr, rules: list[Rule], costs: dict[str, float], max_depth: int = 4, max_nodes: int = 20000) -> dict:
+    """Cheapest expression reachable within the budget, with the chain of rules that reaches it."""
+    if isinstance(expr, str):
+        expr = parse(expr)
+    best = (expr_cost(expr, costs), size(expr), expr)
+    parents = {_key(expr): None}
+    exprs = {_key(expr): expr}
+    q = deque([(expr, 0)])
+    nodes = 1
+    while q and nodes < max_nodes:
+        cur, d = q.popleft()
+        if d >= max_depth:
+            continue
+        for rule, new in rewrites(cur, rules):
+            k = _key(new)
+            if k in parents:
+                continue
+            parents[k] = (_key(cur), rule)
+            exprs[k] = new
+            nodes += 1
+            c = (expr_cost(new, costs), size(new), new)
+            if c[:2] < best[:2]:
+                best = c
+            q.append((new, d + 1))
+    chain = _chain(_key(best[2]), parents, exprs)
+    return {"input": to_text(expr), "input_cost": expr_cost(expr, costs), "best": to_text(best[2]),
+            "best_tree": best[2], "best_cost": best[0], "steps": [(r, to_text(e)) for r, e in chain],
+            "nodes": nodes}

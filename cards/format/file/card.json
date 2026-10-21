@@ -1,0 +1,19 @@
+{
+  "category": "format",
+  "detect": {
+    "parents": [],
+    "predicate": "reacards.domains:is_regular_file",
+    "priority": 0
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "file",
+  "statement": "Any regular file (fallback domain).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/file"
+}

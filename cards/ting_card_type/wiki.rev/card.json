@@ -1,0 +1,46 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "target",
+      "label": "target"
+    },
+    {
+      "from": "context.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {
+    "target": "required"
+  },
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "wiki.rev",
+  "render": "none",
+  "schema": {
+    "properties": {
+      "summary": {
+        "maxLength": 300,
+        "type": "string"
+      },
+      "text": {
+        "maxLength": 60000,
+        "type": "string"
+      },
+      "title": {
+        "maxLength": 200,
+        "type": "string"
+      }
+    },
+    "required": [
+      "text"
+    ],
+    "type": "object"
+  },
+  "summary": "A revision of a wiki page; the newest revision is shown.",
+  "tier": 0,
+  "version": 1
+}

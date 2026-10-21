@@ -1,0 +1,83 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "body.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "post",
+  "render": "post",
+  "schema": {
+    "properties": {
+      "channel": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "files": {
+        "items": {
+          "properties": {
+            "key": {
+              "format": "b64_32",
+              "type": "string"
+            },
+            "mime": {
+              "maxLength": 128,
+              "type": "string"
+            },
+            "name": {
+              "maxLength": 255,
+              "type": "string"
+            },
+            "sha256": {
+              "format": "hex64",
+              "type": "string"
+            },
+            "size": {
+              "maximum": 52428800,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "suite": {
+              "maxLength": 32,
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "mime",
+            "size",
+            "sha256",
+            "key"
+          ],
+          "type": "object"
+        },
+        "maxItems": 10,
+        "type": "array"
+      },
+      "text": {
+        "maxLength": 50000,
+        "type": "string"
+      },
+      "title": {
+        "maxLength": 200,
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "text",
+      "channel"
+    ],
+    "type": "object"
+  },
+  "summary": "A forum post with a title; replies are messages whose parent is the post.",
+  "tier": 0,
+  "version": 1
+}

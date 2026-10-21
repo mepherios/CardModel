@@ -1,0 +1,21 @@
+{
+  "category": "format",
+  "detect": {
+    "parents": [
+      "file"
+    ],
+    "predicate": "reacards.domains:is_evm_hex",
+    "priority": 20
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "evm_bytecode",
+  "statement": "Hex-encoded EVM bytecode text.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/evm_bytecode"
+}

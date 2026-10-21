@@ -1,0 +1,42 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "body.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "wiki",
+  "render": "wiki",
+  "schema": {
+    "properties": {
+      "channel": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "text": {
+        "maxLength": 60000,
+        "type": "string"
+      },
+      "title": {
+        "maxLength": 200,
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "text",
+      "channel"
+    ],
+    "type": "object"
+  },
+  "summary": "A wiki page. Any member can add revisions (wiki.rev cards).",
+  "tier": 0,
+  "version": 1
+}

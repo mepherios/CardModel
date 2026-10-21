@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "redefinitions_verified",
+  "name": "G_C4_redefinitions_verified",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Executable redefinitions verified numerically on seeded points (or proved symbolically when sympy is present).",
+  "target": 111,
+  "tier": 0
+}

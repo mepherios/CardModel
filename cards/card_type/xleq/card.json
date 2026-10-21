@@ -1,0 +1,59 @@
+{
+  "applies_to": [
+    "xleq"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "anyOf": [
+      {
+        "properties": {
+          "confidence": {
+            "const": "established"
+          },
+          "evidence_count": {
+            "minimum": 3,
+            "type": "integer"
+          }
+        }
+      },
+      {
+        "properties": {
+          "confidence": {
+            "enum": [
+              "tentative",
+              "refuted",
+              "hypothesized"
+            ]
+          }
+        }
+      }
+    ],
+    "properties": {
+      "evidence_count": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "languages": {
+        "minItems": 2,
+        "type": "array"
+      }
+    },
+    "required": [
+      "subject",
+      "languages",
+      "confidence",
+      "evidence_count"
+    ],
+    "type": "object"
+  },
+  "statement": "Cross-language equivalence evidence (Pheros cross_language_equivalence + L56: 'established' needs evidence_count >= 3).",
+  "tier": 0
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pheros.studio/schemas/card.schema.json",
+  "title": "Card",
+  "description": "The universal Card record. Every card in Pheros_Studio conforms to this.",
+  "type": "object",
+  "required": ["name", "category"],
+  "properties": {
+    "name":           { "type": "string", "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$" },
+    "category":       { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "tier":           { "type": "integer", "minimum": 0 },
+    "cost":           { "type": ["number", "object", "null"] },
+    "statement":      { "type": "string" },
+    "rationale":      { "type": "string" },
+    "problem":        { "type": "string" },
+    "solution":       { "type": "string" },
+    "location":       { "type": "string" },
+    "file_refs":      { "type": "array", "items": { "type": "string" } },
+    "depends_on":     { "type": "array", "items": { "type": "string" } },
+    "supersedes":     { "type": "array", "items": { "type": "string" } },
+    "interacts_with": { "type": "array", "items": { "type": "string" } },
+    "tags":           { "type": "array", "items": { "type": "string" } },
+    "status":         { "type": "string", "enum": ["healthy", "suspect", "broken", "quarantined"] },
+    "flaws":          { "type": "array", "items": { "type": "string" } },
+    "witness":        { "type": ["string", "null"], "description": "qualified name of the witness predicate, or null" },
+    "variants":       { "type": "object", "description": "map of filename -> file content for language/format variants" },
+    "metadata":       { "type": "object", "description": "open extension point — registries MAY add fields; consumers MUST ignore unknown ones" }
+  },
+  "additionalProperties": true
+}

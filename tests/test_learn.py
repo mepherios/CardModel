@@ -1,0 +1,107 @@
+"""Observe and the learning loop: proposals carry evidence; promotion needs it (CM04, CM15)."""
+import unittest
+
+from helpers import SEED, TempProject
+
+from cardmodel.engines.learn import MIN_EVIDENCE, learn
+from cardmodel.engines.observe import observe
+
+APP = {
+    "app/core.py": '''
+import json
+
+def score(a: int, b: int) -> int:
+    total = 0
+    for i in range(a):
+        total += (i * b) % 7
+    return total
+
+def area(w: float, h: float) -> float:
+    return w * h / 2
+
+def load(path):
+    with open(path) as f:
+        return json.loads(f.read())
+
+def shout(cfg):
+    return cfg.get("x") + cfg.get("y")
+''',
+    "app/util.py": '''
+def double(x: int) -> int:
+    return x * 2 + 0
+
+def pick(cfg):
+    return cfg.get("z")
+
+def once(v):
+    return frobnicate(v)
+''',
+    "web/app.js": "function f(a) { return Math.max(a, 1) + parseInt('3'); }\n// comment(not_a_call)\n",
+}
+
+
+class Observe(unittest.TestCase):
+    def test_observation_counts_and_functions(self):
+        p = TempProject(APP)
+        try:
+            obs = observe(p.ctx(), p.dir)
+            t = obs["totals"]
+            self.assertEqual(t["by_language"], {"python": 2, "javascript": 1})
+            self.assertGreater(t["cards_fired"], 10)
+            self.assertTrue(0 < t["named_fraction"] < 1)
+            lifted = {f["name"]: f["liftable"] for f in obs["functions"]}
+            self.assertEqual(lifted["score"], True)
+            self.assertEqual(lifted["load"], False)
+            self.assertNotIn("not_a_call", obs["fallback_calls_by_language"].get("javascript", {}))
+            self.assertTrue(all(not f["path"].startswith("/") for f in obs["files"]))   # no user paths (L50)
+        finally:
+            p.cleanup()
+
+
+class Learn(unittest.TestCase):
+    def test_promotion_needs_evidence(self):
+        p = TempProject(APP)
+        try:
+            ctx = p.ctx()
+            rep = learn(ctx, p.dir, promote=True, seed=SEED, langs=["python", "javascript"])
+            st = ctx.store
+            st.invalidate()
+            get = st.get("call/CALL_METHOD_GET")            # .get used 3 times in 2 files -> promoted
+            self.assertIsNotNone(get, rep)
+            self.assertGreaterEqual(get["metadata"]["evidence_count"], MIN_EVIDENCE)
+            self.assertIsNone(st.get("call/CALL_FROBNICATE"))  # used once -> stays a proposal
+            prop = st.get("proposal/prop_call_CALL_FROBNICATE")
+            self.assertIsNotNone(prop)
+            self.assertFalse(prop["ready"])
+            self.assertIn("needs", prop["reason"])
+        finally:
+            p.cleanup()
+
+    def test_learned_cards_cite_evidence(self):
+        p = TempProject(APP)
+        try:
+            ctx = p.ctx()
+            rep = learn(ctx, p.dir, promote=True, seed=SEED, langs=["python", "javascript", "c"])
+            st = ctx.store
+            st.invalidate()
+            fns = [c for c in st.cards("function") if c.layer == "project"]   # the model has its own learned ones
+            self.assertTrue(any(c["ir"]["entry"] == "score" for c in fns), rep)
+            for c in fns:
+                self.assertEqual(c["status"], "healthy")
+                self.assertIn(f"observation/{rep['observation']}", c["provenance"]["learning_loop_refs"])
+                self.assertIn(c["metadata"]["confidence"], ("established", "tentative"))
+                self.assertGreaterEqual(len(c["metadata"]["agreeing_languages"]), 3)
+            xs = [x for x in st.cards("xleq") if x.layer == "project"]
+            self.assertTrue(xs and all(x["evidence_count"] >= 3 for x in xs))
+            obs = st.get(f"observation/{rep['observation']}")
+            self.assertIsNotNone(obs)                         # ground truth written once
+            sugg = [x for x in st.cards("suggestion") if x.layer == "project"]
+            self.assertTrue(any(s["to"] == "(x << 1)" for s in sugg), [s["statement"] for s in sugg])
+            again = learn(ctx, p.dir, promote=True, seed=SEED, langs=["python"])
+            self.assertEqual(again["observation"], rep["observation"])   # same content -> same observation
+        finally:
+            p.cleanup()
+
+
+if __name__ == "__main__":
+    unittest.main()

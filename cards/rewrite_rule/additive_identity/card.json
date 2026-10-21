@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a + 0",
+  "metadata": {
+    "previous_content_hash": "b37c2d32d82bacbf3cc1180ee9767ba60308086f7e45dfe3fd3b3e1b2614374b",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "additive_identity",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a",
+  "statement": "a + 0 == a",
+  "tier": 1,
+  "vars": [
+    "a"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_additive_identity (a : Int) : (a + 0) = a := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

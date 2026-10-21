@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM04_compose_with_evidence",
+  "origins": [
+    "hub L26",
+    "Pheros L100",
+    "Pheros L22"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Compose from existing cards first; a new card enters through the learning loop with evidence (>= 3 observations or a passing witness), never as a bare declaration.",
+  "tier": 0,
+  "witness": "tests/test_learn.py::test_promotion_needs_evidence"
+}

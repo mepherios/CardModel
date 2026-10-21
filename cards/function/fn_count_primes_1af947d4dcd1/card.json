@@ -1,0 +1,643 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_EQ",
+    "op/CMP_LE",
+    "op/CMP_LT",
+    "op/MOD",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef count_primes(limit: int) -> int:\n    c = 0\n    for k in range(2, limit):\n        if is_prime(k):\n            c += 1\n    return c\n\ndef is_prime(n: int) -> bool:\n    if n < 2:\n        return False\n    i = 2\n    while i * i <= n:\n        if n % i == 0:\n            return False\n        i += 1\n    return True",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic bool is_prime(int64_t n) {\n    int64_t i = 0;\n    if ((n < INT64_C(2))) {\n        return false;\n    }\n    i = INT64_C(2);\n    while (((i * i) <= n)) {\n        if ((cm_floormod(n, i) == INT64_C(0))) {\n            return false;\n        }\n        i = (i + INT64_C(1));\n    }\n    return true;\n}\n\nstatic int64_t count_primes(int64_t limit) {\n    int64_t c = 0;\n    int64_t k = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    c = INT64_C(0);\n    cm_it1 = INT64_C(2);\n    cm_stop2 = limit;\n    while ((cm_it1 < cm_stop2)) {\n        k = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        if (is_prime(k)) {\n            c = (c + INT64_C(1));\n        }\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc is_prime(n int64) bool {\n\tvar i int64 = 0\n\t_ = i\n\tif (n < int64(2)) {\n\t\treturn false\n\t}\n\ti = int64(2)\n\tfor ((i * i) <= n) {\n\t\tif (cm_floormod(n, i) == int64(0)) {\n\t\t\treturn false\n\t\t}\n\t\ti = (i + int64(1))\n\t}\n\treturn true\n}\n\nfunc count_primes(limit int64) int64 {\n\tvar c int64 = 0\n\t_ = c\n\tvar k int64 = 0\n\t_ = k\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\tc = int64(0)\n\tcm_it1 = int64(2)\n\tcm_stop2 = limit\n\tfor (cm_it1 < cm_stop2) {\n\t\tk = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\tif is_prime(k) {\n\t\t\tc = (c + int64(1))\n\t\t}\n\t}\n\treturn c\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction is_prime(n) {\n    let i = 0n;\n    if ((n < (2n))) {\n        return false;\n    }\n    i = (2n);\n    while (((i * i) <= n)) {\n        if ((cm_floormod(n, i) === (0n))) {\n            return false;\n        }\n        i = (i + (1n));\n    }\n    return true;\n}\n\nfunction count_primes(limit) {\n    let c = 0n;\n    let k = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    c = (0n);\n    cm_it1 = (2n);\n    cm_stop2 = limit;\n    while ((cm_it1 < cm_stop2)) {\n        k = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        if (is_prime(k)) {\n            c = (c + (1n));\n        }\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def is_prime(n: int) -> bool:\n    if (n < 2):\n        return False\n    i = 2\n    while ((i * i) <= n):\n        if ((n % i) == 0):\n            return False\n        i = (i + 1)\n    return True\n\n\ndef count_primes(limit: int) -> int:\n    c = 0\n    for k in range(2, limit, 1):\n        if is_prime(k):\n            c = (c + 1)\n    return c\n\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn is_prime(n: i64) -> bool {\n    let mut i: i64 = 0;\n    if (n < (2i64)) {\n        return false;\n    }\n    i = (2i64);\n    while ((i * i) <= n) {\n        if (cm_floormod(n, i) == (0i64)) {\n            return false;\n        }\n        i = (i + (1i64));\n    }\n    return true;\n}\n\nfn count_primes(limit: i64) -> i64 {\n    let mut c: i64 = 0;\n    let mut k: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    c = (0i64);\n    cm_it1 = (2i64);\n    cm_stop2 = limit;\n    while (cm_it1 < cm_stop2) {\n        k = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        if is_prime(k) {\n            c = (c + (1i64));\n        }\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic bool is_prime(int64_t n) {\n    int64_t i = 0;\n    if ((n < INT64_C(2))) {\n        return false;\n    }\n    i = INT64_C(2);\n    while (((i * i) <= n)) {\n        if ((cm_floormod(n, i) == INT64_C(0))) {\n            return false;\n        }\n        i = (i + INT64_C(1));\n    }\n    return true;\n}\n\nstatic int64_t count_primes(int64_t limit) {\n    int64_t c = 0;\n    int64_t k = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    c = INT64_C(0);\n    cm_it1 = INT64_C(2);\n    cm_stop2 = limit;\n    while ((cm_it1 < cm_stop2)) {\n        k = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        if (is_prime(k)) {\n            c = (c + INT64_C(1));\n        }\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static boolean is_prime(long n) {\n    long i = 0L;\n    if ((n < (2L))) {\n        return false;\n    }\n    i = (2L);\n    while (((i * i) <= n)) {\n        if ((Math.floorMod(n, i) == (0L))) {\n            return false;\n        }\n        i = (i + (1L));\n    }\n    return true;\n    }\n\n    static long count_primes(long limit) {\n    long c = 0L;\n    long k = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    c = (0L);\n    cm_it1 = (2L);\n    cm_stop2 = limit;\n    while ((cm_it1 < cm_stop2)) {\n        k = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        if (is_prime(k)) {\n            c = (c + (1L));\n        }\n    }\n    return c;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def is_prime (n : Int) : Bool := Id.run do\n  let mut i : Int := 0\n  if (decide (n < (2 : Int))) then\n    return false\n  i := (2 : Int)\n  while (decide ((i * i) <= n)) do\n    if ((Int.fmod n i) == (0 : Int)) then\n      return false\n    i := (i + (1 : Int))\n  return true\n\n\npartial def count_primes (limit : Int) : Int := Id.run do\n  let mut c : Int := 0\n  let mut k : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  c := (0 : Int)\n  cm_it1 := (2 : Int)\n  cm_stop2 := limit\n  while (decide (cm_it1 < cm_stop2)) do\n    k := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    if (is_prime k) then\n      c := (c + (1 : Int))\n  return c\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function is_prime(n)\n  local i = 0\n  if (n < (2)) then\n    return false\n  end\n  i = (2)\n  while ((i * i) <= n) do\n    if ((n % i) == (0)) then\n      return false\n    end\n    i = (i + (1))\n    ::cm_continue_1::\n  end\n  return true\nend\n\nfunction count_primes(limit)\n  local c = 0\n  local k = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  c = (0)\n  cm_it1 = (2)\n  cm_stop2 = limit\n  while (cm_it1 < cm_stop2) do\n    k = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    if is_prime(k) then\n      c = (c + (1))\n    end\n    ::cm_continue_2::\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def is_prime(n)\n  i = 0\n  if (n < (2))\n    return false\n  end\n  i = (2)\n  while ((i * i) <= n)\n    if ((n % i) == (0))\n      return false\n    end\n    i = (i + (1))\n  end\n  return true\nend\n\ndef count_primes(limit)\n  c = 0\n  k = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  c = (0)\n  cm_it1 = (2)\n  cm_stop2 = limit\n  while (cm_it1 < cm_stop2)\n    k = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    if is_prime(k)\n      c = (c + (1))\n    end\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc is_prime(_ n: Int) -> Bool {\n    var i: Int = 0\n    if (n < (2)) {\n        return false\n    }\n    i = (2)\n    while ((i * i) <= n) {\n        if (cm_floormod(n, i) == (0)) {\n            return false\n        }\n        i = (i + (1))\n    }\n    return true\n}\n\nfunc count_primes(_ limit: Int) -> Int {\n    var c: Int = 0\n    var k: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    c = (0)\n    cm_it1 = (2)\n    cm_stop2 = limit\n    while (cm_it1 < cm_stop2) {\n        k = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        if is_prime(k) {\n            c = (c + (1))\n        }\n    }\n    return c\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction is_prime(n: bigint): boolean {\n    let i: bigint = 0n;\n    if ((n < (2n))) {\n        return false;\n    }\n    i = (2n);\n    while (((i * i) <= n)) {\n        if ((cm_floormod(n, i) === (0n))) {\n            return false;\n        }\n        i = (i + (1n));\n    }\n    return true;\n}\n\nfunction count_primes(limit: bigint): bigint {\n    let c: bigint = 0n;\n    let k: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    c = (0n);\n    cm_it1 = (2n);\n    cm_stop2 = limit;\n    while ((cm_it1 < cm_stop2)) {\n        k = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        if (is_prime(k)) {\n            c = (c + (1n));\n        }\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "count_primes",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "count_primes",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "c",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "cond": [
+                  "CALL",
+                  "is_prime",
+                  [
+                    "var",
+                    "k"
+                  ]
+                ],
+                "else": [],
+                "k": "if",
+                "then": [
+                  {
+                    "k": "assign",
+                    "target": "c",
+                    "value": [
+                      "ADD",
+                      [
+                        "var",
+                        "c"
+                      ],
+                      [
+                        "int",
+                        1
+                      ]
+                    ]
+                  }
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              2
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "var",
+              "limit"
+            ],
+            "stop_var": "cm_stop2",
+            "var": "k"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "c"
+            ]
+          }
+        ],
+        "locals": {
+          "c": "int",
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "k": "int"
+        },
+        "name": "count_primes",
+        "params": [
+          {
+            "name": "limit",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      },
+      {
+        "body": [
+          {
+            "cond": [
+              "CMP_LT",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                2
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "bool",
+                  false
+                ]
+              }
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "i",
+            "value": [
+              "int",
+              2
+            ]
+          },
+          {
+            "body": [
+              {
+                "cond": [
+                  "CMP_EQ",
+                  [
+                    "MOD",
+                    [
+                      "var",
+                      "n"
+                    ],
+                    [
+                      "var",
+                      "i"
+                    ]
+                  ],
+                  [
+                    "int",
+                    0
+                  ]
+                ],
+                "else": [],
+                "k": "if",
+                "then": [
+                  {
+                    "k": "return",
+                    "value": [
+                      "bool",
+                      false
+                    ]
+                  }
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "i",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "i"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_LE",
+              [
+                "MUL",
+                [
+                  "var",
+                  "i"
+                ],
+                [
+                  "var",
+                  "i"
+                ]
+              ],
+              [
+                "var",
+                "n"
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "bool",
+              true
+            ]
+          }
+        ],
+        "locals": {
+          "i": "int"
+        },
+        "name": "is_prime",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "bool"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_count_primes_1af947d4dcd1",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "1af947d4dcd1"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "limit",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "count_primes(limit: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 9
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

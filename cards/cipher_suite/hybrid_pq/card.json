@@ -1,0 +1,66 @@
+{
+  "aead": "xchacha20poly1305",
+  "category": "cipher_suite",
+  "cost_vector": {
+    "envelope_bytes": 1205,
+    "fips_approved": 0,
+    "kem_ct_bytes": 1120,
+    "kem_pk_bytes": 1216,
+    "post_quantum": 1,
+    "sig_bytes": 3373,
+    "sig_pk_bytes": 1984
+  },
+  "depends_on": [
+    "xwing_kem",
+    "xchacha20poly1305",
+    "ed25519_sign",
+    "ml_dsa65",
+    "hkdf_sha256"
+  ],
+  "dimension_direction": {
+    "envelope_bytes": "lower",
+    "fips_approved": "higher",
+    "kem_ct_bytes": "lower",
+    "kem_pk_bytes": "lower",
+    "post_quantum": "higher",
+    "sig_bytes": "lower",
+    "sig_pk_bytes": "lower"
+  },
+  "interacts_with": [
+    "comp_crypto_aead_encrypt",
+    "comp_crypto_aead_decrypt",
+    "comp_crypto_sign_ed25519",
+    "comp_crypto_verify_ed25519"
+  ],
+  "kdf": "hkdf_sha256",
+  "kem": "xwing_kem",
+  "label": "Hybrid post-quantum — X-Wing (ML-KEM-768 + X25519) · XChaCha20-Poly1305 · Ed25519 + ML-DSA-65",
+  "lengths": {
+    "kem_ct": 1120,
+    "kem_pk": 1216,
+    "nonce": 24,
+    "sig": 3373,
+    "sig_pk": 1984,
+    "tag": 16
+  },
+  "metadata": {
+    "kem_standard": "draft-connolly-cfrg-xwing-kem (noble ml_kem768_x25519)",
+    "sig_pk_layout": "ed25519_pk(32) || ml_dsa65_pk(1952)",
+    "signature_rule": "sig = ed25519_sig(64) || ml_dsa65_sig(3309); both must verify",
+    "version": "1.0.0"
+  },
+  "name": "hybrid_pq",
+  "sig": [
+    "ed25519",
+    "ml_dsa65"
+  ],
+  "status": "vetted",
+  "suite_id": "hybrid-pq",
+  "summary": "Stays secure if either the classical or the post-quantum half holds. Large keys and signatures.",
+  "tier": 1,
+  "variants": {
+    "js": "static/app/crypto/suites.js#hybrid-pq",
+    "python": "core/suites_ref.py#SUITES['hybrid-pq']"
+  },
+  "version": 1
+}

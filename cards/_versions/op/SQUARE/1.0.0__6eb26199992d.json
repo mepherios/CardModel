@@ -1,0 +1,130 @@
+{
+  "category": "op",
+  "cost": 2.5,
+  "domain_generators": {
+    "int": [
+      {
+        "edges": [
+          2147483648,
+          2147483649,
+          4294967295,
+          4294967296,
+          -2147483649,
+          -4294967296
+        ],
+        "int": [
+          -1099511627776,
+          1099511627776
+        ]
+      }
+    ],
+    "u32": [
+      {
+        "edges": [
+          2147483647,
+          2147483648,
+          4294967294
+        ],
+        "int": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  },
+  "forms": [
+    {
+      "code": "lambda x: x * x",
+      "cost": 3.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "native_mul",
+      "runnable": true
+    },
+    {
+      "code": "lambda x: x * x",
+      "cost": 2.5,
+      "domain": "any",
+      "lang": "python",
+      "name": "half_cost",
+      "notes": "per vebjornic/cards.py -- same op, cheaper card label",
+      "runnable": true
+    },
+    {
+      "code": "lambda x: x ** 2",
+      "cost": 20.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "pow2",
+      "notes": "slower than direct mul",
+      "runnable": true
+    },
+    {
+      "code": "bp.square_via_bits",
+      "cost": 40.0,
+      "domain": "u32",
+      "hub_domain": "int",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "bit",
+      "notes": "fixed 32-bit shift-and-add",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -100000,
+        100000
+      ]
+    }
+  ],
+  "hints": {
+    "c": {
+      "snippet": "x * x"
+    },
+    "go": {
+      "snippet": "x * x"
+    },
+    "js": {
+      "snippet": "x * x"
+    },
+    "python": {
+      "snippet": "x * x"
+    },
+    "rust": {
+      "snippet": "x.wrapping_mul(x)"
+    },
+    "swift": {
+      "snippet": "x &* x"
+    }
+  },
+  "match": {
+    "python": {
+      "pattern": [
+        "MUL",
+        "?x",
+        "?x"
+      ]
+    }
+  },
+  "metadata": {
+    "hub_kind": "fused",
+    "version": "1.0.0"
+  },
+  "name": "SQUARE",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "x * x",
+  "tier": 1
+}

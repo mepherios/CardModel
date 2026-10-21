@@ -1,0 +1,531 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ABS",
+    "op/ADD",
+    "op/CMP_GT",
+    "op/FLOORDIV",
+    "op/MOD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef digit_sum(n: int) -> int:\n    n = abs(n)\n    s = 0\n    while n > 0:\n        s += n % 10\n        n //= 10\n    return s",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t digit_sum(int64_t n) {\n    int64_t s = 0;\n    n = cm_abs_i(n);\n    s = INT64_C(0);\n    while ((n > INT64_C(0))) {\n        s = (s + cm_floormod(n, INT64_C(10)));\n        n = cm_floordiv(n, INT64_C(10));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_abs_i(a int64) int64 {\n\tif a < 0 {\n\t\treturn -a\n\t}\n\treturn a\n}\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc digit_sum(n int64) int64 {\n\tvar s int64 = 0\n\t_ = s\n\tn = cm_abs_i(n)\n\ts = int64(0)\n\tfor (n > int64(0)) {\n\t\ts = (s + cm_floormod(n, int64(10)))\n\t\tn = cm_floordiv(n, int64(10))\n\t}\n\treturn s\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction digit_sum(n) {\n    let s = 0n;\n    n = cm_abs_i(n);\n    s = (0n);\n    while ((n > (0n))) {\n        s = (s + cm_floormod(n, (10n)));\n        n = cm_floordiv(n, (10n));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def digit_sum(n: int) -> int:\n    n = abs(n)\n    s = 0\n    while (n > 0):\n        s = (s + (n % 10))\n        n = (n // 10)\n    return s\n\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_abs_i(a: i64) -> i64 { if a < 0 { -a } else { a } }\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn digit_sum(n: i64) -> i64 {\n    let mut n: i64 = n;\n    let mut s: i64 = 0;\n    n = cm_abs_i(n);\n    s = (0i64);\n    while (n > (0i64)) {\n        s = (s + cm_floormod(n, (10i64)));\n        n = cm_floordiv(n, (10i64));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t digit_sum(int64_t n) {\n    int64_t s = 0;\n    n = cm_abs_i(n);\n    s = INT64_C(0);\n    while ((n > INT64_C(0))) {\n        s = (s + cm_floormod(n, INT64_C(10)));\n        n = cm_floordiv(n, INT64_C(10));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long digit_sum(long n) {\n    long s = 0L;\n    n = Math.abs(n);\n    s = (0L);\n    while ((n > (0L))) {\n        s = (s + Math.floorMod(n, (10L)));\n        n = Math.floorDiv(n, (10L));\n    }\n    return s;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def digit_sum (n : Int) : Int := Id.run do\n  let mut n : Int := n\n  let mut s : Int := 0\n  n := (Int.ofNat (Int.natAbs n))\n  s := (0 : Int)\n  while (decide (n > (0 : Int))) do\n    s := (s + (Int.fmod n (10 : Int)))\n    n := (Int.fdiv n (10 : Int))\n  return s\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function digit_sum(n)\n  local s = 0\n  n = math.abs(n)\n  s = (0)\n  while (n > (0)) do\n    s = (s + (n % (10)))\n    n = (n // (10))\n    ::cm_continue_1::\n  end\n  return s\nend\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def digit_sum(n)\n  s = 0\n  n = ((n).abs)\n  s = (0)\n  while (n > (0))\n    s = (s + (n % (10)))\n    n = (n / (10))\n  end\n  return s\nend\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc digit_sum(_ n: Int) -> Int {\n    var n: Int = n\n    var s: Int = 0\n    n = abs(n)\n    s = (0)\n    while (n > (0)) {\n        s = (s + cm_floormod(n, (10)))\n        n = cm_floordiv(n, (10))\n    }\n    return s\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction digit_sum(n: bigint): bigint {\n    let s: bigint = 0n;\n    n = cm_abs_i(n);\n    s = (0n);\n    while ((n > (0n))) {\n        s = (s + cm_floormod(n, (10n)));\n        n = cm_floordiv(n, (10n));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "digit_sum",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "digit_sum",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "n",
+            "value": [
+              "ABS",
+              [
+                "var",
+                "n"
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "s",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "s",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "s"
+                  ],
+                  [
+                    "MOD",
+                    [
+                      "var",
+                      "n"
+                    ],
+                    [
+                      "int",
+                      10
+                    ]
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "n",
+                "value": [
+                  "FLOORDIV",
+                  [
+                    "var",
+                    "n"
+                  ],
+                  [
+                    "int",
+                    10
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_GT",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "s"
+            ]
+          }
+        ],
+        "locals": {
+          "s": "int"
+        },
+        "name": "digit_sum",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_digit_sum_8f3e186e75ef",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "8f3e186e75ef"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "digit_sum(n: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 11
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 6
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

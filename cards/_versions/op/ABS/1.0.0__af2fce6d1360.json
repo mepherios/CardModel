@@ -1,0 +1,138 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "domain_generators": {
+    "i32": [
+      {
+        "int": [
+          -2147483648,
+          2147483647
+        ]
+      }
+    ],
+    "int": [
+      {
+        "edges": [
+          2147483648,
+          2147483649,
+          4294967295,
+          4294967296,
+          -2147483649,
+          -4294967296
+        ],
+        "int": [
+          -1099511627776,
+          1099511627776
+        ]
+      }
+    ]
+  },
+  "emit": {
+    "c_like": {
+      "float": "fabs({0})",
+      "int": "cm_abs_i({0})"
+    },
+    "go": {
+      "float": "math.Abs({0})",
+      "int": "cm_abs_i({0})"
+    },
+    "java": "Math.abs({0})",
+    "javascript": {
+      "float": "Math.abs({0})",
+      "int": "cm_abs_i({0})"
+    },
+    "lean": {
+      "int": "(Int.ofNat (Int.natAbs {0}))"
+    },
+    "lua": "math.abs({0})",
+    "python": "abs({0})",
+    "ruby": "(({0}).abs)",
+    "rust": {
+      "float": "(({0}).abs())",
+      "int": "cm_abs_i({0})"
+    },
+    "swift": "abs({0})"
+  },
+  "forms": [
+    {
+      "code": "abs",
+      "cost": 1.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a: (a ^ (a >> 31)) - (a >> 31) if a.bit_length() <= 32 else abs(a)",
+      "cost": 3.0,
+      "domain": "i32",
+      "hub_domain": "int",
+      "lang": "python",
+      "name": "branchless",
+      "notes": "branchless 32-bit trick; exact only for -2**31 <= a < 2**31",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        }
+      ],
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: abs(a)",
+    "types": [
+      [
+        "int",
+        "int"
+      ],
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "call": [
+        "abs"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ABS",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "requires": {
+    "go": {
+      "float": [
+        "math"
+      ]
+    }
+  },
+  "statement": "absolute value",
+  "tier": 0
+}

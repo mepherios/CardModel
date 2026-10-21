@@ -1,0 +1,85 @@
+{
+  "category": "redefinition",
+  "condition": "(_x > -1e15) & (_x < 1e15)",
+  "cost_score": 30,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_x": 0
+      },
+      "source_eval": 0.0,
+      "target_eval": 0.0
+    },
+    {
+      "input": {
+        "_x": 0.5235987755982988
+      },
+      "source_eval": 0.8660254037844386,
+      "target_eval": 0.8660254037844386
+    },
+    {
+      "input": {
+        "_x": 0.7853981633974483
+      },
+      "source_eval": 1.0,
+      "target_eval": 1.0
+    },
+    {
+      "input": {
+        "_x": "x"
+      },
+      "source_eval": "sin(2*x)",
+      "target_eval": "2*sin(x)*cos(x)"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "c550fe6039305de92dd2c14dc10df3a07a508291aa18ec8d2bfdf5682abae3c8",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "sin_double_angle",
+  "pheros_path": "redefinition/sin_double_angle",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:sin-addition-formula-sin(a+b)=sin(a)cos(b)+cos(a)sin(b)-with-a=b=x",
+  "provenance": "derived_from_card",
+  "source_form": "sin(2*_x)",
+  "status": "healthy",
+  "tags": [
+    "double-angle",
+    "identity",
+    "rt-a5-seed",
+    "sin",
+    "trig"
+  ],
+  "target_form": "2*sin(_x)*cos(_x)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 4
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

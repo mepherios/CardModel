@@ -1,0 +1,63 @@
+{
+  "blockers": [
+    "Rust lifetimes and borrow checking have no C analogue; lowering must either rely on `unsafe` patterns or refuse complex shapes",
+    "panic/unwind requires C-level setjmp/longjmp redefinition, not direct emission"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "no production path; UB3-B exists for the reverse direction (C->Rust)",
+  "current_coverage_percent": 40,
+  "evidence": [
+    "cards/tool/v_transpile/frontends/rust.py — Rust frontend",
+    "cards/tool/v_transpile/coverage.py — c target capability matrix governs the emit side",
+    "cards/redefinition/* — Rust trait dispatch lowering to C struct+fn pointers documented in UR-A/UR-B",
+    "outputs/agent_ub4_b.md — install rustc + compile rewrites; the reverse direction is less exercised than C->Rust"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rust__to__c",
+  "optimal_solution_path": [
+    "lower Rust integer-arithmetic + simple struct subset first (covers leaf coreutils)",
+    "lower trait dispatch via C vtables (function pointer in a struct)",
+    "lower closures via context-struct + function-pointer pair",
+    "smoke a 25-utility C-emit pipeline from existing Rust rewrites"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_rust_trait_dispatch_to_c_vtable",
+    "cards/project_task/close_rust_closure_to_c_function_with_context_struct"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/v_transpile/frontends/rust.py"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "rust",
+  "supported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else_match_simple",
+    "while_loop",
+    "for_loop",
+    "return",
+    "int_variables",
+    "float_variables",
+    "struct_pod",
+    "tuple_to_struct",
+    "string_to_const_char_ptr"
+  ],
+  "target_language": "c",
+  "unsupported_constructs": [
+    "lifetimes_with_complex_borrow_graph",
+    "trait_dispatch_dynamic_general",
+    "async_fn",
+    "closures_capturing_environment_general",
+    "macro_rules_expansion",
+    "proc_macro",
+    "panic_unwind",
+    "Result_with_anyhow_general",
+    "lifetimes_higher_ranked"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/rust__to__c",
+  "wave_23_audit_note": "40% reflects no production substrate path; UB3-B reverse direction exists but Rust trait dispatch via C vtables is the missing pattern (OSP step 2) — not done in W23"
+}

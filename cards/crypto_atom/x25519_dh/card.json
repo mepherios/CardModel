@@ -1,0 +1,76 @@
+{
+  "category": "crypto_atom",
+  "forms": [
+    {
+      "cost": 50.0,
+      "domain": "python",
+      "entry": "x25519_dh",
+      "file": "python.py",
+      "lang": "python",
+      "name": "python_stdlib",
+      "notes": "pure-Python RFC reference algorithm: exact, slow, not constant-time",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "entry": "x25519_dh",
+      "file": "javascript.mjs",
+      "lang": "javascript",
+      "name": "node_crypto",
+      "notes": "node:crypto built-ins (no npm packages)",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "lang": "javascript",
+      "name": "ting_noble",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "static/app/crypto/atoms.js#x25519_kem"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_cryptography",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "core/suites_ref.py#x25519_*"
+    }
+  ],
+  "interacts_with": [],
+  "metadata": {
+    "previous_content_hash": "a7e90b4ec809d0208a3a617c312d241d9c6010b18855be584d1bb65eae6c3477",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "x25519_dh",
+  "operation": "kem",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b",
+    "ting_card": "cards/crypto_atom/x25519_kem"
+  },
+  "purity": "pure for keygen/dh; encap is pure:false (random ephemeral)",
+  "standard": "RFC 7748 (ephemeral-static KEM per Ting CRYPTO.md)",
+  "statement": "X25519 shared secret; all-zero result rejected (Ting rule)",
+  "tier": 0,
+  "vectors": "vectors.json",
+  "verification": {
+    "date": "2026-10-21",
+    "vectors": {
+      "forms": {
+        "node_crypto": "pass",
+        "python_stdlib": "pass",
+        "ting_cryptography": "documentation_only",
+        "ting_noble": "documentation_only"
+      },
+      "status": "pass"
+    }
+  }
+}

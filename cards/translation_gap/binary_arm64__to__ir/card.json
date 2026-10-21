@@ -1,0 +1,62 @@
+{
+  "blockers": [
+    "cards/lacking_feature/isa_arm64_instruction_cards (no cards/isa/arm64 instruction-card materialization (~400 ba...)",
+    "arm64 uses fixed 32-bit instruction encoding; decoder shape differs enough from x86_64 to require separate work"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED via opcode-coverage ratio in binary_to_ir (~7 instructions of ~80 baseline integer arm64 mainline ~= 8%)",
+  "current_coverage_percent": 8,
+  "evidence": [
+    "cards/tool/binary_to_ir - W14-D extended to emit cards-per-instruction; arm64 path is partial vs x86_64",
+    "outputs/agent_rc_d.md - RC-D Real ARM64 ELF lift effort",
+    "cards/isa/arm64 absent - the ISA card set has not been materialized via W14-B pattern"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "binary_arm64__to__ir",
+  "optimal_solution_path": [
+    "use W14-B card_from_isa_spec to ingest ARMv8 reference manual XML and emit one card per instruction (one day on the loader)",
+    "wire those cards into binary_to_ir's arm64 dispatch",
+    "smoke: lift `int main(){return 42;}` arm64 Mach-O (also unblocks c__to__arm64_macho)",
+    "iterate over the SM64-B / RC-D corpus to expand coverage",
+    "publish coverage_percent from opcode-coverage ratio"
+  ],
+  "optimization_paths": [
+    "cards/project_task/materialize_full_arm64_isa_card_set",
+    "cards/project_task/add_arm64_modrm_equivalent_decoder",
+    "cards/project_task/close_macho_arm64_extraction"
+  ],
+  "required_isa_cards": [
+    "cards/isa/arm64"
+  ],
+  "required_tools": [
+    "cards/tool/binary_to_ir"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "binary_arm64",
+  "supported_constructs": [
+    "mov_reg_reg_subset",
+    "mov_imm_reg_subset",
+    "add_reg_reg_subset",
+    "sub_reg_reg_subset",
+    "ret_subset",
+    "bl_subset",
+    "b_subset"
+  ],
+  "target_language": "ir",
+  "unsupported_constructs": [
+    "ldp_stp_addressing_modes",
+    "neon_simd",
+    "sve_simd",
+    "ldr_str_full_addressing_modes",
+    "conditional_select",
+    "barrier_instructions",
+    "system_register_access",
+    "exclusive_load_store",
+    "pointer_authentication"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/binary_arm64__to__ir",
+  "wave_23_audit_note": "8% MEASURED opcode-coverage; cards/isa/arm64 materialization piggybacks on close_macho_arm64_extraction"
+}

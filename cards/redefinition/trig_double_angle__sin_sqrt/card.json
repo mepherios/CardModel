@@ -1,0 +1,61 @@
+{
+  "category": "redefinition",
+  "condition": "cos(x) >= 0",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "positive_real",
+  "examples": [
+    {
+      "source_eval": "2*sin(x)*sqrt(1-sin(x)**2)",
+      "target_eval": "2*sin(x)*sqrt(1-sin(x)**2)"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "is_identity_redefinition": true,
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "a0a88cf67f431afbbafcd7b256d8389fed35fd98004795b696082897763f9c67",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "trig_double_angle__sin_sqrt",
+  "pheros_path": "redefinition/trig_double_angle__sin_sqrt",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "redefinition_test_corpus",
+  "provenance": "derived_from_card",
+  "rationale_for_identity": "Corpus card (tag=test_corpus): represents one canonical member of an equivalence class. source_form == target_form is the identity element of the class, not a vacuous rewrite. Detector exempt per VAC-F heuristic refinement.",
+  "source_form": "2*sin(x)*sqrt(1-sin(x)**2)",
+  "status": "healthy",
+  "tags": [
+    "sin_sqrt",
+    "symbolic",
+    "test_corpus",
+    "trig_double_angle"
+  ],
+  "target_form": "2*sin(x)*sqrt(1-sin(x)**2)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 0
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

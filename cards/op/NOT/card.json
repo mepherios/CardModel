@@ -1,0 +1,61 @@
+{
+  "category": "op",
+  "cost": 0.5,
+  "emit": {
+    "c_like": "(!{0})",
+    "lean": "(!{0})",
+    "lua": "(not {0})",
+    "python": "(not {0})",
+    "ruby": "(!{0})"
+  },
+  "forms": [
+    {
+      "code": "lambda a: not a",
+      "cost": 0.5,
+      "domain": "any",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "bool": [
+        {
+          "bool": true
+        }
+      ]
+    },
+    "eval": "lambda a: not a",
+    "types": [
+      [
+        "bool",
+        "bool"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "unaryop": [
+        "Not"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "NOT",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "boolean not",
+  "tier": 0
+}

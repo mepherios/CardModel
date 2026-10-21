@@ -1,0 +1,35 @@
+{
+  "anchor": 1.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "xor_mask",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.208,
+  "median_ns": 51.578,
+  "metadata": {
+    "inputs_signature": "2a7725e9f50fc528",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__BIT_NOT__xor_mask",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/BIT_NOT form xor_mask: 51.6 ns per call on this host",
+  "target_card": "op/BIT_NOT",
+  "tier": 3
+}

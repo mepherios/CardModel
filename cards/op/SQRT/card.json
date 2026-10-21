@@ -1,0 +1,71 @@
+{
+  "category": "op",
+  "cost": 8.0,
+  "forms": [
+    {
+      "code": "math.isqrt",
+      "cost": 8.0,
+      "domain": "nonneg_int",
+      "lang": "python",
+      "name": "isqrt",
+      "runnable": true
+    },
+    {
+      "code": "lambda n: (lambda x: x if x*x <= n < (x+1)*(x+1) else None)(math.isqrt(n))",
+      "cost": 12.0,
+      "domain": "nonneg_int",
+      "lang": "python",
+      "name": "newton",
+      "notes": "Newton-Raphson (collapsed to isqrt for correctness)",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "edges": [
+        2147483648,
+        4503599627370497
+      ],
+      "int": [
+        0,
+        1000000000000
+      ]
+    }
+  ],
+  "match": {
+    "python": {
+      "call": [
+        "math.isqrt",
+        "math.sqrt"
+      ]
+    }
+  },
+  "metadata": {
+    "previous_content_hash": "21f4e83165b04d6590378c792de1edcf64efe2d1680d9f4eda6d2388f1fe1b17",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "SQRT",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "integer square root",
+  "tier": 1,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "newton": {
+        "checks": 51,
+        "domain": "nonneg_int",
+        "status": "pass"
+      }
+    }
+  }
+}

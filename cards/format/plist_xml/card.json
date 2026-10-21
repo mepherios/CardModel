@@ -1,0 +1,22 @@
+{
+  "category": "format",
+  "detect": {
+    "parents": [
+      "plist",
+      "file"
+    ],
+    "predicate": "reacards.domains:is_xml_plist",
+    "priority": 40
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "plist_xml",
+  "statement": "XML property list.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/plist_xml"
+}

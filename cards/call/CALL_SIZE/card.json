@@ -1,0 +1,33 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        "size"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 4,
+    "files": 3,
+    "learned": true,
+    "spellings": {
+      "size": 4
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_SIZE",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to size (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

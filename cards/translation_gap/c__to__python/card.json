@@ -1,0 +1,72 @@
+{
+  "blockers": [
+    "C preprocessor must run before lift; pycparser requires preprocessed input",
+    "function-pointer types do not map 1:1 to Python — needs idiom redefinition"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "contributor estimate from PV1 capability matrix tempered by C macro/pointer/union landscape; auto-derived figure awaits W15-E corpus",
+  "current_coverage_percent": 60,
+  "evidence": [
+    "cards/tool/v_transpile/frontends/c.py — pycparser-backed C frontend (UB3-A) lifting ints, floats, functions, control flow into IR",
+    "cards/tool/v_transpile/backends/__init__.py + tools/v_transpile — Python emitter from IR",
+    "cards/tool/v_transpile/coverage.py — published PV1 capability matrix (try/with/class/async/decorator/comprehension/lambda/generator/fstring/walrus all SUPPORTED for python target)",
+    "cards/redefinition/* — multiple coreutils C->Rust->Python paths in UB3-C/UB3-D regressions"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__python",
+  "notes": "Coverage estimate is a contributor figure based on the PV1 capability matrix (10/10 SUPPORTED at the IR level) tempered down because C's macro/pointer/union landscape is unmapped at the frontend. A real auto-derived figure awaits the compiler_observer corpus from W15-E.",
+  "optimal_solution_path": [
+    "run v_transpile against a 50-sample C corpus and tabulate per-construct success",
+    "lift struct + tagged function-pointer pairs to Python @dataclass + bound methods",
+    "lower #define macros via a pre-pass that resolves trivial macros into Python constants/functions",
+    "emit Python regression smoke for the closed shapes",
+    "re-derive coverage_percent from the 50-sample success rate"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_c_to_python_class_support",
+    "cards/project_task/close_c_macro_lowering"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/v_transpile/frontends/c.py",
+    "cards/tool/v_transpile/backends"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "c",
+  "supported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "unary_arithmetic",
+    "if_else",
+    "while_loop",
+    "for_loop_index",
+    "return",
+    "int_variables",
+    "float_variables",
+    "char_variables",
+    "string_literal",
+    "array_subscript_read",
+    "printf_basic",
+    "scanf_basic",
+    "comparison_operators",
+    "logical_operators"
+  ],
+  "target_language": "python",
+  "unsupported_constructs": [
+    "preprocessor_macros",
+    "function_pointers",
+    "struct_with_function_pointers",
+    "union",
+    "bitfield",
+    "goto",
+    "setjmp_longjmp",
+    "inline_assembly",
+    "variadic_functions_general",
+    "K_and_R_function_syntax"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__python",
+  "wave_23_audit_note": "60% is contributor-estimate tempered by C macro/pointer/union frontend gaps; pycparser preprocessor pre-pass is unbuilt; promoting needs the 50-sample C corpus sweep filed in OSP step 1"
+}

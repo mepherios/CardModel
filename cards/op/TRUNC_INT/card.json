@@ -1,0 +1,72 @@
+{
+  "category": "op",
+  "cost": 0.8,
+  "emit": {
+    "c": "((int64_t)({0}))",
+    "go": "int64({0})",
+    "java": "((long)({0}))",
+    "javascript": "cm_trunc_int({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "(({0}) >= 0 and math.floor({0}) or math.ceil({0}))",
+    "python": "int({0})",
+    "ruby": "(({0}).to_i)",
+    "rust": "(({0}) as i64)",
+    "swift": "Int({0})"
+  },
+  "forms": [
+    {
+      "code": "int",
+      "cost": 0.8,
+      "domain": "float",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1000000.0,
+            1000000.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: int(a)",
+    "types": [
+      [
+        "float",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "call": [
+        "int"
+      ]
+    }
+  },
+  "metadata": {
+    "hub_names": [
+      "TYPE_INT_CAST"
+    ],
+    "version": "1.0.0"
+  },
+  "name": "TRUNC_INT",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "float -> int conversion, truncating toward zero (Python int(x))",
+  "tier": 0
+}

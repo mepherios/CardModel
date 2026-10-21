@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Libraries that forms import (variant files next to card.json).",
+  "name": "lib",
+  "tier": 0
+}

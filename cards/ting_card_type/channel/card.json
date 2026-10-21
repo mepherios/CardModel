@@ -1,0 +1,41 @@
+{
+  "author_rule": "moderator",
+  "category": "card_type",
+  "index": [],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "channel",
+  "render": "channel",
+  "schema": {
+    "properties": {
+      "kind": {
+        "enum": [
+          "chat",
+          "forum",
+          "wiki",
+          "announcements"
+        ],
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 64,
+        "type": "string"
+      },
+      "topic": {
+        "maxLength": 500,
+        "type": "string"
+      }
+    },
+    "required": [
+      "name",
+      "kind"
+    ],
+    "type": "object"
+  },
+  "summary": "A place for cards: chat, forum, wiki or announcements.",
+  "tier": 0,
+  "version": 1
+}

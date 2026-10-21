@@ -1,0 +1,625 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_EQ",
+    "op/CMP_LE",
+    "op/CMP_NE",
+    "op/FLOORDIV",
+    "op/MOD",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef sum_of_divisors(n: int) -> int:\n    if n <= 0:\n        return 0\n    total = 0\n    d = 1\n    while d * d <= n:\n        if n % d == 0:\n            total += d\n            if d * d != n:\n                total += n // d\n        d += 1\n    return total",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t sum_of_divisors(int64_t n) {\n    int64_t total = 0;\n    int64_t d = 0;\n    if ((n <= INT64_C(0))) {\n        return INT64_C(0);\n    }\n    total = INT64_C(0);\n    d = INT64_C(1);\n    while (((d * d) <= n)) {\n        if ((cm_floormod(n, d) == INT64_C(0))) {\n            total = (total + d);\n            if (((d * d) != n)) {\n                total = (total + cm_floordiv(n, d));\n            }\n        }\n        d = (d + INT64_C(1));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc sum_of_divisors(n int64) int64 {\n\tvar total int64 = 0\n\t_ = total\n\tvar d int64 = 0\n\t_ = d\n\tif (n <= int64(0)) {\n\t\treturn int64(0)\n\t}\n\ttotal = int64(0)\n\td = int64(1)\n\tfor ((d * d) <= n) {\n\t\tif (cm_floormod(n, d) == int64(0)) {\n\t\t\ttotal = (total + d)\n\t\t\tif ((d * d) != n) {\n\t\t\t\ttotal = (total + cm_floordiv(n, d))\n\t\t\t}\n\t\t}\n\t\td = (d + int64(1))\n\t}\n\treturn total\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction sum_of_divisors(n) {\n    let total = 0n;\n    let d = 0n;\n    if ((n <= (0n))) {\n        return (0n);\n    }\n    total = (0n);\n    d = (1n);\n    while (((d * d) <= n)) {\n        if ((cm_floormod(n, d) === (0n))) {\n            total = (total + d);\n            if (((d * d) !== n)) {\n                total = (total + cm_floordiv(n, d));\n            }\n        }\n        d = (d + (1n));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def sum_of_divisors(n: int) -> int:\n    if (n <= 0):\n        return 0\n    total = 0\n    d = 1\n    while ((d * d) <= n):\n        if ((n % d) == 0):\n            total = (total + d)\n            if ((d * d) != n):\n                total = (total + (n // d))\n        d = (d + 1)\n    return total\n\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn sum_of_divisors(n: i64) -> i64 {\n    let mut total: i64 = 0;\n    let mut d: i64 = 0;\n    if (n <= (0i64)) {\n        return (0i64);\n    }\n    total = (0i64);\n    d = (1i64);\n    while ((d * d) <= n) {\n        if (cm_floormod(n, d) == (0i64)) {\n            total = (total + d);\n            if ((d * d) != n) {\n                total = (total + cm_floordiv(n, d));\n            }\n        }\n        d = (d + (1i64));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t sum_of_divisors(int64_t n) {\n    int64_t total = 0;\n    int64_t d = 0;\n    if ((n <= INT64_C(0))) {\n        return INT64_C(0);\n    }\n    total = INT64_C(0);\n    d = INT64_C(1);\n    while (((d * d) <= n)) {\n        if ((cm_floormod(n, d) == INT64_C(0))) {\n            total = (total + d);\n            if (((d * d) != n)) {\n                total = (total + cm_floordiv(n, d));\n            }\n        }\n        d = (d + INT64_C(1));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long sum_of_divisors(long n) {\n    long total = 0L;\n    long d = 0L;\n    if ((n <= (0L))) {\n        return (0L);\n    }\n    total = (0L);\n    d = (1L);\n    while (((d * d) <= n)) {\n        if ((Math.floorMod(n, d) == (0L))) {\n            total = (total + d);\n            if (((d * d) != n)) {\n                total = (total + Math.floorDiv(n, d));\n            }\n        }\n        d = (d + (1L));\n    }\n    return total;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def sum_of_divisors (n : Int) : Int := Id.run do\n  let mut total : Int := 0\n  let mut d : Int := 0\n  if (decide (n <= (0 : Int))) then\n    return (0 : Int)\n  total := (0 : Int)\n  d := (1 : Int)\n  while (decide ((d * d) <= n)) do\n    if ((Int.fmod n d) == (0 : Int)) then\n      total := (total + d)\n      if ((d * d) != n) then\n        total := (total + (Int.fdiv n d))\n    d := (d + (1 : Int))\n  return total\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function sum_of_divisors(n)\n  local total = 0\n  local d = 0\n  if (n <= (0)) then\n    return (0)\n  end\n  total = (0)\n  d = (1)\n  while ((d * d) <= n) do\n    if ((n % d) == (0)) then\n      total = (total + d)\n      if ((d * d) ~= n) then\n        total = (total + (n // d))\n      end\n    end\n    d = (d + (1))\n    ::cm_continue_1::\n  end\n  return total\nend\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def sum_of_divisors(n)\n  total = 0\n  d = 0\n  if (n <= (0))\n    return (0)\n  end\n  total = (0)\n  d = (1)\n  while ((d * d) <= n)\n    if ((n % d) == (0))\n      total = (total + d)\n      if ((d * d) != n)\n        total = (total + (n / d))\n      end\n    end\n    d = (d + (1))\n  end\n  return total\nend\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc sum_of_divisors(_ n: Int) -> Int {\n    var total: Int = 0\n    var d: Int = 0\n    if (n <= (0)) {\n        return (0)\n    }\n    total = (0)\n    d = (1)\n    while ((d * d) <= n) {\n        if (cm_floormod(n, d) == (0)) {\n            total = (total + d)\n            if ((d * d) != n) {\n                total = (total + cm_floordiv(n, d))\n            }\n        }\n        d = (d + (1))\n    }\n    return total\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction sum_of_divisors(n: bigint): bigint {\n    let total: bigint = 0n;\n    let d: bigint = 0n;\n    if ((n <= (0n))) {\n        return (0n);\n    }\n    total = (0n);\n    d = (1n);\n    while (((d * d) <= n)) {\n        if ((cm_floormod(n, d) === (0n))) {\n            total = (total + d);\n            if (((d * d) !== n)) {\n                total = (total + cm_floordiv(n, d));\n            }\n        }\n        d = (d + (1n));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "sum_of_divisors",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "sum_of_divisors",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "CMP_LE",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "int",
+                  0
+                ]
+              }
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "total",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "d",
+            "value": [
+              "int",
+              1
+            ]
+          },
+          {
+            "body": [
+              {
+                "cond": [
+                  "CMP_EQ",
+                  [
+                    "MOD",
+                    [
+                      "var",
+                      "n"
+                    ],
+                    [
+                      "var",
+                      "d"
+                    ]
+                  ],
+                  [
+                    "int",
+                    0
+                  ]
+                ],
+                "else": [],
+                "k": "if",
+                "then": [
+                  {
+                    "k": "assign",
+                    "target": "total",
+                    "value": [
+                      "ADD",
+                      [
+                        "var",
+                        "total"
+                      ],
+                      [
+                        "var",
+                        "d"
+                      ]
+                    ]
+                  },
+                  {
+                    "cond": [
+                      "CMP_NE",
+                      [
+                        "MUL",
+                        [
+                          "var",
+                          "d"
+                        ],
+                        [
+                          "var",
+                          "d"
+                        ]
+                      ],
+                      [
+                        "var",
+                        "n"
+                      ]
+                    ],
+                    "else": [],
+                    "k": "if",
+                    "then": [
+                      {
+                        "k": "assign",
+                        "target": "total",
+                        "value": [
+                          "ADD",
+                          [
+                            "var",
+                            "total"
+                          ],
+                          [
+                            "FLOORDIV",
+                            [
+                              "var",
+                              "n"
+                            ],
+                            [
+                              "var",
+                              "d"
+                            ]
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "d",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "d"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_LE",
+              [
+                "MUL",
+                [
+                  "var",
+                  "d"
+                ],
+                [
+                  "var",
+                  "d"
+                ]
+              ],
+              [
+                "var",
+                "n"
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "total"
+            ]
+          }
+        ],
+        "locals": {
+          "d": "int",
+          "total": "int"
+        },
+        "name": "sum_of_divisors",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_sum_of_divisors_4150517ff493",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "4150517ff493"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "sum_of_divisors(n: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 72
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 12
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 20
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 18
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 24
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 31
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 24
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 24
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 14
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 30
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 40
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 15
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 42
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 13
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 36
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 56
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 39
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 42
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 12
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 28
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 31
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 60
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

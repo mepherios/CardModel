@@ -1,0 +1,67 @@
+{
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "a_domain": "real",
+    "b_domain": "real",
+    "composed_from": [
+      "horner_polynomial",
+      "mul_via_mean_square"
+    ],
+    "composition_kind": "direct",
+    "previous_content_hash": "a5f6a4c73768e2d4269fd65e7c9f26bbe2ae89714d55510c8fe3898f0fe4647f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_composite_692cc63368aca533",
+  "pheros_path": "redefinition/auto_composite_692cc63368aca533",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "composer:verified_via_redefinition_verifier",
+  "provenance": "derived_from_card",
+  "source_form": "_a*_x**3 + _b*_x**2 + _c*_x + _d",
+  "status": "healthy",
+  "tags": [
+    "auto_composite",
+    "composer",
+    "direct"
+  ],
+  "target_form": "-(-_d/2 - _x*(_c + _x*(_a*_x + _b))/2 + 1/2)**2 + (_d/2 + _x*(_c + _x*(_a*_x + _b))/2 + 1/2)**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 1
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

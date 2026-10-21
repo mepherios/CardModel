@@ -1,0 +1,17 @@
+[
+ {
+  "name": "cavs-kas-ecc-cdh-p256-0",
+  "args": [
+   {
+    "$bytes": "7d7dc5f71eb29ddaf80d6214632eeae03d9058af1fb6d22ed80badb62bc1a534"
+   },
+   {
+    "$bytes": "02700c48f77f56584c5cc632ca65640db91b6bacce3a4df6b42ce7cc838833d287"
+   }
+  ],
+  "source": "NIST CAVS KAS ECC CDH, P-256 COUNT=0",
+  "out": {
+   "$bytes": "46fc62106420ff012e54a434fbdd2d25ccc5852060561e68040dd7778997bd7b"
+  }
+ }
+]

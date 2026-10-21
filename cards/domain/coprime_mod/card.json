@@ -1,0 +1,16 @@
+{
+  "category": "domain",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "coprime_mod",
+  "parents": [
+    "modular"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "(a, n) with gcd(a, n) = 1.",
+  "tier": 0
+}

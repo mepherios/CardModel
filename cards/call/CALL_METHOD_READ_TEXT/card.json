@@ -1,0 +1,34 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        ".read_text"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 6,
+    "files": 6,
+    "learned": true,
+    "spellings": {
+      "f.read_text": 3,
+      "p.read_text": 3
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_METHOD_READ_TEXT",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to .read_text (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

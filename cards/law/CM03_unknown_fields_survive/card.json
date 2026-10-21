@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM03_unknown_fields_survive",
+  "origins": [
+    "hub CARD_MODEL.md",
+    "Ting CARD_MODEL_MAPPING"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Unknown fields are kept on save and ignored by consumers that do not know them (the infinite-extension guarantee).",
+  "tier": 0,
+  "witness": "tests/test_kernel.py::test_unknown_fields_round_trip"
+}

@@ -1,0 +1,23 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "(a + b) + c",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "associative_add",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a + (b + c)",
+  "statement": "(a + b) + c == a + (b + c)",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b",
+    "c"
+  ]
+}

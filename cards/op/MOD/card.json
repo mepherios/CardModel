@@ -1,0 +1,124 @@
+{
+  "category": "op",
+  "cost": 4.0,
+  "domain_generators": {
+    "nonneg_int": [
+      {
+        "int": [
+          0,
+          1000000
+        ]
+      },
+      {
+        "int": [
+          1,
+          1000
+        ]
+      }
+    ]
+  },
+  "emit": {
+    "c_like": "cm_floormod({0}, {1})",
+    "java": "Math.floorMod({0}, {1})",
+    "lean": "(Int.fmod {0} {1})",
+    "lua": "({0} % {1})",
+    "python": "({0} % {1})",
+    "ruby": "({0} % {1})"
+  },
+  "forms": [
+    {
+      "code": "lambda a, b: a % b",
+      "cost": 4.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b: a & (b - 1) if b and (b & (b - 1)) == 0 else a % b",
+      "cost": 1.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "pow2_bit",
+      "notes": "x mod 2^k -> x & (2^k - 1); exact when b is a power of 2",
+      "runnable": true
+    },
+    {
+      "code": "({0} % {1})",
+      "cost": 1.0,
+      "domain": "nonneg_int",
+      "lang": "c",
+      "name": "c_naive",
+      "notes": "C's % truncates: equal to Python's only when both operands are >= 0",
+      "role": "hint",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            -1000,
+            1000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a % b",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "binop": [
+        "Mod"
+      ]
+    }
+  },
+  "metadata": {
+    "previous_content_hash": "7bfd629540f123cd97cbbf2bd1d034cd220f212ba720f3f63440d170249024a2",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "MOD",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "integer modulo (Python semantics: sign of the divisor)",
+  "tier": 0,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "c_naive": {
+        "checks": 52,
+        "domain": "nonneg_int",
+        "status": "pass"
+      },
+      "pow2_bit": {
+        "checks": 52,
+        "domain": "int",
+        "status": "pass"
+      }
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "target",
+      "label": "target"
+    },
+    {
+      "from": "context.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {
+    "target": "required"
+  },
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "verification",
+  "render": "verification",
+  "schema": {
+    "properties": {
+      "caveat": {
+        "maxLength": 2000,
+        "type": "string"
+      },
+      "confidence": {
+        "enum": [
+          "tentative",
+          "established",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "engine": {
+        "type": "object"
+      },
+      "evidence_count": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "languages": {
+        "items": {
+          "maxLength": 32,
+          "type": "string"
+        },
+        "maxItems": 16,
+        "type": "array"
+      },
+      "mismatches": {
+        "maxItems": 50,
+        "type": "array"
+      },
+      "results": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "languages",
+      "confidence"
+    ],
+    "type": "object"
+  },
+  "summary": "A signed verification report for a code card, shaped like a Pheros cross_language_equivalence card.",
+  "tier": 0,
+  "version": 1
+}

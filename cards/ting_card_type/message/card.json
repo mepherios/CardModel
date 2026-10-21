@@ -1,0 +1,96 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "body.channel",
+      "label": "chan"
+    },
+    {
+      "from": "parent",
+      "label": "thread"
+    },
+    {
+      "from": "body.mentions[]",
+      "label": "mention"
+    }
+  ],
+  "links": {
+    "parent": "optional"
+  },
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "message",
+  "render": "message",
+  "schema": {
+    "properties": {
+      "channel": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "files": {
+        "items": {
+          "properties": {
+            "key": {
+              "format": "b64_32",
+              "type": "string"
+            },
+            "mime": {
+              "maxLength": 128,
+              "type": "string"
+            },
+            "name": {
+              "maxLength": 255,
+              "type": "string"
+            },
+            "sha256": {
+              "format": "hex64",
+              "type": "string"
+            },
+            "size": {
+              "maximum": 52428800,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "suite": {
+              "maxLength": 32,
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "mime",
+            "size",
+            "sha256",
+            "key"
+          ],
+          "type": "object"
+        },
+        "maxItems": 10,
+        "type": "array"
+      },
+      "mentions": {
+        "items": {
+          "format": "username",
+          "type": "string"
+        },
+        "maxItems": 50,
+        "type": "array"
+      },
+      "text": {
+        "maxLength": 20000,
+        "type": "string"
+      }
+    },
+    "required": [
+      "text",
+      "channel"
+    ],
+    "type": "object"
+  },
+  "summary": "A chat message; with parent it is a reply in a thread.",
+  "tier": 0,
+  "version": 1
+}

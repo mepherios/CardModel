@@ -1,0 +1,70 @@
+{
+  "blockers": [
+    "Final .dol production gated on devkitPPC + powerpc-eabi-gcc on the user's machine — the substrate emits C only, it does not link",
+    "Dolphin run/boot proof is an external manual step; CI does not run Dolphin"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED on pong+snake shapes (W12-E, W13-F); 25% honest because only those two shapes are byte-proven on devkitPPC",
+  "current_coverage_percent": 25,
+  "evidence": [
+    "cards/tool/v_transpile/backends/gamecube.py — W12-A gamecube backend; emits C targeting devkitPPC",
+    "cards/tool/v_transpile/backends/test_gamecube.py — emitted-C regression smokes",
+    "cards/tool/v_transpile/backends/test_gamecube_syntax.py — host-gcc C-syntax check (W13-C)",
+    "outputs/agent_w12_c.md and outputs/agent_w13_g.md — Pong and Snake .c emitted; Dolphin boot proof gated on devkitPPC toolchain on user's machine",
+    "W12-G: Pong 2P -> .dol Dolphin boot proof — succeeded for the canonical shape but requires devkitPPC + Dolphin on the user's box"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__gamecube_dol",
+  "notes": "Coverage is 'emit-only' rather than 'compile-and-run'. The substrate's authoritative role is the emit; final link is user-toolchain-dependent. Honest framing per L41.",
+  "optimal_solution_path": [
+    "vendor a devkitPPC docker image for reproducible builds (closes the external-toolchain gap)",
+    "extend libogc symbol cards to cover audio + memcard + extended input",
+    "add a verified .dol byte-asserter so the emit pipeline is closed-loop, not Dolphin-gated",
+    "rerun coverage estimate after a 5-game emit sweep"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_gamecube_audio_synthesis",
+    "cards/project_task/wire_devkitppc_in_substrate_ci"
+  ],
+  "required_library_cards": [
+    "cards/symbol/libogc_GXBegin",
+    "cards/symbol/libogc_GXEnd",
+    "cards/symbol/libogc_VIDEO_Init"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/backends/gamecube.py"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "c",
+  "supported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "while_loop",
+    "for_loop_index",
+    "return",
+    "int_variables",
+    "float_variables",
+    "struct_pod",
+    "list_to_array_lowering",
+    "dict_state_to_struct_lowering",
+    "gx_render_primitives_via_libogc_intrinsics"
+  ],
+  "target_language": "gamecube_dol",
+  "unsupported_constructs": [
+    "function_pointers",
+    "preprocessor_macros_general",
+    "string_io_general",
+    "filesystem_io",
+    "network_io",
+    "audio_synthesis_general",
+    "memory_card_save_load",
+    "controller_rumble_extended",
+    "double_precision_float_general"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__gamecube_dol",
+  "wave_23_audit_note": "25% honest emit-only coverage; final .dol production gated on devkitPPC + Dolphin on user's machine — pong+snake shapes byte-proven, broader coverage needs the docker pipeline (OSP step 1)"
+}

@@ -1,0 +1,554 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_EQ",
+    "op/CMP_GT",
+    "op/FLOORDIV",
+    "op/IF_EXPR",
+    "op/MOD",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef collatz_steps(n: int) -> int:\n    steps = 0\n    while n > 1:\n        n = n // 2 if n % 2 == 0 else 3 * n + 1\n        steps += 1\n    return steps",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t collatz_steps(int64_t n) {\n    int64_t steps = 0;\n    steps = INT64_C(0);\n    while ((n > INT64_C(1))) {\n        n = ((cm_floormod(n, INT64_C(2)) == INT64_C(0)) ? cm_floordiv(n, INT64_C(2)) : ((INT64_C(3) * n) + INT64_C(1)));\n        steps = (steps + INT64_C(1));\n    }\n    return steps;\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc collatz_steps(n int64) int64 {\n\tvar steps int64 = 0\n\t_ = steps\n\tsteps = int64(0)\n\tfor (n > int64(1)) {\n\t\tn = func() int64 { if (cm_floormod(n, int64(2)) == int64(0)) { return cm_floordiv(n, int64(2)) }; return ((int64(3) * n) + int64(1)) }()\n\t\tsteps = (steps + int64(1))\n\t}\n\treturn steps\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction collatz_steps(n) {\n    let steps = 0n;\n    steps = (0n);\n    while ((n > (1n))) {\n        n = ((cm_floormod(n, (2n)) === (0n)) ? cm_floordiv(n, (2n)) : (((3n) * n) + (1n)));\n        steps = (steps + (1n));\n    }\n    return steps;\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def collatz_steps(n: int) -> int:\n    steps = 0\n    while (n > 1):\n        n = ((n // 2) if ((n % 2) == 0) else ((3 * n) + 1))\n        steps = (steps + 1)\n    return steps\n\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn collatz_steps(n: i64) -> i64 {\n    let mut n: i64 = n;\n    let mut steps: i64 = 0;\n    steps = (0i64);\n    while (n > (1i64)) {\n        n = (if (cm_floormod(n, (2i64)) == (0i64)) { cm_floordiv(n, (2i64)) } else { (((3i64) * n) + (1i64)) });\n        steps = (steps + (1i64));\n    }\n    return steps;\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t collatz_steps(int64_t n) {\n    int64_t steps = 0;\n    steps = INT64_C(0);\n    while ((n > INT64_C(1))) {\n        n = ((cm_floormod(n, INT64_C(2)) == INT64_C(0)) ? cm_floordiv(n, INT64_C(2)) : ((INT64_C(3) * n) + INT64_C(1)));\n        steps = (steps + INT64_C(1));\n    }\n    return steps;\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long collatz_steps(long n) {\n    long steps = 0L;\n    steps = (0L);\n    while ((n > (1L))) {\n        n = ((Math.floorMod(n, (2L)) == (0L)) ? Math.floorDiv(n, (2L)) : (((3L) * n) + (1L)));\n        steps = (steps + (1L));\n    }\n    return steps;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def collatz_steps (n : Int) : Int := Id.run do\n  let mut n : Int := n\n  let mut steps : Int := 0\n  steps := (0 : Int)\n  while (decide (n > (1 : Int))) do\n    n := (if ((Int.fmod n (2 : Int)) == (0 : Int)) then (Int.fdiv n (2 : Int)) else (((3 : Int) * n) + (1 : Int)))\n    steps := (steps + (1 : Int))\n  return steps\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function collatz_steps(n)\n  local steps = 0\n  steps = (0)\n  while (n > (1)) do\n    n = (function() if ((n % (2)) == (0)) then return (n // (2)) else return (((3) * n) + (1)) end end)()\n    steps = (steps + (1))\n    ::cm_continue_1::\n  end\n  return steps\nend\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def collatz_steps(n)\n  steps = 0\n  steps = (0)\n  while (n > (1))\n    n = (((n % (2)) == (0)) ? (n / (2)) : (((3) * n) + (1)))\n    steps = (steps + (1))\n  end\n  return steps\nend\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc collatz_steps(_ n: Int) -> Int {\n    var n: Int = n\n    var steps: Int = 0\n    steps = (0)\n    while (n > (1)) {\n        n = ((cm_floormod(n, (2)) == (0)) ? cm_floordiv(n, (2)) : (((3) * n) + (1)))\n        steps = (steps + (1))\n    }\n    return steps\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction collatz_steps(n: bigint): bigint {\n    let steps: bigint = 0n;\n    steps = (0n);\n    while ((n > (1n))) {\n        n = ((cm_floormod(n, (2n)) === (0n)) ? cm_floordiv(n, (2n)) : (((3n) * n) + (1n)));\n        steps = (steps + (1n));\n    }\n    return steps;\n}\n",
+      "cost": 1.0,
+      "entry": "collatz_steps",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "collatz_steps",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "steps",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "n",
+                "value": [
+                  "IF_EXPR",
+                  [
+                    "CMP_EQ",
+                    [
+                      "MOD",
+                      [
+                        "var",
+                        "n"
+                      ],
+                      [
+                        "int",
+                        2
+                      ]
+                    ],
+                    [
+                      "int",
+                      0
+                    ]
+                  ],
+                  [
+                    "FLOORDIV",
+                    [
+                      "var",
+                      "n"
+                    ],
+                    [
+                      "int",
+                      2
+                    ]
+                  ],
+                  [
+                    "ADD",
+                    [
+                      "MUL",
+                      [
+                        "int",
+                        3
+                      ],
+                      [
+                        "var",
+                        "n"
+                      ]
+                    ],
+                    [
+                      "int",
+                      1
+                    ]
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "steps",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "steps"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_GT",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                1
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "steps"
+            ]
+          }
+        ],
+        "locals": {
+          "steps": "int"
+        },
+        "name": "collatz_steps",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_collatz_steps_ade9a949a90e",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "ade9a949a90e"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "collatz_steps(n: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 18
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 14
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 20
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 16
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 12
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 15
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 23
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 17
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 17
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 18
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 111
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 19
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 15
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 18
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 20
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 10
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

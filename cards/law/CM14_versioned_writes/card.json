@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM14_versioned_writes",
+  "origins": [
+    "hub L35",
+    "Pheros card_versioning",
+    "Pheros L94"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Overwriting a card archives the previous version first and verifies the archive (semver bump + previous_content_hash).",
+  "tier": 0,
+  "witness": "tests/test_kernel.py::test_versioning_archives_previous"
+}

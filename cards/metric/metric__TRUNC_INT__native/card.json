@@ -1,0 +1,35 @@
+{
+  "anchor": 0.8,
+  "calls_per_sample": 1360,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.184,
+  "median_ns": 18.566,
+  "metadata": {
+    "inputs_signature": "f6b49c5afd8517ab",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__TRUNC_INT__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/TRUNC_INT form native: 18.6 ns per call on this host",
+  "target_card": "op/TRUNC_INT",
+  "tier": 3
+}

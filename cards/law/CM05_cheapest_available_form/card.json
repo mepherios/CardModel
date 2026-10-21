@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM05_cheapest_available_form",
+  "origins": [
+    "hub L27",
+    "hub rewrite_engine.cheapest",
+    "rea-cards dispatch"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "A choice between equivalent forms goes through cheapest(): domain match, runnable, available on this host, minimum cost; never 'first in list'.",
+  "tier": 0,
+  "witness": "tests/test_rewrite.py::test_cheapest_respects_domain_and_availability"
+}

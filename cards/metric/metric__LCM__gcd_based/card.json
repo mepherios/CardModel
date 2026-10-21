@@ -1,0 +1,35 @@
+{
+  "anchor": 9.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "gcd_based",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.393,
+  "median_ns": 133.877,
+  "metadata": {
+    "inputs_signature": "a00dfc0a79c4cbd7",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__LCM__gcd_based",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/LCM form gcd_based: 133.9 ns per call on this host",
+  "target_card": "op/LCM",
+  "tier": 3
+}

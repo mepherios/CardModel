@@ -1,0 +1,88 @@
+{
+  "category": "redefinition",
+  "condition": "(_a >= 0) & (_b > 0)",
+  "cost_score": 30,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "integer",
+  "examples": [
+    {
+      "input": {
+        "_a": 48,
+        "_b": 18
+      },
+      "source_eval": 6,
+      "target_eval": 6
+    },
+    {
+      "input": {
+        "_a": 100,
+        "_b": 75
+      },
+      "source_eval": 25,
+      "target_eval": 25
+    },
+    {
+      "input": {
+        "_a": 17,
+        "_b": 5
+      },
+      "source_eval": 1,
+      "target_eval": 1
+    },
+    {
+      "input": {
+        "_a": 1024,
+        "_b": 256
+      },
+      "source_eval": 256,
+      "target_eval": 256
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "1130f765d33daf34d8c32225732a2803acdea135c6e49e1145d4656ef9471c99",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "euclid_gcd_invariant",
+  "pheros_path": "redefinition/euclid_gcd_invariant",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:euclid-lemma-gcd(a,b)=gcd(b,a-q*b)-for-any-integer-q",
+  "provenance": "derived_from_card",
+  "source_form": "gcd(_a, _b)",
+  "status": "healthy",
+  "tags": [
+    "euclid",
+    "gcd",
+    "invariant",
+    "number-theory",
+    "rt-a5-seed"
+  ],
+  "target_form": "gcd(_b, Mod(_a, _b))",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 4,
+        "total": 4
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "axiomatic"
+}

@@ -1,0 +1,22 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a ** 2 - b ** 2",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "difference_of_squares",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "(a + b) * (a - b)",
+  "statement": "a ** 2 - b ** 2 == (a + b) * (a - b)",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ]
+}

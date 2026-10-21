@@ -1,0 +1,71 @@
+{
+  "category": "redefinition",
+  "condition": "Ne(_y, 0) & (_y > -1e150) & (_y < 1e150) & (_x > -1e150) & (_x < 1e150) & ((_y > 1e-150) | (_y < -1e-150))",
+  "cost_score": 5,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_x": 6,
+        "_y": 3
+      },
+      "source_eval": 2,
+      "target_eval": 2
+    },
+    {
+      "input": {
+        "_x": 1,
+        "_y": 4
+      },
+      "source_eval": 0.25,
+      "target_eval": 0.25
+    },
+    {
+      "input": {
+        "_x": -7,
+        "_y": 2
+      },
+      "source_eval": -3.5,
+      "target_eval": -3.5
+    },
+    {
+      "input": {
+        "_x": "x",
+        "_y": "y"
+      },
+      "source_eval": "x/y",
+      "target_eval": "x/y"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "version": "1.0.0"
+  },
+  "name": "div_via_recip",
+  "pheros_path": "redefinition/div_via_recip",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:field-definition-of-division",
+  "provenance": "derived_from_card",
+  "source_form": "_x/_y",
+  "tags": [
+    "algebra",
+    "division",
+    "field-axiom",
+    "reciprocal",
+    "rt-a5-seed"
+  ],
+  "target_form": "_x*(1/_y)",
+  "witness_kind": "symbolic"
+}

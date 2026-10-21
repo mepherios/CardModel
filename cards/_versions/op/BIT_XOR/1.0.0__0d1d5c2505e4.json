@@ -1,0 +1,169 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "domain_generators": {
+    "int": [
+      {
+        "edges": [
+          2147483648,
+          2147483649,
+          4294967295,
+          4294967296,
+          -2147483649,
+          -4294967296
+        ],
+        "int": [
+          -1099511627776,
+          1099511627776
+        ]
+      },
+      {
+        "edges": [
+          2147483648,
+          2147483649,
+          4294967295,
+          4294967296,
+          -2147483649,
+          -4294967296
+        ],
+        "int": [
+          -1099511627776,
+          1099511627776
+        ]
+      }
+    ],
+    "u32": [
+      {
+        "edges": [
+          2147483647,
+          2147483648,
+          4294967294
+        ],
+        "int": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "edges": [
+          2147483647,
+          2147483648,
+          4294967294
+        ],
+        "int": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  },
+  "emit": {
+    "c_like": "({0} ^ {1})",
+    "lean": "UNSUPPORTED",
+    "lua": "({0} ~ {1})",
+    "python": "({0} ^ {1})",
+    "ruby": "({0} ^ {1})"
+  },
+  "forms": [
+    {
+      "code": "lambda a, b: a ^ b",
+      "cost": 1.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "bp.nand_xor",
+      "cost": 4.0,
+      "domain": "u32",
+      "hub_domain": "int",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "nand",
+      "notes": "4-gate NAND tree",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b: (a | b) - (a & b)",
+      "cost": 4.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "add_sub",
+      "notes": "XOR = OR - AND (all integers)",
+      "runnable": true
+    }
+  ],
+  "hints": {
+    "c": {
+      "snippet": "a ^ b"
+    },
+    "go": {
+      "snippet": "a ^ b"
+    },
+    "js": {
+      "snippet": "a ^ b"
+    },
+    "python": {
+      "snippet": "a ^ b"
+    },
+    "rust": {
+      "snippet": "a ^ b"
+    },
+    "swift": {
+      "snippet": "a ^ b"
+    }
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a ^ b",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "binop": [
+        "BitXor"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "BIT_XOR",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "bitwise XOR",
+  "tier": 0
+}

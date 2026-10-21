@@ -1,0 +1,16 @@
+[project]
+name = "cardmodel"
+version = "0.1.0"
+description = "A self-contained card model: every structure is a card; observe, verify, translate, learn, optimize."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+cardmodel = "cardmodel.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["cardmodel*"]

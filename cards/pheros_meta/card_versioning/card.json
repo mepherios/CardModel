@@ -1,0 +1,40 @@
+{
+  "category": "meta_definition",
+  "derivation_source": "substrate_self_definition",
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed",
+    "lacking: tool_create_card does not yet write version archives (lifting_plan: add to create_card's commit step)"
+  ],
+  "former_provenance": "substrate_meta",
+  "interacts_with": [
+    "must_do_card_versioning",
+    "tool_create_card"
+  ],
+  "metadata": {
+    "bypass_create_card": true,
+    "bypass_rationale": "axiom-tier meta card",
+    "version": "1.0.0"
+  },
+  "name": "card_versioning",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "provenance": "derived_from_card",
+  "rationale": "Without versioning, edits lose history and rollback is impossible. The protocol is documented here; full enforcement is in tool_create_card after E2 implementation lands.",
+  "statement": "Versioning protocol for card.json edits. Every card may carry metadata.version (semver) and metadata.previous_content_hash. tool_create_card writes the prior version to cards/version/<name>/<v>/ before overwriting.",
+  "substrate_role": "substrate-internal definition",
+  "supersedes": [
+    "must_do_card_versioning"
+  ],
+  "tags": [
+    "axiom",
+    "history",
+    "versioning"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Documents/Pheros_Studio/cards/_meta/card_versioning"
+}

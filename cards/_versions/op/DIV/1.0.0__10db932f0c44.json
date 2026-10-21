@@ -1,0 +1,80 @@
+{
+  "category": "op",
+  "cost": 5.0,
+  "emit": {
+    "c_like": "({0} / {1})",
+    "lean": "UNSUPPORTED",
+    "lua": "({0} / {1})",
+    "python": "({0} / {1})",
+    "ruby": "({0} / {1})"
+  },
+  "forms": [
+    {
+      "code": "lambda a, b: a / b",
+      "cost": 5.0,
+      "domain": "float",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda a, b: a * (1.0 / b)",
+      "cost": 6.0,
+      "domain": "float",
+      "lang": "python",
+      "name": "reciprocal_mul",
+      "notes": "a * (1/b); can differ from a/b in the last ulp (compared with rel_tol 1e-12)",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        },
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a / b",
+    "types": [
+      [
+        "float",
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "binop": [
+        "Div"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "DIV",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "true division (float result)",
+  "tier": 0
+}

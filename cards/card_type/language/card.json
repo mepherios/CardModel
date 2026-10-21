@@ -1,0 +1,46 @@
+{
+  "applies_to": [
+    "language"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "language",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "codegen": {
+        "type": "object"
+      },
+      "comments": {
+        "type": "object"
+      },
+      "extends": {
+        "type": "string"
+      },
+      "extensions": {
+        "items": {
+          "pattern": "^\\.",
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "probe": {
+        "type": "object"
+      },
+      "runner": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "extensions"
+    ],
+    "type": "object"
+  },
+  "statement": "A programming language as a card.",
+  "tier": 0
+}

@@ -1,0 +1,27 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "504b0304",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "archive",
+      "file"
+    ],
+    "priority": 30
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "zip",
+  "statement": "ZIP container (also APK/JAR/IPA).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/zip"
+}

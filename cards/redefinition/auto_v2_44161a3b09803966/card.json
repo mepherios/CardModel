@@ -1,0 +1,86 @@
+{
+  "_autogen_v2": {
+    "origin": "analogize_v2",
+    "parents": [
+      "auto_e98fdd5c6797b270"
+    ],
+    "verifier_evidence": "real:PROVED(30/30)"
+  },
+  "category": "redefinition",
+  "condition": null,
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "positive_real",
+  "examples": [
+    {
+      "input": {
+        "x": 2,
+        "y": 2
+      },
+      "source_eval": -12.0,
+      "target_eval": -12.0
+    },
+    {
+      "input": {
+        "x": 3,
+        "y": 3
+      },
+      "source_eval": -33.0,
+      "target_eval": -33.0
+    },
+    {
+      "input": {
+        "x": 5,
+        "y": 5
+      },
+      "source_eval": -135.0,
+      "target_eval": -135.0
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "a48f096eeb871d97b93266129202e0bf14d9a4dc48ad0f5e499c1810b94e3446",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_v2_44161a3b09803966",
+  "pheros_path": "redefinition/auto_v2_44161a3b09803966",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:analogize_v2",
+  "provenance": "derived_from_card",
+  "source_form": "-x**2*y - 2*x",
+  "status": "healthy",
+  "tags": [
+    "auto_generated",
+    "redefinition",
+    "autogen_v2",
+    "analogize_v2"
+  ],
+  "target_form": "x*(-x*y - 2)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

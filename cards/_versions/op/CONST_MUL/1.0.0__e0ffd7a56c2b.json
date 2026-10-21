@@ -1,0 +1,62 @@
+{
+  "category": "op",
+  "cost": 2.0,
+  "forms": [
+    {
+      "code": "lambda x, n: x * n",
+      "cost": 2.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "cost": 1.5,
+      "domain": "int",
+      "lang": "python",
+      "name": "booth_hint",
+      "notes": "wins when bit_length(N) is small and Hamming weight low",
+      "runnable": false,
+      "str_impl": "signed-digit recoding of N; shifts + adds"
+    }
+  ],
+  "match": {
+    "python": {
+      "pattern_any": [
+        [
+          "MUL",
+          "?x",
+          [
+            "int",
+            "?n"
+          ]
+        ],
+        [
+          "MUL",
+          [
+            "int",
+            "?n"
+          ],
+          "?x"
+        ]
+      ]
+    }
+  },
+  "metadata": {
+    "hub_kind": "fused",
+    "version": "1.0.0"
+  },
+  "name": "CONST_MUL",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "x * N where N is a constant int",
+  "tier": 1
+}

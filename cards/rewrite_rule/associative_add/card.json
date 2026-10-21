@@ -1,0 +1,39 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "(a + b) + c",
+  "metadata": {
+    "previous_content_hash": "eb025556efd65762dafbb2ceade8d27fa61b0397e16569da25bce4229460a8eb",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "associative_add",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a + (b + c)",
+  "statement": "(a + b) + c == a + (b + c)",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b",
+    "c"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_associative_add (a b c : Int) : ((a + b) + c) = (a + (b + c)) := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

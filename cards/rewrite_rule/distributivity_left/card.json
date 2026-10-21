@@ -1,0 +1,39 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a * (b + c)",
+  "metadata": {
+    "previous_content_hash": "371ec109a2e8ae71283a39234f8f0e8f28526e8f093dab71ec2f0d83317d6e49",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "distributivity_left",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a * b + a * c",
+  "statement": "a * (b + c) == a * b + a * c",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b",
+    "c"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_distributivity_left (a b c : Int) : (a * (b + c)) = ((a * b) + (a * c)) := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

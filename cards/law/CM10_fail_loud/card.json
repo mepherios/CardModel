@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM10_fail_loud",
+  "origins": [
+    "hub L36",
+    "hub L39"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Malformed cards and schema drift are reported, never silently skipped; broad excepts log what they caught.",
+  "tier": 0,
+  "witness": "tests/test_kernel.py::test_malformed_card_is_reported"
+}

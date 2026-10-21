@@ -1,0 +1,630 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_GT",
+    "op/CMP_LT",
+    "op/FLOORDIV",
+    "op/MIN",
+    "op/MUL",
+    "op/OR",
+    "op/SUB"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef binomial(n: int, k: int) -> int:\n    if k < 0 or k > n:\n        return 0\n    k = min(k, n - k)\n    c = 1\n    for i in range(k):\n        c = c * (n - i) // (i + 1)\n    return c",
+      "cost": 1.0,
+      "entry": "binomial",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_min_i(int64_t a, int64_t b) { return b < a ? b : a; }\nstatic int64_t binomial(int64_t n, int64_t k) {\n    int64_t c = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    if (((k < INT64_C(0)) || (k > n))) {\n        return INT64_C(0);\n    }\n    k = cm_min_i(k, (n - k));\n    c = INT64_C(1);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = k;\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        c = cm_floordiv((c * (n - i)), (i + INT64_C(1)));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc cm_min_i(a int64, b int64) int64 {\n\tif b < a {\n\t\treturn b\n\t}\n\treturn a\n}\nfunc binomial(n int64, k int64) int64 {\n\tvar c int64 = 0\n\t_ = c\n\tvar i int64 = 0\n\t_ = i\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\tif ((k < int64(0)) || (k > n)) {\n\t\treturn int64(0)\n\t}\n\tk = cm_min_i(k, (n - k))\n\tc = int64(1)\n\tcm_it1 = int64(0)\n\tcm_stop2 = k\n\tfor (cm_it1 < cm_stop2) {\n\t\ti = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\tc = cm_floordiv((c * (n - i)), (i + int64(1)))\n\t}\n\treturn c\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_min_i(a, b) { return b < a ? b : a; }\nfunction binomial(n, k) {\n    let c = 0n;\n    let i = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    if (((k < (0n)) || (k > n))) {\n        return (0n);\n    }\n    k = cm_min_i(k, (n - k));\n    c = (1n);\n    cm_it1 = (0n);\n    cm_stop2 = k;\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        c = cm_floordiv((c * (n - i)), (i + (1n)));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def binomial(n: int, k: int) -> int:\n    if ((k < 0) or (k > n)):\n        return 0\n    k = min(k, (n - k))\n    c = 1\n    for i in range(0, k, 1):\n        c = ((c * (n - i)) // (i + 1))\n    return c\n\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn cm_min_i(a: i64, b: i64) -> i64 { if b < a { b } else { a } }\nfn binomial(n: i64, k: i64) -> i64 {\n    let mut k: i64 = k;\n    let mut c: i64 = 0;\n    let mut i: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    if ((k < (0i64)) || (k > n)) {\n        return (0i64);\n    }\n    k = cm_min_i(k, (n - k));\n    c = (1i64);\n    cm_it1 = (0i64);\n    cm_stop2 = k;\n    while (cm_it1 < cm_stop2) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        c = cm_floordiv((c * (n - i)), (i + (1i64)));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_min_i(int64_t a, int64_t b) { return b < a ? b : a; }\nstatic int64_t binomial(int64_t n, int64_t k) {\n    int64_t c = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    if (((k < INT64_C(0)) || (k > n))) {\n        return INT64_C(0);\n    }\n    k = cm_min_i(k, (n - k));\n    c = INT64_C(1);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = k;\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        c = cm_floordiv((c * (n - i)), (i + INT64_C(1)));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long binomial(long n, long k) {\n    long c = 0L;\n    long i = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    if (((k < (0L)) || (k > n))) {\n        return (0L);\n    }\n    k = Math.min(k, (n - k));\n    c = (1L);\n    cm_it1 = (0L);\n    cm_stop2 = k;\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        c = Math.floorDiv((c * (n - i)), (i + (1L)));\n    }\n    return c;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def binomial (n : Int) (k : Int) : Int := Id.run do\n  let mut k : Int := k\n  let mut c : Int := 0\n  let mut i : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  if ((decide (k < (0 : Int))) || (decide (k > n))) then\n    return (0 : Int)\n  k := (min k (n - k))\n  c := (1 : Int)\n  cm_it1 := (0 : Int)\n  cm_stop2 := k\n  while (decide (cm_it1 < cm_stop2)) do\n    i := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    c := (Int.fdiv (c * (n - i)) (i + (1 : Int)))\n  return c\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function cm_min_i(a, b) if b < a then return b else return a end end\nfunction binomial(n, k)\n  local c = 0\n  local i = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  if ((k < (0)) or (k > n)) then\n    return (0)\n  end\n  k = cm_min_i(k, (n - k))\n  c = (1)\n  cm_it1 = (0)\n  cm_stop2 = k\n  while (cm_it1 < cm_stop2) do\n    i = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    c = ((c * (n - i)) // (i + (1)))\n    ::cm_continue_1::\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def cm_min_i(a, b)\n  b < a ? b : a\nend\ndef binomial(n, k)\n  c = 0\n  i = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  if ((k < (0)) || (k > n))\n    return (0)\n  end\n  k = cm_min_i(k, (n - k))\n  c = (1)\n  cm_it1 = (0)\n  cm_stop2 = k\n  while (cm_it1 < cm_stop2)\n    i = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    c = ((c * (n - i)) / (i + (1)))\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc cm_min_i(_ a: Int, _ b: Int) -> Int { return b < a ? b : a }\nfunc binomial(_ n: Int, _ k: Int) -> Int {\n    var k: Int = k\n    var c: Int = 0\n    var i: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    if ((k < (0)) || (k > n)) {\n        return (0)\n    }\n    k = cm_min_i(k, (n - k))\n    c = (1)\n    cm_it1 = (0)\n    cm_stop2 = k\n    while (cm_it1 < cm_stop2) {\n        i = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        c = cm_floordiv((c * (n - i)), (i + (1)))\n    }\n    return c\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_min_i(a, b) { return b < a ? b : a; }\nfunction binomial(n: bigint, k: bigint): bigint {\n    let c: bigint = 0n;\n    let i: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    if (((k < (0n)) || (k > n))) {\n        return (0n);\n    }\n    k = cm_min_i(k, (n - k));\n    c = (1n);\n    cm_it1 = (0n);\n    cm_stop2 = k;\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        c = cm_floordiv((c * (n - i)), (i + (1n)));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "binomial",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    },
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "binomial",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "OR",
+              [
+                "CMP_LT",
+                [
+                  "var",
+                  "k"
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ],
+              [
+                "CMP_GT",
+                [
+                  "var",
+                  "k"
+                ],
+                [
+                  "var",
+                  "n"
+                ]
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "int",
+                  0
+                ]
+              }
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "k",
+            "value": [
+              "MIN",
+              [
+                "var",
+                "k"
+              ],
+              [
+                "SUB",
+                [
+                  "var",
+                  "n"
+                ],
+                [
+                  "var",
+                  "k"
+                ]
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "c",
+            "value": [
+              "int",
+              1
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "c",
+                "value": [
+                  "FLOORDIV",
+                  [
+                    "MUL",
+                    [
+                      "var",
+                      "c"
+                    ],
+                    [
+                      "SUB",
+                      [
+                        "var",
+                        "n"
+                      ],
+                      [
+                        "var",
+                        "i"
+                      ]
+                    ]
+                  ],
+                  [
+                    "ADD",
+                    [
+                      "var",
+                      "i"
+                    ],
+                    [
+                      "int",
+                      1
+                    ]
+                  ]
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              0
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "var",
+              "k"
+            ],
+            "stop_var": "cm_stop2",
+            "var": "i"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "c"
+            ]
+          }
+        ],
+        "locals": {
+          "c": "int",
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "i": "int"
+        },
+        "name": "binomial",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          },
+          {
+            "name": "k",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_binomial_195473b88cbd",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "195473b88cbd"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "k",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "binomial(n: int, k: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30,
+        30
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        11,
+        19
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        7,
+        17
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        23,
+        25
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        7,
+        30
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        14,
+        15
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        25,
+        25
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        13,
+        29
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        11,
+        27
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        7,
+        4
+      ],
+      "out": 35
+    },
+    {
+      "args": [
+        3,
+        8
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        7,
+        26
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        9,
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        22,
+        28
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        0,
+        14
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        0,
+        15
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        26,
+        26
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30,
+        18
+      ],
+      "out": 86493225
+    },
+    {
+      "args": [
+        27,
+        29
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        20,
+        6
+      ],
+      "out": 38760
+    },
+    {
+      "args": [
+        0,
+        19
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        12,
+        20
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        13,
+        26
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        14,
+        3
+      ],
+      "out": 364
+    },
+    {
+      "args": [
+        8,
+        16
+      ],
+      "out": 0
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

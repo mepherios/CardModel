@@ -1,0 +1,63 @@
+{
+  "category": "crypto_atom",
+  "forms": [
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "entry": "sha256",
+      "file": "python.py",
+      "lang": "python",
+      "name": "python_stdlib",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "entry": "sha256",
+      "file": "javascript.mjs",
+      "lang": "javascript",
+      "name": "node_crypto",
+      "notes": "node:crypto built-ins (no npm packages)",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "lang": "javascript",
+      "name": "ting_noble",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "static/app/crypto/atoms.js#sha256"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_hashlib",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "core/suites_ref.py#sha256"
+    }
+  ],
+  "interacts_with": [
+    "comp_crypto_hash_sha256"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sha256",
+  "operation": "hash",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b",
+    "ting_card": "cards/crypto_atom/sha256"
+  },
+  "purity": "pure",
+  "standard": "FIPS 180-4",
+  "statement": "SHA-256 (FIPS 180-4)",
+  "tier": 0,
+  "vectors": "vectors.json"
+}

@@ -1,0 +1,49 @@
+{
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "x": 1
+      },
+      "source_eval": "1",
+      "target_eval": "1"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "a_domain": "real",
+    "b_domain": "real",
+    "composed_from": [
+      "complete_the_square",
+      "mul_via_mean_square"
+    ],
+    "composition_kind": "direct",
+    "version": "1.0.0"
+  },
+  "name": "auto_composite_bfc879ae52211434",
+  "pheros_path": "redefinition/auto_composite_bfc879ae52211434",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "composer:verified_via_redefinition_verifier",
+  "provenance": "derived_from_card",
+  "source_form": "_x**2 + _b*_x + _c",
+  "tags": [
+    "auto_composite",
+    "composer",
+    "direct"
+  ],
+  "target_form": "(-_b**2/8 + _c/2 + (_b/2 + _x)**2/2 + 1/2)**2 - (_b**2/8 - _c/2 - (_b/2 + _x)**2/2 + 1/2)**2",
+  "witness_kind": "symbolic"
+}

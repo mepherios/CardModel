@@ -1,0 +1,17 @@
+{
+  "axis": "learning",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "learned_cards",
+  "name": "G_L1_learned_cards",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Cards promoted by the learning loop with cited evidence.",
+  "target": 10,
+  "tier": 0
+}

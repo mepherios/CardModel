@@ -1,0 +1,25 @@
+{
+  "category": "lib",
+  "export_names": true,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "module_alias": "rh",
+  "name": "redef_helpers",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "hub",
+    "read_on": "2026-10-21"
+  },
+  "statement": "Helpers used by ported card_redefinitions forms (_xgcd, _const_pow_chain).",
+  "tier": 0,
+  "variants": {
+    "python.py": {
+      "kind": "file"
+    }
+  }
+}

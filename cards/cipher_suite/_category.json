@@ -1,0 +1,22 @@
+{
+  "card_type": "cipher_suite",
+  "defined_by": "tools/vendor_import.py",
+  "description": "Ting cipher suites: depends_on atoms, cost_vector + dimension_direction (rank / pareto with cardmodel rewrite --rank).",
+  "name": "cipher_suite",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "9fc34be4aded820dd9a403a75e75219845bb7aa30546ef6788d9afd0f7fe78c8"
+  },
+  "references": "internal",
+  "status_values": [
+    "broken",
+    "healthy",
+    "quarantined",
+    "suspect",
+    "vetted"
+  ],
+  "tier": 1
+}

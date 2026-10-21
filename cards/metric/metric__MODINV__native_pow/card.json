@@ -1,0 +1,35 @@
+{
+  "anchor": 25.0,
+  "calls_per_sample": 820,
+  "category": "metric",
+  "form": "native_pow",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 6.505,
+  "median_ns": 275.661,
+  "metadata": {
+    "inputs_signature": "0e6820859ef69cbe",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__MODINV__native_pow",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/MODINV form native_pow: 275.7 ns per call on this host",
+  "target_card": "op/MODINV",
+  "tier": 3
+}

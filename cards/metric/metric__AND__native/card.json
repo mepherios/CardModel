@@ -1,0 +1,35 @@
+{
+  "anchor": 0.5,
+  "calls_per_sample": 80,
+  "category": "metric",
+  "form": "native",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 2.087,
+  "median_ns": 36.975,
+  "metadata": {
+    "inputs_signature": "ed8ae96a9a1a7eed",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__AND__native",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/AND form native: 37.0 ns per call on this host",
+  "target_card": "op/AND",
+  "tier": 3
+}

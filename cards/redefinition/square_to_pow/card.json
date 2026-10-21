@@ -1,0 +1,69 @@
+{
+  "category": "redefinition",
+  "condition": "(_x > -1e150) & (_x < 1e150)",
+  "cost_score": 5,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_x": 3
+      },
+      "source_eval": 9,
+      "target_eval": 9
+    },
+    {
+      "input": {
+        "_x": "x"
+      },
+      "source_eval": "x*x",
+      "target_eval": "x**2"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "9e49fc4f4edd0ae4ffd50f461315b19aba9dc2a881246463c706f32a26bd94e6",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "square_to_pow",
+  "pheros_path": "redefinition/square_to_pow",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic",
+  "provenance": "derived_from_card",
+  "source_form": "_x*_x",
+  "status": "healthy",
+  "tags": [
+    "algebra",
+    "normalisation",
+    "power"
+  ],
+  "target_form": "_x**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 1,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 2
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

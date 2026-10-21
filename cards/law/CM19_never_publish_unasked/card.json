@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM19_never_publish_unasked",
+  "origins": [
+    "hub L13",
+    "hub L76"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Nothing is pushed or published without an explicit request; the program only writes inside its own tree and the project's .cardmodel/.",
+  "tier": 0,
+  "witness": "tests/test_laws.py::test_no_publishing_calls"
+}

@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Computation atoms: reference semantics (ir.eval), signatures, per-language emit templates, equivalent forms with costs (redefinitions), hints and observe matchers.",
+  "name": "op",
+  "tier": 0
+}

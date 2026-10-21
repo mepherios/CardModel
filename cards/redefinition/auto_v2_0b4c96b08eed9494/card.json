@@ -1,0 +1,83 @@
+{
+  "_autogen_v2": {
+    "origin": "analogize_v2",
+    "parents": [
+      "auto_e9f40d8dc2944da3"
+    ],
+    "verifier_evidence": "integer:PROVED(56/56), real:PROVED(63/63)"
+  },
+  "category": "redefinition",
+  "condition": null,
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "integer",
+  "examples": [
+    {
+      "input": {
+        "_x": 2
+      },
+      "source_eval": 1.157821282,
+      "target_eval": 1.157821282
+    },
+    {
+      "input": {
+        "_x": 3
+      },
+      "source_eval": -0.291006191,
+      "target_eval": -0.291006191
+    },
+    {
+      "input": {
+        "_x": 5
+      },
+      "source_eval": 0.648360827,
+      "target_eval": 0.648360827
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "74e1c4d1fd019e9b2588370a54bd60000b33aa89761981c9cf6743fd899e6cf2",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "auto_v2_0b4c96b08eed9494",
+  "pheros_path": "redefinition/auto_v2_0b4c96b08eed9494",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:analogize_v2",
+  "provenance": "derived_from_card",
+  "source_form": "-(tan(_x) - 1/(2 - 2*tan(_x)**2))**2 + (tan(_x) + 1/(2 - 2*tan(_x)**2))**2",
+  "status": "healthy",
+  "tags": [
+    "auto_generated",
+    "redefinition",
+    "autogen_v2",
+    "analogize_v2"
+  ],
+  "target_form": "(1/(2*sqrt(tan(_x) + 1)) - 2*tan(_x)/((tan(_x) - 1)*sqrt(tan(_x) + 1)))**2 - 1/(4*(tan(_x) + 1)) - 4*tan(_x)**2/((tan(_x) - 1)**2*(tan(_x) + 1))",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 1,
+        "disagree": 0,
+        "incomplete": 2,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

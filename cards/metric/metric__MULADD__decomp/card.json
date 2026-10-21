@@ -1,0 +1,35 @@
+{
+  "anchor": 4.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "decomp",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.241,
+  "median_ns": 42.33,
+  "metadata": {
+    "inputs_signature": "43e57c18e25333d6",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__MULADD__decomp",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/MULADD form decomp: 42.3 ns per call on this host",
+  "target_card": "op/MULADD",
+  "tier": 3
+}

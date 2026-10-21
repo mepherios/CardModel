@@ -1,0 +1,16 @@
+{
+  "category": "domain",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python",
+  "parents": [
+    "any"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Runtime domain: the Python interpreter (Ting's 'python' forms).",
+  "tier": 0
+}

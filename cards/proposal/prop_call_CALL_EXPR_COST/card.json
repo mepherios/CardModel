@@ -1,0 +1,51 @@
+{
+  "candidate": {
+    "category": "call",
+    "cost": 1.5,
+    "match": {
+      "python": {
+        "call": [
+          "expr_cost"
+        ]
+      }
+    },
+    "metadata": {
+      "confidence": "tentative",
+      "evidence_count": 4,
+      "files": 1,
+      "learned": true,
+      "spellings": {
+        "expr_cost": 4
+      }
+    },
+    "name": "CALL_EXPR_COST",
+    "provenance": {
+      "language": "python",
+      "learning_loop_refs": [
+        "observation/obs_b01cbf91e8dc6db4"
+      ]
+    },
+    "statement": "call to expr_cost (python), learned from observed code",
+    "tags": [
+      "learned"
+    ],
+    "tier": 3
+  },
+  "category": "proposal",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "prop_call_CALL_EXPR_COST",
+  "proposal_kind": "call",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "ready": false,
+  "reason": "needs >= 3 uses in >= 2 files (have 4 in 1)",
+  "seed": 1210246382,
+  "statement": "proposed call card CALL_EXPR_COST",
+  "tier": 3,
+  "xleq": null
+}

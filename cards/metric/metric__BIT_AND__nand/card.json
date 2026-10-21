@@ -1,0 +1,35 @@
+{
+  "anchor": 2.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "nand",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 15160.566,
+  "median_ns": 17160.566,
+  "metadata": {
+    "inputs_signature": "fcbf9841e4d06149",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__BIT_AND__nand",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/BIT_AND form nand: 17160.6 ns per call on this host",
+  "target_card": "op/BIT_AND",
+  "tier": 3
+}

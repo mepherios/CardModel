@@ -1,0 +1,66 @@
+{
+  "_autogen_v2": {
+    "origin": "compose_v2",
+    "parents": [
+      "auto_v2_2431bb0d47273fb3",
+      "cos_double_angle"
+    ],
+    "verifier_evidence": "real:PROVED(40/40)"
+  },
+  "category": "redefinition",
+  "condition": "(((_x > -1e15) & (_x < 1e15))) & ((_x > -1e15) & (_x < 1e15))",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_x": 2
+      },
+      "source_eval": -0.653643621,
+      "target_eval": -0.653643621
+    },
+    {
+      "input": {
+        "_x": 3
+      },
+      "source_eval": 0.960170287,
+      "target_eval": 0.960170287
+    },
+    {
+      "input": {
+        "_x": 5
+      },
+      "source_eval": -0.839071529,
+      "target_eval": -0.839071529
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "auto_v2_8b1a608490a912c5",
+  "pheros_path": "redefinition/auto_v2_8b1a608490a912c5",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:compose_v2",
+  "provenance": "derived_from_card",
+  "source_form": "cos(2*_x)",
+  "tags": [
+    "auto_generated",
+    "autogen_v2",
+    "compose_v2",
+    "redefinition"
+  ],
+  "target_form": "-sin(_x)**2 + cos(_x)**2",
+  "witness_kind": "symbolic"
+}

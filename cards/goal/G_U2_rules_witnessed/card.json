@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "rules_witnessed",
+  "name": "G_U2_rules_witnessed",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Rewrite rules with a passing numeric witness.",
+  "target": 12,
+  "tier": 0
+}

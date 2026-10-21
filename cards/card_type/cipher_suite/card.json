@@ -1,0 +1,24 @@
+{
+  "applies_to": [
+    "cipher_suite"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "cipher_suite",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "required": [
+      "depends_on",
+      "cost_vector",
+      "dimension_direction"
+    ],
+    "type": "object"
+  },
+  "statement": "Ting's cipher suite: depends_on atoms; cost_vector with dimension_direction.",
+  "tier": 0
+}

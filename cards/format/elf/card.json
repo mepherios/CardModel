@@ -1,0 +1,27 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "7f454c46",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "native_binary",
+      "file"
+    ],
+    "priority": 50
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "elf",
+  "statement": "ELF object/executable.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/elf"
+}

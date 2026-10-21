@@ -1,0 +1,49 @@
+{
+  "applies_to": [
+    "function"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "function",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "generators": {
+        "type": "array"
+      },
+      "ir": {
+        "required": [
+          "entry",
+          "functions"
+        ],
+        "type": "object"
+      },
+      "signature": {
+        "required": [
+          "params",
+          "returns"
+        ],
+        "type": "object"
+      },
+      "vectors": {
+        "type": "array"
+      },
+      "verification": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "ir",
+      "signature",
+      "forms"
+    ],
+    "type": "object"
+  },
+  "statement": "A function lifted into the card IR, with its forms in many languages and its known-answer vectors.",
+  "tier": 0
+}

@@ -1,0 +1,16 @@
+{
+  "category": "domain",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "browser",
+  "parents": [
+    "any"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Runtime domain: a JavaScript engine (Ting's 'browser' forms; Node here).",
+  "tier": 0
+}

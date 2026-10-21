@@ -1,0 +1,16 @@
+{
+  "category_aliases": [
+    "meta_definition"
+  ],
+  "defined_by": "tools/vendor_import.py",
+  "description": "Pheros _meta contracts, vendored verbatim; the model's card_type cards are their ported, executable form.",
+  "name": "pheros_meta",
+  "provenance": {
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/_meta",
+    "read_on": "2026-10-21",
+    "sha256": "4bfa58ac937704d7b0044fbe694edeb59ea9d89a42f850423292b6558432fa3b"
+  },
+  "references": "external",
+  "tier": 0
+}

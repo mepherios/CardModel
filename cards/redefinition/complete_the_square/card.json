@@ -1,0 +1,93 @@
+{
+  "category": "redefinition",
+  "condition": "(_x > -1e150) & (_x < 1e150) & (_b > -1e150) & (_b < 1e150) & (_c > -1e150) & (_c < 1e150)",
+  "cost_score": 25,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_b": 0,
+        "_c": 0,
+        "_x": 0
+      },
+      "source_eval": 0,
+      "target_eval": 0
+    },
+    {
+      "input": {
+        "_b": -4,
+        "_c": 1,
+        "_x": 3
+      },
+      "source_eval": -2,
+      "target_eval": -2
+    },
+    {
+      "input": {
+        "_b": 6,
+        "_c": 5,
+        "_x": 2
+      },
+      "source_eval": 21,
+      "target_eval": 21
+    },
+    {
+      "input": {
+        "_b": "b",
+        "_c": "c",
+        "_x": "x"
+      },
+      "source_eval": "x**2 + b*x + c",
+      "target_eval": "(x + b/2)**2 + (c - b**2/4)"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "e1a1711e76cf3bd153b9b7f80b77e02e90a5045687dcf65c9ba109376047b214",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "complete_the_square",
+  "pheros_path": "redefinition/complete_the_square",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:expand-(x+b/2)^2+(c-b^2/4)=x^2+b*x+c",
+  "provenance": "derived_from_card",
+  "source_form": "_x**2 + _b*_x + _c",
+  "status": "healthy",
+  "tags": [
+    "algebra",
+    "complete-the-square",
+    "quadratic",
+    "rt-a5-seed",
+    "vertex-form"
+  ],
+  "target_form": "(_x + _b/2)**2 + (_c - _b**2/4)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 4
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

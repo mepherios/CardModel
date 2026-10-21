@@ -1,0 +1,530 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_EQ",
+    "op/MOD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef tri(n: int) -> int:\n    total = 0\n    for i in range(n, 0, -1):\n        if i % 3 == 0:\n            continue\n        total += i\n    return total",
+      "cost": 1.0,
+      "entry": "tri",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t tri(int64_t n) {\n    int64_t total = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    total = INT64_C(0);\n    cm_it1 = n;\n    cm_stop2 = INT64_C(0);\n    while ((cm_it1 > cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(-1));\n        if ((cm_floormod(i, INT64_C(3)) == INT64_C(0))) {\n            continue;\n        }\n        total = (total + i);\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc tri(n int64) int64 {\n\tvar total int64 = 0\n\t_ = total\n\tvar i int64 = 0\n\t_ = i\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\ttotal = int64(0)\n\tcm_it1 = n\n\tcm_stop2 = int64(0)\n\tfor (cm_it1 > cm_stop2) {\n\t\ti = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(-1))\n\t\tif (cm_floormod(i, int64(3)) == int64(0)) {\n\t\t\tcontinue\n\t\t}\n\t\ttotal = (total + i)\n\t}\n\treturn total\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction tri(n) {\n    let total = 0n;\n    let i = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    total = (0n);\n    cm_it1 = n;\n    cm_stop2 = (0n);\n    while ((cm_it1 > cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (-1n));\n        if ((cm_floormod(i, (3n)) === (0n))) {\n            continue;\n        }\n        total = (total + i);\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def tri(n: int) -> int:\n    total = 0\n    for i in range(n, 0, -1):\n        if ((i % 3) == 0):\n            continue\n        total = (total + i)\n    return total\n\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn tri(n: i64) -> i64 {\n    let mut total: i64 = 0;\n    let mut i: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    total = (0i64);\n    cm_it1 = n;\n    cm_stop2 = (0i64);\n    while (cm_it1 > cm_stop2) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (-1i64));\n        if (cm_floormod(i, (3i64)) == (0i64)) {\n            continue;\n        }\n        total = (total + i);\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t tri(int64_t n) {\n    int64_t total = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    total = INT64_C(0);\n    cm_it1 = n;\n    cm_stop2 = INT64_C(0);\n    while ((cm_it1 > cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(-1));\n        if ((cm_floormod(i, INT64_C(3)) == INT64_C(0))) {\n            continue;\n        }\n        total = (total + i);\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long tri(long n) {\n    long total = 0L;\n    long i = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    total = (0L);\n    cm_it1 = n;\n    cm_stop2 = (0L);\n    while ((cm_it1 > cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (-1L));\n        if ((Math.floorMod(i, (3L)) == (0L))) {\n            continue;\n        }\n        total = (total + i);\n    }\n    return total;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def tri (n : Int) : Int := Id.run do\n  let mut total : Int := 0\n  let mut i : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  total := (0 : Int)\n  cm_it1 := n\n  cm_stop2 := (0 : Int)\n  while (decide (cm_it1 > cm_stop2)) do\n    i := cm_it1\n    cm_it1 := (cm_it1 + (-1 : Int))\n    if ((Int.fmod i (3 : Int)) == (0 : Int)) then\n      continue\n    total := (total + i)\n  return total\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function tri(n)\n  local total = 0\n  local i = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  total = (0)\n  cm_it1 = n\n  cm_stop2 = (0)\n  while (cm_it1 > cm_stop2) do\n    i = cm_it1\n    cm_it1 = (cm_it1 + (-1))\n    if ((i % (3)) == (0)) then\n      goto cm_continue_1\n    end\n    total = (total + i)\n    ::cm_continue_1::\n  end\n  return total\nend\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def tri(n)\n  total = 0\n  i = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  total = (0)\n  cm_it1 = n\n  cm_stop2 = (0)\n  while (cm_it1 > cm_stop2)\n    i = cm_it1\n    cm_it1 = (cm_it1 + (-1))\n    if ((i % (3)) == (0))\n      next\n    end\n    total = (total + i)\n  end\n  return total\nend\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc tri(_ n: Int) -> Int {\n    var total: Int = 0\n    var i: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    total = (0)\n    cm_it1 = n\n    cm_stop2 = (0)\n    while (cm_it1 > cm_stop2) {\n        i = cm_it1\n        cm_it1 = (cm_it1 + (-1))\n        if (cm_floormod(i, (3)) == (0)) {\n            continue\n        }\n        total = (total + i)\n    }\n    return total\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction tri(n: bigint): bigint {\n    let total: bigint = 0n;\n    let i: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    total = (0n);\n    cm_it1 = n;\n    cm_stop2 = (0n);\n    while ((cm_it1 > cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (-1n));\n        if ((cm_floormod(i, (3n)) === (0n))) {\n            continue;\n        }\n        total = (total + i);\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "tri",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "tri",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "total",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "cond": [
+                  "CMP_EQ",
+                  [
+                    "MOD",
+                    [
+                      "var",
+                      "i"
+                    ],
+                    [
+                      "int",
+                      3
+                    ]
+                  ],
+                  [
+                    "int",
+                    0
+                  ]
+                ],
+                "else": [],
+                "k": "if",
+                "then": [
+                  {
+                    "k": "continue"
+                  }
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "total",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "total"
+                  ],
+                  [
+                    "var",
+                    "i"
+                  ]
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "var",
+              "n"
+            ],
+            "step": [
+              "int",
+              -1
+            ],
+            "stop": [
+              "int",
+              0
+            ],
+            "stop_var": "cm_stop2",
+            "var": "i"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "total"
+            ]
+          }
+        ],
+        "locals": {
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "i": "int",
+          "total": "int"
+        },
+        "name": "tri",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_tri_36534d396342",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "36534d396342"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "tri(n: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 300
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 48
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 127
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 19
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 108
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 192
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 217
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 75
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 75
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 61
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 300
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 243
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 27
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 243
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 27
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 169
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 271
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 108
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 147
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 12
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 48
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 91
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 192
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

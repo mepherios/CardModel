@@ -1,0 +1,565 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_LT",
+    "op/FLOORDIV"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef isqrt_newton(n: int) -> int:\n    if n < 2:\n        return n\n    x = n\n    y = (x + 1) // 2\n    while y < x:\n        x = y\n        y = (x + n // x) // 2\n    return x",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t isqrt_newton(int64_t n) {\n    int64_t x = 0;\n    int64_t y = 0;\n    if ((n < INT64_C(2))) {\n        return n;\n    }\n    x = n;\n    y = cm_floordiv((x + INT64_C(1)), INT64_C(2));\n    while ((y < x)) {\n        x = y;\n        y = cm_floordiv((x + cm_floordiv(n, x)), INT64_C(2));\n    }\n    return x;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc isqrt_newton(n int64) int64 {\n\tvar x int64 = 0\n\t_ = x\n\tvar y int64 = 0\n\t_ = y\n\tif (n < int64(2)) {\n\t\treturn n\n\t}\n\tx = n\n\ty = cm_floordiv((x + int64(1)), int64(2))\n\tfor (y < x) {\n\t\tx = y\n\t\ty = cm_floordiv((x + cm_floordiv(n, x)), int64(2))\n\t}\n\treturn x\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction isqrt_newton(n) {\n    let x = 0n;\n    let y = 0n;\n    if ((n < (2n))) {\n        return n;\n    }\n    x = n;\n    y = cm_floordiv((x + (1n)), (2n));\n    while ((y < x)) {\n        x = y;\n        y = cm_floordiv((x + cm_floordiv(n, x)), (2n));\n    }\n    return x;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def isqrt_newton(n: int) -> int:\n    if (n < 2):\n        return n\n    x = n\n    y = ((x + 1) // 2)\n    while (y < x):\n        x = y\n        y = ((x + (n // x)) // 2)\n    return x\n\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn isqrt_newton(n: i64) -> i64 {\n    let mut x: i64 = 0;\n    let mut y: i64 = 0;\n    if (n < (2i64)) {\n        return n;\n    }\n    x = n;\n    y = cm_floordiv((x + (1i64)), (2i64));\n    while (y < x) {\n        x = y;\n        y = cm_floordiv((x + cm_floordiv(n, x)), (2i64));\n    }\n    return x;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t isqrt_newton(int64_t n) {\n    int64_t x = 0;\n    int64_t y = 0;\n    if ((n < INT64_C(2))) {\n        return n;\n    }\n    x = n;\n    y = cm_floordiv((x + INT64_C(1)), INT64_C(2));\n    while ((y < x)) {\n        x = y;\n        y = cm_floordiv((x + cm_floordiv(n, x)), INT64_C(2));\n    }\n    return x;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long isqrt_newton(long n) {\n    long x = 0L;\n    long y = 0L;\n    if ((n < (2L))) {\n        return n;\n    }\n    x = n;\n    y = Math.floorDiv((x + (1L)), (2L));\n    while ((y < x)) {\n        x = y;\n        y = Math.floorDiv((x + Math.floorDiv(n, x)), (2L));\n    }\n    return x;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def isqrt_newton (n : Int) : Int := Id.run do\n  let mut x : Int := 0\n  let mut y : Int := 0\n  if (decide (n < (2 : Int))) then\n    return n\n  x := n\n  y := (Int.fdiv (x + (1 : Int)) (2 : Int))\n  while (decide (y < x)) do\n    x := y\n    y := (Int.fdiv (x + (Int.fdiv n x)) (2 : Int))\n  return x\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function isqrt_newton(n)\n  local x = 0\n  local y = 0\n  if (n < (2)) then\n    return n\n  end\n  x = n\n  y = ((x + (1)) // (2))\n  while (y < x) do\n    x = y\n    y = ((x + (n // x)) // (2))\n    ::cm_continue_1::\n  end\n  return x\nend\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def isqrt_newton(n)\n  x = 0\n  y = 0\n  if (n < (2))\n    return n\n  end\n  x = n\n  y = ((x + (1)) / (2))\n  while (y < x)\n    x = y\n    y = ((x + (n / x)) / (2))\n  end\n  return x\nend\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc isqrt_newton(_ n: Int) -> Int {\n    var x: Int = 0\n    var y: Int = 0\n    if (n < (2)) {\n        return n\n    }\n    x = n\n    y = cm_floordiv((x + (1)), (2))\n    while (y < x) {\n        x = y\n        y = cm_floordiv((x + cm_floordiv(n, x)), (2))\n    }\n    return x\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction isqrt_newton(n: bigint): bigint {\n    let x: bigint = 0n;\n    let y: bigint = 0n;\n    if ((n < (2n))) {\n        return n;\n    }\n    x = n;\n    y = cm_floordiv((x + (1n)), (2n));\n    while ((y < x)) {\n        x = y;\n        y = cm_floordiv((x + cm_floordiv(n, x)), (2n));\n    }\n    return x;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_newton",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "isqrt_newton",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "CMP_LT",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                2
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "var",
+                  "n"
+                ]
+              }
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "x",
+            "value": [
+              "var",
+              "n"
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "y",
+            "value": [
+              "FLOORDIV",
+              [
+                "ADD",
+                [
+                  "var",
+                  "x"
+                ],
+                [
+                  "int",
+                  1
+                ]
+              ],
+              [
+                "int",
+                2
+              ]
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "x",
+                "value": [
+                  "var",
+                  "y"
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "y",
+                "value": [
+                  "FLOORDIV",
+                  [
+                    "ADD",
+                    [
+                      "var",
+                      "x"
+                    ],
+                    [
+                      "FLOORDIV",
+                      [
+                        "var",
+                        "n"
+                      ],
+                      [
+                        "var",
+                        "x"
+                      ]
+                    ]
+                  ],
+                  [
+                    "int",
+                    2
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_LT",
+              [
+                "var",
+                "y"
+              ],
+              [
+                "var",
+                "x"
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "x"
+            ]
+          }
+        ],
+        "locals": {
+          "x": "int",
+          "y": "int"
+        },
+        "name": "isqrt_newton",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_isqrt_newton_e2cee9fea3a7",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "e2cee9fea3a7"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "isqrt_newton(n: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 4
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

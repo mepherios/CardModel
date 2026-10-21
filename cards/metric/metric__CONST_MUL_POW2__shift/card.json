@@ -1,0 +1,35 @@
+{
+  "anchor": 1.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "shift",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 0.091,
+  "median_ns": 45.35,
+  "metadata": {
+    "inputs_signature": "0f1d510d8846713c",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__CONST_MUL_POW2__shift",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/CONST_MUL_POW2 form shift: 45.4 ns per call on this host",
+  "target_card": "op/CONST_MUL_POW2",
+  "tier": 3
+}

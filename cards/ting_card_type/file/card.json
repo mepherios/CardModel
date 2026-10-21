@@ -1,0 +1,74 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "body.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "file",
+  "render": "file",
+  "schema": {
+    "properties": {
+      "caption": {
+        "maxLength": 2000,
+        "type": "string"
+      },
+      "channel": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "file": {
+        "properties": {
+          "key": {
+            "format": "b64_32",
+            "type": "string"
+          },
+          "mime": {
+            "maxLength": 128,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "sha256": {
+            "format": "hex64",
+            "type": "string"
+          },
+          "size": {
+            "maximum": 52428800,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "suite": {
+            "maxLength": 32,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "mime",
+          "size",
+          "sha256",
+          "key"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "file",
+      "channel"
+    ],
+    "type": "object"
+  },
+  "summary": "An encrypted file; the per-file key travels inside this card.",
+  "tier": 0,
+  "version": 1
+}

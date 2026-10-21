@@ -1,0 +1,61 @@
+{
+  "author_rule": "moderator",
+  "category": "card_type",
+  "index": [],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "cardtype",
+  "render": "cardtype",
+  "schema": {
+    "properties": {
+      "index": {
+        "maxItems": 8,
+        "type": "array"
+      },
+      "metadata": {
+        "type": "object"
+      },
+      "name": {
+        "format": "typename",
+        "maxLength": 64,
+        "type": "string"
+      },
+      "render": {
+        "enum": [
+          "fields",
+          "card",
+          "list"
+        ],
+        "type": "string"
+      },
+      "schema": {
+        "type": "object"
+      },
+      "summary": {
+        "maxLength": 500,
+        "type": "string"
+      },
+      "title_field": {
+        "maxLength": 64,
+        "type": "string"
+      },
+      "version": {
+        "maximum": 100000,
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "name",
+      "version",
+      "schema"
+    ],
+    "type": "object"
+  },
+  "summary": "Schema-as-data: defines a new card type for this space without code.",
+  "tier": 0,
+  "version": 1
+}

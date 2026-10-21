@@ -1,0 +1,17 @@
+{
+  "category_aliases": [
+    "re_domain"
+  ],
+  "defined_by": "tools/vendor_import.py",
+  "description": "File formats as cards (ported from rea-cards re_domain): magic bytes and predicates as data; detect_format reads them.",
+  "name": "format",
+  "provenance": {
+    "commit": "bfd0b0cb6da27e24871997b7037b3da13bc77a7e",
+    "origin": "rea-cards",
+    "path": "~/Programmering/rea-cards",
+    "read_on": "2026-10-21",
+    "sha256": "a5db95491881141f430265a9e169a66dd0668bb72d53f8d95a1bc67607bdd2dd",
+    "upstream": "morluto/rea (MIT)"
+  },
+  "tier": 1
+}

@@ -1,0 +1,37 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [
+      [
+        "#=",
+        "=#"
+      ]
+    ],
+    "line": [
+      "#"
+    ],
+    "strings": [
+      "\""
+    ]
+  },
+  "extensions": [
+    ".jl"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "julia",
+  "probe": {
+    "kind": "executable",
+    "name": "julia",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "julia: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

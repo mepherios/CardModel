@@ -1,0 +1,59 @@
+{
+  "blockers": [
+    "cards/lacking_feature/macho_arm64_parser (Mach-O LC_SEGMENT_64 + LC_SYMTAB walker missing from output_...)",
+    "cards/lacking_feature/isa_arm64_instruction_cards (no cards/isa/arm64 instruction-card materialization (W14-B p...)"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED at 0% via W17-Diag: output_to_cards returns [] on Mach-O inputs",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "outputs/agent_w17_diag.md - W17-Diag identified that clang on user's Mac produces arm64 Mach-O which output_to_cards stubs to []",
+    "cards/tool/output_to_cards/python.py - currently handles ELF section dumps; LC_SEGMENT_64 walker absent",
+    "no cards/translation_gap/c__to__arm64_macho-prior; the rust/swift mac gaps share the same root cause"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__arm64_macho",
+  "notes": "Symmetric with rust__to__arm64_macho and swift__to__arm64_macho. The Mach-O walker is the shared first step that unblocks all three.",
+  "optimal_solution_path": [
+    "add Mach-O magic detection (0xfeedfacf) to cards/tool/output_to_cards/python.py with a single LC_SEGMENT_64 walker as the first day's work",
+    "emit one card per Mach-O section the substrate observes",
+    "materialize cards/isa/arm64 via the W14-B card_from_isa_spec pattern",
+    "wire compiler_observer C/clang adapter to feed observed bytes back through the new walker",
+    "byte-assert a smallest-possible clang `int f(int x){return x+1;}` Mach-O against a stored reference",
+    "promote source__to__source_same_language redefinition cards for the closed shapes"
+  ],
+  "optimization_paths": [
+    "cards/project_task/add_macho_lc_segment_walker",
+    "cards/project_task/extend_output_to_cards_for_arm64_macho",
+    "cards/project_task/close_macho_arm64_extraction"
+  ],
+  "required_isa_cards": [
+    "cards/isa/arm64",
+    "cards/isa/arm64_macos_calling_convention"
+  ],
+  "required_tools": [
+    "cards/tool/output_to_cards",
+    "cards/tool/compiler_observer/adapters/c"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "c",
+  "supported_constructs": [],
+  "target_language": "arm64_macho",
+  "unsupported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "while_loop",
+    "return",
+    "stack_frame",
+    "calling_convention_arm64_aapcs64",
+    "load_commands_lc_segment_64",
+    "symbol_table",
+    "relocations_arm64"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__arm64_macho",
+  "wave_23_audit_note": "0% MEASURED via W17-Diag; depends on close_macho_arm64_extraction (Mach-O LC_SEGMENT_64 walker)"
+}

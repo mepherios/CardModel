@@ -1,0 +1,28 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "4d5a",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "native_binary",
+      "file"
+    ],
+    "predicate": "reacards.domains:is_pe",
+    "priority": 50
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "pe",
+  "statement": "Portable Executable (Windows) image.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/pe"
+}

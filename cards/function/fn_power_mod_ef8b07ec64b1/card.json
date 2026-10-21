@@ -1,0 +1,646 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/CMP_EQ",
+    "op/CMP_GT",
+    "op/FLOORDIV",
+    "op/MOD",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef power_mod(base: int, exp: int, m: int) -> int:\n    result = 1 % m\n    base = base % m\n    while exp > 0:\n        if exp % 2 == 1:\n            result = result * base % m\n        base = base * base % m\n        exp //= 2\n    return result",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t power_mod(int64_t base, int64_t exp, int64_t m) {\n    int64_t result = 0;\n    result = cm_floormod(INT64_C(1), m);\n    base = cm_floormod(base, m);\n    while ((exp > INT64_C(0))) {\n        if ((cm_floormod(exp, INT64_C(2)) == INT64_C(1))) {\n            result = cm_floormod((result * base), m);\n        }\n        base = cm_floormod((base * base), m);\n        exp = cm_floordiv(exp, INT64_C(2));\n    }\n    return result;\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc power_mod(base int64, exp int64, m int64) int64 {\n\tvar result int64 = 0\n\t_ = result\n\tresult = cm_floormod(int64(1), m)\n\tbase = cm_floormod(base, m)\n\tfor (exp > int64(0)) {\n\t\tif (cm_floormod(exp, int64(2)) == int64(1)) {\n\t\t\tresult = cm_floormod((result * base), m)\n\t\t}\n\t\tbase = cm_floormod((base * base), m)\n\t\texp = cm_floordiv(exp, int64(2))\n\t}\n\treturn result\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction power_mod(base, exp, m) {\n    let result = 0n;\n    result = cm_floormod((1n), m);\n    base = cm_floormod(base, m);\n    while ((exp > (0n))) {\n        if ((cm_floormod(exp, (2n)) === (1n))) {\n            result = cm_floormod((result * base), m);\n        }\n        base = cm_floormod((base * base), m);\n        exp = cm_floordiv(exp, (2n));\n    }\n    return result;\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def power_mod(base: int, exp: int, m: int) -> int:\n    result = (1 % m)\n    base = (base % m)\n    while (exp > 0):\n        if ((exp % 2) == 1):\n            result = ((result * base) % m)\n        base = ((base * base) % m)\n        exp = (exp // 2)\n    return result\n\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn power_mod(base: i64, exp: i64, m: i64) -> i64 {\n    let mut base: i64 = base;\n    let mut exp: i64 = exp;\n    let mut result: i64 = 0;\n    result = cm_floormod((1i64), m);\n    base = cm_floormod(base, m);\n    while (exp > (0i64)) {\n        if (cm_floormod(exp, (2i64)) == (1i64)) {\n            result = cm_floormod((result * base), m);\n        }\n        base = cm_floormod((base * base), m);\n        exp = cm_floordiv(exp, (2i64));\n    }\n    return result;\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t power_mod(int64_t base, int64_t exp, int64_t m) {\n    int64_t result = 0;\n    result = cm_floormod(INT64_C(1), m);\n    base = cm_floormod(base, m);\n    while ((exp > INT64_C(0))) {\n        if ((cm_floormod(exp, INT64_C(2)) == INT64_C(1))) {\n            result = cm_floormod((result * base), m);\n        }\n        base = cm_floormod((base * base), m);\n        exp = cm_floordiv(exp, INT64_C(2));\n    }\n    return result;\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long power_mod(long base, long exp, long m) {\n    long result = 0L;\n    result = Math.floorMod((1L), m);\n    base = Math.floorMod(base, m);\n    while ((exp > (0L))) {\n        if ((Math.floorMod(exp, (2L)) == (1L))) {\n            result = Math.floorMod((result * base), m);\n        }\n        base = Math.floorMod((base * base), m);\n        exp = Math.floorDiv(exp, (2L));\n    }\n    return result;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def power_mod (base : Int) (exp : Int) (m : Int) : Int := Id.run do\n  let mut base : Int := base\n  let mut exp : Int := exp\n  let mut result : Int := 0\n  result := (Int.fmod (1 : Int) m)\n  base := (Int.fmod base m)\n  while (decide (exp > (0 : Int))) do\n    if ((Int.fmod exp (2 : Int)) == (1 : Int)) then\n      result := (Int.fmod (result * base) m)\n    base := (Int.fmod (base * base) m)\n    exp := (Int.fdiv exp (2 : Int))\n  return result\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function power_mod(base, exp, m)\n  local result = 0\n  result = ((1) % m)\n  base = (base % m)\n  while (exp > (0)) do\n    if ((exp % (2)) == (1)) then\n      result = ((result * base) % m)\n    end\n    base = ((base * base) % m)\n    exp = (exp // (2))\n    ::cm_continue_1::\n  end\n  return result\nend\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def power_mod(base, exp, m)\n  result = 0\n  result = ((1) % m)\n  base = (base % m)\n  while (exp > (0))\n    if ((exp % (2)) == (1))\n      result = ((result * base) % m)\n    end\n    base = ((base * base) % m)\n    exp = (exp / (2))\n  end\n  return result\nend\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc power_mod(_ base: Int, _ exp: Int, _ m: Int) -> Int {\n    var base: Int = base\n    var exp: Int = exp\n    var result: Int = 0\n    result = cm_floormod((1), m)\n    base = cm_floormod(base, m)\n    while (exp > (0)) {\n        if (cm_floormod(exp, (2)) == (1)) {\n            result = cm_floormod((result * base), m)\n        }\n        base = cm_floormod((base * base), m)\n        exp = cm_floordiv(exp, (2))\n    }\n    return result\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction power_mod(base: bigint, exp: bigint, m: bigint): bigint {\n    let result: bigint = 0n;\n    result = cm_floormod((1n), m);\n    base = cm_floormod(base, m);\n    while ((exp > (0n))) {\n        if ((cm_floormod(exp, (2n)) === (1n))) {\n            result = cm_floormod((result * base), m);\n        }\n        base = cm_floormod((base * base), m);\n        exp = cm_floordiv(exp, (2n));\n    }\n    return result;\n}\n",
+      "cost": 1.0,
+      "entry": "power_mod",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        0,
+        30
+      ]
+    },
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "power_mod",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "result",
+            "value": [
+              "MOD",
+              [
+                "int",
+                1
+              ],
+              [
+                "var",
+                "m"
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "base",
+            "value": [
+              "MOD",
+              [
+                "var",
+                "base"
+              ],
+              [
+                "var",
+                "m"
+              ]
+            ]
+          },
+          {
+            "body": [
+              {
+                "cond": [
+                  "CMP_EQ",
+                  [
+                    "MOD",
+                    [
+                      "var",
+                      "exp"
+                    ],
+                    [
+                      "int",
+                      2
+                    ]
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ],
+                "else": [],
+                "k": "if",
+                "then": [
+                  {
+                    "k": "assign",
+                    "target": "result",
+                    "value": [
+                      "MOD",
+                      [
+                        "MUL",
+                        [
+                          "var",
+                          "result"
+                        ],
+                        [
+                          "var",
+                          "base"
+                        ]
+                      ],
+                      [
+                        "var",
+                        "m"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "base",
+                "value": [
+                  "MOD",
+                  [
+                    "MUL",
+                    [
+                      "var",
+                      "base"
+                    ],
+                    [
+                      "var",
+                      "base"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "m"
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "exp",
+                "value": [
+                  "FLOORDIV",
+                  [
+                    "var",
+                    "exp"
+                  ],
+                  [
+                    "int",
+                    2
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_GT",
+              [
+                "var",
+                "exp"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "result"
+            ]
+          }
+        ],
+        "locals": {
+          "result": "int"
+        },
+        "name": "power_mod",
+        "params": [
+          {
+            "name": "base",
+            "type": "int"
+          },
+          {
+            "name": "exp",
+            "type": "int"
+          },
+          {
+            "name": "m",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 38,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_power_mod_ef8b07ec64b1",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "ef8b07ec64b1"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "base",
+        "type": "int"
+      },
+      {
+        "name": "exp",
+        "type": "int"
+      },
+      {
+        "name": "m",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "power_mod(base: int, exp: int, m: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        1,
+        1,
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -50,
+        30,
+        30
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        -5,
+        19,
+        7
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        21,
+        23,
+        25
+      ],
+      "out": 11
+    },
+    {
+      "args": [
+        -19,
+        30,
+        14
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        12,
+        25,
+        25
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        2,
+        29,
+        11
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        -20,
+        4,
+        3
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -15,
+        7,
+        26
+      ],
+      "out": 15
+    },
+    {
+      "args": [
+        -11,
+        0,
+        22
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        9,
+        0,
+        15
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        25,
+        27,
+        29
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        27,
+        12,
+        20
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        3,
+        26,
+        14
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        -36,
+        8,
+        16
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        49,
+        13,
+        29
+      ],
+      "out": 16
+    },
+    {
+      "args": [
+        50,
+        1,
+        22
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        -15,
+        17,
+        22
+      ],
+      "out": 17
+    },
+    {
+      "args": [
+        20,
+        9,
+        3
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -4,
+        30,
+        22
+      ],
+      "out": 12
+    },
+    {
+      "args": [
+        45,
+        3,
+        24
+      ],
+      "out": 21
+    },
+    {
+      "args": [
+        -34,
+        5,
+        6
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -9,
+        23,
+        19
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -4,
+        1,
+        29
+      ],
+      "out": 25
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 38,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 24,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 38,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "category": "language_definition",
+  "derivation_source": "external_observation_documentation",
+  "flaws": [
+    "lacking: tool_cl_compile is not yet on disk — Agent D's v0 compiler is the next deliverable",
+    "monolingual: the canonical CL compiler will be Python on day 1 (lifting_plan: Rust port targeted at v2 once the v1 self-hosting bootstrap is stable; Lean reference semantics targeted at v3)"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "interacts_with": [
+    "L01_complete_isolation",
+    "L09_no_silent_monoglots",
+    "L22_auto_cardify",
+    "L25_card_programs_are_cl",
+    "L26_compiler_extends_via_cards",
+    "cl_compilation_model",
+    "cl_grammar",
+    "cl_ir",
+    "process_cl_language_plan"
+  ],
+  "lifting_plan": "Hand-authored bootstrap card. Path to observation-derived: future waves will either harvest this card from a binary observation pipeline, or re-derive via the substrate's learned_idiom / mapping_extractor machinery. Bootstrap_seed count is the substrate's scaling-deficit metric.",
+  "metadata": {
+    "bypass_create_card": true,
+    "bypass_rationale": "axiom-tier language-definition card; CL is foundational to the substrate's L25 contract and must exist before tool_create_card can write CL-described cards.",
+    "version": "1.0.0"
+  },
+  "name": "cl",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "provenance": "derived_from_card",
+  "rationale": "Per L1, programming languages are themselves cards. CL is the *primary* language card in Pheros_Studio — the one the autonomous loop emits, the one card-to-code synthesis writes into, and the one all other languages are reachable from via emission. CL exists so that the substrate has a uniform source representation that survives target-language churn: when the studio wants to add Wasm or a quantum backend or a new hardware target, the existing CL programs need not change.",
+  "statement": "CL (Card Language) is the substrate's first-class card-native language. A CL program is a typed expression whose atoms are references to cards under cards/computation/<cat>/<subcat>/<name>/. The compiler resolves these references to specific variants/transpositions at emit time and produces target code (Python, Rust, Lean, CUDA, QASM, etc.). New primitives, types, transpositions, and target languages are added as cards, not as compiler edits.",
+  "tags": [
+    "L1",
+    "axiom",
+    "language",
+    "primary"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Documents/Pheros_Studio/cards/language/cl"
+}

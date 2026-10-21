@@ -1,0 +1,22 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a ^ b",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xor_as_or_minus_and",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "(a | b) - (a & b)",
+  "statement": "a ^ b == (a | b) - (a & b)",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "blockers": [
+    "cards/lacking_feature/python_to_llvm_ir_emitter_missing (no direct backends/llvm.py emitter under v_transpile)",
+    "cards/lacking_feature/python_to_llvm_ir_emitter_missing (bytecode_to_ir_heuristic (W17-B) is heuristic, not verified ...)",
+    "Python's dynamic semantics (boxing, refcounting) require an explicit runtime contract before any non-trivial subset can lower"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "no direct backend; would need projection via cpython_bytecode + bytecode_to_ir",
+  "current_coverage_percent": 5,
+  "evidence": [
+    "cards/tool/v_transpile/frontends/llvm.py — LLVM IR frontend exists (DEEP-6) so the IR is a known target",
+    "cards/tool/* — bytecode_to_ir_heuristic referenced in W17-B as the indirect path; no direct python->llvm path",
+    "no python.py backend under v_transpile/backends/ targets llvm_ir — only python, java, go, kotlin, swift, ts, gamecube, riscv64, verilog observed in backends/"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python__to__llvm_ir",
+  "optimal_solution_path": [
+    "decide the runtime contract: refcounted-boxed-objects vs static-int-subset",
+    "author cards/tool/v_transpile/backends/llvm.py for the static-int subset first",
+    "promote bytecode_to_ir_heuristic from W17-B into a verified per-opcode mapping card set",
+    "smoke: python 'def f(x): return x+1' -> llvm ir -> llc -> .o on arm64 / riscv64",
+    "re-derive coverage_percent after smokes are green"
+  ],
+  "optimization_paths": [
+    "cards/project_task/build_python_to_llvm_ir_direct_backend",
+    "cards/project_task/promote_bytecode_to_ir_heuristic_to_production",
+    "cards/project_task/close_translation_gap_python__to__llvm_ir"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/frontends/python.py",
+    "cards/tool/v_transpile/frontends/llvm.py"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "python",
+  "supported_constructs": [
+    "module_level_constants_via_indirect_bytecode_path"
+  ],
+  "target_language": "llvm_ir",
+  "unsupported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "class",
+    "comprehension",
+    "lambda",
+    "fstring",
+    "decorator",
+    "import",
+    "generator",
+    "async"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/python__to__llvm_ir",
+  "wave_23_audit_note": "5% no direct backend; runtime contract decision + backends/llvm.py authoring unstarted — filed as project_task"
+}

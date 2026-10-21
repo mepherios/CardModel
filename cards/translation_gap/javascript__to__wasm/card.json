@@ -1,0 +1,56 @@
+{
+  "blockers": [
+    "cards/lacking_feature/javascript_to_wasm_no_direct_path (no clean JS→native-IR path the substrate can integrate without major work)",
+    "JS standardization is at the source level, not at any compiled-IR level",
+    "Every JS runtime has its own bytecode and none are portable"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "no mainstream JS→wasm tooling exists; 0% MEASURED is a permanent fact of the JS ecosystem, not a substrate gap to close",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "cards/lacking_feature/javascript_to_wasm_no_direct_path — W25-E formal upstream-gap card",
+    "emscripten is C/C++→wasm, not JS→wasm",
+    "AssemblyScript is TypeScript-shaped, not general JavaScript",
+    "Bun --compile produces a Bun-runtime-embedded binary, not standalone wasm",
+    "No mainstream toolchain compiles arbitrary JS to standalone wasm"
+  ],
+  "last_verified_date": "2026-05-28",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "javascript__to__wasm",
+  "optimal_solution_path": [
+    "Honest path: pick ONE runtime + ONE lowering and accept it as the substrate's canonical JS→<IR>",
+    "Recommended: V8 Ignition because it's the most observable in production (see cards/translation_gap/javascript__to__bytecode)",
+    "Alternative: ship AssemblyScript adapter and clearly label it as 'TypeScript-flavoured JS', NOT general JavaScript",
+    "Do NOT author a compiler_adapter_javascript_wasm tool until at least one real lowering exists — would be a vacuous L41 violation"
+  ],
+  "optimization_paths": [
+    "cards/lacking_feature/javascript_to_wasm_no_direct_path — read first; the upstream gap is fundamental, not an installation issue"
+  ],
+  "required_tools": [
+    "cards/tool/compiler_observer",
+    "cards/tool/output_to_cards"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "javascript",
+  "supported_constructs": [],
+  "target_language": "wasm",
+  "unsupported_constructs": [
+    "function_def",
+    "arrow_function",
+    "class",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "async_await",
+    "promise",
+    "destructuring",
+    "spread_operator",
+    "template_literal",
+    "regex",
+    "module_export"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/javascript__to__wasm",
+  "wave_25_audit_note": "0% MEASURED in W25-E. Filed honestly. cards/lacking_feature/javascript_to_wasm_no_direct_path formalizes the upstream-gap reasoning. Per spec: NO compiler_adapter_javascript_wasm tool authored — would be vacuous. Substrate does NOT pretend to support general JS→wasm."
+}

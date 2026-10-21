@@ -1,0 +1,35 @@
+{
+  "anchor": 4.0,
+  "calls_per_sample": 1380,
+  "category": "metric",
+  "form": "floordiv",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 37.229,
+  "median_ns": 133.304,
+  "metadata": {
+    "inputs_signature": "423de9c5d31ac98f",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__SHIFT_RIGHT__floordiv",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/SHIFT_RIGHT form floordiv: 133.3 ns per call on this host",
+  "target_card": "op/SHIFT_RIGHT",
+  "tier": 3
+}

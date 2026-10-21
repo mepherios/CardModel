@@ -1,0 +1,22 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "(a + b) ** 2",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "binomial_square_expand",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a ** 2 + 2 * (a * b) + b ** 2",
+  "statement": "(a + b) ** 2 == a ** 2 + 2 * (a * b) + b ** 2",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ]
+}

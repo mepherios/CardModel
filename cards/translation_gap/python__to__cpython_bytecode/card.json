@@ -1,0 +1,61 @@
+{
+  "blockers": [],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED via W15-E learning_orchestrator: CPython is the canonical compiler; substrate observes its output via W15-C output_to_cards. 100% observability.",
+  "current_coverage_percent": 100,
+  "evidence": [
+    "CPython is the canonical authority for python -> cpython_bytecode. The substrate observes this compilation rather than performing it. (L41 honest framing: 100% observability, 0% transpiled by us.)",
+    "cards/tool/compiler_observer/adapters/python.py — W15-F per-language adapter wrapping CPython invocations",
+    "cards/tool/source_to_cards + cards/tool/output_to_cards — W15-B/W15-C extract source AST and emitted .pyc cards",
+    "state/learning_output/source and state/learning_output/output — W15-E observed runs",
+    "cards/tool/mapping_extractor — W15-D verified source->bytecode mappings for the observed corpus"
+  ],
+  "last_verified_date": "2026-05-28",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "python__to__cpython_bytecode",
+  "notes": "L41 caveat: the 100% applies to observability of CPython's bytecode emission. The substrate's independent emission of cpython_bytecode (W15-G goal) is a separate, lower-coverage pair that is not yet a translation_gap card.",
+  "optimal_solution_path": [
+    "continue scaling the W15-E observation corpus so unseen AST shapes (match, complex async patterns) are also witnessed",
+    "promote the observed mapping_extractor pairs into closed-loop verified emission (W15-G goal)",
+    "publish a coverage report that distinguishes 'observed' (current 100%) from 'substrate-emitted without CPython' (current 0%)"
+  ],
+  "optimization_paths": [
+    "cards/project_task/scale_corpus_to_1000_samples"
+  ],
+  "required_tools": [
+    "cards/tool/compiler_observer",
+    "cards/tool/compiler_observer/adapters/python.py",
+    "cards/tool/source_to_cards",
+    "cards/tool/output_to_cards",
+    "cards/tool/mapping_extractor",
+    "cards/tool/learning_orchestrator"
+  ],
+  "self_autonomy_status": "autonomous",
+  "source_language": "python",
+  "supported_constructs": [
+    "all_python_ast_constructs_via_cpython_dis",
+    "function_def",
+    "class_def",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "try_except",
+    "with",
+    "comprehension",
+    "lambda",
+    "generator",
+    "async",
+    "fstring",
+    "decorator",
+    "import",
+    "match_statement"
+  ],
+  "target_language": "cpython_bytecode",
+  "unsupported_constructs": [
+    "non_observed_constructs_in_corpus_below_100_samples"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/python__to__cpython_bytecode",
+  "verification_provenance": "W24-F re-verified: end-to-end smoke (compiler_adapter_python + compiler_observer + output_to_cards) on hello.py with add+mul defs produced 18 pyc cards: BINARY_ADD, BINARY_MULTIPLY, LOAD_CONST, LOAD_FAST, MAKE_FUNCTION, RETURN_VALUE, STORE_NAME. Exit code 0. L115 freshness contract upheld; prior W23-TC pass also valid."
+}

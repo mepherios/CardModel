@@ -1,0 +1,51 @@
+{
+  "candidate": {
+    "category": "call",
+    "cost": 1.5,
+    "match": {
+      "python": {
+        "call": [
+          "digit_sum"
+        ]
+      }
+    },
+    "metadata": {
+      "confidence": "tentative",
+      "evidence_count": 1,
+      "files": 1,
+      "learned": true,
+      "spellings": {
+        "digit_sum": 1
+      }
+    },
+    "name": "CALL_DIGIT_SUM",
+    "provenance": {
+      "language": "python",
+      "learning_loop_refs": [
+        "observation/obs_ddaffa59942a585b"
+      ]
+    },
+    "statement": "call to digit_sum (python), learned from observed code",
+    "tags": [
+      "learned"
+    ],
+    "tier": 3
+  },
+  "category": "proposal",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "prop_call_CALL_DIGIT_SUM",
+  "proposal_kind": "call",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ]
+  },
+  "ready": false,
+  "reason": "needs >= 3 uses in >= 2 files (have 1 in 1)",
+  "seed": 1210246382,
+  "statement": "proposed call card CALL_DIGIT_SUM",
+  "tier": 3,
+  "xleq": null
+}

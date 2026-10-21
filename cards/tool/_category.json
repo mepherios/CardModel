@@ -1,0 +1,12 @@
+{
+  "defined_by": "tools/vendor_import.py",
+  "description": "Tool cards vendored for their design (inputs, outputs, flaws, coverage method).",
+  "name": "tool",
+  "provenance": {
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/tool",
+    "read_on": "2026-10-21"
+  },
+  "references": "external",
+  "tier": 2
+}

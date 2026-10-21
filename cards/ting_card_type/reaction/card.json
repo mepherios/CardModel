@@ -1,0 +1,38 @@
+{
+  "author_rule": "any",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "target",
+      "label": "target"
+    },
+    {
+      "from": "context.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {
+    "target": "required"
+  },
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "reaction",
+  "render": "none",
+  "schema": {
+    "properties": {
+      "emoji": {
+        "maxLength": 16,
+        "type": "string"
+      }
+    },
+    "required": [
+      "emoji"
+    ],
+    "type": "object"
+  },
+  "summary": "An emoji reaction to a card.",
+  "tier": 0,
+  "version": 1
+}

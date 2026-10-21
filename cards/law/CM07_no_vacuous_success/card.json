@@ -1,0 +1,20 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM07_no_vacuous_success",
+  "origins": [
+    "Pheros L41",
+    "Pheros L45",
+    "Pheros L46",
+    "Pheros L50"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "A witness that cannot fail is not a witness: every check runs a differential probe, and a deliberately wrong form must be caught.",
+  "tier": 0,
+  "witness": "tests/test_witness.py::test_wrong_form_is_caught"
+}

@@ -1,0 +1,23 @@
+{
+  "category": "domain",
+  "generator": {
+    "int": [
+      0,
+      4294967295
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "u32",
+  "parents": [
+    "int"
+  ],
+  "project_reference": "lambda r: r & 0xFFFFFFFF",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Unsigned 32-bit integers; results compared modulo 2**32.",
+  "tier": 0
+}

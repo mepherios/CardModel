@@ -1,0 +1,75 @@
+{
+  "category": "re_operation",
+  "equivalence": {
+    "forms": [
+      "py_strings",
+      "host_strings"
+    ],
+    "relation": "equal"
+  },
+  "forms": [
+    {
+      "cost": 40.0,
+      "domain": "any",
+      "entry": "py_strings",
+      "file": "python.py",
+      "lang": "python",
+      "name": "py_strings",
+      "notes": "card-native, no external process",
+      "runnable": true
+    },
+    {
+      "cost": 60.0,
+      "domain": "any",
+      "entry": "host_strings",
+      "file": "python.py",
+      "lang": "python",
+      "name": "host_strings",
+      "notes": "Apple cctools strings under LC_ALL=C",
+      "probe": {
+        "kind": "executable",
+        "name": "strings"
+      },
+      "runnable": true
+    },
+    {
+      "cost": 60000,
+      "domain": "native_binary",
+      "name": "rea_ghidra",
+      "notes": "rea's Ghidra provider (form kept as documentation; see rea-cards)",
+      "runnable": false
+    }
+  ],
+  "generators": [
+    {
+      "choice": [
+        "/bin/ls",
+        "/usr/bin/true",
+        "/bin/cat",
+        "/usr/lib/dyld"
+      ]
+    },
+    {
+      "choice": [
+        4,
+        6,
+        8
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "list_strings",
+  "provenance": {
+    "commit": "bfd0b0cb6da27e24871997b7037b3da13bc77a7e",
+    "origin": "rea-cards",
+    "path": "~/Programmering/rea-cards",
+    "rea_card": "cards/re_operation/list_strings",
+    "read_on": "2026-10-21",
+    "sha256": "a5db95491881141f430265a9e169a66dd0668bb72d53f8d95a1bc67607bdd2dd",
+    "upstream": "morluto/rea (MIT)"
+  },
+  "statement": "List the printable-ASCII strings of a file with their byte offsets.",
+  "tier": 1
+}

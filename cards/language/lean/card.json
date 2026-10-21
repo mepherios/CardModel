@@ -1,0 +1,138 @@
+{
+  "category": "language",
+  "codegen": {
+    "assign": "{name} := {value}",
+    "break": "break",
+    "call": "({name} {args})",
+    "call_sep": " ",
+    "continue": "continue",
+    "declare": "let mut {name} : {type} := {value}",
+    "else": "else",
+    "empty": "pure ()",
+    "end_if": "",
+    "end_while": "",
+    "func": "partial def {name} {params} : {ret} := Id.run do\n{body}\n",
+    "harness": {
+      "main": "end CM\n\ndef main : IO Unit := do\n{calls}",
+      "print": {
+        "bool": "IO.println s!\"b:{{{e}}}\"",
+        "int": "IO.println s!\"i:{{{e}}}\""
+      }
+    },
+    "harness_call": "(CM.{name} {args})",
+    "helpers": {
+      "cm_powmod": "partial def cm_powmod (a0 : Int) (b0 : Int) (m : Int) : Int := Id.run do\n  let mut r : Int := Int.fmod 1 m\n  let mut a : Int := Int.fmod a0 m\n  let mut b : Int := b0\n  while b > 0 do\n    if Int.fmod b 2 == 1 then\n      r := Int.fmod (r * a) m\n    a := Int.fmod (a * a) m\n    b := Int.fdiv b 2\n  return r"
+    },
+    "if": "if {cond} then",
+    "indent": "  ",
+    "lib_epilogue": "end CM\n",
+    "lib_prelude": "namespace CM\n\n",
+    "lit": {
+      "false": "false",
+      "int": "({v} : Int)",
+      "true": "true"
+    },
+    "param": "({name} : {type})",
+    "param_rebind": "let mut {name} : {type} := {name}",
+    "param_sep": " ",
+    "prelude": "namespace CM\n\n",
+    "return": "return {value}",
+    "style": "indent",
+    "types": {
+      "bool": "Bool",
+      "int": "Int"
+    },
+    "while": "while {cond} do",
+    "zero": {
+      "bool": "false",
+      "int": "0"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/-",
+        "-/"
+      ]
+    ],
+    "line": [
+      "--"
+    ],
+    "strings": [
+      "\""
+    ]
+  },
+  "extensions": [
+    ".lean"
+  ],
+  "family": "lean",
+  "int_bits": null,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "lean",
+  "notes": "The probe only uses toolchains already installed under ~/.elan/toolchains: calling the elan proxy `lean` can start a network download of a newer toolchain.",
+  "probe": {
+    "env_override": "CARDMODEL_LEAN",
+    "glob": [
+      "~/.elan/toolchains/*/bin/lean"
+    ],
+    "glob_only": true,
+    "kind": "executable",
+    "name": "lean",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "def",
+    "theorem",
+    "lemma",
+    "fun",
+    "let",
+    "in",
+    "if",
+    "then",
+    "else",
+    "do",
+    "return",
+    "where",
+    "match",
+    "with",
+    "have",
+    "show",
+    "by",
+    "at",
+    "from",
+    "for",
+    "unless",
+    "mut",
+    "partial",
+    "namespace",
+    "end",
+    "open",
+    "import",
+    "structure",
+    "class",
+    "instance",
+    "Type",
+    "Prop",
+    "true",
+    "false",
+    "main"
+  ],
+  "runner": {
+    "file": "Main.lean",
+    "run": [
+      "{exe}",
+      "--run",
+      "{src}"
+    ]
+  },
+  "statement": "Lean 4: partial defs in Id.run do-notation; Int is unbounded; floats not emitted.",
+  "tier": 1
+}

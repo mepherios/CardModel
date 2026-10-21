@@ -1,0 +1,37 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a ^ b",
+  "metadata": {
+    "previous_content_hash": "1af175e9c6939623df8096e09eeaa3113267feaa438abcb5bdb86bafec3689a3",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "xor_as_or_minus_and",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "(a | b) - (a & b)",
+  "statement": "a ^ b == (a | b) - (a & b)",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "detail": "no Lean form for BIT_XOR",
+      "status": "not_expressible"
+    }
+  }
+}

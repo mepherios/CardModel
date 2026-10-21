@@ -1,0 +1,42 @@
+{
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "source_eval": "Pow(x,2)",
+      "target_eval": "Pow(x,2)"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "is_identity_redefinition": true,
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "square_of_x__pow_fn",
+  "pheros_path": "redefinition/square_of_x__pow_fn",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "redefinition_test_corpus",
+  "provenance": "derived_from_card",
+  "rationale_for_identity": "Corpus card (tag=test_corpus): represents one canonical member of an equivalence class. source_form == target_form is the identity element of the class, not a vacuous rewrite. Detector exempt per VAC-F heuristic refinement.",
+  "source_form": "Pow(x,2)",
+  "tags": [
+    "pow_fn",
+    "square_of_x",
+    "symbolic",
+    "test_corpus"
+  ],
+  "target_form": "Pow(x,2)",
+  "witness_kind": "symbolic"
+}

@@ -1,0 +1,27 @@
+{
+  "category": "format",
+  "detect": {
+    "magic": [
+      {
+        "hex": "cafebabe",
+        "offset": 0
+      }
+    ],
+    "parents": [
+      "file"
+    ],
+    "predicate": "reacards.domains:is_java_class",
+    "priority": 55
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "java_class",
+  "statement": "Java class file (shares 0xCAFEBABE with fat Mach-O).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/java_class"
+}

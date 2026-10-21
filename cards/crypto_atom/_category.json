@@ -1,0 +1,14 @@
+{
+  "card_type": "crypto_atom",
+  "defined_by": "tools/vendor_import.py",
+  "description": "Cryptographic atoms (from Ting): stdlib-Python and node:crypto forms, witnessed by Ting's known-answer vectors.",
+  "name": "crypto_atom",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b"
+  },
+  "tier": 1
+}

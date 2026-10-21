@@ -1,0 +1,58 @@
+{
+  "blockers": [
+    "cards/lacking_feature/go_to_llvm_no_tooling (tinygo not on dispatch host)",
+    "tinygo's exact -emit-llvm flag is version-dependent; may need adapter flag adjustment after install",
+    "Go's goroutine/channel runtime is large; first-cut coverage will exclude concurrency primitives"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "no tinygo on dispatch host; compiler_adapter_go_llvm ships but is_available()=False; zero ir_node cards emitted for any Go source — coverage is 0% MEASURED",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "cards/tool/compiler_adapter_go_llvm ships in honest-unavailable mode (W25-E)",
+    "cards/lacking_feature/go_to_llvm_no_tooling — tinygo is not on the dispatch host; mainline `go` does not emit LLVM IR",
+    "cards/tool/output_to_cards/_handle_llvm_ir is ready to consume .ll once a tinygo-backed run produces them",
+    "W25-E VM probe: `which tinygo` → not found"
+  ],
+  "last_verified_date": "2026-05-28",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "go__to__llvm_ir",
+  "optimal_solution_path": [
+    "Close cards/project_task/install_tinygo_for_w26 (install tinygo on a dispatch host)",
+    "Run compiler_adapter_go_llvm smoke end-to-end; capture real .wasm bytes",
+    "Extend cards/tool/output_to_cards if tinygo's .ll dialect needs hints",
+    "Lift Go integer-arithmetic subset and emit per-instruction ir_node cards",
+    "Re-run translation coverage measurement; promote this card to current_coverage_percent > 0 with verification_provenance citing the smoke output paths"
+  ],
+  "optimization_paths": [
+    "cards/project_task/install_tinygo_for_w26"
+  ],
+  "required_tools": [
+    "cards/tool/compiler_adapter_go_llvm",
+    "cards/tool/output_to_cards",
+    "cards/tool/compiler_observer"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "go",
+  "supported_constructs": [],
+  "target_language": "llvm_ir",
+  "unsupported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "if_else",
+    "for_loop",
+    "goroutine",
+    "channel",
+    "struct",
+    "interface",
+    "defer",
+    "panic_recover",
+    "select",
+    "string_literal",
+    "slice",
+    "map"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/go__to__llvm_ir",
+  "wave_25_audit_note": "0% MEASURED in W25-E — compiler_adapter_go_llvm authored in honest-unavailable mode; gated on cards/project_task/install_tinygo_for_w26. L41 forbids inflating to non-zero without a real verification run; explicit honest hold."
+}

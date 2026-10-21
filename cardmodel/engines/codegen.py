@@ -1,0 +1,419 @@
+"""codegen — emit native code from the card IR (L33: algorithm as cards, native as output).
+
+Nothing language-specific lives here. A target is a ``language`` card whose
+``codegen`` block holds the syntax as data (types, literals, statement
+templates, helper functions, test and bench harnesses); an operator is an
+``op`` card whose ``emit`` block holds one template per language (or per
+syntax family, e.g. ``c_like``). Adding a language = adding one card;
+adding an operator = adding one card. A missing template is a precise
+translation gap (``EmitGap``), never a silent fallback.
+
+Template placeholders: {0} {1} {2} operands · {type} result type name ·
+{t0} {t1} operand type names · {tc} type code (i/f/b) of the first operand.
+An ``emit`` entry may be a dict keyed by the first operand's IR type.
+
+Lowering rules shared by every non-native target:
+  * locals are hoisted to the top of the function with zero values;
+  * parameters that are reassigned are re-bound when the language has
+    immutable parameters (``param_rebind``);
+  * ``for i in range(a, b, s)`` becomes: it = a; stop = b;
+    while it < stop (> for s < 0): i = it; it += s; body
+    (incrementing first keeps ``continue`` correct, and ``i`` keeps
+    Python's last-iterated value after the loop).
+
+Honest limits (L1): templates are only as right as the conformance matrix
+that checks them; identifiers are renamed only for the language card's
+``reserved`` list; emitted code is plain (no formatting pass).
+"""
+from __future__ import annotations
+
+import re
+
+from .ir import LEAVES
+
+
+class EmitGap(Exception):
+    """The target cannot express something (missing template / unsupported type)."""
+
+
+def resolve_language(store, name: str) -> dict:
+    """The language card's codegen + runner with ``extends`` applied (deep for dicts)."""
+    card = store.get(f"language/{name}")
+    if card is None:
+        raise EmitGap(f"no language card {name!r}")
+    data = dict(card)
+    base_name = data.get("extends")
+    if base_name:
+        base = resolve_language(store, base_name)
+        for key in ("codegen", "runner", "probe", "family", "extensions"):
+            if key in base and key not in data:
+                data[key] = base[key]
+            elif isinstance(base.get(key), dict) and isinstance(data.get(key), dict):
+                merged = dict(base[key])
+                for k, v in data[key].items():
+                    if isinstance(v, dict) and isinstance(merged.get(k), dict):
+                        mv = dict(merged[k])
+                        mv.update(v)
+                        merged[k] = mv
+                    else:
+                        merged[k] = v
+                data[key] = merged
+    data.setdefault("family", data.get("name"))
+    return data
+
+
+class Emitter:
+    def __init__(self, store, lang: str, ops: dict):
+        self.lang_name = lang
+        self.lang = resolve_language(store, lang)
+        self.cg = self.lang.get("codegen") or {}
+        if not self.cg:
+            raise EmitGap(f"language {lang!r} has no codegen block")
+        self.family = self.lang.get("family") or lang
+        self.lineage = self._lineage(store, lang)
+        self.ops = ops
+        self.requires: set[str] = set()
+        self.loop_id = 0
+
+    @staticmethod
+    def _lineage(store, lang):
+        out = [lang]
+        card = store.get(f"language/{lang}")
+        while card is not None and card.get("extends"):
+            out.append(card["extends"])
+            card = store.get(f"language/{card['extends']}")
+        return out
+
+    # -- small helpers ---------------------------------------------------------
+    def T(self, ir_type: str) -> str:
+        t = (self.cg.get("types") or {}).get(ir_type)
+        if t is None:
+            raise EmitGap(f"{self.lang_name}: no type for {ir_type!r}")
+        return t
+
+    def tmpl(self, key: str, **kw) -> str:
+        t = self.cg.get(key)
+        if t is None:
+            raise EmitGap(f"{self.lang_name}: codegen template {key!r} missing")
+        return t.format(**kw)
+
+    def lit(self, kind: str, v) -> str:
+        lits = self.cg.get("lit") or {}
+        if kind == "bool":
+            return lits.get("true" if v else "false", "true" if v else "false")
+        if kind == "float":
+            if v != v or v in (float("inf"), float("-inf")):
+                raise EmitGap(f"{self.lang_name}: non-finite float literal")
+            text = repr(float(v))
+            return lits.get("float", "{v}").format(v=text)
+        return lits.get("int", "{v}").format(v=int(v))
+
+    def ident(self, name: str) -> str:
+        """A safe identifier: "_" and the language card's ``reserved`` words get a suffix."""
+        reserved = self.lang.get("reserved") or []
+        if name == "_" and self.cg.get("underscore_ok") is not True:
+            return "cm_u"
+        if name in reserved:
+            return f"{name}_cm"
+        return name
+
+    def var(self, name: str) -> str:
+        return self.cg.get("var", "{name}").format(name=self.ident(name))
+
+    # -- expressions -----------------------------------------------------------
+    def op_template(self, op: str, arg_types: list[str]) -> str:
+        spec = self.ops.get(op)
+        emit = (spec.card.get("emit") if spec else None) or {}
+        if op in ("AND", "OR", "NOT", "IF_EXPR") and not emit:
+            raise EmitGap(f"op card {op} has no emit block")
+        for key in (*self.lineage, self.family, "default"):
+            t = emit.get(key)
+            if t is None:
+                continue
+            if isinstance(t, dict):
+                t = t.get(arg_types[0] if arg_types else "int") or t.get("any")
+                if t is None:
+                    continue
+            if t == "UNSUPPORTED":
+                break
+            req = (spec.card.get("requires") or {}) if spec else {}
+            for key2 in (*self.lineage, self.family):
+                if key2 in req:
+                    need = req[key2]
+                    if isinstance(need, dict):  # keyed by the first operand's type
+                        need = need.get(arg_types[0] if arg_types else "int", [])
+                    self.requires.update(need)
+                    break
+            return t
+        raise EmitGap(f"{self.lang_name}: op {op} on ({', '.join(arg_types)}) has no template")
+
+    def expr(self, e, types: dict[str, str]) -> tuple[str, str]:
+        head = e[0]
+        if head == "var":
+            return self.var(e[1]), types[e[1]]
+        if head in ("int", "float", "bool"):
+            return self.lit(head, e[1]), head
+        if head == "RAW":
+            # ["RAW", lang, template, result_type, *args]: one language's own spelling (a hint form under test)
+            if e[1] not in self.lineage:
+                raise EmitGap(f"RAW {e[1]} code cannot be emitted as {self.lang_name}")
+            subs = [self.expr(a, types)[0] for a in e[4:]]
+            return e[2].format(*subs), e[3]
+        if head == "CALL":
+            args = [self.expr(a, types)[0] for a in e[2:]]
+            sep = self.cg.get("call_sep", ", ")
+            text = self.cg.get("call", "{name}({args})").format(name=self.ident(e[1]), args=sep.join(args))
+            return text, self.fn_returns[e[1]]
+        subs = [self.expr(a, types) for a in e[1:]]
+        arg_types = [t for _, t in subs]
+        rtype = self.result_type(head, arg_types)
+        tpl = self.op_template(head, arg_types)
+        fields = {"type": self.T(rtype), "tc": (arg_types[0][0] if arg_types else "i")}
+        for i, (code, t) in enumerate(subs):
+            fields[f"t{i}"] = self.T(t)
+        try:
+            text = tpl.format(*[c for c, _ in subs], **fields)
+        except (IndexError, KeyError) as exc:
+            raise EmitGap(f"{self.lang_name}: bad template for {head}: {exc}") from exc
+        return text, rtype
+
+    def result_type(self, op: str, arg_types: list[str]) -> str:
+        if op in ("AND", "OR", "NOT"):
+            return "bool"
+        if op == "IF_EXPR":
+            return arg_types[1]
+        spec = self.ops.get(op)
+        rt = spec.result_type(arg_types) if spec else None
+        if rt is None:
+            raise EmitGap(f"op {op} has no signature for ({', '.join(arg_types)})")
+        return rt
+
+    # -- statements ------------------------------------------------------------
+    def block(self, body, types, depth, loop=None) -> list[str]:
+        ind = self.cg.get("indent", "    ") * depth
+        out: list[str] = []
+        for s in body:
+            k = s["k"]
+            if k == "assign":
+                v, _ = self.expr(s["value"], types)
+                out.append(ind + self.tmpl("assign", name=self.var(s["target"]), value=v))
+            elif k == "return":
+                v, _ = self.expr(s["value"], types)
+                out.append(ind + self.tmpl("return", value=v))
+            elif k == "if":
+                c, _ = self.expr(s["cond"], types)
+                out.append(ind + self.tmpl("if", cond=c))
+                out += self.block(s["then"], types, depth + 1, loop) or [ind + self.cg.get("indent", "    ")
+                                                                         + self.cg.get("empty", "").format()]
+                if s.get("else"):
+                    out.append(ind + self.tmpl("else"))
+                    out += self.block(s["else"], types, depth + 1, loop)
+                end = self.cg.get("end_if", "").format()
+                if end:
+                    out.append(ind + end)
+            elif k == "while":
+                self.loop_id += 1
+                lid = self.loop_id
+                c, _ = self.expr(s["cond"], types)
+                out.append(ind + self.tmpl("while", cond=c))
+                inner = self.block(s["body"], types, depth + 1, lid)
+                out += inner or [ind + self.cg.get("indent", "    ") + self.cg.get("empty", "").format()]
+                if self.cg.get("loop_end_label"):
+                    out.append(ind + self.cg.get("indent", "    ") + self.cg["loop_end_label"].format(loop=lid))
+                end = self.cg.get("end_while", "").format()
+                if end:
+                    out.append(ind + end)
+            elif k == "for_range":
+                out += self.for_range(s, types, depth)
+            elif k == "break":
+                out.append(ind + self.tmpl("break"))
+            elif k == "continue":
+                out.append(ind + self.tmpl("continue", loop=loop))
+            else:
+                raise EmitGap(f"statement {k!r}")
+        return out
+
+    def for_range(self, s, types, depth) -> list[str]:
+        ind = self.cg.get("indent", "    ") * depth
+        if self.cg.get("native_for_range"):
+            self.loop_id += 1
+            start, _ = self.expr(s["start"], types)
+            stop, _ = self.expr(s["stop"], types)
+            step, _ = self.expr(s["step"], types)
+            out = [ind + self.cg["native_for_range"].format(var=self.var(s["var"]), start=start, stop=stop,
+                                                            step=step)]
+            out += self.block(s["body"], types, depth + 1, self.loop_id) or [
+                ind + self.cg.get("indent", "    ") + self.cg.get("empty", "").format()]
+            return out
+        it, stop_v = s["counter"], s["stop_var"]
+        neg = s["step"][1] < 0
+        lowered = [
+            {"k": "assign", "target": it, "value": s["start"]},
+            {"k": "assign", "target": stop_v, "value": s["stop"]},
+            {"k": "while", "cond": ["CMP_GT" if neg else "CMP_LT", ["var", it], ["var", stop_v]],
+             "body": [{"k": "assign", "target": s["var"], "value": ["var", it]},
+                      {"k": "assign", "target": it, "value": ["ADD", ["var", it], s["step"]]},
+                      *s["body"]]},
+        ]
+        return self.block(lowered, types, depth)
+
+    # -- functions and programs ------------------------------------------------
+    def function(self, fn: dict) -> str:
+        types = {p["name"]: p["type"] for p in fn["params"]}
+        types.update(fn.get("locals") or {})
+        ind = self.cg.get("indent", "    ")
+        assigned = {s["target"] for s in _stmts(fn["body"]) if s["k"] == "assign"} | \
+                   {s["var"] for s in _stmts(fn["body"]) if s["k"] == "for_range"}
+        lines: list[str] = []
+        if self.cg.get("param_rebind"):
+            for p in fn["params"]:
+                if p["name"] in assigned:
+                    lines.append(ind + self.cg["param_rebind"].format(name=self.var(p["name"]), type=self.T(p["type"])))
+        if self.cg.get("hoist", True):
+            for name, t in (fn.get("locals") or {}).items():
+                if self.cg.get("native_for_range") and name.startswith(("cm_it", "cm_stop")):
+                    continue
+                zero = (self.cg.get("zero") or {}).get(t, "0")
+                lines.append(ind + self.tmpl("declare", name=self.var(name), type=self.T(t), value=zero))
+        lines += self.block(fn["body"], types, 1)
+        sep = self.cg.get("param_sep", ", ")
+        params = sep.join(self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
+                          for p in fn["params"])
+        body = "\n".join(lines) + "\n"
+        return self.tmpl("func", name=self.ident(fn["name"]), params=params, ret=self.T(fn["returns"]), body=body)
+
+    def program(self, module: dict, calls: list, mode: str = "test", reps: int = 1) -> str:
+        """A complete program: helpers + functions + a harness.
+
+        ``calls`` items are argument lists for the module entry, or
+        ``(function_name, args)`` pairs (one program can test many functions).
+        mode "test":  print one tagged line per call (i:/f:/b:)
+        mode "bench": loop ``reps`` times over the calls, print one checksum;
+                      arguments pass through the language's ``opaque``
+                      template so the compiler cannot constant-fold the calls."""
+        self.requires = set()
+        fns = {f["name"]: f for f in module["functions"]}
+        self.fn_returns = {n: f["returns"] for n, f in fns.items()}
+        protos = ""
+        if self.cg.get("prototype"):
+            sep0 = self.cg.get("param_sep", ", ")
+            protos = "".join(self.tmpl("prototype", name=self.ident(f["name"]), ret=self.T(f["returns"]), params=sep0.join(
+                self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
+                for p in f["params"])) + "\n" for f in module["functions"]) + "\n"
+        funcs = [self.function(f) for f in reversed(module["functions"])]
+        entry_name = module.get("entry", module["functions"][0]["name"])
+        sep = self.cg.get("call_sep", ", ")
+        call_tpl = self.cg.get("harness_call", self.cg.get("call", "{name}({args})"))
+        opaque = (self.cg.get("opaque") or {}) if mode == "bench" else {}
+        harness = self.cg.get("harness") or {}
+        ind2 = self.cg.get("indent", "    ")
+        lines = []
+        for item in calls:
+            name, args = (item[0], item[1]) if isinstance(item, tuple) else (entry_name, item)
+            fn = fns[name]
+            parts = []
+            for p, a in zip(fn["params"], args):
+                text = self.lit(p["type"], a)
+                if p["type"] in opaque:
+                    text = opaque[p["type"]].format(v=text)
+                parts.append(text)
+            text = call_tpl.format(name=self.ident(name), args=sep.join(parts))
+            rt = fn["returns"]
+            if mode == "test":
+                pr = (harness.get("print") or {}).get(rt)
+                if pr is None:
+                    raise EmitGap(f"{self.lang_name}: no print template for {rt}")
+                lines.append(ind2 + pr.format(e=text) + "\n")
+            else:
+                tr = (harness.get("truthy") or {}).get(rt)
+                if tr is None or "bench_main" not in harness:
+                    raise EmitGap(f"{self.lang_name}: no bench harness")
+                lines.append(ind2 * 2 + harness["bench_call"].format(truthy=tr.format(e=text)) + "\n")
+        if "main" not in harness:
+            raise EmitGap(f"{self.lang_name}: no test harness")
+        main = harness["main"].format(calls="".join(lines)) if mode == "test" else \
+            harness["bench_main"].format(calls="".join(lines), reps=reps)
+        code_body = protos + "\n".join(funcs) + "\n" + main
+        helpers = self.helpers_for(code_body)
+        return self._prelude("prelude") + helpers + code_body
+
+    def _prelude(self, key: str) -> str:
+        """Prelude text with ``@imports@`` replaced by the import lines the emitted ops require."""
+        imports = "".join(self.cg.get("import", "").replace("@name@", r) for r in sorted(self.requires)) \
+            if self.cg.get("import") else ""
+        text = self.cg.get(key, self.cg.get("prelude", ""))
+        return text.replace("@imports@", imports)
+
+    def module_source(self, module: dict) -> str:
+        """Just the functions (+ helpers), without a harness: what a translation emits."""
+        self.requires = set()
+        self.fn_returns = {f["name"]: f["returns"] for f in module["functions"]}
+        funcs = "\n".join(self.function(f) for f in reversed(module["functions"]))
+        helpers = self.helpers_for(funcs)
+        return self._prelude("lib_prelude") + helpers + funcs + self.cg.get("lib_epilogue", "")
+
+    def helpers_for(self, code: str) -> str:
+        """Helper functions referenced by ``code``, dependencies first.
+
+        Helpers are written as plain target code; ``@int@``, ``@float@`` and
+        ``@bool@`` are replaced by the language's type names (no brace escaping)."""
+        helpers = self.cg.get("helpers") or {}
+        ordered: list[str] = []
+
+        def uses(text: str, name: str) -> bool:
+            return re.search(rf"\b{re.escape(name)}\b", text) is not None
+
+        def visit(n: str, stack: tuple = ()) -> None:
+            if n in ordered or n in stack:
+                return
+            for m in helpers:
+                if m != n and uses(helpers[n], m):
+                    visit(m, (*stack, n))
+            ordered.append(n)
+
+        for n in helpers:
+            if uses(code, n):
+                visit(n)
+        types = self.cg.get("types") or {}
+        out = []
+        for n in ordered:
+            text = helpers[n]
+            for t in ("int", "float", "bool"):
+                text = text.replace(f"@{t}@", types.get(t, t))
+            out.append(text if text.endswith("\n") else text + "\n")
+        return "".join(out)
+
+
+def _stmts(body):
+    for s in body:
+        yield s
+        for key in ("then", "else", "body"):
+            if key in s:
+                yield from _stmts(s[key])
+
+
+def emit_module(store, ops, lang: str, module: dict) -> str:
+    return Emitter(store, lang, ops).module_source(module)
+
+
+def emit_program(store, ops, lang: str, module: dict, calls: list[list], mode: str = "test", reps: int = 1) -> str:
+    return Emitter(store, lang, ops).program(module, calls, mode, reps)
+
+
+def supported_ops(store, ops, lang: str) -> dict[str, bool]:
+    em = Emitter(store, lang, ops)
+    out = {}
+    for name, spec in ops.items():
+        ok = False
+        for sig in spec.types or [["int", "int"]]:
+            try:
+                em.op_template(name, list(sig[:-1]))
+                ok = True
+                break
+            except EmitGap:
+                continue
+        out[name] = ok
+    return out
+
+
+__all__ = ["EmitGap", "Emitter", "emit_module", "emit_program", "resolve_language", "supported_ops", "LEAVES"]

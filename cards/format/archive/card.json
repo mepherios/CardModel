@@ -1,0 +1,20 @@
+{
+  "category": "format",
+  "detect": {
+    "abstract": true,
+    "parents": [
+      "file"
+    ]
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "archive",
+  "statement": "Abstract parent of archive containers.",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/archive"
+}

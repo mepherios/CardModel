@@ -1,0 +1,68 @@
+{
+  "_autogen_v2": {
+    "origin": "compose_v2",
+    "parents": [
+      "auto_474cd8920fa19471",
+      "auto_62a9524aa6a7d8ca"
+    ],
+    "verifier_evidence": "real:PROVED(40/40)"
+  },
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "symbolic_real",
+  "examples": [
+    {
+      "input": {
+        "x": 1,
+        "y": 1
+      },
+      "source_eval": "-1",
+      "target_eval": "-1"
+    },
+    {
+      "input": {
+        "x": 2,
+        "y": 2
+      },
+      "source_eval": "4",
+      "target_eval": "4"
+    },
+    {
+      "input": {
+        "x": 3,
+        "y": 3
+      },
+      "source_eval": "21",
+      "target_eval": "21"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "auto_v2_670eead414e1362d",
+  "pheros_path": "redefinition/auto_v2_670eead414e1362d",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "verifier:autogen_v2:compose_v2",
+  "provenance": "derived_from_card",
+  "source_form": "x**2*y - 2*x",
+  "tags": [
+    "auto_generated",
+    "autogen_v2",
+    "compose_v2",
+    "redefinition"
+  ],
+  "target_form": "x**8*y**4/(4*x**4*y**2 - 16*x**3*y - 8*x**2*y + 16*x**2 + 16*x + 4) - 8*x**7*y**3/(4*x**4*y**2 - 16*x**3*y - 8*x**2*y + 16*x**2 + 16*x + 4) + 24*x**6*y**2/(4*x**4*y**2 - 16*x**3*y - 8*x**2*y + 16*x**2 + 16*x + 4) - 32*x**5*y/(4*x**4*y**2 - 16*x**3*y - 8*x**2*y + 16*x**2 + 16*x + 4) - x**4*y**2/4 + x**4*y**2/(2*x**4*y**2 - 8*x**3*y - 4*x**2*y + 8*x**2 + 8*x + 2) - x**4*y**2/(x**4*y**2 - 4*x**3*y - 2*x**2*y + 4*x**2 + 4*x + 1) + 16*x**4/(4*x**4*y**2 - 16*x**3*y - 8*x**2*y + 16*x**2 + 16*x + 4) + x**3*y - 4*x**3*y/(2*x**4*y**2 - 8*x**3*y - 4*x**2*y + 8*x**2 + 8*x + 2) + x**3*y/(x**4*y**2/4 - x**3*y - x**2*y/2 + x**2 + x + 1/4) + x**2*y/2 - x**2 + 4*x**2/(2*x**4*y**2 - 8*x**3*y - 4*x**2*y + 8*x**2 + 8*x + 2) - x**2/(x**4*y**2/4 - x**3*y - x**2*y/2 + x**2 + x + 1/4) - x - 1/4 + 1/(4*x**4*y**2 - 16*x**3*y - 8*x**2*y + 16*x**2 + 16*x + 4)",
+  "witness_kind": "symbolic"
+}

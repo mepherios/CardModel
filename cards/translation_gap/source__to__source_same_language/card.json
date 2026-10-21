@@ -1,0 +1,58 @@
+{
+  "blockers": [
+    "dynamic eval and runtime-only type info are genuine semantic blockers — they cannot be closed by tooling alone, they require user-supplied invariants"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED on UB5-B lang-matrix python->python, ts->ts, java->java all at 10/10 runtime-ok",
+  "current_coverage_percent": 95,
+  "evidence": [
+    "cards/redefinition/pong_1p_to_2p — W12-F two-player hotseat redefinition (AST-level same-language rewrite)",
+    "cards/redefinition/snake_to_snake_with_ai — W13-E AI opponent redefinition",
+    "cards/redefinition/* — UR-A through UR-F universal_program_rewrite_model covers function+class+paradigm+concurrency+error+data rewrites",
+    "outputs/agent_ur_f.md — UR-F verification sweep + L38 program_rewrite_witness_required",
+    "L38_program_rewrite_witness_required — every same-language rewrite must carry a witness"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "source__to__source_same_language",
+  "notes": "Coverage is 95% rather than 100% because the unsupported list is non-empty — dynamic eval and macro-expansion rewrites are honest blockers, not closable by current tooling.",
+  "optimal_solution_path": [
+    "harvest the universal_program_rewrite_model documented shapes into a single explicit catalog",
+    "for each catalogued shape, attach an L38 witness and a regression smoke",
+    "publish a 'rewrites we can safely automate' GUI per the dashboard",
+    "leave the dynamic-eval corner cases honestly listed as unsupported"
+  ],
+  "optimization_paths": [
+    "cards/project_task/extend_same_language_rewrite_to_dynamic_eval_corner_cases"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/card_canonicalize",
+    "cards/tool/program_rewrite_verifier"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "any",
+  "supported_constructs": [
+    "function_rewrite",
+    "class_rewrite",
+    "paradigm_rewrite_oop_to_functional",
+    "concurrency_rewrite",
+    "error_handling_rewrite",
+    "data_structure_equivalence_rewrite",
+    "ast_node_substitution",
+    "extract_method_refactor",
+    "rename_refactor",
+    "fps_decoupling_rewrite",
+    "single_player_to_multiplayer_rewrite"
+  ],
+  "target_language": "any_same",
+  "unsupported_constructs": [
+    "rewrites_requiring_runtime_type_information_unavailable_at_ast_time",
+    "rewrites_across_dynamic_eval_boundaries",
+    "rewrites_with_macro_expansion_not_present_in_ast"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/source__to__source_same_language",
+  "wave_23_audit_note": "honestly capped: dynamic_eval and macro-expansion rewrites are genuine semantic blockers, not closable by tooling alone (per card notes); 5% gap stays for L41 honesty"
+}

@@ -1,0 +1,39 @@
+{
+  "category": "meta_definition",
+  "derivation_source": "substrate_self_definition",
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "substrate_meta",
+  "interacts_with": [
+    "L24_complexity_declared",
+    "composition_rules",
+    "computation_taxonomy",
+    "variant_contract"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "primitive_contract",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "provenance": "derived_from_card",
+  "rationale": "Without a uniform contract, primitives become opaque: a future composition or verification tool cannot reason about them. By requiring the same shape from every primitive — pure transform or stateful syscall, classical or quantum, BLAS kernel or shader — the studio gets a substrate where cards plug into each other mechanically.",
+  "statement": "Every primitive computational card under cards/computation/ MUST carry a defined contract surface: name, category (one of the 18), statement, contract (inputs, outputs, preconditions, postconditions, side_effects), complexity (time, space; energy optional), alternatives, composes_with, witnesses, and at least one variant. A card missing any of these fields is incomplete and surfaces as `lacking: incomplete_primitive`.",
+  "substrate_role": "substrate-internal definition",
+  "tags": [
+    "L1",
+    "axiom",
+    "contract"
+  ],
+  "tier": 0,
+  "variants": {
+    "schema.json": "see sibling file"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/_meta/primitive_contract"
+}

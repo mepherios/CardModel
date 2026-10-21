@@ -1,0 +1,23 @@
+{
+  "category": "meta_definition",
+  "interacts_with": [
+    "card_type",
+    "variant_contract",
+    "L01_complete_isolation"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "registry_contract",
+  "rationale": "Eliminating the central index is what makes the system infinitely expandable. New categories are new directories. New cards are new directories inside categories. No registration step exists, so no registration step can be forgotten or corrupted.",
+  "statement": "A registry is any directory under cards/ that contains a _category.json file. The registry contract: walking the directory yields its cards by reading every immediate-subdirectory's card.json. There is no central index — the filesystem IS the index.",
+  "tags": [
+    "axiom",
+    "expandability"
+  ],
+  "tier": 0,
+  "variants": {
+    "walk_registry.py": "\"\"\"walk_registry.py — Python reference implementation of the registry walk.\n\nOne variant. The contract is: 'every immediate subdirectory of a\ncategory directory that contains a card.json is a card in that\ncategory.' Any language can implement the same walk.\n\"\"\"\nfrom pathlib import Path\nimport json\n\n\ndef walk(category_path: Path) -> list[dict]:\n    \"\"\"Yield every card.json in the immediate subdirectories of category_path.\"\"\"\n    cards = []\n    if not category_path.is_dir():\n        return cards\n    for sub in sorted(category_path.iterdir()):\n        if not sub.is_dir():\n            continue\n        card_file = sub / \"card.json\"\n        if not card_file.exists():\n            continue\n        try:\n            cards.append(json.loads(card_file.read_text(encoding=\"utf-8\")))\n        except Exception as e:\n            print(f\"  ! malformed card.json at {card_file}: {e}\")\n    return cards\n\n\ndef walk_all(cards_root: Path) -> dict[str, list[dict]]:\n    \"\"\"Walk every category under cards_root. Returns {category_name: [card, ...]}.\"\"\"\n    out = {}\n    for sub in sorted(cards_root.iterdir()):\n        if sub.is_dir() and (sub / \"_category.json\").exists():\n            out[sub.name] = walk(sub)\n    return out\n"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/_meta/registry_contract"
+}

@@ -1,0 +1,19 @@
+{
+  "category": "format",
+  "detect": {
+    "directory": true,
+    "parents": [],
+    "priority": 1
+  },
+  "metadata": {
+    "curated": true,
+    "version": "1.0.0"
+  },
+  "name": "directory",
+  "statement": "Any directory (fallback domain).",
+  "tags": [
+    "domain"
+  ],
+  "tier": 0,
+  "vendored_from": "~/Programmering/rea-cards/cards/re_domain/directory"
+}

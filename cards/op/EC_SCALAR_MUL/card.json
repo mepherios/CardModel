@@ -1,0 +1,41 @@
+{
+  "category": "op",
+  "cost": 200.0,
+  "forms": [
+    {
+      "cost": 200.0,
+      "domain": "ec",
+      "lang": "sage",
+      "name": "double_add",
+      "runnable": false,
+      "str_impl": "double-and-add O(bit_length(k))"
+    },
+    {
+      "cost": 160.0,
+      "domain": "ec",
+      "lang": "sage",
+      "name": "window_naf",
+      "notes": "typically 25% faster than double-add",
+      "runnable": false,
+      "str_impl": "width-w NAF"
+    }
+  ],
+  "metadata": {
+    "domain_specific": "elliptic curves (hub/Pheros research)",
+    "hub_kind": "fused",
+    "version": "1.0.0"
+  },
+  "name": "EC_SCALAR_MUL",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "k * G -- scalar multiplication",
+  "tier": 2
+}

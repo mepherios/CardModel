@@ -1,0 +1,6 @@
+{
+  "defined_by": "cardmodel",
+  "description": "Cards of category observation.",
+  "name": "observation",
+  "tier": 1
+}

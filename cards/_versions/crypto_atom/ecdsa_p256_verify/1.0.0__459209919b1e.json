@@ -1,0 +1,52 @@
+{
+  "category": "crypto_atom",
+  "forms": [
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "entry": "ecdsa_p256_verify",
+      "file": "javascript.mjs",
+      "lang": "javascript",
+      "name": "node_crypto",
+      "notes": "node:crypto built-ins (no npm packages)",
+      "runnable": true
+    },
+    {
+      "cost": 1.0,
+      "domain": "browser",
+      "lang": "javascript",
+      "name": "ting_noble",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "static/app/crypto/atoms.js#ecdsaP256"
+    },
+    {
+      "cost": 1.0,
+      "domain": "python",
+      "lang": "python",
+      "name": "ting_cryptography",
+      "notes": "Ting's own form (noble / cryptography / PyNaCl); not a dependency here",
+      "runnable": false,
+      "str_impl": "core/suites_ref.py#ecdsa_p256_*"
+    }
+  ],
+  "interacts_with": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ecdsa_p256_verify",
+  "operation": "signature",
+  "provenance": {
+    "commit": "21fb6ee02cddb74c2ff808fd7f9e7957cc855ded",
+    "origin": "ting",
+    "path": "~/Programmering/ting",
+    "read_on": "2026-10-21",
+    "sha256": "e9b09ebe7cf173f131fd6084832b0635c2cbf1170aeb07714dec1e43b01dcf6b",
+    "ting_card": "cards/crypto_atom/ecdsa_p256"
+  },
+  "purity": "pure (deterministic)",
+  "standard": "FIPS 186-5 ECDSA P-256 + SHA-256, RFC 6979 deterministic nonces, low-S on signing",
+  "statement": "ECDSA P-256 / SHA-256 verify (r||s, compressed or uncompressed public key)",
+  "tier": 0,
+  "vectors": "vectors.json"
+}

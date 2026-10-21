@@ -1,0 +1,37 @@
+{
+  "author_rule": "same_author_as_target",
+  "category": "card_type",
+  "index": [
+    {
+      "from": "target",
+      "label": "target"
+    },
+    {
+      "from": "context.channel",
+      "label": "chan"
+    }
+  ],
+  "links": {
+    "target": "required"
+  },
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "edit",
+  "render": "none",
+  "schema": {
+    "properties": {
+      "body": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "body"
+    ],
+    "type": "object"
+  },
+  "summary": "A later variant of the target card's body. Only the target's author may edit.",
+  "tier": 0,
+  "version": 1
+}

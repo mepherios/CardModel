@@ -1,0 +1,61 @@
+{
+  "blockers": [
+    "cards/lacking_feature/dxbc_dxil_decoder_missing (no DXBC/DXIL bytecode decoder; HLSL semantics differ enough ...)",
+    "cards/lacking_feature/dxbc_dxil_decoder_missing (ID3D12* COM-interface lifecycle is stateful (resource states...)",
+    "all current cards are witness_kind: axiomatic / SPEC; 0% real code coverage"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED at 0% real: every existing card under cards/redefinition/gpu_api_* is witness_kind: axiomatic per NR-B/NR-C; no executable shim exists",
+  "current_coverage_percent": 0,
+  "evidence": [
+    "cards/redefinition/gpu_api_d3d12_to_metal - NR-B GPU API translation card exists as axiomatic spec (witness_kind: axiomatic)",
+    "cards/redefinition/gpu_api_compute_shader_d3d_to_metal - NR-C shader translation card, axiomatic",
+    "no substrate code emits Metal from a DirectX 12 input; this is pure spec / documentation"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "directx12__to__metal",
+  "notes": "Pure spec / 0% real coverage. The redefinition cards document the mapping but emit no Metal. Honest framing: this is a roadmap, not a transpiler.",
+  "optimal_solution_path": [
+    "narrow scope to compute shaders only (drop graphics pipeline) for the first day's work; DXIL -> AIR shader emitter is the smallest interesting milestone",
+    "build a DXIL bytecode decoder (it is LLVM-IR-flavored; cards/tool/v_transpile/frontends/llvm.py is the closest existing surface)",
+    "emit Metal Shading Language (MSL) for a single HLSL kernel and verify it round-trips via xcrun metal",
+    "extend to graphics pipeline + command buffer lifecycle once compute shader path is proven",
+    "publish coverage_percent computed as (working_demos / spec_surface) once any demo lands"
+  ],
+  "optimization_paths": [
+    "cards/project_task/materialize_dxbc_dxil_decoder",
+    "cards/project_task/materialize_metal_shader_emitter",
+    "cards/project_task/build_d3d12_to_metal_runtime_shim",
+    "cards/project_task/close_translation_gap_directx12__to__metal"
+  ],
+  "required_library_cards": [
+    "cards/symbol/directx12",
+    "cards/symbol/metal"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/binary_to_ir"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "directx12",
+  "supported_constructs": [],
+  "target_language": "metal",
+  "unsupported_constructs": [
+    "ID3D12CommandQueue_lifecycle",
+    "ID3D12CommandList_recording",
+    "ID3D12Resource_resource_states",
+    "ID3D12PipelineState_PSO",
+    "ID3D12RootSignature",
+    "ID3D12DescriptorHeap",
+    "HLSL_shader_bytecode_dxbc_dxil",
+    "DXR_raytracing",
+    "DML_machine_learning",
+    "GPU_synchronization_fences",
+    "swap_chain_DXGI"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/directx12__to__metal",
+  "wave_23_audit_note": "0% real: gpu_api_* cards are axiomatic per NR-B/NR-C; DXIL decoder + AIR emitter unstarted — filed as project_task"
+}

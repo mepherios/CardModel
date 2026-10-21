@@ -1,0 +1,38 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".cs"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "csharp",
+  "probe": {
+    "kind": "executable",
+    "name": "dotnet",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "csharp: recognised by the observer; no codegen block yet.",
+  "tier": 2
+}

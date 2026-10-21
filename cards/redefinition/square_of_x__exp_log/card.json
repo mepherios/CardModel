@@ -1,0 +1,60 @@
+{
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "positive_real",
+  "examples": [
+    {
+      "source_eval": "exp(2*log(x))",
+      "target_eval": "exp(2*log(x))"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "is_identity_redefinition": true,
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "b51dc259ea1e4bc510f25c52cd975ee542ac43528447cd316a938d976a774ee8",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "square_of_x__exp_log",
+  "pheros_path": "redefinition/square_of_x__exp_log",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "redefinition_test_corpus",
+  "provenance": "derived_from_card",
+  "rationale_for_identity": "Corpus card (tag=test_corpus): represents one canonical member of an equivalence class. source_form == target_form is the identity element of the class, not a vacuous rewrite. Detector exempt per VAC-F heuristic refinement.",
+  "source_form": "exp(2*log(x))",
+  "status": "healthy",
+  "tags": [
+    "exp_log",
+    "square_of_x",
+    "symbolic",
+    "test_corpus"
+  ],
+  "target_form": "exp(2*log(x))",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 0
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

@@ -1,0 +1,62 @@
+{
+  "aead": "xchacha20poly1305",
+  "category": "cipher_suite",
+  "cost_vector": {
+    "envelope_bytes": 114,
+    "fips_approved": 0,
+    "kem_ct_bytes": 32,
+    "kem_pk_bytes": 32,
+    "post_quantum": 0,
+    "sig_bytes": 64,
+    "sig_pk_bytes": 32
+  },
+  "depends_on": [
+    "x25519_dh",
+    "xchacha20poly1305",
+    "ed25519_sign",
+    "hkdf_sha256"
+  ],
+  "dimension_direction": {
+    "envelope_bytes": "lower",
+    "fips_approved": "higher",
+    "kem_ct_bytes": "lower",
+    "kem_pk_bytes": "lower",
+    "post_quantum": "higher",
+    "sig_bytes": "lower",
+    "sig_pk_bytes": "lower"
+  },
+  "interacts_with": [
+    "comp_crypto_aead_encrypt",
+    "comp_crypto_aead_decrypt",
+    "comp_crypto_sign_ed25519",
+    "comp_crypto_verify_ed25519"
+  ],
+  "kdf": "hkdf_sha256",
+  "kem": "x25519_kem",
+  "label": "Curve25519 — X25519 · XChaCha20-Poly1305 · Ed25519",
+  "lengths": {
+    "kem_ct": 32,
+    "kem_pk": 32,
+    "nonce": 24,
+    "sig": 64,
+    "sig_pk": 32,
+    "tag": 16
+  },
+  "metadata": {
+    "kem_mode": "ephemeral-static X25519; HKDF salt = eph_pk || recipient_pk",
+    "version": "1.0.0"
+  },
+  "name": "c25519",
+  "sig": [
+    "ed25519"
+  ],
+  "status": "vetted",
+  "suite_id": "c25519",
+  "summary": "Fast, small keys, misuse-resistant 24-byte random nonces. The default.",
+  "tier": 1,
+  "variants": {
+    "js": "static/app/crypto/suites.js#c25519",
+    "python": "core/suites_ref.py#SUITES['c25519']"
+  },
+  "version": 1
+}

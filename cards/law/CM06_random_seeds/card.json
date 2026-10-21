@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM06_random_seeds",
+  "origins": [
+    "hub L17",
+    "hub L28",
+    "Ting test_cross_language"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Randomised checks pick a fresh seed, print it, and accept --seed to reproduce.",
+  "tier": 0,
+  "witness": "tests/test_laws.py::test_verify_prints_and_accepts_seed"
+}

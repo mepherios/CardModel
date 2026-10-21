@@ -1,0 +1,67 @@
+{
+  "blockers": [
+    "rv32 calling convention (a0-a7, ra, sp) is partially codified — only return-int + binop-add lowering proven",
+    "no relocation table emission yet; only single-function leaf code emits cleanly",
+    "C frontend strips preprocessor; cross-compile against newlib not wired"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "MEASURED via outputs/agent_w14_e.md byte-asserted regression: only int-binop-add shape works (1/47 RV32I instructions cover-tested end-to-end ~= 15%)",
+  "current_coverage_percent": 15,
+  "evidence": [
+    "cards/tool/v_transpile/backends/riscv64.py — RISC-V backend present (T2: RISC-V asm + Verilog backends)",
+    "cards/isa/rv32i — W14-B card_from_isa_spec for RV32I 47 instructions",
+    "cards/tool/v_transpile/backends/rv64_object — W14-E card-based RV64I .o emitter; rv32 path shares the int-binop-add shape",
+    "outputs/agent_w14_e.md — emits real .o for the int-binop-add shape"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__riscv32",
+  "optimal_solution_path": [
+    "extend rv64_object emitter pattern to rv32 32-bit register encoding",
+    "add branch + jal lowering so if/while compile",
+    "add stack-frame prologue/epilogue cards",
+    "smoke: C 'int f(int x){return x+1;}' -> rv32 .o, byte-asserted against gcc-riscv32 reference",
+    "expand smokes to coreutils 'true' and 'false' as the smallest interesting programs"
+  ],
+  "optimization_paths": [
+    "cards/project_task/extend_rv32_emitter_to_control_flow",
+    "cards/project_task/add_rv32_calling_convention_support",
+    "cards/project_task/close_translation_gap_c__to__riscv32"
+  ],
+  "required_isa_cards": [
+    "cards/isa/rv32i"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile/backends/riscv64.py",
+    "cards/tool/v_transpile/frontends/c.py"
+  ],
+  "self_autonomy_status": "manual",
+  "source_language": "c",
+  "supported_constructs": [
+    "int_add",
+    "int_subtract",
+    "int_load_immediate",
+    "register_to_register_move",
+    "return_int"
+  ],
+  "target_language": "riscv32",
+  "unsupported_constructs": [
+    "function_call_general",
+    "if_else",
+    "while_loop",
+    "for_loop",
+    "memory_load_store_general",
+    "struct",
+    "float_variables",
+    "string_literal",
+    "printf",
+    "stack_frame_general",
+    "calling_convention_full",
+    "multiply_divide",
+    "branch_general"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__riscv32",
+  "wave_23_audit_note": "15% MEASURED: only int-binop-add shape works (1/47 RV32I instructions end-to-end); branch/jal/stack-frame lowering not wired — filed as project_task"
+}

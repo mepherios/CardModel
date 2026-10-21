@@ -1,0 +1,14 @@
+{
+  "defined_by": "tools/vendor_import.py",
+  "description": "source -> target translation coverage cards (Pheros L115), vendored; the model's measured matrix is in COVERAGE.md.",
+  "name": "translation_gap",
+  "provenance": {
+    "files": 28,
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/translation_gap",
+    "read_on": "2026-10-21",
+    "sha256": "a91919cd7fe2027d7a25efdc8e579521d64ee8611dc0d084bfd19285f38260d0"
+  },
+  "references": "external",
+  "tier": 2
+}

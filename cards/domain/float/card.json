@@ -1,0 +1,22 @@
+{
+  "category": "domain",
+  "generator": {
+    "float": [
+      -1000.0,
+      1000.0
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "float",
+  "parents": [
+    "any"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "IEEE-754 binary64; compared with rel_tol 1e-12.",
+  "tier": 0
+}

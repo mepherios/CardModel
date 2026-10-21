@@ -1,0 +1,37 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        ".append"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 124,
+    "files": 24,
+    "learned": true,
+    "spellings": {
+      "L.append": 8,
+      "errs.append": 21,
+      "lines.append": 18,
+      "out.append": 50,
+      "problems.append": 6
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_METHOD_APPEND",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to .append (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

@@ -1,0 +1,34 @@
+{
+  "applies_to": [
+    "law"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "law",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "origins": {
+        "minItems": 1,
+        "type": "array"
+      },
+      "witness": {
+        "pattern": "^tests/test_[a-z_]+\\.py::",
+        "type": "string"
+      }
+    },
+    "required": [
+      "statement",
+      "origins",
+      "witness"
+    ],
+    "type": "object"
+  },
+  "statement": "A law of the model.",
+  "tier": 0
+}

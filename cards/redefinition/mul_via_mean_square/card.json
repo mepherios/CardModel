@@ -1,0 +1,89 @@
+{
+  "category": "redefinition",
+  "condition": "(_x > -1e150) & (_x < 1e150) & (_y > -1e150) & (_y < 1e150)",
+  "cost_score": 35,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_x": 3,
+        "_y": 4
+      },
+      "source_eval": 12,
+      "target_eval": 12
+    },
+    {
+      "input": {
+        "_x": -2,
+        "_y": 5
+      },
+      "source_eval": -10,
+      "target_eval": -10
+    },
+    {
+      "input": {
+        "_x": 7,
+        "_y": 7
+      },
+      "source_eval": 49,
+      "target_eval": 49
+    },
+    {
+      "input": {
+        "_x": "x",
+        "_y": "y"
+      },
+      "source_eval": "x*y",
+      "target_eval": "x*y"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "21b524ffbe1ac86c6a2538d469894211d3321356c099b408600674949f1fdeb2",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "mul_via_mean_square",
+  "pheros_path": "redefinition/mul_via_mean_square",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:expand-((x+y)/2)^2-((x-y)/2)^2=xy",
+  "provenance": "derived_from_card",
+  "source_form": "_x*_y",
+  "status": "healthy",
+  "tags": [
+    "algebra",
+    "mean-square",
+    "multiplication",
+    "polarization-identity",
+    "rt-a5-seed"
+  ],
+  "target_form": "((_x+_y)/2)**2 - ((_x-_y)/2)**2",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 1,
+        "total": 4
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

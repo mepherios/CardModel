@@ -1,0 +1,21 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "-(-a)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "neg_neg",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a",
+  "statement": "-(-a) == a",
+  "tier": 1,
+  "vars": [
+    "a"
+  ]
+}

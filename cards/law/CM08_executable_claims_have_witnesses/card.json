@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM08_executable_claims_have_witnesses",
+  "origins": [
+    "hub L47",
+    "Pheros L34",
+    "Pheros L38"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Every runnable form, rewrite rule and executable redefinition has a witness that pins inputs to outputs (vectors or seeded equivalence).",
+  "tier": 0,
+  "witness": "tests/test_witness.py::test_builtin_runnable_forms_are_witnessed"
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "languages_fully_conformant",
+  "name": "G_C1_languages_verified",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Codegen target languages available here whose op-conformance row passes completely.",
+  "target": 10,
+  "tier": 0
+}

@@ -1,0 +1,38 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "(a + b) ** 2",
+  "metadata": {
+    "previous_content_hash": "1e8fa9cc16de2982fa4265e1ceeef49dfbb3b70e34b859ad139084f2cf8e36f0",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "binomial_square_expand",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a ** 2 + 2 * (a * b) + b ** 2",
+  "statement": "(a + b) ** 2 == a ** 2 + 2 * (a * b) + b ** 2",
+  "tier": 1,
+  "vars": [
+    "a",
+    "b"
+  ],
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "checks": 69,
+      "seed": 1210246382,
+      "status": "pass",
+      "witness_can_fail": true
+    },
+    "proof": {
+      "statement": "theorem cm_binomial_square_expand (a b : Int) : ((a + b) ^ 2) = (((a ^ 2) + (2 * (a * b))) + (b ^ 2)) := by grind",
+      "status": "proved",
+      "tactic": "grind"
+    }
+  }
+}

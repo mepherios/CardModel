@@ -1,0 +1,60 @@
+{
+  "category": "redefinition",
+  "cost_score": 50,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "source_eval": "sin(2*x)",
+      "target_eval": "sin(2*x)"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "is_identity_redefinition": true,
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "previous_content_hash": "03507834e85e6e5eefb8623111b66fff21054d3ecc03f30d3fbe265d29c988a7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "trig_double_angle__sin_2x",
+  "pheros_path": "redefinition/trig_double_angle__sin_2x",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "redefinition_test_corpus",
+  "provenance": "derived_from_card",
+  "rationale_for_identity": "Corpus card (tag=test_corpus): represents one canonical member of an equivalence class. source_form == target_form is the identity element of the class, not a vacuous rewrite. Detector exempt per VAC-F heuristic refinement.",
+  "source_form": "sin(2*x)",
+  "status": "healthy",
+  "tags": [
+    "sin_2x",
+    "symbolic",
+    "test_corpus",
+    "trig_double_angle"
+  ],
+  "target_form": "sin(2*x)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 0
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

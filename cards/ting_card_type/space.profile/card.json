@@ -1,0 +1,31 @@
+{
+  "author_rule": "moderator",
+  "category": "card_type",
+  "index": [],
+  "links": {},
+  "metadata": {
+    "builtin": true,
+    "version": "1.0.0"
+  },
+  "name": "space.profile",
+  "render": "space_profile",
+  "schema": {
+    "properties": {
+      "about": {
+        "maxLength": 4000,
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 100,
+        "type": "string"
+      }
+    },
+    "required": [
+      "name"
+    ],
+    "type": "object"
+  },
+  "summary": "The space's name and description — encrypted, so even the name is hidden from the server.",
+  "tier": 0,
+  "version": 1
+}

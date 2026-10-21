@@ -1,0 +1,18 @@
+{
+  "category_aliases": [
+    "language",
+    "language_definition"
+  ],
+  "defined_by": "tools/vendor_import.py",
+  "description": "Pheros language cards (paradigm, type system, evaluation and memory model, algebraic carriers): semantic knowledge linked from language/ cards.",
+  "name": "language_semantics",
+  "provenance": {
+    "files": 4,
+    "origin": "pheros",
+    "path": "~/Documents/Pheros_Studio/cards/language",
+    "read_on": "2026-10-21",
+    "sha256": "d30671d047edc0e7857d4137f95ddc889aa6612a11fbca446068805e87ef3846"
+  },
+  "references": "external",
+  "tier": 2
+}

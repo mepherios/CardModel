@@ -1,0 +1,104 @@
+{
+  "category": "redefinition",
+  "condition": "(k > 0)",
+  "cost_score": 25,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "positive_real",
+  "examples": [
+    {
+      "comment": "equilibrium at x* = F/k = 0.5; E(0.5) = (10/2)*0.25 - 5*0.5 = 1.25 - 2.5 = -1.25 -- agrees with -F^2/(2k) = -25/20 = -1.25.",
+      "input": {
+        "F": 5,
+        "k": 10,
+        "x": 0.5
+      },
+      "source_eval": -1.25,
+      "target_eval": -1.25
+    },
+    {
+      "comment": "spring constant k = 1, applied force F = 3, evaluated at x = 2 (off equilibrium). Source: 0.5*4 - 3*2 = 2 - 6 = -4. Target: 0.5*(2-3)^2 - 9/2 = 0.5 - 4.5 = -4.",
+      "input": {
+        "F": 3,
+        "k": 1,
+        "x": 2
+      },
+      "source_eval": -4.0,
+      "target_eval": -4.0
+    },
+    {
+      "comment": "evaluated at x = 0 with F = 10 -- net potential is zero before any displacement.",
+      "input": {
+        "F": 10,
+        "k": 100,
+        "x": 0
+      },
+      "source_eval": 0,
+      "target_eval": 0
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "canonical_postulate": "quadratic_extremum_canonical",
+    "domain_framing": "physics: 1-D harmonic oscillator in a constant external force field. Potential energy U(x) = (k/2) x^2 - F x where k is the spring constant (N/m) and F is the applied force (N). Equilibrium x_eq = F/k is where dU/dx = 0; minimum energy U_min = -F^2/(2k) is the work stored against the spring at equilibrium.",
+    "first_order_condition": "k*x - F = 0",
+    "introduced_by": "W8-G",
+    "optimum": "F/k",
+    "optimum_value": "-F**2/(2*k)",
+    "physical_interpretation": "U_min = -F^2/(2k) is the work done by the external force as the mass settles to its new equilibrium; negative sign means the force does positive work on the mass.",
+    "previous_content_hash": "df764c86cac45290d7eaf94b1e7f155eda147bf87b793163ac35166a1c50af5d",
+    "units": {
+      "F": "N",
+      "U": "J",
+      "k": "N/m",
+      "x": "m"
+    },
+    "variable_map_to_canonical": {
+      "F": "c",
+      "k": "a",
+      "x": "z"
+    },
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "harmonic_oscillator_to_canonical_quadratic",
+  "pheros_path": "redefinition/harmonic_oscillator_to_canonical_quadratic",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "postulate:quadratic_extremum_canonical",
+  "provenance": "derived_from_card",
+  "source_form": "(k/2)*x**2 - F*x",
+  "status": "healthy",
+  "tags": [
+    "physics",
+    "harmonic-oscillator",
+    "energy-landscape",
+    "cross-domain",
+    "w8-g"
+  ],
+  "target_form": "(k/2)*(x - F/k)**2 - F**2/(2*k)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 3,
+        "disagree": 0,
+        "incomplete": 0,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "proved",
+      "valid_points": 40,
+      "verdict": "proved_symbolic"
+    }
+  },
+  "witness_kind": "symbolic"
+}

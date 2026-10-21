@@ -1,0 +1,35 @@
+{
+  "anchor": 40.0,
+  "calls_per_sample": 1400,
+  "category": "metric",
+  "form": "bit",
+  "host": {
+    "machine": "arm64",
+    "node": null,
+    "python": "3.14.5",
+    "system": "Darwin"
+  },
+  "lang": "python",
+  "mad_ns": 38404.673,
+  "median_ns": 85591.607,
+  "metadata": {
+    "inputs_signature": "eccfc0f26e363ba3",
+    "run_conditions": {
+      "machine": "arm64",
+      "node": null,
+      "python": "3.14.5",
+      "system": "Darwin"
+    },
+    "seed": 1210246382,
+    "version": "1.0.0"
+  },
+  "name": "metric__MUL__bit",
+  "provenance": {
+    "tool": "cardmodel optimize"
+  },
+  "samples": 7,
+  "startup_ms": null,
+  "statement": "op/MUL form bit: 85591.6 ns per call on this host",
+  "target_card": "op/MUL",
+  "tier": 3
+}

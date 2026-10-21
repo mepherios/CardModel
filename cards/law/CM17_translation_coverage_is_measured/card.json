@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM17_translation_coverage_is_measured",
+  "origins": [
+    "Pheros L115",
+    "Pheros translation_gap"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Translation coverage is the op-by-language conformance matrix and per-construct gaps, computed by running real toolchains.",
+  "tier": 0,
+  "witness": "tests/test_conformance.py::test_conformance_matrix"
+}

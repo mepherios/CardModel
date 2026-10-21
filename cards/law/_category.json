@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "The model's laws, consolidated from the hub and Pheros law sets; each names its witness test.",
+  "name": "law",
+  "tier": 0
+}

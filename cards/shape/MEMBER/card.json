@@ -1,0 +1,21 @@
+{
+  "category": "shape",
+  "cost": 1.0,
+  "fallback": false,
+  "match": {
+    "python": {
+      "cmpop": [
+        "In",
+        "NotIn"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "MEMBER",
+  "provenance": {
+    "origin": "hub config/card_catalog.py walk_cards (V5 shapes)"
+  },
+  "statement": "x in c / x not in c"
+}

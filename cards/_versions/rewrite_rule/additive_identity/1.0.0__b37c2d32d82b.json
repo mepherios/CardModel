@@ -1,0 +1,21 @@
+{
+  "bidirectional": true,
+  "category": "rewrite_rule",
+  "condition": null,
+  "domain": "int",
+  "lhs": "a + 0",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "additive_identity",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "rhs": "a",
+  "statement": "a + 0 == a",
+  "tier": 1,
+  "vars": [
+    "a"
+  ]
+}

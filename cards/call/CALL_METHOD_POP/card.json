@@ -1,0 +1,33 @@
+{
+  "category": "call",
+  "cost": 1.5,
+  "match": {
+    "python": {
+      "call": [
+        ".pop"
+      ]
+    }
+  },
+  "metadata": {
+    "confidence": "established",
+    "evidence_count": 3,
+    "files": 2,
+    "learned": true,
+    "spellings": {
+      "meta.pop": 3
+    },
+    "version": "1.0.0"
+  },
+  "name": "CALL_METHOD_POP",
+  "provenance": {
+    "language": "python",
+    "learning_loop_refs": [
+      "observation/obs_b01cbf91e8dc6db4"
+    ]
+  },
+  "statement": "call to .pop (python), learned from observed code",
+  "tags": [
+    "learned"
+  ],
+  "tier": 3
+}

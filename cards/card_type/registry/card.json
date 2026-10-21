@@ -1,0 +1,68 @@
+{
+  "applies_to": [],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "registry",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "card_type": {
+        "type": [
+          "string",
+          "array"
+        ]
+      },
+      "category_aliases": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "description": {
+        "minLength": 10,
+        "type": "string"
+      },
+      "dimension_direction": {
+        "type": "object"
+      },
+      "max_cards": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "name": {
+        "pattern": "^[a-z][a-z0-9_.]*$",
+        "type": "string"
+      },
+      "references": {
+        "enum": [
+          "internal",
+          "external"
+        ]
+      },
+      "status_values": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "tier": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "name",
+      "description"
+    ],
+    "type": "object"
+  },
+  "statement": "Shape of a registry's _category.json (Pheros registry_contract).",
+  "tier": 0
+}

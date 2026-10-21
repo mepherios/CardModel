@@ -1,0 +1,136 @@
+{
+  "algebraic_carriers": [
+    {
+      "maps_to_algebra": "ring (with explicit overflow: wrapping_add / checked_add / saturating_add / overflowing_add are distinct operations; debug builds panic on overflow, release wraps)",
+      "type_in_language": "i32"
+    },
+    {
+      "maps_to_algebra": "ring (same wrap-on-release / panic-on-debug semantics as i32)",
+      "type_in_language": "i64"
+    },
+    {
+      "maps_to_algebra": "commutative_ring (Z/2^32 Z under wrapping_add/_mul)",
+      "type_in_language": "u32"
+    },
+    {
+      "maps_to_algebra": "field (approximation; IEEE-754 double-precision, same caveats as Python/C)",
+      "type_in_language": "f64"
+    },
+    {
+      "maps_to_algebra": "monoid (placeholder for product_type; same caveat as C struct - W22 follow-up)",
+      "type_in_language": "struct"
+    },
+    {
+      "maps_to_algebra": "monoid (placeholder for sum_type / coproduct - Rust enums ARE proper tagged unions, the substrate just lacks a sum_type algebra card yet; W22 follow-up)",
+      "type_in_language": "enum"
+    },
+    {
+      "maps_to_algebra": "monoid (under .or() with None as identity - genuine monoid; would also be expressible as 'monoid_with_zero' under .and() but the substrate has no such card yet)",
+      "type_in_language": "Option<T>"
+    },
+    {
+      "maps_to_algebra": "monoid (concatenation via extend / chain with Vec::new() identity)",
+      "type_in_language": "Vec<T>"
+    },
+    {
+      "maps_to_algebra": "monoid (concatenation via push_str / + with String::new() identity)",
+      "type_in_language": "String"
+    }
+  ],
+  "canonical_name": "Rust",
+  "category": "language",
+  "concurrency_model": [
+    {
+      "name": "thread",
+      "primitives": [
+        "std::thread::spawn",
+        "std::sync::Mutex",
+        "std::sync::RwLock",
+        "std::sync::Arc",
+        "std::sync::atomic::AtomicUsize",
+        "std::sync::Barrier"
+      ]
+    },
+    {
+      "name": "async",
+      "primitives": [
+        "async fn",
+        "await",
+        "std::future::Future",
+        "tokio",
+        "async-std",
+        "futures::executor::block_on"
+      ]
+    },
+    {
+      "name": "channel",
+      "primitives": [
+        "std::sync::mpsc::channel",
+        "std::sync::mpsc::sync_channel",
+        "tokio::sync::mpsc",
+        "tokio::sync::oneshot",
+        "tokio::sync::broadcast",
+        "crossbeam::channel"
+      ]
+    }
+  ],
+  "evaluation_model": "eager_strict",
+  "flaws": [
+    "structure-mixed: 'mixed' is honest but coarse - Rust is mostly nominal with structural escape hatches; a finer-grained taxonomy is a W23+ idea.",
+    "sum-type-as-monoid: enum is genuinely a sum type (coproduct in category-of-types) but the substrate has no cards/algebra/sum_type/ card yet. The 'monoid' placeholder is dishonest at the precision level but the only existing algebra ref that lands. W22 follow-up: add sum_type and product_type algebra cards.",
+    "Option-not-monoid_with_zero: Option<T> under .and() with Some(_) absorbing-zero behaviour is more precisely a 'monoid with zero' / 'pointed monoid'; the substrate has no such card. We use plain monoid (under .or()) honestly.",
+    "memory-model-summary: 'borrow_checked' is the substrate convention; the formal Rust memory model is still under active spec (Stacked Borrows / Tree Borrows / MIRI). This card describes the language as understood circa 2024.",
+    "Rust-frontend-heuristic: rust.py is regex-driven, not a proper parser - real syn-crate-style parsing is a W24+ idea. The card describes the LANGUAGE; coverage gaps live in rust.py."
+  ],
+  "informal_description": "Rust is a strongly statically typed systems language with structural algebraic data types (enums for sum types, structs/tuples for product types) layered on top of a nominal struct/enum identity system. Evaluation is eager and strict. Side effects are type-tracked: mutability is explicit (let vs let mut), shared mutable state requires Cell/RefCell/Mutex/RwLock with explicit interior-mutability markers, and IO is not in the type signature but unsafe-only operations (raw pointer deref, FFI calls, untagged-union access) require an `unsafe` block. Memory is neither GC'd nor manually managed: ownership + borrowing + lifetimes provide static guarantees of safe deallocation (RAII via Drop), no use-after-free, and no data races across threads (Send/Sync trait gating). i32/i64 are rings; u32/u64 are commutative rings under wrap; f64 approximates a field; Vec<T> and String are monoids; Option<T> and Result<T,E> form monoids under .or() / .and_then() chaining. Concurrency is exposed three ways: native OS threads (std::thread, Send-bounded), async/await (Future-trait, executor-pluggable - tokio is the default in practice), and channels (std::sync::mpsc, tokio::sync, crossbeam). The transpile frontend at cards/tool/v_transpile/frontends/rust.py uses regex + heuristics (UB5-A push toward ~95% of typical modern Rust) to lift fn/let/struct/enum/impl/trait/match/closure/try-propagate (?) into the substrate IR.",
+  "interacts_with": [
+    "category_language",
+    "schema_language_semantic_schema",
+    "L13_construction_through_cards",
+    "L41_no_vacuous_success",
+    "L114_terminal_decomposition",
+    "cards/algebra/ring/card.json",
+    "cards/algebra/commutative_ring/card.json",
+    "cards/algebra/field/card.json",
+    "cards/algebra/monoid/card.json",
+    "cards/tool/v_transpile/frontends/rust.py",
+    "cards/postulate/rust_operational_semantics_axiom/card.json",
+    "cards/postulate/actor_model_axiom/card.json"
+  ],
+  "kind": "language_semantic",
+  "memory_model": "borrow_checked",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rust",
+  "notes": "Rust's type_system.structure is 'mixed' because the language has BOTH nominal types (a struct/enum is a distinct named type even with identical fields to another) AND structural elements (tuples, function/closure types, trait-object dyn Trait). The 'pure_restricted' side_effect_model is the substrate's name for type-system-tracked-but-not-monadic effects: Rust mutability is explicit, shared state requires Sync, but IO is not lifted into an IO monad the way Haskell does it.",
+  "operational_semantics_card": "cards/postulate/rust_operational_semantics_axiom/card.json",
+  "paradigm": [
+    "systems",
+    "imperative",
+    "functional-influenced",
+    "concurrent"
+  ],
+  "side_effect_model": "pure_restricted",
+  "standardization_body": "Rust RFC process + Edition system (2015/2018/2021/2024); no ISO standard",
+  "tags": [
+    "language",
+    "rust",
+    "w21-d",
+    "static",
+    "strong-typing",
+    "borrow-checked",
+    "systems",
+    "algebraic-data-types"
+  ],
+  "tier": 0,
+  "transpile_backends_available": [],
+  "transpile_frontend": "cards/tool/v_transpile/frontends/rust.py",
+  "type_system": {
+    "dynamism": "static",
+    "strength": "strong",
+    "structure": "mixed"
+  },
+  "vendored_from": "~/Documents/Pheros_Studio/cards/language/rust",
+  "year_origin": 2010
+}

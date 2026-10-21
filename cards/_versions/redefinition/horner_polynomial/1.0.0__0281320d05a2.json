@@ -1,0 +1,81 @@
+{
+  "category": "redefinition",
+  "cost_score": 15,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "real",
+  "examples": [
+    {
+      "input": {
+        "_a": 1,
+        "_b": 0,
+        "_c": 0,
+        "_d": 0,
+        "_x": 2
+      },
+      "source_eval": 8,
+      "target_eval": 8
+    },
+    {
+      "input": {
+        "_a": 2,
+        "_b": -3,
+        "_c": 4,
+        "_d": -1,
+        "_x": 5
+      },
+      "source_eval": 194,
+      "target_eval": 194
+    },
+    {
+      "input": {
+        "_a": 1,
+        "_b": 1,
+        "_c": 1,
+        "_d": 1,
+        "_x": 3
+      },
+      "source_eval": 40,
+      "target_eval": 40
+    },
+    {
+      "input": {
+        "_a": "a",
+        "_b": "b",
+        "_c": "c",
+        "_d": "d",
+        "_x": "x"
+      },
+      "source_eval": "a*x**3 + b*x**2 + c*x + d",
+      "target_eval": "((a*x + b)*x + c)*x + d"
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "horner_polynomial",
+  "pheros_path": "redefinition/horner_polynomial",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:expand-((a*x+b)*x+c)*x+d=a*x^3+b*x^2+c*x+d",
+  "provenance": "derived_from_card",
+  "source_form": "_a*_x**3 + _b*_x**2 + _c*_x + _d",
+  "tags": [
+    "evaluation",
+    "fewer-multiplies",
+    "horner",
+    "polynomial",
+    "rt-a5-seed"
+  ],
+  "target_form": "((_a*_x + _b)*_x + _c)*_x + _d",
+  "witness_kind": "symbolic"
+}

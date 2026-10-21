@@ -1,0 +1,22 @@
+{
+  "category": "domain",
+  "generator": {
+    "int": [
+      -1000000,
+      1000000
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "int",
+  "parents": [
+    "any"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Python integers (unbounded).",
+  "tier": 0
+}

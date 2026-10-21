@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM15_observations_are_ground_truth",
+  "origins": [
+    "Pheros L102",
+    "Pheros L56"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Observations are never edited by rules; learned cards cite the observations and runs they came from, with confidence and evidence_count.",
+  "tier": 0,
+  "witness": "tests/test_learn.py::test_learned_cards_cite_evidence"
+}

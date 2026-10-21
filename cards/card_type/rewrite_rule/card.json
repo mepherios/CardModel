@@ -1,0 +1,50 @@
+{
+  "applies_to": [
+    "rewrite_rule"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rewrite_rule",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "bidirectional": {
+        "type": "boolean"
+      },
+      "condition": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "domain": {
+        "type": "string"
+      },
+      "lhs": {
+        "type": "string"
+      },
+      "rhs": {
+        "type": "string"
+      },
+      "vars": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "lhs",
+      "rhs",
+      "vars"
+    ],
+    "type": "object"
+  },
+  "statement": "An identity usable as a rewrite.",
+  "tier": 0
+}

@@ -1,0 +1,210 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "domain_generators": {
+    "int": [
+      {
+        "edges": [
+          2147483648,
+          2147483649,
+          4294967295,
+          4294967296,
+          -2147483649,
+          -4294967296
+        ],
+        "int": [
+          -1099511627776,
+          1099511627776
+        ]
+      },
+      {
+        "edges": [
+          2147483648,
+          2147483649,
+          4294967295,
+          4294967296,
+          -2147483649,
+          -4294967296
+        ],
+        "int": [
+          -1099511627776,
+          1099511627776
+        ]
+      }
+    ],
+    "u32": [
+      {
+        "edges": [
+          2147483647,
+          2147483648,
+          4294967294
+        ],
+        "int": [
+          0,
+          4294967295
+        ]
+      },
+      {
+        "edges": [
+          2147483647,
+          2147483648,
+          4294967294
+        ],
+        "int": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  },
+  "emit": {
+    "c_like": "({0} - {1})",
+    "lean": "({0} - {1})",
+    "lua": "({0} - {1})",
+    "python": "({0} - {1})",
+    "ruby": "({0} - {1})"
+  },
+  "forms": [
+    {
+      "code": "lambda a, b: a - b",
+      "cost": 1.0,
+      "domain": "any",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "bp.sub_via_bits",
+      "cost": 80.0,
+      "domain": "u32",
+      "hub_domain": "int",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "bit",
+      "notes": "fixed 32-bit two's complement",
+      "runnable": true
+    },
+    {
+      "code": "a - b",
+      "cost": 2.0,
+      "domain": "int",
+      "lang": "sage",
+      "name": "sage",
+      "role": "hint",
+      "runnable": false
+    },
+    {
+      "code": "(({0} as u32).wrapping_sub({1} as u32) as i64)",
+      "cost": 1.0,
+      "domain": "u32",
+      "lang": "rust",
+      "name": "rust_hint",
+      "role": "hint",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        },
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        }
+      ],
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a - b",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ],
+      [
+        "float",
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "binop": [
+        "Sub"
+      ]
+    }
+  },
+  "metadata": {
+    "hub_kind": "binop",
+    "previous_content_hash": "aa6a9d44428d89787b92c3363887fa8fe127685cb836b3c58bf67a7b0181e897",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "SUB",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "integer/float subtraction",
+  "tier": 0,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "bit": {
+        "checks": 54,
+        "domain": "u32",
+        "hub_claim": {
+          "args": [
+            -597005841672,
+            605800622549
+          ],
+          "checks": 12,
+          "domain": "int",
+          "expected": -1202806464221,
+          "got": 4079345955,
+          "status": "fail"
+        },
+        "status": "pass"
+      },
+      "rust_hint": {
+        "checks": 54,
+        "domain": "u32",
+        "status": "pass"
+      },
+      "sage": {
+        "reason": "documentation-only form (no code)",
+        "status": "documentation_only"
+      }
+    }
+  }
+}

@@ -1,0 +1,566 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/MAX",
+    "op/MIN"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef clamp(x: int, lo: int, hi: int) -> int:\n    return max(lo, min(x, hi))",
+      "cost": 1.0,
+      "entry": "clamp",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_max_i(int64_t a, int64_t b) { return b > a ? b : a; }\nstatic int64_t cm_min_i(int64_t a, int64_t b) { return b < a ? b : a; }\nstatic int64_t clamp(int64_t x, int64_t lo, int64_t hi) {\n    return cm_max_i(lo, cm_min_i(x, hi));\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_max_i(a int64, b int64) int64 {\n\tif b > a {\n\t\treturn b\n\t}\n\treturn a\n}\nfunc cm_min_i(a int64, b int64) int64 {\n\tif b < a {\n\t\treturn b\n\t}\n\treturn a\n}\nfunc clamp(x int64, lo int64, hi int64) int64 {\n\treturn cm_max_i(lo, cm_min_i(x, hi))\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_max_i(a, b) { return b > a ? b : a; }\nfunction cm_min_i(a, b) { return b < a ? b : a; }\nfunction clamp(x, lo, hi) {\n    return cm_max_i(lo, cm_min_i(x, hi));\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def clamp(x: int, lo: int, hi: int) -> int:\n    return max(lo, min(x, hi))\n\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_max_i(a: i64, b: i64) -> i64 { if b > a { b } else { a } }\nfn cm_min_i(a: i64, b: i64) -> i64 { if b < a { b } else { a } }\nfn clamp(x: i64, lo: i64, hi: i64) -> i64 {\n    return cm_max_i(lo, cm_min_i(x, hi));\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_max_i(int64_t a, int64_t b) { return b > a ? b : a; }\nstatic int64_t cm_min_i(int64_t a, int64_t b) { return b < a ? b : a; }\nstatic int64_t clamp(int64_t x, int64_t lo, int64_t hi) {\n    return cm_max_i(lo, cm_min_i(x, hi));\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long clamp(long x, long lo, long hi) {\n    return Math.max(lo, Math.min(x, hi));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def clamp (x : Int) (lo : Int) (hi : Int) : Int := Id.run do\n  return (max lo (min x hi))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function cm_max_i(a, b) if b > a then return b else return a end end\nfunction cm_min_i(a, b) if b < a then return b else return a end end\nfunction clamp(x, lo, hi)\n  return cm_max_i(lo, cm_min_i(x, hi))\nend\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def cm_max_i(a, b)\n  b > a ? b : a\nend\ndef cm_min_i(a, b)\n  b < a ? b : a\nend\ndef clamp(x, lo, hi)\n  return cm_max_i(lo, cm_min_i(x, hi))\nend\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_max_i(_ a: Int, _ b: Int) -> Int { return b > a ? b : a }\nfunc cm_min_i(_ a: Int, _ b: Int) -> Int { return b < a ? b : a }\nfunc clamp(_ x: Int, _ lo: Int, _ hi: Int) -> Int {\n    return cm_max_i(lo, cm_min_i(x, hi))\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_max_i(a, b) { return b > a ? b : a; }\nfunction cm_min_i(a, b) { return b < a ? b : a; }\nfunction clamp(x: bigint, lo: bigint, hi: bigint): bigint {\n    return cm_max_i(lo, cm_min_i(x, hi));\n}\n",
+      "cost": 1.0,
+      "entry": "clamp",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "clamp",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "return",
+            "value": [
+              "MAX",
+              [
+                "var",
+                "lo"
+              ],
+              [
+                "MIN",
+                [
+                  "var",
+                  "x"
+                ],
+                [
+                  "var",
+                  "hi"
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "clamp",
+        "params": [
+          {
+            "name": "x",
+            "type": "int"
+          },
+          {
+            "name": "lo",
+            "type": "int"
+          },
+          {
+            "name": "hi",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_clamp_429484c35431",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_ddaffa59942a585b"
+    ],
+    "origin": "algorithms/algos.py",
+    "seed": 1210246382,
+    "source_sha256_12": "429484c35431"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "x",
+        "type": "int"
+      },
+      {
+        "name": "lo",
+        "type": "int"
+      },
+      {
+        "name": "hi",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "clamp(x: int, lo: int, hi: int) -> int lifted from algorithms/algos.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0,
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1,
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        -1,
+        -1
+      ],
+      "out": -1
+    },
+    {
+      "args": [
+        -50,
+        -50,
+        -50
+      ],
+      "out": -50
+    },
+    {
+      "args": [
+        50,
+        50,
+        50
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        -5,
+        28,
+        -19
+      ],
+      "out": 28
+    },
+    {
+      "args": [
+        21,
+        44,
+        -19
+      ],
+      "out": 44
+    },
+    {
+      "args": [
+        6,
+        12,
+        2
+      ],
+      "out": 12
+    },
+    {
+      "args": [
+        -5,
+        -20,
+        -33
+      ],
+      "out": -20
+    },
+    {
+      "args": [
+        -36,
+        -15,
+        -21
+      ],
+      "out": -15
+    },
+    {
+      "args": [
+        -11,
+        -47,
+        39
+      ],
+      "out": -11
+    },
+    {
+      "args": [
+        -48,
+        -47,
+        -48
+      ],
+      "out": -47
+    },
+    {
+      "args": [
+        9,
+        -49,
+        10
+      ],
+      "out": 9
+    },
+    {
+      "args": [
+        25,
+        31,
+        -26
+      ],
+      "out": 31
+    },
+    {
+      "args": [
+        -47,
+        27,
+        0
+      ],
+      "out": 27
+    },
+    {
+      "args": [
+        32,
+        3,
+        6
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        -36,
+        -17,
+        17
+      ],
+      "out": -17
+    },
+    {
+      "args": [
+        49,
+        3,
+        50
+      ],
+      "out": 49
+    },
+    {
+      "args": [
+        -43,
+        38,
+        -15
+      ],
+      "out": 38
+    },
+    {
+      "args": [
+        19,
+        40,
+        20
+      ],
+      "out": 40
+    },
+    {
+      "args": [
+        -12,
+        -36,
+        -4
+      ],
+      "out": -12
+    },
+    {
+      "args": [
+        41,
+        45,
+        -36
+      ],
+      "out": 45
+    },
+    {
+      "args": [
+        46,
+        -34,
+        -30
+      ],
+      "out": -30
+    },
+    {
+      "args": [
+        -23,
+        -9,
+        42
+      ],
+      "out": -9
+    },
+    {
+      "args": [
+        29,
+        -4,
+        -46
+      ],
+      "out": -4
+    },
+    {
+      "args": [
+        -2,
+        -37,
+        26
+      ],
+      "out": -2
+    },
+    {
+      "args": [
+        30,
+        5,
+        33
+      ],
+      "out": 30
+    },
+    {
+      "args": [
+        -29,
+        -7,
+        9
+      ],
+      "out": -7
+    },
+    {
+      "args": [
+        -42,
+        34,
+        36
+      ],
+      "out": 34
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 1210246382
+    }
+  }
+}

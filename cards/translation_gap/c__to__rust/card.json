@@ -1,0 +1,70 @@
+{
+  "blockers": [
+    "raw pointer arithmetic generally requires unsafe Rust + region inference, neither of which the substrate yet does",
+    "union types map to Rust enums only when discriminant is recoverable; otherwise the path is unsafe"
+  ],
+  "category": "translation_gap",
+  "coverage_inference_method": "estimate from UB3-B C->Rust pipeline regression count (~65% of the 60 coreutils rewrites compile + run); auto-derive via lang-matrix sweep",
+  "current_coverage_percent": 65,
+  "evidence": [
+    "cards/tool/v_transpile/frontends/c.py — UB3-A C frontend",
+    "cards/tool/v_transpile/backends — Rust emitter (UB5-A IR coverage push)",
+    "cards/redefinition/* — UB3-B Auto C->Rust pipeline ran against ~60 coreutils (UB4-A pushed to 60, UB3-C did 25, UB-D was leaf-utility demo)",
+    "UB3-G Lean 4 verification for cat/echo gives evidence at the small-shape end",
+    "outputs/agent_ub3_b.md and outputs/agent_ub4_a.md — pipeline run reports"
+  ],
+  "last_verified_date": "2026-05-27",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "c__to__rust",
+  "optimal_solution_path": [
+    "drive C->Rust against UB5-B's all-pairs matrix and lock down per-construct success rate",
+    "lower pointer arithmetic into slice index patterns where region inference succeeds",
+    "emit explicit `unsafe { ... }` blocks for the residual instead of silently dropping",
+    "extend UB3-G's Lean verification beyond cat/echo to 10 more leaf utilities"
+  ],
+  "optimization_paths": [
+    "cards/project_task/close_c_macro_lowering",
+    "cards/project_task/close_c_pointer_to_rust_borrow"
+  ],
+  "required_tools": [
+    "cards/tool/v_transpile",
+    "cards/tool/v_transpile/frontends/c.py"
+  ],
+  "self_autonomy_status": "orchestrated",
+  "source_language": "c",
+  "supported_constructs": [
+    "function_def",
+    "binary_arithmetic",
+    "unary_arithmetic",
+    "if_else",
+    "while_loop",
+    "for_loop_index",
+    "return",
+    "int_variables",
+    "float_variables",
+    "char_variables",
+    "string_literal",
+    "array_subscript_read",
+    "struct_pod",
+    "comparison_operators",
+    "logical_operators",
+    "printf_to_println"
+  ],
+  "target_language": "rust",
+  "unsupported_constructs": [
+    "preprocessor_macros",
+    "raw_pointer_arithmetic_unsafe_general",
+    "function_pointer_general",
+    "void_pointer_casts",
+    "union",
+    "bitfield",
+    "goto",
+    "setjmp_longjmp",
+    "inline_assembly",
+    "variadic_functions_general"
+  ],
+  "vendored_from": "~/Documents/Pheros_Studio/cards/translation_gap/c__to__rust",
+  "wave_23_audit_note": "65% is corpus-estimate from UB5-B all-pairs matrix (c->rust = ~6.5/10 by extrapolation); promoting requires running v_transpile against the larger coreutils corpus with byte-asserted regression, not done in W23"
+}

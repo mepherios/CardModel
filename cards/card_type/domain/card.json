@@ -1,0 +1,37 @@
+{
+  "applies_to": [
+    "domain"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "domain",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "generator": {
+        "type": "object"
+      },
+      "parents": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "project_reference": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "statement",
+      "parents"
+    ],
+    "type": "object"
+  },
+  "statement": "An input domain.",
+  "tier": 0
+}
