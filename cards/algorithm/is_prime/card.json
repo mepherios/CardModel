@@ -1,0 +1,69 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def prime_all(n: int) -> bool:\n    if n < 2:\n        return False\n    for d in range(2, n):\n        if n % d == 0:\n            return False\n    return True\n",
+      "complexity": "O(n)",
+      "cost": 100.0,
+      "domain": "int",
+      "entry": "prime_all",
+      "lang": "python",
+      "name": "trial_all",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def prime_sqrt(n: int) -> bool:\n    if n < 2:\n        return False\n    d = 2\n    while d * d <= n:\n        if n % d == 0:\n            return False\n        d += 1\n    return True\n",
+      "complexity": "O(sqrt n)",
+      "cost": 10.0,
+      "domain": "int",
+      "entry": "prime_sqrt",
+      "lang": "python",
+      "name": "trial_sqrt",
+      "runnable": true
+    },
+    {
+      "code": "def prime_6k(n: int) -> bool:\n    if n < 2:\n        return False\n    if n < 4:\n        return True\n    if n % 2 == 0 or n % 3 == 0:\n        return False\n    d = 5\n    while d * d <= n:\n        if n % d == 0 or n % (d + 2) == 0:\n            return False\n        d += 6\n    return True\n",
+      "complexity": "O(sqrt n / 3)",
+      "cost": 4.0,
+      "domain": "int",
+      "entry": "prime_6k",
+      "lang": "python",
+      "name": "wheel_6k",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -10,
+        200000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "is_prime",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "trial_sqrt",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "bool"
+  },
+  "statement": "n is prime",
+  "tags": [
+    "math",
+    "number_theory"
+  ],
+  "tier": 1
+}

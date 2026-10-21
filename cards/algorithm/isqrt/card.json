@@ -1,0 +1,79 @@
+{
+  "category": "algorithm",
+  "domain_generators": {
+    "small_int": [
+      {
+        "int": [
+          0,
+          100000
+        ]
+      }
+    ]
+  },
+  "filter": "lambda n: n >= 0",
+  "forms": [
+    {
+      "code": "def isqrt_linear(n: int) -> int:\n    r = 0\n    while (r + 1) * (r + 1) <= n:\n        r += 1\n    return r\n",
+      "complexity": "O(sqrt n)",
+      "cost": 100.0,
+      "domain": "small_int",
+      "entry": "isqrt_linear",
+      "lang": "python",
+      "name": "linear",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def isqrt_bisect(n: int) -> int:\n    lo = 0\n    hi = n + 1\n    while hi - lo > 1:\n        mid = (lo + hi) // 2\n        if mid * mid <= n:\n            lo = mid\n        else:\n            hi = mid\n    return lo\n",
+      "complexity": "O(log n)",
+      "cost": 8.0,
+      "domain": "any",
+      "entry": "isqrt_bisect",
+      "lang": "python",
+      "name": "binary_search",
+      "runnable": true
+    },
+    {
+      "code": "def isqrt_newton(n: int) -> int:\n    if n < 2:\n        return n\n    x = n\n    y = (x + 1) // 2\n    while y < x:\n        x = y\n        y = (x + n // x) // 2\n    return x\n",
+      "complexity": "O(log log n)",
+      "cost": 4.0,
+      "domain": "any",
+      "entry": "isqrt_newton",
+      "lang": "python",
+      "name": "newton",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        1000000000000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "isqrt",
+  "precondition": "n >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "newton",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "floor(sqrt(n)) for n >= 0",
+  "tags": [
+    "math"
+  ],
+  "tier": 1
+}

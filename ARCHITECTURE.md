@@ -29,6 +29,8 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── observe.py          source tree -> observation card (ast for Python, tokens elsewhere)
 │   │   ├── learn.py            observe -> propose -> verify -> promote
 │   │   ├── optimize.py         measurements -> metric cards -> calibrated cost anchors
+│   │   ├── improve.py          whole-program optimization: algorithm/affine substitution, rewrites, recheck
+│   │   ├── arena.py            generated suboptimal programs + soundness/recall/speed score
 │   │   ├── verify.py           all witnesses with one seed; records verdicts
 │   │   ├── coverage.py         computed coverage + goal metrics
 │   │   ├── selfcheck.py        self-containment: static scan + macOS sandbox run
@@ -38,6 +40,7 @@ cardmodel/                      the repository IS the model (its home)
 │   ├── emit/                   lean.py (theorems + lint), proofs.py (backend choice), hints.py
 │   └── cli.py                  init observe verify cover rewrite emit learn optimize translate status ...
 ├── cards/                      the model's own registries (the knowledge; see COVERAGE.md for counts)
+├── arena/                      optimization test environment: slowframework/ (+ its optimized output)
 ├── tests/                      unittest suites (stdlib), incl. the sandboxed self-containment test
 ├── tools/                      BUILD-TIME ONLY: bootstrap.py (own cards), vendor_import.py (consolidation)
 └── docs/                       PROVENANCE.md, VENDOR_REPORT.json
@@ -94,6 +97,8 @@ source tree ──► observe ──► observation card (ground truth) ──�
                                                 │                                                    │
                                      interpreter (op.ir.eval) ──────── reference ───────────────────┘
 rewrite/search ◄── op costs, rule cards       optimize ──► metric cards ──► cheapest(cost="measured")
+program.py ──► improve: lift ─► match algorithm cards (exact/affine) + rule rewrites ─► verify ─► measure
+                        ─► splice (shell byte-identical) ─► recheck (revert on counterexample) ─► natives
 verify ──► state/last_verify.json ──► coverage / goals ──► COVERAGE.md
 ```
 

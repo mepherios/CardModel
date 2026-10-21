@@ -1,0 +1,80 @@
+{
+  "category": "algorithm",
+  "domain_generators": {
+    "small_int": [
+      {
+        "int": [
+          0,
+          400
+        ]
+      }
+    ]
+  },
+  "forms": [
+    {
+      "code": "def tri_loop(n: int) -> int:\n    t = 0\n    for i in range(n):\n        t += i\n    return t\n",
+      "complexity": "O(n)",
+      "cost": 10.0,
+      "domain": "int",
+      "entry": "tri_loop",
+      "lang": "python",
+      "name": "loop",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def tri_rec(n: int) -> int:\n    if n <= 0:\n        return 0\n    return (n - 1) + tri_rec(n - 1)\n",
+      "complexity": "O(n) stack",
+      "cost": 30.0,
+      "domain": "small_int",
+      "entry": "tri_rec",
+      "lang": "python",
+      "name": "recursive",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def tri_closed(n: int) -> int:\n    if n <= 0:\n        return 0\n    return n * (n - 1) // 2\n",
+      "complexity": "O(1)",
+      "cost": 1.0,
+      "domain": "int",
+      "entry": "tri_closed",
+      "lang": "python",
+      "name": "closed_form",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        100000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "triangular",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "loop",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "sum of i for 0 <= i < n (0 when n <= 0)",
+  "tags": [
+    "series",
+    "math"
+  ],
+  "tier": 1
+}

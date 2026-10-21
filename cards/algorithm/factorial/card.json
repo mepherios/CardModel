@@ -1,0 +1,69 @@
+{
+  "category": "algorithm",
+  "domain_generators": {
+    "small_int": [
+      {
+        "int": [
+          0,
+          200
+        ]
+      }
+    ]
+  },
+  "filter": "lambda n: n >= 0",
+  "forms": [
+    {
+      "code": "def fact_rec(n: int) -> int:\n    if n <= 1:\n        return 1\n    return n * fact_rec(n - 1)\n",
+      "complexity": "O(n) stack",
+      "cost": 15.0,
+      "domain": "small_int",
+      "entry": "fact_rec",
+      "lang": "python",
+      "name": "recursive",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def fact_loop(n: int) -> int:\n    r = 1\n    for i in range(2, n + 1):\n        r *= i\n    return r\n",
+      "complexity": "O(n)",
+      "cost": 10.0,
+      "domain": "any",
+      "entry": "fact_loop",
+      "lang": "python",
+      "name": "loop",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        300
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "factorial",
+  "precondition": "n >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "loop",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "n! (1 for n <= 0 in the loop form's convention)",
+  "tags": [
+    "math"
+  ],
+  "tier": 1
+}

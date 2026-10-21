@@ -1,0 +1,79 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def gcd_sub(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    if a == 0:\n        return b\n    if b == 0:\n        return a\n    while a != b:\n        if a > b:\n            a = a - b\n        else:\n            b = b - a\n    return a\n",
+      "complexity": "O(max(a,b))",
+      "cost": 50.0,
+      "domain": "int",
+      "entry": "gcd_sub",
+      "lang": "python",
+      "name": "subtraction",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def gcd_euclid(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    while b != 0:\n        a, b = b, a % b\n    return a\n",
+      "complexity": "O(log min)",
+      "cost": 5.0,
+      "domain": "int",
+      "entry": "gcd_euclid",
+      "lang": "python",
+      "name": "euclid",
+      "runnable": true
+    },
+    {
+      "code": "def gcd_builtin(a: int, b: int) -> int:\n    return math.gcd(a, b)\n",
+      "complexity": "O(log min) native",
+      "cost": 1.0,
+      "domain": "int",
+      "entry": "gcd_builtin",
+      "lang": "python",
+      "name": "builtin",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -5000,
+        5000
+      ]
+    },
+    {
+      "int": [
+        -5000,
+        5000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "gcd",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "euclid",
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "greatest common divisor of |a| and |b| (gcd(0,0) = 0)",
+  "tags": [
+    "math",
+    "number_theory"
+  ],
+  "tier": 1
+}

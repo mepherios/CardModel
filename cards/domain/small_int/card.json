@@ -1,0 +1,22 @@
+{
+  "category": "domain",
+  "generator": {
+    "int": [
+      0,
+      20
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "small_int",
+  "parents": [
+    "nonneg_int"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Small integers >= 0: where exponential or linear-time reference forms still finish quickly.",
+  "tier": 0
+}

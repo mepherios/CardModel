@@ -1,0 +1,69 @@
+{
+  "category": "algorithm",
+  "filter": "lambda a, b: b >= 0",
+  "forms": [
+    {
+      "code": "def pow_loop(a: int, b: int) -> int:\n    r = 1\n    for _ in range(b):\n        r *= a\n    return r\n",
+      "complexity": "O(b)",
+      "cost": 10.0,
+      "domain": "int",
+      "entry": "pow_loop",
+      "lang": "python",
+      "name": "loop",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def pow_sq(a: int, b: int) -> int:\n    r = 1\n    x = a\n    e = b\n    while e > 0:\n        if e % 2 == 1:\n            r = r * x\n        x = x * x\n        e = e // 2\n    return r\n",
+      "complexity": "O(log b)",
+      "cost": 3.0,
+      "domain": "any",
+      "entry": "pow_sq",
+      "lang": "python",
+      "name": "square_multiply",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -9,
+        9
+      ]
+    },
+    {
+      "int": [
+        0,
+        60
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "power",
+  "precondition": "b >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "square_multiply",
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "a^b for b >= 0",
+  "tags": [
+    "math"
+  ],
+  "tier": 1
+}

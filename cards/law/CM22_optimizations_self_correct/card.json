@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM22_optimizations_self_correct",
+  "origins": [
+    "hub L4",
+    "hub L17",
+    "Pheros L41"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "A substitution is verified against the original, then re-verified in the spliced program with a fresh seed and more inputs; any counterexample reverts it to the original before the output is written.",
+  "tier": 0,
+  "witness": "tests/test_improve.py::test_refuted_substitution_is_reverted"
+}

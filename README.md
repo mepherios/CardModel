@@ -27,12 +27,22 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel improve arena/slowframework --out /tmp/fast
+```
+
+```bash
+./bin/cardmodel arena --count 300
+```
+
+```bash
 cd tests && python3 -B -m unittest
 ```
 
 `probe` lists the toolchains found here. `verify --quick` witnesses the kernel, forms, vectors, rules and identities.
-`translate` runs Python → C, C++, Rust, Go, Swift, Java, JavaScript, TypeScript, Ruby, Lua and Lean, verified. The
-last command runs the test suite.
+`translate` runs Python → C, C++, Rust, Go, Swift, Java, JavaScript, TypeScript, Ruby, Lua and Lean, verified.
+`improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
+byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last
+command runs the test suite.
 
 | Read | For |
 |---|---|
@@ -43,3 +53,5 @@ last command runs the test suite.
 | [ROADMAP.md](ROADMAP.md) | done / now / next |
 | [COVERAGE.md](COVERAGE.md) | computed coverage and goal values (generated) |
 | [docs/PROVENANCE.md](docs/PROVENANCE.md) | sources, commits, and what the witnesses found in them |
+| [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | pure core / effect shell, the optimization pipeline, guarantees, online play |
+| [arena/](arena/README.md) | the optimization test environment (hand-written slow framework + generator) |

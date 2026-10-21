@@ -1,0 +1,17 @@
+{
+  "axis": "optimization",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "arena_recall",
+  "name": "G_O3_arena_recall",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Planted suboptimal functions improved in the latest arena run.",
+  "target": 0.9,
+  "tier": 0
+}

@@ -17,8 +17,20 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 observe → learn → promote with evidence thresholds. Optimizer: metric cards, calibrated anchors, L4 verdicts.
 * 🔵 CLI usable from any folder. Coverage and goals are computed. The self-containment test uses the macOS sandbox.
 * 🔵 Consolidation of hub + Pheros + Ting + rea-cards with provenance (`docs/PROVENANCE.md`).
+* 🔵 `improve`: whole-program optimization with algorithm cards (exact and affine behavioural matching) and rule
+  rewrites. Every substitution is verified against the original, guarded by its precondition, re-checked after
+  splicing (reverted on a counterexample), and the effect shell stays byte-identical (CM21, CM22).
+* 🔵 Arena: hand-written slow game framework plus a generator of programs of any size with decoys. Scored on
+  soundness, recall and speed; runs recorded as cards.
+* 🔵 Portability: verify runs under every Python 3.9+ on the machine; METHODOLOGY.md written.
 
 ## Now
+
+* 🟢 **Native path inside improved modules.** Optionally call the C/Rust form of a pure function through
+  `ctypes` (stdlib), guarded by the int-width domain the witness established; keep the Python form as the
+  fallback.
+* 🟢 **More algorithm cards** (each one raises arena recall): sorting/searching once lists exist, matrix kernels,
+  geometry (lattice counts), DP recurrences (linear recurrences → matrix power), modular inverses.
 
 * 🟢 **stdin-driven test harness per language.** Today inputs are baked into the program, so every new seed costs one
   compile per language (the full matrix takes 30–250 s, depending on machine load). Read inputs from stdin instead;

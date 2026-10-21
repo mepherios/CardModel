@@ -200,6 +200,37 @@ pattern, covering the whole rea toolkit. See its `docs/MAPPING.md`.
 
 ---
 
+## 3b. Making a program faster (improve) and the arena
+
+```bash
+cardmodel improve path/to/module_or_package --out path/to/optimized
+```
+
+```bash
+cardmodel arena --count 300 --out /tmp/arena
+```
+
+For each top-level function, `improve` does the following:
+* lifts it into the IR (or leaves it alone as effect shell);
+* matches it by behaviour against `cards/algorithm`, exactly or as `a·card(x) + b`;
+* tries rule rewrites;
+* verifies every candidate against the original (domain + wide + structured inputs, matching exceptions);
+* measures, and keeps the original unless a candidate is faster beyond noise;
+* splices only the winners (surgical), re-checks the whole module with a fresh seed (reverting any refuted
+  substitution), and emits native source for every language.
+
+The output directory holds the optimized module (same API), `*.improve.md` / `*.improve.json` and
+`native/<lang>/`.
+
+`arena/slowframework` is a hand-written suboptimal game framework. `arena/slowframework_optimized` is its output, and
+`online.py` (login, sockets, signed messages) passes through byte-identical. `cardmodel arena` generates programs of
+any size with planted slow functions and decoys, and records a scored run in `cards/arena_run/`. Read
+`docs/METHODOLOGY.md` for the guarantees and for what this means for games played online.
+
+To raise recall, add an algorithm card: a `signature`, a `precondition`, `generators`, a `reference_form`, and
+`forms` (one with `role: suboptimal` lets the arena plant it). Run `cardmodel verify --only forms` to witness the forms
+and `cardmodel arena` to score the new card.
+
 ## 4. How to add things
 
 **A card.** Run `cardmodel new <registry> <name> --statement "..."`, or write `cards/<registry>/<name>/card.json`
@@ -320,8 +351,8 @@ and `bidirectional`. `verify` witnesses it numerically and tries Lean (`grind`, 
 * Ting's documentation-only atoms (XChaCha20-Poly1305, Argon2id, ML-KEM, ML-DSA, X-Wing): their vectors are kept for
   future stdlib forms.
 
-**Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean
-(ROADMAP).
+**Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
+a native (ctypes) path inside improved modules (ROADMAP).
 
 ---
 
@@ -351,6 +382,21 @@ and `bidirectional`. `verify` witnesses it numerically and tries Lean (`grind`, 
    project `.cardmodel/` directories. Then use `cardmodel cover` there to pick the next card to write: the top
    fallback calls.
 5. **Schedule `cardmodel verify --record`** (cron or launchd), so evidence accumulates in git history.
+6. **Games natively (proposed as its own session).** Game Boy / Game Boy Color first, then Nintendo DS. The pieces
+   follow the same pattern:
+   * an `isa` registry: one op card per CPU instruction (LR35902, later ARMv4T/ARMv5TE), with IR semantics and
+     conformance against free test ROMs;
+   * a machine-code frontend that lifts ROM basic blocks into the IR (REA-style distillation, kept internal);
+   * native emission through the language cards;
+   * a launcher.
+
+   The effect shell (input, audio, video, saves, link/online) stays in the runtime unchanged (CM21). ROMs stay local
+   test inputs and are never copied into a repository.
+7. **AnyPS5 on the card model (proposed as its own session).** One card per PRX export/NID (implemented, throws, or
+   unknown signature) and one card per debt entry. That gives the real coverage behind its 95 % badge and an honest
+   account of why the rest is missing: unknown console behaviour can only be closed by observation, which is Pheros
+   L102. Then the card-native mechanisms that make the missing pieces explicit, witnessed obligations instead of
+   prose.
 
 ---
 

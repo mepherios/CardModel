@@ -1,6 +1,6 @@
 # LAWS (generated from cards/law by `cardmodel docs`; edit the cards, not this file)
 
-20 laws. Each one names the test that witnesses it (CM20); the origins column says which hub (LAWS.md L-numbers) or Pheros (cards/law) laws it consolidates.
+22 laws. Each one names the test that witnesses it (CM20); the origins column says which hub (LAWS.md L-numbers) or Pheros (cards/law) laws it consolidates.
 
 | id | law | origins | witness |
 |---|---|---|---|
@@ -24,5 +24,7 @@
 | CM18_bounded_work | Every subprocess has a timeout, every search a node budget; independent work runs in parallel. | hub L20, hub L32 | `tests/test_laws.py::test_subprocesses_have_timeouts` |
 | CM19_never_publish_unasked | Nothing is pushed or published without an explicit request; the program only writes inside its own tree and the project's .cardmodel/. | hub L13, hub L76 | `tests/test_laws.py::test_no_publishing_calls` |
 | CM20_laws_are_cards | Laws are cards with a witness test; LAWS.md is generated from them and a test fails when it drifts. | Pheros L63, hub L19, hub L38 | `tests/test_laws.py::test_laws_md_in_sync` |
+| CM21_effects_are_boundaries | Optimization rewrites only the pure core (functions that lift into the IR); every other line -- I/O, sockets, login, clocks, module-level code -- stays byte-identical and is never executed by the optimizer, so protocols and authentication behave exactly as before. | user requirement 2026-10-21 (play online unchanged), hub L3, Pheros L46 | `tests/test_improve.py::test_effect_shell_is_byte_identical` |
+| CM22_optimizations_self_correct | A substitution is verified against the original, then re-verified in the spliced program with a fresh seed and more inputs; any counterexample reverts it to the original before the output is written. | hub L4, hub L17, Pheros L41 | `tests/test_improve.py::test_refuted_substitution_is_reverted` |
 
 Laws from the source sets that are not carried over (hub GUI/hub-folder/process laws, Pheros wave/daemon/hub-panel laws) are about those projects' own tooling; see ARCHITECTURE.md § What was not carried over.

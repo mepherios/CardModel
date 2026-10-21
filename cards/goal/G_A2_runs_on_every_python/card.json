@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "python_failures",
+  "name": "G_A2_runs_on_every_python",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Python interpreters found on this machine that fail to run the program (portability check in verify).",
+  "target": 0,
+  "tier": 0
+}

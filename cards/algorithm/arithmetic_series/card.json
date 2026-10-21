@@ -1,0 +1,79 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def ar_loop(a: int, d: int, k: int) -> int:\n    s = 0\n    x = a\n    for _ in range(k):\n        s += x\n        x += d\n    return s\n",
+      "complexity": "O(k)",
+      "cost": 12.0,
+      "domain": "int",
+      "entry": "ar_loop",
+      "lang": "python",
+      "name": "loop",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def ar_closed(a: int, d: int, k: int) -> int:\n    if k <= 0:\n        return 0\n    return k * a + d * (k * (k - 1) // 2)\n",
+      "complexity": "O(1)",
+      "cost": 2.0,
+      "domain": "int",
+      "entry": "ar_closed",
+      "lang": "python",
+      "name": "closed_form",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -1000,
+        1000
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -5,
+        20000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "arithmetic_series",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "loop",
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "d",
+        "type": "int"
+      },
+      {
+        "name": "k",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "a + (a+d) + ... (k terms, 0 when k <= 0)",
+  "tags": [
+    "series",
+    "math"
+  ],
+  "tier": 1
+}

@@ -1,0 +1,59 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def droot_loop(n: int) -> int:\n    n = abs(n)\n    while n >= 10:\n        s = 0\n        while n > 0:\n            s += n % 10\n            n = n // 10\n        n = s\n    return n\n",
+      "complexity": "O(digits)",
+      "cost": 10.0,
+      "domain": "int",
+      "entry": "droot_loop",
+      "lang": "python",
+      "name": "iterate",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def droot_closed(n: int) -> int:\n    n = abs(n)\n    if n == 0:\n        return 0\n    return 1 + (n - 1) % 9\n",
+      "complexity": "O(1)",
+      "cost": 1.0,
+      "domain": "int",
+      "entry": "droot_closed",
+      "lang": "python",
+      "name": "closed_form",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -1000000000,
+        1000000000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "digital_root",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "closed_form",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "repeated digit sum of |n| down to one digit",
+  "tags": [
+    "math",
+    "digits"
+  ],
+  "tier": 1
+}

@@ -11,6 +11,7 @@ Sections (all on by default; ``only`` selects):
   proofs        rule theorems checked by a local proof assistant (emit/lean.py; when a toolchain is present)
   selfcheck     no source-folder references in the code; on macOS the CLI re-runs with the source folders
                 (read from the vendored registries' provenance) unreadable
+  portability   every Python 3 interpreter found on this machine runs `verify --only kernel,rules`
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
 it). ``record=True`` also writes each card's verdict into the card
@@ -31,7 +32,7 @@ from . import values as V
 from .context import Ctx
 
 SECTIONS = ("kernel", "forms", "vectors", "rules", "redefinitions", "conformance", "functions", "proofs",
-            "selfcheck")
+            "selfcheck", "portability")
 
 
 def _kernel(ctx: Ctx) -> dict:
@@ -142,9 +143,12 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         elif sec == "proofs":
             from ..emit import proofs
             res = proofs.check_rules(ctx)
-        else:
+        elif sec == "selfcheck":
             from . import selfcheck
             res = selfcheck.run(ctx, seed)
+        else:
+            from . import selfcheck
+            res = selfcheck.portability(seed)
         timings[sec] = round(time.perf_counter() - t0, 2)
         report["sections"][sec] = res
     report["timings_s"] = timings

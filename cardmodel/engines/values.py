@@ -108,3 +108,24 @@ def fits(v, bits: int | None) -> bool:
 
 def fresh_seed() -> int:
     return random.SystemRandom().randrange(2**32)
+
+
+def key(v):
+    """A hashable identity for a value that never converts huge ints to text (Python limits int->str)."""
+    if isinstance(v, int) and not isinstance(v, bool):
+        return ("int", v % (2**61 - 1), v.bit_length(), v < 0)
+    try:
+        return ("h", hash(v))
+    except TypeError:
+        return ("r", repr(v)[:200])
+
+
+def short(v):
+    """A JSON-safe, size-bounded rendering of a value for reports."""
+    if isinstance(v, int) and not isinstance(v, bool) and v.bit_length() > 256:
+        return f"<int: {v.bit_length()} bits, ends ...{v % 10**12}>"
+    if isinstance(v, (list, tuple)):
+        return [short(x) for x in v[:20]]
+    if isinstance(v, str) and len(v) > 300:
+        return v[:300] + "..."
+    return v

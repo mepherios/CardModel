@@ -1,0 +1,80 @@
+{
+  "category": "algorithm",
+  "domain_generators": {
+    "small_int": [
+      {
+        "int": [
+          0,
+          20
+        ]
+      }
+    ]
+  },
+  "filter": "lambda n: n >= 0",
+  "forms": [
+    {
+      "code": "def fib_naive(n: int) -> int:\n    if n < 2:\n        return n\n    return fib_naive(n - 1) + fib_naive(n - 2)\n",
+      "complexity": "O(phi^n)",
+      "cost": 1000.0,
+      "domain": "small_int",
+      "entry": "fib_naive",
+      "lang": "python",
+      "name": "naive_recursive",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def fib_iter(n: int) -> int:\n    a = 0\n    b = 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\n",
+      "complexity": "O(n)",
+      "cost": 10.0,
+      "domain": "any",
+      "entry": "fib_iter",
+      "lang": "python",
+      "name": "iterative",
+      "runnable": true
+    },
+    {
+      "code": "def fib_doubling(n: int) -> int:\n    a = 0\n    b = 1\n    bit = 1\n    while bit <= n:\n        bit = bit * 2\n    bit = bit // 2\n    while bit > 0:\n        c = a * (2 * b - a)\n        d = a * a + b * b\n        if n & bit != 0:\n            a = d\n            b = c + d\n        else:\n            a = c\n            b = d\n        bit = bit // 2\n    return a\n",
+      "complexity": "O(log n)",
+      "cost": 3.0,
+      "domain": "any",
+      "entry": "fib_doubling",
+      "lang": "python",
+      "name": "fast_doubling",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        60
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "fibonacci",
+  "precondition": "n >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "iterative",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)",
+  "tags": [
+    "sequence",
+    "math"
+  ],
+  "tier": 1
+}

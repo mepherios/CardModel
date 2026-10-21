@@ -1,0 +1,380 @@
+{
+ "changed": [
+  "combo_bonus",
+  "distance_sq",
+  "xp_for_level"
+ ],
+ "effect_shell": [],
+ "effect_shell_identical": true,
+ "end_to_end": {
+  "checks": 1746,
+  "mismatches": {},
+  "status": "pass"
+ },
+ "functions": {
+  "combo_bonus": {
+   "action": "algorithm_affine:algorithm/sum_1_to_n#closed_form",
+   "candidates": [
+    {
+     "card": "algorithm/sum_1_to_n",
+     "checks": 283,
+     "complexity": "O(1)",
+     "form": "closed_form",
+     "kind": "algorithm_affine",
+     "scale": 5,
+     "seconds": 2.095801755785942e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 283,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 283,
+   "line": 19,
+   "new_source": "def combo_bonus(hits: int) -> int:\n    return 5 * combo_bonus__sum_1_to_n_closed_form(hits)\n\n\ndef combo_bonus__sum_1_to_n_closed_form(hits: int) -> int:\n    if hits <= 0:\n        return 0\n    return hits * (hits + 1) // 2\n",
+   "original_seconds": 0.16675741598010063,
+   "speedup": 7956.74
+  },
+  "damage": {
+   "action": "kept",
+   "candidates": [
+    {
+     "card": "rewrite_rule/*",
+     "changes": [
+      [
+       "(((attack * 2) + 0) - defense)",
+       "((attack << 1) - defense)",
+       [
+        "additive_identity",
+        "double_as_shift"
+       ]
+      ],
+      [
+       "(base * 2)",
+       "(base << 1)",
+       [
+        "double_as_shift"
+       ]
+      ]
+     ],
+     "checks": 852,
+     "form": "rules",
+     "kind": "rewrite",
+     "seconds": 6.679201032966375e-05
+    }
+   ],
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "bool": true
+    }
+   ],
+   "inputs": 852,
+   "line": 29,
+   "original_seconds": 6.420901627279818e-05,
+   "reason": "no verified candidate faster than the original beyond noise"
+  },
+  "distance_sq": {
+   "action": "rewrite:rewrite_rule/*#rules",
+   "candidates": [
+    {
+     "card": "rewrite_rule/*",
+     "changes": [
+      [
+       "(((x2 - x1) ** 2) + ((y2 - y1) ** 2))",
+       "(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)))",
+       [
+        "square_as_mul",
+        "square_as_mul"
+       ]
+      ]
+     ],
+     "checks": 977,
+     "form": "rules",
+     "kind": "rewrite",
+     "seconds": 0.00021566697978414595
+    }
+   ],
+   "checks": 977,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 977,
+   "line": 38,
+   "new_source": "def distance_sq(x1: int, y1: int, x2: int, y2: int) -> int:\n    return (((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)))\n\n",
+   "original_seconds": 0.0002433749905321747,
+   "speedup": 1.13
+  },
+  "in_range": {
+   "action": "kept",
+   "candidates": [],
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 977,
+   "line": 42,
+   "original_seconds": 0.0002804590039886534,
+   "reason": "no verified candidate"
+  },
+  "lerp": {
+   "action": "kept",
+   "candidates": [],
+   "generators": [
+    {
+     "float": [
+      -100.0,
+      100.0
+     ]
+    },
+    {
+     "float": [
+      -100.0,
+      100.0
+     ]
+    },
+    {
+     "float": [
+      -100.0,
+      100.0
+     ]
+    }
+   ],
+   "inputs": 497,
+   "line": 64,
+   "original_seconds": 2.4792010663077235e-05,
+   "reason": "no verified candidate"
+  },
+  "level_from_xp": {
+   "action": "kept",
+   "candidates": [],
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 283,
+   "line": 12,
+   "original_seconds": 0.0011368750128895044,
+   "reason": "no verified candidate"
+  },
+  "next_seed": {
+   "action": "kept",
+   "candidates": [],
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 284,
+   "line": 56,
+   "original_seconds": 3.6582991015166044e-05,
+   "reason": "no verified candidate"
+  },
+  "tiles_in_circle": {
+   "action": "kept",
+   "candidates": [],
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 202,
+   "line": 46,
+   "original_seconds": 0.46375658398028463,
+   "reason": "no verified candidate"
+  },
+  "trajectory_y": {
+   "action": "kept",
+   "candidates": [
+    {
+     "card": "algorithm/cubic_eval",
+     "checks": 977,
+     "complexity": "3 MUL + 3 ADD",
+     "form": "horner",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.0002724579826463014,
+     "shift": 0
+    },
+    {
+     "card": "rewrite_rule/*",
+     "changes": [
+      [
+       "((((a * (t ** 3)) + (b * (t ** 2))) + (c * t)) + d)",
+       "((((a * (t ** 3)) + (b * (t * t))) + (c * t)) + d)",
+       [
+        "square_as_mul"
+       ]
+      ]
+     ],
+     "checks": 977,
+     "form": "rules",
+     "kind": "rewrite",
+     "seconds": 0.0001304580073338002
+    }
+   ],
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 977,
+   "line": 60,
+   "original_seconds": 0.00012499999138526618,
+   "reason": "no verified candidate faster than the original beyond noise"
+  },
+  "xp_for_level": {
+   "action": "algorithm_affine:algorithm/sum_of_squares#closed_form",
+   "candidates": [
+    {
+     "card": "algorithm/sum_of_squares",
+     "checks": 281,
+     "complexity": "O(1)",
+     "form": "closed_form",
+     "kind": "algorithm_affine",
+     "scale": 10,
+     "seconds": 5.8375007938593626e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 281,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 281,
+   "line": 4,
+   "new_source": "def xp_for_level(level: int) -> int:\n    return 10 * xp_for_level__sum_of_squares_closed_form(level)\n\n\ndef xp_for_level__sum_of_squares_closed_form(level: int) -> int:\n    if level <= 0:\n        return 0\n    return level * (level + 1) * (2 * level + 1) // 6\n",
+   "original_seconds": 0.154918042011559,
+   "speedup": 2653.84
+  }
+ },
+ "label": "game.py",
+ "native_gaps": {
+  "c": [],
+  "cpp": [],
+  "go": [],
+  "java": [],
+  "javascript": [],
+  "lean": [
+   "lerp"
+  ],
+  "lua": [],
+  "python": [],
+  "ruby": [],
+  "rust": [],
+  "swift": [],
+  "typescript": []
+ },
+ "reverted": {},
+ "seed": 4242
+}

@@ -1,0 +1,70 @@
+{
+  "category": "algorithm",
+  "filter": "lambda n, k: n >= 0",
+  "forms": [
+    {
+      "code": "def binom_fact(n: int, k: int) -> int:\n    if k < 0 or k > n:\n        return 0\n    a = 1\n    for i in range(2, n + 1):\n        a *= i\n    b = 1\n    for i in range(2, k + 1):\n        b *= i\n    c = 1\n    for i in range(2, n - k + 1):\n        c *= i\n    return a // (b * c)\n",
+      "complexity": "O(n) big-int",
+      "cost": 30.0,
+      "domain": "any",
+      "entry": "binom_fact",
+      "lang": "python",
+      "name": "via_factorials",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def binom_mult(n: int, k: int) -> int:\n    if k < 0 or k > n:\n        return 0\n    k = min(k, n - k)\n    c = 1\n    for i in range(k):\n        c = c * (n - i) // (i + 1)\n    return c\n",
+      "complexity": "O(min(k, n-k))",
+      "cost": 5.0,
+      "domain": "any",
+      "entry": "binom_mult",
+      "lang": "python",
+      "name": "multiplicative",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        400
+      ]
+    },
+    {
+      "int": [
+        -5,
+        400
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "binomial",
+  "precondition": "n >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "multiplicative",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "k",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "C(n, k) (0 when k < 0 or k > n)",
+  "tags": [
+    "math",
+    "combinatorics"
+  ],
+  "tier": 1
+}

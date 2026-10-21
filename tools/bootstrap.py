@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
 from cardmodel.kernel.store import open_store  # noqa: E402
+import seed_algorithms as SA  # noqa: E402
 import seed_languages as SL  # noqa: E402
 import seed_ops as SO  # noqa: E402
 
@@ -36,6 +37,8 @@ REGISTRIES = {
                      "numerically and emitted to Lean.", 1),
     "law": ("The model's laws, consolidated from the hub and Pheros law sets; each names its witness test.", 0),
     "goal": ("Measurable goals: a metric the program computes, a target and a direction.", 0),
+    "algorithm": ("Algorithm-level redefinitions: one mathematical function, several implementations of very "
+                  "different cost (all in the liftable subset); improve substitutes verified faster forms.", 1),
 }
 
 DOMAINS = [
@@ -47,6 +50,8 @@ DOMAINS = [
     {"name": "u32", "statement": "Unsigned 32-bit integers; results compared modulo 2**32.", "parents": ["int"],
      "generator": {"int": [0, 4294967295]}, "project_reference": "lambda r: r & 0xFFFFFFFF"},
     {"name": "nonneg_int", "statement": "Integers >= 0.", "parents": ["int"], "generator": {"int": [0, 1000000]}},
+    {"name": "small_int", "statement": "Small integers >= 0: where exponential or linear-time reference forms "
+     "still finish quickly.", "parents": ["nonneg_int"], "generator": {"int": [0, 20]}},
     {"name": "modular", "statement": "Modular arithmetic inputs (generators come from the card).", "parents": ["int"]},
     {"name": "coprime_mod", "statement": "(a, n) with gcd(a, n) = 1.", "parents": ["modular"]},
     {"name": "prime_mod", "statement": "(a, p) with p prime and p not dividing a.", "parents": ["modular"]},
@@ -170,6 +175,13 @@ CARD_TYPES = [
                 "anyOf": [{"properties": {"confidence": {"const": "established"},
                                           "evidence_count": {"type": "integer", "minimum": 3}}},
                           {"properties": {"confidence": {"enum": ["tentative", "refuted", "hypothesized"]}}}]}},
+    {"name": "algorithm", "applies_to": ["algorithm"],
+     "statement": "One mathematical function with implementations of different cost; forms are liftable Python.",
+     "schema": {"type": "object", "required": ["statement", "signature", "forms", "reference_form", "generators"],
+                "properties": {"signature": {"type": "object", "required": ["params", "returns"]},
+                               "precondition": {"type": ["string", "null"]},
+                               "forms": {"type": "array", "minItems": 2,
+                                         "items": {"type": "object", "required": ["name", "code", "entry", "complexity"]}}}}},
     {"name": "law", "applies_to": ["law"], "statement": "A law of the model.",
      "schema": {"type": "object", "required": ["statement", "origins", "witness"],
                 "properties": {"origins": {"type": "array", "minItems": 1},
@@ -266,6 +278,15 @@ LAWS = [
      "tests/test_laws.py::test_no_publishing_calls"),
     ("CM20_laws_are_cards", "Laws are cards with a witness test; LAWS.md is generated from them and a test fails "
      "when it drifts.", ["Pheros L63", "hub L19", "hub L38"], "tests/test_laws.py::test_laws_md_in_sync"),
+    ("CM21_effects_are_boundaries", "Optimization rewrites only the pure core (functions that lift into the IR); "
+     "every other line -- I/O, sockets, login, clocks, module-level code -- stays byte-identical and is never "
+     "executed by the optimizer, so protocols and authentication behave exactly as before.",
+     ["user requirement 2026-10-21 (play online unchanged)", "hub L3", "Pheros L46"],
+     "tests/test_improve.py::test_effect_shell_is_byte_identical"),
+    ("CM22_optimizations_self_correct", "A substitution is verified against the original, then re-verified in the "
+     "spliced program with a fresh seed and more inputs; any counterexample reverts it to the original before the "
+     "output is written.", ["hub L4", "hub L17", "Pheros L41"],
+     "tests/test_improve.py::test_refuted_substitution_is_reverted"),
 ]
 
 GOALS = [
@@ -293,6 +314,14 @@ GOALS = [
      "measured_forms", 30, "higher"),
     ("G_A1_self_contained", "autonomy", "Source folders the program needs at runtime.", "external_dependencies", 0,
      "lower"),
+    ("G_A2_runs_on_every_python", "autonomy", "Python interpreters found on this machine that fail to run the "
+     "program (portability check in verify).", "python_failures", 0, "lower"),
+    ("G_O2_arena_sound", "optimization", "Recorded arena runs that were not sound (end-to-end recheck, effect shell, "
+     "decoys).", "arena_unsound_runs", 0, "lower"),
+    ("G_O3_arena_recall", "optimization", "Planted suboptimal functions improved in the latest arena run.",
+     "arena_recall", 0.9, "higher"),
+    ("G_O4_arena_speedup", "optimization", "Geometric-mean measured speedup over improved functions in the latest "
+     "arena run.", "arena_geomean_speedup", 10, "higher"),
 ]
 
 RULES = [
@@ -398,6 +427,8 @@ def main(argv=None) -> int:
     for name, axis, statement, metric, target, direction in GOALS:
         put(store, {"name": name, "category": "goal", "tier": 0, "axis": axis, "statement": statement,
                     "metric": metric, "target": target, "direction": direction, "provenance": PROV}, args.force, stats)
+    for a in SA.ALGORITHMS:
+        put(store, {"category": "algorithm", "provenance": PROV, **a}, args.force, stats)
     # library: redef_helpers (bit_primitives is vendored from the hub by tools/vendor_import.py)
     put(store, {"name": "redef_helpers", "category": "lib", "tier": 0, "module_alias": "rh", "export_names": True,
                 "statement": "Helpers used by ported card_redefinitions forms (_xgcd, _const_pow_chain).",

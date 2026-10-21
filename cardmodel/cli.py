@@ -10,6 +10,9 @@
   cardmodel learn [PATH] [--promote]    observe -> propose -> verify -> promote (cards with evidence)
   cardmodel optimize [--card Q] [--apply]  measure real costs -> metric cards -> cost anchors
   cardmodel translate FILE.py [--to ...]   lift + emit + verify every function, report per language
+  cardmodel improve PATH [--out DIR]       make a module/package faster: verified algorithm substitutions and
+                                           rewrites; effectful code byte-identical; native forms for every language
+  cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
   cardmodel show CARD | list [REGISTRY] | probe | new REGISTRY NAME | docs [--check] | clean
 
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
@@ -129,6 +132,8 @@ def cmd_verify(args) -> int:
         if sec == "kernel":
             extra = (f"{r['cards']} cards, {r['schema_error_cards']} schema errors, {len(r['load_errors'])} load "
                      f"errors, {len(r['unresolved_references'])} unresolved refs, {len(r['registry_errors'])} registry errors")
+        if sec == "portability":
+            extra = ", ".join(f"{x['version']} {x['status']}" for x in r.get("runs", []))
         if sec == "selfcheck":
             sb = r.get("sandbox") or {}
             extra = (f"static problems {len(r['static_problems'])}; sandbox "
@@ -281,11 +286,11 @@ def cmd_emit(args) -> int:
         seen = set()
         for n in names:
             module = module_for(n, lifted)
-            module["functions"] = [f for f in module["functions"] if f["name"] not in seen]
-            seen.update(f["name"] for f in module["functions"])
-            if module["functions"]:
+            todo = [f["name"] for f in module["functions"] if f["name"] not in seen]
+            seen.update(todo)
+            if todo:
                 try:
-                    texts.append(emit_module(ctx.store, ctx.ops, args.lang, module))
+                    texts.append(emit_module(ctx.store, ctx.ops, args.lang, module, only=todo))
                 except EmitGap as exc:
                     texts.append(f"/* {n}: {exc} */")
     text = "\n".join(texts)
@@ -329,6 +334,66 @@ def cmd_translate(args) -> int:
     failed = [n for n, r in results.items() if "report" in r and any(
         lr["status"] in ("fail", "error") for lr in r["report"]["languages"].values())]
     return 1 if failed else 0   # functions that did not lift are reported gaps, not failures
+
+
+def cmd_improve(args) -> int:
+    from .engines import improve
+    from .engines import values as V
+    ctx = _ctx(args)
+    src_path = Path(args.path)
+    if not src_path.exists():
+        print(f"error: {src_path} does not exist", file=sys.stderr)
+        return 2
+    files = [src_path] if src_path.is_file() else sorted(p for p in src_path.rglob("*.py")
+                                                         if "__pycache__" not in p.parts)
+    seed = V.fresh_seed() if args.seed is None else args.seed
+    base = src_path.parent if src_path.is_file() else src_path
+    out_root = Path(args.out) if args.out else base.parent / f"{base.name}_optimized"
+    if src_path.is_file() and not args.out:
+        out_root = src_path.parent / f"{src_path.stem}_optimized"
+    summary, failed = [], []
+    for f in files:
+        rel = f.relative_to(base) if src_path.is_dir() else Path(f.name)
+        rep = improve.improve_source(ctx, f.read_text(encoding="utf-8"), str(rel), seed=seed,
+                                     native=not args.no_native)
+        improve.write_outputs(rep, out_root / rel.parent, rel.stem)
+        changed = [(n, x.get("speedup")) for n, x in rep["functions"].items() if x.get("speedup")]
+        if rep["end_to_end"].get("status") == "fail" or not rep["effect_shell_identical"]:
+            failed.append(str(rel))
+        summary.append({"file": str(rel), "changed": changed, "kept": len(rep["functions"]) - len(changed),
+                        "effect_shell": len(rep["effect_shell"]), "end_to_end": rep["end_to_end"].get("status"),
+                        "shell_identical": rep["effect_shell_identical"]})
+    lines = [f"seed {seed} · output {out_root}"]
+    for s_ in summary:
+        ch = ", ".join(f"{n} x{sp}" for n, sp in s_["changed"]) or "nothing faster found"
+        lines.append(f"  {s_['file']}: {ch} · kept {s_['kept']} · effect shell {s_['effect_shell']} "
+                     f"(identical: {s_['shell_identical']}) · end-to-end {s_['end_to_end']}")
+    _out(args, {"seed": seed, "out": str(out_root), "files": summary, "failed": failed}, "\n".join(lines))
+    return 1 if failed else 0
+
+
+def cmd_arena(args) -> int:
+    from .engines import arena
+    ctx = _ctx(args)
+    res = arena.run(ctx, count=args.count, seed=args.seed, samples=args.samples)
+    sc = res["score"]
+    name = arena.record(ctx, res, layer=_layer(ctx, args))
+    if args.out:
+        from .engines import improve
+        out = Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "suboptimal.py").write_text(res["source"], encoding="utf-8")
+        improve.write_outputs(res["report"], out, "optimized")
+        (out / "score.json").write_text(json.dumps(sc, indent=1, default=str) + "\n", encoding="utf-8")
+    lines = [f"seed {sc['seed']} · {sc['functions']} functions · recorded {name}",
+             f"  sound: {sc['sound']} (end-to-end {sc['end_to_end']} with {sc['end_to_end_checks']} checks, "
+             f"effect shell identical {sc['effect_shell_identical']}, decoys wrongly substituted "
+             f"{len(sc['decoys_wrongly_substituted'])}, shell preserved {sc['shell_preserved']})",
+             f"  recall: {sc['planted_improved']}/{sc['planted']} planted suboptimal functions improved",
+             f"  speed: geomean x{sc['geomean_speedup']} over {sc['improved_total']} improved functions "
+             f"(max x{sc['max_speedup']})"]
+    _out(args, sc, "\n".join(lines))
+    return 0 if sc["sound"] else 1
 
 
 def cmd_learn(args) -> int:
@@ -492,6 +557,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--card"); s.add_argument("--functions", action="store_true"); s.add_argument("--apply", action="store_true")
     s.add_argument("--seed", type=int); s.add_argument("--global", dest="global_", action="store_true")
     s.set_defaults(fn=cmd_optimize)
+    s = sub.add_parser("improve"); s.add_argument("path"); s.add_argument("--out"); s.add_argument("--seed", type=int)
+    s.add_argument("--no-native", action="store_true"); s.set_defaults(fn=cmd_improve)
+    s = sub.add_parser("arena"); s.add_argument("--count", type=int, default=60); s.add_argument("--seed", type=int)
+    s.add_argument("--samples", type=int, default=24); s.add_argument("--out")
+    s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_arena)
     s = sub.add_parser("show"); s.add_argument("card"); s.set_defaults(fn=cmd_show)
     s = sub.add_parser("list"); s.add_argument("registry", nargs="?"); s.set_defaults(fn=cmd_list)
     s = sub.add_parser("probe"); s.set_defaults(fn=cmd_probe)

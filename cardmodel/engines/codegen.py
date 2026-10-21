@@ -344,11 +344,13 @@ class Emitter:
         text = self.cg.get(key, self.cg.get("prelude", ""))
         return text.replace("@imports@", imports)
 
-    def module_source(self, module: dict) -> str:
-        """Just the functions (+ helpers), without a harness: what a translation emits."""
+    def module_source(self, module: dict, only: list[str] | None = None) -> str:
+        """Just the functions (+ helpers), without a harness: what a translation emits.
+        ``only``: emit just these functions; the others are known callees defined elsewhere."""
         self.requires = set()
         self.fn_returns = {f["name"]: f["returns"] for f in module["functions"]}
-        funcs = "\n".join(self.function(f) for f in reversed(module["functions"]))
+        funcs = "\n".join(self.function(f) for f in reversed(module["functions"])
+                           if only is None or f["name"] in only)
         helpers = self.helpers_for(funcs)
         return self._prelude("lib_prelude") + helpers + funcs + self.cg.get("lib_epilogue", "")
 
@@ -392,8 +394,8 @@ def _stmts(body):
                 yield from _stmts(s[key])
 
 
-def emit_module(store, ops, lang: str, module: dict) -> str:
-    return Emitter(store, lang, ops).module_source(module)
+def emit_module(store, ops, lang: str, module: dict, only: list[str] | None = None) -> str:
+    return Emitter(store, lang, ops).module_source(module, only)
 
 
 def emit_program(store, ops, lang: str, module: dict, calls: list[list], mode: str = "test", reps: int = 1) -> str:

@@ -1,0 +1,59 @@
+{
+  "category": "algorithm",
+  "filter": "lambda n: n >= 0",
+  "forms": [
+    {
+      "code": "def pop_shift(n: int) -> int:\n    c = 0\n    while n != 0:\n        c += n & 1\n        n >>= 1\n    return c\n",
+      "complexity": "O(bits)",
+      "cost": 10.0,
+      "domain": "any",
+      "entry": "pop_shift",
+      "lang": "python",
+      "name": "shift_loop",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def pop_kernighan(n: int) -> int:\n    c = 0\n    while n != 0:\n        n = n & (n - 1)\n        c += 1\n    return c\n",
+      "complexity": "O(set bits)",
+      "cost": 5.0,
+      "domain": "any",
+      "entry": "pop_kernighan",
+      "lang": "python",
+      "name": "kernighan",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        1099511627776
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "popcount",
+  "precondition": "n >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "kernighan",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "number of set bits of n >= 0",
+  "tags": [
+    "bits"
+  ],
+  "tier": 1
+}

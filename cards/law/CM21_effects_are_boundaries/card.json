@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM21_effects_are_boundaries",
+  "origins": [
+    "user requirement 2026-10-21 (play online unchanged)",
+    "hub L3",
+    "Pheros L46"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Optimization rewrites only the pure core (functions that lift into the IR); every other line -- I/O, sockets, login, clocks, module-level code -- stays byte-identical and is never executed by the optimizer, so protocols and authentication behave exactly as before.",
+  "tier": 0,
+  "witness": "tests/test_improve.py::test_effect_shell_is_byte_identical"
+}

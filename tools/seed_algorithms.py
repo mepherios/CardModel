@@ -14,7 +14,7 @@ valid); improve guards a substitution with it and keeps the original code for ev
 S = "suboptimal"
 
 
-def form(name, code, complexity, cost, role=None, domain="nonneg_int", notes=""):
+def form(name, code, complexity, cost, role=None, domain="any", notes=""):
     entry = code.split("def ", 1)[1].split("(", 1)[0]
     f = {"name": name, "lang": "python", "entry": entry, "code": code.strip() + "\n", "complexity": complexity,
          "cost": cost, "domain": domain, "runnable": True}

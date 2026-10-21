@@ -1,0 +1,17 @@
+{
+  "axis": "optimization",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "arena_unsound_runs",
+  "name": "G_O2_arena_sound",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Recorded arena runs that were not sound (end-to-end recheck, effect shell, decoys).",
+  "target": 0,
+  "tier": 0
+}

@@ -1,0 +1,59 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def sq_loop(n: int) -> int:\n    s = 0\n    for i in range(1, n + 1):\n        s += i * i\n    return s\n",
+      "complexity": "O(n)",
+      "cost": 12.0,
+      "domain": "int",
+      "entry": "sq_loop",
+      "lang": "python",
+      "name": "loop",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def sq_closed(n: int) -> int:\n    if n <= 0:\n        return 0\n    return n * (n + 1) * (2 * n + 1) // 6\n",
+      "complexity": "O(1)",
+      "cost": 2.0,
+      "domain": "int",
+      "entry": "sq_closed",
+      "lang": "python",
+      "name": "closed_form",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -20,
+        50000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sum_of_squares",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "loop",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "1^2 + 2^2 + ... + n^2",
+  "tags": [
+    "series",
+    "math"
+  ],
+  "tier": 1
+}

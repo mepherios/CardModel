@@ -1,0 +1,69 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def lcm_search(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    if a == 0 or b == 0:\n        return 0\n    m = max(a, b)\n    step = m\n    while m % a != 0 or m % b != 0:\n        m += step\n    return m\n",
+      "complexity": "O(lcm/max)",
+      "cost": 40.0,
+      "domain": "int",
+      "entry": "lcm_search",
+      "lang": "python",
+      "name": "search",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def lcm_gcd(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    if a == 0 or b == 0:\n        return 0\n    return a // math.gcd(a, b) * b\n",
+      "complexity": "O(log min)",
+      "cost": 2.0,
+      "domain": "int",
+      "entry": "lcm_gcd",
+      "lang": "python",
+      "name": "via_gcd",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -300,
+        300
+      ]
+    },
+    {
+      "int": [
+        -300,
+        300
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "lcm",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "via_gcd",
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "least common multiple of |a| and |b| (0 if either is 0)",
+  "tags": [
+    "math",
+    "number_theory"
+  ],
+  "tier": 1
+}

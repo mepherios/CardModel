@@ -1,0 +1,509 @@
+{
+ "changed": [
+  "checksum_pow",
+  "choose",
+  "common_period",
+  "digit_root",
+  "divisor_sum",
+  "int_power",
+  "is_prime_level",
+  "is_texture_size",
+  "isqrt_slow",
+  "reduce_ratio",
+  "set_bits",
+  "total_points",
+  "wave_size"
+ ],
+ "effect_shell": [],
+ "effect_shell_identical": true,
+ "end_to_end": {
+  "checks": 7491,
+  "mismatches": {},
+  "status": "pass"
+ },
+ "functions": {
+  "checksum_pow": {
+   "action": "algorithm:algorithm/modpow#square_multiply",
+   "candidates": [
+    {
+     "card": "algorithm/modpow",
+     "checks": 967,
+     "complexity": "O(log b)",
+     "form": "square_multiply",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.0022860410099383444,
+     "shift": 0
+    },
+    {
+     "card": "algorithm/modpow",
+     "checks": 967,
+     "complexity": "O(log b) native",
+     "form": "builtin",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.008437582990154624,
+     "shift": 0
+    }
+   ],
+   "checks": 967,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 967,
+   "line": 62,
+   "new_source": "def checksum_pow(a: int, b: int, m: int) -> int:\n    if b >= 0 and m >= 1:\n        return checksum_pow__modpow_square_multiply(a, b, m)\n    return checksum_pow__original(a, b, m)\n\n\ndef checksum_pow__modpow_square_multiply(a: int, b: int, m: int) -> int:\n    r = 1 % m\n    x = a % m\n    e = b\n    while e > 0:\n        if e % 2 == 1:\n            r = r * x % m\n        x = x * x % m\n        e = e // 2\n    return r\n\n\ndef checksum_pow__original(a: int, b: int, m: int) -> int:\n    r = 1 % m\n    for _ in range(b):\n        r = r * a % m\n    return r\n",
+   "original_seconds": 0.027238625014433637,
+   "speedup": 11.92
+  },
+  "choose": {
+   "action": "algorithm:algorithm/binomial#multiplicative",
+   "candidates": [
+    {
+     "card": "algorithm/binomial",
+     "checks": 953,
+     "complexity": "O(min(k, n-k))",
+     "form": "multiplicative",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.0015635830059181899,
+     "shift": 0
+    }
+   ],
+   "checks": 953,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    },
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 953,
+   "line": 113,
+   "new_source": "def choose(n: int, k: int) -> int:\n    if n >= 0:\n        return choose__binomial_multiplicative(n, k)\n    return choose__original(n, k)\n\n\ndef choose__binomial_multiplicative(n: int, k: int) -> int:\n    if k < 0 or k > n:\n        return 0\n    k = min(k, n - k)\n    c = 1\n    for i in range(k):\n        c = c * (n - i) // (i + 1)\n    return c\n\n\ndef choose__original(n: int, k: int) -> int:\n    if k < 0 or k > n:\n        return 0\n    a = 1\n    for i in range(2, n + 1):\n        a *= i\n    b = 1\n    for i in range(2, k + 1):\n        b *= i\n    c = 1\n    for i in range(2, n - k + 1):\n        c *= i\n    return a // (b * c)\n",
+   "original_seconds": 0.2034894580137916,
+   "speedup": 130.14
+  },
+  "common_period": {
+   "action": "algorithm:algorithm/lcm#via_gcd",
+   "candidates": [
+    {
+     "card": "algorithm/lcm",
+     "checks": 972,
+     "complexity": "O(log min)",
+     "form": "via_gcd",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.00011870797607116401,
+     "shift": 0
+    }
+   ],
+   "checks": 972,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 972,
+   "line": 43,
+   "new_source": "def common_period(a: int, b: int) -> int:\n    return common_period__lcm_via_gcd(a, b)\n\n\ndef common_period__lcm_via_gcd(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    if a == 0 or b == 0:\n        return 0\n    return a // math.gcd(a, b) * b\n",
+   "original_seconds": 0.007233457989059389,
+   "speedup": 60.93
+  },
+  "digit_root": {
+   "action": "algorithm:algorithm/digital_root#closed_form",
+   "candidates": [
+    {
+     "card": "algorithm/digital_root",
+     "checks": 282,
+     "complexity": "O(1)",
+     "form": "closed_form",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 2.4792010663077235e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 282,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 282,
+   "line": 102,
+   "new_source": "def digit_root(n: int) -> int:\n    return digit_root__digital_root_closed_form(n)\n\n\ndef digit_root__digital_root_closed_form(n: int) -> int:\n    n = abs(n)\n    if n == 0:\n        return 0\n    return 1 + (n - 1) % 9\n",
+   "original_seconds": 5.750000127591193e-05,
+   "speedup": 2.32
+  },
+  "divisor_sum": {
+   "action": "algorithm:algorithm/sum_of_divisors#sqrt_pairs",
+   "candidates": [
+    {
+     "card": "algorithm/sum_of_divisors",
+     "checks": 281,
+     "complexity": "O(sqrt n)",
+     "form": "sqrt_pairs",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.000184959004400298,
+     "shift": 0
+    }
+   ],
+   "checks": 281,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 281,
+   "line": 92,
+   "new_source": "def divisor_sum(n: int) -> int:\n    return divisor_sum__sum_of_divisors_sqrt_pairs(n)\n\n\ndef divisor_sum__sum_of_divisors_sqrt_pairs(n: int) -> int:\n    if n <= 0:\n        return 0\n    s = 0\n    d = 1\n    while d * d <= n:\n        if n % d == 0:\n            s += d\n            if d * d != n:\n                s += n // d\n        d += 1\n    return s\n",
+   "original_seconds": 0.06641400000080466,
+   "speedup": 359.07
+  },
+  "int_power": {
+   "action": "algorithm:algorithm/power#square_multiply",
+   "candidates": [
+    {
+     "card": "algorithm/power",
+     "checks": 954,
+     "complexity": "O(log b)",
+     "form": "square_multiply",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.03433541697449982,
+     "shift": 0
+    }
+   ],
+   "checks": 954,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 954,
+   "line": 55,
+   "new_source": "def int_power(base: int, exp: int) -> int:\n    if exp >= 0:\n        return int_power__power_square_multiply(base, exp)\n    return int_power__original(base, exp)\n\n\ndef int_power__power_square_multiply(base: int, exp: int) -> int:\n    r = 1\n    x = base\n    e = exp\n    while e > 0:\n        if e % 2 == 1:\n            r = r * x\n        x = x * x\n        e = e // 2\n    return r\n\n\ndef int_power__original(base: int, exp: int) -> int:\n    r = 1\n    for _ in range(exp):\n        r *= base\n    return r\n",
+   "original_seconds": 0.17456154199317098,
+   "speedup": 5.08
+  },
+  "is_prime_level": {
+   "action": "algorithm:algorithm/is_prime#wheel_6k",
+   "candidates": [
+    {
+     "card": "algorithm/is_prime",
+     "checks": 283,
+     "complexity": "O(sqrt n)",
+     "form": "trial_sqrt",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 7.579199154861271e-05,
+     "shift": 0
+    },
+    {
+     "card": "algorithm/is_prime",
+     "checks": 283,
+     "complexity": "O(sqrt n / 3)",
+     "form": "wheel_6k",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 3.8209022022783756e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 283,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 283,
+   "line": 18,
+   "new_source": "def is_prime_level(n: int) -> bool:\n    return is_prime_level__is_prime_wheel_6k(n)\n\n\ndef is_prime_level__is_prime_wheel_6k(n: int) -> bool:\n    if n < 2:\n        return False\n    if n < 4:\n        return True\n    if n % 2 == 0 or n % 3 == 0:\n        return False\n    d = 5\n    while d * d <= n:\n        if n % d == 0 or n % (d + 2) == 0:\n            return False\n        d += 6\n    return True\n",
+   "original_seconds": 0.06199004198424518,
+   "speedup": 1622.39
+  },
+  "is_texture_size": {
+   "action": "algorithm:algorithm/is_power_of_two#bit_trick",
+   "candidates": [
+    {
+     "card": "algorithm/is_power_of_two",
+     "checks": 284,
+     "complexity": "O(1)",
+     "form": "bit_trick",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 1.833401620388031e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 284,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 284,
+   "line": 84,
+   "new_source": "def is_texture_size(n: int) -> bool:\n    return is_texture_size__is_power_of_two_bit_trick(n)\n\n\ndef is_texture_size__is_power_of_two_bit_trick(n: int) -> bool:\n    return n > 0 and n & n - 1 == 0\n",
+   "original_seconds": 2.3833010345697403e-05,
+   "speedup": 1.3
+  },
+  "isqrt_slow": {
+   "action": "algorithm:algorithm/isqrt#newton",
+   "candidates": [
+    {
+     "card": "algorithm/isqrt",
+     "checks": 284,
+     "complexity": "O(log n)",
+     "form": "binary_search",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 8.783300290815532e-05,
+     "shift": 0
+    },
+    {
+     "card": "algorithm/isqrt",
+     "checks": 284,
+     "complexity": "O(log log n)",
+     "form": "newton",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 6.412499351426959e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 284,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 284,
+   "line": 69,
+   "new_source": "def isqrt_slow(n: int) -> int:\n    if n >= 0:\n        return isqrt_slow__isqrt_newton(n)\n    return isqrt_slow__original(n)\n\n\ndef isqrt_slow__isqrt_newton(n: int) -> int:\n    if n < 2:\n        return n\n    x = n\n    y = (x + 1) // 2\n    while y < x:\n        x = y\n        y = (x + n // x) // 2\n    return x\n\n\ndef isqrt_slow__original(n: int) -> int:\n    r = 0\n    while (r + 1) * (r + 1) <= n:\n        r += 1\n    return r\n",
+   "original_seconds": 0.00018400000408291817,
+   "speedup": 2.87
+  },
+  "reduce_ratio": {
+   "action": "algorithm:algorithm/gcd#builtin",
+   "candidates": [
+    {
+     "card": "algorithm/gcd",
+     "checks": 973,
+     "complexity": "O(log min)",
+     "form": "euclid",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 0.0002120420103892684,
+     "shift": 0
+    },
+    {
+     "card": "algorithm/gcd",
+     "checks": 973,
+     "complexity": "O(log min) native",
+     "form": "builtin",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 6.970801041461527e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 973,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    },
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 973,
+   "line": 27,
+   "new_source": "def reduce_ratio(a: int, b: int) -> int:\n    return reduce_ratio__gcd_builtin(a, b)\n\n\ndef reduce_ratio__gcd_builtin(a: int, b: int) -> int:\n    return math.gcd(a, b)\n",
+   "original_seconds": 0.0007274579838849604,
+   "speedup": 10.44
+  },
+  "set_bits": {
+   "action": "algorithm:algorithm/popcount#kernighan",
+   "candidates": [
+    {
+     "card": "algorithm/popcount",
+     "checks": 166,
+     "complexity": "O(set bits)",
+     "form": "kernighan",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 2.6666995836421847e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 166,
+   "generators": [
+    {
+     "int": [
+      -50,
+      50
+     ]
+    }
+   ],
+   "inputs": 166,
+   "line": 76,
+   "new_source": "def set_bits(flags: int) -> int:\n    if flags >= 0:\n        return set_bits__popcount_kernighan(flags)\n    return set_bits__original(flags)\n\n\ndef set_bits__popcount_kernighan(flags: int) -> int:\n    c = 0\n    while flags != 0:\n        flags = flags & flags - 1\n        c += 1\n    return c\n\n\ndef set_bits__original(flags: int) -> int:\n    c = 0\n    while flags != 0:\n        c += flags & 1\n        flags >>= 1\n    return c\n",
+   "original_seconds": 4.729200736619532e-05,
+   "speedup": 1.77
+  },
+  "total_points": {
+   "action": "algorithm:algorithm/sum_1_to_n#closed_form",
+   "candidates": [
+    {
+     "card": "algorithm/sum_1_to_n",
+     "checks": 281,
+     "complexity": "O(1)",
+     "form": "closed_form",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 4.2458006646484137e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 281,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 281,
+   "line": 11,
+   "new_source": "def total_points(n: int) -> int:\n    return total_points__sum_1_to_n_closed_form(n)\n\n\ndef total_points__sum_1_to_n_closed_form(n: int) -> int:\n    if n <= 0:\n        return 0\n    return n * (n + 1) // 2\n",
+   "original_seconds": 0.04297958398819901,
+   "speedup": 1012.28
+  },
+  "wave_size": {
+   "action": "algorithm:algorithm/fibonacci#iterative",
+   "candidates": [
+    {
+     "card": "algorithm/fibonacci",
+     "checks": 89,
+     "complexity": "O(n)",
+     "form": "iterative",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 9.291019523516297e-06,
+     "shift": 0
+    },
+    {
+     "card": "algorithm/fibonacci",
+     "checks": 89,
+     "complexity": "O(log n)",
+     "form": "fast_doubling",
+     "kind": "algorithm",
+     "scale": 1,
+     "seconds": 1.3583980035036802e-05,
+     "shift": 0
+    }
+   ],
+   "checks": 89,
+   "generators": [
+    {
+     "int": [
+      0,
+      30
+     ]
+    }
+   ],
+   "inputs": 89,
+   "line": 4,
+   "new_source": "def wave_size(n: int) -> int:\n    if n >= 0:\n        return wave_size__fibonacci_iterative(n)\n    return wave_size__original(n)\n\n\ndef wave_size__fibonacci_iterative(n: int) -> int:\n    a = 0\n    b = 1\n    for _ in range(n):\n        a, b = (b, a + b)\n    return a\n\n\ndef wave_size__original(n: int) -> int:\n    \"\"\"Fibonacci-sized enemy waves (naive recursion).\"\"\"\n    if n < 2:\n        return n\n    return wave_size(n - 1) + wave_size(n - 2)\n",
+   "original_seconds": 0.06089033299940638,
+   "speedup": 6553.68
+  }
+ },
+ "label": "mathx.py",
+ "native_gaps": {
+  "c": [],
+  "cpp": [],
+  "go": [],
+  "java": [],
+  "javascript": [],
+  "lean": [
+   "is_texture_size",
+   "set_bits"
+  ],
+  "lua": [],
+  "python": [],
+  "ruby": [],
+  "rust": [],
+  "swift": [],
+  "typescript": []
+ },
+ "reverted": {},
+ "seed": 4242
+}

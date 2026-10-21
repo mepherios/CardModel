@@ -1,0 +1,34 @@
+{
+  "category": "arena_run",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "arena_2026_40",
+  "provenance": {
+    "tool": "cardmodel arena"
+  },
+  "score": {
+    "count": 40,
+    "decoys": 8,
+    "decoys_wrongly_substituted": [
+      "f0015_decoy"
+    ],
+    "effect_shell_identical": true,
+    "end_to_end": "fail",
+    "end_to_end_checks": 1110,
+    "finished": "2026-10-21T03:20:16+00:00",
+    "functions": 40,
+    "geomean_speedup": 47.35,
+    "improved_total": 19,
+    "max_speedup": 3706.14,
+    "planted": 17,
+    "planted_improved": 15,
+    "recall": 0.8824,
+    "seed": 2026,
+    "shell_functions": 6,
+    "shell_preserved": true,
+    "sound": false
+  },
+  "statement": "arena run: 15/17 planted improved, geomean x47.35, sound=False",
+  "tier": 3
+}

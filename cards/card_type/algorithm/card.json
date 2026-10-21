@@ -1,0 +1,54 @@
+{
+  "applies_to": [
+    "algorithm"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "algorithm",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "forms": {
+        "items": {
+          "required": [
+            "name",
+            "code",
+            "entry",
+            "complexity"
+          ],
+          "type": "object"
+        },
+        "minItems": 2,
+        "type": "array"
+      },
+      "precondition": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "signature": {
+        "required": [
+          "params",
+          "returns"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "statement",
+      "signature",
+      "forms",
+      "reference_form",
+      "generators"
+    ],
+    "type": "object"
+  },
+  "statement": "One mathematical function with implementations of different cost; forms are liftable Python.",
+  "tier": 0
+}

@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Algorithm-level redefinitions: one mathematical function, several implementations of very different cost (all in the liftable subset); improve substitutes verified faster forms.",
+  "name": "algorithm",
+  "tier": 1
+}

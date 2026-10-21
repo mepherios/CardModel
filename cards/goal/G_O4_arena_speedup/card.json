@@ -1,0 +1,17 @@
+{
+  "axis": "optimization",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "arena_geomean_speedup",
+  "name": "G_O4_arena_speedup",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Geometric-mean measured speedup over improved functions in the latest arena run.",
+  "target": 10,
+  "tier": 0
+}

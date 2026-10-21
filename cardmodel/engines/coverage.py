@@ -147,6 +147,16 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
         return len(st.cards("metric"))
     if name == "external_dependencies":
         return 0 if ctx.load_state("self_contained_check", {}).get("ok") else None
+    if name == "python_failures":
+        pr = secs.get("portability")
+        return len(pr.get("failures", [])) if pr else None
+    runs = sorted(st.cards("arena_run"), key=lambda c: c["score"].get("finished", ""))
+    if name == "arena_unsound_runs":
+        return sum(1 for r in runs if not r["score"].get("sound")) if runs else None
+    if name == "arena_recall":
+        return runs[-1]["score"].get("recall") if runs else None
+    if name == "arena_geomean_speedup":
+        return runs[-1]["score"].get("geomean_speedup") if runs else None
     return None
 
 

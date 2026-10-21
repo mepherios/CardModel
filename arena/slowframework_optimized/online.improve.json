@@ -1,0 +1,47 @@
+{
+ "changed": [],
+ "effect_shell": [
+  {
+   "line": 12,
+   "name": "login",
+   "reason": "line 13: keyword arguments in call"
+  },
+  {
+   "line": 20,
+   "name": "sign",
+   "reason": "line 21: call to hmac.new(session_key.encode(), json.dumps(payload, sort_keys=True).encode(), hashlib.sha256).hexdigest() (no op card or lifted function)"
+  },
+  {
+   "line": 24,
+   "name": "send_state",
+   "reason": "line 25: expression Dict"
+  },
+  {
+   "line": 30,
+   "name": "receive",
+   "reason": "line 31: call to sock.makefile().readline() (no op card or lifted function)"
+  }
+ ],
+ "effect_shell_identical": true,
+ "end_to_end": {
+  "status": "nothing_changed"
+ },
+ "functions": {},
+ "label": "online.py",
+ "native_gaps": {
+  "c": [],
+  "cpp": [],
+  "go": [],
+  "java": [],
+  "javascript": [],
+  "lean": [],
+  "lua": [],
+  "python": [],
+  "ruby": [],
+  "rust": [],
+  "swift": [],
+  "typescript": []
+ },
+ "reverted": {},
+ "seed": 4242
+}

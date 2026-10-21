@@ -7,11 +7,13 @@ Methodology (docs/METHODOLOGY.md), per top-level function of a Python module:
                byte for byte; so is every other top-level statement (CM21).
   2. domain    the function's domain is inferred and the ORIGINAL Python is the reference.
   3. candidates
-       algorithm   behavioural match against cards/algorithm: same signature, same outputs on
-                   probe inputs (and at least 3 distinct outputs, so a constant function
-                   matches nothing). Every non-suboptimal form of a matched card is a candidate,
-                   guarded by the card's precondition; the original code still runs for every
-                   input outside it.
+       algorithm   behavioural match against cards/algorithm: same signature and the same
+                   outputs on probe inputs, or (int results) outputs that are an exact affine
+                   function a*card(x) + b of the card's (e.g. an XP curve that is 10 x a sum of
+                   squares). At least 3 distinct card outputs are required, so a constant
+                   function matches nothing. Every non-suboptimal form of a matched card is a
+                   candidate, guarded by the card's precondition; the original code still runs
+                   for every input outside it.
        rewrite     search.optimize over every int-typed expression with the rule cards;
                    the function is re-emitted from IR.
   4. verify    each candidate against the original on seeded inputs (plus edges); any
@@ -20,8 +22,15 @@ Methodology (docs/METHODOLOGY.md), per top-level function of a Python module:
                (budgeted); the fastest wins only if it beats the original by more than NOISE
                (hub L4); otherwise the function is kept.
   6. emit      only the chosen functions are replaced in the module text (surgical, hub L3);
-               the result is re-verified end to end (fresh seed); native translations of the
-               chosen versions are emitted for every language card with codegen.
+               the result is re-verified end to end with a fresh seed and more inputs; a
+               substitution the recheck refutes is reverted (the original is kept) and the
+               check repeats until it passes. Native translations of the chosen versions are
+               emitted for every language card with codegen.
+
+Comparison inputs = the inferred domain + wide random values + a structured set (exhaustive small
+ranges, prime products, Carmichael numbers, powers of two and neighbours), smallest first, each
+within a time budget for the ORIGINAL; recursion limits and timeouts are never compared, ordinary
+exceptions must match by type.
 
 Honest limits (L1): equivalence is sampled, not proven; behavioural matching only finds
 algorithms that have a card; timing is in-process Python on this machine; module-level code
@@ -40,16 +49,23 @@ from . import values as V
 from .codegen import EmitGap, Emitter, emit_module
 from .context import Ctx
 from .frontend_python import lift_source, module_for
-from .ir import Interpreter, StepLimit, walk_stmts
+from .ir import walk_stmts
 from .search import expr_cost, load_rules, op_costs, optimize
 from .translate import infer_domain
 from .witness import TimeLimit, time_limit
 
 NOISE = 0.10
 MIN_MATCH = 8
-MIN_DISTINCT = 3
-CALL_BUDGET_S = 0.25
-STEP_BUDGET = 400_000
+CALL_BUDGET_S = 0.02
+WIDE = {"int": {"int": [-10000, 10000], "edges": [2, -2, 10, 100, 1000, -1000, 99999, 10**6]},
+        "float": {"float": [-1e6, 1e6]}, "bool": {"bool": True}}
+# values that separate look-alike integer functions: prime products and squares (trial division
+# decoys), Carmichael numbers, powers of two and their neighbours, digit boundaries
+INTERESTING_INTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 25, 31, 32, 33, 49, 63, 64, 65, 97, 99,
+                    100, 101, 121, 127, 128, 143, 169, 221, 255, 256, 257, 289, 323, 361, 437, 529, 561, 899, 961,
+                    999, 1000, 1001, 1023, 1024, 1025, 1105, 1681, 1729, 2047, 2048, 2465, 2641, 2821, 4093, 4096,
+                    6601, 8191, 9999, 10007, 10403, 65535, 65536, 65537, 99991, 1000003]
+INTERESTING_FLOATS = [0.0, -0.0, 0.5, -0.5, 1.0, -1.0, 2.0, 3.0, 0.1, 1e-9, -1e-9, 1e9, 123.456, -987.25]
 
 
 # -- small AST helpers ----------------------------------------------------------------------
@@ -80,10 +96,11 @@ def rename(code: str, mapping: dict[str, str]) -> str:
 
 
 def _functions_only(source: str) -> str:
-    """The module with every top-level statement except imports and function definitions removed:
-    safe to execute (module-level code never runs here)."""
+    """Only the module's function definitions: safe to execute. Module-level code and imports never
+    run here (an import could execute another module's top level); liftable functions need nothing but
+    ``math``, which the namespace provides, and shell functions are only defined, never called."""
     tree = ast.parse(source)
-    keep = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.Import, ast.ImportFrom))]
+    keep = [n for n in tree.body if isinstance(n, ast.FunctionDef)]
     return ast.unparse(ast.Module(body=keep, type_ignores=[]))
 
 
@@ -94,24 +111,47 @@ def _load(source: str) -> dict:
 
 
 # -- verification and timing --------------------------------------------------------------------
+def _outcome(fn, args):
+    """("ok", value) | ("raise", ExceptionType name) | ("skip", reason): recursion limits and time budgets are
+    limits of this run, not semantics, so they are never compared."""
+    try:
+        with time_limit(2):
+            return "ok", fn(*args)
+    except (RecursionError, TimeLimit) as exc:
+        return "skip", type(exc).__name__
+    except Exception as exc:  # noqa: BLE001 -- an exception is observable behaviour and is compared by type
+        return "raise", type(exc).__name__
+
+
 def _agree(ref, cand, inputs) -> tuple[int, dict | None]:
     checks = 0
     for args in inputs:
-        try:
-            want = ref(*args)
-        except Exception:  # noqa: BLE001 -- outside the original's domain: not compared
+        k1, want = _outcome(ref, args)
+        if k1 == "skip":
             continue
-        try:
-            got = cand(*args)
-        except Exception as exc:  # noqa: BLE001 -- a candidate that raises where the original does not fails
-            return checks, {"args": list(args), "expected": want, "got": f"raised {type(exc).__name__}"}
+        k2, got = _outcome(cand, args)
+        if k2 == "skip":
+            continue
         checks += 1
-        if not V.same(want, got):
-            return checks, {"args": list(args), "expected": want, "got": got}
+        if k1 != k2 or (k1 == "ok" and not V.same(want, got)) or (k1 == "raise" and want != got):
+            return checks, {"args": V.short(list(args)), "expected": V.short(want) if k1 == "ok" else f"raised {want}",
+                            "got": V.short(got) if k2 == "ok" else f"raised {got}"}
     return checks, None
 
 
-def _time(fn, inputs, budget_s: float = 1.0) -> float:
+def _returning(fn, inputs) -> list:
+    """The inputs on which ``fn`` returns normally (timing runs only these)."""
+    out = []
+    for a in inputs:
+        try:
+            fn(*a)
+            out.append(a)
+        except Exception:  # noqa: BLE001 -- a raising input is compared for parity, not timed
+            continue
+    return out
+
+
+def _time(fn, inputs, budget_s: float = 0.3) -> float:
     """Median-of-repeats seconds for one pass over ``inputs`` (at least 3 repeats, within the budget)."""
     samples = []
     spent = 0.0
@@ -128,20 +168,66 @@ def _time(fn, inputs, budget_s: float = 1.0) -> float:
     return samples[len(samples) // 2]
 
 
-def _cheap_inputs(fn, inputs, per_call_s: float = CALL_BUDGET_S) -> list:
-    """Inputs on which ``fn`` finishes quickly (the slow original sets the measurement set)."""
+def _cheap_inputs(fn, inputs, per_call_s: float = CALL_BUDGET_S, give_up_after: int = 4) -> list:
+    """Inputs on which ``fn`` finishes (with a value or an ordinary exception) within ``per_call_s``.
+    Inputs are tried smallest first; after ``give_up_after`` consecutive slow inputs the larger ones are
+    skipped (the slow original decides the comparison set)."""
     out = []
-    for a in inputs:
+    slow = 0
+    for a in sorted(inputs, key=_magnitude):
+        if slow >= give_up_after:
+            break
         t0 = time.perf_counter()
         try:
-            with time_limit(max(per_call_s * 4, 1.0)):
+            with time_limit(max(per_call_s * 2, 0.01)):
                 fn(*a)
-        except TimeLimit:
+        except (TimeLimit, RecursionError):
+            slow += 1
             continue
-        except Exception:  # noqa: BLE001 -- not part of the comparable domain
-            continue
+        except Exception:  # noqa: BLE001 -- a raising input stays: the candidate must raise the same way
+            pass
         if time.perf_counter() - t0 <= per_call_s:
             out.append(a)
+            slow = 0
+        else:
+            slow += 1
+    return out
+
+
+def structured_inputs(param_types: list[str], rng: random.Random, cap: int = 900) -> list[tuple]:
+    """Exhaustive small domains and interesting values (deterministic part of every comparison set)."""
+    import itertools
+    base = {"int": list(range(-64, 129)) + INTERESTING_INTS + [-v for v in INTERESTING_INTS[:40]],
+            "float": INTERESTING_FLOATS, "bool": [False, True]}
+    small = {"int": list(range(-6, 21)) + [31, 32, 64, 97, 100, 143, 255, 256, 561, 1000, 1024],
+             "float": INTERESTING_FLOATS[:8], "bool": [False, True]}
+    if len(param_types) == 1:
+        rows = [(v,) for v in base[param_types[0]]]
+    elif len(param_types) == 2:
+        rows = list(itertools.product(small[param_types[0]], small[param_types[1]]))
+    else:
+        pools = [small[t] for t in param_types]
+        rows = [tuple(rng.choice(p) for p in pools) for _ in range(cap)]
+    if len(rows) > cap:
+        rows = rng.sample(rows, cap)
+    return rows
+
+
+def _magnitude(row) -> float:
+    total = 0.0
+    for v in row:
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            total += min(abs(float(v)), 1e300)
+    return total
+
+
+def _unique(rows):
+    seen, out = set(), []
+    for r in rows:
+        k = repr(r)
+        if k not in seen:
+            seen.add(k)
+            out.append(tuple(r))
     return out
 
 
@@ -169,28 +255,24 @@ def algorithm_candidates(ctx: Ctx, fn_ir: dict, ref, inputs: list) -> list[dict]
         filt = None
         if card.get("filter"):
             filt = eval(card["filter"], {"__builtins__": {}, "math": math})  # noqa: S307 -- trusted card data
-        agree, outs = 0, set()
-        mismatch = False
+        pairs = []   # (user value, card value) on inputs where both return normally
         for args in inputs:
             try:
                 if filt is not None and not filt(*args):
                     continue
-                want = ref(*args)
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001 -- precondition not evaluable here: not compared
                 continue
-            try:
-                with time_limit(2):
-                    got = card_fn(*args)
-            except Exception:  # noqa: BLE001
-                mismatch = True
-                break
-            if not V.same(want, got):
-                mismatch = True
-                break
-            agree += 1
-            outs.add(repr(want))
-        if mismatch or agree < MIN_MATCH or len(outs) < MIN_DISTINCT:
+            k1, want = _outcome(ref, args)
+            if k1 != "ok":
+                continue
+            k2, got = _outcome(card_fn, args)
+            if k2 != "ok":
+                continue
+            pairs.append((want, got))
+        affine = _fit_affine(pairs, rtype)
+        if affine is None:
             continue
+        scale, shift = affine
         cparams = [p["name"] for p in sig["params"]]
         pre = card.get("precondition")
         for form in card["forms"]:
@@ -198,11 +280,43 @@ def algorithm_candidates(ctx: Ctx, fn_ir: dict, ref, inputs: list) -> list[dict]
                 continue
             fast_name = f"{fn_ir['name']}__{card.name}_{form['name']}"
             fast_src = rename(form["code"], {form["entry"]: fast_name, **dict(zip(cparams, params))})
-            out.append({"kind": "algorithm", "card": card.qualified, "form": form["name"],
+            out.append({"kind": "algorithm" if (scale, shift) == (1, 0) else "algorithm_affine",
+                        "card": card.qualified, "form": form["name"], "scale": scale, "shift": shift,
                         "complexity": form.get("complexity"), "fast_name": fast_name, "fast_src": fast_src,
                         "precondition": rename(pre, dict(zip(cparams, params))) if pre else None,
                         "needs_math": "math." in form["code"]})
     return out
+
+
+def _fit_affine(pairs: list, rtype: str):
+    """(1, 0) when the user's outputs equal the card's; for int results also (a, b) with
+    user == a * card + b exactly on every pair (a != 0, integers). None when neither holds or the
+    evidence is too thin (>= MIN_MATCH pairs; >= 3 distinct card values, 2 for bool)."""
+    if len(pairs) < MIN_MATCH:
+        return None
+    distinct = {V.key(g) for _, g in pairs}
+    if len(distinct) < (2 if rtype == "bool" else 3):
+        return None
+    if all(V.same(u, g) for u, g in pairs):
+        return 1, 0
+    if rtype != "int":
+        return None
+    ints = [(u, g) for u, g in pairs if isinstance(u, int) and isinstance(g, int)
+            and not isinstance(u, bool) and not isinstance(g, bool)]
+    if len(ints) != len(pairs):
+        return None
+    (u1, g1) = ints[0]
+    other = next(((u, g) for u, g in ints if g != g1), None)
+    if other is None:
+        return None
+    u2, g2 = other
+    if (u1 - u2) % (g1 - g2) != 0:
+        return None
+    a = (u1 - u2) // (g1 - g2)
+    b = u1 - a * g1
+    if a == 0 or not all(u == a * g + b for u, g in ints):
+        return None
+    return a, b
 
 
 def _int_typed(e, types: dict[str, str]) -> bool:
@@ -274,43 +388,40 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
         ref = original_ns[node.name]
         gens, _ = infer_domain(ctx, module, ref, want=samples, seed=seed)
         rng = random.Random(f"{seed}:{label}:{node.name}")
-        raw_inputs = [tuple(a) for a in V.inputs(gens, samples, rng)]
-        interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
-        inputs = []
-        for a in raw_inputs:
-            try:
-                interp.call(node.name, list(a))
-                inputs.append(a)
-            except StepLimit:
-                continue
-            except Exception:  # noqa: BLE001 -- outside the domain
-                continue
-        inputs = _cheap_inputs(ref, inputs)
+        fn_ir = next(f for f in module["functions"] if f["name"] == node.name)
+        ptypes = [p["type"] for p in fn_ir["params"]]
+        wide = [WIDE[t] for t in ptypes]
+        inputs = _cheap_inputs(ref, _unique(V.inputs(gens, samples, rng) + V.inputs(wide, samples, rng)
+                                            + structured_inputs(ptypes, rng)))
         entry["generators"] = gens
         entry["inputs"] = len(inputs)
         if len(inputs) < 4:
             entry.update(action="kept", reason="too few quick in-domain inputs to compare")
             continue
-        fn_ir = next(f for f in module["functions"] if f["name"] == node.name)
         orig_src = "".join(lines[node.lineno - 1 - len(node.decorator_list): node.end_lineno])
         cands = []
         for c in algorithm_candidates(ctx, fn_ir, ref, inputs):
             params = ", ".join(f"{p['name']}: {p['type']}" for p in fn_ir["params"])
             call = ", ".join(p["name"] for p in fn_ir["params"])
+            fast_call = f"{c['fast_name']}({call})"
+            if (c["scale"], c["shift"]) != (1, 0):
+                fast_call = f"{c['scale']} * {fast_call}" + (f" + {c['shift']}" if c["shift"] else "")
             if c["precondition"]:
                 orig_name = f"{node.name}__original"
                 orig_body = rename(orig_src, {}).replace(f"def {node.name}(", f"def {orig_name}(", 1)
                 src = (f"def {node.name}({params}) -> {fn_ir['returns']}:\n"
-                       f"    if {c['precondition']}:\n        return {c['fast_name']}({call})\n"
+                       f"    if {c['precondition']}:\n        return {fast_call}\n"
                        f"    return {orig_name}({call})\n\n\n{c['fast_src']}\n\n\n{orig_body}\n")
             else:
                 src = (f"def {node.name}({params}) -> {fn_ir['returns']}:\n"
-                       f"    return {c['fast_name']}({call})\n\n\n{c['fast_src']}\n")
+                       f"    return {fast_call}\n\n\n{c['fast_src']}\n")
             cands.append({**c, "src": src})
         rw_ir, changes = rewrite_candidate(ctx, fn_ir, rules, costs)
         if rw_ir is not None:
             try:
-                rw_src = emit_module(ctx.store, ctx.ops, "python", {"entry": node.name, "functions": [rw_ir]})
+                callees = [f for f in module["functions"] if f["name"] != node.name]
+                rw_src = emit_module(ctx.store, ctx.ops, "python",
+                                     {"entry": node.name, "functions": [rw_ir, *callees]}, only=[node.name])
                 cands.append({"kind": "rewrite", "card": "rewrite_rule/*", "form": "rules", "src": rw_src,
                               "changes": changes, "needs_math": "math." in rw_src})
             except EmitGap as exc:
@@ -330,14 +441,19 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
                 verified.append(c)
             else:
                 c["rejected"] = bad or "too few checks"
-        t_orig = _time(ref, inputs)
+        timed = _returning(ref, inputs)
+        if not timed:
+            entry.update(action="kept", reason="the original returns normally on none of the inputs")
+            continue
+        t_orig = _time(ref, timed)
         best, best_t = None, t_orig
         for c in verified:
-            c["seconds"] = _time(c["fn"], inputs)
+            c["seconds"] = _time(c["fn"], timed)
             if c["seconds"] < best_t:
                 best, best_t = c, c["seconds"]
         entry["candidates"] = [{k: v for k, v in c.items() if k in ("kind", "card", "form", "complexity", "checks",
-                                                                    "seconds", "rejected", "changes")}
+                                                                    "seconds", "rejected", "changes", "scale",
+                                                                    "shift")}
                                for c in cands]
         entry["original_seconds"] = t_orig
         if best is not None and t_orig / best_t > 1 + NOISE:
@@ -349,11 +465,25 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
             entry.update(action="kept", reason="no verified candidate faster than the original beyond noise"
                          if verified else "no verified candidate")
 
-    optimized = _splice(source, tree, replacements, needs_math)
+    reverted = {}
+    while True:
+        optimized = _splice(source, tree, replacements, needs_math)
+        e2e = end_to_end(ctx, source, optimized, sorted(replacements), seed)
+        if e2e.get("status") != "fail":
+            break
+        for name, why in e2e["mismatches"].items():   # a recheck refuted it: keep the original instead
+            replacements.pop(name, None)
+            reverted[name] = why
+            f = report["functions"][name]
+            f.update(action="kept", reason="reverted: the end-to-end recheck found a counterexample",
+                     counterexample=why, reverted_from=f.get("action"))
+            f.pop("speedup", None)
+            f.pop("new_source", None)
     report["optimized_source"] = optimized
     report["changed"] = sorted(replacements)
+    report["reverted"] = reverted
     report["effect_shell_identical"] = shell_identical(source, optimized, set(replacements))
-    report["end_to_end"] = end_to_end(ctx, source, optimized, sorted(replacements), seed)
+    report["end_to_end"] = e2e
     if native:
         report["native"] = native_forms(ctx, optimized, sorted(report["functions"]))
     return report
@@ -405,7 +535,12 @@ def end_to_end(ctx: Ctx, source: str, optimized: str, changed: list[str], seed: 
     for name in changed:
         module = module_for(name, lifted)
         gens, _ = infer_domain(ctx, module, orig[name], want=24, seed=seed + 1)
-        inputs = _cheap_inputs(orig[name], [tuple(a) for a in V.inputs(gens, 24, random.Random(seed + 1))])
+        fn_ir = next(f for f in module["functions"] if f["name"] == name)
+        rng = random.Random(seed + 1)
+        ptypes = [p["type"] for p in fn_ir["params"]]
+        wide = [WIDE[t] for t in ptypes]
+        inputs = _cheap_inputs(orig[name], _unique(V.inputs(gens, 48, rng) + V.inputs(wide, 96, rng)
+                                                   + structured_inputs(ptypes, rng)))
         checks, mismatch = _agree(orig[name], new[name], inputs)
         total += checks
         if mismatch:
@@ -426,12 +561,12 @@ def native_forms(ctx: Ctx, optimized: str, names: list[str]) -> dict:
                 gaps.append(name)
                 continue
             module = module_for(name, lifted)
-            module["functions"] = [f for f in module["functions"] if f["name"] not in seen]
-            if not module["functions"]:
+            todo = [f["name"] for f in module["functions"] if f["name"] not in seen]
+            if not todo:
                 continue
             try:
-                texts.append(Emitter(ctx.store, lang, ctx.ops).module_source(module))
-                seen.update(f["name"] for f in module["functions"])
+                texts.append(Emitter(ctx.store, lang, ctx.ops).module_source(module, only=todo))
+                seen.update(todo)
             except EmitGap:
                 gaps.append(name)
         out[lang] = {"source": "\n".join(texts), "gaps": gaps}

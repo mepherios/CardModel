@@ -1,0 +1,32 @@
+{
+ "changed": [],
+ "effect_shell": [
+  {
+   "line": 5,
+   "name": "frame",
+   "reason": "line 6: augmented assignment to \"state['xp']\""
+  }
+ ],
+ "effect_shell_identical": true,
+ "end_to_end": {
+  "status": "nothing_changed"
+ },
+ "functions": {},
+ "label": "app.py",
+ "native_gaps": {
+  "c": [],
+  "cpp": [],
+  "go": [],
+  "java": [],
+  "javascript": [],
+  "lean": [],
+  "lua": [],
+  "python": [],
+  "ruby": [],
+  "rust": [],
+  "swift": [],
+  "typescript": []
+ },
+ "reverted": {},
+ "seed": 4242
+}

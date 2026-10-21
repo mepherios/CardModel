@@ -1,0 +1,90 @@
+{
+  "category": "algorithm",
+  "filter": "lambda a, b, m: b >= 0 and m >= 1",
+  "forms": [
+    {
+      "code": "def mp_loop(a: int, b: int, m: int) -> int:\n    r = 1 % m\n    for _ in range(b):\n        r = r * a % m\n    return r\n",
+      "complexity": "O(b)",
+      "cost": 10.0,
+      "domain": "int",
+      "entry": "mp_loop",
+      "lang": "python",
+      "name": "loop",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def mp_sq(a: int, b: int, m: int) -> int:\n    r = 1 % m\n    x = a % m\n    e = b\n    while e > 0:\n        if e % 2 == 1:\n            r = r * x % m\n        x = x * x % m\n        e = e // 2\n    return r\n",
+      "complexity": "O(log b)",
+      "cost": 3.0,
+      "domain": "any",
+      "entry": "mp_sq",
+      "lang": "python",
+      "name": "square_multiply",
+      "runnable": true
+    },
+    {
+      "code": "def mp_builtin(a: int, b: int, m: int) -> int:\n    return pow(a, b, m)\n",
+      "complexity": "O(log b) native",
+      "cost": 1.0,
+      "domain": "any",
+      "entry": "mp_builtin",
+      "lang": "python",
+      "name": "builtin",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -1000,
+        1000
+      ]
+    },
+    {
+      "int": [
+        0,
+        5000
+      ]
+    },
+    {
+      "int": [
+        1,
+        100000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "modpow",
+  "precondition": "b >= 0 and m >= 1",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "builtin",
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      },
+      {
+        "name": "m",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "a^b mod m for b >= 0, m >= 1",
+  "tags": [
+    "math",
+    "number_theory"
+  ],
+  "tier": 1
+}

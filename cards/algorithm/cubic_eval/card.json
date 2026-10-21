@@ -1,0 +1,99 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def cubic_pow(a: int, b: int, c: int, d: int, x: int) -> int:\n    return a * x ** 3 + b * x ** 2 + c * x + d\n",
+      "complexity": "3 POW + 3 MUL",
+      "cost": 70.0,
+      "domain": "int",
+      "entry": "cubic_pow",
+      "lang": "python",
+      "name": "powers",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def cubic_horner(a: int, b: int, c: int, d: int, x: int) -> int:\n    return ((a * x + b) * x + c) * x + d\n",
+      "complexity": "3 MUL + 3 ADD",
+      "cost": 6.0,
+      "domain": "int",
+      "entry": "cubic_horner",
+      "lang": "python",
+      "name": "horner",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -100,
+        100
+      ]
+    },
+    {
+      "int": [
+        -100,
+        100
+      ]
+    },
+    {
+      "int": [
+        -100,
+        100
+      ]
+    },
+    {
+      "int": [
+        -100,
+        100
+      ]
+    },
+    {
+      "int": [
+        -100,
+        100
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "cubic_eval",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "horner",
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      },
+      {
+        "name": "c",
+        "type": "int"
+      },
+      {
+        "name": "d",
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "a*x^3 + b*x^2 + c*x + d (integers)",
+  "tags": [
+    "math",
+    "polynomial"
+  ],
+  "tier": 1
+}

@@ -114,3 +114,49 @@ def run(ctx, seed: int) -> dict:
     ctx.save_state("self_contained_check", {"ok": ok and bool(sb["ok"]), "denied": res["denied"],
                                             "sandbox": sb.get("ok"), "static_problems": static})
     return res
+
+
+def pythons() -> list[str]:
+    """Every distinct Python 3 interpreter on PATH (python3, python3.N) and the platform's system one."""
+    import glob
+    import os
+    found, seen = [], set()
+    cands = [shutil.which("python3")] + [shutil.which(f"python3.{m}") for m in range(9, 20)] + ["/usr/bin/python3"]
+    for d in os.environ.get("PATH", "").split(os.pathsep):
+        cands += sorted(glob.glob(os.path.join(d, "python3.[0-9]*")))
+    for c in cands:
+        if not c or not os.path.isfile(c) or not os.access(c, os.X_OK) or c.endswith("-config"):
+            continue
+        real = os.path.realpath(c)
+        if real in seen:
+            continue
+        seen.add(real)
+        found.append(c)
+    return found
+
+
+def portability(seed: int) -> dict:
+    """verify section: run the program's kernel and rule witnesses under every interpreter found."""
+    runs, failures = [], []
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONPATH=str(paths.home()))
+    for py in pythons():
+        try:
+            v = subprocess.run([py, "-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"], capture_output=True,
+                               text=True, timeout=60).stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if not v or tuple(int(x) for x in v.split(".")[:2]) < (3, 9):
+            runs.append({"python": py, "version": v, "status": "skipped (needs >= 3.9)"})
+            continue
+        try:
+            r = subprocess.run([py, "-B", "-m", "cardmodel", "--no-project", "verify", "--only", "kernel,rules",
+                                "--seed", str(seed)], capture_output=True, text=True, timeout=900, env=env,
+                               cwd=str(paths.home()))
+            ok = r.returncode == 0
+            detail = "" if ok else (r.stderr or r.stdout)[-400:]
+        except subprocess.TimeoutExpired:
+            ok, detail = False, "timeout"
+        runs.append({"python": py, "version": v, "status": "pass" if ok else "fail", "detail": detail})
+        if not ok:
+            failures.append(py)
+    return {"status": "fail" if failures else ("pass" if runs else "vacuous"), "runs": runs, "failures": failures}

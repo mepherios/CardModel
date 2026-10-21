@@ -1,0 +1,59 @@
+{
+  "category": "algorithm",
+  "forms": [
+    {
+      "code": "def sigma_linear(n: int) -> int:\n    if n <= 0:\n        return 0\n    s = 0\n    for d in range(1, n + 1):\n        if n % d == 0:\n            s += d\n    return s\n",
+      "complexity": "O(n)",
+      "cost": 100.0,
+      "domain": "int",
+      "entry": "sigma_linear",
+      "lang": "python",
+      "name": "linear",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def sigma_sqrt(n: int) -> int:\n    if n <= 0:\n        return 0\n    s = 0\n    d = 1\n    while d * d <= n:\n        if n % d == 0:\n            s += d\n            if d * d != n:\n                s += n // d\n        d += 1\n    return s\n",
+      "complexity": "O(sqrt n)",
+      "cost": 10.0,
+      "domain": "int",
+      "entry": "sigma_sqrt",
+      "lang": "python",
+      "name": "sqrt_pairs",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -10,
+        200000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sum_of_divisors",
+  "precondition": null,
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "sqrt_pairs",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "sum of positive divisors of n (0 for n <= 0)",
+  "tags": [
+    "math",
+    "number_theory"
+  ],
+  "tier": 1
+}

@@ -21,7 +21,9 @@ class Cheapest(unittest.TestCase):
         add = st.get("op/ADD")
         self.assertEqual(rewrite.cheapest(st, add, "u32").name, "native")         # tie: declaration order
         self.assertNotEqual(rewrite.cheapest(st, add).name, "rust_hint")          # hints only when asked for
-        self.assertEqual(rewrite.cheapest(st, add, lang="rust").name, "rust_hint")
+        self.assertEqual(rewrite.cheapest(st, add, lang="rust", available_only=False).name, "rust_hint")
+        rust_ok = rewrite.available(st, next(f for f in rewrite.forms_of(add) if f.name == "rust_hint"))[0]
+        self.assertEqual(rewrite.cheapest(st, add, lang="rust") is not None, rust_ok)   # only if rustc works here
         ec = st.get("op/EC_ADD")                                                  # sage forms: documentation only
         self.assertIsNone(rewrite.cheapest(st, ec))
         self.assertIsNotNone(rewrite.cheapest(st, ec, runnable_only=False, available_only=False))

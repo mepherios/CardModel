@@ -10,7 +10,10 @@ filesystem registry. The program takes part in software development in any proje
 2. **verify** every executable claim by running it (seeded, reproducible, with anti-vacuity checks);
 3. **translate** functions into other languages through the card IR, and prove each translation by running it;
 4. **learn** new cards from what it observes, promoting them only with evidence;
-5. **optimize**: pick the cheapest equivalent form, find cheaper equivalent expressions, and measure real costs.
+5. **optimize**: pick the cheapest equivalent form, find cheaper equivalent expressions, and measure real costs;
+6. **improve** whole programs: substitute verified faster algorithms (including scaled/shifted matches) in the pure
+   core, leave the effect shell (I/O, network, login) byte-identical, and re-check the result. See
+   docs/METHODOLOGY.md and the arena.
 
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
@@ -36,6 +39,10 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_L1_learned_cards` | learning | cards promoted by the learning loop with cited evidence | ≥ 10 |
 | `G_O1_measured_forms` | optimization | forms with a host measurement (metric card) | ≥ 30 |
 | `G_A1_self_contained` | autonomy | source folders needed at runtime (sandbox check) | = 0 |
+| `G_A2_runs_on_every_python` | autonomy | Python 3.9+ interpreters on this machine that fail to run the program | = 0 |
+| `G_O2_arena_sound` | optimization | recorded arena runs that were not sound | = 0 |
+| `G_O3_arena_recall` | optimization | planted suboptimal functions improved in the latest arena run | ≥ 0.9 |
+| `G_O4_arena_speedup` | optimization | geometric-mean measured speedup in the latest arena run | ≥ 10 |
 
 ### What "done" would mean on each axis
 
@@ -47,7 +54,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
   redefinition notes, translation gaps) keeps its provenance, and each item is marked as executable or knowledge-only.
 * **Learning.** Running `cardmodel learn` on a codebase raises the named fraction and adds function cards. Nothing is
   promoted without evidence.
-* **Optimization.** Cost anchors converge to host measurements, and every speed claim cites a metric card.
+* **Optimization.** Cost anchors converge to host measurements, and every speed claim cites a metric card. The
+  arena stays sound at any size, and recall and speedup rise as algorithm cards are added.
 * **Autonomy.** Copy the folder to another machine with Python 3.10+, and the program runs, verifies itself and reports
   which toolchains it found there.
 
