@@ -213,8 +213,8 @@ layer`):
 
 **Running it.** The relinker builds on this Mac (AnyPS5's relinker-only mode: `cmake -S . -B build-relinker
 -DCMAKE_BUILD_TYPE=Release -DANYPS5_RELINKER_ONLY=ON -DBUILD_TESTING=ON`). The result is
-`build-relinker/core/relinker/relinker`, an arm64 executable, and 225 of its 226 tests pass. The other test,
-`shader_cache_runtime_sources`, configures a sub-build with Ninja, which is not installed here. The system
+`build-relinker/core/relinker/relinker`, an arm64 executable, and all 226 of its tests pass. One of them,
+`shader_cache_runtime_sources`, configures a sub-build with Ninja, so Ninja must be installed. The system
 libraries need AnyPS5's full build (Linux or Windows, submodules, FFmpeg, SDL, Vulkan), which means downloads and
 was not done. Their pure functions run in the witnesses instead; libm and the copy's MP3 parser are built for
 x86-64, the PS5's architecture, and run under Rosetta. Nothing here runs a title.
