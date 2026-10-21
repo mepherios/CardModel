@@ -82,6 +82,9 @@ global training: Int = 0
 global versus: Int = 0
 global flawless: Int = 0
 global flash_t: Int = 0
+global boss_phase: Int = 0
+global p1_last: Int = -1
+global p1_last_start: Int = 0
 global flash_col: Int = 0xFFFFFF
 
 -- what the screen shows of the last exchange: a word, where, how long, what colour
@@ -188,6 +191,10 @@ fn round_setup() {
   round_winner = -1
   ev_text = -1
   hit_kind = -1
+  if boss_phase != 0 {
+    ai_level[1] = max(1, ai_level[1] - 2)
+  }
+  boss_phase = 0
   ai_round_setup()
 }
 
@@ -346,6 +353,10 @@ fn start_move(i: Int, m: Int) {
   f_len[i] = s + mv_active[m] + mv_recovery[m]
   f_shown[i] = mv_dir[m]
   last_move = m
+  if i == 0 {
+    p1_last = m
+    p1_last_start = s
+  }
   if k == K_ATTACK or k == K_GRAB or k == K_FEINT {
     ai_saw_attack(other(i), m)
     sfx(SFX_WINDUP)
@@ -375,6 +386,16 @@ fn hp_damage(j: Int, dmg: Int) {
   let d = max(0, dmg)
   f_hp[j] = max(0, f_hp[j] - d)
   f_dmg_round[j] += d
+  if f_ctl[j] == AI_BOSS and boss_phase == 0 and f_hp[j] > 0 and f_hp[j] * 2 < f_hpmax[j] {
+    -- the Architect adapts: sharper reads, a clear posture
+    boss_phase = 1
+    ai_level[j] = min(9, ai_level[j] + 2)
+    f_post[j] = 0
+    event(S_ADAPTS, xpx(j), 0xC77DFF, 1)
+    flash_t = 8
+    flash_col = 0xC77DFF
+    sfx(SFX_BREAK)
+  }
   if training != 0 and j == 1 {
     f_hp[j] = max(f_hp[j], 1)
   }

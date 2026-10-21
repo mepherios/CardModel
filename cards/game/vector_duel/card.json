@@ -56,6 +56,122 @@
       "name": "No Mercy"
     }
   ],
+  "arenas": {
+    "dusk": {
+      "floor": [
+        "0x3B2E3A",
+        "0x17121C"
+      ],
+      "lines": "0x46364A",
+      "name": "DUSK BRIDGE",
+      "orb": "moon",
+      "orb_col": "0xFFF2DC",
+      "ridge": [
+        "0x3A2850",
+        "0x2A1C3C"
+      ],
+      "sky": [
+        "0x1A1440",
+        "0xD8705A"
+      ],
+      "weather": "none"
+    },
+    "forge": {
+      "floor": [
+        "0x3A1E16",
+        "0x140A08"
+      ],
+      "lines": "0x5A2A1A",
+      "name": "EMBER FORGE",
+      "orb": "none",
+      "orb_col": "0xFF8040",
+      "ridge": [
+        "0x401410",
+        "0x2A0C0A"
+      ],
+      "sky": [
+        "0x2A0A08",
+        "0x8A2A10"
+      ],
+      "weather": "embers"
+    },
+    "hall": {
+      "floor": [
+        "0x2A1E36",
+        "0x100A16"
+      ],
+      "lines": "0x5A3A70",
+      "name": "THE ARCHITECT'S HALL",
+      "orb": "sun",
+      "orb_col": "0xFFD870",
+      "ridge": [
+        "0x2A1240",
+        "0x1A0A2A"
+      ],
+      "sky": [
+        "0x120822",
+        "0x4A1C5A"
+      ],
+      "weather": "cards"
+    },
+    "snow": {
+      "floor": [
+        "0xD8E0EC",
+        "0x96A4BC"
+      ],
+      "lines": "0xB8C4D6",
+      "name": "SNOW PASS",
+      "orb": "sun",
+      "orb_col": "0xFFFFF0",
+      "ridge": [
+        "0xA8B6CC",
+        "0x7E8EAE"
+      ],
+      "sky": [
+        "0x6A7CA0",
+        "0xC8D4E6"
+      ],
+      "weather": "snow"
+    },
+    "storm": {
+      "floor": [
+        "0x34403C",
+        "0x141A18"
+      ],
+      "lines": "0x46524E",
+      "name": "STORM CLIFFS",
+      "orb": "none",
+      "orb_col": "0xE0F0FF",
+      "ridge": [
+        "0x2C3A38",
+        "0x1E2826"
+      ],
+      "sky": [
+        "0x1E2A2A",
+        "0x5A6A66"
+      ],
+      "weather": "rain"
+    },
+    "temple": {
+      "floor": [
+        "0x262A3A",
+        "0x0E1018"
+      ],
+      "lines": "0x343A52",
+      "name": "NIGHT TEMPLE",
+      "orb": "moon",
+      "orb_col": "0xDDE8FF",
+      "ridge": [
+        "0x141C38",
+        "0x0C1228"
+      ],
+      "sky": [
+        "0x050A1C",
+        "0x22305A"
+      ],
+      "weather": "stars"
+    }
+  },
   "audio": {
     "array": "audio",
     "count": "audio_n",
@@ -83,6 +199,16 @@
       ],
       "title": "Readable vectors",
       "version": "0.2.0"
+    },
+    {
+      "notes": [
+        "Every arcade stage has its own arena and weather: the dusk bridge, a night temple, a snow pass, an ember forge, storm cliffs and the Architect's hall.",
+        "Each opponent introduces itself, and the readers tell you after the duel what they learned about you.",
+        "The Architect adapts when it is losing: past half its health it reads sharper.",
+        "Training: pick what the dummy does from the pause menu, and read your last move's frame data and outcome."
+      ],
+      "title": "Six arenas and The Architect",
+      "version": "0.3.0"
     }
   ],
   "developer": "the card model",
@@ -220,37 +346,49 @@
   "ladder": [
     {
       "ai": "habit",
+      "arena": "dusk",
       "fighter": "brute",
+      "intro": "S_IN_1",
       "level": 1,
       "name": "S_AI_HABIT"
     },
     {
       "ai": "greedy",
+      "arena": "temple",
       "fighter": "duelist",
+      "intro": "S_IN_2",
       "level": 2,
       "name": "S_AI_GREEDY"
     },
     {
       "ai": "reader",
+      "arena": "snow",
       "fighter": "warden",
+      "intro": "S_IN_3",
       "level": 3,
       "name": "S_AI_READER"
     },
     {
       "ai": "reader",
+      "arena": "forge",
       "fighter": "brute",
+      "intro": "S_IN_4",
       "level": 4,
       "name": "S_AI_READER"
     },
     {
       "ai": "equilibrium",
+      "arena": "storm",
       "fighter": "duelist",
+      "intro": "S_IN_5",
       "level": 5,
       "name": "S_AI_EQUILIBRIUM"
     },
     {
       "ai": "boss",
+      "arena": "hall",
       "fighter": "warden",
+      "intro": "S_IN_6",
       "level": 6,
       "name": "S_AI_BOSS"
     }
@@ -317,6 +455,7 @@
   "strings": {
     "S_ACH": "ACHIEVEMENT UNLOCKED",
     "S_ACTIVE": "ACTIVE",
+    "S_ADAPTS": "THE ARCHITECT ADAPTS",
     "S_AI_BOSS": "THE ARCHITECT",
     "S_AI_EQUILIBRIUM": "THE BALANCE",
     "S_AI_GREEDY": "OPPORTUNIST",
@@ -349,6 +488,7 @@
     "S_DUELIST": "DUELIST",
     "S_DUELIST_D": "FAST. THRUSTS, FEINTS AND A QUICK FOOT.",
     "S_DUMMY": "DUMMY",
+    "S_DUMMY_IS": "DUMMY",
     "S_D_ATTACK": "ATTACKS",
     "S_D_DIAG": "DIAGONAL",
     "S_D_EVADING": "EVADING",
@@ -377,21 +517,38 @@
     "S_HOW3": "GUARD AS THE ARC FLASHES WHITE: REDIRECT!",
     "S_HOW4": "J + DIRECTION ATTACKS. K HEAVY, U FEINT, SPACE EVADES",
     "S_HP": "HP",
+    "S_IN_1": "THE BRUTE SWINGS FROM ABOVE. GUARD HIGH, CUT FROM THE SIDE.",
+    "S_IN_2": "THE OPPORTUNIST PUNISHES EVERY MISS. WAIT, THEN ANSWER.",
+    "S_IN_3": "THE READER COUNTS WHAT YOU DO. VARY IT.",
+    "S_IN_4": "A READER WITH A HEAVY HAND. ITS OVERHEAD HAS ARMOUR.",
+    "S_IN_5": "THE BALANCE PLAYS THE EQUILIBRIUM: THERE IS NOTHING TO READ.",
+    "S_IN_6": "THE ARCHITECT WROTE THE CARDS. IT ADAPTS WHEN IT LOSES.",
     "S_KO": "K.O.",
     "S_K_ATK": "J: ATTACK  K: HEAVY  U: FEINT",
     "S_K_DEF": "L: GUARD (HOLD)  SPACE: EVADE  I: CATCH",
     "S_K_DIR": "W A S D / ARROWS: VECTOR AND WALK",
     "S_K_SYS": "ESC: PAUSE  F: FULL SCREEN",
     "S_K_TIP": "GUARD THE SIDE THE RED VECTOR SHOWS. JUST BEFORE IT LANDS: REDIRECT.",
+    "S_LAST": "LAST MOVE",
+    "S_LEARNED": "IT LEARNED: YOU ATTACK",
     "S_MADE": "MADE WITH THE CARD MODEL",
     "S_MOVES": "MOVE LIST",
     "S_MUSIC": "MUSIC",
     "S_NEXT": "NEXT DUEL",
+    "S_NONE": "-",
     "S_NORMAL": "NORMAL",
     "S_OF": "OF",
     "S_OFF": "OFF",
     "S_ON": "ON",
     "S_OPTIONS": "OPTIONS",
+    "S_OUTCOME": "OUTCOME",
+    "S_O_BLOCK": "BLOCK",
+    "S_O_CAUGHT": "CAUGHT",
+    "S_O_DEFLECT": "DEFLECT",
+    "S_O_EVADED": "EVADED",
+    "S_O_HIT": "HIT",
+    "S_O_PIERCE": "PIERCED",
+    "S_O_REDIRECT": "REDIRECT",
     "S_P1": "YOU",
     "S_P2": "P2",
     "S_P2_KEYS": "P2: ARROWS + 1 2 3 0 (NUMPAD)",
@@ -407,7 +564,7 @@
     "S_RESTART": "RESTART",
     "S_RESUME": "RESUME",
     "S_RETRY": "RETRY",
-    "S_RINGS": "VECTOR RINGS",
+    "S_RINGS": "VECTOR ARCS",
     "S_ROUND": "ROUND",
     "S_SFX": "SOUND",
     "S_STAGE": "STAGE",
@@ -439,5 +596,5 @@
   ],
   "tier": 1,
   "title": "Vector Duel",
-  "version": "0.2.0"
+  "version": "0.3.0"
 }

@@ -41,38 +41,85 @@ fn team_col(i: Int) -> Int {
   return if i == 0 then C_P1 else C_P2
 }
 
--- the arena ---------------------------------------------------------------------------------------------------------
+-- the arena: the current stage's palette and weather (the game card's arenas); the title uses the first
+global arena: Int = 0
+
 fn draw_sky(t: Int) {
-  vgrad(0, 0, SW, 150, 0x1A1440, 0xD8705A)
-  -- the moon and its glow
-  disc_blend(372, 58, 30, 0xFFE0C0, 40)
-  disc(372, 58, 16, 0xFFF2DC)
-  -- far ridge, near ridge
+  let a = arena
+  vgrad(0, 0, SW, 150, ar_sky0[a], ar_sky1[a])
+  if ar_weather[a] == 1 {
+    for k in 0 .. 70 {
+      let sx = (k * 97 + 13) % SW
+      let sy = (k * 53 + 7) % 110
+      let tw = (sin256(t * 3 + k * 37) + 256) // 4
+      blend(sx, sy, 0xFFFFFF, 60 + tw // 2)
+    }
+  }
+  if ar_orb[a] != 0 {
+    let ox = if ar_orb[a] == 2 then 108 else 372
+    let oy = if ar_orb[a] == 2 then 50 else 58
+    disc_blend(ox, oy, 30, ar_orb_col[a], 40)
+    disc(ox, oy, 16, ar_orb_col[a])
+  }
   for x in 0 .. SW {
-    let h1 = 112 + (sin256(x * 2 + 40) * 10 + sin256(x * 5 + 7) * 4) // 256
-    rect(x, h1, 1, 150 - h1, 0x3A2850)
-    let h2 = 130 + (sin256(x * 3 + 90) * 7 + sin256(x * 7 + t // 8) * 0) // 256
-    rect(x, h2, 1, 150 - h2, 0x2A1C3C)
+    let h1 = 112 + (sin256(x * 2 + 40 + a * 31) * 10 + sin256(x * 5 + 7 + a * 11) * 4) // 256
+    rect(x, h1, 1, 150 - h1, ar_ridge0[a])
+    let h2 = 130 + (sin256(x * 3 + 90 + a * 17) * 7) // 256
+    rect(x, h2, 1, 150 - h2, ar_ridge1[a])
   }
 }
 fn draw_floor(t: Int) {
-  vgrad(0, 150, SW, SH - 150, 0x3B2E3A, 0x17121C)
-  -- the stage lines run to a vanishing point on the horizon
+  let a = arena
+  vgrad(0, 150, SW, SH - 150, ar_floor0[a], ar_floor1[a])
   for k in -8 .. 9 {
-    line(240 + k * 18, 150, 240 + k * 90, SH, 0x46364A)
+    line(240 + k * 18, 150, 240 + k * 90, SH, ar_lines[a])
   }
   for k in 0 .. 7 {
     let y = 150 + (k * k * 3) + k * 4
-    rect(0, y, SW, 1, 0x4A3A50)
+    rect(0, y, SW, 1, mix(ar_lines[a], 0xFFFFFF, 20))
   }
-  rect(0, GROUND, SW, 1, 0x6A5470)
-  -- torches at the edges, flickering
+  rect(0, GROUND, SW, 1, mix(ar_lines[a], 0xFFFFFF, 60))
   for side in 0 .. 2 {
     let tx = if side == 0 then 22 else SW - 22
-    rect(tx - 2, GROUND - 60, 4, 60, 0x2A2030)
+    rect(tx - 2, GROUND - 60, 4, 60, mix(ar_floor1[a], 0x000000, 80))
     let fl = 6 + (sin256(t * 9 + side * 77) * 2) // 256 + rnd(2)
     disc_blend(tx, GROUND - 66, fl + 8, 0xFF8030, 50)
     disc(tx, GROUND - 66, fl // 2 + 2, 0xFFD070)
+  }
+}
+fn draw_weather(t: Int) {
+  let w = ar_weather[arena]
+  if w == 2 {
+    for k in 0 .. 90 {
+      let x = (k * 73 + t * (1 + k % 3) // 2 + (sin256(t * 2 + k * 29) * 6) // 256) % SW
+      let y = (k * 41 + t * (1 + k % 2)) % SH
+      px(x, y, 0xFFFFFF)
+      if k % 3 == 0 {
+        px(x + 1, y, 0xE8F0FF)
+      }
+    }
+  } elif w == 3 {
+    for k in 0 .. 50 {
+      let y = SH - ((k * 53 + t * (1 + k % 3)) % SH)
+      let x = (k * 97 + (sin256(t * 4 + k * 41) * 10) // 256) % SW
+      blend(x, y, if k % 2 == 0 then 0xFF9040 else 0xFFD060, 200)
+    }
+  } elif w == 4 {
+    for k in 0 .. 110 {
+      let x = (k * 61 + t * 3) % SW
+      let y = (k * 37 + t * 9) % SH
+      line(x, y, x - 2, y + 6, 0x9AB0C0)
+    }
+    if (t % 240) < 3 {
+      rect_blend(0, 0, SW, SH, 0xE0F0FF, 90)
+    }
+  } elif w == 5 {
+    for k in 0 .. 10 {
+      let x = (k * 53 + t // 3) % (SW + 40) - 20
+      let y = 20 + (k * 31) % 100 + (sin256(t * 2 + k * 50) * 8) // 256
+      rect_blend(x, y, 9, 13, 0xF4EEE0, 70)
+      frame_rect(x, y, 9, 13, 0xFFD870)
+    }
   }
 }
 fn draw_arena(t: Int) {
@@ -525,6 +572,7 @@ fn draw_duel() {
     draw_fighter(i)
   }
   draw_sparks()
+  draw_weather(frame_no)
   no_shake()
   if rings_on != 0 {
     for i in 0 .. 2 {
@@ -535,9 +583,12 @@ fn draw_duel() {
     rect_blend(0, 0, SW, SH, flash_col, flash_t * 18)
   }
   draw_hud()
+  if training != 0 {
+    draw_frame_data()
+  }
   draw_event()
   -- the first duel teaches its rules at the bottom of the screen
-  if training != 0 or (versus == 0 and stage == 0 and round_no == 1 and duel_t < 900 and round_state == 1) {
+  if paused == 0 and (training != 0 or (versus == 0 and stage == 0 and round_no == 1 and duel_t < 900 and round_state == 1)) {
     rect_blend(0, SH - 24, SW, 24, C_INK, 170)
     let tip = if (duel_t // 220) % 4 == 0 then S_HOW1 else if (duel_t // 220) % 4 == 1 then S_HOW2 else if (duel_t // 220) % 4 == 2 then S_HOW3 else S_HOW4
     draw_str_c(tip, SW // 2, SH - 16, 1, 0xFFE8A0)
@@ -546,6 +597,51 @@ fn draw_duel() {
     if round_t < INTRO - 30 {
       draw_str_c(S_ROUND, SW // 2 - 14, 110, 4, 0xFFFFFF)
       draw_num_c(round_no, SW // 2 + 74, 110, 4, 0xFFE070)
+      if mode == MODE_ARCADE and round_no == 1 and lad_intro[stage] >= 0 {
+        draw_str_c(lad_intro[stage], SW // 2, 92, 1, 0xC8B8E8)
+      }
     }
   }
+}
+
+fn outcome_name(k: Int) -> Int {
+  if k == 0 {
+    return S_O_HIT
+  }
+  if k == 1 {
+    return S_O_PIERCE
+  }
+  if k == 2 {
+    return S_O_BLOCK
+  }
+  if k == 3 {
+    return S_O_DEFLECT
+  }
+  if k == 4 {
+    return S_O_REDIRECT
+  }
+  if k == 5 {
+    return S_O_EVADED
+  }
+  if k == 6 {
+    return S_O_CAUGHT
+  }
+  return S_NONE
+}
+-- training: the last move P1 started and the last impact's outcome
+fn draw_frame_data() {
+  let m = p1_last
+  rect_blend(SW - 170, 52, 160, 52, C_INK, 170)
+  draw_str_sh(S_LAST, SW - 164, 56, 1, 0x9A90B8)
+  if m >= 0 {
+    draw_str_sh(mv_str[m], SW - 164 + 60, 56, 1, 0xFFFFFF)
+    draw_str_sh(S_STARTUP, SW - 164, 66, 1, 0x9A90B8)
+    draw_num(p1_last_start, SW - 164 + 60, 66, 1, 0xFFE070)
+    draw_str_sh(S_ACTIVE, SW - 164, 76, 1, 0x9A90B8)
+    draw_num(mv_active[m], SW - 164 + 60, 76, 1, 0xFFE070)
+    draw_str_sh(S_RECOVERY, SW - 164, 86, 1, 0x9A90B8)
+    draw_num(mv_recovery[m], SW - 164 + 60, 86, 1, 0xFFE070)
+  }
+  draw_str_sh(S_OUTCOME, SW - 164, 96, 1, 0x9A90B8)
+  draw_str_sh(outcome_name(f_last_outcome[1]), SW - 164 + 60, 96, 1, 0x60F0FF)
 }

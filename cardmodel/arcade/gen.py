@@ -20,6 +20,8 @@ STANCES = ["neutral", "flow", "recoil", "broken"]
 AIS = ["human", "habit", "greedy", "reader", "equilibrium", "boss", "dummy"]
 NO_DIR = 9
 EQ_SCALE = 1000
+ORBS = ["none", "moon", "sun"]
+WEATHER = ["none", "stars", "snow", "embers", "rain", "cards"]
 
 
 def _ident(name: str) -> str:
@@ -162,6 +164,12 @@ def generate(ctx, game) -> tuple[str, dict]:
 
     strings = dict(game["strings"])
     strings["S_VERSION"] = "V" + game["version"]
+    arenas = game.get("arenas") or {}
+    arena_ids = list(arenas)
+    for a in arena_ids:
+        strings["S_AR_" + _ident(a)] = arenas[a]["name"]
+    for n in moves:
+        strings["S_MV_" + _ident(n)] = n.replace("_", " ")
     for a in game.get("achievements", []):
         strings["S_ACH_" + _ident(a["id"])] = a["name"]
     for st in game.get("ladder", []):
@@ -180,7 +188,20 @@ def generate(ctx, game) -> tuple[str, dict]:
           _array("lad_fighter", [fighters.index(s["fighter"]) for s in lad]),
           _array("lad_ai", [AIS.index(s["ai"]) for s in lad]),
           _array("lad_name", [ids.index(s["name"]) for s in lad]),
-          _array("lad_level", [s.get("level", i + 1) for i, s in enumerate(lad)])]
+          _array("lad_level", [s.get("level", i + 1) for i, s in enumerate(lad)]),
+          _array("lad_intro", [ids.index(s["intro"]) if s.get("intro") in ids else -1 for s in lad]),
+          _array("lad_arena", [arena_ids.index(s["arena"]) if s.get("arena") in arena_ids else 0 for s in lad])]
+    hexes = lambda key, k: [int(arenas[a][key][k] if isinstance(arenas[a][key], list) else arenas[a][key], 16)  # noqa: E731
+                            for a in arena_ids] or [0]
+    L += [f"const N_ARENAS = {max(1, len(arena_ids))}",
+          _array("ar_sky0", hexes("sky", 0)), _array("ar_sky1", hexes("sky", 1)),
+          _array("ar_ridge0", hexes("ridge", 0)), _array("ar_ridge1", hexes("ridge", 1)),
+          _array("ar_floor0", hexes("floor", 0)), _array("ar_floor1", hexes("floor", 1)),
+          _array("ar_lines", hexes("lines", 0)), _array("ar_orb_col", hexes("orb_col", 0)),
+          _array("ar_orb", [ORBS.index(arenas[a].get("orb", "none")) for a in arena_ids] or [0]),
+          _array("ar_weather", [WEATHER.index(arenas[a].get("weather", "none")) for a in arena_ids] or [0]),
+          _array("ar_name", [ids.index("S_AR_" + _ident(a)) for a in arena_ids] or [0]),
+          _array("mv_str", [ids.index("S_MV_" + _ident(n)) for n in moves])]
     ach = game.get("achievements", [])
     L += [f"const N_ACH = {len(ach)}"] + [f"const ACH_{_ident(a['id'])} = {i}" for i, a in enumerate(ach)]
     L.append(_array("ach_str", [ids.index("S_ACH_" + _ident(a["id"])) for a in ach]))
