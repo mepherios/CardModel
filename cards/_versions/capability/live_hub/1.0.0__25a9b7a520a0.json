@@ -1,0 +1,36 @@
+{
+  "category": "capability",
+  "check": "live_hub",
+  "commands": [
+    "cardmodel arcade serve (the In progress page)"
+  ],
+  "core": true,
+  "docs": [
+    "docs/STORE.md"
+  ],
+  "laws": [
+    "law/CM01_honest_limits",
+    "law/CM35_games_are_cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/arcade/hub.py"
+  ],
+  "name": "live_hub",
+  "order": 24,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The store follows everything in progress: project cards say what to watch; the hub computes each one's phase, branches, uncommitted work, metrics and builds from git and the model's records, read-only, and pushes changes to the launcher as they happen; early-access builds install beside the release.",
+  "tests": [
+    "tests/test_hub.py::test_status_is_computed_from_git_and_state",
+    "tests/test_hub.py::test_git_reads_never_write",
+    "tests/test_hub.py::test_changes_are_pushed",
+    "tests/test_hub.py::test_early_access_is_separate_and_installable"
+  ],
+  "tier": 0,
+  "usefulness": "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "project_card_problems",
+  "name": "G_A8_project_cards_current",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Project cards missing detail, stale, or missing for a branch with unmerged work (CM41).",
+  "target": 0,
+  "tier": 0
+}

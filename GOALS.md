@@ -129,6 +129,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_A5_integrity_problems` | autonomy | integrity problems: duplicate numbers, uncarried laws, undescribed commands, sections or docs, drift (CM39) | = 0 |
 | `G_A6_laws_carried` | autonomy | laws that no capability card carries | = 0 |
 | `G_A7_self_run_fresh` | autonomy | hours since the last self-run cycle finished (CM38) | ≤ 24 |
+| `G_A8_project_cards_current` | autonomy | project cards missing detail, stale, or missing for a branch with unmerged work (CM41) | = 0 |
 | `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
 | `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
 | `G_P1_anyps5_badge_reproduced` | computation | libraries where the model's reading of AnyPS5's counting rule differs from AnyPS5's own tool | = 0 |

@@ -1,0 +1,30 @@
+{
+  "category": "project",
+  "docs": [
+    "game/DESIGN.md"
+  ],
+  "kind": "game",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "format": "{world_final_facts} facts carried to the end",
+      "label": "world run",
+      "verify": "game"
+    }
+  ],
+  "name": "world",
+  "order": 5,
+  "paths": [
+    "cardmodel/game/world.py",
+    "stdlib/world.card"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "A world whose events carry between ticks and explain their causes (cardmodel game world).",
+  "tier": 1,
+  "title": "The systemic world"
+}

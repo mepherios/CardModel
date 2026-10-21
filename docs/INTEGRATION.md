@@ -85,6 +85,42 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main).
   (`cardmodel cover --write COVERAGE.md`), docs/ANYPS5_COVERAGE.md (`cardmodel anyps5 cover --write docs/ANYPS5_COVERAGE.md`),
   stdlib/algebra.card (`cardmodel algebra scan --write`), the `_pack_*.jsonl` card packs (their tools).
 
+## 4b. Project cards (law CM41)
+
+Every project in progress keeps a detailed card, and its owning session keeps it current. The store's In progress
+page and its "Waiting on you" list are built from these cards (`cardmodel/arcade/hub.py`, `engines/projects.py`),
+and `cardmodel verify` (section `projects`) fails when one is missing or stale.
+
+* **Where.** Projects in this repository: `cards/project/<name>/card.json`. Revise it on your branch in the same
+  commit as the work, or within a day of it. A project in another repository keeps its detail there, committed, in
+  `.cardmodel/project.json`. The hub reads that with `git show HEAD:...` and never writes it, and it overrides the
+  card here.
+* **Fields** (the card's what-to-watch fields `repo`, `paths`, `games`, `metrics`, `docs` stay as they are):
+
+```json
+{
+  "goal": "one sentence: what the project is for",
+  "standing": "one sentence: where it stands now (`status` is every card's lifecycle field)",
+  "done": ["finished pieces"],
+  "in_progress": ["what is being worked on"],
+  "left": ["what remains"],
+  "blockers": ["what stops it, if anything"],
+  "next_steps": ["the next concrete steps"],
+  "user_actions": [{"action": "what the user must do or decide", "why": "why it matters",
+                    "unblocks": ["what it unblocks"]}],
+  "owner": {"session": "local_<id>", "name": "the owning session's short name"},
+  "branches": ["claude/<your-branch>*"],
+  "updated": "2026-10-22T00:55:00+02:00"
+}
+```
+
+* **Stale.** A commit that touches the project's `paths` (in another repository, any commit) more than 24 hours
+  after `updated` makes the card stale.
+* **Missing.** On main, every branch with unmerged commits from the last week must be listed in some card's
+  `branches`. On a branch, that branch must be listed.
+* **Computed, not written.** The phase, the last commits, ahead/behind counts, uncommitted work, metrics (with
+  the checkout that measured them) and builds are computed by the hub. Never type them into the card.
+
 ## 5. Integration log
 
 | date | commit | what landed |

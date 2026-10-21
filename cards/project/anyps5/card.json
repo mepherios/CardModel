@@ -1,11 +1,33 @@
 {
+  "blockers": [],
+  "branches": [
+    "claude/recursing-williams-*"
+  ],
   "category": "project",
   "docs": [
     "docs/ANYPS5.md"
   ],
+  "done": [
+    "the badge reproduced",
+    "every gap with its cause",
+    "witnesses against public standards",
+    "on the branch: VISION.md, the machine-code lifter (9db0861)"
+  ],
+  "goal": "AnyPS5's real coverage, every gap's cause, and its code witnessed against semantics from public standards.",
+  "in_progress": [
+    "the plan's next steps on its branch"
+  ],
   "kind": "program",
+  "left": [
+    "close the derivable gaps",
+    "host mappings",
+    "the string/list IR",
+    "console observations"
+  ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "4c5c5af6da011ac622121aa821b7b198ce829ebaf7fb6d9811f714d015dbf3b5",
+    "version": "2.0.0",
+    "version_bump_reason": "major"
   },
   "metrics": [
     {
@@ -19,7 +41,14 @@
     }
   ],
   "name": "anyps5",
+  "next_steps": [
+    "its session asks for the merge when a step is ready"
+  ],
   "order": 7,
+  "owner": {
+    "name": "cardmodel-anyps5",
+    "session": "local_cae4df41-9d25-4898-9bd6-d52bfafb23ba"
+  },
   "paths": [
     "cardmodel/anyps5",
     "stdlib/anyps5.card",
@@ -32,7 +61,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
+  "standing": "2467 of 6903 exports complete (36%), every gap classified; on its branch: the master plan (docs/VISION.md) and 23 compiled library functions lifted from machine code into cards.",
   "statement": "AnyPS5 read as cards: its badge reproduced, its real coverage, every gap with the cause that keeps it open.",
   "tier": 1,
-  "title": "AnyPS5 on cards"
+  "title": "AnyPS5 on cards",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
 }

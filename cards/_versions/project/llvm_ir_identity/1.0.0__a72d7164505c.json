@@ -1,0 +1,30 @@
+{
+  "category": "project",
+  "kind": "research",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "cards": "translation_gap",
+      "label": "LLVM-IR translation gaps recorded",
+      "match": "*llvm*"
+    },
+    {
+      "cards": "xleq",
+      "label": "cross-language equivalences learned"
+    }
+  ],
+  "name": "llvm_ir_identity",
+  "order": 13,
+  "paths": [
+    "*llvm*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Identity of functions across languages through LLVM IR (the Pheros line of work). The card model holds the translation-gap cards for LLVM IR it carried over, and no LLVM code yet; its nearest working pieces are lifted machine code and the cross-language equivalence cards the learning step writes.",
+  "tier": 1,
+  "title": "LLVM-IR identity"
+}

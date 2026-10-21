@@ -1,0 +1,28 @@
+{
+  "category": "project",
+  "kind": "program",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "git_files": "cards/",
+      "label": "cards committed"
+    },
+    {
+      "count": "dirs",
+      "git_files": "cards/re_flaw/",
+      "label": "flaws recorded"
+    }
+  ],
+  "name": "rea_cards",
+  "order": 10,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "repo": "~/Programmering/rea-cards",
+  "statement": "rea's reconstruction tooling as cards (~/Programmering/rea-cards), read here only.",
+  "tier": 1,
+  "title": "rea as cards"
+}
