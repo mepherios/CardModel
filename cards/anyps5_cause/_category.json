@@ -1,0 +1,7 @@
+{
+  "card_type": "anyps5_cause",
+  "defined_by": "tools/seed_anyps5.py",
+  "description": "Why an AnyPS5 gap is open: derivable (and how), observation only (Pheros L102), performance, or an effect-shell / hardware / service / policy boundary; with what closes it.",
+  "name": "anyps5_cause",
+  "tier": 1
+}

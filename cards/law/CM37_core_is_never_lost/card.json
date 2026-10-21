@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM37_core_is_never_lost",
+  "origins": [
+    "user requirement 2026-10-21 (core model features never lost or forgotten, as laws)",
+    "hub L1",
+    "Pheros L41"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The model's core is a set of capability cards, each naming the laws it carries, a smoke check of the real engine, its witness tests and its docs. Every verify and every self-run runs the checks, and a core capability that stops behaving fails verify. Every law is carried by at least one capability, so no law is only words. New knowledge comes in as cards, and reframings (redefinitions, rewrites, learned cards) must keep every check passing; removing a capability is a visible change to its card and its test.",
+  "tier": 0,
+  "witness": "tests/test_self.py::test_core_capabilities_are_never_lost"
+}

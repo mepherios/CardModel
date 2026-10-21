@@ -1,0 +1,17 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM38_the_model_runs_itself",
+  "origins": [
+    "user requirement 2026-10-21 (self-ran rules, self-determinism, self-optimization and self-learning; the whole model runs as one unit)"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Using the model runs the model: a cycle of self_step cards checks the capabilities and the program's integrity, verifies, learns from source trees in every recognised language, rediscovers laws and identities when their cards change, measures the optimizer and the forms, and computes every goal; it turns the results into strengths, weaknesses and flaws with evidence and ranks what to improve next. Any command starts a cycle in the background when one is due, under the resource governor; what it learns lands in the self layer (untracked, read by every command), never in the tracked cards or the code.",
+  "tier": 0,
+  "witness": "tests/test_self.py::test_self_run_finds_flaws_and_ranks_them"
+}

@@ -221,6 +221,21 @@ def _draw(t: str, rng: random.Random):
     return abs(v) if t == "nat" else v
 
 
+def _draw_in_box(vs, box: dict, rng: random.Random) -> dict:
+    """A random point of a hypothesis box too large to enumerate: its corners and their neighbours sometimes,
+    otherwise uniform inside, so bounded statements are sampled where they mean something."""
+    env = {}
+    for v in vs:
+        lo, hi = box[v["name"]]
+        if v["type"] == "bool":
+            env[v["name"]] = rng.random() < 0.5
+        elif rng.random() < 0.2:
+            env[v["name"]] = min(hi, max(lo, rng.choice([lo, hi, lo + 1, hi - 1])))
+        else:
+            env[v["name"]] = rng.randint(lo, hi)
+    return env
+
+
 def _exhaustive(vs) -> list[dict] | None:
     if vs and all(v["type"] == "bool" for v in vs) and len(vs) <= 10:
         out = []
@@ -319,8 +334,9 @@ def _box_points(card, box) -> list[dict] | None:
 
 def witness(card, ops: dict, seed: int | None = None, samples: int = 400, call=None) -> dict:
     """Seeded check of a theorem card: an exhaustive small-value phase, then seeded random values (edges
-    included). Fails loud on a counterexample; 'vacuous' when the hypotheses rarely hold or pin a variable
-    to a single value (a law about one point is not a law)."""
+    included; inside the hypothesis box when the hypotheses bound every variable). Fails loud on a
+    counterexample; 'vacuous' when the hypotheses rarely hold or pin a variable to a single value (a law about
+    one point is not a law)."""
     seed = V.fresh_seed() if seed is None else seed
     rng = random.Random(f"{seed}:{card.get('name')}")
     ops = guarded(ops)
@@ -346,6 +362,8 @@ def witness(card, ops: dict, seed: int | None = None, samples: int = 400, call=N
             env = plan[k]
         elif envs is not None or checks - len(plan) >= budget or tried >= limit + len(plan):
             break
+        elif box is not None:
+            env = _draw_in_box(vs, box, rng)
         else:
             env = {v["name"]: _draw(v["type"], rng) for v in vs}
         k += 1

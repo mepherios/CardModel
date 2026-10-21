@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 0,
+  "measures": "integrity_problems",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "integrity",
+  "on_change": [],
+  "order": 20,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "integrity",
+  "statement": "one program: numbers, carried laws, described commands, sections, docs (CM39)",
+  "tier": 0
+}

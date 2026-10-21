@@ -215,6 +215,14 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "equilibrium_support":
         gm = secs.get("game")
         return len((gm.get("equilibrium") or {}).get("row_mix", {})) if gm and gm.get("equilibrium") else None
+    if name.startswith("anyps5_"):
+        a = secs.get("anyps5")
+        if not a or a.get("status") == "skipped":
+            return None
+        key = {"anyps5_parity_mismatches": "parity_mismatches", "anyps5_gaps_unclassified": "unclassified",
+               "anyps5_closable_open": "closable_open", "anyps5_complete_fraction": "complete_fraction",
+               "anyps5_witness_disagreements": "witness_disagreements"}.get(name)
+        return a.get(key) if key else None
     if name == "card_programs_passing":
         lang = secs.get("lang")
         return sum(1 for p in lang["programs"].values() if p["status"] == "pass") if lang else None
@@ -235,6 +243,21 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "ds_undecodable_executed":
         nds = ctx.load_state("nds_coverage")
         return sum(c.get("undecodable_executed", 0) for c in (nds.get("cpus") or {}).values()) if nds else None
+    if name == "capabilities_failing":
+        cap = secs.get("capabilities")
+        return len(cap.get("failing", [])) if cap and "failing" in cap else None
+    if name == "integrity_problems":
+        it = secs.get("integrity")
+        return len(it.get("problems", [])) if it and "problems" in it else None
+    if name == "laws_uncarried":
+        carried = {law for c in st.cards("capability") for law in c.get("laws") or []}
+        return sum(1 for law in st.cards("law") if law.qualified not in carried)
+    if name == "self_run_age_hours":
+        from . import selfrun
+        last = (selfrun._read(selfrun.self_dir() / "last.json") or {}).get("finished")
+        if not last:
+            return None
+        return round((datetime.now(timezone.utc) - datetime.fromisoformat(last)).total_seconds() / 3600, 1)
     runs = sorted(st.cards("arena_run"), key=lambda c: c["score"].get("finished", ""))
     if name == "arena_unsound_runs":
         return sum(1 for r in runs if not r["score"].get("sound")) if runs else None

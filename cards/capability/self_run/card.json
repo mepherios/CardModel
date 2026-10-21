@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "self_run",
+  "commands": [
+    "cardmodel self"
+  ],
+  "core": true,
+  "docs": [
+    "docs/AUTONOMY.md"
+  ],
+  "laws": [
+    "law/CM37_core_is_never_lost",
+    "law/CM38_the_model_runs_itself"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/selfrun.py",
+    "cardmodel/engines/capabilities.py"
+  ],
+  "name": "self_run",
+  "order": 25,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The model runs itself: cycles of checks, learning and optimization with findings and a ranked plan; the core is never lost.",
+  "tests": [
+    "tests/test_self.py::test_core_capabilities_are_never_lost",
+    "tests/test_self.py::test_self_run_finds_flaws_and_ranks_them"
+  ],
+  "tier": 0,
+  "usefulness": "Every use makes the model check and improve itself, and tell you where it falls short."
+}

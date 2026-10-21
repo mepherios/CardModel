@@ -407,22 +407,7 @@ def cmd_algebra(args) -> int:
                 out = paths.home() / "stdlib" / "algebra.card"
                 out.write_text(FA.card_source(r), encoding="utf-8")
                 layer = cli._layer(ctx, args)
-                cards = []
-                for rel in r["relations"]:
-                    cards.append({"name": f"{rel['f']}__{rel['g']}", "category": "functional_identity",
-                                  "statement": " | ".join(str(rel[k]) for k in ("shift", "composition",
-                                                                                "composition_rev", "cross_identity",
-                                                                                "basis_change") if k in rel),
-                                  "f": f"algorithm/{rel['f']}", "g": f"algorithm/{rel['g']}",
-                                  **{k: v for k, v in rel.items() if k not in ("f", "g")},
-                                  "depends_on": [f"algorithm/{rel['f']}", f"algorithm/{rel['g']}"],
-                                  "provenance": {"origin": "cardmodel algebra scan", "engine": "engines/funcalg.py"}})
-                for n, i in r["forms"].items():
-                    cards.append({"name": f"form__{n}", "category": "functional_identity", "kind": "canonical_form",
-                                  "statement": f"algorithm/{n}: {i['canonical']}", "canonical": i["canonical"],
-                                  "godel": i["godel"], "implementations": i["forms"], "checked": i["checked"],
-                                  "depends_on": [f"algorithm/{n}"],
-                                  "provenance": {"origin": "cardmodel algebra scan", "engine": "engines/funcalg.py"}})
+                cards = FA.identity_cards(r)
                 path = ctx.store.save_pack("functional_identity", "algorithms", cards, layer=layer,
                                            description="Identities between functions found from their behaviour "
                                            "(engines/funcalg.py): canonical forms with Gödel numbers, shifts, "
@@ -575,6 +560,8 @@ def register(sub) -> None:
     s.set_defaults(fn=cmd_algebra)
     from .game import cli as game_cli
     game_cli.register(sub)
+    from .anyps5 import cli as anyps5_cli
+    anyps5_cli.register(sub)
     from .machine import cli as machine_cli
     machine_cli.register(sub)
     from .arcade import cli as arcade_cli

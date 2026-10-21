@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "card_language",
+  "commands": [
+    "cardmodel run",
+    "cardmodel lang",
+    "cardmodel repl"
+  ],
+  "core": true,
+  "docs": [
+    "docs/LANGUAGE.md"
+  ],
+  "laws": [
+    "law/CM26_one_language"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/lang"
+  ],
+  "name": "card_language",
+  "order": 13,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "One language: functions, logic, theorems, tests and cards in one .card file, compiled to the card IR and from there to every language card.",
+  "tests": [
+    "tests/test_lang.py::test_function_cards_verify_in_languages",
+    "tests/test_lang.py::test_run_passes"
+  ],
+  "tier": 0,
+  "usefulness": "One file says what a thing is, how it behaves and why it is right."
+}

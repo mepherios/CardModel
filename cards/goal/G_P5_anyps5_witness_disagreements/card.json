@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "anyps5_witness_disagreements",
+  "name": "G_P5_anyps5_witness_disagreements",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Inputs where AnyPS5's own code and the card model's derived semantics disagree in the latest witness runs.",
+  "target": 0,
+  "tier": 1
+}

@@ -1,0 +1,273 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 303,
+      "call": "Agc::Command::Header({0}, {1}, {2})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": null,
+      "fn": "pm4_header",
+      "inputs": 303,
+      "note": "internal helper Agc::Command::Header, used by every packet emitter",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 4,
+      "call": "Agc::Command::Header({0}, {1}, {2})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": null,
+      "fn": null,
+      "inputs": 4,
+      "note": "outside the header's fields AnyPS5 throws (an unexpected state)",
+      "ok": true,
+      "threw": 4
+    },
+    {
+      "agree": 35,
+      "call": "GetSize constant vs the emitter's packet",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": null,
+      "fn": "packet_bytes",
+      "inputs": 35,
+      "ok": true,
+      "threw": 0,
+      "witnessed_exports": {
+        "libSceAgc.sceAgcAcbAcquireMemGetSize": true,
+        "libSceAgc.sceAgcAcbAtomicMemGetSize": true,
+        "libSceAgc.sceAgcAcbCondExecGetSize": true,
+        "libSceAgc.sceAgcAcbCopyDataGetSize": true,
+        "libSceAgc.sceAgcAcbDispatchIndirectGetSize": true,
+        "libSceAgc.sceAgcAcbDmaDataGetSize": true,
+        "libSceAgc.sceAgcAcbEventWriteGetSize": true,
+        "libSceAgc.sceAgcAcbJumpGetSize": true,
+        "libSceAgc.sceAgcAcbPrimeUtcl2GetSize": true,
+        "libSceAgc.sceAgcAcbRewindGetSize": true,
+        "libSceAgc.sceAgcCbBranchGetSize": true,
+        "libSceAgc.sceAgcCbCondWriteGetSize": true,
+        "libSceAgc.sceAgcCbDispatchGetSize": true,
+        "libSceAgc.sceAgcDcbAcquireMemGetSize": true,
+        "libSceAgc.sceAgcDcbAtomicGdsGetSize": true,
+        "libSceAgc.sceAgcDcbAtomicMemGetSize": true,
+        "libSceAgc.sceAgcDcbCondExecGetSize": true,
+        "libSceAgc.sceAgcDcbCopyDataGetSize": true,
+        "libSceAgc.sceAgcDcbDispatchIndirectGetSize": true,
+        "libSceAgc.sceAgcDcbDmaDataGetSize": true,
+        "libSceAgc.sceAgcDcbDrawIndexAutoGetSize": true,
+        "libSceAgc.sceAgcDcbDrawIndexGetSize": true,
+        "libSceAgc.sceAgcDcbDrawIndexIndirectGetSize": true,
+        "libSceAgc.sceAgcDcbDrawIndexIndirectMultiGetSize": true,
+        "libSceAgc.sceAgcDcbDrawIndexOffsetGetSize": true,
+        "libSceAgc.sceAgcDcbDrawIndirectGetSize": true,
+        "libSceAgc.sceAgcDcbGetLodStatsGetSize": true,
+        "libSceAgc.sceAgcDcbJumpGetSize": true,
+        "libSceAgc.sceAgcDcbPrimeUtcl2GetSize": true,
+        "libSceAgc.sceAgcDcbRewindGetSize": true,
+        "libSceAgc.sceAgcDcbSetIndexBufferGetSize": true,
+        "libSceAgc.sceAgcDcbSetIndexCountGetSize": true,
+        "libSceAgc.sceAgcDcbSetIndexSizeGetSize": true,
+        "libSceAgc.sceAgcDcbSetNumInstancesGetSize": true,
+        "libSceAgc.sceAgcDcbStallCommandBufferParserGetSize": true
+      }
+    }
+  ],
+  "exports": {
+    "libSceAgc.sceAgcAcbAcquireMemGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbAtomicMemGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbCondExecGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbCopyDataGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbDispatchIndirectGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbDmaDataGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbEventWriteGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbJumpGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbPrimeUtcl2GetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcAcbRewindGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcCbBranchGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcCbCondWriteGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcCbDispatchGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbAcquireMemGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbAtomicGdsGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbAtomicMemGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbCondExecGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbCopyDataGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDispatchIndirectGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDmaDataGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDrawIndexAutoGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDrawIndexGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDrawIndexIndirectGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDrawIndexIndirectMultiGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDrawIndexOffsetGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbDrawIndirectGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbGetLodStatsGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbJumpGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbPrimeUtcl2GetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbRewindGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbSetIndexBufferGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbSetIndexCountGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbSetIndexSizeGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbSetNumInstancesGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceAgc.sceAgcDcbStallCommandBufferParserGetSize": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "agc_packets",
+  "program": "stdlib/ps5_agc.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:50:57+00:00",
+  "seed": 20261021,
+  "semantics": "agc_packets",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "05cb644e351bc0756c3184ac87d8e0374d8797e6eb6d9a7eefac23b74c7f4d14",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

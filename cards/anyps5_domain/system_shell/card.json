@@ -1,0 +1,16 @@
+{
+  "category": "anyps5_domain",
+  "cause": "boundary_system_shell",
+  "exports": [],
+  "match": "^libSce(SystemService|Mbus|ShellUIUtil|SysCore|SysUtil|SysBridge|RegMgr|AppDb\\w*|AppInstUtil|Bgft|BgsStorage|Notification\\w*|Ipmi|UpdateService|BackupRestoreUtil|DataTransfer|HubAppUtil|Workspace|ContentListController|Esvm\\w*|Jemspace|Smart|Scm|SpSysCallWrapper|CustomMusicSysCallWrapper|MediaAppSharedStorage|Dipsw|Idu|AutoMounterClient|UsbStorage|Psm|PsmUtil|OrbisCompat|ResourceArbitrator|VideoArbitration|VideoDecoderArbitration|FsInternalForVsh|GLSlimVSH|AgcVsh\\w*|AgcResourceRegistration|CompanionHttpd|CompanionUtil|Gic|Mat|SrcUtl)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "system_shell",
+  "priority": 9,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "System processes and privileged services."
+}

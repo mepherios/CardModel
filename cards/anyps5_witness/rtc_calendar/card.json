@@ -1,0 +1,248 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 310,
+      "call": "sceRtcIsLeapYear({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcIsLeapYear",
+      "fn": "rtc_is_leap_year",
+      "inputs": 310,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 307,
+      "call": "sceRtcGetDaysInMonth({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetDaysInMonth",
+      "fn": "rtc_days_in_month",
+      "inputs": 307,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 305,
+      "call": "sceRtcGetDayOfWeek({0}, {1}, {2})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetDayOfWeek",
+      "fn": "rtc_day_of_week",
+      "inputs": 305,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 304,
+      "call": "daysFromCivil({0}, {1}, {2})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": null,
+      "fn": "days_from_civil",
+      "inputs": 304,
+      "note": "internal helper daysFromCivil",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 305,
+      "call": "Civil({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": null,
+      "fn": "civil_field",
+      "inputs": 305,
+      "note": "internal helper civilFromDays",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 303,
+      "call": "CheckValid({0}, {1}, {2}, {3}, {4}, {5}, {6})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcCheckValid",
+      "fn": "rtc_check_valid",
+      "inputs": 303,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 302,
+      "call": "GetTick({0}, {1}, {2}, {3}, {4}, {5}, {6})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetTick",
+      "fn": "rtc_get_tick",
+      "inputs": 302,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 303,
+      "call": "GetTimeT({0}, {1}, {2}, {3}, {4}, {5}, {6})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetTime_t",
+      "fn": "rtc_get_time_t",
+      "inputs": 303,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 302,
+      "call": "GetWin32({0}, {1}, {2}, {3}, {4}, {5}, {6})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetWin32FileTime",
+      "fn": "rtc_get_win32_filetime",
+      "inputs": 302,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 291,
+      "call": "DosWritten({0}, {1}, {2}, {3}, {4}, {5})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetDosTime",
+      "fn": "rtc_dos_time_written",
+      "inputs": 291,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 292,
+      "call": "DosResult({0}, {1}, {2}, {3}, {4}, {5})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetDosTime",
+      "fn": "rtc_dos_time_result",
+      "inputs": 292,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 303,
+      "call": "SetDos({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcSetDosTime",
+      "fn": "dos_field",
+      "inputs": 303,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 303,
+      "call": "FromTick({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcSetTick",
+      "fn": "rtc_set_tick_field",
+      "inputs": 303,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 1,
+      "call": "sceRtcGetTickResolution()",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceRtc.sceRtcGetTickResolution",
+      "fn": "ticks_per_second",
+      "inputs": 1,
+      "ok": true,
+      "threw": 0
+    }
+  ],
+  "exports": {
+    "libSceRtc.sceRtcCheckValid": {
+      "agree": true,
+      "checks": 303,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcGetDayOfWeek": {
+      "agree": true,
+      "checks": 305,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcGetDaysInMonth": {
+      "agree": true,
+      "checks": 307,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcGetDosTime": {
+      "agree": true,
+      "checks": 583,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcGetTick": {
+      "agree": true,
+      "checks": 302,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcGetTickResolution": {
+      "agree": true,
+      "checks": 1,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcGetTime_t": {
+      "agree": true,
+      "checks": 303,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcGetWin32FileTime": {
+      "agree": true,
+      "checks": 302,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcIsLeapYear": {
+      "agree": true,
+      "checks": 310,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcSetDosTime": {
+      "agree": true,
+      "checks": 303,
+      "disagree": 0
+    },
+    "libSceRtc.sceRtcSetTick": {
+      "agree": true,
+      "checks": 303,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rtc_calendar",
+  "program": "stdlib/ps5_rtc.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:51:02+00:00",
+  "seed": 20261021,
+  "semantics": "rtc_calendar",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "3b5f255f10f229849801dabf083ba16a82e7d82eb74d3ee1da70f08c56242038",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

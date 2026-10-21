@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 0,
+  "measures": "capabilities_failing",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "capabilities",
+  "on_change": [],
+  "order": 10,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "capabilities",
+  "statement": "the core capability smoke checks (CM37)",
+  "tier": 0
+}

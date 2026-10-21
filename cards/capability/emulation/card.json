@@ -1,0 +1,37 @@
+{
+  "category": "capability",
+  "check": "emulation",
+  "commands": [
+    "cardmodel emu",
+    "cardmodel machine"
+  ],
+  "core": true,
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "laws": [
+    "law/CM33_lifted_code_is_the_cards",
+    "law/CM34_emulation_effects_are_the_shell"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/machine/lift.py",
+    "cardmodel/machine/shell.py",
+    "cardmodel/machine/gb.py"
+  ],
+  "name": "emulation",
+  "order": 22,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Lifted ROM code is the cards and the shell is the only effect: a ROM runs lifted, frame for frame equal to the interpreter.",
+  "tests": [
+    "tests/test_machine.py::test_lifted_blocks_match_the_interpreter",
+    "tests/test_machine.py::test_shell_is_the_only_effect"
+  ],
+  "tier": 0,
+  "usefulness": "Your Game Boy / Color games run through the model, natively."
+}

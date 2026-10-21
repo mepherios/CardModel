@@ -1,0 +1,861 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 400,
+      "call": "__ashldi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__ashldi3_nid_postfix",
+      "fn": "ashldi3",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__ashrdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__ashrdi3_nid_postfix",
+      "fn": "ashrdi3",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__lshrdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__lshrdi3_nid_postfix",
+      "fn": "lshrdi3",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__muldi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__muldi3_nid_postfix",
+      "fn": "muldi3",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__negdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__negdi2_nid_postfix",
+      "fn": "negdi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 399,
+      "call": "__divdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__divdi3_nid_postfix",
+      "fn": "divdi3",
+      "inputs": 399,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__moddi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__moddi3_nid_postfix",
+      "fn": "moddi3",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 398,
+      "call": "__divsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__divsi3_nid_postfix",
+      "fn": "divsi3",
+      "inputs": 398,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 398,
+      "call": "__modsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__modsi3_nid_postfix",
+      "fn": "modsi3",
+      "inputs": 398,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 388,
+      "call": "__udivsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__udivsi3_nid_postfix",
+      "fn": "udivsi3",
+      "inputs": 388,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 393,
+      "call": "__umodsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__umodsi3_nid_postfix",
+      "fn": "umodsi3",
+      "inputs": 393,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 397,
+      "call": "__udivdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__udivdi3_nid_postfix",
+      "fn": "udivdi3",
+      "inputs": 397,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 399,
+      "call": "__umoddi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__umoddi3_nid_postfix",
+      "fn": "umoddi3",
+      "inputs": 399,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__cmpdi2_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__cmpdi2_nid_postfix",
+      "fn": "cmpdi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__ucmpdi2_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__ucmpdi2_nid_postfix",
+      "fn": "ucmpdi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 395,
+      "call": "__clzsi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__clzsi2_nid_postfix",
+      "fn": "clzsi2",
+      "inputs": 395,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 394,
+      "call": "__clzdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__clzdi2_nid_postfix",
+      "fn": "clzdi2",
+      "inputs": 394,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 390,
+      "call": "__ctzsi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__ctzsi2_nid_postfix",
+      "fn": "ctzsi2",
+      "inputs": 390,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 397,
+      "call": "__ctzdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__ctzdi2_nid_postfix",
+      "fn": "ctzdi2",
+      "inputs": 397,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__ffsdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__ffsdi2_nid_postfix",
+      "fn": "ffsdi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__paritysi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__paritysi2_nid_postfix",
+      "fn": "paritysi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__paritydi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__paritydi2_nid_postfix",
+      "fn": "paritydi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__popcountsi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__popcountsi2_nid_postfix",
+      "fn": "popcountsi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 400,
+      "call": "__popcountdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__popcountdi2_nid_postfix",
+      "fn": "popcountdi2",
+      "inputs": 400,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 399,
+      "call": "__absvsi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__absvsi2_nid_postfix",
+      "fn": "absvsi2",
+      "inputs": 399,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 397,
+      "call": "__absvdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__absvdi2_nid_postfix",
+      "fn": "absvdi2",
+      "inputs": 397,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 395,
+      "call": "__negvsi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__negvsi2_nid_postfix",
+      "fn": "negvsi2",
+      "inputs": 395,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 397,
+      "call": "__negvdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__negvdi2_nid_postfix",
+      "fn": "negvdi2",
+      "inputs": 397,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 278,
+      "call": "__addvsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__addvsi3_nid_postfix",
+      "fn": "addvsi3",
+      "inputs": 278,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 263,
+      "call": "__addvdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__addvdi3_nid_postfix",
+      "fn": "addvdi3",
+      "inputs": 263,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 314,
+      "call": "__subvsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__subvsi3_nid_postfix",
+      "fn": "subvsi3",
+      "inputs": 314,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 304,
+      "call": "__subvdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__subvdi3_nid_postfix",
+      "fn": "subvdi3",
+      "inputs": 304,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 14,
+      "call": "__mulvsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__mulvsi3_nid_postfix",
+      "fn": "mulvsi3",
+      "inputs": 14,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 13,
+      "call": "__mulvdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__mulvdi3_nid_postfix",
+      "fn": "mulvdi3",
+      "inputs": 13,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "__addvsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__addvsi3_nid_postfix",
+      "fn": "console_addvsi3",
+      "inputs": 300,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "__addvdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__addvdi3_nid_postfix",
+      "fn": "console_addvdi3",
+      "inputs": 300,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "__subvsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__subvsi3_nid_postfix",
+      "fn": "console_subvsi3",
+      "inputs": 300,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "__subvdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__subvdi3_nid_postfix",
+      "fn": "console_subvdi3",
+      "inputs": 300,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "__udivsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__udivsi3_nid_postfix",
+      "fn": "console_udivsi3",
+      "inputs": 300,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "__umodsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__umodsi3_nid_postfix",
+      "fn": "console_umodsi3",
+      "inputs": 300,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 4,
+      "call": "__clzdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__clzdi2_nid_postfix",
+      "fn": "console_clzdi2",
+      "inputs": 4,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 4,
+      "call": "__ctzdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.__ctzdi2_nid_postfix",
+      "fn": "console_ctzdi2",
+      "inputs": 4,
+      "note": "the console's behaviour outside the ABI's domain (debt libc.L37), observation",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 3,
+      "call": "__divdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__divdi3_nid_postfix",
+      "fn": null,
+      "inputs": 3,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 3
+    },
+    {
+      "agree": 2,
+      "call": "__moddi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__moddi3_nid_postfix",
+      "fn": null,
+      "inputs": 2,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 2
+    },
+    {
+      "agree": 2,
+      "call": "__divsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__divsi3_nid_postfix",
+      "fn": null,
+      "inputs": 2,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 2
+    },
+    {
+      "agree": 1,
+      "call": "__modsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__modsi3_nid_postfix",
+      "fn": null,
+      "inputs": 1,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 1
+    },
+    {
+      "agree": 2,
+      "call": "__udivdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__udivdi3_nid_postfix",
+      "fn": null,
+      "inputs": 2,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 2
+    },
+    {
+      "agree": 1,
+      "call": "__umoddi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__umoddi3_nid_postfix",
+      "fn": null,
+      "inputs": 1,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 1
+    },
+    {
+      "agree": 1,
+      "call": "__negvsi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__negvsi2_nid_postfix",
+      "fn": null,
+      "inputs": 1,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 1
+    },
+    {
+      "agree": 1,
+      "call": "__absvsi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__absvsi2_nid_postfix",
+      "fn": null,
+      "inputs": 1,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 1
+    },
+    {
+      "agree": 1,
+      "call": "__negvdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__negvdi2_nid_postfix",
+      "fn": null,
+      "inputs": 1,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 1
+    },
+    {
+      "agree": 1,
+      "call": "__absvdi2_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__absvdi2_nid_postfix",
+      "fn": null,
+      "inputs": 1,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 1
+    },
+    {
+      "agree": 2,
+      "call": "__mulvsi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__mulvsi3_nid_postfix",
+      "fn": null,
+      "inputs": 2,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 2
+    },
+    {
+      "agree": 2,
+      "call": "__mulvdi3_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libc.__mulvdi3_nid_postfix",
+      "fn": null,
+      "inputs": 2,
+      "note": "the console traps here (debt libc.L37); AnyPS5 throws instead",
+      "ok": true,
+      "threw": 2
+    }
+  ],
+  "exports": {
+    "libc.__absvdi2_nid_postfix": {
+      "agree": true,
+      "checks": 398,
+      "disagree": 0
+    },
+    "libc.__absvsi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__addvdi3_nid_postfix": {
+      "agree": true,
+      "checks": 563,
+      "disagree": 0
+    },
+    "libc.__addvsi3_nid_postfix": {
+      "agree": true,
+      "checks": 578,
+      "disagree": 0
+    },
+    "libc.__ashldi3_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__ashrdi3_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__clzdi2_nid_postfix": {
+      "agree": true,
+      "checks": 398,
+      "disagree": 0
+    },
+    "libc.__clzsi2_nid_postfix": {
+      "agree": true,
+      "checks": 395,
+      "disagree": 0
+    },
+    "libc.__cmpdi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__ctzdi2_nid_postfix": {
+      "agree": true,
+      "checks": 401,
+      "disagree": 0
+    },
+    "libc.__ctzsi2_nid_postfix": {
+      "agree": true,
+      "checks": 390,
+      "disagree": 0
+    },
+    "libc.__divdi3_nid_postfix": {
+      "agree": true,
+      "checks": 402,
+      "disagree": 0
+    },
+    "libc.__divsi3_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__ffsdi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__lshrdi3_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__moddi3_nid_postfix": {
+      "agree": true,
+      "checks": 402,
+      "disagree": 0
+    },
+    "libc.__modsi3_nid_postfix": {
+      "agree": true,
+      "checks": 399,
+      "disagree": 0
+    },
+    "libc.__muldi3_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__mulvdi3_nid_postfix": {
+      "agree": true,
+      "checks": 15,
+      "disagree": 0
+    },
+    "libc.__mulvsi3_nid_postfix": {
+      "agree": true,
+      "checks": 16,
+      "disagree": 0
+    },
+    "libc.__negdi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__negvdi2_nid_postfix": {
+      "agree": true,
+      "checks": 398,
+      "disagree": 0
+    },
+    "libc.__negvsi2_nid_postfix": {
+      "agree": true,
+      "checks": 396,
+      "disagree": 0
+    },
+    "libc.__paritydi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__paritysi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__popcountdi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__popcountsi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__subvdi3_nid_postfix": {
+      "agree": true,
+      "checks": 604,
+      "disagree": 0
+    },
+    "libc.__subvsi3_nid_postfix": {
+      "agree": true,
+      "checks": 614,
+      "disagree": 0
+    },
+    "libc.__ucmpdi2_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__udivdi3_nid_postfix": {
+      "agree": true,
+      "checks": 399,
+      "disagree": 0
+    },
+    "libc.__udivsi3_nid_postfix": {
+      "agree": true,
+      "checks": 688,
+      "disagree": 0
+    },
+    "libc.__umoddi3_nid_postfix": {
+      "agree": true,
+      "checks": 400,
+      "disagree": 0
+    },
+    "libc.__umodsi3_nid_postfix": {
+      "agree": true,
+      "checks": 693,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "libc_integer_builtins",
+  "program": "stdlib/ps5_libc.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:50:59+00:00",
+  "seed": 20261021,
+  "semantics": "libc_integer_builtins",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "f15ed1d0685872336addb1a99cbd138f13810937c84d4b5a7bdcd00d06f199aa",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

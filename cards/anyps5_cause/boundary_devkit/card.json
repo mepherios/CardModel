@@ -1,0 +1,25 @@
+{
+  "category": "anyps5_cause",
+  "class": "boundary",
+  "closes_with": "nothing for retail titles",
+  "cues": [
+    "\\bdevkit\\b",
+    "\\bdev kit\\b",
+    "\\bdebugger\\b",
+    "\\bprofil\\w+\\b",
+    "\\bdeci5?\\b",
+    "\\brazor\\b",
+    "\\bsanitizer\\b"
+  ],
+  "debt_priority": 21,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary_devkit",
+  "priority": 21,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Development-kit tooling (debuggers, profilers, DECI5, system logging), absent on retail consoles."
+}

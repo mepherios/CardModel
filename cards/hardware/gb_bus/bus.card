@@ -23,6 +23,22 @@ fn wr8(a: Int, v: Int) {
 fn idle() {
   now += md
 }
+-- the IDU on the bus: an address in FE00-FEFF during the OAM scan corrupts OAM (DMG, oam_bug in the PPU card);
+-- a read that increments also gets the read-increase pattern before the read's own
+fn idu(a: Int) {
+  if a >= 0xFE00 and a < 0xFF00 {
+    oam_bug(OAM_BUG_WRITE)
+  }
+  now += md
+}
+fn rd8_idu(a: Int) -> Int {
+  if a >= 0xFE00 and a < 0xFF00 {
+    oam_bug(OAM_BUG_READ_IDU)
+  }
+  let v = bus_read(a)
+  now += md
+  return v
+}
 fn wram_index(a: Int) -> Int {
   if a < 0xD000 {
     return a - 0xC000
@@ -54,7 +70,7 @@ fn bus_read(a: Int) -> Int {
     return oam_read(a)
   }
   if a < 0xFF00 {
-    return 0
+    return unusable_read(a)
   }
   if a < 0xFF80 {
     return io_read(a)
@@ -84,7 +100,7 @@ fn bus_write(a: Int, v: Int) {
   } elif a < 0xFEA0 {
     oam_write(a, v)
   } elif a < 0xFF00 {
-    return
+    unusable_write(a)
   } elif a < 0xFF80 {
     io_write(a, v)
     next_event = now

@@ -1,0 +1,14 @@
+{
+  "category": "anyps5_standard",
+  "cause": "derivable_standard_host",
+  "match": "^(fchown|readlink|readlinkat|symlink|nmount)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "posix_filesystem",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "POSIX.1-2017 file operations; nmount (FreeBSD mount(2))."
+}

@@ -1,0 +1,19 @@
+{
+  "category": "anyps5_cause",
+  "class": "derivable",
+  "closes_with": "close the blocker first (cardmodel anyps5 blocks ranks them)",
+  "cues": [
+    "\\bonce .{0,40} is implemented\\b"
+  ],
+  "debt_priority": 30,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "derivable_blocked",
+  "priority": 4,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Derivable once what it calls, sizes or mirrors is implemented: the blocker is named."
+}

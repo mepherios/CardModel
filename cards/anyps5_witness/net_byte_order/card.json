@@ -1,0 +1,125 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 300,
+      "call": "sceNetHtonl_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceNet.sceNetHtonl_nid_postfix",
+      "fn": "htonl",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "sceNetNtohl_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceNet.sceNetNtohl_nid_postfix",
+      "fn": "ntohl",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "sceNetHtons_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceNet.sceNetHtons_nid_postfix",
+      "fn": "htons",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "sceNetNtohs_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceNet.sceNetNtohs_nid_postfix",
+      "fn": "ntohs",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "sceNetHtonll({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceNet.sceNetHtonll",
+      "fn": "htonll",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "sceNetNtohll({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceNet.sceNetNtohll",
+      "fn": "ntohll",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    }
+  ],
+  "exports": {
+    "libSceNet.sceNetHtonl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libSceNet.sceNetHtonll": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libSceNet.sceNetHtons_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libSceNet.sceNetNtohl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libSceNet.sceNetNtohll": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libSceNet.sceNetNtohs_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "net_byte_order",
+  "program": "stdlib/ps5_net.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:51:01+00:00",
+  "seed": 20261021,
+  "semantics": "net_byte_order",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "ae8a85d34847c00117b67e5e0fb804a84db22534c745fd9f72cbc5f1eee0f291",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

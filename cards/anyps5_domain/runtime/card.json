@@ -1,0 +1,16 @@
+{
+  "category": "anyps5_domain",
+  "cause": "observation_proprietary",
+  "exports": [],
+  "match": "^libSce(Fiber|Ult|JobManager|Random|Rtc|Sysmodule|UserService|Amprs?|Ampr)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "runtime",
+  "priority": 19,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Fibers, user-level threads, jobs, time, modules, users, asynchronous I/O."
+}

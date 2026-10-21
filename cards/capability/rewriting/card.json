@@ -1,0 +1,34 @@
+{
+  "category": "capability",
+  "check": "rewriting",
+  "commands": [
+    "cardmodel rewrite --optimize",
+    "cardmodel rewrite --prove"
+  ],
+  "core": true,
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "laws": [
+    "law/CM25_laws_carry_into_optimization"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/search.py"
+  ],
+  "name": "rewriting",
+  "order": 8,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Rules rewrite and prove: rewrite rule cards simplify expressions to their cheapest equivalent and chain into proofs of equalities.",
+  "tests": [
+    "tests/test_rewrite.py::test_optimize_finds_cheaper",
+    "tests/test_rewrite.py::test_proves_hub_identities"
+  ],
+  "tier": 0,
+  "usefulness": "Algebra the model knows turns into faster code automatically."
+}

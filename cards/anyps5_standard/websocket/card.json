@@ -1,0 +1,14 @@
+{
+  "category": "anyps5_standard",
+  "cause": "derivable_standard_host",
+  "match": "^sceHttp2WebSocket\\w*$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "websocket",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "RFC 6455 (WebSocket) over the host's sockets."
+}

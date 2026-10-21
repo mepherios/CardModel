@@ -1,0 +1,7 @@
+{
+  "card_type": "self_step",
+  "defined_by": "tools/seed_self.py",
+  "description": "The steps of a self-run cycle (engines/selfrun.py): what each does and when it is due (every_hours, on_change registries) (CM38).",
+  "name": "self_step",
+  "tier": 0
+}

@@ -1,0 +1,635 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 300,
+      "call": "floor_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.floor_nid_postfix",
+      "fn": "floor_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "floorf_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.floorf_nid_postfix",
+      "fn": "floor_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "floorl_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.floorl_nid_postfix",
+      "fn": "floor_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "ceil_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.ceil_nid_postfix",
+      "fn": "ceil_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "ceilf_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.ceilf_nid_postfix",
+      "fn": "ceil_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "ceill_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.ceill_nid_postfix",
+      "fn": "ceil_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "trunc_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.trunc_nid_postfix",
+      "fn": "trunc_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "truncf_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.truncf_nid_postfix",
+      "fn": "trunc_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "truncl_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.truncl_nid_postfix",
+      "fn": "trunc_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "round_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.round_nid_postfix",
+      "fn": "round_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "roundf_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.roundf_nid_postfix",
+      "fn": "round_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "roundl_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.roundl_nid_postfix",
+      "fn": "round_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fabs_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fabs_nid_postfix",
+      "fn": "fabs_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fabsf_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fabsf_nid_postfix",
+      "fn": "fabs_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fabsl_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fabsl_nid_postfix",
+      "fn": "fabs_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fmin_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fmin_nid_postfix",
+      "fn": "fmin_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fminf_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fminf_nid_postfix",
+      "fn": "fmin_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fminl_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fminl_nid_postfix",
+      "fn": "fmin_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fmax_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fmax_nid_postfix",
+      "fn": "fmax_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fmaxf_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fmaxf_nid_postfix",
+      "fn": "fmax_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fmaxl_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fmaxl_nid_postfix",
+      "fn": "fmax_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "fdim_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.fdim_nid_postfix",
+      "fn": "fdim_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 293,
+      "call": "ldexp_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.ldexp_nid_postfix",
+      "fn": "ldexp_f",
+      "inputs": 293,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 53,
+      "call": "ldexpf_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.ldexpf_nid_postfix",
+      "fn": "ldexp_f",
+      "inputs": 53,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 288,
+      "call": "ldexpl_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.ldexpl_nid_postfix",
+      "fn": "ldexp_f",
+      "inputs": 288,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 296,
+      "call": "scalbn_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.scalbn_nid_postfix",
+      "fn": "ldexp_f",
+      "inputs": 296,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 48,
+      "call": "scalbnf_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.scalbnf_nid_postfix",
+      "fn": "ldexp_f",
+      "inputs": 48,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 294,
+      "call": "scalbnl_nid_postfix({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.scalbnl_nid_postfix",
+      "fn": "ldexp_f",
+      "inputs": 294,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "lround_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.lround_nid_postfix",
+      "fn": "lround_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "llround_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.llround_nid_postfix",
+      "fn": "lround_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "rint_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.rint_nid_postfix",
+      "fn": "rint_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "rintf_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.rintf_nid_postfix",
+      "fn": "rint_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "nearbyint_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.nearbyint_nid_postfix",
+      "fn": "rint_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "lrint_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.lrint_nid_postfix",
+      "fn": "lrint_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "llrint_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.llrint_nid_postfix",
+      "fn": "lrint_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "lrintf_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.lrintf_nid_postfix",
+      "fn": "lrint_f",
+      "inputs": 300,
+      "ok": true,
+      "threw": 0
+    }
+  ],
+  "exports": {
+    "libc.ceil_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.ceilf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.ceill_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fabs_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fabsf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fabsl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fdim_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.floor_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.floorf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.floorl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fmax_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fmaxf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fmaxl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fmin_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fminf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.fminl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.ldexp_nid_postfix": {
+      "agree": true,
+      "checks": 293,
+      "disagree": 0
+    },
+    "libc.ldexpf_nid_postfix": {
+      "agree": true,
+      "checks": 53,
+      "disagree": 0
+    },
+    "libc.ldexpl_nid_postfix": {
+      "agree": true,
+      "checks": 288,
+      "disagree": 0
+    },
+    "libc.llrint_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.llround_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.lrint_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.lrintf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.lround_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.nearbyint_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.rint_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.rintf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.round_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.roundf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.roundl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.scalbn_nid_postfix": {
+      "agree": true,
+      "checks": 296,
+      "disagree": 0
+    },
+    "libc.scalbnf_nid_postfix": {
+      "agree": true,
+      "checks": 48,
+      "disagree": 0
+    },
+    "libc.scalbnl_nid_postfix": {
+      "agree": true,
+      "checks": 294,
+      "disagree": 0
+    },
+    "libc.trunc_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.truncf_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    },
+    "libc.truncl_nid_postfix": {
+      "agree": true,
+      "checks": 300,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "libm_exact",
+  "program": "stdlib/ps5_libm.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:51:00+00:00",
+  "seed": 20261021,
+  "semantics": "libm_exact",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "1203e6587d13186914765bd8759023af007f8a1190a82da0daae1231114f98cc",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

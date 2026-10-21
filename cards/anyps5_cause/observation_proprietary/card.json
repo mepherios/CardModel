@@ -1,0 +1,17 @@
+{
+  "category": "anyps5_cause",
+  "class": "observation",
+  "closes_with": "an observation of the console's behaviour (Pheros L102)",
+  "cues": [],
+  "debt_priority": 36,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observation_proprietary",
+  "priority": 40,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "A Sony API with no public specification and no recorded observation in AnyPS5: only observing the console (or Sony's documentation, which the model does not have) can define it."
+}

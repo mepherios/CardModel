@@ -122,6 +122,79 @@ fn view_mode() -> Int {
   }
   return 0
 }
+-- The DMG's OAM corruption bug (Pan Docs): while the OAM scan reads row r (8 bytes; row d // 4 at dot d of mode
+-- 2, so from L+4 to L+76: Blargg oam_bug 4-scanline_timing), an OAM access or an IDU address in FE00-FEFF
+-- rewrites it from the row before. Words are 16-bit: a =
+-- row r word 0, b = row r-1 word 0, c = row r-1 word 2. Write: word 0 = ((a ^ c) & (b ^ c)) ^ c; read: word 0 =
+-- b | (a & c); both then copy words 1-3 from row r-1. A read that increments first (rows 4-18) sets row r-1
+-- word 0 = (b & (x | a | c)) | (x & a & c) with x = row r-2 word 0, and copies row r-1 to rows r-2 and r.
+const OAM_BUG_WRITE = 1
+const OAM_BUG_READ = 2
+const OAM_BUG_READ_IDU = 3
+fn oam_bug_row() -> Int {
+  if cgb != 0 or not lcd_on() or ly >= SCREEN_H or first_line != 0 {
+    return -1
+  }
+  let d = line_dot()
+  if d < 0 or d >= MODE2_DOTS {
+    return -1
+  }
+  return d // 4
+}
+fn oam_word(r: Int, i: Int) -> Int = oam[r * 8 + i * 2] | (oam[r * 8 + i * 2 + 1] << 8)
+fn set_oam_word(r: Int, i: Int, v: Int) {
+  oam[r * 8 + i * 2] = v & 0xFF
+  oam[r * 8 + i * 2 + 1] = (v >> 8) & 0xFF
+}
+fn oam_bug(kind: Int) {
+  ppu_sync()
+  let r = oam_bug_row()
+  if r < 1 {
+    return
+  }
+  if kind == OAM_BUG_READ_IDU {
+    if r >= 4 and r < 19 {
+      let x = oam_word(r - 2, 0)
+      let a = oam_word(r, 0)
+      let b = oam_word(r - 1, 0)
+      let c = oam_word(r - 1, 2)
+      set_oam_word(r - 1, 0, (b & (x | a | c)) | (x & a & c))
+      for i in 0 .. 8 {
+        oam[(r - 2) * 8 + i] = oam[(r - 1) * 8 + i]
+        oam[r * 8 + i] = oam[(r - 1) * 8 + i]
+      }
+    }
+    return
+  }
+  let a = oam_word(r, 0)
+  let b = oam_word(r - 1, 0)
+  let c = oam_word(r - 1, 2)
+  set_oam_word(r, 0, if kind == OAM_BUG_WRITE then ((a ^ c) & (b ^ c)) ^ c else b | (a & c))
+  for i in 2 .. 8 {
+    oam[r * 8 + i] = oam[(r - 1) * 8 + i]
+  }
+}
+-- FEA0-FEFF, the unusable range: on the DMG it reads 0x00 while OAM is open and 0xFF while it is blocked, and an
+-- access then corrupts OAM like one inside it (Pan Docs memory map)
+fn unusable_read(a: Int) -> Int {
+  if cgb != 0 {
+    return 0
+  }
+  ppu_sync()
+  if oam_blocked() {
+    oam_bug(OAM_BUG_READ)
+    return 0xFF
+  }
+  return 0
+}
+fn unusable_write(a: Int) {
+  if cgb == 0 {
+    ppu_sync()
+    if oam_write_blocked() {
+      oam_bug(OAM_BUG_WRITE)
+    }
+  }
+}
 fn vram_read(a: Int) -> Int {
   ppu_sync()
   if vram_blocked() {
@@ -139,6 +212,7 @@ fn vram_write(a: Int, v: Int) {
 fn oam_read(a: Int) -> Int {
   ppu_sync()
   if oam_blocked() {
+    oam_bug(OAM_BUG_READ)
     return 0xFF
   }
   return oam[a - 0xFE00]
@@ -146,6 +220,7 @@ fn oam_read(a: Int) -> Int {
 fn oam_write(a: Int, v: Int) {
   ppu_sync()
   if oam_write_blocked() {
+    oam_bug(OAM_BUG_WRITE)
     return
   }
   oam[a - 0xFE00] = v

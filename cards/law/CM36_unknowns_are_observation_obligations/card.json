@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM36_unknowns_are_observation_obligations",
+  "origins": [
+    "user requirement 2026-10-21 (AnyPS5 by construction)",
+    "Pheros L102",
+    "AnyPS5 AGENTS.md (never return a made-up success)"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "A gap whose semantics no card derives is classified by what would close it and never filled with a made-up success: console-specific behaviour (names, signatures, layouts, error codes, timing) is closed only by observation (Pheros L102), boundaries (hardware, services, DRM) are named, and only what a public standard or the model's own structure fixes is derived, with a witness.",
+  "tier": 0,
+  "witness": "tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"
+}

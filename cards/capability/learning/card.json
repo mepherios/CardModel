@@ -1,0 +1,38 @@
+{
+  "category": "capability",
+  "check": "learning",
+  "commands": [
+    "cardmodel observe",
+    "cardmodel learn",
+    "cardmodel self corpus"
+  ],
+  "core": true,
+  "docs": [
+    "HANDOVER.md",
+    "docs/AUTONOMY.md"
+  ],
+  "laws": [
+    "law/CM04_compose_with_evidence",
+    "law/CM15_observations_are_ground_truth"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/observe.py",
+    "cardmodel/engines/learn.py"
+  ],
+  "name": "learning",
+  "order": 6,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Learning from code in any recognised language: observe (named cards vs fallbacks), propose, verify, promote only with evidence; learned cards cite their observation.",
+  "tests": [
+    "tests/test_learn.py::test_promotion_needs_evidence",
+    "tests/test_learn.py::test_learned_cards_cite_evidence"
+  ],
+  "tier": 0,
+  "usefulness": "The model grows from the code it reads, and only keeps what it could check."
+}

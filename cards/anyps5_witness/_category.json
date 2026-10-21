@@ -1,0 +1,13 @@
+{
+  "defined_by": "tools/seed_anyps5.py",
+  "description": "Runs of AnyPS5's own code next to the card model's semantics: seed, inputs, agreement, counterexamples, toolchain and the snapshot they belong to. Written by `cardmodel anyps5 witness`.",
+  "name": "anyps5_witness",
+  "status_values": [
+    "agree",
+    "disagree",
+    "error",
+    "skipped",
+    "vacuous"
+  ],
+  "tier": 2
+}

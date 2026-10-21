@@ -1,0 +1,14 @@
+{
+  "category": "anyps5_standard",
+  "cause": "derivable_standard_host",
+  "match": "^(execv|execve|execvp|fork|daemon|posix_spawnp?)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "posix_process",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "POSIX.1-2017 exec, fork, posix_spawn; daemon (BSD)."
+}

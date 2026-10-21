@@ -1,0 +1,16 @@
+{
+  "category": "anyps5_domain",
+  "cause": "boundary_psn",
+  "exports": [],
+  "match": "^libSce(Np\\w*|SigninDialog|LoginDialog|LoginService|LoginMgrServer|GameUpdate|Abstract(Twitter|Youtube|Tcs)|UrlConfigResolver|ConnectAccountDialog|PlayerInvitationDialog|PlayerSelectionDialog|CdlgPlayerReview|CdlgG2P)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "psn",
+  "priority": 5,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "PlayStation Network services and their dialogs."
+}

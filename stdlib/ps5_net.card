@@ -1,0 +1,28 @@
+-- libSceNet's byte-order conversions, derived: network byte order is big-endian (RFC 1700, "Data notations";
+-- POSIX htonl/ntohl), and the PS5's CPU is little-endian x86-64, so host-to-network and back are byte swaps.
+-- anyps5_semantics/net_byte_order runs AnyPS5's libSceNet next to these definitions.
+module ps5_net
+
+fn bswap16(x: Int) -> Int requires 0 <= x, x <= 0xFFFF = ((x & 0xFF) << 8) | (x >> 8)
+fn bswap32(x: Int) -> Int requires 0 <= x, x <= 0xFFFFFFFF =
+  ((x & 0xFF) << 24) | (((x >> 8) & 0xFF) << 16) | (((x >> 16) & 0xFF) << 8) | (x >> 24)
+fn bswap64(x: Int) -> Int requires 0 <= x, x <= 0xFFFFFFFFFFFFFFFF = (bswap32(x & 0xFFFFFFFF) << 32) | bswap32(x >> 32)
+fn htons(x: Int) -> Int requires 0 <= x, x <= 0xFFFF = bswap16(x)
+fn htonl(x: Int) -> Int requires 0 <= x, x <= 0xFFFFFFFF = bswap32(x)
+fn htonll(x: Int) -> Int requires 0 <= x, x <= 0xFFFFFFFFFFFFFFFF = bswap64(x)
+fn ntohs(x: Int) -> Int requires 0 <= x, x <= 0xFFFF = bswap16(x)
+fn ntohl(x: Int) -> Int requires 0 <= x, x <= 0xFFFFFFFF = bswap32(x)
+fn ntohll(x: Int) -> Int requires 0 <= x, x <= 0xFFFFFFFFFFFFFFFF = bswap64(x)
+-- byte i of x, counted from the least significant
+fn byte_at(x: Int, i: Int) -> Int requires 0 <= x, 0 <= i = (x >> (8 * i)) & 0xFF
+
+theorem swap16_involution(x: Int) requires 0 <= x, x <= 0xFFFF: bswap16(bswap16(x)) == x
+theorem swap32_involution(x: Int) requires 0 <= x, x <= 0xFFFFFFFF: bswap32(bswap32(x)) == x
+theorem swap64_involution(x: Int) requires 0 <= x, x <= 0xFFFFFFFFFFFFFFFF: bswap64(bswap64(x)) == x
+theorem swap32_reverses_bytes(x: Int, i: Int) requires 0 <= x, x <= 0xFFFFFFFF, 0 <= i, i <= 3:
+  byte_at(bswap32(x), i) == byte_at(x, 3 - i)
+theorem swap64_reverses_bytes(x: Int, i: Int) requires 0 <= x, x <= 0xFFFFFFFFFFFFFFFF, 0 <= i, i <= 7:
+  byte_at(bswap64(x), i) == byte_at(x, 7 - i)
+
+test htonl(0x12345678) == 0x78563412 and htons(0x1234) == 0x3412
+test htonll(0x0102030405060708) == 0x0807060504030201 and ntohll(htonll(42)) == 42

@@ -233,7 +233,7 @@ class Lifter:
         for d in parse(I.library_text(core, "core")):
             if d.kind == "fn":
                 core_mod_fns.add(d.data["name"])
-        self.inline_always = {n for n in core_mod_fns | {"rd8", "wr8", "idle", "fetch8", "fetch16"}
+        self.inline_always = {n for n in core_mod_fns | {"rd8", "wr8", "idle", "idu", "rd8_idu", "fetch8", "fetch16"}
                               if n in self.fns and _loop_free(self.fns[n])}
         self.inline_const = {"bus_read", "bus_write", "wram_index", "io_read", "io_write", "rom_read", "peek8"}
         self.n = 0

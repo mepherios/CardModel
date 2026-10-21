@@ -1,0 +1,16 @@
+{
+  "category": "anyps5_domain",
+  "cause": "boundary_capture_share",
+  "exports": [],
+  "match": "^libSce(ScreenShot|VideoRecording\\w*|GameLiveStreaming|Share\\w*|SharePlay|SocialScreen\\w*|Remoteplay|RemotePlayClientIpc|VideoStreamingEngine\\w*|ShareFactoryUtil)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "capture_share",
+  "priority": 7,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Capture, streaming, remote play, share."
+}

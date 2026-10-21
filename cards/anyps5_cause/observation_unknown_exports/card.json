@@ -1,0 +1,17 @@
+{
+  "category": "anyps5_cause",
+  "class": "observation",
+  "closes_with": "the module's export list from a public NID database or from titles' import tables",
+  "cues": [],
+  "debt_priority": 41,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observation_unknown_exports",
+  "priority": 41,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "A module whose export table AnyPS5 does not declare at all: even the denominator is unknown (firmware tables are not read here, by policy)."
+}

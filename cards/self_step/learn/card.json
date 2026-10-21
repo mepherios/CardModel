@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 0,
+  "measures": "learned_cards, named_fraction",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "learn",
+  "on_change": [],
+  "order": 50,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "learn",
+  "statement": "learn from changed source trees in every recognised language into the self layer",
+  "tier": 0
+}

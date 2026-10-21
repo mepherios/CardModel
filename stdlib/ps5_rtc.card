@@ -1,0 +1,200 @@
+-- libSceRtc's calendar, derived: the proleptic Gregorian calendar of ISO 8601 for years 1..9999, days counted
+-- from 0001-01-01, ticks of one microsecond, weekdays from Sunday = 0, Unix and Win32 epochs, and the FAT
+-- (MS-DOS) packed date and time. The error codes and validation order are libSceRtc's own contract (values the
+-- console returns, recorded by AnyPS5; observation, not derivation) and are kept apart at the end.
+-- anyps5_semantics/rtc_calendar runs AnyPS5's libSceRtc next to these definitions.
+module ps5_rtc
+
+fn is_leap(y: Int) -> Bool = (y % 4 == 0 and y % 100 != 0) or y % 400 == 0
+fn month_days(y: Int, m: Int) -> Int requires 1 <= m, m <= 12 =
+  if m == 2 then (if is_leap(y) then 29 else 28) else (if m == 4 or m == 6 or m == 9 or m == 11 then 30 else 31)
+fn valid_date(y: Int, m: Int, d: Int) -> Bool =
+  1 <= y and y <= 9999 and 1 <= m and m <= 12 and 1 <= d and d <= month_days(y, m)
+
+-- whole years before y: 365 days each and one more per leap year (every 4th, not every 100th, every 400th)
+fn days_before_year(y: Int) -> Int requires 1 <= y, y <= 10000 =
+  365 * (y - 1) + (y - 1) // 4 - (y - 1) // 100 + (y - 1) // 400
+fn days_before_month(y: Int, m: Int) -> Int requires 1 <= m, m <= 12 {
+  var d = 0
+  for k in 1 .. m {
+    d += month_days(y, k)
+  }
+  return d
+}
+fn days_from_civil(y: Int, m: Int, d: Int) -> Int requires 1 <= y, y <= 9999, 1 <= m, m <= 12, 1 <= d, d <= 31 =
+  days_before_year(y) + days_before_month(y, m) + d - 1
+
+-- the inverse: the year, month and day of day n (0 = 0001-01-01; 3652058 = 9999-12-31)
+fn civil_year(n: Int) -> Int requires 0 <= n, n <= 3652058 {
+  var y = n * 400 // 146097 + 1
+  while days_before_year(y) > n {
+    y -= 1
+  }
+  while days_before_year(y + 1) <= n {
+    y += 1
+  }
+  return y
+}
+fn civil_month(n: Int) -> Int requires 0 <= n, n <= 3652058 {
+  let y = civil_year(n)
+  var r = n - days_before_year(y)
+  var m = 1
+  while r >= month_days(y, m) {
+    r -= month_days(y, m)
+    m += 1
+  }
+  return m
+}
+fn civil_day(n: Int) -> Int requires 0 <= n, n <= 3652058 =
+  n - days_before_year(civil_year(n)) - days_before_month(civil_year(n), civil_month(n)) + 1
+
+-- the O(1) form AnyPS5's daysFromCivil uses (H. Hinnant, "chrono-Compatible Low-Level Date Algorithms"):
+-- March-based years in 400-year eras; a theorem below ties it to the definition
+fn days_from_civil_fast(y: Int, m: Int, d: Int) -> Int requires 1 <= y, y <= 9999, 1 <= m, m <= 12, 1 <= d, d <= 31 {
+  let yy = if m <= 2 then y - 1 else y
+  let era = yy // 400
+  let yoe = yy - era * 400
+  let doy = (153 * (if m > 2 then m - 3 else m + 9) + 2) // 5 + d - 1
+  let doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+  return era * 146097 + doe - 306
+}
+
+-- 0001-01-01 was a Monday, so Sunday = 0 is (days + 1) mod 7
+fn day_of_week(y: Int, m: Int, d: Int) -> Int requires 1 <= y, y <= 9999, 1 <= m, m <= 12, 1 <= d, d <= 31 =
+  (days_from_civil(y, m, d) + 1) % 7
+
+-- ticks: microseconds since 0001-01-01T00:00:00
+fn ticks_per_second() -> Int = 1000000
+fn ticks_per_day() -> Int = 86400000000
+fn tick(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int, us: Int) -> Int requires 1 <= y, y <= 9999, 1 <= mo, mo <= 12, 1 <= d, d <= 31 =
+  days_from_civil(y, mo, d) * ticks_per_day() + h * 3600000000 + mi * 60000000 + s * 1000000 + us
+fn unix_epoch_tick() -> Int = days_from_civil(1970, 1, 1) * ticks_per_day()
+fn win32_epoch_tick() -> Int = days_from_civil(1601, 1, 1) * ticks_per_day()
+fn max_tick() -> Int = (days_from_civil(9999, 12, 31) + 1) * ticks_per_day() - 1
+fn tick_year(t: Int) -> Int requires 0 <= t, t <= 315537897599999999 = civil_year(t // ticks_per_day())
+fn tick_month(t: Int) -> Int requires 0 <= t, t <= 315537897599999999 = civil_month(t // ticks_per_day())
+fn tick_day(t: Int) -> Int requires 0 <= t, t <= 315537897599999999 = civil_day(t // ticks_per_day())
+fn tick_hour(t: Int) -> Int requires 0 <= t = t % ticks_per_day() // 3600000000
+fn tick_minute(t: Int) -> Int requires 0 <= t = t % 3600000000 // 60000000
+fn tick_second(t: Int) -> Int requires 0 <= t = t % 60000000 // 1000000
+fn tick_microsecond(t: Int) -> Int requires 0 <= t = t % 1000000
+
+-- FAT date and time (Microsoft FAT specification, "Date and time formats"): years since 1980 in bits 31-25,
+-- month 24-21, day 20-16, hour 15-11, minute 10-5, seconds / 2 in 4-0
+fn dos_pack(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int) -> Int requires 1980 <= y, y <= 2107, 1 <= mo, mo <= 12, 1 <= d, d <= 31, 0 <= h, h <= 23, 0 <= mi, mi <= 59, 0 <= s, s <= 59 =
+  ((y - 1980) << 25) | (mo << 21) | (d << 16) | (h << 11) | (mi << 5) | (s // 2)
+fn dos_year(v: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF = 1980 + (v >> 25)
+fn dos_month(v: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF = (v >> 21) & 15
+fn dos_day(v: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF = (v >> 16) & 31
+fn dos_hour(v: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF = (v >> 11) & 31
+fn dos_minute(v: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF = (v >> 5) & 63
+fn dos_second(v: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF = (v & 31) * 2
+
+-- libSceRtc's contract: error codes and the order fields are checked in (AnyPS5 libSceRtc/Export.cpp; observed
+-- console values, not derived). The calendar inside each branch is the derived part above.
+fn e_invalid_value() -> Int = 0x80B50003 - 0x100000000
+fn e_invalid_year() -> Int = 0x80B50008 - 0x100000000
+fn e_invalid_month() -> Int = 0x80B50009 - 0x100000000
+fn e_invalid_day() -> Int = 0x80B5000A - 0x100000000
+fn e_invalid_hour() -> Int = 0x80B5000B - 0x100000000
+fn e_invalid_minute() -> Int = 0x80B5000C - 0x100000000
+fn e_invalid_second() -> Int = 0x80B5000D - 0x100000000
+fn e_invalid_microsecond() -> Int = 0x80B5000E - 0x100000000
+fn rtc_is_leap_year(y: Int) -> Int = if y < 1 then e_invalid_year() else (if is_leap(y) then 1 else 0)
+fn rtc_days_in_month(y: Int, m: Int) -> Int =
+  if y < 1 then e_invalid_year() else (if m < 1 or m > 12 then e_invalid_month() else month_days(y, m))
+fn rtc_day_of_week(y: Int, m: Int, d: Int) -> Int {
+  if y < 1 or y > 9999 { return e_invalid_year() }
+  if m < 1 or m > 12 { return e_invalid_month() }
+  if d < 1 or d > month_days(y, m) { return e_invalid_day() }
+  return day_of_week(y, m, d)
+}
+fn rtc_check_valid(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int, us: Int) -> Int {
+  if y < 1 or y > 9999 { return e_invalid_year() }
+  if mo < 1 or mo > 12 { return e_invalid_month() }
+  if d < 1 or d > month_days(y, mo) { return e_invalid_day() }
+  if h > 23 { return e_invalid_hour() }
+  if mi > 59 { return e_invalid_minute() }
+  if s > 59 { return e_invalid_second() }
+  if us >= 1000000 { return e_invalid_microsecond() }
+  return 0
+}
+fn rtc_get_tick(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int, us: Int) -> Int {
+  let e = rtc_check_valid(y, mo, d, h, mi, s, us)
+  if e != 0 { return e }
+  return tick(y, mo, d, h, mi, s, us)
+}
+fn rtc_get_time_t(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int, us: Int) -> Int {
+  let e = rtc_check_valid(y, mo, d, h, mi, s, us)
+  if e != 0 { return e }
+  let t = tick(y, mo, d, h, mi, s, us)
+  if t < unix_epoch_tick() { return e_invalid_value() }
+  return (t - unix_epoch_tick()) // 1000000
+}
+fn rtc_get_win32_filetime(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int, us: Int) -> Int {
+  let e = rtc_check_valid(y, mo, d, h, mi, s, us)
+  if e != 0 { return e }
+  let t = tick(y, mo, d, h, mi, s, us)
+  if t < win32_epoch_tick() { return e_invalid_value() }
+  return (t - win32_epoch_tick()) * 10
+}
+-- the packed value sceRtcGetDosTime writes: the FAT layout inside 1980..2107; outside it, 0 below and the
+-- largest encodable time above (fpPS4's reading of the PS4 library: observation)
+fn rtc_dos_time_written(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int) -> Int requires 1 <= y, y <= 9999, 1 <= mo, mo <= 12, 1 <= d, d <= 31, 0 <= h, h <= 23, 0 <= mi, mi <= 59, 0 <= s, s <= 59 =
+  if y < 1980 then 0 else (if y > 2107 then 0xFF9FBF7D else dos_pack(y, mo, d, h, mi, s))
+fn rtc_dos_time_result(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int) -> Int =
+  if y < 1980 or y > 2107 then e_invalid_year() else 0
+-- one field per call, for the harness: what sceRtcSetTick and sceRtcSetDosTime write, and civilFromDays
+fn valid_dt(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int) -> Bool =
+  valid_date(y, mo, d) and 0 <= h and h <= 23 and 0 <= mi and mi <= 59 and 0 <= s and s <= 59
+fn rtc_set_tick_field(t: Int, f: Int) -> Int requires 0 <= t, 0 <= f, f <= 6 {
+  if t > max_tick() { return e_invalid_value() }
+  if f == 0 { return tick_year(t) }
+  if f == 1 { return tick_month(t) }
+  if f == 2 { return tick_day(t) }
+  if f == 3 { return tick_hour(t) }
+  if f == 4 { return tick_minute(t) }
+  if f == 5 { return tick_second(t) }
+  return tick_microsecond(t)
+}
+fn dos_field(v: Int, f: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF, 0 <= f, f <= 5 {
+  if f == 0 { return dos_year(v) }
+  if f == 1 { return dos_month(v) }
+  if f == 2 { return dos_day(v) }
+  if f == 3 { return dos_hour(v) }
+  if f == 4 { return dos_minute(v) }
+  return dos_second(v)
+}
+fn civil_field(n: Int, f: Int) -> Int requires 0 <= n, n <= 3652058, 0 <= f, f <= 2 =
+  if f == 0 then civil_year(n) else (if f == 1 then civil_month(n) else civil_day(n))
+
+theorem fast_form_is_the_definition(y: Int, m: Int, d: Int) requires 1 <= y, y <= 9999, 1 <= m, m <= 12, 1 <= d, d <= 31:
+  days_from_civil_fast(y, m, d) == days_from_civil(y, m, d)
+theorem year_lengths(y: Int) requires 1 <= y, y <= 9999:
+  days_before_year(y + 1) - days_before_year(y) == (if is_leap(y) then 366 else 365)
+theorem leap_cycle(y: Int) requires 1 <= y, y <= 9599:
+  days_before_year(y + 400) - days_before_year(y) == 146097
+theorem month_lengths_sum(y: Int) requires 1 <= y, y <= 9999:
+  days_before_month(y, 12) + month_days(y, 12) == (if is_leap(y) then 366 else 365)
+theorem civil_round_trip(n: Int) requires 0 <= n, n <= 3652058:
+  days_from_civil(civil_year(n), civil_month(n), civil_day(n)) == n
+theorem civil_is_valid(n: Int) requires 0 <= n, n <= 3652058:
+  valid_date(civil_year(n), civil_month(n), civil_day(n))
+theorem weekday_steps(y: Int, m: Int, d: Int) requires 1 <= y, y <= 9999, 1 <= m, m <= 12, 1 <= d, d <= 27:
+  day_of_week(y, m, d + 1) == (day_of_week(y, m, d) + 1) % 7
+theorem dos_round_trip(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int) requires 1980 <= y, y <= 2107, 1 <= mo, mo <= 12, 1 <= d, d <= 31, 0 <= h, h <= 23, 0 <= mi, mi <= 59, 0 <= s, s <= 59:
+  (dos_year(dos_pack(y, mo, d, h, mi, s)) == y and dos_month(dos_pack(y, mo, d, h, mi, s)) == mo
+   and dos_day(dos_pack(y, mo, d, h, mi, s)) == d and dos_hour(dos_pack(y, mo, d, h, mi, s)) == h
+   and dos_minute(dos_pack(y, mo, d, h, mi, s)) == mi and dos_second(dos_pack(y, mo, d, h, mi, s)) == s - s % 2)
+
+test days_from_civil(1970, 1, 1) == 719162 and days_from_civil(1601, 1, 1) == 584388
+test days_from_civil(1, 1, 1) == 0 and days_from_civil(9999, 12, 31) == 3652058
+test max_tick() == 315537897599999999
+test day_of_week(1970, 1, 1) == 4 and day_of_week(2000, 1, 1) == 6 and day_of_week(2026, 10, 21) == 3
+test is_leap(2000) and not is_leap(1900) and is_leap(2024) and not is_leap(2026)
+test civil_year(719162) == 1970 and civil_month(719162 + 59) == 3 and civil_day(719162 + 59) == 1
+test dos_pack(2026, 10, 21, 18, 30, 59) == 0x5D5593DD
+test rtc_check_valid(2026, 2, 29, 0, 0, 0, 0) == e_invalid_day() and rtc_check_valid(2024, 2, 29, 23, 59, 59, 999999) == 0
+test rtc_get_time_t(1970, 1, 2, 0, 0, 0, 0) == 86400 and rtc_get_time_t(1969, 12, 31, 0, 0, 0, 0) == e_invalid_value()
+test rtc_dos_time_written(1979, 1, 1, 0, 0, 0) == 0 and rtc_dos_time_written(2108, 1, 1, 0, 0, 0) == 0xFF9FBF7D
+test days_from_civil_fast(2026, 10, 21) == days_from_civil(2026, 10, 21) and days_from_civil_fast(1, 1, 1) == 0

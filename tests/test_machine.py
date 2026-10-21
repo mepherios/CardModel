@@ -170,6 +170,32 @@ class GameBoy(unittest.TestCase):
         self.assertLess(g.m.get("PC"), 0x8000)
         self.assertIn(g.m.read("hram", 0, 1)[0], (5, 6, 7), "one V-blank handler run per frame")
 
+    def test_dmg_oam_corruption(self):
+        """The DMG's OAM bug (Pan Docs' write pattern): the IDU putting an address in FE00-FEFF on the bus during
+        the OAM scan rewrites the row being read from the row before; row 0, other addresses and the CGB are
+        spared (Blargg oam_bug is the hardware witness)."""
+        m = native.IRMachine(self.ctx, Bd.module(self.ctx, "gameboy"))
+        fill = bytes(range(0xA0))
+
+        def after(addr, dot, cgb=0):
+            m.array("oam")[:] = fill
+            for k, v in {"lcdc": 0x91, "ly": 10, "first_line": 0, "mode": 2, "cgb": cgb, "md": 4, "now": 4000,
+                         "line_start": 4000 - dot, "ppu_next": 99999}.items():
+                m.set(k, v)
+            m.call("idu", addr)
+            return bytes(m.array("oam"))
+
+        def word(b, r, i):
+            return b[r * 8 + i * 2] | (b[r * 8 + i * 2 + 1] << 8)
+
+        got = after(0xFE00, 8)                     # dot 8 of mode 2: the scan reads row 2
+        a, b, c = word(fill, 2, 0), word(fill, 1, 0), word(fill, 1, 2)
+        self.assertEqual(word(got, 2, 0), ((a ^ c) & (b ^ c)) ^ c)
+        self.assertEqual(got[18:24], fill[10:16])
+        self.assertEqual(got[:16] + got[24:], fill[:16] + fill[24:])
+        for spared in (after(0xFE00, 0), after(0xFDFF, 8), after(0xFE00, 8, cgb=1), after(0xFE00, 80)):
+            self.assertEqual(spared, fill)
+
     def test_a_run_of_eis_lets_the_interrupt_in_after_the_second(self):
         """EI only schedules IME; a second EI does not push it back (mooneye ei_sequence): with an interrupt
         pending, the handler's return address is the third EI's."""

@@ -1,0 +1,130 @@
+{
+  "category": "anyps5_semantics",
+  "checks": [
+    {
+      "args": [
+        [
+          0,
+          255
+        ]
+      ],
+      "call": "UsCharacter({0})",
+      "export": null,
+      "fn": "us_char",
+      "note": "internal table UsCharacter"
+    },
+    {
+      "args": [
+        [
+          256,
+          65535
+        ]
+      ],
+      "call": "UsCharacter({0})",
+      "export": null,
+      "fn": "us_char",
+      "note": "internal table UsCharacter"
+    },
+    {
+      "args": [
+        [
+          0,
+          255
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "call": "GetCharacter({0}, {1})",
+      "export": "libSceConvertKeycode.sceConvertKeycodeGetCharacter",
+      "fn": "us_char_state"
+    },
+    {
+      "args": [
+        [
+          0,
+          255
+        ],
+        [
+          67108864,
+          67108864
+        ]
+      ],
+      "call": "GetCharacter({0}, {1})",
+      "export": "libSceConvertKeycode.sceConvertKeycodeGetCharacter",
+      "fn": "us_char_state"
+    },
+    {
+      "call": "GetCharacter({0}, {1})",
+      "edges": [
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          256
+        ],
+        [
+          4,
+          2147483648
+        ]
+      ],
+      "expect": "throws",
+      "export": "libSceConvertKeycode.sceConvertKeycodeGetCharacter",
+      "note": "AnyPS5 throws for the state bits it does not know (the shift bit among them)"
+    }
+  ],
+  "closes": [],
+  "closes_debt": [],
+  "covers": [
+    "libSceConvertKeycode.sceConvertKeycodeGetCharacter"
+  ],
+  "derives": [
+    {
+      "export": "libSceConvertKeycode.sceConvertKeycodeGetCharacter",
+      "remaining": "which bit of the state argument selects shift, and what the console returns for the other bits and for keys without a character (observation; debt libSceConvertKeycode.L5)",
+      "remaining_cause": "observation_unknown_signature",
+      "what": "the shifted layer of the US layout (us_shifted_char)"
+    }
+  ],
+  "harness": {
+    "include": [
+      "core/libs/prx/libSceConvertKeycode/Export.cpp"
+    ],
+    "language": "cpp",
+    "link": {
+      "darwin": [
+        "-Wl,-undefined,dynamic_lookup"
+      ],
+      "linux": [
+        "-Wl,--unresolved-symbols=ignore-all"
+      ]
+    },
+    "prelude_file": "harness.hpp"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "keycode_us_layout",
+  "observed": [
+    {
+      "debt": "libSceConvertKeycode.L5",
+      "what": "usage 0x64 reads as '\\\\' (the HID name 'Non-US \\\\ and |'); the console is unmeasured"
+    }
+  ],
+  "program": "stdlib/ps5_keycode.card",
+  "provenance": {
+    "by": "the AnyPS5 session (hand-written binding)",
+    "origin": "cardmodel",
+    "written": "2026-10-21"
+  },
+  "source": "core/libs/prx/libSceConvertKeycode/Export.cpp",
+  "standard": "USB HID Usage Tables 1.12, section 10 (Keyboard/Keypad page 0x07), US keyboard layout",
+  "statement": "libSceConvertKeycode's characters: USB HID keyboard usages through the US layout, unshifted (what AnyPS5 returns) and shifted (derived here; AnyPS5 throws for every state bit it does not know)."
+}

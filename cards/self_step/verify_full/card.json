@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 24,
+  "measures": "conformance, functions, proofs, portability",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "verify_full",
+  "on_change": [],
+  "order": 40,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "verify_full",
+  "statement": "every verify section, the toolchain-heavy ones too (writes last_verify)",
+  "tier": 0
+}
