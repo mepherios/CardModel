@@ -1,10 +1,9 @@
 {
-  "blockers": [
-    "MATH_CORE.md needs the user's yes before anything existing is restructured"
-  ],
+  "blockers": [],
   "branches": [
     "claude/jolly-liskov-*",
-    "claude/compassionate-margulis-*"
+    "claude/compassionate-margulis-*",
+    "claude/elated-mestorf-*"
   ],
   "category": "project",
   "docs": [
@@ -26,18 +25,19 @@
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
-    "phase 2: distillation of lifted code and the semantic-hash library"
+    "phase 0 by the research handover (the user's yes, relayed by Ting): storage rules (no content integers, a structure hash and a sparse vector with its basis version on every definition), witness tiers, the formal core in Lean",
+    "merging claude/festive-margulis-43fde7 (the user approved in its session)"
   ],
   "kind": "program",
   "left": [
+    "R3: size witnesses by class so they prove (polynomials, C-finite, Boolean, bit-vectors)",
     "the ARM instruction cards as terms (G_M6: 511 of 679)",
     "canonical forms for more definitions (G_U7 0.3 of 0.9)",
-    "a polynomial normal form beside the e-graph",
     "one In progress tab after the cartridge merge"
   ],
   "metadata": {
-    "previous_content_hash": "f3a39807753c6253a5cca92abe58ab40806b4eb2306618550f18f77fe6bdff70",
-    "version": "2.0.5",
+    "previous_content_hash": "2495493d7e230edb2e4c987ca0332ed57f93c83c6796eef2ba8af55955660ae2",
+    "version": "2.0.6",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -56,8 +56,8 @@
   ],
   "name": "cardmodel",
   "next_steps": [
-    "symbolic ARM terms",
-    "e-graph canonical forms of the instruction terms",
+    "merge the cartridge store and fold its WORK tab into In progress",
+    "storage rules R2, then witness tiers R3, then the Lean formal core R1",
     "the semantic-hash library and instant lookup (phase 2)"
   ],
   "order": 6,
@@ -70,18 +70,19 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "MATH_CORE phases 0 and 1 are on main: the prime ledger (70 atoms, CM43), an e-graph over 241 equalities, the four sources (CM44) with 552 definitions, and the 512 LR35902 instruction cards as symbolic terms (511 witnessed against their semantics, the CB prefix a dispatch).",
+  "standing": "MATH_CORE phases 0 and 1 are on main (the user's yes): the prime ledger (70 atoms, CM43), an e-graph over 241 equalities, the four sources (CM44) with 552 definitions, the 512 LR35902 instruction cards as symbolic terms. Next: phase 0 brought to the research handover's storage rules and agenda (R1-R3), as the user asked.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T01:17:28+02:00",
+  "updated": "2026-10-22T01:28:26+02:00",
   "user_actions": [
     {
-      "action": "Decide what happens to claude/jolly-liskov-2d97a8",
+      "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",
       "unblocks": [
-        "merging or retiring that branch"
+        "law CM42 (the store runs what it lists)",
+        "goals G_A9 and G_S1"
       ],
-      "why": "a second self-run built in parallel; its laws CM37-CM39 collide with main's"
+      "why": "its session folded its loop into main's self-run (law witnesses, observe_self, the store client, CM42); the user decides the merge"
     }
   ]
 }

@@ -139,6 +139,14 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | bb480fb | main: the store's live In progress page (cards/project, arcade/hub.py, early access); main took over port 8770 and the installed launcher, agreed with the games session |
 | 2026-10-22 | c8aeb4c | main: law CM41, detailed and current project cards, the Waiting on you list |
 | 2026-10-22 | de22b52 | main: docs/MATH_CORE.md, a proposal awaiting the user's yes |
+| 2026-10-22 | e86a84b | main: project cards revised honestly; a timing race out of `test_affine_match` |
+| 2026-10-22 | 99242f5 | main: the hub re-reads the cards when anything moved, so a revised project card shows at once |
+| 2026-10-22 | e0eca75 | `claude/sad-sanderson-482207`: Vector Duel 0.4.0 is the release (the user's "Yes: merge claude/sad-sanderson-482207 into main so Vector Duel 0.4.0 is the release") |
+| 2026-10-22 | b75a6d2 | main: Vector Duel 0.4.0 released from main's cards; early access only from branches with unmerged work |
+| 2026-10-22 | 03b1c6e | main: MATH_CORE phase 0 F1–F3 (the user's "Yes to MATH_CORE.md: start phase 0 and phase 1"): the prime ledger, content vectors, structural numbers, core types; law CM43 |
+| 2026-10-22 | 51a70b2 | main: MATH_CORE phase 0 F4: equality saturation (an e-graph) over the rule cards and discovered laws |
+| 2026-10-22 | bcdbdde | main: MATH_CORE phase 1: the four sources (definition, action, transformation, method); law CM44 |
+| 2026-10-22 | 8dbd200 | main: MATH_CORE phase 0 F5: the LR35902 instruction cards as symbolic terms (511 of 512 agree with the bench) |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
-sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a.
+sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200.
