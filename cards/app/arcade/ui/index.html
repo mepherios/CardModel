@@ -15,13 +15,14 @@
     <button class="arrow" id="fwd" title="Forward">&#8250;</button>
     <a data-view="store" class="tab">STORE</a>
     <a data-view="library" class="tab">LIBRARY</a>
+    <a data-view="work" class="tab">WORK</a>
     <a data-view="news" class="tab">NEWS</a>
     <a data-view="dev" class="tab">IN PROGRESS</a>
     <a data-view="profile" class="tab" id="usertab">YOU</a>
   </div>
   <div class="right">
     <span id="service" class="dot" title="Arcade service"></span>
-    <span id="username"></span>
+    <a id="username" title="Your profile"></a>
     <button id="settings-btn" class="iconbtn" title="Settings">&#9881;</button>
   </div>
 </header>
@@ -35,7 +36,7 @@
     <span class="dl-bar"><span id="dl-mini-fill"></span></span>
   </a>
   <span class="spacer"></span>
-  <span class="friends">Built from cards &middot; every rule is a card</span>
+  <a class="friends" id="worklink" title="Every session's branch of the repository">Built from cards &middot; every rule is a card</a>
 </footer>
 
 <div id="modal" class="hidden"></div>

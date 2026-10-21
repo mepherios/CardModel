@@ -1,7 +1,6 @@
 {
   "blockers": [
-    "the branch's store work is uncommitted",
-    "the merge needs the user's go-ahead"
+    "the merge into main needs the user's go-ahead"
   ],
   "branches": [
     "claude/festive-margulis-*",
@@ -12,22 +11,25 @@
     "docs/MACHINES.md"
   ],
   "done": [
-    "960 of 971 surveyed ROMs boot",
-    "every runnable hardware test ROM passes (OAM bug, CGB DMG mode)",
-    "on the branch: library.json cartridge folders, headers, covers, the Game Boy Player build"
+    "960 of 971 surveyed ROMs boot; every runnable hardware test ROM passes (153 of 153: the DMG OAM bug, the CGB's DMG mode)",
+    "the Game Boy Player (system/gameboy: the gameboy machine card plus player.card, law CM40) builds, installs and plays like a game; battery saves and the MBC3 clock survive closing",
+    "the library: every cartridge in the user's folders read where it is (a zip in memory), with its header, the survey's verdict and a title screen the machine draws headless; the folders live in library.json",
+    "the DS listed with its coverage, not playable",
+    "the launcher's Update installs the last good build when the cards in progress do not build, remembers the error across restarts, and the pages restart a stopped service",
+    "a WORK tab (every branch's commits, uncommitted changes, areas, programs) and a Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its own cardmodel",
+    "every title and datum on the launcher's pages opens something (230 clicks over 11 views, no errors)"
   ],
   "games": [
     "gameboy_player"
   ],
   "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
-  "in_progress": [
-    "the launcher's library UI and update fallback (uncommitted on the branch)"
-  ],
+  "in_progress": [],
   "kind": "game",
   "left": [
-    "commit the store work",
-    "merge it into main",
-    "one store entry per cartridge on main"
+    "merge the branch into main and reinstall Cardmodel Arcade from main",
+    "fold the WORK tab into main's IN PROGRESS tab, and branch versions into early access (one mechanism)",
+    "one store page per cartridge (today cartridges are library entries played by the player)",
+    "the DS playable: its 2D engines, VRAM banks, 3D, sound"
   ],
   "metadata": {
     "previous_content_hash": "dd26687a64257466811fefd6759ef75bfdaf93a64becf9c4635fc75808e52407",
@@ -51,9 +53,8 @@
   ],
   "name": "gameboy_player",
   "next_steps": [
-    "commit the work in progress",
-    "renumber CM36_players_are_cards to CM40",
-    "merge into main"
+    "the main session asks the user to approve merging claude/festive-margulis-43fde7",
+    "after the merge: install the launcher from main and check Update, the WORK tab and the cartridges in the app"
   ],
   "order": 2,
   "owner": {
@@ -69,28 +70,31 @@
     "cards/hardware",
     "cards/machine/gameboy",
     "cards/isa/lr35902",
-    "cards/game/gameboy_player",
-    "cards/player",
-    "cards/cartridge"
+    "cards/system",
+    "cardmodel/arcade/system.py",
+    "cardmodel/arcade/library.py",
+    "cardmodel/arcade/work.py"
   ],
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "The cartridge library, the system player and a WORK tab are on claude/festive-margulis-43fde7; its store work is still uncommitted there.",
+  "standing": "Committed on claude/festive-margulis-43fde7 and caught up with main (c8aeb4c): the Game Boy Player installs and plays like a game, the library lists every cartridge with its title screen and verdict, and the launcher has a WORK tab, branch versions and an Update that falls back to the last good build; it waits for the user's go-ahead to merge into main.",
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T00:30:00+02:00",
+  "updated": "2026-10-22T00:38:39+02:00",
   "user_actions": [
     {
-      "action": "Approve merging claude/festive-margulis-43fde7 into main once its store work is committed",
+      "action": "Approve merging claude/festive-margulis-43fde7 into main",
       "unblocks": [
-        "Game Boy / Color cartridges as store entries",
-        "the DS listed as unplayable",
+        "Update that falls back to the last good build",
+        "every title and datum clickable",
+        "the WORK tab and branch versions",
+        "your Game Boy / Color cartridges in the library",
         "one In progress tab instead of two"
       ],
-      "why": "it brings every cartridge into the store as an entry, the DS shown as unplayable, and the system players"
+      "why": "the launcher you use is built from main: the working Update, the clickable pages, the WORK tab and your cartridges reach it only through that merge"
     }
   ]
 }

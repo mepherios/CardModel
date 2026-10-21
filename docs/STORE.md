@@ -16,8 +16,9 @@ built game natively; `arcade launcher` compiled the app in 4.5 s.
 |---|---|---|---|
 | **Vector Duel** (`game/vector_duel`, v0.3.0) | a 1-v-1 fighting game: 3 fighters, 25 moves, 6 arenas, a 6-opponent arcade ladder, training, local versus, 10 achievements | compiled from cards to a native library + the macOS shell; `cardmodel arcade run vector_duel` without the launcher | yes: store page, screenshots, install / update / verify / play, achievements from its save |
 | **Cardmodel Arcade** (`app/arcade`) | the launcher itself | `cardmodel arcade launcher [--install]` builds the app; it starts `cardmodel arcade serve` | it is the store |
-| Game Boy / Game Boy Color games | the user's own ROMs (never copied into the repository) through the lifted card IR | `cardmodel emu ROM` (a browser shell with sound and saves); 960 of 971 surveyed ROMs boot | not on main yet: the games session is adding a "Game Boy Player" entry on its branch |
-| The DS prototype | both DS CPUs direct-booted, ARM9 code lifted, coverage measured | `cardmodel machine nds ROM` | no: no graphics or sound yet, so nothing to play |
+| **Game Boy Player** (`system/gameboy`, v1.0.0) and the user's Game Boy / Color games | the gameboy machine card plus a card-language player (CM40); the user's own cartridges, read where they are (never copied into the repository, a depot or the library) | built and installed like a game; `cardmodel arcade run gameboy_player --rom FILE`; `cardmodel emu ROM` is the browser shell | yes: the player is a store entry; every cartridge in the user's folders is in the library with the survey's verdict and a title screen the machine draws, and Play runs it in the installed player |
+| The DS prototype | both DS CPUs direct-booted, ARM9 code lifted, coverage measured | `cardmodel machine nds ROM` | listed: DS cartridges are in the library with their coverage, not playable (no graphics or sound yet) |
+| Work in progress | every session's branch of the repository and the programs on it | the launcher's Work tab; each program's Versions and branches card | yes: a branch's version installs like a beta, built there with the branch's own code and cards |
 | The combat prototype | the Vector Counter System in a terminal, against the model's AIs | `cardmodel game play`, `game duel`, `game tournament` | no: a terminal program (the native game is its successor) |
 | The systemic world | a world whose events carry and explain themselves | `cardmodel game world` | no: a simulation, not a game yet |
 
@@ -36,7 +37,9 @@ Any new `game` card appears in the store by itself: the service lists every card
 | the build and the depot | `arcade/build.py` | content-addressed: the build id hashes the library, shell, interface and version; files are cut into 1 MiB chunks named by their SHA-256, so an update downloads only changed chunks and every file is checked |
 | the store pictures | rendered headless from the module | screenshots, header, capsule, hero and icon come from the game itself, not by hand |
 | the service | `arcade/server.py` (standard-library HTTP) | catalog, store pages, build progress, manifests, chunks with an optional bandwidth limit, pictures, the launcher's pages; it re-reads the cards when they change |
-| the launcher | `app/arcade` (`Launcher.swift`, `ui/`) | install / update / verify integrity / play, play time, achievements read from the game's save |
+| the launcher | `app/arcade` (`Launcher.swift`, `ui/`) | install / update / verify integrity / play, play time, achievements read from the game's save; installs from a branch; falls back to the last good build when the cards in progress do not build |
+| the players and the library | `system/*`, `arcade/system.py`, `arcade/library.py` | a console player is the machine cards plus card-language glue built through the same pipeline; the library reads every cartridge where it is and draws its title screen headless |
+| the branches | `arcade/work.py` | every worktree's commits, changes, areas and programs; a branch's build state from its own `arcade list`; builds there by its own `bin/cardmodel`, served from its state folder |
 | the guarantees | tests/test_arcade.py, capability `arcade`, the resource governor | a scripted redirect is a theorem of the kernel (CM35's witness); builds and compiles take machine slots and memory caps (CM30); the self-run checks the store on every cycle |
 
 ## 2b. In progress: the live page
@@ -76,6 +79,13 @@ own library id (`<game>.early.<worktree>`). It is labelled with its branch and i
 release channel (`/api/catalog`, the Store and Library tabs) never lists it. Its manifest and pictures come from
 that worktree's depot. Its chunks come from whichever store has them, since chunks are named by their SHA-256.
 
+**Versions and branches** (`cardmodel/arcade/work.py`, docs/ARCADE.md section 3) is the second way in, from the
+Store and Library: each program's page lists its version on every branch, the Store has an *In development* row,
+and the WORK tab lists every branch with its commits, uncommitted changes and programs. Installing a branch's
+version replaces the program's installed build (same library id, like a beta) and is built in that worktree by
+its own `bin/cardmodel` when its cards changed. Early access and branch versions are two answers to the same
+question for now; they are to become one.
+
 **Read-only.** The hub runs git with `--no-optional-locks`, so `status` never rewrites an index a session might
 be committing to. It runs only `log`, `status`, `rev-list`, `for-each-ref`, `ls-files` and `worktree list`.
 Ting, rea-cards and the AnyPS5 copy are read the same way; nothing is written there (`tests/test_hub.py`
@@ -101,5 +111,4 @@ Then open `http://127.0.0.1:8770/ui/index.html` (or Cardmodel Arcade) and choose
 * The installed `~/Applications/Cardmodel Arcade.app` was installed from the games session's worktree and records
   that folder as its home: it breaks when the worktree is cleaned up. Once that branch is merged, run
   `cardmodel arcade launcher --install` from main. The self-run reports this (`app/arcade` finding) until it is fixed.
-* Game Boy / Color titles and the DS are not store products on main yet (section 1).
 * macOS only (one platform card), ad-hoc signed, this Mac's architecture (docs/ARCADE.md section 6).

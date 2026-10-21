@@ -185,9 +185,13 @@ CAPABILITIES = [
      ["cardmodel/machine/lift.py", "cardmodel/machine/shell.py", "cardmodel/machine/gb.py"],
      "Your Game Boy / Color games run through the model, natively."),
     ("arcade", "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, "
-     "serves and launches.", L("CM35_games_are_cards"),
-     ["tests/test_arcade.py::test_a_timed_guard_redirects"], ["docs/ARCADE.md", "docs/STORE.md"],
-     ["cardmodel arcade"], ["cardmodel/arcade"], "Games made from the model's cards ship through Cardmodel Arcade."),
+     "serves and launches; a console player is the machine cards plus a card-language player, built the same way.",
+     L("CM35_games_are_cards", "CM40_players_are_cards"),
+     ["tests/test_arcade.py::test_a_timed_guard_redirects",
+      "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host",
+      "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked"],
+     ["docs/ARCADE.md", "docs/STORE.md"], ["cardmodel arcade"], ["cardmodel/arcade"],
+     "Games made from the model's cards, and the user's own cartridges, ship through Cardmodel Arcade."),
     ("live_hub", "The store follows everything in progress: project cards say what to watch and keep their owner's "
      "detail current (CM41); the hub computes each one's phase, branches, uncommitted work, metrics and builds from "
      "git and the model's records, read-only, gathers what waits on the user, and pushes changes to the launcher as "
