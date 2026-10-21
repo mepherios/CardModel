@@ -88,7 +88,9 @@ def propose_calls(ctx: Ctx, obs: dict) -> list[dict]:
     return out
 
 
-def propose_functions(ctx: Ctx, obs: dict, base: Path, seed: int, max_functions: int, langs=None) -> list[dict]:
+def propose_functions(ctx: Ctx, obs: dict, base: Path, seed: int, max_functions: int, langs=None,
+                      strict: bool = False, known=None) -> list[dict]:
+    """``known(card_name)`` true: the card exists already, so it is neither translated again nor proposed."""
     out = []
     by_file = defaultdict(list)
     for f in obs.get("functions") or []:
@@ -101,14 +103,18 @@ def propose_functions(ctx: Ctx, obs: dict, base: Path, seed: int, max_functions:
         for name in names:
             if done >= max_functions:
                 return out
-            done += 1
             card = function_card(ctx, name, lifted, f"{obs['root']}/{relp}", seed=seed)
+            if known is not None and known(card["name"]):
+                continue
+            done += 1
             rep = verify_function(ctx, card, langs=langs, seed=seed)
             agreeing = rep["agreeing_languages"]
             checks = min((r.get("checks", 0) for r in rep["languages"].values() if r["status"] == "pass"),
                          default=0)
             faithful = card["verification"]["lift_fidelity"]["mismatched"] == 0 and rep["lift_mismatches"] == 0
-            ready = faithful and len(agreeing) >= MIN_AGREEING and checks >= MIN_EVIDENCE
+            failing = sorted(k for k, v in rep["languages"].items() if v["status"] in ("fail", "error"))
+            ready = (faithful and len(agreeing) >= MIN_AGREEING and checks >= MIN_EVIDENCE
+                     and not (strict and failing))
             card["verification"].update({"run": {k: v for k, v in rep.items() if k != "languages"},
                                          "languages": {k: {kk: vv for kk, vv in v.items()
                                                            if kk in ("status", "checks", "out_of_width", "args",
@@ -120,7 +126,7 @@ def propose_functions(ctx: Ctx, obs: dict, base: Path, seed: int, max_functions:
             card["provenance"]["learning_loop_refs"] = [f"observation/{obs['name']}"]
             out.append({"kind": "function", "ready": ready, "candidate": card,
                         "reason": "faithful lift; agrees in " + ", ".join(agreeing) if ready else
-                        f"faithful={faithful}, agreeing={agreeing}, checks={checks}",
+                        f"faithful={faithful}, agreeing={agreeing}, checks={checks}, failing={failing}",
                         "xleq": {"name": f"xleq_{card['name']}", "category": "xleq", "tier": 3,
                                  "subject": f"function/{card['name']}", "languages": agreeing,
                                  "confidence": "established" if ready and checks >= 3 else "tentative",
@@ -200,7 +206,13 @@ def _nodes(e):
 
 
 def learn(ctx: Ctx, root, promote: bool = False, layer: str | None = None, seed: int | None = None,
-          max_functions: int = 25, langs: list[str] | None = None) -> dict:
+          max_functions: int = 25, langs: list[str] | None = None, kinds: set[str] | None = None,
+          keep_pending: bool = True, skip_existing: bool = False, strict: bool = False) -> dict:
+    """``kinds`` limits what is promoted (call, function, rewrite; default all); ``keep_pending=False`` does not
+    write the proposals that are not promoted, and ``skip_existing`` leaves cards the store already has as they
+    are (the cycle re-derives both every run instead of rewriting them with a new seed); ``strict`` promotes a
+    function only when no language it ran in disagreed (verify checks every function card in every language,
+    so a card that fails one would make the model fail its own verify)."""
     seed = V.fresh_seed() if seed is None else seed
     root = Path(root).resolve()
     obs = observe(ctx, root)
@@ -209,18 +221,25 @@ def learn(ctx: Ctx, root, promote: bool = False, layer: str | None = None, seed:
     if store.get(f"observation/{obs['name']}") is None:   # ground truth: written once, never edited
         store.save(obs, layer=layer, category="observation")
     base = root if root.is_dir() else root.parent
-    proposals = propose_calls(ctx, obs) + propose_functions(ctx, obs, base, seed, max_functions, langs) + \
+    known_fn = (lambda n: store.get(f"function/{n}") is not None) if skip_existing else None
+    proposals = propose_calls(ctx, obs) + \
+        propose_functions(ctx, obs, base, seed, max_functions, langs, strict, known_fn) + \
         propose_rewrites(ctx, root, seed)
-    promoted, pending = [], []
+    promoted, pending, known = [], [], []
     for p in proposals:
         cand = p["candidate"]
-        if promote and p["ready"]:
+        if skip_existing and store.get(f"{cand['category']}/{cand['name']}") is not None:
+            known.append(f"{cand['category']}/{cand['name']}")
+            continue
+        if promote and p["ready"] and (kinds is None or p["kind"] in kinds):
             store.save(cand, layer=layer, category=cand["category"])
             if p.get("xleq"):
                 store.save(p["xleq"], layer=layer, category="xleq")
             promoted.append(f"{cand['category']}/{cand['name']}")
         else:
             pending.append(p)
+            if not keep_pending:
+                continue
             store.save({"name": f"prop_{cand['category']}_{cand['name']}"[:120], "category": "proposal", "tier": 3,
                         "statement": f"proposed {cand['category']} card {cand['name']}",
                         "proposal_kind": p["kind"], "ready": p["ready"], "reason": p["reason"],
@@ -230,4 +249,4 @@ def learn(ctx: Ctx, root, promote: bool = False, layer: str | None = None, seed:
     return {"seed": seed, "observation": obs["name"], "totals": obs["totals"],
             "proposals": Counter(p["kind"] for p in proposals),
             "ready": Counter(p["kind"] for p in proposals if p["ready"]),
-            "promoted": promoted, "pending": len(pending), "layer": layer}
+            "promoted": promoted, "pending": len(pending), "known": len(known), "layer": layer}

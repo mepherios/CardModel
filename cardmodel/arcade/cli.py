@@ -4,14 +4,17 @@
   cardmodel arcade build GAME                   compile the game's cards to a native package and a depot
   cardmodel arcade serve [--port 8770]          the content service the launcher talks to
   cardmodel arcade launcher [--install]         build Cardmodel Arcade.app (and put it in ~/Applications)
-  cardmodel arcade run GAME [--frames N --shot PNG --input SCRIPT]   the latest build, natively
+  cardmodel arcade run GAME [--frames N --shot PNG --input SCRIPT --save-dir DIR]   the latest build, natively
   cardmodel arcade build gameboy                a console's player (system card): your cartridges play in it
   cardmodel arcade run gameboy_player --rom PATH   a cartridge in the latest player build
   cardmodel arcade library [--draw]             the cartridges the system cards find (--draw: their title screens)
   cardmodel arcade library --add DIR --system gameboy   look for cartridges in DIR (--remove DIR to stop)
+  cardmodel arcade check [GAME] [--launcher] [--no-build]   every catalogue item launched through the store as
+                                                the launcher does it (install, verify, repair, play headless)
 
-Honest limits (L1): the launcher remembers this checkout's path (to start the service): after moving the
-repository, run `cardmodel arcade launcher --install` again.
+Honest limits (L1): the launcher remembers a checkout's path (to start the service): after moving the
+repository, run `cardmodel arcade launcher --install` again. Installing from a linked git worktree points the
+launcher at the main checkout (a worktree is deleted with its session; `--home` names another checkout).
 """
 from __future__ import annotations
 
@@ -63,7 +66,39 @@ def launcher_icon() -> bytes:
     return png_rgba(bytes(px), w, w)
 
 
-def build_launcher(ctx, install: bool, say=print) -> Path:
+def primary_checkout(home: Path) -> Path | None:
+    """The main checkout when ``home`` is a linked git worktree (its ``.git`` is a file naming
+    <main>/.git/worktrees/<name>), else None."""
+    g = home / ".git"
+    if not g.is_file():
+        return None
+    text = g.read_text(encoding="utf-8", errors="replace").strip()
+    if not text.startswith("gitdir:"):
+        return None
+    gitdir = Path(text.split(":", 1)[1].strip())
+    if not gitdir.is_absolute():
+        gitdir = (home / gitdir).resolve()
+    if gitdir.parent.name != "worktrees" or gitdir.parent.parent.name != ".git":
+        return None
+    main = gitdir.parent.parent.parent
+    return main if (main / "bin" / "cardmodel").is_file() and (main / "cardmodel" / "arcade").is_dir() else None
+
+
+def launcher_home(install: bool, home: str | None, say=print) -> Path:
+    """Where the installed launcher starts the service: --home, else (installing from a linked worktree, which
+    may be deleted with its session) the main checkout, else this checkout."""
+    if home:
+        return Path(home).expanduser().resolve()
+    here = paths.home()
+    main = primary_checkout(here) if install else None
+    if main is not None:
+        say(f"this checkout is a linked worktree; the launcher will start the service from the main checkout "
+            f"{main} (pass --home to choose another)")
+        return main
+    return here
+
+
+def build_launcher(ctx, install: bool, say=print, home: Path | None = None) -> Path:
     from . import build as B
     app = ctx.store.get("app/arcade")
     plat = ctx.store.get(f"platform/{app['platform']}")
@@ -108,7 +143,7 @@ def build_launcher(ctx, install: bool, say=print) -> Path:
             for a in plat["icon"]["compile"]], work)
     shutil.copy(icns, out / b["resources_dir"] / b["icon_file"])
     shutil.rmtree(work)
-    values = {"build": build_id, "version": app.get("version", "1.0.0"), "home": str(paths.home()),
+    values = {"build": build_id, "version": app.get("version", "1.0.0"), "home": str(home or paths.home()),
               "python": sys.executable}
     plist = {}
     for k, v in b["info_plist"].items():
@@ -205,7 +240,8 @@ def cmd_arcade(args) -> int:
                      ready=lambda p: print(f"arcade service on http://127.0.0.1:{p}/", flush=True))
         return 0
     if args.action == "launcher":
-        dest = build_launcher(ctx, args.install, say=lambda m: print(m, file=sys.stderr))
+        say = lambda m: print(m, file=sys.stderr)  # noqa: E731
+        dest = build_launcher(ctx, args.install, say=say, home=launcher_home(args.install, args.home, say=say))
         cli._out(args, {"app": str(dest)}, str(dest))
         return 0
     if args.action == "run":
@@ -227,32 +263,72 @@ def cmd_arcade(args) -> int:
             cmd += ["--input", args.input]
         if args.rom:
             cmd += ["--rom", str(Path(args.rom).expanduser())]
-        if args.save_dir:
-            cmd += ["--save-dir", args.save_dir]
+        import tempfile
+        save_dir = args.save_dir or (tempfile.mkdtemp(prefix="cardmodel_run_") if args.frames else None)
+        if save_dir:            # a headless run never writes the player's own save
+            cmd += ["--save-dir", str(Path(save_dir).expanduser())]
         from ..kernel import resources
         p = resources.run(cmd, timeout=24 * 3600, heavy=False)
         sys.stdout.write(p.stdout or "")
         return p.returncode
+    if args.action == "check":
+        from . import client
+        say = (lambda m: print(f"[store] {m}", file=sys.stderr)) if not args.json else (lambda m: None)
+        rep = client.check_catalog(ctx, frames=args.frames or 120, only=[args.target] if args.target else None,
+                                   build=not args.no_build, progress=say)
+        if args.launcher and rep["status"] != "skipped":
+            import time
+            t0 = time.perf_counter()
+            try:
+                out = build_launcher(ctx, False, say=say)
+                rep["launcher"] = {"ok": True, "app": str(out), "seconds": round(time.perf_counter() - t0, 1)}
+            except (B.BuildError, OSError, KeyError) as exc:
+                rep["launcher"] = {"ok": False, "error": str(exc)[-1500:]}
+                rep["status"] = "fail"
+        lines = []
+        for gid, r in rep["items"].items():
+            if r.get("ok"):
+                pl, ins = r["play"], r["install"]
+                lines.append(f"  ok    {gid:<14} v{ins['version']} build {ins['build']}: {ins['files']} files "
+                             f"{ins['size']:,} bytes checked; repair re-fetched {r['repair']['fetched']:,} bytes; "
+                             f"played {args.frames or 120} frames in {pl['seconds']} s "
+                             f"({pl['picture']['colours_sampled']} colours on screen)")
+            else:
+                lines.append(f"  FAIL  {gid:<14} {r.get('error') or json.dumps(r, default=str)[:400]}")
+        pg = rep.get("pages") or {}
+        lines.append(f"  pages {'ok' if pg.get('ok') else 'FAIL'}  assets {pg.get('assets')}, endpoints the page "
+                     f"uses {pg.get('api')}" + (f", unknown {pg['unknown_endpoints']}" if pg.get("unknown_endpoints")
+                                               else ""))
+        if rep.get("launcher"):
+            lw = rep["launcher"]
+            lines.append(f"  launcher {'compiles' if lw['ok'] else 'FAILED: ' + lw['error']}"
+                         + (f" ({lw['seconds']} s)" if lw.get("seconds") else ""))
+        head = f"store check: {rep['status']}" + (f" ({rep.get('reason')})" if rep.get("reason") else "")
+        cli._out(args, rep, "\n".join([head, *lines]))
+        return 0 if rep["status"] == "pass" else (2 if rep["status"] == "skipped" else 1)
     del G
     return 2
 
 
 def register(sub) -> None:
     s = sub.add_parser("arcade", help="games built from cards: build them natively, serve them to the launcher")
-    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "library"])
+    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "library", "check"])
     s.add_argument("target", nargs="?")
     s.add_argument("--port", type=int, default=8770)
     s.add_argument("--install", action="store_true")
+    s.add_argument("--home", help="launcher: the checkout the launcher starts the service from (default: this one)")
     s.add_argument("--frames", type=int, default=0)
     s.add_argument("--shot")
     s.add_argument("--input")
     s.add_argument("--rom", help="run: a cartridge for a console player")
-    s.add_argument("--save-dir", dest="save_dir", help="run: where the save lives")
+    s.add_argument("--save-dir", help="run: the save folder (headless runs default to a temporary one)")
     s.add_argument("--draw", action="store_true", help="library: draw every missing title screen")
     s.add_argument("--add", help="library: a folder to look for cartridges in")
     s.add_argument("--remove", help="library: a folder to stop looking in")
     s.add_argument("--system", help="library: which system card the folder is for (default gameboy)")
+    s.add_argument("--launcher", action="store_true", help="check: also compile the launcher")
+    s.add_argument("--no-build", action="store_true", help="check: fail instead of building when cards changed")
     s.set_defaults(fn=cmd_arcade)
 
 
-__all__ = ["build_launcher", "cmd_arcade", "launcher_icon", "register"]
+__all__ = ["build_launcher", "cmd_arcade", "launcher_home", "launcher_icon", "primary_checkout", "register"]

@@ -86,19 +86,27 @@ def infer_domain(ctx: Ctx, module: dict, ref, want: int = 24, seed: int = 0) -> 
 
 
 def reference_rows(ctx: Ctx, module: dict, ref, inputs: list) -> list[dict]:
-    """[{args, out, bits}] for inputs where the Python source and the IR interpreter both succeed."""
+    """[{args, out, bits}] for inputs where the Python source and the IR interpreter both succeed.
+
+    The step-bounded interpreter runs first: the original source has no bound, so an input on which it never
+    returns (``while n != 0: n >>= 1`` for a negative n) must be dropped before the source is called."""
     entry = module["entry"]
     interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
     rows = []
     for args in inputs:
-        try:
-            out = ref(*args)
-        except Exception:  # noqa: BLE001 -- not in the reference domain
-            continue
+        failed = None
         try:
             got = interp.call(entry, list(args))
         except (StepLimit, RecursionError):
             continue
+        except Exception as exc:  # noqa: BLE001 -- decided below, by whether the source fails too
+            failed = exc
+        try:
+            out = ref(*args)
+        except Exception:  # noqa: BLE001 -- not in the reference domain
+            continue
+        if failed is not None:
+            raise failed
         rows.append({"args": list(args), "out": out, "ir_out": got, "bits": interp.max_bits})
     return rows
 

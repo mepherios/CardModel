@@ -1,0 +1,34 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 34,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lean",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_int_power_3af2afe0cc30",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 3132429613,
+  "statement": "int_power: same outputs in 13 implementations",
+  "subject": "function/fn_int_power_3af2afe0cc30",
+  "tier": 3
+}

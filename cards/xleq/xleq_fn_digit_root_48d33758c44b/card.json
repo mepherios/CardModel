@@ -1,0 +1,34 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 43,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lean",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_digit_root_48d33758c44b",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 3132429613,
+  "statement": "digit_root: same outputs in 13 implementations",
+  "subject": "function/fn_digit_root_48d33758c44b",
+  "tier": 3
+}

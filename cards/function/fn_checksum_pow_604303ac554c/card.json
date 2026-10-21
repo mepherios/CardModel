@@ -1,0 +1,582 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/MOD",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef checksum_pow(a: int, b: int, m: int) -> int:\n    r = 1 % m\n    for _ in range(b):\n        r = r * a % m\n    return r",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t checksum_pow(int64_t a, int64_t b, int64_t m) {\n    int64_t r = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    r = cm_floormod(INT64_C(1), m);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = b;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        r = cm_floormod((r * a), m);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc checksum_pow(a int64, b int64, m int64) int64 {\n\tvar r int64 = 0\n\t_ = r\n\tvar cm_u int64 = 0\n\t_ = cm_u\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\tr = cm_floormod(int64(1), m)\n\tcm_it1 = int64(0)\n\tcm_stop2 = b\n\tfor (cm_it1 < cm_stop2) {\n\t\tcm_u = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\tr = cm_floormod((r * a), m)\n\t}\n\treturn r\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction checksum_pow(a, b, m) {\n    let r = 0n;\n    let cm_u = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    r = cm_floormod((1n), m);\n    cm_it1 = (0n);\n    cm_stop2 = b;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        r = cm_floormod((r * a), m);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def checksum_pow(a: int, b: int, m: int) -> int:\n    r = (1 % m)\n    for _ in range(0, b, 1):\n        r = ((r * a) % m)\n    return r\n\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn checksum_pow(a: i64, b: i64, m: i64) -> i64 {\n    let mut r: i64 = 0;\n    let mut cm_u: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    r = cm_floormod((1i64), m);\n    cm_it1 = (0i64);\n    cm_stop2 = b;\n    while (cm_it1 < cm_stop2) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        r = cm_floormod((r * a), m);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t checksum_pow(int64_t a, int64_t b, int64_t m) {\n    int64_t r = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    r = cm_floormod(INT64_C(1), m);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = b;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        r = cm_floormod((r * a), m);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long checksum_pow(long a, long b, long m) {\n    long r = 0L;\n    long cm_u = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    r = Math.floorMod((1L), m);\n    cm_it1 = (0L);\n    cm_stop2 = b;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        r = Math.floorMod((r * a), m);\n    }\n    return r;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def checksum_pow (a : Int) (b : Int) (m : Int) : Int := Id.run do\n  let mut r : Int := 0\n  let mut cm_u : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  r := (Int.fmod (1 : Int) m)\n  cm_it1 := (0 : Int)\n  cm_stop2 := b\n  while (decide (cm_it1 < cm_stop2)) do\n    cm_u := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    r := (Int.fmod (r * a) m)\n  return r\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function checksum_pow(a, b, m)\n  local r = 0\n  local _ = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  r = ((1) % m)\n  cm_it1 = (0)\n  cm_stop2 = b\n  while (cm_it1 < cm_stop2) do\n    _ = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    r = ((r * a) % m)\n    ::cm_continue_1::\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def checksum_pow(a, b, m)\n  r = 0\n  cm_u = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  r = ((1) % m)\n  cm_it1 = (0)\n  cm_stop2 = b\n  while (cm_it1 < cm_stop2)\n    cm_u = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    r = ((r * a) % m)\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc checksum_pow(_ a: Int, _ b: Int, _ m: Int) -> Int {\n    var r: Int = 0\n    var cm_u: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    r = cm_floormod((1), m)\n    cm_it1 = (0)\n    cm_stop2 = b\n    while (cm_it1 < cm_stop2) {\n        cm_u = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        r = cm_floormod((r * a), m)\n    }\n    return r\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction checksum_pow(a: bigint, b: bigint, m: bigint): bigint {\n    let r: bigint = 0n;\n    let cm_u: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    r = cm_floormod((1n), m);\n    cm_it1 = (0n);\n    cm_stop2 = b;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        r = cm_floormod((r * a), m);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "checksum_pow",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "checksum_pow",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "r",
+            "value": [
+              "MOD",
+              [
+                "int",
+                1
+              ],
+              [
+                "var",
+                "m"
+              ]
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "r",
+                "value": [
+                  "MOD",
+                  [
+                    "MUL",
+                    [
+                      "var",
+                      "r"
+                    ],
+                    [
+                      "var",
+                      "a"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "m"
+                  ]
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              0
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "var",
+              "b"
+            ],
+            "stop_var": "cm_stop2",
+            "var": "_"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "r"
+            ]
+          }
+        ],
+        "locals": {
+          "_": "int",
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "r": "int"
+        },
+        "name": "checksum_pow",
+        "params": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          },
+          {
+            "name": "m",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 40,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_checksum_pow_604303ac554c",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3132429613,
+    "source_sha256_12": "604303ac554c"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      },
+      {
+        "name": "m",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "checksum_pow(a: int, b: int, m: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        1,
+        1,
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -50,
+        -50,
+        30
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -28,
+        26,
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        37,
+        26,
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -19,
+        -30,
+        7
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -21,
+        7,
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        2,
+        -24,
+        18
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -45,
+        27,
+        8
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        23,
+        19,
+        27
+      ],
+      "out": 23
+    },
+    {
+      "args": [
+        -29,
+        46,
+        30
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -34,
+        -4,
+        9
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -42,
+        -28,
+        7
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -5,
+        -11,
+        17
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        2,
+        -23,
+        9
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        47,
+        27
+      ],
+      "out": 26
+    },
+    {
+      "args": [
+        -3,
+        -21,
+        26
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        39,
+        -11,
+        8
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -6,
+        4,
+        30
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        9,
+        -25,
+        6
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -20,
+        -47,
+        16
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        48,
+        29,
+        1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -20,
+        -47,
+        22
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -31,
+        11,
+        26
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        -22,
+        -49,
+        29
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        31,
+        -6,
+        18
+      ],
+      "out": 1
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 40,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 25,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 40,
+      "lift_mismatches": 0,
+      "seed": 3132429613
+    }
+  }
+}

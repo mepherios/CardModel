@@ -241,6 +241,21 @@ class Depot(unittest.TestCase):
             httpd.shutdown()
             httpd.server_close()
 
+    def test_every_catalogue_item_launches_from_the_store(self):
+        """CM42: every game the catalogue lists, through the service exactly as the launcher does it: installed
+        with every chunk and file checked, verified, damaged and repaired (only the damaged file is fetched again),
+        played natively headless with its own save folder, drawing a frame that is not one flat colour; the
+        launcher's pages are served and name only endpoints the service has."""
+        from cardmodel.arcade import client
+        rep = client.check_catalog(self.ctx, frames=60)
+        self.assertEqual(rep["status"], "pass", json.dumps(rep, default=str)[:3000])
+        self.assertEqual(sorted(rep["items"]), sorted(c.name for c in self.ctx.store.cards("game")))
+        for gid, r in rep["items"].items():
+            self.assertTrue(r["repair"]["seen"], gid)
+            self.assertLess(r["repair"]["fetched"], r["install"]["size"], f"{gid}: repair fetched only the damage")
+            self.assertGreater(r["play"]["picture"]["colours_sampled"], 1, gid)
+        self.assertTrue(rep["pages"]["ok"], rep["pages"])
+
     def test_native_package_runs_headless(self):
         import tempfile
         from cardmodel.kernel import resources
@@ -251,6 +266,45 @@ class Depot(unittest.TestCase):
                            "--shot", d + "/shot.png"], timeout=120, heavy=False)
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn("ran 120 frames", p.stdout)
+
+
+class Store(unittest.TestCase):
+    def test_a_headless_run_never_writes_the_players_save(self):
+        import argparse
+        import tempfile
+        from pathlib import Path
+        from cardmodel.arcade import cli as A
+        from cardmodel.kernel import resources
+        seen = []
+        root = Path(tempfile.mkdtemp(prefix="cardmodel_run_"))
+        (root / "manifest.json").write_text(json.dumps({"executable": "x"}))
+        old_latest, old_run = B.latest, resources.run
+        B.latest = lambda ctx, name: root
+        resources.run = lambda cmd, **kw: (seen.append(cmd), type("P", (), {"stdout": "", "returncode": 0})())[1]
+        try:
+            args = argparse.Namespace(action="run", target="vector_duel", frames=10, shot=None, input=None,
+                                      save_dir=None, json=False, cards=None, no_project=True, project=None)
+            self.assertEqual(A.cmd_arcade(args), 0)
+        finally:
+            B.latest, resources.run = old_latest, old_run
+        cmd = seen[0]
+        self.assertIn("--save-dir", cmd)
+        self.assertNotIn("Cardmodel Arcade", cmd[cmd.index("--save-dir") + 1])
+
+    def test_the_launcher_starts_the_service_from_the_main_checkout(self):
+        import tempfile
+        from pathlib import Path
+        from cardmodel.arcade.cli import primary_checkout
+        base = Path(tempfile.mkdtemp(prefix="cardmodel_wt_"))
+        main, wt = base / "main", base / "main" / ".claude" / "worktrees" / "x"
+        (main / ".git" / "worktrees" / "x").mkdir(parents=True)
+        (main / "bin").mkdir()
+        (main / "bin" / "cardmodel").write_text("#!/bin/sh\n")
+        (main / "cardmodel" / "arcade").mkdir(parents=True)
+        wt.mkdir(parents=True)
+        (wt / ".git").write_text(f"gitdir: {main / '.git' / 'worktrees' / 'x'}\n")
+        self.assertEqual(primary_checkout(wt), main)
+        self.assertIsNone(primary_checkout(main))
 
 
 if __name__ == "__main__":

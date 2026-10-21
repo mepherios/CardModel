@@ -3,7 +3,9 @@
   "category": "goal",
   "direction": "higher",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "29d622591105f52de19f4fc103731ef28b022f2b07920682343a9b94599d0146",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "metric": "named_fraction",
   "name": "G_U3_named_fraction",
@@ -11,7 +13,7 @@
     "origin": "cardmodel bootstrap",
     "tool": "tools/bootstrap.py"
   },
-  "statement": "Named-card fraction on the last observation (card_coverage).",
+  "statement": "Named-card fraction of the model's own code (cardmodel/): the newest observation of it, a card or the cycle's (which observes it on every run) (card_coverage).",
   "target": 0.6,
   "tier": 0
 }

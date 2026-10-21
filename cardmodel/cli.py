@@ -40,6 +40,7 @@
 
   games and the store (arcade/cli.py, docs/ARCADE.md, docs/STORE.md):
   cardmodel arcade list|build|serve|launcher|run [GAME]   native games from cards, the Cardmodel Arcade launcher
+  cardmodel arcade check|inventory       every catalogue item launched through the store; what goes into the store
 
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.

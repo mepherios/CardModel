@@ -1,0 +1,33 @@
+{
+  "category": "capability",
+  "check": "arcade",
+  "commands": [
+    "cardmodel arcade"
+  ],
+  "core": true,
+  "docs": [
+    "docs/ARCADE.md",
+    "docs/STORE.md"
+  ],
+  "laws": [
+    "law/CM35_games_are_cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/arcade"
+  ],
+  "name": "arcade",
+  "order": 23,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, serves and launches.",
+  "tests": [
+    "tests/test_arcade.py::test_a_timed_guard_redirects"
+  ],
+  "tier": 0,
+  "usefulness": "Games made from the model's cards ship through Cardmodel Arcade."
+}

@@ -1,0 +1,525 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/CMP_EQ",
+    "op/CMP_LT",
+    "op/FLOORDIV",
+    "op/MOD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef is_texture_size(n: int) -> bool:\n    if n < 1:\n        return False\n    while n % 2 == 0:\n        n = n // 2\n    return n == 1",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic bool is_texture_size(int64_t n) {\n    if ((n < INT64_C(1))) {\n        return false;\n    }\n    while ((cm_floormod(n, INT64_C(2)) == INT64_C(0))) {\n        n = cm_floordiv(n, INT64_C(2));\n    }\n    return (n == INT64_C(1));\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc is_texture_size(n int64) bool {\n\tif (n < int64(1)) {\n\t\treturn false\n\t}\n\tfor (cm_floormod(n, int64(2)) == int64(0)) {\n\t\tn = cm_floordiv(n, int64(2))\n\t}\n\treturn (n == int64(1))\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction is_texture_size(n) {\n    if ((n < (1n))) {\n        return false;\n    }\n    while ((cm_floormod(n, (2n)) === (0n))) {\n        n = cm_floordiv(n, (2n));\n    }\n    return (n === (1n));\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def is_texture_size(n: int) -> bool:\n    if (n < 1):\n        return False\n    while ((n % 2) == 0):\n        n = (n // 2)\n    return (n == 1)\n\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn is_texture_size(n: i64) -> bool {\n    let mut n: i64 = n;\n    if (n < (1i64)) {\n        return false;\n    }\n    while (cm_floormod(n, (2i64)) == (0i64)) {\n        n = cm_floordiv(n, (2i64));\n    }\n    return (n == (1i64));\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floordiv(int64_t a, int64_t b) { int64_t q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic bool is_texture_size(int64_t n) {\n    if ((n < INT64_C(1))) {\n        return false;\n    }\n    while ((cm_floormod(n, INT64_C(2)) == INT64_C(0))) {\n        n = cm_floordiv(n, INT64_C(2));\n    }\n    return (n == INT64_C(1));\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static boolean is_texture_size(long n) {\n    if ((n < (1L))) {\n        return false;\n    }\n    while ((Math.floorMod(n, (2L)) == (0L))) {\n        n = Math.floorDiv(n, (2L));\n    }\n    return (n == (1L));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def is_texture_size (n : Int) : Bool := Id.run do\n  let mut n : Int := n\n  if (decide (n < (1 : Int))) then\n    return false\n  while ((Int.fmod n (2 : Int)) == (0 : Int)) do\n    n := (Int.fdiv n (2 : Int))\n  return (n == (1 : Int))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function is_texture_size(n)\n  if (n < (1)) then\n    return false\n  end\n  while ((n % (2)) == (0)) do\n    n = (n // (2))\n    ::cm_continue_1::\n  end\n  return (n == (1))\nend\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def is_texture_size(n)\n  if (n < (1))\n    return false\n  end\n  while ((n % (2)) == (0))\n    n = (n / (2))\n  end\n  return (n == (1))\nend\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc is_texture_size(_ n: Int) -> Bool {\n    var n: Int = n\n    if (n < (1)) {\n        return false\n    }\n    while (cm_floormod(n, (2)) == (0)) {\n        n = cm_floordiv(n, (2))\n    }\n    return (n == (1))\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction is_texture_size(n: bigint): boolean {\n    if ((n < (1n))) {\n        return false;\n    }\n    while ((cm_floormod(n, (2n)) === (0n))) {\n        n = cm_floordiv(n, (2n));\n    }\n    return (n === (1n));\n}\n",
+      "cost": 1.0,
+      "entry": "is_texture_size",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "is_texture_size",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "CMP_LT",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                1
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "bool",
+                  false
+                ]
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "n",
+                "value": [
+                  "FLOORDIV",
+                  [
+                    "var",
+                    "n"
+                  ],
+                  [
+                    "int",
+                    2
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_EQ",
+              [
+                "MOD",
+                [
+                  "var",
+                  "n"
+                ],
+                [
+                  "int",
+                  2
+                ]
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "CMP_EQ",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                1
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "is_texture_size",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "bool"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_is_texture_size_ed2db73e2742",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3132429613,
+    "source_sha256_12": "ed2db73e2742"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "bool"
+  },
+  "statement": "is_texture_size(n: int) -> bool lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        5
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": true
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 3132429613
+    }
+  }
+}

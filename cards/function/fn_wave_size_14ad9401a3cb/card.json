@@ -1,0 +1,484 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_LT",
+    "op/SUB"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef wave_size(n: int) -> int:\n    \"\"\"Fibonacci-sized enemy waves (naive recursion).\"\"\"\n    if n < 2:\n        return n\n    return wave_size(n - 1) + wave_size(n - 2)",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t wave_size(int64_t n) {\n    if ((n < INT64_C(2))) {\n        return n;\n    }\n    return (wave_size((n - INT64_C(1))) + wave_size((n - INT64_C(2))));\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc wave_size(n int64) int64 {\n\tif (n < int64(2)) {\n\t\treturn n\n\t}\n\treturn (wave_size((n - int64(1))) + wave_size((n - int64(2))))\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function wave_size(n) {\n    if ((n < (2n))) {\n        return n;\n    }\n    return (wave_size((n - (1n))) + wave_size((n - (2n))));\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def wave_size(n: int) -> int:\n    if (n < 2):\n        return n\n    return (wave_size((n - 1)) + wave_size((n - 2)))\n\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn wave_size(n: i64) -> i64 {\n    if (n < (2i64)) {\n        return n;\n    }\n    return (wave_size((n - (1i64))) + wave_size((n - (2i64))));\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t wave_size(int64_t n) {\n    if ((n < INT64_C(2))) {\n        return n;\n    }\n    return (wave_size((n - INT64_C(1))) + wave_size((n - INT64_C(2))));\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long wave_size(long n) {\n    if ((n < (2L))) {\n        return n;\n    }\n    return (wave_size((n - (1L))) + wave_size((n - (2L))));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def wave_size (n : Int) : Int := Id.run do\n  if (decide (n < (2 : Int))) then\n    return n\n  return ((wave_size (n - (1 : Int))) + (wave_size (n - (2 : Int))))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function wave_size(n)\n  if (n < (2)) then\n    return n\n  end\n  return (wave_size((n - (1))) + wave_size((n - (2))))\nend\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def wave_size(n)\n  if (n < (2))\n    return n\n  end\n  return (wave_size((n - (1))) + wave_size((n - (2))))\nend\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc wave_size(_ n: Int) -> Int {\n    if (n < (2)) {\n        return n\n    }\n    return (wave_size((n - (1))) + wave_size((n - (2))))\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function wave_size(n: bigint): bigint {\n    if ((n < (2n))) {\n        return n;\n    }\n    return (wave_size((n - (1n))) + wave_size((n - (2n))));\n}\n",
+      "cost": 1.0,
+      "entry": "wave_size",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "wave_size",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "CMP_LT",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                2
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "var",
+                  "n"
+                ]
+              }
+            ]
+          },
+          {
+            "k": "return",
+            "value": [
+              "ADD",
+              [
+                "CALL",
+                "wave_size",
+                [
+                  "SUB",
+                  [
+                    "var",
+                    "n"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              ],
+              [
+                "CALL",
+                "wave_size",
+                [
+                  "SUB",
+                  [
+                    "var",
+                    "n"
+                  ],
+                  [
+                    "int",
+                    2
+                  ]
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "wave_size",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 35,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_wave_size_14ad9401a3cb",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3558831672,
+    "source_sha256_12": "14ad9401a3cb"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "wave_size(n: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 4181
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 17711
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 1597
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 10946
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 6765
+    },
+    {
+      "args": [
+        10
+      ],
+      "out": 55
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 89
+    },
+    {
+      "args": [
+        5
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 8
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 233
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 21
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 987
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 610
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 13
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 34
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 2584
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 144
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 28657
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 35,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 23,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 35,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}
