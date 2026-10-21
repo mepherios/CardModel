@@ -112,19 +112,26 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
 
 
 class Player:
-    """The player headless (tests, the library's title screens): a cartridge in, frames out, in any engine."""
+    """The player headless (tests, the library's title screens, the store check): a cartridge in, frames out, in
+    any engine. ``machine`` reuses a loaded module (``start`` inserts the next cartridge into it)."""
 
     def __init__(self, ctx, name: str, rom: bytes, engine: str = "native", fresh: bool = False, clock: int = 0,
-                 save: bytes | None = None):
+                 save: bytes | None = None, machine=None):
         self.ctx = ctx
         self.card = system_card(ctx.store, name)
-        self.ir = module(ctx, name)
-        self.m = N.load(ctx, self.ir, engine, fresh=fresh)
+        self.ir = machine.ir if machine is not None else module(ctx, name)
+        self.m = machine if machine is not None else N.load(ctx, self.ir, engine, fresh=fresh)
+        self.start(rom, clock=clock, save=save)
+
+    def start(self, rom: bytes, clock: int = 0, save: bytes | None = None) -> None:
+        """What the shell does before the first frame: reset, the cartridge's bytes in (the whole array, since
+        reset_all leaves the big arrays to the host), decode them, the save and the clock, init."""
         c = self.card
         self.m.call("reset_all")
         cart = c["cartridge"]
-        data = rom[:int(cart["bytes"])]
-        self.m.write(cart["array"], data)
+        cap = int(cart["bytes"])
+        data = rom[:cap]
+        self.m.write(cart["array"], data + bytes(cap - len(data)))
         self.m.call(cart["load"], len(data))
         if save:
             self.m.write(c["save"]["array"], save[:int(c["save"]["bytes"])])
@@ -147,6 +154,34 @@ class Player:
         data = self.m.read(a["array"], 0, n) if n else b""
         self.m.set(a["count"], 0)
         return data
+
+
+def _num(v):
+    """card data writes addresses and bytes as "0x.." strings; anything else (a label) stays as it is"""
+    if isinstance(v, str) and v.lower().startswith("0x"):
+        return int(v, 16)
+    if isinstance(v, list):
+        return [_num(x) for x in v]
+    return v
+
+
+def check_cartridge(ctx, name: str) -> dict | None:
+    """The system card's check cartridge, assembled from the instruction cards: no one's game, so the store check
+    can launch the installed player when no library lists a cartridge. {file, bytes, save: {offset, byte}}."""
+    from ..machine import asm
+    card = system_card(ctx.store, name)
+    c = card.get("check_cartridge")
+    if not c:
+        return None
+    isa = c.get("isa", "lr35902")
+    items = [tuple(_num(x) for x in it) for it in c["program"]]
+    extra = {int(a, 16): asm.assemble(ctx.store, [tuple(_num(x) for x in it) for it in prog], org=int(a, 16), isa=isa)
+             for a, prog in (c.get("at") or {}).items()}
+    data = asm.rom(ctx.store, items, title=c.get("title", "CARDCHECK"), cart_type=_num(c.get("cart_type", "0x00")),
+                   ram_size_code=int(c.get("ram_size_code", 0)), extra=extra)
+    save = c.get("save") or {}
+    return {"file": c.get("file", "check.gb"), "bytes": data,
+            "save": {"offset": _num(save["offset"]), "byte": _num(save["byte"])} if save else None}
 
 
 def spec(ctx, card, ir, lang: str) -> dict:
@@ -283,5 +318,5 @@ def build(ctx, name: str, progress=None) -> dict:
     return info
 
 
-__all__ = ["ID_SUFFIX", "Player", "arcade_id", "build", "is_system", "module", "render_media", "source_hash",
-           "spec", "system_card", "tables"]
+__all__ = ["ID_SUFFIX", "Player", "arcade_id", "build", "check_cartridge", "is_system", "module", "render_media",
+           "source_hash", "spec", "system_card", "tables"]

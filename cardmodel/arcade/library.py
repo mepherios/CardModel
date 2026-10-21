@@ -11,7 +11,9 @@ Which folders: the user's choice, kept in library.json in the arcade's own folde
 platform card places), so any checkout's service sees the same library and no card carries a user's path.
 
 A system card with a ``machine`` and ``logic`` is playable (its player is an arcade build, ``system.py``); one
-without (the DS) is listed with what the card model can do with it so far.
+without (the DS) is listed with what the card model can do with it so far. A cartridge's title is its No-Intro
+file name when it has one (region tags in parentheses), else the title in its cartridge header (``entry_title``).
+`cardmodel arcade check` launches every listed cartridge through the store (arcade/client.py).
 
 Honest limits (L1): the picture is a frame of the first ten seconds picked by colour, not a chosen shot; the first scan of a
 big folder takes a minute to draw every picture (the service draws in the background and the page fills in).
@@ -175,6 +177,8 @@ def scan(ctx, force: bool = False) -> dict:
                     continue
                 row = dict(row)
                 row["path"] = str(p)
+                head = (row.get("header") or {}).get("title", "")
+                row["title"], row["tags"], row["title_from"] = entry_title(p.stem, head)
                 v = survey.get(row.get("sha1"))
                 if card.name == "nds":
                     row["verdict"] = {"level": "unavailable", "text": card.get("playable_note", ""), "detail": nds_status(ctx)}
@@ -196,15 +200,26 @@ def scan(ctx, force: bool = False) -> dict:
     return result
 
 
+def entry_title(stem: str, header_title: str) -> tuple[str, str, str]:
+    """(title, tags, where the title came from): a No-Intro file name (its region tags show it is one) names the
+    game better than the 11 to 16 capitals of the header ('Pokemon - Crystal Version' for PM_CRYSTAL); any other
+    file is titled by its cartridge header, and a header without a readable title leaves the file's name."""
+    title, tags = display_title(stem)
+    if tags:
+        return title, tags, "file name"
+    head = " ".join(header_title.replace("�", " ").split())
+    if head and sum(ch.isalnum() for ch in head) >= 2:
+        return head, "", "header"
+    return title, tags, "file name"
+
+
 def describe(ctx, card, path: Path, exts) -> dict | None:
     try:
         data = read_cartridge(path, exts)
     except (OSError, ValueError, zipfile.BadZipFile, KeyError):
         return None
     sha = hashlib.sha1(data).hexdigest()
-    title, tags = display_title(path.stem)
-    row = {"id": f"rom-{sha[:16]}", "sha1": sha, "file": path.name, "title": title, "tags": tags,
-           "size": len(data), "system_card": card.name}
+    row = {"id": f"rom-{sha[:16]}", "sha1": sha, "file": path.name, "size": len(data), "system_card": card.name}
     if card.name == "gameboy":
         try:
             h = G.header(data, ctx.store)
@@ -219,6 +234,7 @@ def describe(ctx, card, path: Path, exts) -> dict | None:
         row["system"] = card.name
         row["header"] = {"title": data[0:12].split(b"\0")[0].decode("ascii", "replace").strip(),
                          "code": data[12:16].decode("ascii", "replace")}
+    row["title"], row["tags"], row["title_from"] = entry_title(path.stem, row["header"]["title"])
     return row
 
 
@@ -334,4 +350,5 @@ def route(handler, method: str, parts: list[str]) -> bool:
     return False
 
 
-__all__ = ["cover", "display_title", "draw_covers", "read_cartridge", "route", "scan", "start_drawing", "systems"]
+__all__ = ["cover", "display_title", "draw_covers", "entry_title", "read_cartridge", "route", "scan", "start_drawing",
+           "systems"]

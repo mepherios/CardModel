@@ -102,6 +102,40 @@ class GameBoyPlayer(unittest.TestCase):
         self.assertEqual(q.m.read("cram", 0x10, 1)[0], 0x5A)
         self.assertEqual(q.m.get("rtc_h"), 6, "an hour closed is an hour on the cartridge's clock")
 
+    def test_the_check_cartridge_comes_from_the_system_card(self):
+        """The store check's own cartridge is assembled from the instruction cards (no one's game): its header is
+        the card's board, it draws a two-shade checkerboard and leaves the card's byte in battery RAM."""
+        c = S.check_cartridge(self.ctx, "gameboy")
+        h = G.header(c["bytes"], self.ctx.store)
+        self.assertEqual((h["title"], h["mbc"], h["battery"], h["ram_size"], h["header_checksum_ok"]),
+                         ("CARDCHECK", "mbc3", True, 8192, True))
+        p = S.Player(self.ctx, "gameboy", c["bytes"], "native", fresh=True)
+        for _ in range(30):
+            p.frame(0)
+        p.m.call("player_flush")
+        save = p.m.read("player_save")
+        self.assertEqual(save[c["save"]["offset"]], c["save"]["byte"])
+        self.assertEqual(bytes(save[0x20030:0x20034]), b"CMSV")
+        self.assertEqual(G.frame_stats(p.rgb())["colours"], 2)
+
+    def test_a_reused_machine_starts_each_cartridge_as_a_fresh_one(self):
+        """The store check inserts cartridge after cartridge into one loaded player (start): each one's picture is
+        the one a freshly loaded module draws, whatever ran before (reset_all leaves the ROM array to the host)."""
+        big = bytearray(cart(self.ctx, 0x1B, 0, 0x80, 3, "BIGFIRST"))  # 256 KiB first, then a 32 KiB cartridge
+        big[0x8000:] = b"\x76" * (len(big) - 0x8000)                     # banks the first one never runs, not zero
+        big = bytes(big)
+        small = cart(self.ctx, 0x00, 0, 0x00, 0, "SMALLNEXT")
+        p = S.Player(self.ctx, "gameboy", big, "native", fresh=True)
+        for _ in range(20):
+            p.frame(0)
+        p.start(small)
+        fresh = S.Player(self.ctx, "gameboy", small, "native", fresh=True)
+        for _ in range(45):
+            p.frame(0)
+            fresh.frame(0)
+        self.assertEqual(p.rgb(), fresh.rgb())
+        self.assertEqual(p.m.read("rom", 0x8000, 64), fresh.m.read("rom", 0x8000, 64), "no bytes of the first left")
+
 
 class Library(unittest.TestCase):
     @classmethod
@@ -113,6 +147,19 @@ class Library(unittest.TestCase):
                          ("The Legend of Zelda - Link's Awakening", "(USA, Europe) (Rev B)"))
         self.assertEqual(L.display_title("Tetris (World) (Rev A)"), ("Tetris", "(World) (Rev A)"))
         self.assertEqual(L.display_title("Plain"), ("Plain", ""))
+
+    def test_a_file_without_a_no_intro_name_is_titled_by_its_header(self):
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_carts_"))
+        card = S.system_card(self.ctx.store, "gameboy")
+        (d / "my cartridge.gb").write_bytes(cart(self.ctx, title="HEADERNAME"))
+        (d / "Named Game (Europe).gb").write_bytes(cart(self.ctx, title="HEADERNAME"))
+        (d / "untitled.gb").write_bytes(cart(self.ctx, title=""))
+        got = {p: L.describe(self.ctx, card, d / p, (".gb",)) for p in ("my cartridge.gb", "Named Game (Europe).gb",
+                                                                         "untitled.gb")}
+        self.assertEqual((got["my cartridge.gb"]["title"], got["my cartridge.gb"]["title_from"]), ("HEADERNAME", "header"))
+        self.assertEqual((got["Named Game (Europe).gb"]["title"], got["Named Game (Europe).gb"]["title_from"]),
+                         ("Named Game", "file name"))
+        self.assertEqual((got["untitled.gb"]["title"], got["untitled.gb"]["title_from"]), ("untitled", "file name"))
 
     def test_a_folder_of_cartridges_is_listed_where_it_is(self):
         d = Path(tempfile.mkdtemp(prefix="cardmodel_carts_"))
