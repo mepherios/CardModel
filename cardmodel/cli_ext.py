@@ -522,6 +522,53 @@ def cmd_repl(args) -> int:
             print(f"error: {exc}")
 
 
+def cmd_godel(args) -> int:
+    from collections import Counter
+
+    from .engines import godel as GD
+    cli = _cli()
+    ctx = cli._ctx(args)
+    idx = GD.index_of(ctx.store)
+    if args.action == "ledger":
+        rows = GD.ledger(ctx.store)
+        sets = Counter(e["set"] for e in rows)
+        text = [f"{len(rows)} atoms ({', '.join(f'{k}: {v}' for k, v in sets.items())}); problems: "
+                f"{GD.problems(rows) or 'none'}"]
+        text += [f"  {e['index']:>4}  {e['prime']:>6}  {e['set']:<12} {e['atom']}" for e in rows[-args.limit:]]
+        cli._out(args, rows, "\n".join(text))
+        return 0
+    vecs = []
+    for q in args.cards:
+        card = ctx.store.get(q)
+        if card is None:
+            print(f"error: no card {q!r}", file=sys.stderr)
+            return 2
+        v, why = GD.card_content(ctx, card)
+        if v is None:
+            print(f"error: {q}: {why}", file=sys.stderr)
+            return 1
+        vecs.append((q, v, why))
+    if args.action == "vector":
+        lines = []
+        for q, v, why in vecs:
+            n, missing = GD.number(v, idx)
+            lines.append(f"{q} ({why}): {dict(v)} -> {n if n is not None else 'atoms not in the ledger: ' + str(missing)}")
+        cli._out(args, {q: dict(v) for q, v, _ in vecs}, "\n".join(lines))
+        return 0
+    if args.action in ("gcd", "lcm"):
+        if len(vecs) != 2:
+            print("error: gcd and lcm take two cards", file=sys.stderr)
+            return 2
+        a, b = vecs[0][1], vecs[1][1]
+        r = GD.gcd(a, b) if args.action == "gcd" else GD.lcm(a, b)
+        n, _ = GD.number(r, idx)
+        cli._out(args, {"result": dict(r), "number": n, "a_divides_b": GD.divides(a, b), "b_divides_a": GD.divides(b, a)},
+                 f"{args.action}: {dict(r)} = {n}; {vecs[0][0]} divides {vecs[1][0]}: {GD.divides(a, b)}; "
+                 f"the reverse: {GD.divides(b, a)}")
+        return 0
+    return 2
+
+
 def register(sub) -> None:
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
@@ -558,6 +605,9 @@ def register(sub) -> None:
     s.add_argument("--start", type=int, default=0); s.add_argument("--write", action="store_true")
     s.add_argument("--number"); s.add_argument("--global", dest="global_", action="store_true")
     s.set_defaults(fn=cmd_algebra)
+    s = sub.add_parser("godel", help="the expanding Gödel model: the prime ledger, content vectors, GCD and LCM")
+    s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm"]); s.add_argument("cards", nargs="*")
+    s.add_argument("--limit", type=int, default=20); s.set_defaults(fn=cmd_godel)
     from .game import cli as game_cli
     game_cli.register(sub)
     from .anyps5 import cli as anyps5_cli

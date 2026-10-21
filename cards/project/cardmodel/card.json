@@ -23,7 +23,7 @@
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
-    "waiting for the user's yes on MATH_CORE.md"
+    "MATH_CORE phase 0 and phase 1"
   ],
   "kind": "program",
   "left": [
@@ -32,8 +32,8 @@
     "one In progress tab after the cartridge merge"
   ],
   "metadata": {
-    "previous_content_hash": "f5114263df38e1819a3a9509941e6e7cfcd6c888afbe1486f2959daf9075b97f",
-    "version": "2.0.1",
+    "previous_content_hash": "ce9a6fdef2775aaaf057dfd28f2cdc3bbdcd79c06c4803766e56fe79eb5a564b",
+    "version": "2.0.2",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -65,21 +65,12 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main: 41 laws carried by 27 capabilities, verify passes, the self-run on every use, the live store page with Waiting on you, project cards under CM41; MATH_CORE.md is written and waits for the user's yes.",
+  "standing": "MATH_CORE is approved and phase 0 is under way on main: the prime ledger and content vectors (CM43) are in; core types, symbolic instruction terms, an e-graph and phase 1 follow.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T00:38:37+02:00",
+  "updated": "2026-10-22T01:02:10+02:00",
   "user_actions": [
-    {
-      "action": "Read the MATH_CORE summary and say yes, or what to change",
-      "unblocks": [
-        "the semantic core migration",
-        "definition cards for every function",
-        "sessions stop adding imitation-only paths"
-      ],
-      "why": "moving from imitation (emulation, tests) to understanding (one semantic core, definitions, Gödel factors) changes how everything is built"
-    },
     {
       "action": "Decide what happens to claude/jolly-liskov-2d97a8",
       "unblocks": [

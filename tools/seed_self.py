@@ -198,6 +198,13 @@ CAPABILITIES = [
       "tests/test_projects.py::test_missing_or_stale_project_cards_fail"],
      ["docs/STORE.md"], ["cardmodel arcade serve (the In progress page)"], ["cardmodel/arcade/hub.py"],
      "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."),
+    ("godel_model", "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's "
+     "content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded "
+     "exactly; maps between Gödel sets with their gaps.", L("CM43_primes_are_forever", "CM31_behaviour_is_numbered"),
+     ["tests/test_godel.py::test_ledger_is_append_only", "tests/test_godel.py::test_content_algebra_and_carry",
+      "tests/test_godel.py::test_structural_numbers_decode_exactly"],
+     ["GOALS.md", "docs/MATH_CORE.md"], ["cardmodel godel"], ["cardmodel/engines/godel.py"],
+     "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],

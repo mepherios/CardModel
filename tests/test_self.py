@@ -20,7 +20,7 @@ from cardmodel.kernel.store import Store
 CORE = ["card_store", "honest_limits", "witnesses", "form_selection", "boundaries", "learning", "translation",
         "rewriting", "law_discovery", "theorems", "lean", "logic", "card_language", "self_theory",
         "function_algebra", "redefinitions", "improve", "resources", "game_design", "world", "machines",
-        "emulation", "arcade", "live_hub", "anyps5", "self_run", "integration"]
+        "emulation", "arcade", "live_hub", "godel_model", "anyps5", "self_run", "integration"]
 
 
 class IsolatedSelf:

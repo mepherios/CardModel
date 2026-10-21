@@ -111,6 +111,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_U2_rules_witnessed` | understanding | rewrite rules with a passing numeric witness | ≥ 12 |
 | `G_U3_named_fraction` | understanding | named-card fraction of the last observation (hub card_coverage) | ≥ 0.6 |
 | `G_U4_valid_cards` | understanding | cards failing their card-type schema | = 0 |
+| `G_U5_content_vectors` | understanding | fraction of op, function and algorithm cards whose content vector is computed (CM43) | ≥ 1.0 |
 | `G_L1_learned_cards` | learning | cards promoted by the learning loop with cited evidence | ≥ 10 |
 | `G_O1_measured_forms` | optimization | forms with a host measurement (metric card) | ≥ 30 |
 | `G_A1_self_contained` | autonomy | source folders needed at runtime (sandbox check) | = 0 |

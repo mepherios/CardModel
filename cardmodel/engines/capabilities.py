@@ -496,6 +496,37 @@ def live_hub(ctx: Ctx, seed: int) -> str:
             "revised before the project's last change is stale")
 
 
+def godel_model(ctx: Ctx, seed: int) -> str:
+    from collections import Counter
+
+    from ..kernel.store import Store
+    from . import godel as G
+    entries = G.ledger(ctx.store)
+    _need(entries and not G.problems(entries), f"the prime ledger is empty or malformed: {G.problems(entries)[:3]}")
+    d = _tmp()
+    try:
+        st = Store([("model", d)])
+        G.sync(st, ["s/a", "s/b"], "S")
+        before = (d / "godel" / "_pack_ledger.jsonl").read_text(encoding="utf-8")
+        G.sync(st, ["s/c"], "S")
+        _need((d / "godel" / "_pack_ledger.jsonl").read_text(encoding="utf-8").startswith(before),
+              "appending to the ledger rewrote a line (CM43)")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    a, _ = G.card_content(ctx, ctx.store.get("algorithm/sum_of_squares"))
+    b, _ = G.card_content(ctx, ctx.store.get("algorithm/triangular"))
+    common = G.gcd(a, b)
+    _need(common and G.divides(common, a) and G.divides(common, b), f"no common factor: {a} {b}")
+    idx = G.index_of(ctx.store)
+    t = ["ADD", ["MUL", ["var", "n"], ["int", 3]], ["int", -2]]
+    n, vs = G.structural(t, ctx.ops, idx)
+    _need(G.decode(n, ctx.ops, entries, vs) == t, "a structural number did not decode to its term")
+    image, gap = G.carry(Counter({"x": 1, "y": 2}), {"x": Counter({"X": 1})})
+    _need(gap == Counter({"y": 2}), "a map's gap is wrong")
+    return (f"{len(entries)} atoms with their primes; gcd(sum_of_squares, triangular) = {dict(common)}; structural "
+            f"numbers decode exactly; a map leaves its gap")
+
+
 def anyps5(ctx: Ctx, seed: int) -> str:
     if not ctx.store.cards("anyps5_export"):
         raise Unavailable("no AnyPS5 scan in the store (cardmodel anyps5 scan PATH --save)")
@@ -533,7 +564,8 @@ def integration(ctx: Ctx, seed: int) -> str:
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
-                                  world, machines, emulation, arcade, live_hub, anyps5, self_run, integration)}
+                                  world, machines, emulation, arcade, live_hub, godel_model, anyps5, self_run,
+                                  integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:
