@@ -1,0 +1,408 @@
+-- ARMv5TE (the DS's ARM9, an ARM946E-S) and ARMv4T (its ARM7, an ARM7TDMI): registers, modes, conditions, the
+-- barrel shifter and flag arithmetic that the ARM and Thumb instruction cards call. The ISA level is `arch`
+-- (5 = ARMv5TE, 4 = ARMv4T: the v5-only cards are undefined there). A machine supplies the bus (rd8/16/32,
+-- wr8/16/32), swi(n), undefined_op(op), cp_read(op) / cp_write(op, v) and the clock.
+--
+-- Registers: regs[0..15] are the current mode's view; R15 as an operand reads the instruction's address + 8 in ARM
+-- state, + 4 in Thumb state (+12 for a register-shifted operand and for STR/STM of R15 on ARM). Writing R15 is a
+-- branch: next_pc. CPSR: N Z C V (31..28), Q (27), I F T (7 6 5), mode (4..0).
+const MASK32 = 0xFFFFFFFF
+const FLAG_N = 0x80000000
+const FLAG_Z = 0x40000000
+const FLAG_C = 0x20000000
+const FLAG_V = 0x10000000
+const FLAG_Q = 0x08000000
+const FLAG_T = 0x20
+const M_USR = 0x10
+const M_FIQ = 0x11
+const M_IRQ = 0x12
+const M_SVC = 0x13
+const M_ABT = 0x17
+const M_UND = 0x1B
+const M_SYS = 0x1F
+array regs: Int[16]
+-- banked copies, by bank b (0 usr/sys, 1 fiq, 2 irq, 3 svc, 4 abt, 5 und): R8-R14 at b*7 + (n-8), SPSR at 42 + b
+array banked: Int[48]
+global pc: Int = 0
+global next_pc: Int = 0
+global cpsr: Int = 0xD3
+global spsr: Int = 0
+global sh_c: Int = 0
+global arch: Int = 5
+
+fn s32(v: Int) -> Int = if v >= 0x80000000 then v - 0x100000000 else v
+fn bit(v: Int, n: Int) -> Int = (v >> n) & 1
+fn thumb() -> Bool = (cpsr & FLAG_T) != 0
+fn flag_c() -> Int = (cpsr >> 29) & 1
+fn rr(n: Int) -> Int {
+  if n == 15 {
+    if thumb() {
+      return (pc + 4) & MASK32
+    }
+    return (pc + 8) & MASK32
+  }
+  return regs[n]
+}
+fn branch(v: Int) {
+  if thumb() {
+    next_pc = v & 0xFFFFFFFE
+  } else {
+    next_pc = v & 0xFFFFFFFC
+  }
+}
+fn bx(v: Int) {
+  if (v & 1) != 0 {
+    cpsr = cpsr | FLAG_T
+    next_pc = v & 0xFFFFFFFE
+  } else {
+    cpsr = cpsr & (MASK32 ^ FLAG_T)
+    next_pc = v & 0xFFFFFFFC
+  }
+}
+-- a load into R15: ARMv5 interworks (like BX); ARMv4T only branches
+fn load_pc(v: Int) {
+  if arch >= 5 {
+    bx(v)
+  } else {
+    branch(v)
+  }
+}
+fn wr(n: Int, v: Int) {
+  if n == 15 {
+    branch(v)
+  } else {
+    regs[n] = v & MASK32
+  }
+}
+
+-- modes and banked registers
+fn bank_of(m: Int) -> Int {
+  if m == M_FIQ {
+    return 1
+  }
+  if m == M_IRQ {
+    return 2
+  }
+  if m == M_SVC {
+    return 3
+  }
+  if m == M_ABT {
+    return 4
+  }
+  if m == M_UND {
+    return 5
+  }
+  return 0
+}
+-- R8-R12 are shared by every mode except FIQ; R13-R14 and the SPSR are per bank
+fn switch_bank(old_m: Int, new_m: Int) {
+  let ob = bank_of(old_m)
+  let nb = bank_of(new_m)
+  if ob == nb {
+    return
+  }
+  banked[ob * 7 + 5] = regs[13]
+  banked[ob * 7 + 6] = regs[14]
+  let o8 = if ob == 1 then 7 else 0
+  for i in 0 .. 5 {
+    banked[o8 + i] = regs[8 + i]
+  }
+  banked[42 + ob] = spsr
+  let n8 = if nb == 1 then 7 else 0
+  for i in 0 .. 5 {
+    regs[8 + i] = banked[n8 + i]
+  }
+  regs[13] = banked[nb * 7 + 5]
+  regs[14] = banked[nb * 7 + 6]
+  spsr = banked[42 + nb]
+}
+-- the user-mode register i as seen from the current mode (LDM/STM with the S bit and no PC in the list)
+fn user_reg(i: Int) -> Int {
+  let b = bank_of(cpsr & 0x1F)
+  if b == 0 or i < 8 or i == 15 {
+    return rr(i)
+  }
+  if i < 13 {
+    if b == 1 {
+      return banked[i - 8]
+    }
+    return regs[i]
+  }
+  return banked[i - 8]
+}
+fn set_user_reg(i: Int, v: Int) {
+  let b = bank_of(cpsr & 0x1F)
+  if b == 0 or i < 8 {
+    regs[i] = v & MASK32
+  } elif i < 13 {
+    if b == 1 {
+      banked[i - 8] = v & MASK32
+    } else {
+      regs[i] = v & MASK32
+    }
+  } else {
+    banked[i - 8] = v & MASK32
+  }
+}
+fn set_cpsr(v: Int) {
+  let old_m = cpsr & 0x1F
+  let new_m = v & 0x1F
+  switch_bank(old_m, new_m)
+  cpsr = v & MASK32
+}
+fn restore_cpsr() {
+  if (cpsr & 0x1F) != M_USR and (cpsr & 0x1F) != M_SYS {
+    set_cpsr(spsr)
+  }
+}
+fn set_nz(v: Int) {
+  var f = cpsr & 0x3FFFFFFF
+  if (v & 0x80000000) != 0 {
+    f = f | FLAG_N
+  }
+  if (v & MASK32) == 0 {
+    f = f | FLAG_Z
+  }
+  cpsr = f
+}
+fn set_c(c: Int) {
+  cpsr = (cpsr & (MASK32 ^ FLAG_C)) | (c << 29)
+}
+fn set_v(v: Int) {
+  cpsr = (cpsr & (MASK32 ^ FLAG_V)) | (v << 28)
+}
+fn cond_ok(c: Int) -> Bool {
+  let n = (cpsr >> 31) & 1
+  let z = (cpsr >> 30) & 1
+  let cy = (cpsr >> 29) & 1
+  let v = (cpsr >> 28) & 1
+  if c == 0 {
+    return z == 1
+  }
+  if c == 1 {
+    return z == 0
+  }
+  if c == 2 {
+    return cy == 1
+  }
+  if c == 3 {
+    return cy == 0
+  }
+  if c == 4 {
+    return n == 1
+  }
+  if c == 5 {
+    return n == 0
+  }
+  if c == 6 {
+    return v == 1
+  }
+  if c == 7 {
+    return v == 0
+  }
+  if c == 8 {
+    return cy == 1 and z == 0
+  }
+  if c == 9 {
+    return cy == 0 or z == 1
+  }
+  if c == 10 {
+    return n == v
+  }
+  if c == 11 {
+    return n != v
+  }
+  if c == 12 {
+    return z == 0 and n == v
+  }
+  if c == 13 {
+    return z == 1 or n != v
+  }
+  return true
+}
+
+-- the barrel shifter: kind 0 LSL, 1 LSR, 2 ASR, 3 ROR; sets sh_c
+fn ror32(v: Int, n: Int) -> Int {
+  let k = n & 31
+  if k == 0 {
+    return v
+  }
+  return ((v >> k) | ((v << (32 - k)) & MASK32)) & MASK32
+}
+fn lsl32(v: Int, n: Int) -> Int = ((v & (MASK32 >> n)) << n)
+fn asr32(v: Int, n: Int) -> Int {
+  if (v & 0x80000000) == 0 {
+    return v >> n
+  }
+  return ((v >> n) | (MASK32 ^ (MASK32 >> n))) & MASK32
+}
+-- shift by an immediate amount (the encodings: LSR #0 = #32, ASR #0 = #32, ROR #0 = RRX)
+fn shift_imm(v: Int, kind: Int, n: Int) -> Int {
+  if kind == 0 {
+    if n == 0 {
+      sh_c = flag_c()
+      return v
+    }
+    sh_c = (v >> (32 - n)) & 1
+    return lsl32(v, n)
+  }
+  if kind == 1 {
+    if n == 0 {
+      sh_c = (v >> 31) & 1
+      return 0
+    }
+    sh_c = (v >> (n - 1)) & 1
+    return v >> n
+  }
+  if kind == 2 {
+    if n == 0 {
+      sh_c = (v >> 31) & 1
+      return if sh_c == 1 then MASK32 else 0
+    }
+    sh_c = (v >> (n - 1)) & 1
+    return asr32(v, n)
+  }
+  if n == 0 {
+    sh_c = v & 1
+    return (v >> 1) | (flag_c() << 31)
+  }
+  sh_c = (v >> (n - 1)) & 1
+  return ror32(v, n)
+}
+-- shift by a register amount (bottom byte; 0 leaves the value and the carry; 32 and more saturate)
+fn shift_reg(v: Int, kind: Int, amount: Int) -> Int {
+  let n = amount & 0xFF
+  if n == 0 {
+    sh_c = flag_c()
+    return v
+  }
+  if kind == 0 {
+    if n < 32 {
+      sh_c = (v >> (32 - n)) & 1
+      return lsl32(v, n)
+    }
+    sh_c = if n == 32 then v & 1 else 0
+    return 0
+  }
+  if kind == 1 {
+    if n < 32 {
+      sh_c = (v >> (n - 1)) & 1
+      return v >> n
+    }
+    sh_c = if n == 32 then (v >> 31) & 1 else 0
+    return 0
+  }
+  if kind == 2 {
+    if n < 32 {
+      sh_c = (v >> (n - 1)) & 1
+      return asr32(v, n)
+    }
+    sh_c = (v >> 31) & 1
+    return if sh_c == 1 then MASK32 else 0
+  }
+  let k = n & 31
+  if k == 0 {
+    sh_c = (v >> 31) & 1
+    return v
+  }
+  sh_c = (v >> (k - 1)) & 1
+  return ror32(v, k)
+}
+-- operand 2 of data processing: an 8-bit immediate rotated right by 2 * rot
+fn op2_imm(op: Int) -> Int {
+  let rot = ((op >> 8) & 0xF) * 2
+  let v = ror32(op & 0xFF, rot)
+  if rot == 0 {
+    sh_c = flag_c()
+  } else {
+    sh_c = (v >> 31) & 1
+  }
+  return v
+}
+-- operand 2 from a register: shifted by an immediate (bit 4 = 0) or by Rs (bit 4 = 1; R15 then reads + 12)
+fn op2_reg(op: Int) -> Int {
+  let rm = op & 0xF
+  let kind = (op >> 5) & 3
+  if (op & 0x10) == 0 {
+    return shift_imm(rr(rm), kind, (op >> 7) & 0x1F)
+  }
+  var v = rr(rm)
+  if rm == 15 {
+    v = (v + 4) & MASK32
+  }
+  return shift_reg(v, kind, rr((op >> 8) & 0xF))
+}
+-- a + b + c with flags (when s); b may be the inverted operand for subtraction
+fn adds(a: Int, b: Int, c: Int, s: Bool) -> Int {
+  let res = a + b + c
+  let out = res & MASK32
+  if s {
+    set_nz(out)
+    set_c(if res > MASK32 then 1 else 0)
+    set_v((((a ^ out) & (b ^ out)) >> 31) & 1)
+  }
+  return out
+}
+-- a - b - (1 - c): subtraction as a + not b + c
+fn subs(a: Int, b: Int, c: Int, s: Bool) -> Int = adds(a, b ^ MASK32, c, s)
+fn logic_flags(v: Int, s: Bool) {
+  if s {
+    set_nz(v)
+    set_c(sh_c)
+  }
+}
+-- 32 x 32 -> 64 multiply without leaving 64-bit signed arithmetic (16-bit partial products)
+fn mul_lo(a: Int, b: Int) -> Int = ((a & 0xFFFF) * b + ((((a >> 16) * b) & 0xFFFF) << 16)) & MASK32
+fn umul_hi(a: Int, b: Int) -> Int {
+  let al = a & 0xFFFF
+  let ah = a >> 16
+  let bl = b & 0xFFFF
+  let bh = b >> 16
+  let ll = al * bl
+  let lh = al * bh
+  let hl = ah * bl
+  let hh = ah * bh
+  let mid = (ll >> 16) + (lh & 0xFFFF) + (hl & 0xFFFF)
+  return (hh + (lh >> 16) + (hl >> 16) + (mid >> 16)) & MASK32
+}
+-- signed high word: from the unsigned product, corrected for negative operands
+fn smul_hi(a: Int, b: Int) -> Int {
+  var h = umul_hi(a, b)
+  if (a & 0x80000000) != 0 {
+    h = h - b
+  }
+  if (b & 0x80000000) != 0 {
+    h = h - a
+  }
+  return h & MASK32
+}
+fn sat32(v: Int) -> Int {
+  if v > 0x7FFFFFFF {
+    cpsr = cpsr | FLAG_Q
+    return 0x7FFFFFFF
+  }
+  if v < -0x80000000 {
+    cpsr = cpsr | FLAG_Q
+    return 0x80000000
+  }
+  return v & MASK32
+}
+fn half(v: Int, top: Int) -> Int {
+  let h = if top != 0 then (v >> 16) & 0xFFFF else v & 0xFFFF
+  return if h >= 0x8000 then h - 0x10000 else h
+}
+fn sext(v: Int, bits: Int) -> Int {
+  let m = 1 << (bits - 1)
+  return ((v & ((1 << bits) - 1)) ^ m) - m
+}
+-- loads: an unaligned word load rotates the aligned word (ARMv4/v5)
+fn load32_rot(a: Int) -> Int = ror32(rd32(a & 0xFFFFFFFC), (a & 3) * 8)
+fn popcount16(v: Int) -> Int {
+  var n = 0
+  var x = v & 0xFFFF
+  while x != 0 {
+    n += x & 1
+    x = x >> 1
+  }
+  return n
+}

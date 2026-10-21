@@ -49,6 +49,36 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   identities, fixed divisors, totals; verified fast forms in `improve` without algorithm cards; the lineage
   as cards (Servois 1814 to Gödel 1931).
 
+## Done (2026-10-21, third build: machines)
+
+* 🔵 **Machine state in the IR and the card language**: globals, byte/int arrays, void functions, call statements,
+  switch, constants read from cards, an evaluation-order pass (C computes what Python computes), language cards
+  with machine templates and `embed` blocks (Python in-process, C through ctypes), split compilation.
+* 🔵 **Instruction cards**: LR35902 (every base and CB opcode) and ARMv5TE/ARMv4T (ARM and Thumb forms), with
+  timing and flags as data, semantics, IR, vectors; per-instruction conformance in three engines in `verify` (CM32).
+* 🔵 **Game Boy / Game Boy Color from hardware cards**: memory map, MBC1/2/3+RTC/5, timer, interrupts, PPU (DMG and
+  CGB), DMA/HDMA, joypad, serial, APU, CGB registers; lazy, exact component syncing; a ROM survey of the user's
+  collection (COVERAGE.md).
+* 🔵 **Lifting** (REA-style, internal): ROM basic blocks as specialised card IR, compiled natively, frame-for-frame
+  identical to the interpreter (CM33).
+* 🔵 **Effect shell**: `cardmodel emu` (browser page with audio and gamepads, headless PNG/WAV runs, saves, RTC)
+  (CM21, CM34).
+* 🔵 **DS prototype**: both CPUs on the ARM cards, memory maps, IPC, timers, DMA, divider, cartridge reads, HLE
+  BIOS, direct boot; `cardmodel machine nds` measures coverage.
+
+## Machines: now and next
+
+* 🟡 **Hardware test suites**: Blargg and mooneye through `cardmodel machine testroms` (needs the user's go-ahead
+  to download them).
+* 🟢 **The survey's remaining failures**: MBC7, HuC3 and camera bank controllers as cards; trace the static and
+  blank titles.
+* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); DMG colourisation
+  palettes for DMG games on the CGB (from data, not the boot ROM).
+* 🟢 **DS, as its coverage report asks**: SPI (firmware user settings, touchscreen, power), RTC, sound status,
+  VRAM banks and the 2D engines (a first picture), then 3D; wait states; an ARM block lifter.
+* 🟢 **Lifting further**: superblocks through not-taken branches, a fast path for dynamic WRAM/HRAM accesses,
+  register caching across exits.
+
 ## Now
 
 * 🟢 **Native path inside improved modules.** Optionally call the C/Rust form of a pure function through

@@ -1,0 +1,24 @@
+{
+  "category": "hardware",
+  "name": "nds_cartridge",
+  "machine": "nds",
+  "statement": "The DS cartridge header (the first 0x200 bytes of a ROM image) as data: where the ARM9 and ARM7 binaries are in the image, where they load and start, the file system tables and the overlays. The secure area (0x4000-0x47FF) of a decrypted image starts with the words E7FFDEFF E7FFDEFF; an encrypted one cannot be booted here (it would need the BIOS's key material, and that is not done).",
+  "header": {
+    "title": {"offset": 0, "size": 12, "type": "ascii"}, "game_code": {"offset": 12, "size": 4, "type": "ascii"},
+    "maker_code": {"offset": 16, "size": 2, "type": "ascii"}, "unit_code": {"offset": 18, "size": 1},
+    "device_capacity": {"offset": 20, "size": 1},
+    "arm9_rom_offset": {"offset": 32, "size": 4}, "arm9_entry": {"offset": 36, "size": 4},
+    "arm9_ram_address": {"offset": 40, "size": 4}, "arm9_size": {"offset": 44, "size": 4},
+    "arm7_rom_offset": {"offset": 48, "size": 4}, "arm7_entry": {"offset": 52, "size": 4},
+    "arm7_ram_address": {"offset": 56, "size": 4}, "arm7_size": {"offset": 60, "size": 4},
+    "fnt_offset": {"offset": 64, "size": 4}, "fnt_size": {"offset": 68, "size": 4},
+    "fat_offset": {"offset": 72, "size": 4}, "fat_size": {"offset": 76, "size": 4},
+    "arm9_overlay_offset": {"offset": 80, "size": 4}, "arm9_overlay_size": {"offset": 84, "size": 4},
+    "arm7_overlay_offset": {"offset": 88, "size": 4}, "arm7_overlay_size": {"offset": 92, "size": 4},
+    "icon_offset": {"offset": 104, "size": 4}, "rom_used": {"offset": 128, "size": 4}, "header_size": {"offset": 132, "size": 4}},
+  "secure_area": {"offset": 16384, "size": 2048, "decrypted_marker": "E7FFDEFF"},
+  "boot_info": {"chip_id": 8130, "header_copy_bytes": 368},
+  "sources": ["GBATEK (DS cartridge header)"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

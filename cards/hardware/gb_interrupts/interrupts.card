@@ -25,6 +25,12 @@ fn hang() {
 }
 fn dispatch_irq() {
   ime = 0
+  -- EI; HALT with an interrupt pending: the HALT bug meets the dispatch, which pushes the HALT's own address
+  -- (it runs again after RETI) instead of letting the handler's first fetch repeat a byte
+  if halt_bug != 0 {
+    halt_bug = 0
+    PC = (PC - 1) & 0xFFFF
+  }
   idle()
   idle()
   SP = (SP - 1) & 0xFFFF

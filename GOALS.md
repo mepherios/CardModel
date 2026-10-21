@@ -24,6 +24,9 @@ filesystem registry. The program takes part in software development in any proje
    cards and to every language card (docs/LANGUAGE.md);
 10. **design a game**: the Vector Counter System, whose design laws are computed on exact equilibria and whose
     world carries every consequence with its cause (game/DESIGN.md).
+11. **run machines**: a CPU is its instruction cards and a console is its hardware cards; their card-language
+    semantics compile to the card IR, run in every engine, and a ROM's own code is lifted into the same IR and
+    emitted natively, behind an effect shell for video, audio, input and saves (docs/MACHINES.md).
 
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
@@ -62,6 +65,11 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_A3_memory_bounded` | autonomy | peak memory of the cardmodel process in the last verify (MB) | ≤ 1024 |
 | `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
 | `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
+| `G_M1_isa_conformance` | machines | instruction cards failing per-instruction conformance (engines, cycles, flags, vectors) | = 0 |
+| `G_M2_roms_boot` | machines | fraction of surveyed ROMs that boot and animate in the native engine | ≥ 0.95 |
+| `G_M3_lifted_identical` | machines | differential runs where lifted code and the interpreter disagree | = 0 |
+| `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye) passing | = 1.0 |
+| `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
 
 ### What "done" would mean on each axis
 
@@ -77,6 +85,9 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
   arena stays sound at any size, and recall and speedup rise as algorithm cards are added.
 * **Autonomy.** Copy the folder to another machine with Python 3.10+, and the program runs, verifies itself and reports
   which toolchains it found there.
+* **Machines.** Every instruction card agrees with its own data and across engines; the hardware test suites pass;
+  every game in a collection boots, and lifted code is frame-for-frame identical to the interpreter; for the DS,
+  every executed instruction decodes and the unmodelled hardware the games touch shrinks to nothing.
 
 ## Non-goals (and why)
 

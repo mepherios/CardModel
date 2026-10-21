@@ -1,0 +1,296 @@
+-- HLE BIOS for both DS CPUs (no BIOS image is used or needed): the SWI calls games make, written from their
+-- documented behaviour, plus CP15 (the ARM9's system control coprocessor: control, TCM regions, wait for
+-- interrupt) and interrupt entry. The interrupt vector holds our own six/nine-word dispatcher (it saves
+-- R0-R3, R12, LR, calls the handler the game stored at DTCM+0x3FFC / 0x0380FFFC and returns), placed there at
+-- power-on as instruction words. Undefined instructions stop that CPU and are counted.
+export array swi_hits: Int[64]            -- per CPU: 32 counters (SWI numbers 0..31)
+export global swi_last_unknown: Int = -1
+export array stopped_cpu: Int[2]
+export array stop_pc: Int[2]
+
+fn bios_if_addr() -> Int = if cur == 0 then dtcm_base + 0x3FF8 else 0x0380FFF8
+fn intr_wait(discard: Int, mask: Int) {
+  let a = bios_if_addr()
+  if discard != 0 {
+    wr32(a, rd32(a) & (MASK32 ^ mask))
+  }
+  let f = rd32(a)
+  if (f & mask) != 0 {
+    wr32(a, f & (MASK32 ^ mask))
+    return
+  }
+  regs[0] = 0
+  regs[1] = mask
+  ime[cur] = 1
+  next_pc = pc
+  halted_cpu[cur] = 1
+}
+fn crc16(init: Int, addr: Int, len: Int) -> Int {
+  var crc = init & 0xFFFF
+  for i in 0 .. len {
+    crc = crc ^ rd8(addr + i)
+    for k in 0 .. 8 {
+      if (crc & 1) != 0 {
+        crc = (crc >> 1) ^ 0xA001
+      } else {
+        crc = crc >> 1
+      }
+    }
+  }
+  return crc
+}
+fn cpu_set(src: Int, dst: Int, ctl: Int, fast: Bool) {
+  var n = ctl & 0x1FFFFF
+  let fill = (ctl >> 24) & 1
+  let word = fast or ((ctl >> 26) & 1) != 0
+  if fast {
+    n = (n + 7) & 0x1FFFF8
+  }
+  var s = src
+  var d = dst
+  var v0 = 0
+  if word {
+    v0 = rd32(s)
+  } else {
+    v0 = rd16(s)
+  }
+  for i in 0 .. n {
+    var v = v0
+    if word {
+      if fill == 0 {
+        v = rd32(s)
+      }
+      wr32(d, v)
+      d += 4
+      s += 4
+    } else {
+      if fill == 0 {
+        v = rd16(s)
+      }
+      wr16(d, v)
+      d += 2
+      s += 2
+    }
+  }
+}
+-- LZ77 (type 1): header word = size << 8 | 0x10; flag byte, then per flag bit: literal or (length, distance)
+fn lz77(src: Int, dst: Int, wide: Bool) {
+  let size = rd32(src) >> 8
+  var s = src + 4
+  var d = 0
+  var pend = 0
+  while d < size {
+    let flags = rd8(s)
+    s += 1
+    for k in 0 .. 8 {
+      if d < size {
+        if ((flags >> (7 - k)) & 1) == 0 {
+          lz_out(dst, d, rd8(s), wide)
+          s += 1
+          d += 1
+        } else {
+          let b1 = rd8(s)
+          let b2 = rd8(s + 1)
+          s += 2
+          let n = (b1 >> 4) + 3
+          let disp = (((b1 & 0xF) << 8) | b2) + 1
+          for j in 0 .. n {
+            if d < size {
+              lz_out(dst, d, lz_back(dst, d - disp, d, wide), wide)
+              d += 1
+            }
+          }
+        }
+      }
+    }
+  }
+}
+global lz_half: Int = 0
+fn lz_out(dst: Int, d: Int, b: Int, wide: Bool) {
+  if wide {
+    if (d & 1) == 0 {
+      lz_half = b
+    } else {
+      wr16(dst + d - 1, lz_half | (b << 8))
+    }
+  } else {
+    wr8(dst + d, b)
+  }
+}
+-- in 16-bit mode an odd position's low byte is still pending in lz_half (VRAM takes halfwords only)
+fn lz_back(dst: Int, at: Int, d: Int, wide: Bool) -> Int {
+  if wide and at == d - 1 and (d & 1) == 1 {
+    return lz_half
+  }
+  return rd8(dst + at)
+}
+-- run-length (type 3): flag byte: bit 7 = run of (n + 3) copies of one byte, else (n + 1) literal bytes
+fn rl_uncomp(src: Int, dst: Int) {
+  let size = rd32(src) >> 8
+  var s = src + 4
+  var d = 0
+  while d < size {
+    let f = rd8(s)
+    s += 1
+    if (f & 0x80) != 0 {
+      let b = rd8(s)
+      s += 1
+      for j in 0 .. (f & 0x7F) + 3 {
+        if d < size {
+          wr8(dst + d, b)
+          d += 1
+        }
+      }
+    } else {
+      for j in 0 .. (f & 0x7F) + 1 {
+        if d < size {
+          wr8(dst + d, rd8(s))
+          s += 1
+          d += 1
+        }
+      }
+    }
+  }
+}
+fn swi(comment: Int) {
+  var n = comment & 0xFF
+  if not thumb() {
+    n = (comment >> 16) & 0xFF
+  }
+  if n < 32 {
+    swi_hits[cur * 32 + n] += 1
+  }
+  if n == 0x03 or n == 0x08 {
+    return
+  }
+  if n == 0x04 {
+    intr_wait(regs[0], regs[1])
+  } elif n == 0x05 {
+    intr_wait(1, 1)
+  } elif n == 0x06 or n == 0x07 {
+    halted_cpu[cur] = 1
+  } elif n == 0x09 {
+    let a = s32(regs[0])
+    let b = s32(regs[1])
+    if b == 0 {
+      regs[0] = if a < 0 then 1 else MASK32
+      regs[1] = a & MASK32
+      regs[3] = 1
+    } else {
+      var q = a // b
+      if q < 0 and q * b != a {
+        q += 1
+      }
+      regs[0] = q & MASK32
+      regs[1] = (a - q * b) & MASK32
+      regs[3] = abs(q) & MASK32
+    }
+  } elif n == 0x0B {
+    cpu_set(regs[0], regs[1], regs[2], false)
+  } elif n == 0x0C {
+    cpu_set(regs[0], regs[1], regs[2], true)
+  } elif n == 0x0D {
+    regs[0] = isqrt(regs[0])
+  } elif n == 0x0E {
+    regs[0] = crc16(regs[0], regs[1], regs[2])
+  } elif n == 0x11 {
+    lz77(regs[0], regs[1], false)
+  } elif n == 0x12 {
+    lz77(regs[0], regs[1], true)
+  } elif n == 0x14 or n == 0x15 {
+    rl_uncomp(regs[0], regs[1])
+  } else {
+    swi_last_unknown = (cur << 8) | n
+  }
+}
+fn undefined_op(op: Int) {
+  undef_hits += 1
+  stopped_cpu[cur] = 1
+  stop_pc[cur] = pc
+}
+-- CP15 on the ARM9: control (bit 13 high vectors), DTCM region (c9,c1,0), ITCM region (c9,c1,1), wait for
+-- interrupt (c7,c0,4 and c7,c8,2); caches and the protection unit accept writes with no effect here
+fn cp_fields(op: Int) -> Int = (((op >> 16) & 0xF) << 8) | ((op & 0xF) << 4) | ((op >> 5) & 7)
+fn cp_read(op: Int) -> Int {
+  if cur != 0 or ((op >> 8) & 0xF) != 15 {
+    undefined_op(op)
+    return 0
+  }
+  let f = cp_fields(op)
+  if f == 0x000 {
+    return 0x41059461
+  }
+  if f == 0x001 {
+    return 0x0F0D2112
+  }
+  if f == 0x100 {
+    return cp15_ctrl
+  }
+  if f == 0x910 {
+    return dtcm_base | 0x0A
+  }
+  if f == 0x911 {
+    return 0x20
+  }
+  return 0
+}
+fn cp_write(op: Int, v: Int) {
+  if cur != 0 or ((op >> 8) & 0xF) != 15 {
+    undefined_op(op)
+    return
+  }
+  let f = cp_fields(op)
+  if f == 0x100 {
+    cp15_ctrl = (v & 0x000FF085) | 0x78
+  } elif f == 0x910 {
+    dtcm_base = v & 0xFFFFF000
+    dtcm_size = 512 << ((v >> 1) & 0x1F)
+    if dtcm_size > 0x4000 {
+      dtcm_size = 0x4000
+    }
+  } elif f == 0x911 {
+    itcm_size = 512 << ((v >> 1) & 0x1F)
+  } elif f == 0x704 or f == 0x782 {
+    halted_cpu[0] = 1
+  }
+}
+fn take_irq() {
+  let old = cpsr
+  set_cpsr((old & 0xFFFFFF40) | 0x92)
+  spsr = old
+  regs[14] = (pc + 4) & MASK32
+  if cur == 0 and (cp15_ctrl & 0x2000) != 0 {
+    pc = 0xFFFF0018
+  } else {
+    pc = 0x18
+  }
+  halted_cpu[cur] = 0
+}
+fn bios_store(c: Int, a: Int, w: Int) {
+  for k in 0 .. 4 {
+    if c == 0 {
+      bios9[(a + k) & 0xFFF] = (w >> (8 * k)) & 0xFF
+    } else {
+      bios7[(a + k) & 0xFFF] = (w >> (8 * k)) & 0xFF
+    }
+  }
+}
+-- the IRQ vector: our dispatcher, as ARM instruction words (stmdb sp!,{r0-r3,r12,lr}; base of the handler
+-- pointer; add lr, pc, #0; ldr pc, [r0, #-4]; ldmia sp!,{r0-r3,r12,lr}; subs pc, lr, #4)
+fn bios_install() {
+  bios_store(0, 0x18, 0xE92D500F)
+  bios_store(0, 0x1C, 0xEE190F11)
+  bios_store(0, 0x20, 0xE1A00620)
+  bios_store(0, 0x24, 0xE1A00600)
+  bios_store(0, 0x28, 0xE2800901)
+  bios_store(0, 0x2C, 0xE28FE000)
+  bios_store(0, 0x30, 0xE510F004)
+  bios_store(0, 0x34, 0xE8BD500F)
+  bios_store(0, 0x38, 0xE25EF004)
+  bios_store(1, 0x18, 0xE92D500F)
+  bios_store(1, 0x1C, 0xE3A00301)
+  bios_store(1, 0x20, 0xE28FE000)
+  bios_store(1, 0x24, 0xE510F004)
+  bios_store(1, 0x28, 0xE8BD500F)
+  bios_store(1, 0x2C, 0xE25EF004)
+}

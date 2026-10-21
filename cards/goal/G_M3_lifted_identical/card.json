@@ -1,0 +1,16 @@
+{
+  "axis": "machines",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "lifted_runs_differing",
+  "name": "G_M3_lifted_identical",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "Differential runs (`cardmodel machine diff ROM`) in which lifted ROM code and the interpreter disagree on a frame's state hash.",
+  "target": 0,
+  "tier": 0
+}

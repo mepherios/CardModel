@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 
 from ..lang.compile import compile_sources
 from . import isa as I
@@ -65,12 +66,14 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
         h.update(label.encode() + b"\0" + text.encode() + b"\0")
     h.update(json.dumps(externs, sort_keys=True).encode())
     h.update(json.dumps({k: mc.get(k) for k in ("export_state", "entry")}, sort_keys=True).encode())
+    h.update(Path(__file__).read_bytes())                  # the builder itself (generated functions, exports)
     key = h.hexdigest()[:20]
     cache = ctx.state_root / "machine" / f"{name}-{key}.json"
     if use_cache and cache.is_file():
         return json.loads(cache.read_text(encoding="utf-8"))
     mod = compile_sources(srcs, ctx.ops, ctx.store, name=name, externs=externs)
     ir = mod.ir_module(mc.get("entry"))
+    ir["functions"].append(reset_function(ir))
     if mc.get("export_state"):
         for x in (*ir.get("globals", []), *ir.get("arrays", [])):
             x["export"] = True
@@ -81,6 +84,35 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
     tmp.write_text(json.dumps(ir, sort_keys=True), encoding="utf-8")
     tmp.replace(cache)
     return ir
+
+
+RESET_ARRAY_MAX = 1 << 20
+
+
+def reset_function(ir: dict) -> dict:
+    """``reset_all``, generated from the module's declarations: every global back to its initial value and every
+    array of at most 1 MiB back to its initial contents (the host refills the big ones: ROM, cartridge). A machine
+    that is reset this way starts the same whatever ran in it before."""
+    body = []
+    for g in ir.get("globals") or []:
+        t = g.get("type", "int")
+        body.append({"k": "assign", "target": g["name"], "value": [t if t in ("int", "bool") else "int", g.get("init", 0)]})
+    n = 0
+    for a in ir.get("arrays") or []:
+        if a["size"] > RESET_ARRAY_MAX:
+            continue
+        n += 1
+        init = list(a.get("init") or [])
+        i, stop = f"cm_ri{n}", f"cm_rs{n}"
+        body.append({"k": "for_range", "var": i, "start": ["int", len(init)], "stop": ["int", a["size"]],
+                     "step": ["int", 1], "counter": f"cm_rc{n}", "stop_var": stop,
+                     "body": [{"k": "store", "array": a["name"], "index": ["var", i], "value": ["int", 0]}]})
+        for k, v in enumerate(init):
+            body.append({"k": "store", "array": a["name"], "index": ["int", k], "value": ["int", v]})
+    locals_ = {}
+    for k in range(1, n + 1):
+        locals_.update({f"cm_ri{k}": "int", f"cm_rs{k}": "int", f"cm_rc{k}": "int"})
+    return {"name": "reset_all", "params": [], "returns": "void", "locals": locals_, "body": body, "export": True}
 
 
 def stats(ir: dict) -> dict:

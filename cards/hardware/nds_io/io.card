@@ -1,0 +1,613 @@
+-- Nintendo DS I/O for both CPUs (index c: 0 = ARM9, 1 = ARM7): interrupt controllers (IME/IE/IF), IPC sync and the
+-- two 16-word FIFOs, four timers each, DMA (immediate, V-blank and cartridge starts), the ARM9 divider and square
+-- root, the cartridge bus (command B7 reads 0x200-byte blocks straight from the ROM image: the image is the
+-- data the bus would deliver), DISPSTAT/VCOUNT, KEYINPUT, HALTCNT. Registers nobody models are latched in a
+-- byte file so reads give back what was written, and every register address touched is marked in io_touch9/7
+-- (the coverage report reads them).
+const IRQ_VBLANK = 0x1
+const IRQ_HBLANK = 0x2
+const IRQ_VCOUNT = 0x4
+const IRQ_TIMER0 = 0x8
+const IRQ_IPCSYNC = 0x10000
+const IRQ_FIFO_EMPTY = 0x20000
+const IRQ_FIFO_RECV = 0x40000
+const IRQ_CART = 0x80000
+array io_file: Byte[0x4000]               -- latched registers: c * 0x2000 + offset
+export array io_touch: Byte[0x4000]       -- 1 read, 2 written, 3 both
+array ime: Int[2]
+array ie: Int[2]
+array irqf: Int[2]
+array dispstat: Int[2]
+global vcount: Int = 0
+array ipcsync: Int[2]
+array fifocnt: Int[2]
+array fifo: Int[32]                       -- 16 words per direction: fifo[c*16 + i] is what CPU c sends
+array fifo_head: Int[2]
+array fifo_len: Int[2]
+array fifo_last: Int[2]
+array tm_count: Int[8]
+array tm_reload: Int[8]
+array tm_ctrl: Int[8]
+array tm_frac: Int[8]
+array dma_src: Int[8]
+array dma_dst: Int[8]
+array dma_cnt: Int[8]
+global div_cnt: Int = 0
+array div_w: Int[8]                       -- numerator lo hi, denominator lo hi, result lo hi, remainder lo hi
+global sqrt_cnt: Int = 0
+array sqrt_w: Int[2]                      -- parameter lo hi
+global sqrt_res: Int = 0
+export global keyinput: Int = 0x3FF       -- 1 = released (A B Select Start Right Left Up Down R L)
+export global extkey: Int = 0x7F          -- X Y (debug) pen-down hinge, ARM7 only
+array halted_cpu: Int[2]
+-- cartridge
+export array cart: Byte[0x4000000]
+export global cart_size: Int = 0
+global cart_ctrl: Int = 0
+array cart_cmd: Byte[8]
+global cart_addr: Int = 0
+global cart_left: Int = 0
+global cart_mode: Int = 0
+global aux_cnt: Int = 0
+export global swi_unknown: Int = 0
+export global undef_hits: Int = 0
+
+fn touch(a: Int, how: Int) {
+  let o = (cur << 13) | (a & 0x1FFF)
+  io_touch[o] = io_touch[o] | how
+}
+fn request(c: Int, bits: Int) {
+  irqf[c] = irqf[c] | bits
+  if (ie[c] & bits) != 0 {
+    halted_cpu[c] = 0
+  }
+}
+-- IPC FIFO: CPU c sends into fifo[c]; the other CPU receives from it
+fn fifo_push(c: Int, v: Int) {
+  if (fifocnt[c] & 0x8000) == 0 {
+    return
+  }
+  if fifo_len[c] >= 16 {
+    fifocnt[c] = fifocnt[c] | 0x4000
+    return
+  }
+  fifo[c * 16 + ((fifo_head[c] + fifo_len[c]) & 15)] = v & MASK32
+  fifo_len[c] += 1
+  let o = 1 - c
+  if fifo_len[c] == 1 and (fifocnt[o] & 0x400) != 0 {
+    request(o, IRQ_FIFO_RECV)
+  }
+}
+fn fifo_pop(c: Int) -> Int {
+  let o = 1 - c
+  if fifo_len[o] == 0 {
+    fifocnt[c] = fifocnt[c] | 0x4000
+    return fifo_last[c]
+  }
+  let v = fifo[o * 16 + fifo_head[o]]
+  fifo_head[o] = (fifo_head[o] + 1) & 15
+  fifo_len[o] -= 1
+  fifo_last[c] = v
+  if fifo_len[o] == 0 and (fifocnt[o] & 0x4) != 0 {
+    request(o, IRQ_FIFO_EMPTY)
+  }
+  return v
+}
+fn fifocnt_read(c: Int) -> Int {
+  let o = 1 - c
+  var v = fifocnt[c] & 0xC404
+  if fifo_len[c] == 0 {
+    v = v | 1
+  }
+  if fifo_len[c] == 16 {
+    v = v | 2
+  }
+  if fifo_len[o] == 0 {
+    v = v | 0x100
+  }
+  if fifo_len[o] == 16 {
+    v = v | 0x200
+  }
+  return v
+}
+fn fifocnt_write(c: Int, v: Int) {
+  if (v & 8) != 0 {
+    fifo_len[c] = 0
+    fifo_head[c] = 0
+  }
+  if (v & 0x4000) != 0 {
+    fifocnt[c] = fifocnt[c] & (0xFFFF ^ 0x4000)
+  }
+  fifocnt[c] = (fifocnt[c] & 0x4000) | (v & 0x8404)
+  if (v & 4) != 0 and fifo_len[c] == 0 {
+    request(c, IRQ_FIFO_EMPTY)
+  }
+  if (v & 0x400) != 0 and fifo_len[1 - c] > 0 {
+    request(c, IRQ_FIFO_RECV)
+  }
+}
+fn ipcsync_write(c: Int, v: Int) {
+  let o = 1 - c
+  ipcsync[c] = (ipcsync[c] & 0xF) | (v & 0x4F00)
+  ipcsync[o] = (ipcsync[o] & 0xFFF0) | ((v >> 8) & 0xF)
+  if (v & 0x2000) != 0 and (ipcsync[o] & 0x4000) != 0 {
+    request(o, IRQ_IPCSYNC)
+  }
+}
+
+-- timers: 33.513982 MHz bus clock, prescaler 1/64/256/1024, count-up chaining; advanced per scanline chunk
+fn timer_advance(c: Int, cycles: Int) {
+  var carry = 0
+  for t in 0 .. 4 {
+    let i = c * 4 + t
+    let ctl = tm_ctrl[i]
+    var ticks = 0
+    if (ctl & 0x80) != 0 {
+      if t > 0 and (ctl & 4) != 0 {
+        ticks = carry
+      } else {
+        let shift = if (ctl & 3) == 0 then 0 else if (ctl & 3) == 1 then 6 else if (ctl & 3) == 2 then 8 else 10
+        let total = tm_frac[i] + cycles
+        ticks = total >> shift
+        tm_frac[i] = total - (ticks << shift)
+      }
+    }
+    carry = 0
+    if ticks > 0 {
+      var n = tm_count[i] + ticks
+      while n > 0xFFFF {
+        n = n - 0x10000 + tm_reload[i]
+        carry += 1
+        if (ctl & 0x40) != 0 {
+          request(c, IRQ_TIMER0 << t)
+        }
+      }
+      tm_count[i] = n
+    }
+  }
+}
+-- DMA: immediate transfers happen at the write; V-blank and cartridge starts wait for their event
+fn dma_run(c: Int, ch: Int) {
+  let i = c * 4 + ch
+  let cnt = dma_cnt[i]
+  var n = cnt & 0x1FFFFF
+  if c == 1 {
+    n = cnt & 0xFFFF
+  }
+  if n == 0 {
+    n = if c == 0 then 0x200000 else 0x10000
+  }
+  let word = (cnt >> 26) & 1
+  let size = if word != 0 then 4 else 2
+  let dmode = (cnt >> 21) & 3
+  let smode = (cnt >> 23) & 3
+  var s = dma_src[i]
+  var d = dma_dst[i]
+  for k in 0 .. n {
+    if word != 0 {
+      wr32(d, rd32(s))
+    } else {
+      wr16(d, rd16(s))
+    }
+    if smode == 0 {
+      s += size
+    } elif smode == 1 {
+      s -= size
+    }
+    if dmode == 0 or dmode == 3 {
+      d += size
+    } elif dmode == 1 {
+      d -= size
+    }
+  }
+  dma_src[i] = s & MASK32
+  if dmode != 3 {
+    dma_dst[i] = d & MASK32
+  }
+  if ((cnt >> 25) & 1) == 0 {
+    dma_cnt[i] = cnt & 0x7FFFFFFF
+  }
+  if ((cnt >> 30) & 1) != 0 {
+    request(c, 0x100 << ch)
+  }
+}
+fn dma_timing(c: Int, cnt: Int) -> Int {
+  if c == 0 {
+    return (cnt >> 27) & 7
+  }
+  return ((cnt >> 28) & 3) * 2
+}
+fn dma_event(c: Int, timing: Int) {
+  for ch in 0 .. 4 {
+    let cnt = dma_cnt[c * 4 + ch]
+    if (cnt & 0x80000000) != 0 and dma_timing(c, cnt) == timing {
+      dma_run(c, ch)
+    }
+  }
+}
+-- the ARM9 divider and square root (results are ready at once here). Values are kept as 32-bit words so every
+-- intermediate fits a signed 64-bit integer; a 64-bit square-root parameter of 2^63 or more is taken as its
+-- top 62 bits (an honest approximation: the result can be off by one there).
+fn w64(lo: Int, hi: Int) -> Int = s32(hi) * 0x100000000 + lo
+fn put64(k: Int, v: Int) {
+  div_w[k] = v & MASK32
+  div_w[k + 1] = (v >> 32) & MASK32
+}
+fn div_update() {
+  let mode = div_cnt & 3
+  var num = w64(div_w[0], div_w[1])
+  var den = w64(div_w[2], div_w[3])
+  if mode == 0 {
+    num = s32(div_w[0])
+    den = s32(div_w[2])
+  } elif mode == 1 {
+    den = s32(div_w[2])
+  }
+  if den == 0 {
+    div_cnt = div_cnt | 0x4000
+    put64(6, num)
+    put64(4, if num < 0 then 1 else -1)
+    return
+  }
+  div_cnt = div_cnt & (0xFFFF ^ 0x4000)
+  if den == -1 and num == -0x8000000000000000 {
+    put64(4, num)
+    put64(6, 0)
+    return
+  }
+  var q = num // den
+  if q < 0 and q * den != num {
+    q += 1
+  }
+  put64(4, q)
+  put64(6, num - q * den)
+}
+fn isqrt(v: Int) -> Int {
+  if v <= 0 {
+    return 0
+  }
+  var x = 0
+  var b = 0x4000000000000000
+  while b > v {
+    b = b >> 2
+  }
+  var rem = v
+  while b != 0 {
+    if rem >= x + b {
+      rem -= x + b
+      x = (x >> 1) + b
+    } else {
+      x = x >> 1
+    }
+    b = b >> 2
+  }
+  return x
+}
+fn sqrt_update() {
+  if (sqrt_cnt & 1) == 0 {
+    sqrt_res = isqrt(sqrt_w[0])
+  } elif sqrt_w[1] >= 0x80000000 {
+    sqrt_res = isqrt((sqrt_w[1] >> 2) * 0x100000000 + (sqrt_w[0] >> 2)) * 2
+  } else {
+    sqrt_res = isqrt(sqrt_w[1] * 0x100000000 + sqrt_w[0])
+  }
+}
+-- the cartridge bus: B7 = read a block from the ROM, B8 = chip ID; the data port returns one word at a time
+fn cart_start(v: Int) {
+  cart_ctrl = v & 0xFF7FFFFF
+  let cmd = cart_cmd[0]
+  let bs = (v >> 24) & 7
+  cart_left = if bs == 0 then 0 else if bs == 7 then 4 else 0x100 << bs
+  if cmd == 0xB7 {
+    cart_mode = 1
+    cart_addr = (cart_cmd[1] << 24) | (cart_cmd[2] << 16) | (cart_cmd[3] << 8) | cart_cmd[4]
+    if cart_addr < 0x8000 {
+      cart_addr = 0x8000 + (cart_addr & 0x1FF)
+    }
+  } elif cmd == 0xB8 {
+    cart_mode = 2
+  } else {
+    cart_mode = 0
+  }
+  if cart_left > 0 {
+    cart_ctrl = cart_ctrl | 0x80800000
+    dma_event(cur, if cur == 0 then 5 else 4)
+  } else {
+    cart_done()
+  }
+}
+fn cart_done() {
+  cart_ctrl = cart_ctrl & 0x7F7FFFFF
+  if (aux_cnt & 0x4000) != 0 {
+    request(0, IRQ_CART)
+    request(1, IRQ_CART)
+  }
+}
+fn cart_data() -> Int {
+  if cart_left <= 0 {
+    return 0
+  }
+  var v = 0xFFFFFFFF
+  if cart_mode == 1 {
+    let a = cart_addr
+    if a + 3 < cart_size {
+      v = cart[a] | (cart[a + 1] << 8) | (cart[a + 2] << 16) | (cart[a + 3] << 24)
+    }
+    cart_addr = (cart_addr + 4) & MASK32
+  } elif cart_mode == 2 {
+    v = 0x00001FC2
+  }
+  cart_left -= 4
+  if cart_left <= 0 {
+    cart_done()
+  }
+  return v
+}
+
+fn io_read32(a: Int) -> Int {
+  let o = a & 0x1FFF
+  if a == 0x04100000 {
+    touch(0x1FF0, 1)
+    return fifo_pop(cur)
+  }
+  if a == 0x04100010 {
+    touch(0x1FF4, 1)
+    return cart_data()
+  }
+  if o == 0x208 {
+    touch(o, 1)
+    return ime[cur]
+  }
+  if o == 0x210 {
+    touch(o, 1)
+    return ie[cur]
+  }
+  if o == 0x214 {
+    touch(o, 1)
+    return irqf[cur]
+  }
+  if o == 0x1A4 {
+    touch(o, 1)
+    return cart_ctrl
+  }
+  if cur == 0 and o >= 0x290 and o < 0x2B0 {
+    touch(o, 1)
+    return div_w[(o - 0x290) >> 2]
+  }
+  if cur == 0 and o == 0x2B4 {
+    touch(o, 1)
+    return sqrt_res & MASK32
+  }
+  return io_read16(a) | (io_read16(a + 2) << 16)
+}
+fn io_read16(a: Int) -> Int = io_read8(a) | (io_read8(a + 1) << 8)
+fn io_read8(a: Int) -> Int {
+  let o = a & 0x1FFF
+  let sh = (o & 3) * 8
+  if (a >> 20) != 0x040 {
+    if a >= 0x04100000 and a < 0x04100004 {
+      return (fifo_pop(cur) >> sh) & 0xFF
+    }
+    return 0
+  }
+  touch(o, 1)
+  if o < 0x4 and cur == 1 {
+    return 0
+  }
+  if o == 0x4 or o == 0x5 {
+    var v = dispstat[cur] & 0xFFB8
+    if vcount >= 192 and vcount < 262 {
+      v = v | 1
+    }
+    if ((dispstat[cur] >> 8) | ((dispstat[cur] & 0x80) << 1)) == vcount {
+      v = v | 4
+    }
+    return (v >> ((o & 1) * 8)) & 0xFF
+  }
+  if o == 0x6 or o == 0x7 {
+    return (vcount >> ((o & 1) * 8)) & 0xFF
+  }
+  if o >= 0x100 and o < 0x110 {
+    let t = (o - 0x100) >> 2
+    let v = if (o & 2) == 0 then tm_count[cur * 4 + t] else tm_ctrl[cur * 4 + t]
+    return (v >> ((o & 1) * 8)) & 0xFF
+  }
+  if o == 0x130 or o == 0x131 {
+    return (keyinput >> ((o & 1) * 8)) & 0xFF
+  }
+  if o == 0x136 and cur == 1 {
+    return extkey
+  }
+  if (o == 0x247 and cur == 0) or (o == 0x241 and cur == 1) {
+    return wramcnt
+  }
+  if o == 0x137 and cur == 1 {
+    return 0
+  }
+  if o == 0x180 or o == 0x181 {
+    return (ipcsync[cur] >> ((o & 1) * 8)) & 0xFF
+  }
+  if o == 0x184 or o == 0x185 {
+    return (fifocnt_read(cur) >> ((o & 1) * 8)) & 0xFF
+  }
+  if o >= 0x1A4 and o < 0x1A8 {
+    return (cart_ctrl >> sh) & 0xFF
+  }
+  if o == 0x1A0 or o == 0x1A1 {
+    return (aux_cnt >> ((o & 1) * 8)) & 0xFF
+  }
+  if o >= 0x208 and o < 0x20C {
+    return (ime[cur] >> sh) & 0xFF
+  }
+  if o >= 0x210 and o < 0x214 {
+    return (ie[cur] >> sh) & 0xFF
+  }
+  if o >= 0x214 and o < 0x218 {
+    return (irqf[cur] >> sh) & 0xFF
+  }
+  if cur == 0 and o >= 0x280 and o < 0x2C0 {
+    if o < 0x284 {
+      return (div_cnt >> sh) & 0xFF
+    }
+    if o >= 0x290 and o < 0x2B0 {
+      return (div_w[(o - 0x290) >> 2] >> sh) & 0xFF
+    }
+    if o < 0x2B4 and o >= 0x2B0 {
+      return (sqrt_cnt >> sh) & 0xFF
+    }
+    if o >= 0x2B4 and o < 0x2B8 {
+      return (sqrt_res >> sh) & 0xFF
+    }
+  }
+  if o >= 0xB0 and o < 0xE0 {
+    let ch = (o - 0xB0) // 12
+    let k = (o - 0xB0) % 12
+    let i = cur * 4 + ch
+    let v = if k < 4 then dma_src[i] else if k < 8 then dma_dst[i] else dma_cnt[i]
+    return (v >> ((k & 3) * 8)) & 0xFF
+  }
+  return io_file[(cur << 13) | o]
+}
+fn io_write32(a: Int, v: Int) {
+  let o = a & 0x1FFF
+  if o == 0x188 {
+    touch(o, 2)
+    fifo_push(cur, v)
+    return
+  }
+  if o == 0x208 {
+    touch(o, 2)
+    ime[cur] = v & 1
+    return
+  }
+  if o == 0x210 {
+    touch(o, 2)
+    ie[cur] = v & MASK32
+    return
+  }
+  if o == 0x214 {
+    touch(o, 2)
+    irqf[cur] = irqf[cur] & (MASK32 ^ v)
+    return
+  }
+  if o >= 0xB0 and o < 0xE0 and ((o - 0xB0) % 12) == 8 {
+    touch(o, 2)
+    let ch = (o - 0xB0) // 12
+    let i = cur * 4 + ch
+    let was = dma_cnt[i] & 0x80000000
+    dma_cnt[i] = v & MASK32
+    if was == 0 and (v & 0x80000000) != 0 and dma_timing(cur, v) == 0 {
+      dma_run(cur, ch)
+    }
+    return
+  }
+  if o == 0x1A4 {
+    touch(o, 2)
+    if (v & 0x80000000) != 0 {
+      cart_start(v)
+    } else {
+      cart_ctrl = v & 0x7FFFFFFF
+    }
+    return
+  }
+  io_write16(a, v & 0xFFFF)
+  io_write16(a + 2, (v >> 16) & 0xFFFF)
+}
+fn io_write16(a: Int, v: Int) {
+  let o = a & 0x1FFF
+  if o == 0x180 {
+    touch(o, 2)
+    ipcsync_write(cur, v)
+    return
+  }
+  if o == 0x184 {
+    touch(o, 2)
+    fifocnt_write(cur, v)
+    return
+  }
+  if o >= 0x100 and o < 0x110 {
+    touch(o, 2)
+    let t = (o - 0x100) >> 2
+    let i = cur * 4 + t
+    if (o & 2) == 0 {
+      tm_reload[i] = v
+    } else {
+      if (tm_ctrl[i] & 0x80) == 0 and (v & 0x80) != 0 {
+        tm_count[i] = tm_reload[i]
+        tm_frac[i] = 0
+      }
+      tm_ctrl[i] = v
+    }
+    return
+  }
+  io_write8(a, v & 0xFF)
+  io_write8(a + 1, (v >> 8) & 0xFF)
+}
+fn io_write8(a: Int, v: Int) {
+  let o = a & 0x1FFF
+  let sh = (o & 3) * 8
+  if (a >> 20) != 0x040 {
+    return
+  }
+  touch(o, 2)
+  if o == 0x4 or o == 0x5 {
+    let s = (o & 1) * 8
+    dispstat[cur] = (dispstat[cur] & (0xFFFF ^ (0xFF << s))) | (v << s)
+  } elif o >= 0x208 and o < 0x20C {
+    ime[cur] = if o == 0x208 then v & 1 else ime[cur]
+  } elif o >= 0x210 and o < 0x214 {
+    ie[cur] = (ie[cur] & (MASK32 ^ (0xFF << sh))) | (v << sh)
+  } elif o >= 0x214 and o < 0x218 {
+    irqf[cur] = irqf[cur] & (MASK32 ^ (v << sh))
+  } elif o >= 0x1A8 and o < 0x1B0 {
+    cart_cmd[o - 0x1A8] = v
+  } elif o == 0x1A0 or o == 0x1A1 {
+    let s = (o & 1) * 8
+    aux_cnt = (aux_cnt & (0xFFFF ^ (0xFF << s))) | (v << s)
+  } elif o >= 0x1A4 and o < 0x1A8 {
+    cart_ctrl = (cart_ctrl & (MASK32 ^ (0xFF << sh))) | (v << sh)
+    if o == 0x1A7 and (v & 0x80) != 0 {
+      cart_start(cart_ctrl)
+    }
+  } elif o == 0x247 and cur == 0 {
+    wramcnt = v & 3
+  } elif o == 0x301 and cur == 1 {
+    if (v & 0xC0) == 0x80 {
+      halted_cpu[1] = 1
+    }
+  } elif cur == 0 and o >= 0x280 and o < 0x2C0 {
+    if o < 0x284 {
+      div_cnt = (div_cnt & (0xFFFF ^ (0xFF << sh))) | (v << sh)
+      div_update()
+    } elif o >= 0x290 and o < 0x2A0 {
+      let k = (o - 0x290) >> 2
+      div_w[k] = (div_w[k] & (MASK32 ^ (0xFF << sh))) | (v << sh)
+      div_update()
+    } elif o >= 0x2B0 and o < 0x2B4 {
+      sqrt_cnt = (sqrt_cnt & (0xFFFF ^ (0xFF << sh))) | (v << sh)
+      sqrt_update()
+    } elif o >= 0x2B8 and o < 0x2C0 {
+      let k = (o - 0x2B8) >> 2
+      sqrt_w[k] = (sqrt_w[k] & (MASK32 ^ (0xFF << sh))) | (v << sh)
+      sqrt_update()
+    }
+  } elif o >= 0xB0 and o < 0xE0 {
+    let ch = (o - 0xB0) // 12
+    let k = (o - 0xB0) % 12
+    let i = cur * 4 + ch
+    let s = (k & 3) * 8
+    if k < 4 {
+      dma_src[i] = (dma_src[i] & (MASK32 ^ (0xFF << s))) | (v << s)
+    } elif k < 8 {
+      dma_dst[i] = (dma_dst[i] & (MASK32 ^ (0xFF << s))) | (v << s)
+    } else {
+      let was = dma_cnt[i] & 0x80000000
+      dma_cnt[i] = (dma_cnt[i] & (MASK32 ^ (0xFF << s))) | (v << s)
+      if k == 11 and was == 0 and (dma_cnt[i] & 0x80000000) != 0 and dma_timing(cur, dma_cnt[i]) == 0 {
+        dma_run(cur, ch)
+      }
+    }
+  } else {
+    io_file[(cur << 13) | o] = v
+  }
+}

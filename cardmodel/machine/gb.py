@@ -92,6 +92,7 @@ class GameBoy:
 
     def reset(self) -> None:
         m, info = self.m, self.info
+        m.call("reset_all")
         size = min(len(self.rom), 0x800000)
         m.write("rom", self.rom[:size])
         rom_bytes = _pow2(max(size, info["rom_size"] if info["rom_size"] <= 0x800000 else size))

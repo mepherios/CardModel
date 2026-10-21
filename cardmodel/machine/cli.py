@@ -9,6 +9,7 @@
   cardmodel machine diff ROM [--frames N]       lifted vs interpreter, frame by frame (state hashes)
   cardmodel machine info ROM                    the cartridge header, decoded with the cartridge card
   cardmodel machine testroms DIR                run test ROMs, read their verdicts (serial / screen / registers)
+  cardmodel machine nds ROM [--frames N]        the DS prototype: direct boot, both CPUs, measured coverage
 """
 from __future__ import annotations
 
@@ -130,11 +131,39 @@ def cmd_machine(args) -> int:
         from . import diff
         rom, name = G.open_rom(args.target)
         r = diff.differential(ctx, rom, frames=args.frames)
+        import hashlib
+        diffs = ctx.load_state("emu_diffs") or {}
+        diffs[hashlib.sha1(rom).hexdigest()[:16]] = {k: r[k] for k in ("verdict", "frames_compared",
+                                                                       "first_difference", "speedup", "blocks")}
+        ctx.save_state("emu_diffs", diffs)
         _out(args, r, f"{name}: {r['verdict']} over {r['frames_compared']} frames"
                       + (f" (first difference at frame {r['first_difference']})" if r.get("first_difference") is not None
                          else "") + f"; interpreter {r['interp_s']} s, lifted {r['lifted_s']} s "
                                     f"({r['speedup']}x); {r['blocks']} blocks")
         return 0 if r["verdict"] == "identical" else 1
+    if args.action == "nds":
+        from . import nds
+        rom = nds.open_nds(args.target)
+        try:
+            ds = nds.DS(ctx, rom, engine=args.engine)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        secs = ds.run(args.frames)
+        cov = nds.coverage(ds)
+        cov["seconds"] = round(secs, 2)
+        ctx.save_state("nds_coverage", cov)
+        lines = [f"{cov['title']} ({cov['game_code']}): {cov['frames']} frames in {cov['seconds']} s, "
+                 f"{cov['instruction_cards']} ARM/Thumb instruction cards"]
+        for name, c in cov["cpus"].items():
+            why = "stopped at an undefined instruction" if c["stopped"] else ("halted" if c["halted"] else "running")
+            lines.append(f"  {name}: {c['instructions_executed']:,} instructions, {c['distinct_instruction_addresses']:,} "
+                         f"distinct, {c['cards_used']} cards used, {c['undecodable_executed']} undecodable; now at "
+                         f"{c['pc']} ({c['state']}, mode {c['mode']}, {why})")
+            lines.append(f"     BIOS calls {c['swi_calls']} (not modelled: {c['swi_unmodelled'] or 'none'})")
+            lines.append(f"     touched but not modelled: {c['unmodelled_hardware_touched'] or 'nothing'}")
+        _out(args, cov, "\n".join(lines))
+        return 0
     if args.action == "testroms":
         from . import testroms
         r = testroms.run(ctx, args.target, engine=args.engine)
@@ -164,7 +193,7 @@ def register(sub) -> None:
     s.add_argument("--samples", type=int, default=8); s.add_argument("--seed", type=int); s.add_argument("--engines")
     s.set_defaults(fn=cmd_isa)
     s = sub.add_parser("machine", help="machines: survey ROMs, lift a ROM, differential runs, test ROMs")
-    s.add_argument("action", choices=["survey", "lift", "diff", "info", "testroms"]); s.add_argument("target")
+    s.add_argument("action", choices=["survey", "lift", "diff", "info", "testroms", "nds"]); s.add_argument("target")
     s.add_argument("--frames", type=int, default=1200); s.add_argument("--engine", default="native")
     s.add_argument("--limit", type=int); s.add_argument("--shots"); s.add_argument("--relift", action="store_true")
     s.set_defaults(fn=cmd_machine)

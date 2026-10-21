@@ -1,0 +1,20 @@
+{
+  "category": "isa",
+  "kind": "isa",
+  "name": "armv5te",
+  "statement": "ARMv5TE (the Nintendo DS ARM9, an ARM946E-S) and ARMv4T (the DS ARM7, an ARM7TDMI): 32-bit ARM and 16-bit Thumb instruction sets, sixteen registers with banked copies per mode, CPSR with N Z C V Q I F T and the mode. One card per instruction form (registry isa, pack armv5te); cards marked arch v5te are undefined at arch 4.",
+  "registers": {"r0-r15": 32, "cpsr": 32, "spsr": 32},
+  "flag_bits": {"N": 31, "Z": 30, "C": 29, "V": 28, "Q": 27},
+  "flag_codes": {"*": "computed", "S": "computed when the S bit is set", "-": "unchanged"},
+  "decode": {"kind": "mask", "sets": {"arm": {"bits": 32, "index": "((op >> 16) & 0xFF0) | ((op >> 4) & 0xF)", "condition": [31, 28]},
+                                    "thumb": {"bits": 16, "index": "op >> 6"}}},
+  "operand_param": "op",
+  "dispatch": {"arm": "arm_exec", "arm_uncond": "arm_uncond", "thumb": "thumb_exec"},
+  "core": "core.card",
+  "interface": "interface.card",
+  "interface_functions": ["rd8", "rd16", "rd32", "wr8", "wr16", "wr32", "swi", "undefined_op", "cp_read", "cp_write"],
+  "cycles_note": "card cycles are nominal ARM946E-S figures (1 = one core cycle at 67 MHz); memory wait states are the machine's",
+  "sources": ["ARM Architecture Reference Manual (ARMv5TE)", "ARM946E-S and ARM7TDMI Technical Reference Manuals", "GBATEK"],
+  "provenance": {"origin": "cardmodel", "tool": "tools/gen_armv5te.py"},
+  "tier": 1
+}

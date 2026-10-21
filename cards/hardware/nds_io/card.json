@@ -1,0 +1,142 @@
+{
+  "category": "hardware",
+  "limits": "the 2D and 3D engines, sound, SPI (touch, firmware, power), RTC, Wi-Fi and wait states are not modelled; cartridge encryption is not involved (the image is the plaintext the bus delivers)",
+  "logic": [
+    "io.card"
+  ],
+  "machine": "nds",
+  "modelled_registers": [
+    "0x004-0x005 DISPSTAT",
+    "0x006-0x007 VCOUNT",
+    "0x0B0-0x0DF DMA",
+    "0x100-0x10F timers",
+    "0x130-0x131 KEYINPUT",
+    "0x136-0x137 EXTKEYIN (ARM7)",
+    "0x180-0x181 IPCSYNC",
+    "0x184-0x185 IPCFIFOCNT",
+    "0x188-0x18B IPCFIFOSEND",
+    "0x1A0-0x1A1 AUXSPICNT",
+    "0x1A4-0x1A7 ROMCTRL",
+    "0x1A8-0x1AF cart command",
+    "0x208-0x20B IME",
+    "0x210-0x213 IE",
+    "0x214-0x217 IF",
+    "0x280-0x2BF divider / square root (ARM9)",
+    "0x241 WRAMSTAT (ARM7)",
+    "0x247 WRAMCNT (ARM9)",
+    "0x301 HALTCNT (ARM7)",
+    "0x1FF0 IPCFIFORECV (0x4100000)",
+    "0x1FF4 cart data (0x4100010)"
+  ],
+  "name": "nds_io",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "register_blocks": [
+    {
+      "cpu": "arm9",
+      "from": "0x000",
+      "name": "2D engine A (display control, backgrounds, windows, blending)",
+      "to": "0x06F"
+    },
+    {
+      "from": "0x0B0",
+      "name": "DMA",
+      "to": "0x0DF"
+    },
+    {
+      "cpu": "arm9",
+      "from": "0x0E0",
+      "name": "DMA fill data",
+      "to": "0x0EF"
+    },
+    {
+      "from": "0x100",
+      "name": "timers",
+      "to": "0x10F"
+    },
+    {
+      "from": "0x130",
+      "name": "keys",
+      "to": "0x137"
+    },
+    {
+      "cpu": "arm7",
+      "from": "0x138",
+      "name": "RTC (ARM7)",
+      "to": "0x13F"
+    },
+    {
+      "from": "0x180",
+      "name": "IPC",
+      "to": "0x18F"
+    },
+    {
+      "from": "0x1A0",
+      "name": "cartridge bus",
+      "to": "0x1BF"
+    },
+    {
+      "cpu": "arm7",
+      "from": "0x1C0",
+      "name": "SPI: firmware, touchscreen, power manager (ARM7)",
+      "to": "0x1C3"
+    },
+    {
+      "from": "0x204",
+      "name": "EXMEMCNT (memory control)",
+      "to": "0x205"
+    },
+    {
+      "from": "0x208",
+      "name": "interrupts",
+      "to": "0x217"
+    },
+    {
+      "cpu": "arm9",
+      "from": "0x240",
+      "name": "VRAM and WRAM bank control",
+      "to": "0x249"
+    },
+    {
+      "cpu": "arm9",
+      "from": "0x280",
+      "name": "divider and square root",
+      "to": "0x2BF"
+    },
+    {
+      "from": "0x300",
+      "name": "POSTFLG, HALTCNT, POWCNT",
+      "to": "0x305"
+    },
+    {
+      "cpu": "arm9",
+      "from": "0x320",
+      "name": "3D engine",
+      "to": "0x6A3"
+    },
+    {
+      "cpu": "arm7",
+      "from": "0x400",
+      "name": "sound (ARM7)",
+      "to": "0x51F"
+    },
+    {
+      "cpu": "arm9",
+      "from": "0x1000",
+      "name": "2D engine B",
+      "to": "0x106F"
+    }
+  ],
+  "sources": [
+    "GBATEK"
+  ],
+  "statement": "DS I/O for both CPUs: IME/IE/IF, IPCSYNC and the IPC FIFOs, timers (prescaler, count-up), DMA (immediate, V-blank, cartridge), the ARM9 divider and square root, the cartridge bus (B7 block reads served from the ROM image, B8 chip ID), DISPSTAT/VCOUNT, KEYINPUT/EXTKEYIN, HALTCNT. Every other register is latched (reads return the last write) and every register touched is recorded for the coverage report.",
+  "tier": 1,
+  "timing": {
+    "bus_hz": 33513982,
+    "line_bus_cycles": 2130,
+    "lines": 263,
+    "visible_lines": 192
+  }
+}

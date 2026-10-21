@@ -40,12 +40,14 @@ def library_text(card, key: str) -> str:
     return (card.path / rel).read_text(encoding="utf-8")
 
 
-def semantics_source(cards) -> str:
-    """Every instruction's semantics as one card-language function per card (named after the card)."""
+def semantics_source(cards, param: str | None = None) -> str:
+    """Every instruction's semantics as one card-language function per card (named after the card); ISAs that
+    decode by bit masks pass the instruction word as ``param``."""
     parts = []
+    sig = f"{param}: Int" if param else ""
     for c in cards:
         body = "\n".join("  " + ln for ln in (c.get("semantics") or "").splitlines())
-        parts.append(f"fn {c.name}() {{\n{body}\n}}\n")
+        parts.append(f"fn {c.name}({sig}) {{\n{body}\n}}\n")
     return "\n".join(parts)
 
 
@@ -55,7 +57,7 @@ def compile_semantics(ctx, isa: str) -> dict:
     cards = instructions(ctx.store, isa)
     sources = [(library_text(ic, "core"), f"isa/{isa}/{ic.get('core')}"),
                (library_text(ic, "interface"), f"isa/{isa}/{ic.get('interface')}"),
-               (semantics_source(cards), f"isa/_pack_{isa}.jsonl")]
+               (semantics_source(cards, ic.get("operand_param")), f"isa/_pack_{isa}.jsonl")]
     mod = compile_sources(sources, ctx.ops, ctx.store, name=f"isa_{isa}")
     return {c.name: mod.functions[c.name] for c in cards}
 
@@ -96,9 +98,71 @@ def externs(store, isa: str) -> dict:
     return out
 
 
+def _mask_chain(cards, fixed_mask: int, fixed_val: int, param: str, indent: str) -> tuple[str, list]:
+    """The decision for one decode index: candidates in priority order, each checked on the bits the index
+    does not fix; the first candidate fully decided by the index ends the chain; nothing left is undefined."""
+    cand = [c for c in cards if (c["mask"] & fixed_mask & (c["match"] ^ fixed_val)) == 0]
+    cand.sort(key=lambda c: (-c.get("priority", bin(c["mask"]).count("1")), c.name))
+    lines, used = [], []
+    opened = 0
+    for c in cand:
+        rmask = c["mask"] & ~fixed_mask
+        rmatch = c["match"] & rmask
+        used.append(c.name)
+        if rmask == 0:
+            lines.append(f"{indent}{'  ' * opened}{c.name}({param})")
+            break
+        lines.append(f"{indent}{'  ' * opened}if ({param} & {rmask:#x}) == {rmatch:#x} {{")
+        lines.append(f"{indent}{'  ' * opened}  {c.name}({param})")
+        lines.append(f"{indent}{'  ' * opened}}} else {{")
+        opened += 1
+    else:
+        lines.append(f"{indent}{'  ' * opened}undefined_op({param})")
+    for k in range(opened, 0, -1):
+        lines.append(f"{indent}{'  ' * (k - 1)}}}")
+    return "\n".join(lines), used
+
+
+def mask_dispatch_source(store, isa: str) -> str:
+    """Decode tables and dispatch functions for an ISA decoded by masks (ARM: a 12-bit index from bits 27-20 and
+    7-4; Thumb: the top 10 bits), generated from the instruction cards' mask/match and priority."""
+    ic = isa_card(store, isa)
+    names = ic.get("dispatch") or {}
+    param = ic.get("operand_param", "op")
+    cards = instructions(store, isa)
+    out = []
+    for key, fname in names.items():
+        if key == "arm_uncond":
+            cs = [c for c in cards if c.get("set") == "arm" and c.get("unconditional")]
+            body, _ = _mask_chain(cs, 0, 0, param, "  ")
+            out.append(f"fn {fname}({param}: Int) {{\n{body}\n}}\n")
+            continue
+        cs = [c for c in cards if c.get("set") == key and not c.get("unconditional")]
+        if key == "arm":
+            n, fmask = 4096, 0x0FF000F0
+            fixed = lambda i: (((i >> 4) & 0xFF) << 20) | ((i & 0xF) << 4)      # noqa: E731
+            index = f"(({param} >> 16) & 0xFF0) | (({param} >> 4) & 0xF)"
+        else:
+            n, fmask = 1024, 0xFFC0
+            fixed = lambda i: i << 6                                           # noqa: E731
+            index = f"{param} >> 6"
+        groups: dict = {}
+        table = []
+        for i in range(n):
+            body, _ = _mask_chain(cs, fmask, fixed(i), param, "      ")
+            gid = groups.setdefault(body, len(groups))
+            table.append(gid)
+        cases = "\n".join(f"    case {gid} {{\n{body}\n    }}" for body, gid in groups.items())
+        out.append(f"array {fname}_dec: Int[{n}] = [{', '.join(map(str, table))}]\n")
+        out.append(f"fn {fname}({param}: Int) {{\n  let g = {fname}_dec[{index}]\n  switch g {{\n{cases}\n  }}\n}}\n")
+    return "\n".join(out)
+
+
 def dispatch_source(store, isa: str) -> str:
     """One switch function per prefix (``isa.dispatch``: {"" -> base function, "<byte>" -> prefixed})."""
     ic = isa_card(store, isa)
+    if (ic.get("decode") or {}).get("kind") == "mask":
+        return mask_dispatch_source(store, isa)
     table = ic.get("dispatch") or {}
     by_prefix: dict = {}
     for c in instructions(store, isa):

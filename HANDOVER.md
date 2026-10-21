@@ -285,6 +285,50 @@ the balancing log of what the laws found.
 Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALLEL`, `CARDMODEL_CHILD_MB`,
 `CARDMODEL_SELF_MB`, `CARDMODEL_MIN_FREE_MB`).
 
+## 3f. Machines: Game Boy, Game Boy Color, and the DS prototype (third build)
+
+```bash
+./bin/cardmodel emu "~/Downloads/GB_GBC/Game Boy/Tetris (World) (Rev A).zip"     # opens the browser page
+```
+
+```bash
+./bin/cardmodel emu game.gbc --headless --frames 900 --input "300:start,306:-" --png shot.png --wav sound.wav
+```
+
+```bash
+./bin/cardmodel isa check lr35902
+```
+
+```bash
+./bin/cardmodel machine survey ~/Downloads/GB_GBC
+```
+
+```bash
+./bin/cardmodel machine diff game.gb --frames 3000
+```
+
+```bash
+./bin/cardmodel machine nds "~/Downloads/Pokemon Diamond/Pokemon Diamond.nds" --frames 600
+```
+
+* A CPU is its **instruction cards** (`cards/isa`), a console its **hardware cards** (`cards/hardware`), and a
+  **machine card** (`cards/machine`) composes them into one card-IR module. docs/MACHINES.md describes all of it.
+* `emu` runs the ROM's **lifted** code (its basic blocks as card IR, specialised, compiled through the C card) with
+  the native interpreter as fallback. The first launch of a ROM profiles 1800 frames headless and compiles (a few
+  seconds); later launches start at once. `--engine native` skips lifting; `--engine host` is the Python
+  fallback (slow); `--engine ir` the reference interpreter (very slow).
+* The page: arrows, X = A, Z = B, Enter = Start, Shift = Select, gamepads. Click once for sound. Ctrl-C stops and
+  saves.
+* Saves: `saves/<game>.sav` in this folder (gitignored), or `--save-dir`. MBC3 clocks are saved in the common
+  48-byte trailer and catch up with the wall clock.
+* Caches: `state/emu/<rom>-<machine>/` holds the profile, the lifted blocks and the library (ROM-derived, never in
+  git). `cardmodel clean` does not touch saves.
+* To extend: an instruction is a card (edit `tools/gen_lr35902.py` or `tools/gen_armv5te.py`, then
+  `cardmodel isa build ISA`); a hardware component is a directory card with registers and timing as data and a
+  `.card` logic file; a bank controller is a case in `gb_cartridge/cart.card` plus an entry in its `types` table.
+  `verify` checks every instruction card in every engine; `machine diff` checks lifting; `machine survey` the
+  collection.
+
 ## 4. How to add things
 
 **A card.** Run `cardmodel new <registry> <name> --statement "..."`, or write `cards/<registry>/<name>/card.json`
@@ -414,6 +458,18 @@ engine, exact equilibria, design laws, AIs and the systemic world.
 function symbols); the game is one-exchange deep (matrix games per state, not a duel-tree search); the world
 is a demonstration map; there is no graphics or engine integration yet beyond the C++ kernel.
 
+**Real since the third build (machines):** the IR and the card language carry machine state (globals, arrays, void
+functions, switch, an evaluation-order pass); the LR35902 and ARMv5TE/ARMv4T instruction cards with per-instruction
+conformance in three engines (reference interpreter, Python, C) and their timing/flag data checked; the Game Boy /
+Color machine from hardware cards; ROM code lifted into card IR and run natively, frame-for-frame identical to the
+interpreter in the differential runs; the effect shell (browser page, headless runs, saves, the RTC); the ROM
+survey; a DS machine prototype that direct-boots and reports its coverage.
+
+**Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; MMM01, MBC6/7, HuC1/3, TAMA5,
+the camera and unlicensed multicart mappers are missing; the hardware test suites (Blargg, mooneye) have not been
+run (not on this machine; downloading needs the user's go-ahead); the DS has no graphics, sound, SPI devices, RTC or
+Wi-Fi and its ARM blocks are not lifted yet (COVERAGE.md has the numbers).
+
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
 
@@ -430,6 +486,10 @@ a native (ctypes) path inside improved modules (ROADMAP).
 * Every subprocess has a timeout; every search has a budget.
 * LAWS.md and COVERAGE.md are generated (`cardmodel docs`, `cardmodel cover --write COVERAGE.md`).
 * Never `git push` from automation; commit locally (hub L13).
+* No ROM byte in the repository: ROMs are read where they are (zips in memory); lifted code and profiles live in
+  `state/emu/`, saves in `saves/` (both gitignored). Nothing decrypts or patches DRM or anti-cheat; a DS image with
+  an encrypted secure area is refused.
+* A machine module performs no I/O; everything that touches the world is `machine/shell.py` (CM21, CM34).
 
 ---
 
@@ -445,16 +505,16 @@ a native (ctypes) path inside improved modules (ROADMAP).
    project `.cardmodel/` directories. Then use `cardmodel cover` there to pick the next card to write: the top
    fallback calls.
 5. **Schedule `cardmodel verify --record`** (cron or launchd), so evidence accumulates in git history.
-6. **Games natively (proposed as its own session).** Game Boy / Game Boy Color first, then Nintendo DS. The pieces
-   follow the same pattern:
-   * an `isa` registry: one op card per CPU instruction (LR35902, later ARMv4T/ARMv5TE), with IR semantics and
-     conformance against free test ROMs;
-   * a machine-code frontend that lifts ROM basic blocks into the IR (REA-style distillation, kept internal);
-   * native emission through the language cards;
-   * a launcher.
-
-   The effect shell (input, audio, video, saves, link/online) stays in the runtime unchanged (CM21). ROMs stay local
-   test inputs and are never copied into a repository.
+6. **Games natively: the next pieces** (the machine model is built; docs/MACHINES.md, ROADMAP "Machines").
+   * Run the free hardware test suites (Blargg cpu_instrs, instr_timing, mem_timing, halt_bug; mooneye
+     acceptance and MBC tests; dmg-acid2 / cgb-acid2): `cardmodel machine testroms DIR`. They are not on this
+     machine; ask the user before downloading them.
+   * Close the survey's remaining failures (`cardmodel machine survey` lists them): the missing bank controllers
+     (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (`machine/` debug helpers:
+     `peek`, `step`).
+   * The DS, in the order its coverage report asks for it: SPI devices (firmware user settings, touchscreen,
+     power), RTC, sound channel status, VRAM banks and the 2D engines (a first picture), then 3D; an ARM block
+     lifter (the instruction cards take `op` as a parameter, so a block is its cards' IR with constant words).
 7. **AnyPS5 on the card model (proposed as its own session).** One card per PRX export/NID (implemented, throws, or
    unknown signature) and one card per debt entry. That gives the real coverage behind its 95 % badge and an honest
    account of why the rest is missing: unknown console behaviour can only be closed by observation, which is Pheros
@@ -480,3 +540,11 @@ a native (ctypes) path inside improved modules (ROADMAP).
   `emit` entry or the language card's helper, never the engine.
 * **The sandbox test is skipped:** `sandbox-exec` only exists on macOS. The static self-containment check still runs.
 * **`state/`** is a cache (builds, last verify). `cardmodel clean` removes the build cache.
+* **`cardmodel emu`** prints the page's URL; if the browser does not open, open it yourself. No sound until you click
+  the page once (browsers block autoplay). A port in use: `--port 0` picks a free one. The first launch of a ROM
+  compiles its lifted code (a few seconds, one compile unit per ROM bank, through the resource governor); use
+  `--engine native` to start at once.
+* **A game misbehaves**: compare engines (`--engine native` vs lifted: `cardmodel machine diff ROM`), then look
+  at `cardmodel machine survey`'s classification. A lifted/interpreter difference is a lifter bug (CM33); an
+  interpreter problem is a hardware-card or instruction-card bug: write a synthetic ROM that shows it
+  (`machine/asm.py`) and add it to `tests/test_machine.py`.

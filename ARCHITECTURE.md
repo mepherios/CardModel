@@ -54,6 +54,11 @@ cardmodel/                      the repository IS the model (its home)
 │   │                           (rule-card chains as calc proofs), proofs.py, hints.py
 │   ├── cli_ext.py              run, lang, logic, laws, lean, repl (+ game via game/cli.py)
 │   └── cli.py                  init observe verify cover rewrite emit learn optimize translate status ...
+│   ├── machine/                machines as cards: isa.py (instruction cards: IR, decode tables), build.py (a machine
+│   │                           card -> one IR module), native.py (engines: ir, host, cabi via ctypes), bench.py
+│   │                           (per-instruction conformance), asm.py (an assembler from the cards), gb.py, nds.py
+│   │                           (hosts for the Game Boy and the DS prototype), lift.py (ROM blocks -> specialised IR ->
+│   │                           native), diff.py, survey.py, testroms.py, shell.py (the effect shell), cli.py
 ├── stdlib/                     card-language sources the program runs: self.card (its laws), program.card,
 │                               combat.card (the combat kernel), world.card (the systemic world),
 │                               algebra.card (identities between algorithm cards, generated)
@@ -191,6 +196,31 @@ Ported for the language: the Pheros CL v0 compilation model (parse → typecheck
 references as atoms and `algorithm.NAME` resolved to the cheapest verified form) and its function form
 (`name : T -> T = match p with | ...`), which the card language accepts unchanged. Nothing was vendored; the
 grammar was read for alignment.
+
+## Machines (third build)
+
+```
+isa/<isa> (core.card, interface.card) + isa/_pack_<isa>.jsonl (instruction cards: data + semantics + IR)
+hardware/<component> (registers and timing as data + logic .card)   machine/<name> (components + main loop)
+      --machine/build--> one card-IR module --codegen (language card)--> Python (exec) | C (shared library, ctypes)
+ROM --interpreter profile--> leaders --machine/lift (cards' IR, constant bytes, inline, fold, cache, DCE)--> blocks
+      --codegen split_sources--> per-bank compile units --> one library per ROM --> run_block hook in the machine
+shell (browser page, headless, saves, clock) <--> machine module (pure: state + buttons -> state, frame, audio)
+```
+
+Design decisions:
+
+* **Lazy, exact syncing.** Components advance only when touched or when `now` passes `next_event`, the earliest
+  moment one of them can raise an interrupt; the interpreter's results do not depend on how often they sync
+  (tested). *Reconsider* for effects that land mid-instruction (write conflicts), which need sub-M-cycle events.
+* **Blocks bounded by events.** A lifted block runs only if it ends before `next_event`, so it cannot miss an
+  interrupt; writes that may move the event end it early. *Reconsider* if superblocks need the condition per
+  iteration.
+* **Two CPUs on one core.** The DS's ARM9 and ARM7 take turns on one set of ARM card globals (registers saved and
+  restored per turn) rather than two copies of the module. *Reconsider* when the per-turn cost matters more than
+  the simplicity.
+* **Engines are embed blocks.** How a host loads emitted code is card data (`embed.kind`), so the machine package
+  names no language.
 
 ## What was not carried over
 

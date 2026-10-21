@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import random
+import re
 
 from ..kernel import resources
 from . import build as Bd
@@ -148,6 +149,8 @@ def _compare(a: dict, b: dict) -> list[str]:
 def conformance(ctx, isa: str = "lr35902", engines: list[str] | None = None, seed: int | None = None,
                 samples: int = 8, only: list[str] | None = None) -> dict:
     """Run every instruction card of the ISA on the bench in each engine; report per card and per engine."""
+    if ((I.isa_card(ctx.store, isa).get("decode") or {}).get("kind")) == "mask":
+        return mask_conformance(ctx, isa, engines, seed, samples, only)
     seed = random.SystemRandom().randrange(2**32) if seed is None else seed
     ir = Bd.module(ctx, f"{isa}_bench")
     engines = engines or ["ir", "host", "native"]
@@ -201,3 +204,165 @@ def conformance(ctx, isa: str = "lr35902", engines: list[str] | None = None, see
 
 
 __all__ = ["check_data", "conformance", "run_case"]
+
+
+# -- ISAs decoded by masks (ARM / Thumb) ----------------------------------------------------------------------
+MODES = (0x10, 0x11, 0x12, 0x13, 0x17, 0x1B, 0x1F)
+_REG_KEY = re.compile(r"r(\d+)")                       # vector keys r0..r15
+ARM_STATE = ("pc", "cpsr", "spsr", "ntrace", "swi_calls", "swi_last", "undef_calls", "cp_last", "cp_value")
+
+
+def decoded_by(cards, op: int, iset: str):
+    """The card the generated decoder picks for a word: every card whose mask/match fits, highest priority."""
+    uncond = iset == "arm" and (op >> 28) == 0xF
+    cand = [c for c in cards if c.get("set") == iset and bool(c.get("unconditional")) == uncond
+            and (op & c["mask"]) == c["match"]]
+    cand.sort(key=lambda c: (-c.get("priority", bin(c["mask"]).count("1")), c.name))
+    return cand[0] if cand else None
+
+
+def _word(rng, card) -> int:
+    bits = 32 if card["set"] == "arm" else 16
+    w = rng.getrandbits(bits)
+    op = (w & ~card["mask"] & ((1 << bits) - 1)) | card["match"]
+    if card["set"] == "arm" and not card.get("unconditional"):
+        op = (op & 0x0FFFFFFF) | (rng.choice([14, 14, 14, rng.randrange(15)]) << 28)
+    return op
+
+
+def _arm_state(rng, card) -> dict:
+    regs = [rng.getrandbits(32) for _ in range(16)]
+    mode = rng.choice(MODES)
+    cpsr = (rng.getrandbits(5) << 27) | (rng.getrandbits(2) << 6) | mode | (0x20 if card["set"] == "thumb" else 0)
+    pc = rng.getrandbits(16) & (0xFFFC if card["set"] == "arm" else 0xFFFE)
+    return {"regs": regs, "banked": [rng.getrandbits(32) for _ in range(48)], "cpsr": cpsr,
+            "spsr": rng.getrandbits(32), "pc": pc}
+
+
+def run_arm_case(m, st: dict, op: int, ram: bytes) -> dict:
+    m.write("mem", ram)
+    ra, ba = m.array("regs"), m.array("banked")
+    for i, v in enumerate(st["regs"]):
+        ra[i] = v
+    for i, v in enumerate(st["banked"]):
+        ba[i] = v
+    for k in ("cpsr", "spsr", "pc"):
+        m.set(k, st[k])
+    for k, v in (("ntrace", 0), ("swi_calls", 0), ("swi_last", -1), ("undef_calls", 0), ("cp_last", -1), ("cp_value", 0x1234)):
+        m.set(k, v)
+    m.call("run_one", op)
+    out = {k: m.get(k) for k in ARM_STATE}
+    out["regs"] = [ra[i] for i in range(16)]
+    out["banked"] = [ba[i] for i in range(48)]
+    n = min(out["ntrace"], 64)
+    tk, ta, tv = m.array("trace_kind"), m.array("trace_addr"), m.array("trace_val")
+    out["trace"] = [(tk[i], ta[i], tv[i]) for i in range(n)]
+    out["mem_hash"] = hashlib.sha1(m.read("mem")).hexdigest()
+    return out
+
+
+def check_arm_data(card, st: dict, out: dict, op: int) -> list[str]:
+    problems = []
+    size = 4 if card["set"] == "arm" else 2
+    if any(not (0 <= v <= 0xFFFFFFFF) for v in out["regs"]):
+        problems.append("a register left the 32-bit range")
+    branched = out["pc"] != ((st["pc"] + size) & 0xFFFFFFFF)
+    mode_changed = (out["cpsr"] & 0x1F) != (st["cpsr"] & 0x1F)
+    if branched and card["group"] in ("data_processing", "block", "psr") or mode_changed:
+        return problems
+    sbit = (op >> 20) & 1 if card["set"] == "arm" else 1
+    for i, f in enumerate("NZCV"):
+        code = card["flags"][f]
+        bit = 1 << (31 - i)
+        if code == "-" or (code == "S" and not sbit):
+            if (st["cpsr"] ^ out["cpsr"]) & bit:
+                problems.append(f"flag {f} marked {code!r} changed")
+    return problems
+
+
+def check_arm_vectors(m, card) -> list[str]:
+    problems = []
+    for v in card.get("vectors") or []:
+        st = {"regs": [0] * 16, "banked": [0] * 48, "cpsr": 0x13 if card["set"] == "arm" else 0x33, "spsr": 0,
+              "pc": 0x1000}
+        for k, val in (v.get("in") or {}).items():
+            reg = _REG_KEY.fullmatch(k)
+            if reg:
+                st["regs"][int(reg.group(1))] = val
+            else:
+                st[k] = val
+        ram = bytearray(0x10000)
+        for a, w in (v.get("mem") or {}).items():
+            ram[int(a, 0):int(a, 0) + 4] = (w & 0xFFFFFFFF).to_bytes(4, "little")
+        out = run_arm_case(m, st, v["op"], bytes(ram))
+        for k, want in (v.get("out") or {}).items():
+            if k == "next_pc":
+                got = out["pc"]
+            elif _REG_KEY.fullmatch(k):
+                got = out["regs"][int(k[1:])]
+            else:
+                got = out.get(k)
+            if got != want:
+                problems.append(f"vector {v.get('name')}: {k} = {got!r:}, expected {want:#x}")
+        after = m.read("mem")
+        for a, want in (v.get("mem_out") or {}).items():
+            got = int.from_bytes(after[int(a, 0):int(a, 0) + 4], "little")
+            if got != want:
+                problems.append(f"vector {v.get('name')}: mem[{a}] = {got:#x}, expected {want:#x}")
+    return problems
+
+
+def mask_conformance(ctx, isa: str, engines=None, seed=None, samples: int = 8, only=None) -> dict:
+    seed = random.SystemRandom().randrange(2**32) if seed is None else seed
+    ir = Bd.module(ctx, f"{isa}_bench")
+    engines = engines or ["ir", "host", "native"]
+    machines, unavailable = {}, {}
+    for e in engines:
+        try:
+            lang = N.resolve_engine(ctx, e)
+            machines[lang] = N.load(ctx, ir, lang)
+        except N.EngineError as exc:
+            unavailable[e] = str(exc)
+    ref = "ir" if "ir" in machines else next(iter(machines))
+    allc = I.instructions(ctx.store, isa)
+    cards = [c for c in allc if only is None or c.name in only]
+    rng = random.Random(seed)
+    per_card = {}
+    for card in cards:
+        resources.guard("isa conformance")
+        problems, runs, misses = [], 0, 0
+        for _ in range(samples):
+            op = None
+            for _try in range(24):
+                w = _word(rng, card)
+                d = decoded_by(allc, w, card["set"])
+                if d is not None and d.name == card.name:
+                    op = w
+                    break
+            if op is None:
+                misses += 1
+                continue
+            st = _arm_state(rng, card)
+            ram = rng.randbytes(0x10000)
+            outs = {lang: run_arm_case(m, st, op, ram) for lang, m in machines.items()}
+            runs += 1
+            base = outs[ref]
+            for lang, o in outs.items():
+                if lang != ref:
+                    for k in (*ARM_STATE, "regs", "banked", "trace", "mem_hash"):
+                        if o[k] != base[k]:
+                            problems.append(f"{lang} vs {ref} on {op:#010x}: {k} {o[k]!r:.80} vs {base[k]!r:.80}")
+                            break
+            problems += [f"{op:#010x}: {p}" for p in check_arm_data(card, st, base, op)]
+        if card.get("vectors"):
+            for lang, m in machines.items():
+                problems += [f"{lang}: {p}" for p in check_arm_vectors(m, card)]
+        status = "fail" if problems else ("pass" if runs else "vacuous")
+        per_card[card.name] = {"mnemonic": card["mnemonic"], "runs": runs, "status": status,
+                               "problems": sorted(set(problems))[:8], "decode_misses": misses}
+    st = [r["status"] for r in per_card.values()]
+    return {"isa": isa, "seed": seed, "samples": samples, "engines": sorted(machines), "unavailable": unavailable,
+            "reference": ref, "cards": len(per_card), "passed": st.count("pass"), "failed": st.count("fail"),
+            "vacuous": st.count("vacuous"),
+            "status": "pass" if per_card and "fail" not in st and len(machines) >= 2 else ("fail" if "fail" in st else "vacuous"),
+            "runs": sum(r["runs"] for r in per_card.values()), "per_card": per_card}

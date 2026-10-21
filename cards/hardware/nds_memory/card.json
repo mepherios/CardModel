@@ -1,0 +1,20 @@
+{
+  "category": "hardware",
+  "name": "nds_memory",
+  "machine": "nds",
+  "statement": "Nintendo DS memory maps for the ARM9 and ARM7 (direct boot): main RAM 4 MiB at 0x02000000, shared WRAM 32 KiB at 0x03000000, ARM7 WRAM 64 KiB at 0x03800000, ITCM 32 KiB and a movable DTCM 16 KiB (CP15), I/O at 0x04000000, palettes, VRAM and OAM at 0x05-0x07, the vector stubs where the BIOS would be.",
+  "regions_arm9": [
+    {"start": 0, "size": 32768, "name": "ITCM (mirrored)"}, {"start": 33554432, "size": 4194304, "name": "main RAM"},
+    {"start": 50331648, "size": 32768, "name": "shared WRAM"}, {"start": 67108864, "size": 16777216, "name": "I/O"},
+    {"start": 83886080, "size": 2048, "name": "palettes"}, {"start": 100663296, "size": 671744, "name": "VRAM (banks A-I, one window here)"},
+    {"start": 117440512, "size": 2048, "name": "OAM"}, {"start": 4294901760, "size": 4096, "name": "vector stub (HLE BIOS)"}],
+  "regions_arm7": [
+    {"start": 0, "size": 16384, "name": "vector stub (HLE BIOS)"}, {"start": 33554432, "size": 4194304, "name": "main RAM"},
+    {"start": 50331648, "size": 32768, "name": "shared WRAM"}, {"start": 58720256, "size": 65536, "name": "ARM7 WRAM"},
+    {"start": 67108864, "size": 16777216, "name": "I/O"}],
+  "limits": "VRAM bank mapping (VRAMCNT), WRAMCNT banking, wait states and the GBA slot are not modelled",
+  "sources": ["GBATEK (DS memory maps)"],
+  "logic": ["memory.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

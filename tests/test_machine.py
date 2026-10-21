@@ -154,6 +154,22 @@ class GameBoy(unittest.TestCase):
             self.assertGreater(gb.frame_stats(f)["colours"], 1)
         self.assertEqual(hashes["native"], hashes["host"])
 
+    def test_ei_halt_with_a_pending_interrupt(self):
+        """EI; HALT while an interrupt is pending: the handler (reached through JP at 0x40) runs, and RETI returns
+        to the HALT, which then waits (the HALT bug meeting the dispatch pushes the HALT's address)."""
+        prog = [("LD SP,nn", 0xFFFE), ("XOR A",), ("LDH (n),A", 0x80), ("LD A,n", 0x01), ("LDH (n),A", 0xFF),
+                ("LDH (n),A", 0x0F), ("EI",), ("HALT",), ("label", "loop"), ("HALT",), ("JR e", "loop")]
+        extra = {0x40: asm.assemble(self.ctx.store, [("JP nn", 0x0200)], org=0x40),
+                 0x200: asm.assemble(self.ctx.store, [("LDH A,(n)", 0x80), ("INC A",), ("LDH (n),A", 0x80),
+                                                      ("RETI",)], org=0x200)}
+        rom = asm.rom(self.ctx.store, prog, title="EIHALT", extra=extra)
+        g = gb.GameBoy(self.ctx, rom, "native", sample_rate=0, fresh=True)
+        for _ in range(6):
+            g.run_frame()
+        self.assertFalse(g.m.get("locked"))
+        self.assertLess(g.m.get("PC"), 0x8000)
+        self.assertIn(g.m.read("hram", 0, 1)[0], (5, 6, 7), "one V-blank handler run per frame")
+
     def test_mbc1_and_mbc5_banking(self):
         r1 = mbc_rom(self.ctx, 0x01, 2, [(1, [(0x2000, 1)]), (2, [(0x2000, 2)]), (3, [(0x2000, 3)]),
                                          (0, [(0x2000, 0)])])
@@ -359,3 +375,74 @@ class Shell(unittest.TestCase):
         self.assertEqual(shell.parse_input("10:start,16:-,20:a+right"), {10: 0x80, 16: 0, 20: 0x11})
         with self.assertRaises(ValueError):
             shell.parse_input("5:jump")
+
+
+def synthetic_nds() -> bytes:
+    """A tiny DS image: the ARM9 sums 1..10, stores it and sends it through the IPC FIFO; the ARM7 receives it and
+    stores it too (hand-encoded ARM words; the secure area marker so the loader accepts it)."""
+    import struct
+    arm9 = [0xE7FFDEFF, 0xE7FFDEFF, 0xE3A00000, 0xE3A0100A, 0xE0800001, 0xE2511001, 0x1AFFFFFC, 0xE3A02621,
+            0xE5820000, 0xE3A03301, 0xE3833E18, 0xE3A04902, 0xE3844008, 0xE1C340B4, 0xE5830008, 0xEAFFFFFE]
+    arm7 = [0xE3A03301, 0xE3833E18, 0xE3A04902, 0xE1C340B4, 0xE1D350B4, 0xE3150C01, 0x1AFFFFFA, 0xE3A06641,
+            0xE5967000, 0xE3A02621, 0xE5827004, 0xEAFFFFFE]
+    img = bytearray(0x10000)
+    img[0:6] = b"CMTEST"
+    img[12:16] = b"CMTS"
+    struct.pack_into("<IIII", img, 0x20, 0x4000, 0x02000008, 0x02000000, len(arm9) * 4)
+    struct.pack_into("<IIII", img, 0x30, 0x8000, 0x02380000, 0x02380000, len(arm7) * 4)
+    img[0x4000:0x4000 + len(arm9) * 4] = struct.pack(f"<{len(arm9)}I", *arm9)
+    img[0x8000:0x8000 + len(arm7) * 4] = struct.pack(f"<{len(arm7)}I", *arm7)
+    return bytes(img)
+
+
+class ARM(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_arm_cards_conform_in_every_engine(self):
+        r = bench.conformance(self.ctx, "armv5te", samples=2, seed=SEED)
+        bad = {k: v["problems"] for k, v in r["per_card"].items() if v["status"] != "pass"}
+        self.assertEqual(bad, {}, seed_note(self))
+        self.assertGreaterEqual(len(r["engines"]), 3)
+        self.assertEqual(isa.in_sync(self.ctx, "armv5te")["status"], "pass")
+
+    def test_wrong_arm_instruction_is_caught(self):
+        ir = Bd.module(self.ctx, "armv5te_bench")
+        bad = copy.deepcopy(ir)
+        for f in bad["functions"]:
+            if f["name"] == "ARM_ADD_rsi":
+                f["name"] = "ARM_ADD_rsi"
+                for g in bad["functions"]:
+                    if g["name"] == "ARM_SUB_rsi":
+                        f["body"] = copy.deepcopy(g["body"])
+                        f["locals"] = dict(g.get("locals") or {})
+        good_m, bad_m = native.load(self.ctx, ir, "ir"), native.load(self.ctx, bad, "host")
+        card = self.ctx.store.get("isa/ARM_ADD_rsi")
+        rng = random.Random(SEED)
+        caught = 0
+        for _ in range(8):
+            op = 0xE0800000 | (rng.getrandbits(4) << 12) | (rng.getrandbits(4) << 16) | rng.getrandbits(4)
+            st = bench._arm_state(rng, card)
+            ram = rng.randbytes(0x10000)
+            a, b = bench.run_arm_case(good_m, st, op, ram), bench.run_arm_case(bad_m, st, op, ram)
+            caught += a["regs"] != b["regs"] or a["cpsr"] != b["cpsr"]
+        self.assertGreater(caught, 0, seed_note(self))
+
+    def test_ds_machine_runs_both_cpus(self):
+        from cardmodel.machine import nds
+        ds = nds.DS(self.ctx, synthetic_nds())
+        ds.run(3)
+        mram = ds.m.read("mram", 0x100000, 8)
+        self.assertEqual(int.from_bytes(mram[0:4], "little"), 55, "the ARM9 summed 1..10")
+        self.assertEqual(int.from_bytes(mram[4:8], "little"), 55, "the ARM7 received it over the IPC FIFO")
+        cov = nds.coverage(ds)
+        self.assertEqual(cov["cpus"]["arm9"]["undecodable_executed"], 0)
+        self.assertIn("ARM_ADD_rsi", cov["cpus"]["arm9"]["card_uses"])
+
+    def test_encrypted_secure_area_is_refused(self):
+        from cardmodel.machine import nds
+        img = bytearray(synthetic_nds())
+        img[0x4000:0x4008] = bytes(8)
+        with self.assertRaises(ValueError):
+            nds.DS(self.ctx, bytes(img))

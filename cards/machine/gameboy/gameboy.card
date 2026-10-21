@@ -270,3 +270,10 @@ export fn power_on(want_cgb: Int) {
   }
   next_event = 0
 }
+-- the debugger's view of the bus (no side effects, no time)
+export fn peek(a: Int) -> Int {
+  if a >= 0xFF00 {
+    return 0
+  }
+  return peek8(a)
+}

@@ -59,6 +59,14 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel emu "~/Downloads/GB_GBC/Game Boy/Tetris (World) (Rev A).zip"
+```
+
+```bash
+./bin/cardmodel machine nds "~/Downloads/Pokemon Diamond/Pokemon Diamond.nds"
+```
+
+```bash
 cd tests && python3 -B -m unittest
 ```
 
@@ -71,6 +79,10 @@ checks with the kernel that each reading is the original proposition, witnesses 
 model's own tactics and rule chains. `algebra gcd` compares two functions by behaviour (common factor, cofactor
 identity, shared dynamics, Gödel number of each canonical form). `game check` computes the combat design's laws on an exact equilibrium,
 and `game play` lets you fight the AI that reads your vectors.
+`emu` runs a Game Boy or Game Boy Color game through the card model: its CPU is instruction cards, its hardware
+is hardware cards, its own code is lifted into the card IR and compiled natively, and the browser page around it
+is the effect shell (video, audio, keys, saves). `machine nds` boots a DS game on the ARM instruction cards and
+reports what runs and what is not modelled yet.
 `improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
 byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last
 command runs the test suite.
@@ -89,3 +101,4 @@ command runs the test suite.
 | [docs/LANGUAGE.md](docs/LANGUAGE.md) | the card language: functions, logic, theorems, tests and cards in one file |
 | [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md) | crystallised knowledge: logic, theorem cards, discovered laws, Lean import and re-proofs |
 | [game/DESIGN.md](game/DESIGN.md) | the game design (Vector Counter System): pillars, kernel, design laws, AIs, world |
+| [docs/MACHINES.md](docs/MACHINES.md) | machines as cards: instruction cards, hardware cards, lifting, the effect shell, the DS prototype |
