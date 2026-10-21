@@ -188,7 +188,8 @@ CAPABILITIES = [
      "serves and launches; a console player is the machine cards plus a card-language player, built the same way.",
      L("CM35_games_are_cards", "CM40_players_are_cards"),
      ["tests/test_arcade.py::test_a_timed_guard_redirects",
-      "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host"],
+      "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host",
+      "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked"],
      ["docs/ARCADE.md", "docs/STORE.md"], ["cardmodel arcade"], ["cardmodel/arcade"],
      "Games made from the model's cards, and the user's own cartridges, ship through Cardmodel Arcade."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "

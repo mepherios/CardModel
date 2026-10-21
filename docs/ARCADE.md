@@ -76,15 +76,32 @@ change on disk; code changes need a restart.
 * **Install / update**: asks the service to build if the cards changed (progress: the six build steps), fetches
   the manifest, downloads only the chunks it does not already have (an update reuses every unchanged chunk of
   the installed build, read back and re-checked), checks each chunk's and each file's SHA-256, assembles the files
-  in a staging folder and swaps it in.
+  in a staging folder and swaps it in. When the cards in progress do not build, the last good build installs
+  instead (a notice says so) and the pages show the build's error with *Try the build again*; a failed build is
+  remembered with what it was built from (`state/arcade/build-errors.json`), so Update only comes back when the
+  cards change again.
+* **Versions and branches** (`arcade/work.py`): every git worktree of the repository is a branch, a session's work
+  in progress. A program's version on a branch is listed on its store and library pages and installs like a
+  beta: the service builds it in that worktree with the worktree's own `bin/cardmodel` (its code, its cards) and
+  serves that depot from there; whether it needs a build is the branch's own answer (its `arcade list`, asked in
+  the background when its cards, its arcade code or its HEAD change). The installation remembers the branch, so
+  its updates come from it; a program only a branch has is in the store as *in development*.
+* **The service**: the app starts `cardmodel arcade serve` from the checkout it was installed from when it is not
+  running, and again whenever the pages lose it (a crash, a restart), then reloads them.
 * **Verify integrity**: re-hashes every installed file against the manifest and re-acquires what fails.
 * **Play**: starts the game's executable, keeps play time and last played; **achievements** come from the game's
   save (one byte each from offset 32, the layout `save.card` documents).
 * Everything lives in `~/Library/Application Support/Cardmodel Arcade/` (`library/`, `saves/`, `launcher.json`).
 
-The pages (`cards/app/arcade/ui/`) are Store (featured, store pages with screenshots, about, requirements,
-achievements, patch notes), Library (sidebar, hero, the big button: Install / Update / Play / Stop, stats, manage
-menu), Downloads (rate graph, progress, pause, cancel), News, a profile, and settings (bandwidth limit).
+The pages (`cards/app/arcade/ui/`) are Store (featured, New & Noteworthy, categories, search over games, branch
+versions and cartridges, store pages with screenshots, about, requirements, achievements, patch notes, versions
+and branches), Library (folding groups, hero, the big button: Install / Update / Play / Stop, stats, manage menu),
+Work (every branch: its last commit, the commits not on main and the files each one changed, the uncommitted
+changes, the areas it touches, its programs with their build state and an Install button), Downloads (rate graph,
+progress, pause, cancel), News, a profile, and settings (bandwidth limit, cartridge folders). Everything that
+shows data opens something: crumbs, tags and developers list their games, a release date or size opens the
+build's details, stats go to the profile or the achievements, an achievement opens its card, patch notes and
+library groups fold, the service light shows the service's checkout and branch.
 
 ## 4. The game
 
@@ -141,6 +158,13 @@ screen; the native package plays a zipped cartridge and shows what the module co
 library the player configured all 971 cartridges exactly as the host does, and its pictures matched the
 machine's over 900 frames in five games.
 
+`tests/test_arcade_work.py` (a throwaway repository with a worktree on a branch and a stand-in for its
+`bin/cardmodel`): every worktree is listed with its commits not on main, its uncommitted files, its areas and
+programs, and a commit with its files; the branch's program is in the catalog with its build served from the
+branch (manifest, chunk, picture; unknown worktrees refused); the branch's own `arcade list` says whether it needs
+a build; a build there runs the branch's cardmodel, and a failed one keeps its error (across a restart of the
+service) while the last good build stays installable.
+
 ## 7. Honest limits
 
 * macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker.
@@ -149,6 +173,10 @@ machine's over 900 frames in five games.
 * The game is a 480 x 270 software renderer with stick-figure fighters; the AIs' strength is tuned by hand in
   `ai.card` (reaction, accuracy, timing per level), not learned.
 * The store pictures are fixed moments of a scripted run.
+* A branch is asked about its programs in the background, a few seconds after it changes; until then its version
+  says it is asking. A branch's build runs that branch's code, which may be broken mid-edit (then its last good
+  build installs). The service only reads the other worktrees and writes under their `state/`; versions compare
+  as dotted numbers.
 * The Game Boy player runs the machine in the interpreter (native C, far faster than real time) without the lifted
   blocks, which are built per cartridge; a cartridge's title screen is picked by colour from its first ten
   seconds, so some show a company logo; a DMG cartridge plays as a DMG.

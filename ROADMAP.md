@@ -85,6 +85,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Your own cartridges in the launcher**: the Game Boy Player (the machine cards plus a card-language player,
   CM40) is installed like a game; every cartridge in the user's folders is a library entry, played where it is,
   with the survey's verdict and a title screen the machine draws; the DS is listed with its coverage.
+* 🔵 **Work in progress in the launcher**: a Work tab with every session's branch and its programs; a program's
+  version on a branch installs like a beta (built there with that branch's own code); Update falls back to the
+  last good build when the cards in progress do not build; every title and datum on the pages opens something.
 
 ## Done (2026-10-21, fifth build: the model runs itself)
 
