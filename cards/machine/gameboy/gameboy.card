@@ -209,9 +209,18 @@ export fn power_on(want_cgb: Int) {
   bgp = 0xFC
   obp0 = 0xFF
   obp1 = 0xFF
-  mode = 2
-  line_start = 0
-  ppu_next = MODE2_DOTS
+  -- the CGB boot ROM hands over in V-blank (games touch VRAM at once: Trouballs detects the Color that way);
+  -- the DMG one at the start of line 0
+  if cgb != 0 {
+    ly = SCREEN_H
+    mode = 1
+    line_start = 0
+    ppu_next = DOTS_PER_LINE
+  } else {
+    mode = 2
+    line_start = 0
+    ppu_next = MODE2_DOTS
+  }
   win_line = 0
   stat_line = 0
   vbk = 0

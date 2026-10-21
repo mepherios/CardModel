@@ -468,7 +468,7 @@ survey; a DS machine prototype that direct-boots and reports its coverage.
 **Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; MMM01, MBC6/7, HuC1/3, TAMA5,
 the camera and unlicensed multicart mappers are missing; the hardware test suites (Blargg, mooneye) have not been
 run (not on this machine; downloading needs the user's go-ahead); the DS has no graphics, sound, SPI devices, RTC or
-Wi-Fi and its ARM blocks are not lifted yet (COVERAGE.md has the numbers).
+Wi-Fi, and only its ARM-state ARM9 code is lifted (COVERAGE.md has the numbers).
 
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
@@ -510,11 +510,11 @@ a native (ctypes) path inside improved modules (ROADMAP).
      acceptance and MBC tests; dmg-acid2 / cgb-acid2): `cardmodel machine testroms DIR`. They are not on this
      machine; ask the user before downloading them.
    * Close the survey's remaining failures (`cardmodel machine survey` lists them): the missing bank controllers
-     (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (`machine/` debug helpers:
-     `peek`, `step`).
+     (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (the gameboy machine card
+     exports `step` and `peek`: `gb.GameBoy(ctx, rom).m.call("step")`, `.m.call("peek", addr)`).
    * The DS, in the order its coverage report asks for it: SPI devices (firmware user settings, touchscreen,
-     power), RTC, sound channel status, VRAM banks and the 2D engines (a first picture), then 3D; an ARM block
-     lifter (the instruction cards take `op` as a parameter, so a block is its cards' IR with constant words).
+     power), RTC, sound channel status, VRAM banks and the 2D engines (a first picture), then 3D. ARM9 blocks are
+     already lifted (`machine nds ROM --lift`); Thumb, the ARM7 and cheaper word guards are next there.
 7. **AnyPS5 on the card model (proposed as its own session).** One card per PRX export/NID (implemented, throws, or
    unknown signature) and one card per debt entry. That gives the real coverage behind its 95 % badge and an honest
    account of why the rest is missing: unknown console behaviour can only be closed by observation, which is Pheros

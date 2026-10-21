@@ -9,7 +9,8 @@
   cardmodel machine diff ROM [--frames N]       lifted vs interpreter, frame by frame (state hashes)
   cardmodel machine info ROM                    the cartridge header, decoded with the cartridge card
   cardmodel machine testroms DIR                run test ROMs, read their verdicts (serial / screen / registers)
-  cardmodel machine nds ROM [--frames N]        the DS prototype: direct boot, both CPUs, measured coverage
+  cardmodel machine nds ROM [--frames N] [--lift]   the DS prototype: direct boot, both CPUs, measured coverage;
+                                                --lift also lifts the ARM9's ARM code and runs a differential
 """
 from __future__ import annotations
 
@@ -152,6 +153,9 @@ def cmd_machine(args) -> int:
         secs = ds.run(args.frames)
         cov = nds.coverage(ds)
         cov["seconds"] = round(secs, 2)
+        if args.lift:
+            from . import lift_arm
+            cov["lifted_differential"] = lift_arm.differential(ctx, rom, args.frames, args.frames)
         ctx.save_state("nds_coverage", cov)
         lines = [f"{cov['title']} ({cov['game_code']}): {cov['frames']} frames in {cov['seconds']} s, "
                  f"{cov['instruction_cards']} ARM/Thumb instruction cards"]
@@ -162,8 +166,13 @@ def cmd_machine(args) -> int:
                          f"{c['pc']} ({c['state']}, mode {c['mode']}, {why})")
             lines.append(f"     BIOS calls {c['swi_calls']} (not modelled: {c['swi_unmodelled'] or 'none'})")
             lines.append(f"     touched but not modelled: {c['unmodelled_hardware_touched'] or 'nothing'}")
+        if "lifted_differential" in cov:
+            d = cov["lifted_differential"]
+            lines.append(f"  lifted ARM9 code: {d['blocks']} blocks ({d['instructions_lifted']} instructions); "
+                         f"{d['verdict']} to the interpreter over {d['frames_compared']} frames; "
+                         f"{d['block_runs']:,} block runs; {d['speedup']}x")
         _out(args, cov, "\n".join(lines))
-        return 0
+        return 0 if cov.get("lifted_differential", {}).get("verdict", "identical") == "identical" else 1
     if args.action == "testroms":
         from . import testroms
         r = testroms.run(ctx, args.target, engine=args.engine)
@@ -196,6 +205,7 @@ def register(sub) -> None:
     s.add_argument("action", choices=["survey", "lift", "diff", "info", "testroms", "nds"]); s.add_argument("target")
     s.add_argument("--frames", type=int, default=1200); s.add_argument("--engine", default="native")
     s.add_argument("--limit", type=int); s.add_argument("--shots"); s.add_argument("--relift", action="store_true")
+    s.add_argument("--lift", action="store_true", help="nds: also lift the ARM9's code and run a differential")
     s.set_defaults(fn=cmd_machine)
 
 

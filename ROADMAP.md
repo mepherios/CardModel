@@ -64,7 +64,8 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Effect shell**: `cardmodel emu` (browser page with audio and gamepads, headless PNG/WAV runs, saves, RTC)
   (CM21, CM34).
 * 🔵 **DS prototype**: both CPUs on the ARM cards, memory maps, IPC, timers, DMA, divider, cartridge reads, HLE
-  BIOS, direct boot; `cardmodel machine nds` measures coverage.
+  BIOS, direct boot; `cardmodel machine nds` measures coverage; the ARM9's ARM code is lifted through the same
+  pipeline (`--lift`), identical to the interpreter in the differential run.
 
 ## Machines: now and next
 
@@ -75,7 +76,7 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); DMG colourisation
   palettes for DMG games on the CGB (from data, not the boot ROM).
 * 🟢 **DS, as its coverage report asks**: SPI (firmware user settings, touchscreen, power), RTC, sound status,
-  VRAM banks and the 2D engines (a first picture), then 3D; wait states; an ARM block lifter.
+  VRAM banks and the 2D engines (a first picture), then 3D; wait states; Thumb and ARM7 lifting, cheaper guards.
 * 🟢 **Lifting further**: superblocks through not-taken branches, a fast path for dynamic WRAM/HRAM accesses,
   register caching across exits.
 

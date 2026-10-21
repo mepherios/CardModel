@@ -339,6 +339,28 @@ class Lifter:
             out.append(s)
         return out
 
+    def hoist_calls(self, e, pre: list, locals_: dict, consts: dict, top: bool):
+        """Calls to inlinable functions nested inside an expression move to temporaries before the statement (only
+        from positions that are always evaluated, so nothing runs that would not have run)."""
+        if not isinstance(e, list) or not e or e[0] in LEAVES:
+            return e
+        if e[0] == "CALL":
+            args = [self.hoist_calls(a, pre, locals_, consts, False) for a in e[2:]]
+            call = ["CALL", e[1], *args]
+            fn = self.fns.get(e[1])
+            if not top and fn is not None and fn["returns"] != "void" and self._inlinable(call, consts):
+                t = self.fresh("h")
+                locals_[t] = fn["returns"]
+                pre.append({"k": "assign", "target": t, "value": call})
+                return ["var", t]
+            return call
+        if e[0] in ("AND", "OR"):
+            return [e[0], self.hoist_calls(e[1], pre, locals_, consts, False), e[2]]
+        if e[0] == "IF_EXPR":
+            return [e[0], self.hoist_calls(e[1], pre, locals_, consts, False), e[2], e[3]]
+        start = 2 if e[0] == "LOAD" else 1
+        return [*e[:start], *[self.hoist_calls(a, pre, locals_, consts, False) for a in e[start:]]]
+
     def inline_stmts(self, body, locals_, consts: dict, depth=0) -> list:
         """Inline calls (statement level) to inlinable functions; constant-address bus calls are specialised."""
         out = []
@@ -347,6 +369,14 @@ class Lifter:
             for key in ("value", "cond", "index"):
                 if key in s:
                     s[key] = self.expand_pure(s[key])
+            if depth < 8 and s["k"] in ("assign", "if", "store", "return", "do"):
+                pre: list = []
+                for key in ("index", "value", "cond"):
+                    if key in s:
+                        s[key] = self.hoist_calls(s[key], pre, locals_, consts,
+                                                  top=(key == "value" and s["k"] in ("assign", "do")))
+                if pre:
+                    out += self.inline_stmts(pre, locals_, consts, depth + 1)
             call = None
             if s["k"] in ("assign", "do") and isinstance(s.get("value"), list) and s["value"][0] == "CALL":
                 call = s["value"]

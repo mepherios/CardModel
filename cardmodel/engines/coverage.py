@@ -121,6 +121,10 @@ def machines(ctx: Ctx, secs: dict) -> dict:
         out["test_roms"] = {"total": tr.get("total"), "passed": tr.get("passed")}
     nds = ctx.load_state("nds_coverage")
     if nds:
+        ld = nds.get("lifted_differential") or {}
+        if ld:
+            out["nds_lifted"] = {k: ld.get(k) for k in ("verdict", "frames_compared", "blocks", "instructions_lifted",
+                                                        "speedup")}
         out["nds"] = {"frames": nds.get("frames"), "cpus": {
             n: {k: c.get(k) for k in ("instructions_executed", "distinct_instruction_addresses", "cards_used",
                                       "undecodable_executed", "unmodelled_hardware_touched", "swi_unmodelled")}
@@ -218,8 +222,10 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
         sv = ctx.load_state("emu_survey")
         return sv.get("runs_fraction") if sv else None
     if name == "lifted_runs_differing":
-        diffs = ctx.load_state("emu_diffs")
-        return sum(1 for d in diffs.values() if d.get("verdict") != "identical") if diffs else None
+        diffs = ctx.load_state("emu_diffs") or {}
+        nds_l = (ctx.load_state("nds_coverage") or {}).get("lifted_differential")
+        runs = list(diffs.values()) + ([nds_l] if nds_l else [])
+        return sum(1 for d in runs if d.get("verdict") != "identical") if runs else None
     if name == "test_roms_pass_rate":
         tr = ctx.load_state("emu_testroms")
         return round(tr["passed"] / tr["total"], 4) if tr and tr.get("total") else None
@@ -314,6 +320,10 @@ def markdown(rep: dict) -> str:
                          f"{c['distinct_instruction_addresses']} distinct, {c['cards_used']} cards used, "
                          f"{c['undecodable_executed']} undecodable; not modelled yet: "
                          f"{', '.join(c['unmodelled_hardware_touched'] or {}) or 'nothing'}.")
+        if mc.get("nds_lifted"):
+            d = mc["nds_lifted"]
+            L.append(f"* **DS ARM9 lifted code**: {d['blocks']} blocks ({d['instructions_lifted']} instructions), "
+                     f"{d['verdict']} to the interpreter over {d['frames_compared']} frames ({d['speedup']}x).")
     if "primitive_contract" in rep:
         p = rep["primitive_contract"]
         L.append(f"* **primitive_contract**: {p['satisfy']} of {p['computation_cards']} vendored computation cards "

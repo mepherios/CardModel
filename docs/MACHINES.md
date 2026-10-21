@@ -99,7 +99,8 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   (modes, STAT edge, LY=LYC, a scanline renderer with window, 10 sprites a line, DMG and CGB priority, CGB
   palettes and VRAM bank), OAM DMA and HDMA, joypad, serial (logged), APU (4 channels, frame sequencer, mixer,
   output capacitor).
-* **Boot**: no boot ROM (it is not ours to ship); the documented post-boot state, DMG or CGB per the header.
+* **Boot**: no boot ROM (it is not ours to ship); the documented post-boot state, DMG or CGB per the header; the
+  CGB hands over in V-blank (games touch VRAM at once), the DMG at the start of line 0.
 
 ## 4. Lifting ROM code (REA-style, kept internal)
 
@@ -117,7 +118,8 @@ replaced by the byte it would read; it is then specialised:
 A block runs only when it can finish before `next_event`, so nothing can raise an interrupt inside it except the
 CPU's own writes; after any instruction that may move `next_event` it checks and leaves. It never starts once the
 frame is done. Blocks are cached per ROM and machine, emitted through the C card in per-bank parts, linked into
-one library. The profile grows each session (`saves the new entries`); a launch re-lifts when it grew enough.
+one library. The profile grows with each session (the shell saves the new entries at exit); a launch re-lifts
+when it grew enough.
 
 ## 5. The effect shell (CM21, CM34)
 
@@ -138,6 +140,12 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 * **What it is for now**: measured coverage. `cardmodel machine nds ROM` reports per CPU the instructions run,
   distinct addresses, which instruction cards the code used, undecodable instructions, BIOS calls (modelled or
   not), and every hardware block the game touched that no card models. That list is the work queue.
+* **The same pipeline for ARM code** (`machine/lift_arm.py`, `cardmodel machine nds ROM --lift`): an ARM card is a
+  function of its instruction word, so a block is the cards' IR with constant words: fields fold, register-list
+  loops unroll, pure helpers are evaluated at lift time, the condition becomes one flag test, registers live in
+  locals. DS code is in RAM and overlays replace it, so a block first checks that its words are still there; it
+  leaves after a branch and wherever the interpreter would check for interrupts, halts or a CPSR change. The
+  differential run compares both CPUs' registers and every RAM after each frame.
 * **Nothing is decrypted**: an image whose secure area is encrypted is refused.
 
 ## 7. Adding things
@@ -158,5 +166,6 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 * No MMM01, MBC6, MBC7, HuC1/HuC3, TAMA5, camera, or unlicensed multicart mappers.
 * DMG games on a CGB run as DMG (no boot ROM colourisation).
 * Lifting: code in RAM, code right after EI and the HALT/STOP/illegal opcodes always run in the interpreter.
-* DS: no 2D/3D graphics, sound, touch, SPI devices, RTC or Wi-Fi yet; no wait states; flat VRAM; ARM blocks are
-  not lifted yet (the lifter is LR35902-specific in its decoder).
+* DS: no 2D/3D graphics, sound, touch, SPI devices, RTC or Wi-Fi yet; no wait states; flat VRAM. ARM lifting
+  covers ARM-state ARM9 code only; its word guards read through the bus, so it saves the decode but not the
+  fetches (little speed-up for RAM-resident code).

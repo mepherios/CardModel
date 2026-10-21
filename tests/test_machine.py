@@ -170,6 +170,18 @@ class GameBoy(unittest.TestCase):
         self.assertLess(g.m.get("PC"), 0x8000)
         self.assertIn(g.m.read("hram", 0, 1)[0], (5, 6, 7), "one V-blank handler run per frame")
 
+    def test_cgb_hands_over_with_vram_open(self):
+        """The CGB hands over in V-blank, so a Color game can probe the second VRAM bank at once (Trouballs does,
+        within the first scanline's time, which a hand-over at the start of line 0 would put in mode 3)."""
+        prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 1), ("LDH (n),A", 0x4F)] + [("NOP",)] * 16 + [
+                ("LD A,n", 0x5A), ("LD (nn),A", 0x8000), ("XOR A",), ("LDH (n),A", 0x4F),
+                ("LD A,(nn)", 0x8000), ("LDH (n),A", 0x80), ("LD A,n", 1), ("LDH (n),A", 0x4F),
+                ("LD A,(nn)", 0x8000), ("LDH (n),A", 0x81), ("label", "end"), ("HALT",), ("JR e", "end")]
+        rom = asm.rom(self.ctx.store, prog, title="CGBVRAM", cgb=0x80)
+        g = gb.GameBoy(self.ctx, rom, "native", sample_rate=0, fresh=True)
+        g.run_frame()
+        self.assertEqual(list(g.m.read("hram", 0, 2)), [0x00, 0x5A], "bank 0 and bank 1 differ: a Color")
+
     def test_mbc1_and_mbc5_banking(self):
         r1 = mbc_rom(self.ctx, 0x01, 2, [(1, [(0x2000, 1)]), (2, [(0x2000, 2)]), (3, [(0x2000, 3)]),
                                          (0, [(0x2000, 0)])])
@@ -446,3 +458,51 @@ class ARM(unittest.TestCase):
         img[0x4000:0x4008] = bytes(8)
         with self.assertRaises(ValueError):
             nds.DS(self.ctx, bytes(img))
+
+
+class ArmLifting(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_lifted_arm_code_matches_the_interpreter(self):
+        import tempfile
+        from cardmodel.machine import lift_arm
+        r = lift_arm.differential(self.ctx, synthetic_nds(), 2, 4, out_dir=tempfile.mkdtemp(prefix="cardmodel_arm_"))
+        self.assertEqual(r["verdict"], "identical", r)
+        self.assertGreater(r["blocks"], 0)
+        self.assertGreater(r["block_runs"], 0)
+
+    def test_planted_arm_lifter_bug_is_caught(self):
+        """CM07: the lifted block loads 9 instead of 10 as the loop bound; the sum in RAM must differ (45, not 55)."""
+        import tempfile
+        from pathlib import Path
+        from cardmodel.machine import lift, lift_arm, native as N, nds
+        prof = nds.DS(self.ctx, synthetic_nds())
+        prof.run(2)
+        mod, _ = lift_arm.lifted_nds_module(self.ctx, prof)
+        hits = []
+
+        def mutate(x):
+            if isinstance(x, list):
+                if x == ["int", 10] and not hits:
+                    hits.append(True)
+                    x[1] = 9
+                for y in x:
+                    mutate(y)
+            elif isinstance(x, dict):
+                for y in x.values():
+                    mutate(y)
+
+        for f in mod["functions"]:
+            if f["name"].startswith("ablk_"):
+                mutate(f["body"])
+        self.assertTrue(hits)
+        lib = lift.build_parts(self.ctx, mod, "c", Path(tempfile.mkdtemp(prefix="cardmodel_arm_")))
+        ml = N.CABIMachine(self.ctx, mod, "c", lib_path=lib)
+        d = nds.DS.__new__(nds.DS)
+        d.ctx, d.rom, d.info, d.ir, d.m = self.ctx, synthetic_nds(), nds.header(synthetic_nds(), self.ctx.store), mod, ml
+        d.load()
+        ml.set("lifted_on", 1)
+        ml.call("run_frame")
+        self.assertNotEqual(int.from_bytes(ml.read("mram", 0x100000, 4), "little"), 55)
