@@ -76,7 +76,7 @@ fn push16(v: Int) {
   wr8(SP, v & 0xFF)
 }
 fn pop16() -> Int {
-  let lo = rd8(SP)
+  let lo = rd8_idu(SP)
   SP = (SP + 1) & 0xFFFF
   let hi = rd8(SP)
   SP = (SP + 1) & 0xFFFF

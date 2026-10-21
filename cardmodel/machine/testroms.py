@@ -37,6 +37,10 @@ GROUPS = {"G": ("dmg0", "dmgABC", "mgb"), "S": ("sgb", "sgb2"), "C": ("cgb0", "c
 NOT_TESTS = {"utils": "a utility, not a test", "manual-only": "a person compares the screen",
              "madness": "MGB-only edge cases"}
 FOLDER_MODEL = {"oam_bug": "dmg"}            # the OAM corruption bug exists on the DMG only
+# single ROMs that cannot report on an accurate machine, with the evidence (docs/MACHINES.md, witnesses)
+CANNOT_REPORT = {("oam_bug", "7-timing_effect.gb"):
+                 "its text log (19 OAM dumps, about 10 KB) overflows the 8 KiB of cartridge RAM into its own code "
+                 "in WRAM; the same test passes inside oam_bug.gb, and passes alone with the log switched off"}
 DMG_GREYS = (0xFF, 0xAA, 0x55, 0x00)         # the four DMG shades as the screen tests' references draw them
 SCREEN_FRAMES = 30                           # acid2 draws its picture within ten frames and keeps it
 
@@ -59,6 +63,9 @@ def model_for(ctx, path: Path, info: dict) -> tuple[str | None, str]:
     """("dmg" / "cgb" / "auto", "") for a test this machine runs, (None, reason) for one it skips."""
     for folder, why in NOT_TESTS.items():
         if folder in path.parts:
+            return None, why
+    for (folder, name), why in CANNOT_REPORT.items():
+        if folder in path.parts and path.name == name:
             return None, why
     revs = revisions_named(path.stem)
     if revs is not None:

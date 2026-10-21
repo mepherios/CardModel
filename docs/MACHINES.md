@@ -91,7 +91,10 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   B..L; dmg-acid2 and cgb-acid2 must draw their reference image pixel for pixel (DMG shades mapped through the
   PPU card's shade table). Each test runs on the model whose hardware revision its name gives (mooneye's
   `-dmgABC`, `-GS`, `-C`... against the machine card's `revisions`); a test for other hardware, or one that is
-  not self-checking, is reported as skipped and not counted.
+  not self-checking, is reported as skipped and not counted. So is a single ROM that cannot report on any
+  accurate machine, with the evidence in the runner (`CANNOT_REPORT`): Blargg's oam_bug 7-timing_effect.gb logs
+  about 10 KB of OAM dumps into 8 KiB of cartridge RAM and the overflow lands on its own code in WRAM; the same
+  test passes inside the combined oam_bug.gb, and passes alone with the log switched off.
 
 ## 3. The Game Boy machine
 
@@ -116,7 +119,11 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   the mode 2 STAT source; LY=LYC is held while the LCD is off; objects lengthen mode 3 by Pan Docs' rule; a TIMA
   write in the reload M-cycle is lost and a TMA write there is what TIMA gets; the serial clock is a bit of the
   system counter; the APU's length, sweep, power-off and wave-RAM quirks; MBC1 multicarts; P1 reads 0xCF after
-  boot.
+  boot; the DMG's OAM corruption bug: during the OAM scan (dots 4-79 of a line, row = dot / 4), an OAM access or
+  the IDU putting an address in FE00-FEFF on the bus (INC/DEC rr, PUSH, CALL, RST, LD A,(HL+/-), POP's reads)
+  rewrites the scanned row from the one before by Pan Docs' write, read and read-increase patterns, and the
+  unusable FEA0-FEFF range reads 0xFF and corrupts while OAM is blocked. The IDU is part of the LR35902 bus
+  contract (`idu`, `rd8_idu` in `isa/lr35902/interface.card`).
 
 ## 4. Lifting ROM code (REA-style, kept internal)
 
@@ -179,8 +186,6 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 * PPU: a scanline renderer (mid-mode-3 changes apply to the whole line); the window's exact mode-3 cost, the
   LY=153 quirk and the blank first frame after LCD enable are not modelled.
 * APU: point sampled (no band limiting); the noise channel's LFSR only steps while samples are made.
-* The DMG's OAM corruption bug (16-bit increments of an address in FE00-FEFF during mode 2) is not modelled:
-  Blargg's oam_bug tests are the open ones.
 * A DMG cartridge on the CGB runs in CGB mode (no DMG-compatibility mode), so tests for that case are skipped.
 * No MMM01, MBC6, MBC7, HuC1/HuC3, TAMA5, camera, or unlicensed multicart mappers.
 * DMG games on a CGB run as DMG (no boot ROM colourisation).

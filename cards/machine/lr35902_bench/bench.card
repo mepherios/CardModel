@@ -32,6 +32,12 @@ fn wr8(a: Int, v: Int) {
 fn idle() {
   note(3, 0, 0)
 }
+fn idu(a: Int) {
+  note(3, 0, 0)
+}
+fn rd8_idu(a: Int) -> Int {
+  return rd8(a)
+}
 fn halt() {
   halt_calls += 1
 }
