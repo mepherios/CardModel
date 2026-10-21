@@ -28,9 +28,9 @@
     "more of the game (ROADMAP: Arcade next)"
   ],
   "metadata": {
-    "previous_content_hash": "518cdf4550e30273c1ba9c161f4e89a362e05ea45e0800fcc061a6a5130111e7",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "dea9f6e2ae2030a53ff9e16b8daee0ed6de6d63529af38fef5e1d43a4c191d9d",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -63,7 +63,7 @@
   "statement": "The native fighting game made of cards. Its next version is built on the games branch and offered as early access beside the release.",
   "tier": 1,
   "title": "Vector Duel",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/sad-sanderson-482207 into main",

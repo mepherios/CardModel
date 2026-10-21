@@ -14,9 +14,9 @@
     "decide whether MATH_CORE's semantic core replaces this line"
   ],
   "metadata": {
-    "previous_content_hash": "ba49306dea793759ff1ea4514736049fdd92ff3f138cb07bbee01f0615cc458f",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "4a32a55e2e56134b9290e1aa5ebb62aa3b9dc50a49499274c5c5324505bd8d8e",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -47,6 +47,6 @@
   "statement": "Identity of functions across languages through LLVM IR (the Pheros line of work). The card model holds the translation-gap cards for LLVM IR it carried over, and no LLVM code yet; its nearest working pieces are lifted machine code and the cross-language equivalence cards the learning step writes.",
   "tier": 1,
   "title": "LLVM-IR identity",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

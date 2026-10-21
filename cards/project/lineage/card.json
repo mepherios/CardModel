@@ -15,9 +15,9 @@
     "the lineage of the four sources (MATH_CORE.md)"
   ],
   "metadata": {
-    "previous_content_hash": "f2fcf3ad0a1a94e9ee94f4e949a10d113229790b970d0ef823027b0b1281568c",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "b80eecd8f41f41d5eeb8ebe17426071059d237b44d71af112b81265aa2c4b643",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -44,6 +44,6 @@
   "statement": "Where the model's methods come from: Servois, Peacock, Boole, Hankel, Gödel.",
   "tier": 1,
   "title": "The lineage cards",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

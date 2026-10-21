@@ -20,9 +20,9 @@
     "a store entry that launches it"
   ],
   "metadata": {
-    "previous_content_hash": "fcddfc061783a4eba44c935d376ebadb2852400795b02fbf233dad728ac5c2d9",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "46bc550fb06c3527e97c053b2991e6279e3a30b6e3b14ef33d868d8f673c364a",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -52,6 +52,6 @@
   "statement": "A world whose events carry between ticks and explain their causes (cardmodel game world).",
   "tier": 1,
   "title": "The systemic world",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

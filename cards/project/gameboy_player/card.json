@@ -30,9 +30,9 @@
     "one store entry per cartridge on main"
   ],
   "metadata": {
-    "previous_content_hash": "8c56a5daf6b79697e8fa227ef3911632006e1e3a8604e065f057eae8fa6a4a3e",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "dd26687a64257466811fefd6759ef75bfdaf93a64becf9c4635fc75808e52407",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -81,7 +81,7 @@
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/festive-margulis-43fde7 into main once its store work is committed",

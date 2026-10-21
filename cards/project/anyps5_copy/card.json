@@ -15,9 +15,9 @@
     "titles that need Rosetta"
   ],
   "metadata": {
-    "previous_content_hash": "436450461017beb8a9a9aec41330b3f38e2329169480a638396a16142de71aef",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "7ca3666596132ac9897e20aadb907617deecb55954195b23c60ae638951fcc3e",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -44,6 +44,6 @@
   "statement": "The copy of AnyPS5 the model's fixes go into (~/Programmering/AnyPS5-cardmodel; the original is never written).",
   "tier": 1,
   "title": "AnyPS5 (working copy)",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

@@ -48,10 +48,11 @@ range to this table in the same commit.
 | CM36 | AnyPS5 (`claude/recursing-williams-ecc80a`) | unknowns are observation obligations (merged as CM32, renumbered CM36 at integration) |
 | CM37–CM39 | main (self-run) | the core is never lost; the model runs itself; one program |
 | CM40 | games (`claude/sad-sanderson-482207`, from the OAM session's cartridge work) | players are cards (`CM36_players_are_cards` on `claude/festive-margulis-43fde7`, renumbered when the games branch merges it) |
-| **CM41 onward** | free | take the next one |
+| CM41 | main | projects keep their cards current |
+| **CM42 onward** | free | take the next one (MATH_CORE's laws take theirs when the user approves it) |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U4, G_L1, G_O1–O4, G_A1–A7, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M5 (machines). The next free one is the axis's next number (G_A8, G_C6, G_K7, G_M6, G_P6 ...).
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U4, G_L1, G_O1–O4, G_A1–A8, G_K1–K6, G_D1–D2, G_P1–P5
+(AnyPS5), G_M1–M5 (machines). The next free one is the axis's next number (G_A9, G_C6, G_K7, G_M6, G_P6 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened
@@ -110,7 +111,7 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
                     "unblocks": ["what it unblocks"]}],
   "owner": {"session": "local_<id>", "name": "the owning session's short name"},
   "branches": ["claude/<your-branch>*"],
-  "updated": "2026-10-22T00:55:00+02:00"
+  "updated": "2026-10-22T00:30:00+02:00"
 }
 ```
 
@@ -132,6 +133,9 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-21 | 9469e58 | `claude/festive-margulis-43fde7`: the DMG's OAM corruption bug; every runnable hardware test ROM passes |
 | 2026-10-21 | f38dce7 | main: core capabilities as cards (CM37), the self-run (CM38), the integrity check (CM39), docs/AUTONOMY.md, docs/STORE.md, this page |
 | 2026-10-21 | 7e4323a | `claude/strange-dewdney-f8f39d`: the CGB's DMG compatibility mode (05178e1); HANDOVER.md merged as a union, COVERAGE.md regenerated |
+| 2026-10-22 | bb480fb | main: the store's live In progress page (cards/project, arcade/hub.py, early access); main took over port 8770 and the installed launcher, agreed with the games session |
+| 2026-10-22 | c8aeb4c | main: law CM41, detailed and current project cards, the Waiting on you list |
+| 2026-10-22 | de22b52 | main: docs/MATH_CORE.md, a proposal awaiting the user's yes |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
 sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a.
