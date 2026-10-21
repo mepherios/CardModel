@@ -74,13 +74,17 @@ class GameBoy:
     """One machine instance with a cartridge inserted."""
 
     def __init__(self, ctx, rom: bytes, engine: str = "native", model: str = "auto", fresh: bool = False,
-                 sample_rate: int = 48000, machine: Machine | None = None):
+                 sample_rate: int = 48000, machine: Machine | None = None, progress=None):
         self.ctx = ctx
         self.rom = rom
         self.info = header(rom, ctx.store)
+        self.lift_report = None
+        if machine is None and engine == "lifted":
+            from . import lift
+            machine, self.lift_report = lift.lifted_machine(ctx, rom, progress=progress)
         self.ir = machine.ir if machine else Bd.module(ctx, "gameboy")
         self.m = machine or N.load(ctx, self.ir, engine, fresh=fresh)
-        self.engine = self.m.engine
+        self.engine = self.m.engine + ("+lifted" if self.lift_report is not None else "")
         want = {"auto": 1 if self.info["cgb"] else 0, "dmg": 0, "cgb": 1}[model]
         self.cgb = want
         self.sample_rate = sample_rate
@@ -102,6 +106,9 @@ class GameBoy:
         m.set("sample_rate", self.sample_rate)
         m.write("cram", bytes(0x20000))
         m.call("power_on", self.cgb)
+        if self.lift_report is not None:
+            m.set("lifted_on", 1)
+            m.set("profiling", 1)
 
     # -- per frame --------------------------------------------------------------------------------------
     def run_frame(self) -> int:

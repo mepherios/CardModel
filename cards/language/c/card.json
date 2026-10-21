@@ -9,6 +9,10 @@
       "int": "int64_t {name}[{size}];",
       "u8": "uint8_t {name}[{size}];"
     },
+    "array_extern": {
+      "int": "extern int64_t {name}[{size}];",
+      "u8": "extern uint8_t {name}[{size}];"
+    },
     "array_init": {
       "int": "static int64_t {name}[{size}] = {{{values}}};",
       "u8": "static uint8_t {name}[{size}] = {{{values}}};"
@@ -27,6 +31,7 @@
     "func_export": "{ret} {name}({params}) {{\n{body}}}\n",
     "global": "static {type} {name} = {value};",
     "global_export": "{type} {name} = {value};",
+    "global_extern": "extern {type} {name};",
     "harness": {
       "bench_call": "cm_acc += {truthy};",
       "bench_main": "int main(void) {{\n    int64_t cm_acc = 0;\n    for (int64_t cm_r = 0; cm_r < {reps}; cm_r++) {{\n{calls}    }}\n    printf(\"%\" PRId64 \"\\n\", cm_acc);\n    return 0;\n}}\n",
@@ -137,8 +142,28 @@
       "{src}",
       "-lm"
     ],
+    "compile_object": [
+      "{exe}",
+      "-O1",
+      "-std=c11",
+      "-fPIC",
+      "-fwrapv",
+      "-w",
+      "-c",
+      "-o",
+      "{obj}",
+      "{src}"
+    ],
     "file": "machine.c",
     "kind": "cabi",
+    "link": [
+      "{exe}",
+      "-shared",
+      "-o",
+      "{lib}",
+      "{objs}",
+      "-lm"
+    ],
     "statement": "a shared library loaded with ctypes: int64 arguments and results, exported symbols carry the codegen export_prefix, arrays are reachable with in_dll"
   },
   "extensions": [
@@ -148,9 +173,9 @@
   "family": "c_like",
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "a16ac8a99135aff35d7aab77176733f359f55dacad51a50a7f2414b94cc9c9e7",
-    "version": "1.1.0",
-    "version_bump_reason": "minor"
+    "previous_content_hash": "f8d0a742dc57a56c17bc5b0e23bc763cf07c117f36d1bde418d99d6bd0cf4515",
+    "version": "1.1.1",
+    "version_bump_reason": "patch"
   },
   "name": "c",
   "probe": {

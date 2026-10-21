@@ -575,6 +575,8 @@ def register(sub) -> None:
     s.set_defaults(fn=cmd_algebra)
     from .game import cli as game_cli
     game_cli.register(sub)
+    from .machine import cli as machine_cli
+    machine_cli.register(sub)
 
 
 __all__ = ["register"]

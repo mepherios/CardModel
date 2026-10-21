@@ -1,0 +1,10 @@
+{
+  "category": "law",
+  "metadata": {"version": "1.0.0"},
+  "name": "CM34_emulation_effects_are_the_shell",
+  "origins": ["user requirement 2026-10-21 (input, video, audio and saves an unchanged effect shell)", "CM21"],
+  "provenance": {"origin": "cardmodel"},
+  "statement": "A machine module performs no I/O: every call stays inside it. Video, audio, input, battery saves and the wall clock are the effect shell around it (machine/shell.py), which is never lifted, specialised or optimised; what the shell shows and streams is exactly the machine's own frame.",
+  "tier": 0,
+  "witness": "tests/test_machine.py::test_shell_is_the_only_effect"
+}

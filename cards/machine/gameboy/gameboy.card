@@ -93,9 +93,11 @@ fn interp_one() {
   if profiling != 0 and PC < 0x8000 {
     profile_mark()
   }
-  exec_op(fetch8())
+  let pc0 = PC
+  let op = fetch8()
+  exec_op(op)
   instructions += 1
-  fall_pc = PC
+  fall_pc = (pc0 + op_bytes[op]) & 0xFFFF
   if ime_delay != 0 {
     ime_delay -= 1
     if ime_delay == 0 {
@@ -107,7 +109,9 @@ export fn step() {
   if not boundary() {
     return
   }
-  if lifted_on != 0 and PC < 0x8000 and halt_bug == 0 and ime_delay == 0 {
+  -- a block is the instructions it replaces only while nothing outside it is waiting for an instruction
+  -- boundary: not after the sync that ended the frame (run_frame stops after one more instruction)
+  if lifted_on != 0 and frame_done == 0 and PC < 0x8000 and halt_bug == 0 and ime_delay == 0 {
     if run_block(block_key(PC)) != 0 {
       block_runs += 1
       fall_pc = -1

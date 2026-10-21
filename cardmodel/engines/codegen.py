@@ -503,6 +503,51 @@ class Emitter:
         helpers = self.helpers_for(state + funcs)
         return self._prelude("lib_prelude") + helpers + state + protos + funcs + self.cg.get("lib_epilogue", "")
 
+    def split_sources(self, module: dict, groups: list[list[str]]) -> list[str]:
+        """The module as several compile units: part 0 holds the state and every function not in a group, part
+        k the functions of group k-1. Every symbol must be exported (so the parts link); each part declares the
+        state (``global_extern`` / ``array_extern``) and the functions (``prototype_export``) it uses."""
+        if not self.cg.get("global_extern") or not self.cg.get("array_extern"):
+            raise EmitGap(f"{self.lang_name}: no extern templates; this language cannot split a module")
+        self.requires = set()
+        self.state(module)
+        self.fn_returns = {f["name"]: f["returns"] for f in module["functions"]}
+        grouped = {n for g in groups for n in g}
+        by = {f["name"]: f for f in module["functions"]}
+        externs = []
+        for g in module.get("globals") or []:
+            externs.append(self.cg["global_extern"].format(name=self.ident(g["name"]), type=self.T(g.get("type", "int"))))
+        for a in module.get("arrays") or []:
+            t = self.cg["array_extern"].get(a.get("elem", "u8"))
+            if t is None:
+                raise EmitGap(f"{self.lang_name}: no array_extern for {a.get('elem')}")
+            externs.append(t.format(name=self.ident(a["name"]), size=int(a["size"])))
+        extern_text = "".join(x + "\n" for x in externs)
+        core = {"functions": [f for f in module["functions"] if f["name"] not in grouped]}
+        funcs0 = "\n".join(self.function(f) for f in reversed(core["functions"]))
+        state0 = self.state_source(module)
+        core_called = {e[1] for f in core["functions"] for st in _stmts(f["body"])
+                       for key in ("value", "cond", "index", "start", "stop") if isinstance(st.get(key), list)
+                       for e in _walk(st[key]) if e[0] == "CALL"}
+        protos_all = self.prototypes({"functions": [f for f in module["functions"]
+                                                    if f["name"] not in grouped or f["name"] in core_called]})
+        parts = []
+        req0 = set(self.requires)
+        parts.append((state0 + protos_all + funcs0, req0))
+        for g in groups:
+            self.requires = set()
+            fs = [by[n] for n in g]
+            body = "\n".join(self.function(f) for f in fs)
+            called = {e[1] for f in fs for st in _stmts(f["body"]) for key in ("value", "cond", "index", "start", "stop")
+                      if isinstance(st.get(key), list) for e in _walk(st[key]) if e[0] == "CALL"}
+            protos = self.prototypes({"functions": [by[n] for n in sorted(called | set(g)) if n in by]})
+            parts.append((extern_text + protos + body, set(self.requires)))
+        out = []
+        for code, req in parts:
+            self.requires = req
+            out.append(self._prelude("lib_prelude") + self.helpers_for(code) + code)
+        return out
+
     def helpers_for(self, code: str) -> str:
         """Helper functions referenced by ``code``, dependencies first.
 
@@ -543,6 +588,14 @@ def _stmts(body):
                 yield from _stmts(s[key])
         for case in s.get("cases") or ():
             yield from _stmts(case["body"])
+
+
+def _walk(e):
+    if isinstance(e, list) and e:
+        yield e
+        if e[0] not in LEAVES:
+            for a in e[(2 if e[0] in ("CALL", "LOAD") else 1):]:
+                yield from _walk(a)
 
 
 def _shallow(body):

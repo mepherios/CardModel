@@ -109,6 +109,11 @@ def dispatch_source(store, isa: str) -> str:
         cases = "\n".join(f"    case 0x{c['opcode']:02X} {{ {c.name}() }}"
                           for c in sorted(by_prefix.get(key, []), key=lambda c: c["opcode"]))
         parts.append(f"fn {fname}(op: Int) {{\n  switch op {{\n{cases}\n  }}\n}}\n")
+    base = {c["opcode"]: c["bytes"] for c in by_prefix.get("", [])}
+    if base:
+        # instruction length by first byte (a prefixed instruction's length is its prefix card's): data from the cards
+        lens = ", ".join(str(base.get(op, 1)) for op in range(256))
+        parts.append(f"array op_bytes: Byte[256] = [{lens}]\n")
     return "\n".join(parts)
 
 

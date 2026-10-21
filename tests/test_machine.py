@@ -195,3 +195,167 @@ class GameBoy(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def busy_rom(ctx):
+    """Loops over WRAM, bank switches (MBC1), LY reads, HALT and a V-blank handler: what lifted blocks must get
+    exactly right."""
+    prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 0x01), ("LDH (n),A", 0xFF), ("EI",),
+            ("label", "main"), ("LD HL,nn", 0xC000), ("LD B,n", 0),
+            ("label", "loop"), ("LD A,(HL)",), ("ADD A,B",), ("LD (HL+),A",), ("INC B",), ("LD A,H",), ("CP n", 0xC4),
+            ("JR NZ,e", "loop"),
+            ("LD A,(nn)", 0x4000), ("INC A",), ("AND n", 3), ("LD (nn),A", 0x2000), ("LDH A,(n)", 0x44),
+            ("LD (nn),A", 0xC000), ("LDH A,(n)", 0x80), ("RLCA",), ("LD (nn),A", 0xC001), ("HALT",), ("JR e", "main")]
+    vblank = asm.assemble(ctx.store, [("PUSH AF",), ("LDH A,(n)", 0x80), ("INC A",), ("LDH (n),A", 0x80),
+                                      ("POP AF",), ("RETI",)], org=0x40)
+    img = bytearray(asm.rom(ctx.store, prog, title="BUSYTEST", cart_type=0x01, rom_size_code=1,
+                            extra={0x40: vblank}))
+    for b in range(1, 4):
+        img[b * 0x4000] = b
+    return bytes(img)
+
+
+class Lifting(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+        cls.rom = busy_rom(cls.ctx)
+        from cardmodel.machine import lift
+        seen, entries = lift.profile_rom(cls.ctx, cls.rom, frames=30)
+        cls.mod, cls.rep = lift.lift_rom(cls.ctx, cls.rom, 0xFFFF, seen, entries)
+
+    def _run_pair(self, mod, frames=60):
+        import tempfile
+        from pathlib import Path
+        from cardmodel.machine import lift
+        lib = lift.build_parts(self.ctx, mod, "c", Path(tempfile.mkdtemp(prefix="cardmodel_lift_")))
+        m = native.CABIMachine(self.ctx, mod, "c", lib_path=lib)
+        lifted = gb.GameBoy(self.ctx, self.rom, machine=m, sample_rate=0)
+        m.set("lifted_on", 1)
+        ref = gb.GameBoy(self.ctx, self.rom, "native", sample_rate=0, fresh=True)
+        for f in range(frames):
+            lifted.run_frame()
+            ref.run_frame()
+            if lifted.state_hash() != ref.state_hash():
+                return f, m.get("block_runs")
+        return None, m.get("block_runs")
+
+    def test_lifted_blocks_match_the_interpreter(self):
+        self.assertGreater(self.rep["blocks"], 3)
+        diverged, runs = self._run_pair(self.mod)
+        self.assertIsNone(diverged, f"lifted run diverged at frame {diverged}")
+        self.assertGreater(runs, 100, "blocks must actually run")
+
+    def test_planted_lifter_bug_is_caught(self):
+        """CM07: change the loop bound (CP 0xC4 -> 0xC3) in every lifted block; the differential run must see it."""
+        bad = copy.deepcopy(self.mod)
+        hits = []
+
+        def mutate(x):
+            if isinstance(x, list):
+                if x == ["int", 0xC4]:
+                    hits.append(True)
+                    x[1] = 0xC3
+                    return
+                for y in x:
+                    mutate(y)
+            elif isinstance(x, dict):
+                for y in x.values():
+                    mutate(y)
+
+        for f in bad["functions"]:
+            if f["name"].startswith("blk_"):
+                mutate(f["body"])
+        self.assertTrue(hits, "the loop's CP 0xC4 must be a constant in a lifted block")
+        diverged, _ = self._run_pair(bad, frames=20)
+        self.assertIsNotNone(diverged)
+
+
+class Shell(unittest.TestCase):
+    """CM21 for machines: the machine module does no I/O; the shell around it is the only effect."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_shell_is_the_only_effect(self):
+        ir = Bd.module(self.ctx, "gameboy")
+        names = {f["name"] for f in ir["functions"]}
+        from cardmodel.machine.lift import _exprs, _stmts
+        calls = {x[1] for f in ir["functions"] for st in _stmts(f["body"]) for x in _exprs(st) if x[0] == "CALL"}
+        self.assertLessEqual(calls, names, "every call stays inside the machine module (no host functions)")
+        ops = {x[0] for f in ir["functions"] for st in _stmts(f["body"]) for x in _exprs(st)}
+        effect_ops = {o for o in ops if o in self.ctx.ops and self.ctx.ops[o].card.get("effect")}
+        self.assertEqual(effect_ops, set())
+        # the headless shell's frame is exactly the machine's frame for the same run
+        import tempfile
+        from pathlib import Path
+        from cardmodel.machine import shell
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_shell_"))
+        (d / "gfx.gb").write_bytes(graphics_rom(self.ctx))
+        s = shell.Session(self.ctx, d / "gfx.gb", engine="native", sample_rate=0, save_dir=d)
+        r = shell.run_headless(s, 5)
+        g = gb.GameBoy(self.ctx, graphics_rom(self.ctx), "native", sample_rate=0, fresh=True)
+        for _ in range(5):
+            g.run_frame()
+        self.assertEqual(r["frame"], g.frame())
+
+    def test_web_shell_streams_the_machines_frames(self):
+        import base64
+        import os
+        import socket
+        import tempfile
+        import threading
+        from pathlib import Path
+        from cardmodel.machine import shell
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_web_"))
+        (d / "gfx.gb").write_bytes(graphics_rom(self.ctx))
+        sess = shell.Session(self.ctx, d / "gfx.gb", engine="native", sample_rate=0, save_dir=d)
+        ports = []
+        orig_log = []
+        t = threading.Thread(target=lambda: ports.append(shell.serve(sess, port=0, open_browser=False,
+                                                                     log=orig_log.append)), daemon=True)
+        t.start()
+        for _ in range(100):
+            if orig_log:
+                break
+            __import__("time").sleep(0.05)
+        port = int(orig_log[0].split("127.0.0.1:")[1].split("/")[0])
+        c = socket.create_connection(("127.0.0.1", port), timeout=10)
+        key = base64.b64encode(os.urandom(16)).decode()
+        c.sendall(f"GET /ws HTTP/1.1\r\nHost: x\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+                  f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n".encode())
+        ws = shell._WS(c)
+        buf = b""
+        while b"\r\n\r\n" not in buf:
+            buf += c.recv(1)
+        self.assertIn(b"101", buf.split(b"\r\n")[0])
+
+        def frame():
+            h = ws._exact(2)
+            n = h[1] & 0x7F
+            if n == 126:
+                n = int.from_bytes(ws._exact(2), "big")
+            elif n == 127:
+                n = int.from_bytes(ws._exact(8), "big")
+            return h[0] & 0x0F, ws._exact(n)
+
+        op, hello = frame()
+        self.assertEqual(op, 1)
+        self.assertIn(b"GFXTEST", hello)
+        op, video = frame()
+        self.assertEqual(video[0], 1)
+        g = gb.GameBoy(self.ctx, graphics_rom(self.ctx), "native", sample_rate=0, fresh=True)
+        g.run_frame()
+        self.assertEqual(video[1:], g.frame(), "the first streamed frame is the machine's first frame")
+        mask = os.urandom(4)
+        msg = b'{"cmd": "quit"}'
+        c.sendall(bytes([0x81, 0x80 | len(msg)]) + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(msg)))
+        t.join(timeout=10)
+        self.assertFalse(t.is_alive())
+
+    def test_input_script(self):
+        from cardmodel.machine import shell
+        self.assertEqual(shell.parse_input("10:start,16:-,20:a+right"), {10: 0x80, 16: 0, 20: 0x11})
+        with self.assertRaises(ValueError):
+            shell.parse_input("5:jump")

@@ -49,6 +49,8 @@ global c4_timer: Int = 0
 global c4_vol: Int = 0
 global c4_env: Int = 0
 global c4_lfsr: Int = 0x7FFF
+global hp_l: Int = 0              -- the output capacitor (a high-pass filter): its charge, x 256
+global hp_r: Int = 0
 
 fn reg(r: Int) -> Int = nr[r - 0x10]
 fn c1_period() -> Int = (2048 - c1_freq) * 4
@@ -362,6 +364,7 @@ fn out4() -> Int {
   return ((c4_lfsr & 1) ^ 1) * c4_vol
 }
 fn analog(v: Int, on: Bool) -> Int = if on then v * 2 - 15 else 0
+fn clip16(v: Int) -> Int = if v > 32767 then 32767 else if v < -32768 then -32768 else v
 fn emit_sample() {
   if audio_n + 4 > AUDIO_BYTES {
     return
@@ -401,6 +404,11 @@ fn emit_sample() {
     l = l * (((reg(0x24) >> 4) & 7) + 1) * 64
     r = r * ((reg(0x24) & 7) + 1) * 64
   }
+  -- the capacitor removes the DC level of the DACs (time constant about 256 samples)
+  hp_l += ((l << 8) - hp_l) >> 8
+  hp_r += ((r << 8) - hp_r) >> 8
+  l = clip16(l - (hp_l >> 8))
+  r = clip16(r - (hp_r >> 8))
   audio[audio_n] = l & 0xFF
   audio[audio_n + 1] = (l >> 8) & 0xFF
   audio[audio_n + 2] = r & 0xFF

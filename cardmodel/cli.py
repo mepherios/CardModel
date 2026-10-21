@@ -25,6 +25,11 @@
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
 
+  machines as cards (machine/cli.py):
+  cardmodel emu ROM [--headless ...]     run a Game Boy / Color ROM: lifted card IR, native, with a web shell
+  cardmodel isa build|check|list [ISA]   instruction cards: compile semantics, conformance in every engine
+  cardmodel machine survey|lift|diff|info|testroms TARGET   boot many ROMs, lift one, differential runs
+
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.
 """

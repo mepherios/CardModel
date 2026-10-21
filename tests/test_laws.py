@@ -14,11 +14,13 @@ CLAIMING = ["engines/frontend_python.py", "engines/conformance.py", "engines/tra
             "engines/learn.py", "engines/optimize.py", "engines/probes.py", "engines/codegen.py", "engines/runners.py",
             "engines/selfcheck.py", "engines/improve.py", "engines/arena.py", "emit/lean.py", "kernel/schema.py",
             "machine/isa.py", "machine/build.py", "machine/native.py", "machine/bench.py", "machine/gb.py",
-            "machine/survey.py", "machine/asm.py"]
+            "machine/survey.py", "machine/asm.py", "machine/lift.py", "machine/shell.py", "machine/diff.py",
+            "machine/testroms.py"]
 NO_LANGUAGE_BRANCHES = ["engines/codegen.py", "engines/runners.py", "engines/conformance.py", "engines/translate.py",
                         "engines/witness.py", "engines/verify.py", "engines/optimize.py", "machine/native.py",
                         "machine/build.py", "machine/isa.py", "machine/bench.py", "machine/gb.py", "machine/survey.py",
-                        "machine/asm.py"]
+                        "machine/asm.py", "machine/lift.py", "machine/shell.py", "machine/diff.py",
+                        "machine/testroms.py"]
 
 
 class Laws(unittest.TestCase):
