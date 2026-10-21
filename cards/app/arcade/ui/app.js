@@ -8,6 +8,7 @@ const S = {
   catalog: [], details: {}, native: { library: {}, settings: { bandwidth: 0, user: "" }, downloading: null, native: !!bridge },
   progress: {}, rates: [], peak: 0, totalDown: 0, completed: [], view: "store", arg: null, history: [], future: [],
   gear: false, shot: 0, libSel: null, lastErr: {},
+  lib: { systems: [], roms: [], drawing: {} }, libQuery: "", libLoaded: 0,
 };
 
 function send(cmd, extra) {
@@ -34,14 +35,19 @@ window.arcade = {
     if (e.type === "verified") {
       toast(e.ok ? `All ${e.files} files validated.` : `${e.bad} file(s) failed to validate and will be reacquired.`); return;
     }
-    if (e.type === "running") { toast(`${(game(e.id) || {}).title || e.id} is running.`); }
+    if (e.type === "running") { toast(`${(game(e.id) || rom(e.id) || {}).title || e.id} is running.`); }
     if (e.type === "stopped") { refresh(); }
+    if (e.type === "folder") { folders({ system: e.system, add: e.path }); }
   },
 };
 
 const $ = (sel, el) => (el || document).querySelector(sel);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const game = (id) => S.catalog.find((g) => g.id === id);
+const rom = (id) => S.lib.roms.find((r) => r.id === id);
+const sysOf = (r) => S.lib.systems.find((s) => s.id === r.system_card) || {};
+const playerOf = (r) => game(sysOf(r).player || "");
+const subLabel = (r) => ((sysOf(r).systems || []).find((x) => x.id === r.system) || {}).label || r.system;
 const media = (g, key) => (g && g.media && g.media[key]) || "";
 const mb = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : (n / 1024).toFixed(0) + " KB");
 const rate = (r) => (r >= 1048576 ? (r / 1048576).toFixed(1) + " MB/s" : (r / 1024).toFixed(0) + " KB/s");
@@ -67,6 +73,13 @@ async function refresh() {
   } catch (e) {
     $("#service").className = "dot bad";
     $("#service").title = "Arcade service: unreachable";
+  }
+  if (!S.libLoaded || (S.lib.drawing && S.lib.drawing.busy)) {
+    try {
+      const r = await fetch("/api/library");
+      S.lib = await r.json();
+      S.libLoaded = Date.now();
+    } catch (e) { /* the service is older or down: no cartridges */ }
   }
   if (bridge) send("state");
   render();
@@ -122,12 +135,15 @@ function render() {
   $("#username").textContent = S.native.settings.user || "";
   $("#usertab").textContent = (S.native.settings.user || "YOU").split(" ")[0].toUpperCase();
   const v = $("#view");
+  // a re-render keeps where the library's lists were scrolled (selecting something scrolls its page itself)
+  const kept = S.view === "library" ? [...v.querySelectorAll(".side, .gamepage")].map((el) => el.scrollTop) : [];
   if (S.view === "store") v.innerHTML = storeHome();
   else if (S.view === "app") { v.innerHTML = `<div class="store">${storePage(S.arg)}</div>`; details(S.arg).then(() => { if (S.view === "app") v.innerHTML = `<div class="store">${storePage(S.arg)}</div>`; bind(); }); }
   else if (S.view === "library") v.innerHTML = libraryView();
   else if (S.view === "downloads") v.innerHTML = downloadsView();
   else if (S.view === "news") v.innerHTML = newsView();
   else if (S.view === "profile") v.innerHTML = profileView();
+  if (S.view === "library") v.querySelectorAll(".side, .gamepage").forEach((el, k) => { if (kept[k] != null) el.scrollTop = kept[k]; });
   bind();
   renderProgress();
 }
@@ -155,6 +171,15 @@ function storeHome() {
       <div class="art" style="background-image:url('${media(g, "header_460x215")}')"></div>
       <div class="meta"><b>${esc(g.title)}</b><span>${S.native.library[g.id] ? "IN LIBRARY" : "FREE"}</span>
       <div class="tags">${(g.genre || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div></div></div>`).join("")}</div>
+    ${S.lib.roms.length ? `<h2>Your cartridges</h2>
+    <div class="grid">${S.lib.systems.filter((s) => s.playable || S.lib.roms.some((r) => r.system_card === s.id)).map((s) => {
+      const n = S.lib.roms.filter((r) => r.system_card === s.id).length;
+      const pl = game(s.player || "");
+      return `<div class="capsule" ${pl ? `data-open="${esc(pl.id)}"` : `data-lib="home"`}>
+        <div class="art" style="background-image:url('${pl ? media(pl, "header_460x215") : ""}')"></div>
+        <div class="meta"><b>${esc(s.title)}</b><span>${n} FOUND</span>
+        <div class="tags">${(s.systems || []).map((x) => `<span class="tag">${esc(x.label)}</span>`).join("")}${s.playable ? "" : `<span class="tag">not playable yet</span>`}</div></div></div>`;
+    }).join("")}</div>` : ""}
     <h2>Recently updated</h2>
     ${games.map((g) => `<div class="card"><b style="color:#fff">${esc(g.title)}</b> &nbsp; v${esc(g.version)}
       ${(g.changelog || []).slice(-1).map((c) => ` &mdash; ${esc(c.title)}<ul>${c.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>`).join("")}</div>`).join("")}
@@ -198,18 +223,128 @@ function newsEntries(g) {
 }
 
 function libraryView() {
-  const games = S.catalog.slice().sort((a, b) => (!!S.native.library[b.id]) - (!!S.native.library[a.id]) || a.title.localeCompare(b.title));
-  const sel = game(S.libSel) || games[0];
-  const items = games.map((g) => {
+  const q = S.libQuery.trim().toLowerCase();
+  const hit = (t) => !q || String(t).toLowerCase().includes(q);
+  const all = S.catalog.slice().sort((a, b) => (!!S.native.library[b.id]) - (!!S.native.library[a.id]) || a.title.localeCompare(b.title));
+  const games = all.filter((g) => g.kind !== "system" && hit(g.title));
+  const tools = all.filter((g) => g.kind === "system" && hit(g.title));
+  const home = S.libSel === "home" || (!S.libSel && S.lib.roms.length);
+  const selRom = rom(S.libSel);
+  const sel = selRom ? null : game(S.libSel) || (home ? null : all[0]);
+  const gameItem = (g) => {
     const inst = S.native.library[g.id];
     const st = status(g);
     const tag = st.kind === "busy" ? st.label : inst && inst.running ? "Running" : st.kind === "update" && inst ? "Update" : "";
     return `<div class="item ${inst ? "installed" : ""} ${sel && sel.id === g.id ? "on" : ""}" data-lib="${esc(g.id)}">
       <img src="${media(g, "icon")}" alt="">${esc(g.title)}<span class="st">${esc(tag)}</span></div>`;
-  }).join("");
-  return `<div class="library"><div class="side"><a class="home">HOME</a><input placeholder="Search">
-      <div class="group">All (${games.length})</div>${items}</div>
-    <div class="gamepage">${sel ? gamePage(sel) : `<div class="empty">No games.</div>`}</div></div>`;
+  };
+  const groups = [];
+  for (const sy of S.lib.systems) {
+    for (const sub of sy.systems || []) {
+      const list = S.lib.roms.filter((r) => r.system_card === sy.id && r.system === sub.id && hit(r.title));
+      if (!list.length) continue;
+      const items = list.map((r) => {
+        const played = (S.native.played || {})[r.id];
+        const cls = sy.playable ? "installed" : "";
+        return `<div class="item ${cls} ${selRom && selRom.id === r.id ? "on" : ""}" data-lib="${esc(r.id)}">
+          ${r.cover ? `<img loading="lazy" src="${esc(r.cover)}" alt="">` : `<span class="noimg"></span>`}<span class="t">${esc(r.title)}</span>
+          <span class="st">${played && played.running ? "Running" : ""}</span></div>`;
+      }).join("");
+      groups.push(`<div class="group">${esc(sub.label)} (${list.length})</div>${items}`);
+    }
+  }
+  const page = selRom ? romPage(selRom) : sel ? gamePage(sel) : home ? libraryHome() : `<div class="empty">No games.</div>`;
+  return `<div class="library"><div class="side"><a class="home ${home && !selRom && !sel ? "on" : ""}" data-lib="home">HOME</a>
+      <input id="libsearch" placeholder="Search" value="${esc(S.libQuery)}">
+      ${games.length ? `<div class="group">Games (${games.length})</div>${games.map(gameItem).join("")}` : ""}
+      ${tools.length ? `<div class="group">Players (${tools.length})</div>${tools.map(gameItem).join("")}` : ""}
+      ${groups.join("")}</div>
+    <div class="gamepage">${page}</div></div>`;
+}
+
+// the library's front: what was played lately, then a shelf of title screens per console
+function libraryHome() {
+  const played = S.native.played || {};
+  const recent = S.lib.roms.filter((r) => played[r.id]).sort((a, b) => played[b.id].lastPlayed - played[a.id].lastPlayed).slice(0, 12);
+  const tile = (r) => `<div class="cov" data-lib="${esc(r.id)}" title="${esc(r.title)}">
+      ${r.cover ? `<img loading="lazy" src="${esc(r.cover)}" alt="">` : `<div class="noart">${esc(r.title)}</div>`}
+      <div class="cap">${esc(r.title)}</div><span class="vb ${esc(r.verdict.level)}"></span></div>`;
+  const d = S.lib.drawing || {};
+  let out = `<div class="libhome">`;
+  if (d.busy) out += `<div class="card">Drawing title screens: ${d.drawn || 0} of ${d.of || "?"} (the machine runs each cartridge for ten seconds, headless).</div>`;
+  if (recent.length) out += `<h3>Recent</h3><div class="shelf">${recent.map(tile).join("")}</div>`;
+  for (const sy of S.lib.systems) {
+    for (const sub of sy.systems || []) {
+      const list = S.lib.roms.filter((r) => r.system_card === sy.id && r.system === sub.id);
+      if (!list.length) continue;
+      out += `<h3>${esc(sub.label)} <small>${list.length} cartridge${list.length === 1 ? "" : "s"}</small></h3><div class="shelf">${list.map(tile).join("")}</div>`;
+    }
+  }
+  if (!S.lib.roms.length) out += `<div class="empty">No cartridges found. The player's card lists the folders it looks in.</div>`;
+  return out + `</div>`;
+}
+
+// a cartridge: its title screen, how far the card model gets with it, and the player's big button
+function romStatus(r) {
+  const sy = sysOf(r);
+  if (!sy.playable) return { kind: "na", label: "Not playable yet" };
+  const pl = playerOf(r);
+  if (!pl) return { kind: "na", label: "No player" };
+  const ps = status(pl);
+  if (ps.kind === "busy") return { kind: "busy", label: ps.label };
+  if (ps.kind === "install") return { kind: "install", label: "Install " + pl.title, player: pl.id };
+  const played = (S.native.played || {})[r.id];
+  if (played && played.running) return { kind: "stop", label: "Stop" };
+  return { kind: "play", label: "Play" };
+}
+function romButton(r) {
+  const st = romStatus(r);
+  const cls = st.kind === "na" ? "busy" : st.kind;
+  const icon = st.kind === "play" ? "&#9654;&nbsp; " : st.kind === "install" ? "&#11015;&nbsp; " : "";
+  return `<button class="btn ${cls}" data-romact="${esc(r.id)}">${icon}${esc(st.label)}</button>`;
+}
+function romAct(r) {
+  const st = romStatus(r);
+  if (st.kind === "install") send("install", { id: st.player });
+  else if (st.kind === "play") send("play_rom", { id: r.id, player: sysOf(r).player, path: r.path, title: r.title });
+  else if (st.kind === "stop") send("stop", { id: r.id });
+}
+function romPage(r) {
+  const played = (S.native.played || {})[r.id];
+  const h = r.header || {};
+  const v = r.verdict || {};
+  const pl = playerOf(r);
+  const vtext = { verified: "Verified", playable: "Playable", unsupported: "Unsupported", unavailable: "Not playable yet", unknown: "Unknown" }[v.level] || v.level;
+  const facts = r.system_card === "gameboy" ? [
+    ["Cartridge", h.title], ["Bank controller", (h.mbc || "none").toUpperCase() + (h.supported === false ? " (no card yet)" : "")],
+    ["RAM", h.ram ? mb(h.ram) + (h.battery ? ", battery" : "") : "none"], ["Clock", h.rtc ? "MBC3 real-time clock" : "none"],
+    ["ROM", mb(r.size)], ["Colour", r.system === "gbc" ? (h.cgb_only ? "Game Boy Color only" : "Game Boy Color enhanced") : "Game Boy"],
+  ] : [["Cartridge", h.title], ["Game code", h.code], ["Size", mb(r.size)]];
+  const ds = v.detail && v.detail.cpus ? Object.entries(v.detail.cpus).map(([k, c]) =>
+    `<p><b>${esc(k.toUpperCase())}</b>: ${esc((c.instructions || 0).toLocaleString())} instructions, ${esc((c.distinct || 0).toLocaleString())} distinct;
+      not modelled yet: ${esc((c.not_modelled || []).join(", ") || "nothing")}</p>`).join("") : "";
+  return `<div class="hero rom"><div class="blur" style="background-image:url('${esc(r.cover || "")}')"></div>
+      ${r.cover ? `<img class="shot" src="${esc(r.cover)}" alt="">` : ""}
+      <div class="logo">${esc(r.title)}<small>${esc(subLabel(r))}${r.tags ? " &middot; " + esc(r.tags) : ""}</small></div></div>
+    <div class="actionbar">${romButton(r)}
+      <div class="stat">Last played<b>${played ? when(played.lastPlayed) : "Never"}</b></div>
+      <div class="stat">Play time<b>${played ? playtime(played.playSeconds) : "None yet"}</b></div>
+      <div class="stat">Card model<b><span class="vb ${esc(v.level)}"></span> ${esc(vtext)}</b></div>
+      <div class="stat">Console<b>${esc(subLabel(r))}</b></div>
+      <div class="gear"><button class="iconbtn" data-gear="1" title="Manage">&#9881;</button>
+        ${S.gear ? `<div class="menu"><a data-romreveal="${esc(r.path)}">Show the cartridge in Finder</a>
+          ${pl ? `<a data-lib="${esc(pl.id)}">${esc(pl.title)}</a>` : ""}</div>` : ""}</div>
+    </div>
+    ${pl ? `<div id="progress-${esc(pl.id)}" class="progress" style="padding:0 26px"></div>` : ""}
+    ${S.lastErr[r.id] ? `<div class="card" style="margin:14px 26px 0;color:#e88">${esc(S.lastErr[r.id])}</div>` : ""}
+    <div class="cols"><div>
+        <div class="card"><h4>Compatibility</h4><p class="verdict"><span class="vb ${esc(v.level)}"></span><b>${esc(vtext)}</b> &mdash; ${esc(v.text || "")}</p>
+          ${v.reason ? `<p class="dim">Survey: ${esc(v.reason)}</p>` : ""}${ds}</div>
+        ${pl ? `<div class="card"><h4>Controls</h4><p>${esc(pl.controls || "")}</p></div>` : ""}
+      </div><div>
+        <div class="card"><h4>Cartridge</h4><div class="factlist">${facts.map(([k, x]) => `<div><span>${esc(k)}</span>${esc(x || "—")}</div>`).join("")}</div></div>
+        <div class="card"><h4>File</h4><div class="path">${esc(r.path)}</div><p class="dim">Played where it is: nothing is copied.</p></div>
+      </div></div>`;
 }
 
 function gamePage(g) {
@@ -291,10 +426,26 @@ function settingsDialog() {
   $("#modal").innerHTML = `<div class="dialog"><h3>SETTINGS</h3><div class="body">
     <label>Limit bandwidth to</label><select id="bw">${opts.map(([v, t]) => `<option value="${v}" ${v === b ? "selected" : ""}>${t}</option>`).join("")}</select>
     <label>Library folder</label><input value="${esc(S.native.libraryPath || "")}" readonly>
+    ${S.lib.systems.map((sy) => `<label>${esc(sy.title)}: cartridge folders</label>
+      ${(sy.folders || []).map((f) => `<div class="folder"><span>${esc(f)}</span><a data-unfolder="${esc(sy.id)}" data-path="${esc(f)}">Remove</a></div>`).join("")
+        || `<div class="dim">None yet.</div>`}
+      <button class="btn small ghost" data-addfolder="${esc(sy.id)}">Add a folder&hellip;</button>`).join("")}
     <label>About</label><div>Cardmodel Arcade. The arcade service builds every game from its cards (card-language logic, compiled to native code) and serves it as a depot of checked chunks.</div>
     </div><div class="foot"><button class="btn small install" id="ok">OK</button></div></div>`;
   $("#modal").classList.remove("hidden");
   $("#ok").onclick = () => { send("settings", { bandwidth: parseInt($("#bw").value, 10) }); $("#modal").classList.add("hidden"); };
+  document.querySelectorAll("[data-addfolder]").forEach((el) => (el.onclick = () => send("pick_folder", { system: el.dataset.addfolder })));
+  document.querySelectorAll("[data-unfolder]").forEach((el) => (el.onclick = () => folders({ system: el.dataset.unfolder, remove: el.dataset.path })));
+}
+// the cartridge folders live with the service (library.json beside the saves); after a change, list again
+async function folders(change) {
+  try {
+    await fetch("/api/library/folders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(change) });
+    S.libLoaded = 0;
+    await refresh();
+    if (!$("#modal").classList.contains("hidden")) settingsDialog();
+    toast(change.add ? "Looking for cartridges in " + change.add : "Folder removed.");
+  } catch (e) { toast("The arcade service did not answer."); }
 }
 
 // -- progress, graph, toast ---------------------------------------------------------------------------------------
@@ -349,7 +500,12 @@ function bind() {
   document.querySelectorAll("[data-open]").forEach((el) => (el.onclick = (e) => { e.stopPropagation(); S.shot = 0; go("app", el.dataset.open); }));
   document.querySelectorAll("[data-act]").forEach((el) => (el.onclick = (e) => { e.stopPropagation(); const g = game(el.dataset.act); if (g) act(g); }));
   document.querySelectorAll("[data-golib]").forEach((el) => (el.onclick = () => go("library", el.dataset.golib)));
-  document.querySelectorAll("[data-lib]").forEach((el) => (el.onclick = () => { S.libSel = el.dataset.lib; S.gear = false; render(); }));
+  document.querySelectorAll("[data-lib]").forEach((el) => (el.onclick = (e) => { e.stopPropagation(); S.libSel = el.dataset.lib; S.gear = false;
+    if (S.view !== "library") go("library", el.dataset.lib); else { render(); $("#view").querySelector(".gamepage").scrollTop = 0; } }));
+  document.querySelectorAll("[data-romact]").forEach((el) => (el.onclick = (e) => { e.stopPropagation(); const r = rom(el.dataset.romact); if (r) romAct(r); }));
+  document.querySelectorAll("[data-romreveal]").forEach((el) => (el.onclick = () => { S.gear = false; send("reveal_rom", { path: el.dataset.romreveal }); render(); }));
+  const ls = $("#libsearch");
+  if (ls) ls.oninput = () => { S.libQuery = ls.value; const pos = ls.selectionStart; render(); const n = $("#libsearch"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } };
   document.querySelectorAll("[data-shot]").forEach((el) => (el.onclick = () => { S.shot = parseInt(el.dataset.shot, 10); render(); }));
   document.querySelectorAll("[data-gear]").forEach((el) => (el.onclick = (e) => { e.stopPropagation(); S.gear = !S.gear; render(); }));
   document.querySelectorAll("[data-verify]").forEach((el) => (el.onclick = () => { S.gear = false; send("verify", { id: el.dataset.verify }); render(); }));

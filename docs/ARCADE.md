@@ -26,6 +26,14 @@ launchers, that installs builds of the game made by the card model and launches 
 ./bin/cardmodel arcade list                      # games, versions, latest builds, whether the cards changed
 ```
 
+```bash
+./bin/cardmodel arcade library --add ~/Downloads/GB_GBC --system gameboy   # your cartridges, where they are
+```
+
+```bash
+./bin/cardmodel arcade run gameboy_player --rom "path/to/game.zip"          # one of them, natively
+```
+
 ## 1. What is a card here
 
 | card | holds |
@@ -36,6 +44,7 @@ launchers, that installs builds of the game made by the card model and launches 
 | `asset/font_5x7` | the font |
 | `platform/macos` | how a module becomes a macOS app: the library's language card, the effect shell (`GameShell.swift`) and its compile command, the bundle layout, the icon tool |
 | `app/arcade` | the launcher: `Launcher.swift` (the native client) and `ui/` (its pages) |
+| `system/gameboy`, `system/nds` | consoles your own cartridges play on: the machine card, the card-language player (`player.card`), how the library lists them (section 5) |
 
 The card language has no strings or records, so `cardmodel/arcade/gen.py` turns the data cards into integer tables
 the logic reads (one array per move-card field, the glyph rows, the strings as character codes, the music as
@@ -93,14 +102,46 @@ menu), Downloads (rate graph, progress, pause, cancel), News, a profile, and set
   their reaction time, and only readable tells (startup of at least the payoff card's reaction frames). The
   reader counts what you lean on and says so on screen.
 
-## 5. Witnesses
+## 5. Consoles: your own cartridges (law CM36)
+
+A **system card** makes a console a player the launcher installs like a game. `system/gameboy` names the gameboy
+machine card (the LR35902 instruction cards and the hardware cards, checked by the hardware test suites, see
+docs/MACHINES.md) and `player.card`, which turns it into an arcade program: it decodes the cartridge header with
+the cartridge card's tables (generated into card-language arrays by `arcade/system.py`, the same rules as the
+Python host), runs the machine 1/60 s per frame so the sound comes out at exactly the shell's rate, shows the last
+picture the PPU finished, and keeps battery RAM and the MBC3 clock in one save (the clock catches up the time the
+game was closed). `system.py` builds it through the same pipeline as a game (`gameboy_player`).
+
+* **The shell** gained three optional fields in game.json: `cartridge` (the array the cartridge's bytes go into and
+  the function that decodes them; `--rom PATH` names the file, a .zip is read in memory), `clock` (an Int64 the
+  shell keeps at the Unix time) and `flush` (called before quitting). A game without them runs as before.
+* **The library** (`arcade/library.py`): every file in a system's folders, read where it is, nothing copied, with
+  its header, the ROM survey's verdict as a compatibility badge (verified, playable, unsupported) and a title
+  screen the machine draws headless (ten seconds, no buttons; cached in `state/arcade/covers/`). The folders are
+  the user's (Settings in the launcher, or `arcade library --add`), kept in `library.json` beside the saves, so no
+  card carries a user's path (CM13).
+* **The launcher**: Library has a group per console with search, a home of title-screen shelves, and a page per
+  cartridge (Play, or Install Game Boy Player first; play time; the verdict; the header; the file). Play starts
+  the installed player with `--rom` on the file and a save folder per cartridge.
+* **The DS** (`system/nds`) is listed with what the DS machine does so far (its coverage report) and is not
+  playable: the DS picture, sound and input hardware have no cards yet.
+
+## 6. Witnesses
 
 `tests/test_arcade.py`: the tables come from the cards; the module gives the same state in the native and the
 Python emission; a scripted versus exchange in which a high guard comes up one frame before an overhead lands is
 a redirect, and an early guard only blocks (no HP through when aligned, posture taken); the build's chunks
 reassemble its files exactly; the service serves catalog, manifest and chunks; the native package runs headless.
 
-## 6. Honest limits
+`tests/test_arcade_systems.py` (synthetic cartridges from the card assembler): the cartridge tables come from the
+card; the player configures every board as the Python host does; its picture is the machine's at the same
+V-blank, with 1/60 s of sound per frame; battery RAM and the clock survive closing (an hour closed is an hour on
+the cartridge's clock); No-Intro names read as titles; a zipped cartridge is listed where it is and gets a title
+screen; the native package plays a zipped cartridge and shows what the module computes. On the user's own
+library the player configured all 971 cartridges exactly as the host does, and its pictures matched the
+machine's over 900 frames in five games.
+
+## 7. Honest limits
 
 * macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker.
 * The launcher remembers this checkout's path to start the service: after moving the repository, run
@@ -108,3 +149,6 @@ reassemble its files exactly; the service serves catalog, manifest and chunks; t
 * The game is a 480 x 270 software renderer with stick-figure fighters; the AIs' strength is tuned by hand in
   `ai.card` (reaction, accuracy, timing per level), not learned.
 * The store pictures are fixed moments of a scripted run.
+* The Game Boy player runs the machine in the interpreter (native C, far faster than real time) without the lifted
+  blocks, which are built per cartridge; a cartridge's title screen is picked by colour from its first ten
+  seconds, so some show a company logo; a DMG cartridge plays as a DMG.

@@ -351,7 +351,12 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   ~/Library/Application Support/Cardmodel Arcade.
 * **Shipping an update**: change the game's cards, bump `version` and add a `changelog` entry in its card.json; the
   launcher shows Update with the notes, and the service compiles the new build when the player asks for it.
-* Witnesses: `tests/test_arcade.py` (CM35).
+* **Your own cartridges** (`cards/system/gameboy`, `system/nds`; docs/ARCADE.md section 5): the Game Boy Player is
+  the gameboy machine card plus `player.card`, built and installed like a game; the library lists every cartridge
+  in the user's folders (`arcade library --add DIR`, kept in library.json beside the saves) where it is, with the
+  survey's verdict and a title screen the machine draws; Play starts the player on the file. The DS is listed,
+  not playable yet.
+* Witnesses: `tests/test_arcade.py` (CM35), `tests/test_arcade_systems.py` (CM36).
 
 ## 4. How to add things
 

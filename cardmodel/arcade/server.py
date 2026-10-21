@@ -8,6 +8,9 @@
     GET  /chunk/SHA256[?rate=B]          one chunk (content-addressed), at most B bytes a second when asked
     GET  /media/ID/BUILD/FILE            store and library pictures (drawn by the game)
     GET  /ui/...                         the launcher's pages (the app card's ui folder)
+    GET  /api/library, /api/cover/ID.png, POST /api/library/scan   the user's cartridges (library.py)
+
+A system card (a console's player, system.py) is in the catalog like a game, under its arcade id.
 
 A build is due when the hash of the game's sources (its cards, its logic, the platform shell, the arcade build
 code) differs from the latest build's. The service only reads the cards and writes under state/arcade.
@@ -27,11 +30,13 @@ from urllib.parse import parse_qs, urlparse
 
 from . import build as B
 from . import game as G
+from . import library as L
+from . import system as S
 
 _builds: dict[str, dict] = {}
 _lock = threading.Lock()
 _seen = {"mark": None}
-WATCH = ("game", "platform", "app", "asset", "move", "fighter", "payoff")
+WATCH = ("game", "system", "platform", "app", "asset", "move", "fighter", "payoff", "machine", "hardware", "isa")
 
 
 def fresh(ctx) -> None:
@@ -58,26 +63,37 @@ def latest_info(ctx, gid: str) -> dict | None:
     return json.loads((root / "manifest.json").read_text(encoding="utf-8"))
 
 
+def card_for(ctx, gid: str):
+    """The game or system card behind an arcade id."""
+    if S.is_system(ctx.store, gid):
+        return S.system_card(ctx.store, gid)
+    return G.game_card(ctx.store, gid)
+
+
 def game_entry(ctx, card, full: bool = False) -> dict:
-    info = latest_info(ctx, card.name)
-    src = B.source_hash(ctx, card)
+    system = card.category == "system"
+    gid = S.arcade_id(card) if system else card.name
+    info = latest_info(ctx, gid)
+    src = S.source_hash(ctx, card) if system else B.source_hash(ctx, card)
     build_dir = f"{info['version']}+{info['build']}" if info else None
     media = {}
     if info:
-        media = {m.rsplit(".", 1)[0]: f"/media/{card.name}/{build_dir}/{m}" for m in info.get("media", [])}
+        media = {m.rsplit(".", 1)[0]: f"/media/{gid}/{build_dir}/{m}" for m in info.get("media", [])}
     out = {
-        "id": card.name, "title": card["title"], "version": card["version"], "developer": card.get("developer"),
+        "id": gid, "kind": "system" if system else "game", "system": card.name if system else None,
+        "controls": card.get("controls"),
+        "title": card["title"], "version": card["version"], "developer": card.get("developer"),
         "genre": card.get("genre", []), "tags": card.get("tags", []),
         "short_description": card.get("short_description", ""),
         "achievements": card.get("achievements", []),
         "changelog": card.get("changelog", []),
         "build": None if not info else {
             "version": info["version"], "build": info["build"], "size": info["size"], "created": info["created"],
-            "manifest": f"/depot/{card.name}/{build_dir}/manifest.json", "executable": info["executable"],
+            "manifest": f"/depot/{gid}/{build_dir}/manifest.json", "executable": info["executable"],
             "app": info["app"], "save": info.get("save"), "chunks": info.get("chunks")},
         "build_due": info is None or info.get("source") != src,
         "source": src, "media": media,
-        "building": _builds.get(card.name, {}).get("state") == "building",
+        "building": _builds.get(gid, {}).get("state") == "building",
     }
     if full:
         out["about"] = card.get("about", [])
@@ -97,7 +113,8 @@ def start_build(ctx, gid: str) -> dict:
         try:
             def say(step, of, label):
                 st.update(step=step, of=of, label=label)
-            info = B.build(ctx, gid, progress=say)
+            builder = S.build if S.is_system(ctx.store, gid) else B.build
+            info = builder(ctx, gid, progress=say)
             st.update(state="done", step=st["of"], label="ready", build=info["build"], version=info["version"],
                       seconds=info["seconds"])
         except Exception as exc:  # noqa: BLE001 -- the launcher shows the reason
@@ -141,10 +158,12 @@ class Handler(BaseHTTPRequestHandler):
         fresh(self.ctx)
         if len(parts) == 3 and parts[:2] == ["api", "build"]:
             try:
-                G.game_card(self.ctx.store, parts[2])
+                card_for(self.ctx, parts[2])
             except KeyError:
                 return self._json({"error": "no such game"}, 404)
             return self._json(start_build(self.ctx, parts[2]))
+        if L.route(self, "POST", parts):
+            return
         self._json({"error": "not found"}, 404)
 
     def do_GET(self):
@@ -159,9 +178,12 @@ class Handler(BaseHTTPRequestHandler):
             if parts == ["api", "status"]:
                 return self._json({"ok": True, "service": self.server_version, "time": time.time()})
             if parts == ["api", "catalog"]:
-                return self._json([game_entry(ctx, c) for c in ctx.store.cards("game")])
+                return self._json([game_entry(ctx, c) for c in ctx.store.cards("game")]
+                                  + [game_entry(ctx, c) for c in ctx.store.cards("system") if c.get("machine")])
             if len(parts) == 3 and parts[:2] == ["api", "game"]:
-                return self._json(game_entry(ctx, G.game_card(ctx.store, parts[2]), full=True))
+                return self._json(game_entry(ctx, card_for(ctx, parts[2]), full=True))
+            if L.route(self, "GET", parts):
+                return
             if len(parts) == 3 and parts[:2] == ["api", "build"]:
                 return self._json(_builds.get(parts[2], {"state": "idle"}))
             if len(parts) == 4 and parts[0] == "depot" and parts[3] == "manifest.json":

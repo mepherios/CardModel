@@ -89,6 +89,8 @@ is the effect shell (video, audio, keys, saves). `machine nds` boots a DS game o
 reports what runs and what is not modelled yet.
 `arcade launcher --install` puts Cardmodel Arcade in ~/Applications: a store, library and downloads for games the
 card model builds. Its first game, Vector Duel, is card-language logic on the combat cards, compiled to native code.
+`arcade library --add DIR` puts your own Game Boy / Color cartridges in its library, played natively by the Game
+Boy Player (the machine cards as an arcade program).
 `improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
 byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last
 command runs the test suite.

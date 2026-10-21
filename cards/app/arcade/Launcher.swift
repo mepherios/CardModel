@@ -5,6 +5,8 @@
 //
 // Everything lives in ~/Library/Application Support/Cardmodel Arcade: library/ (installed games),
 // saves/ (each game's save, written by the game), launcher.json (what is installed, play time, settings).
+// The user's own cartridges are played by an installed console player (a system build): it is started with
+// --rom on the cartridge where it is, and a save folder per cartridge.
 
 import AppKit
 import CryptoKit
@@ -35,9 +37,15 @@ struct Settings: Codable {
     var user: String = NSFullUserName()
 }
 
+struct Played: Codable {
+    var playSeconds: Double
+    var lastPlayed: Double
+}
+
 struct LauncherState: Codable {
     var library: [String: Installed] = [:]
     var settings = Settings()
+    var played: [String: Played]? = [:]     // cartridges, by id
 }
 
 struct FileEntry: Codable {
@@ -212,7 +220,15 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
                        "lastPlayed": g.lastPlayed, "running": running[id] != nil,
                        "achievements": achievements(id)]
         }
-        return ["library": lib, "settings": ["bandwidth": state.settings.bandwidth, "user": state.settings.user],
+        var carts: [String: Any] = [:]
+        for (id, c) in state.played ?? [:] {
+            carts[id] = ["playSeconds": c.playSeconds + (running[id].map { Date().timeIntervalSince1970 - $0.1 } ?? 0),
+                         "lastPlayed": c.lastPlayed, "running": running[id] != nil]
+        }
+        for id in running.keys where state.library[id] == nil && carts[id] == nil {
+            carts[id] = ["playSeconds": 0, "lastPlayed": Date().timeIntervalSince1970, "running": true]
+        }
+        return ["library": lib, "played": carts, "settings": ["bandwidth": state.settings.bandwidth, "user": state.settings.user],
                 "downloading": downloadId as Any, "paused": paused, "native": true,
                 "libraryPath": libraryDir.path]
     }
@@ -234,6 +250,22 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         case "resume": paused = false; emit(["type": "state", "state": snapshot()])
         case "cancel": cancelled = true; paused = false
         case "play": play(id)
+        case "play_rom":
+            playRom(id, player: body["player"] as? String ?? "", path: body["path"] as? String ?? "",
+                    title: body["title"] as? String ?? "")
+        case "pick_folder":
+            let panel = NSOpenPanel()
+            panel.canChooseDirectories = true
+            panel.canChooseFiles = false
+            panel.allowsMultipleSelection = false
+            panel.prompt = "Use This Folder"
+            panel.message = "A folder with cartridges (they are played where they are, never copied)"
+            panel.beginSheetModal(for: window) { [weak self] r in
+                guard r == .OK, let url = panel.url else { return }
+                self?.emit(["type": "folder", "system": body["system"] as? String ?? "", "path": url.path])
+            }
+        case "reveal_rom":
+            if let path = body["path"] as? String { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
         case "stop": running[id]?.0.terminate()
         case "verify": verify(id)
         case "uninstall": uninstall(id)
@@ -427,6 +459,51 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
             try p.run()
             running[id] = (p, started)
             state.library[id]?.lastPlayed = started
+            save()
+            emit(["type": "running", "id": id])
+            emit(["type": "state", "state": snapshot()])
+        } catch {
+            emit(["type": "error", "id": id, "message": "could not start: \(error)"])
+        }
+    }
+}
+
+extension Arcade {
+    // a cartridge: the installed console player, started on the file where it is
+    func playRom(_ id: String, player: String, path: String, title: String) {
+        guard running[id] == nil else { return }
+        guard let g = state.library[player] else {
+            emit(["type": "error", "id": id, "message": "install the player first"]); return
+        }
+        guard FileManager.default.fileExists(atPath: path) else {
+            emit(["type": "error", "id": id, "message": "the cartridge is not at \(path) any more"]); return
+        }
+        let p = Process()
+        p.executableURL = installDir(player).appendingPathComponent(g.executable)
+        p.arguments = ["--rom", path, "--title", title, "--save-dir", savesDir.appendingPathComponent(id).path]
+        let started = Date().timeIntervalSince1970
+        p.terminationHandler = { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                let now = Date().timeIntervalSince1970
+                self.running[id] = nil
+                var c = self.state.played?[id] ?? Played(playSeconds: 0, lastPlayed: now)
+                c.playSeconds += now - started
+                c.lastPlayed = now
+                if self.state.played == nil { self.state.played = [:] }
+                self.state.played?[id] = c
+                self.save()
+                self.emit(["type": "stopped", "id": id])
+                self.emit(["type": "state", "state": self.snapshot()])
+            }
+        }
+        do {
+            try p.run()
+            running[id] = (p, started)
+            if state.played == nil { state.played = [:] }
+            var c = state.played?[id] ?? Played(playSeconds: 0, lastPlayed: started)
+            c.lastPlayed = started
+            state.played?[id] = c
             save()
             emit(["type": "running", "id": id])
             emit(["type": "state", "state": snapshot()])
