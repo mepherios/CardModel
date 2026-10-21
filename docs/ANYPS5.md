@@ -191,8 +191,8 @@ layer`):
 * `ParseMp3Header` takes the bitrate from the table of its version and layer (ISO/IEC 11172-3, 13818-3 and
   MPEG-2.5), counts layer I frames in 4-byte slots of 384 samples and layer II frames as 1,152 samples, and rejects
   the reserved layer value.
-* Over all 8,192 combinations of the fields a parser reads (40,960 field values, built for x86-64 and run under
-  Rosetta), upstream's export differs from the standard on 3,000 and the copy's on none. The copy's sampled witness agrees on all 3,005 inputs it tries;
+* Over all 8,192 combinations of the fields a parser reads (40,960 field values), upstream's export differs from
+  the standard on 3,000 and the copy's on none, built natively for arm64 and again as x86-64 under Rosetta. The copy's sampled witness agrees on all 3,005 inputs it tries;
   upstream needed a separate check for its documented deviation (105 of 165 sampled inputs differed).
 * AnyPS5's tests (`core/libs/tests/GuestAjm.cpp`) gain six headers (MPEG-2.5 at 80 and 160 kbit/s, layers I and
   II in MPEG-1 and MPEG-2) and the reserved layer, with values checked against `stdlib/ps5_mp3.card`. Those tests
@@ -216,8 +216,14 @@ layer`):
 `build-relinker/core/relinker/relinker`, an arm64 executable, and all 226 of its tests pass. One of them,
 `shader_cache_runtime_sources`, configures a sub-build with Ninja, so Ninja must be installed. The system
 libraries need AnyPS5's full build (Linux or Windows, submodules, FFmpeg, SDL, Vulkan), which means downloads and
-was not done. Their pure functions run in the witnesses instead; libm and the copy's MP3 parser are built for
-x86-64, the PS5's architecture, and run under Rosetta. Nothing here runs a title.
+was not done. Their pure functions run in the witnesses instead. The MP3 parser runs natively (arm64). libm is
+built for x86-64 and runs under Rosetta, because its code uses x86 floating-point assembly (the x87 control word,
+the SSE MXCSR) and the PS5's 80-bit long double, which arm64 does not have. Nothing here runs a title.
+
+Titles cannot run natively on an Apple-silicon Mac. AnyPS5 relinks the PS5's x86-64 machine code instead of
+emulating or recompiling it, so that code runs only on an x86-64 processor: under Rosetta here (`relinker --macos
+--to-rosetta`). Its full macOS build is x86-64 only for the same reason, because the system libraries load into the
+title's process. Native arm64 titles would need a translator from x86-64 to arm64 code, which AnyPS5 is not.
 
 ## Commands
 
