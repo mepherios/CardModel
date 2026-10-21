@@ -370,6 +370,8 @@ def summary_line(sec: str, r: dict) -> str:
                  f"{r.get('violation_count')} violations")
     if sec == "lang":
         extra = f"programs {r.get('counts')}"
+    if sec == "functions" and "cards" in r:
+        extra = f"{len(r['cards'])} function cards in every language card here; failing {len(r.get('failing') or [])}"
     if sec == "theorems":
         extra = f"{r.get('cards')} theorem cards {r.get('counts')}; {len(r.get('problems') or {})} problems"
     if sec == "game" and r.get("laws_total"):
