@@ -1,0 +1,17 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM44_everything_traces_to_truth",
+  "origins": [
+    "user requirement 2026-10-22 (source of truth, action, transformation and method as the goal)"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "Every artifact traces back to the four sources. An action names its truth (a definition) and the method that made it, and links to it by a proof, a witness or as its source, never refuted; a transformation names the two truths it relates and its evidence; a definition names its origin and carries its Gödel content over the ledger's atoms; a method states what it decides and its limits. Code is an action of a definition, and optimizing is the cheapest proven chain from truth through transformations to an action.",
+  "tier": 0,
+  "witness": "tests/test_sources.py::test_every_artifact_traces_back"
+}

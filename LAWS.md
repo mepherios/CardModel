@@ -1,6 +1,6 @@
 # LAWS (generated from cards/law by `cardmodel docs`; edit the cards, not this file)
 
-41 laws. Each one names the test that witnesses it (CM20); the origins column says which hub (LAWS.md L-numbers) or Pheros (cards/law) laws it consolidates.
+42 laws. Each one names the test that witnesses it (CM20); the origins column says which hub (LAWS.md L-numbers) or Pheros (cards/law) laws it consolidates.
 
 | id | law | origins | witness |
 |---|---|---|---|
@@ -45,12 +45,13 @@
 | CM39_one_program | Parallel work lands as one program: law numbers and goal ids are unique and allocated in docs/INTEGRATION.md, every law is carried by a capability, every command is in the CLI help, every verify section and doc is described, generated docs are in sync and no merge markers remain; a branch is merged into main only when the tests, verify and this integrity check pass, and every integration is logged. | user requirement 2026-10-21 (one software, one working module; document all work so nothing interferes) | `tests/test_self.py::test_one_program_integrity` |
 | CM41_projects_keep_their_cards_current | Every project in progress keeps a detailed project card: its goal, status, what is done, in progress and left, blockers, next steps, what the user must do or decide (each with what it unblocks), its owning session, its branches and when the detail was last revised. A commit touching the project more than a day after that revision makes the card stale, and a branch with unmerged work that no card lists is missing one; verify fails on either. The store's hub reads these cards and gathers every user action into one list, most unblocking first. Our model keeps them current; other tools never have to. | user requirement 2026-10-22 (force every project by law to keep its detail for later updates) | `tests/test_projects.py::test_missing_or_stale_project_cards_fail` |
 | CM43_primes_are_forever | The Gödel model's atoms take primes in an append-only ledger: an atom keeps its prime forever, a new atom takes the next unused prime, and no line is renumbered or removed. A concept's content vector (its factorization over the atoms) and its structural number (Gödel's positional numbering, the identity) are computed from the ledger; carrying between Gödel sets is a map of atoms, which preserves every GCD exactly when distinct atoms go to disjoint supports, and whose gap is what it cannot send. | user requirement 2026-10-22 (a universal Gödel model that keeps expanding), Gödel 1931 | `tests/test_godel.py::test_ledger_is_append_only` |
+| CM44_everything_traces_to_truth | Every artifact traces back to the four sources. An action names its truth (a definition) and the method that made it, and links to it by a proof, a witness or as its source, never refuted; a transformation names the two truths it relates and its evidence; a definition names its origin and carries its Gödel content over the ledger's atoms; a method states what it decides and its limits. Code is an action of a definition, and optimizing is the cheapest proven chain from truth through transformations to an action. | user requirement 2026-10-22 (source of truth, action, transformation and method as the goal) | `tests/test_sources.py::test_every_artifact_traces_back` |
 
 Laws from the source sets that are not carried over (hub GUI/hub-folder/process laws, Pheros wave/daemon/hub-panel laws) are about those projects' own tooling; see ARCHITECTURE.md § What was not carried over.
 
 ## The core: capabilities that carry the laws (CM37)
 
-29 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
+30 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
 
 | capability | what the model can do | laws it carries | smoke check | witness tests |
 |---|---|---|---|---|
@@ -83,3 +84,4 @@ Laws from the source sets that are not carried over (hub GUI/hub-folder/process 
 | self_run | The model runs itself: cycles of checks, learning and optimization with findings and a ranked plan; the core is never lost. | CM37, CM38 | `self_run` | `test_core_capabilities_are_never_lost`, `test_self_run_finds_flaws_and_ranks_them` |
 | distillation | Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms land in one class, the cheapest term is the canonical one and its hash names it (MATH_CORE phase 0). | CM25 | `distillation` | `test_saturation_proves_and_canonicalizes`, `test_congruence` |
 | integration | One program: unique law and goal numbers, every law carried by a capability, every command, section and doc described, generated docs in sync. | CM20, CM39 | `integration` | `test_laws_md_in_sync`, `test_one_program_integrity` |
+| four_sources | The four sources: every algorithm and function has a definition (truth) with its term, canonical form, Gödel numbers and proof obligations; every implementation is an action linked to it by a witness or proof; identities are transformations; procedures are methods with their limits. | CM44 | `four_sources` | `test_every_artifact_traces_back` |

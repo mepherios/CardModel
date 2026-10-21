@@ -211,6 +211,12 @@ CAPABILITIES = [
      ["tests/test_egraph.py::test_saturation_proves_and_canonicalizes", "tests/test_egraph.py::test_congruence"],
      ["docs/MATH_CORE.md"], ["cardmodel distill"], ["cardmodel/engines/egraph.py"],
      "Two pieces of code that mean the same thing are recognised as one, and the cheapest is chosen."),
+    ("four_sources", "The four sources: every algorithm and function has a definition (truth) with its term, "
+     "canonical form, Gödel numbers and proof obligations; every implementation is an action linked to it by a "
+     "witness or proof; identities are transformations; procedures are methods with their limits.",
+     L("CM44_everything_traces_to_truth"), ["tests/test_sources.py::test_every_artifact_traces_back"],
+     ["docs/MATH_CORE.md"], ["cardmodel sources"], ["cardmodel/engines/sources.py"],
+     "Every piece of code knows what it means, and every claim knows its evidence."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],

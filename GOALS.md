@@ -112,6 +112,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_U3_named_fraction` | understanding | named-card fraction of the last observation (hub card_coverage) | ≥ 0.6 |
 | `G_U4_valid_cards` | understanding | cards failing their card-type schema | = 0 |
 | `G_U5_content_vectors` | understanding | fraction of op, function and algorithm cards whose content vector is computed (CM43) | ≥ 1.0 |
+| `G_U6_definitions` | understanding | fraction of algorithm and function cards with a definition card (truth, CM44) | ≥ 1.0 |
+| `G_U7_canonical_definitions` | understanding | fraction of definitions with a canonical form (e-graph or recurrence) | ≥ 0.9 |
 | `G_L1_learned_cards` | learning | cards promoted by the learning loop with cited evidence | ≥ 10 |
 | `G_O1_measured_forms` | optimization | forms with a host measurement (metric card) | ≥ 30 |
 | `G_A1_self_contained` | autonomy | source folders needed at runtime (sandbox check) | = 0 |
@@ -131,6 +133,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_A6_laws_carried` | autonomy | laws that no capability card carries | = 0 |
 | `G_A7_self_run_fresh` | autonomy | hours since the last self-run cycle finished (CM38) | ≤ 24 |
 | `G_A8_project_cards_current` | autonomy | project cards missing detail, stale, or missing for a branch with unmerged work (CM41) | = 0 |
+| `G_A9_actions_without_truth` | autonomy | actions (implementations) that name no definition (CM44) | = 0 |
 | `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
 | `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
 | `G_P1_anyps5_badge_reproduced` | computation | libraries where the model's reading of AnyPS5's counting rule differs from AnyPS5's own tool | = 0 |

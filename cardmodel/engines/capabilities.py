@@ -496,6 +496,21 @@ def live_hub(ctx: Ctx, seed: int) -> str:
             "revised before the project's last change is stale")
 
 
+def four_sources(ctx: Ctx, seed: int) -> str:
+    from . import sources as SO
+    r = SO.check(ctx)
+    _need(r["definitions"] and r["actions"] and r["methods"], "the four source registries are empty (CM44)")
+    _need(not r["problems"], f"an artifact does not trace back: {r['problems'][:3]} (CM44)")
+    alg = ctx.store.get("algorithm/triangular")
+    built = SO.build(ctx, seed=seed)
+    d = next((x for x in built["definitions"] if x["subject"] == alg.qualified), None)
+    _need(d is not None and d["actions"] and d["godel"]["content"], "a definition was not derived for an algorithm")
+    links = [a["link"]["status"] for a in built["actions"] if a["truth"] == f"definition/{d['name']}"]
+    _need("refuted" not in links and "witnessed" in links, f"its forms are not witnessed against it: {links}")
+    return (f"{r['definitions']} definitions, {r['actions']} actions, {r['transformations']} transformations, "
+            f"{r['methods']} methods trace back; triangular's forms are witnessed against its definition")
+
+
 def distillation(ctx: Ctx, seed: int) -> str:
     from . import egraph as E
     from . import search
@@ -581,8 +596,8 @@ def integration(ctx: Ctx, seed: int) -> str:
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
-                                  world, machines, emulation, arcade, live_hub, godel_model, distillation, anyps5,
-                                  self_run, integration)}
+                                  world, machines, emulation, arcade, live_hub, godel_model, distillation,
+                                  four_sources, anyps5, self_run, integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

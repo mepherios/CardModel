@@ -51,11 +51,11 @@ range to this table in the same commit.
 | CM41 | main | projects keep their cards current |
 | CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`), announced | the store runs what it lists |
 | CM43 | main (MATH_CORE phase 0) | primes are forever |
-| CM44 | main (MATH_CORE phase 1), reserved | everything traces back to the four sources |
+| CM44 | main (MATH_CORE phase 1) | everything traces back to the four sources |
 | **CM45 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U5, G_L1, G_O1–O4, G_A1–A8, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M5 (machines); reserved: G_U6, G_M6, G_A9 (main, MATH_CORE), G_S1 (self-running-improvement). The next free one is the axis's next number (G_A10, G_C6, G_K7, G_M6, G_P6 ...).
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U7, G_L1, G_O1–O4, G_A1–A9, G_K1–K6, G_D1–D2, G_P1–P5
+(AnyPS5), G_M1–M5 (machines); reserved: G_M6 (main, MATH_CORE), G_S1 (self-running-improvement). The next free one is the axis's next number (G_A10, G_U8, G_C6, G_K7, G_M6, G_P6 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened

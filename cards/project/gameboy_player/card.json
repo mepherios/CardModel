@@ -5,7 +5,8 @@
   ],
   "branches": [
     "claude/festive-margulis-*",
-    "claude/strange-dewdney-*"
+    "claude/strange-dewdney-*",
+    "claude/frosty-lumiere-*"
   ],
   "category": "project",
   "docs": [
@@ -21,7 +22,8 @@
   ],
   "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
   "in_progress": [
-    "the launcher's library UI and update fallback (uncommitted on the branch)"
+    "the launcher's library UI and update fallback (uncommitted on the branch)",
+    "a second session (claude/frosty-lumiere-98e2b7) also builds the Game Boy library; told to build on this branch's library instead"
   ],
   "kind": "game",
   "left": [
@@ -30,8 +32,8 @@
     "one store entry per cartridge on main"
   ],
   "metadata": {
-    "previous_content_hash": "dd26687a64257466811fefd6759ef75bfdaf93a64becf9c4635fc75808e52407",
-    "version": "2.0.1",
+    "previous_content_hash": "00db995c9dc5160ae4c7eba6be3a2282af79fcbc8d340ce285dd131d7d760d73",
+    "version": "2.0.2",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -81,7 +83,7 @@
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T00:30:00+02:00",
+  "updated": "2026-10-22T01:10:18+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/festive-margulis-43fde7 into main once its store work is committed",

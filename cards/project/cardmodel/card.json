@@ -20,7 +20,8 @@
     "the live In progress page with early access (bb480fb)",
     "law CM41: detailed, current project cards (c8aeb4c)",
     "docs/MATH_CORE.md proposal (de22b52)",
-    "MATH_CORE phase 0: prime ledger, content vectors (03b1c6e); e-graph distillation"
+    "MATH_CORE phase 0: prime ledger, content vectors (03b1c6e); e-graph distillation",
+    "MATH_CORE phase 1: the four sources, definitions for every algorithm and function"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
@@ -28,13 +29,13 @@
   ],
   "kind": "program",
   "left": [
-    "phase 0 of MATH_CORE: the prime ledger, content vectors, core types, an e-graph, symbolic LR35902",
-    "the semantic core migration, after the yes",
+    "MATH_CORE phase 0 F5: symbolic LR35902 instruction terms",
+    "canonical forms for more definitions (G_U7 is 0.3 of 0.9)",
     "one In progress tab after the cartridge merge"
   ],
   "metadata": {
-    "previous_content_hash": "baa69a03e991ffea14092e426f97f9f41543cc6feb9d14d1fa494478941d348b",
-    "version": "2.0.3",
+    "previous_content_hash": "81ea9ed38424aef21ecf94f0075e897b456cd03db496c8496556c58fe8f6f000",
+    "version": "2.0.4",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -66,11 +67,11 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "MATH_CORE phase 0 on main: the prime ledger and content vectors (CM43) and an e-graph that saturates 241 equalities into canonical terms; symbolic instruction terms and phase 1 follow.",
+  "standing": "MATH_CORE phases 0 and 1 are under way on main: the prime ledger and content vectors (CM43), an e-graph over 241 equalities, and the four sources (CM44): 40 definitions, 314 actions, 6 transformations, 9 methods. Symbolic instruction terms are next.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T01:06:16+02:00",
+  "updated": "2026-10-22T01:10:18+02:00",
   "user_actions": [
     {
       "action": "Decide what happens to claude/jolly-liskov-2d97a8",

@@ -601,6 +601,26 @@ def cmd_distill(args) -> int:
     return 0 if r["equal"] else 1
 
 
+def cmd_sources(args) -> int:
+    from .engines import sources as SO
+    cli = _cli()
+    ctx = cli._ctx(args)
+    if args.action == "build":
+        built = SO.build(ctx, seed=args.seed)
+        counts = SO.write(ctx, built) if args.write else {k: len(built[k]) for k in ("definitions", "actions",
+                                                                                     "transformations")}
+        cli._out(args, counts, f"{'wrote' if args.write else 'built (not written; --write saves the packs)'}: "
+                               f"{counts['definitions']} definitions, {counts['actions']} actions, "
+                               f"{counts['transformations']} transformations")
+        return 0
+    r = SO.check(ctx)
+    lines = [f"{r['status']}: {r['definitions']} definitions (coverage {r['coverage']}, canonical {r['canonical']}), "
+             f"{r['actions']} actions, {r['transformations']} transformations, {r['methods']} methods"]
+    lines += [f"  {p}" for p in r["problems"][:20]]
+    cli._out(args, r, "\n".join(lines))
+    return 1 if r["status"] == "fail" else 0
+
+
 def register(sub) -> None:
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
@@ -642,6 +662,9 @@ def register(sub) -> None:
     s.add_argument("exprs", nargs="*"); s.add_argument("--measure", action="store_true")
     s.add_argument("--iterations", type=int, default=8); s.add_argument("--nodes", type=int, default=4000)
     s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_distill)
+    s = sub.add_parser("sources", help="the four sources: definitions (truth), actions, transformations, methods")
+    s.add_argument("action", choices=["check", "build"]); s.add_argument("--write", action="store_true")
+    s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_sources)
     s = sub.add_parser("godel", help="the expanding Gödel model: the prime ledger, content vectors, GCD and LCM")
     s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm"]); s.add_argument("cards", nargs="*")
     s.add_argument("--limit", type=int, default=20); s.set_defaults(fn=cmd_godel)
