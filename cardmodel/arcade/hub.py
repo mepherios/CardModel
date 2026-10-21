@@ -566,6 +566,7 @@ class Hub:
                 return False
             if force and not self.dirty_at:
                 self._scan_dirty()
+            self.ctx.store.invalidate()                  # a session may have revised its project card (CM41)
             snap = Snapshot(self.ctx, self.dirty).compute()
             self.sig = sig
             with self.cond:
