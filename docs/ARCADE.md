@@ -101,8 +101,9 @@ change on disk; code changes need a restart.
 The pages (`cards/app/arcade/ui/`) are Store (featured, New & Noteworthy, categories, search over games, branch
 versions and cartridges, store pages with screenshots, about, requirements, achievements, patch notes, versions
 and branches), Library (folding groups, hero, the big button: Install / Update / Play / Stop, stats, manage menu),
-Work (every branch: its last commit, the commits not on main and the files each one changed, the uncommitted
-changes, the areas it touches, its programs with their build state and an Install button), Downloads (rate graph,
+In progress (docs/STORE.md section 2b: every project, early access, and *Every branch*: its last commit, the
+commits not on main and the files each one changed, the uncommitted changes, the areas it touches, its programs
+with their build state and an Install button), Downloads (rate graph,
 progress, pause, cancel), News, a profile, and settings (bandwidth limit, cartridge folders). Everything that
 shows data opens something: crumbs, tags and developers list their games, a release date or size opens the
 build's details, stats go to the profile or the achievements, an achievement opens its card, patch notes and
