@@ -1,0 +1,691 @@
+{
+  "category": "anyps5_semantics",
+  "checks": [
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "floor_nid_postfix({0})",
+      "export": "libc.floor_nid_postfix",
+      "fn": "floor_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "floorf_nid_postfix({0})",
+      "export": "libc.floorf_nid_postfix",
+      "fn": "floor_f",
+      "samples": 300,
+      "types": [
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "floorl_nid_postfix({0})",
+      "export": "libc.floorl_nid_postfix",
+      "fn": "floor_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "ceil_nid_postfix({0})",
+      "export": "libc.ceil_nid_postfix",
+      "fn": "ceil_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "ceilf_nid_postfix({0})",
+      "export": "libc.ceilf_nid_postfix",
+      "fn": "ceil_f",
+      "samples": 300,
+      "types": [
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "ceill_nid_postfix({0})",
+      "export": "libc.ceill_nid_postfix",
+      "fn": "ceil_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "trunc_nid_postfix({0})",
+      "export": "libc.trunc_nid_postfix",
+      "fn": "trunc_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "truncf_nid_postfix({0})",
+      "export": "libc.truncf_nid_postfix",
+      "fn": "trunc_f",
+      "samples": 300,
+      "types": [
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "truncl_nid_postfix({0})",
+      "export": "libc.truncl_nid_postfix",
+      "fn": "trunc_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "round_nid_postfix({0})",
+      "export": "libc.round_nid_postfix",
+      "fn": "round_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "roundf_nid_postfix({0})",
+      "export": "libc.roundf_nid_postfix",
+      "fn": "round_f",
+      "samples": 300,
+      "types": [
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "roundl_nid_postfix({0})",
+      "export": "libc.roundl_nid_postfix",
+      "fn": "round_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fabs_nid_postfix({0})",
+      "export": "libc.fabs_nid_postfix",
+      "fn": "fabs_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fabsf_nid_postfix({0})",
+      "export": "libc.fabsf_nid_postfix",
+      "fn": "fabs_f",
+      "samples": 300,
+      "types": [
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fabsl_nid_postfix({0})",
+      "export": "libc.fabsl_nid_postfix",
+      "fn": "fabs_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ],
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fmin_nid_postfix({0}, {1})",
+      "export": "libc.fmin_nid_postfix",
+      "fn": "fmin_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ],
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fminf_nid_postfix({0}, {1})",
+      "export": "libc.fminf_nid_postfix",
+      "fn": "fmin_f",
+      "samples": 300,
+      "types": [
+        "f32",
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ],
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fminl_nid_postfix({0}, {1})",
+      "export": "libc.fminl_nid_postfix",
+      "fn": "fmin_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ],
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fmax_nid_postfix({0}, {1})",
+      "export": "libc.fmax_nid_postfix",
+      "fn": "fmax_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ],
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fmaxf_nid_postfix({0}, {1})",
+      "export": "libc.fmaxf_nid_postfix",
+      "fn": "fmax_f",
+      "samples": 300,
+      "types": [
+        "f32",
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ],
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fmaxl_nid_postfix({0}, {1})",
+      "export": "libc.fmaxl_nid_postfix",
+      "fn": "fmax_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ],
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "fdim_nid_postfix({0}, {1})",
+      "export": "libc.fdim_nid_postfix",
+      "fn": "fdim_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000.0,
+          1000000.0
+        ],
+        [
+          -1022,
+          1023
+        ]
+      ],
+      "call": "ldexp_nid_postfix({0}, {1})",
+      "export": "libc.ldexp_nid_postfix",
+      "fn": "ldexp_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "i64"
+      ],
+      "where": "normal_result"
+    },
+    {
+      "args": [
+        [
+          -1000000.0,
+          1000000.0
+        ],
+        [
+          -1022,
+          1023
+        ]
+      ],
+      "call": "ldexpf_nid_postfix({0}, {1})",
+      "export": "libc.ldexpf_nid_postfix",
+      "fn": "ldexp_f",
+      "samples": 300,
+      "types": [
+        "f32",
+        "i64"
+      ],
+      "where": "normal_result32"
+    },
+    {
+      "args": [
+        [
+          -1000000.0,
+          1000000.0
+        ],
+        [
+          -1022,
+          1023
+        ]
+      ],
+      "call": "ldexpl_nid_postfix({0}, {1})",
+      "export": "libc.ldexpl_nid_postfix",
+      "fn": "ldexp_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "i64"
+      ],
+      "where": "normal_result"
+    },
+    {
+      "args": [
+        [
+          -1000000.0,
+          1000000.0
+        ],
+        [
+          -1022,
+          1023
+        ]
+      ],
+      "call": "scalbn_nid_postfix({0}, {1})",
+      "export": "libc.scalbn_nid_postfix",
+      "fn": "ldexp_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "i64"
+      ],
+      "where": "normal_result"
+    },
+    {
+      "args": [
+        [
+          -1000000.0,
+          1000000.0
+        ],
+        [
+          -1022,
+          1023
+        ]
+      ],
+      "call": "scalbnf_nid_postfix({0}, {1})",
+      "export": "libc.scalbnf_nid_postfix",
+      "fn": "ldexp_f",
+      "samples": 300,
+      "types": [
+        "f32",
+        "i64"
+      ],
+      "where": "normal_result32"
+    },
+    {
+      "args": [
+        [
+          -1000000.0,
+          1000000.0
+        ],
+        [
+          -1022,
+          1023
+        ]
+      ],
+      "call": "scalbnl_nid_postfix({0}, {1})",
+      "export": "libc.scalbnl_nid_postfix",
+      "fn": "ldexp_f",
+      "samples": 300,
+      "types": [
+        "f64",
+        "i64"
+      ],
+      "where": "normal_result"
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "lround_nid_postfix({0})",
+      "export": "libc.lround_nid_postfix",
+      "fn": "lround_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "llround_nid_postfix({0})",
+      "export": "libc.llround_nid_postfix",
+      "fn": "lround_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "rint_nid_postfix({0})",
+      "export": "libc.rint_nid_postfix",
+      "fn": "rint_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "rintf_nid_postfix({0})",
+      "export": "libc.rintf_nid_postfix",
+      "fn": "rint_f",
+      "samples": 300,
+      "types": [
+        "f32"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "nearbyint_nid_postfix({0})",
+      "export": "libc.nearbyint_nid_postfix",
+      "fn": "rint_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "lrint_nid_postfix({0})",
+      "export": "libc.lrint_nid_postfix",
+      "fn": "lrint_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "llrint_nid_postfix({0})",
+      "export": "libc.llrint_nid_postfix",
+      "fn": "lrint_f",
+      "samples": 300,
+      "types": [
+        "f64"
+      ]
+    },
+    {
+      "args": [
+        [
+          -1000000000000000.0,
+          1000000000000000.0
+        ]
+      ],
+      "call": "lrintf_nid_postfix({0})",
+      "export": "libc.lrintf_nid_postfix",
+      "fn": "lrint_f",
+      "samples": 300,
+      "types": [
+        "f32"
+      ]
+    }
+  ],
+  "closes": [],
+  "closes_debt": [],
+  "covers": [
+    "libc.ceil_nid_postfix",
+    "libc.ceilf_nid_postfix",
+    "libc.ceill_nid_postfix",
+    "libc.fabs_nid_postfix",
+    "libc.fabsf_nid_postfix",
+    "libc.fabsl_nid_postfix",
+    "libc.fdim_nid_postfix",
+    "libc.floor_nid_postfix",
+    "libc.floorf_nid_postfix",
+    "libc.floorl_nid_postfix",
+    "libc.fmax_nid_postfix",
+    "libc.fmaxf_nid_postfix",
+    "libc.fmaxl_nid_postfix",
+    "libc.fmin_nid_postfix",
+    "libc.fminf_nid_postfix",
+    "libc.fminl_nid_postfix",
+    "libc.ldexp_nid_postfix",
+    "libc.ldexpf_nid_postfix",
+    "libc.ldexpl_nid_postfix",
+    "libc.llrint_nid_postfix",
+    "libc.llround_nid_postfix",
+    "libc.lrint_nid_postfix",
+    "libc.lrintf_nid_postfix",
+    "libc.lround_nid_postfix",
+    "libc.nearbyint_nid_postfix",
+    "libc.rint_nid_postfix",
+    "libc.rintf_nid_postfix",
+    "libc.round_nid_postfix",
+    "libc.roundf_nid_postfix",
+    "libc.roundl_nid_postfix",
+    "libc.scalbn_nid_postfix",
+    "libc.scalbnf_nid_postfix",
+    "libc.scalbnl_nid_postfix",
+    "libc.trunc_nid_postfix",
+    "libc.truncf_nid_postfix",
+    "libc.truncl_nid_postfix"
+  ],
+  "harness": {
+    "include": [
+      "core/libs/prx/libc/src/Math.cpp",
+      "core/libs/prx/libc/src/MathExact.cpp"
+    ],
+    "language": "cpp",
+    "link": {
+      "darwin": [
+        "-Wl,-undefined,dynamic_lookup"
+      ],
+      "linux": [
+        "-Wl,--unresolved-symbols=ignore-all"
+      ]
+    },
+    "note": "Math.cpp uses x86 intrinsics: on an Apple-silicon Mac the harness is built for x86-64 and runs under Rosetta, the PS5's own architecture (80-bit long double included)",
+    "platform_flags": {
+      "darwin": [
+        "-arch",
+        "x86_64"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "libm_exact",
+  "program": "stdlib/ps5_libm.card",
+  "provenance": {
+    "by": "the AnyPS5 session (hand-written binding)",
+    "origin": "cardmodel",
+    "written": "2026-10-21"
+  },
+  "source": "core/libs/prx/libc/src/Math.cpp, core/libs/prx/libc/src/MathExact.cpp",
+  "standard": "IEEE 754-2008 5.3.1 (roundToIntegral, minNum/maxNum), 5.3.3 (scaleB), 5.8 (convertToInteger); ISO C F.10.6, F.10.9",
+  "statement": "The libm functions IEEE 754 defines exactly (round to integral in every direction, absolute value, minimum, maximum, positive difference, scaling by a power of two, conversion to integer), in double, float and long double, against AnyPS5's libc Math.cpp and MathExact.cpp built for x86-64."
+}

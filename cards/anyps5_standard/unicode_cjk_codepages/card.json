@@ -1,0 +1,14 @@
+{
+  "category": "anyps5_standard",
+  "cause": "derivable_standard_data",
+  "match": "^sceCes(Big5|EucKr|Uhc)ToUtf8$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "unicode_cjk_codepages",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "WHATWG Encoding Standard (Big5, EUC-KR) and Unicode mapping tables."
+}

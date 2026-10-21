@@ -1,0 +1,20 @@
+{
+  "category": "anyps5_cause",
+  "class": "observation",
+  "closes_with": "a symbol name for the NID (a public NID database or a title's symbols), then a title's call site for the signature, then a console observation of the behaviour",
+  "cues": [
+    "\\bname is unknown\\b",
+    "\\bunknown name\\b"
+  ],
+  "debt_priority": 3,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observation_unknown_name",
+  "priority": 2,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Known only by its NID: AnyPS5 does not know the symbol name, so neither signature nor behaviour can be derived."
+}

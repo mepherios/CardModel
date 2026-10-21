@@ -1,0 +1,50 @@
+{
+  "applies_to": [
+    "anyps5_export"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "anyps5_export",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "schema": {
+    "properties": {
+      "kind": {
+        "enum": [
+          "function",
+          "asm",
+          "nid_alias"
+        ]
+      },
+      "library": {
+        "type": "string"
+      },
+      "provenance": {
+        "required": [
+          "file",
+          "line"
+        ],
+        "type": "object"
+      },
+      "state": {
+        "enum": [
+          "implemented",
+          "pending",
+          "unknown"
+        ]
+      }
+    },
+    "required": [
+      "library",
+      "kind",
+      "state",
+      "provenance"
+    ],
+    "type": "object"
+  },
+  "statement": "Fields every anyps5_export card carries."
+}

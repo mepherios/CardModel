@@ -1,0 +1,20 @@
+{
+  "category": "anyps5_cause",
+  "class": "boundary",
+  "closes_with": "a camera and its measured mapping",
+  "cues": [
+    "\\bcamera\\b",
+    "\\bvision\\b"
+  ],
+  "debt_priority": 12,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary_camera",
+  "priority": 12,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Camera and vision hardware."
+}

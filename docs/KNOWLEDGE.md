@@ -7,7 +7,7 @@ A statement in the card model is only as strong as its evidence (law CM23):
 | refuted | a counterexample, shown (the smallest the exhaustive phase finds) |
 | conjecture | not yet checked |
 | vacuous | the hypotheses rarely hold, or pin a variable to one value: a "law" about a point is no law |
-| witnessed | an exhaustive small-value phase and seeded random values (edges included) all agree |
+| witnessed | an exhaustive small-value phase and seeded random values (edges included; inside the hypothesis box when the hypotheses bound every variable) all agree |
 | proved | the Lean kernel accepted a proof, or every point of a finite hypothesis box was checked (`exhaustive`) |
 
 The ladder only moves up with evidence. A proof never overrides a counterexample. `cardmodel verify`

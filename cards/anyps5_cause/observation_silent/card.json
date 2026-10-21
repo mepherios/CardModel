@@ -1,0 +1,17 @@
+{
+  "category": "anyps5_cause",
+  "class": "observation",
+  "closes_with": "an observation that the console returns the same constant, or the behaviour",
+  "cues": [],
+  "debt_priority": 34,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observation_silent",
+  "priority": 34,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Behaviourally empty (a constant return, a bare return or a throw) and no record says the console does the same."
+}

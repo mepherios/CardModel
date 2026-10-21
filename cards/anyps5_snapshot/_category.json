@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_anyps5.py",
+  "description": "What an AnyPS5 scan read: content hash, badges, parity with AnyPS5's own progress tool.",
+  "name": "anyps5_snapshot",
+  "tier": 2
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "anyps5_gaps_unclassified",
+  "name": "G_P2_anyps5_gaps_unclassified",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "AnyPS5 gaps (exports, debt entries, empty modules) without a cause.",
+  "target": 0,
+  "tier": 1
+}

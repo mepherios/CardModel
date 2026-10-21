@@ -1,0 +1,47 @@
+{
+  "applies_to": [
+    "anyps5_cause"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "anyps5_cause",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "schema": {
+    "properties": {
+      "class": {
+        "enum": [
+          "derivable",
+          "observation",
+          "performance",
+          "boundary"
+        ]
+      },
+      "cues": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "debt_priority": {
+        "type": "integer"
+      },
+      "priority": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "class",
+      "statement",
+      "closes_with",
+      "priority",
+      "debt_priority"
+    ],
+    "type": "object"
+  },
+  "statement": "Fields every anyps5_cause card carries."
+}

@@ -1,0 +1,21 @@
+{
+  "category": "anyps5_domain",
+  "cause": "observation_proprietary",
+  "exports": [
+    {
+      "cause": "boundary_system_shell",
+      "match": "^sceNet(Config\\w*|BandwidthControl\\w*|AddrConfig6\\w*|Allocate\\w*Route\\w*|Free\\w*Route\\w*|Show\\w*|Get(SystemTime|IfName\\w*)|\\w*IpcInt)$"
+    }
+  ],
+  "match": "^libSce(Net\\w*|Http\\w*|Ssl|LibreSsl\\w*|Rudp|Vna\\w*)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "network",
+  "priority": 16,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Sockets, network control, HTTP, TLS (protocols are standards; Sony's options and state are not)."
+}

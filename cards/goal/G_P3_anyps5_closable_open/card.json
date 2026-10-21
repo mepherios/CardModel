@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "anyps5_closable_open",
+  "name": "G_P3_anyps5_closable_open",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "AnyPS5 gaps whose semantics the model can derive and express in the IR now, but has not closed with a passing witness.",
+  "target": 0,
+  "tier": 1
+}

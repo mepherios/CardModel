@@ -16,6 +16,8 @@ Sections (all on by default; ``only`` selects):
   lang          every card-language program (examples/lang, stdlib) runs and passes (CM26)
   theorems      every theorem card is re-witnessed with this seed; a status must match its evidence (CM23)
   game          the design_law cards on the exact equilibrium of the neutral exchange, and the world (CM28, CM29)
+  anyps5        AnyPS5's cards: every gap classified (stdlib/anyps5.card), the semantics programs pass, the
+                recorded witnesses agree and belong to the current scan, the badge reproduced (CM32)
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
 it). ``record=True`` also writes each card's verdict into the card
@@ -35,9 +37,9 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "logic", "lang", "theorems", "game", "forms", "vectors", "rules", "redefinitions",
+SECTIONS = ("kernel", "logic", "lang", "theorems", "game", "anyps5", "forms", "vectors", "rules", "redefinitions",
             "conformance", "functions", "proofs", "selfcheck", "portability")
-QUICK = ["kernel", "logic", "lang", "theorems", "game", "forms", "vectors", "rules", "redefinitions"]
+QUICK = ["kernel", "logic", "lang", "theorems", "game", "anyps5", "forms", "vectors", "rules", "redefinitions"]
 
 
 def _kernel(ctx: Ctx) -> dict:
@@ -170,6 +172,37 @@ def _game(ctx: Ctx) -> dict:
             "world_final_facts": len(w["final"])}
 
 
+def _anyps5(ctx: Ctx, lang: dict | None) -> dict:
+    if not ctx.store.cards("anyps5_export"):
+        return {"status": "skipped", "reason": "no anyps5 cards (cardmodel anyps5 scan PATH --save)"}
+    from ..anyps5 import classify as K
+    from ..anyps5 import cover as V
+    known = {name: r["status"] for name, r in ((lang or {}).get("programs") or {}).items()}
+    cls = K.classify(ctx, program_status=known)
+    rep = V.report(ctx, cls)
+    snap = ctx.store.get("anyps5_snapshot/current") or {}
+    parity = (snap.get("parity") or {}).get("mismatch_count")
+    failing = sorted(n for n, r in rep["semantics"].items() if r.get("status") != "pass")
+    problems = []
+    if rep["unclassified"]:
+        problems.append(f"{rep['unclassified']} gap(s) without a cause")
+    if rep["witness_disagreements"]:
+        problems.append(f"{rep['witness_disagreements']} witness disagreement(s)")
+    if failing:
+        problems.append(f"semantics programs failing: {failing}")
+    if parity:
+        problems.append(f"{parity} parity mismatch(es) with AnyPS5's own progress tool")
+    if rep["size_law"]["fails"]:
+        problems.append(f"the packet-size law fails on {rep['size_law']['fails']} pair(s)")
+    return {"status": "fail" if problems else "pass", "problems": problems, "declared": rep["declared"],
+            "implemented": rep["implemented"], "complete": rep["complete"], "witnessed": rep["witnessed"],
+            "complete_fraction": rep["complete_fraction"], "gap_items": rep["gap_items"],
+            "unclassified": rep["unclassified"], "closable_open": rep["closable_open"],
+            "witness_disagreements": rep["witness_disagreements"], "stale_witnesses": rep["stale_witnesses"],
+            "parity_mismatches": parity, "classes": rep["classes"], "badge": snap.get("badge"),
+            "semantics": rep["semantics"]}
+
+
 def _redefinitions(ctx: Ctx, seed: int) -> dict:
     out = {c.qualified: redefs.verify(c, seed=seed) for c in ctx.store.cards("redefinition")}
     st = [r["verdict"] for r in out.values()]
@@ -214,6 +247,8 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
             res = _theorems(ctx, seed, max(40, samples))
         elif sec == "game":
             res = _game(ctx)
+        elif sec == "anyps5":
+            res = _anyps5(ctx, report["sections"].get("lang"))
         elif sec == "forms":
             res = _forms(ctx, seed, samples)
         elif sec == "vectors":

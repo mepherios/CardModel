@@ -24,6 +24,9 @@ filesystem registry. The program takes part in software development in any proje
    cards and to every language card (docs/LANGUAGE.md);
 10. **design a game**: the Vector Counter System, whose design laws are computed on exact equilibria and whose
     world carries every consequence with its cause (game/DESIGN.md).
+11. **account for a real system**: AnyPS5 (a PS5 relinker and its reimplemented system libraries) read as cards,
+    its badge reproduced, its real coverage computed, every gap given the cause that keeps it open, and its pure
+    code witnessed against semantics derived from public standards (docs/ANYPS5.md).
 
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
@@ -62,6 +65,11 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_A3_memory_bounded` | autonomy | peak memory of the cardmodel process in the last verify (MB) | ≤ 1024 |
 | `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
 | `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
+| `G_P1_anyps5_badge_reproduced` | computation | libraries where the model's reading of AnyPS5's counting rule differs from AnyPS5's own tool | = 0 |
+| `G_P2_anyps5_gaps_unclassified` | understanding | AnyPS5 gaps (exports, debt entries, empty modules) without a cause | = 0 |
+| `G_P3_anyps5_closable_open` | computation | AnyPS5 gaps the model can derive and express in the IR now but has not closed with a passing witness | = 0 |
+| `G_P4_anyps5_complete_fraction` | computation | AnyPS5's declared exports complete by its own records (implemented, not empty, total, no stub reached, no open debt) | ≥ 1.0 |
+| `G_P5_anyps5_witness_disagreements` | computation | inputs where AnyPS5's code and the model's derived semantics disagree in the latest witness runs | = 0 |
 
 ### What "done" would mean on each axis
 
@@ -77,6 +85,10 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
   arena stays sound at any size, and recall and speedup rise as algorithm cards are added.
 * **Autonomy.** Copy the folder to another machine with Python 3.10+, and the program runs, verifies itself and reports
   which toolchains it found there.
+* **A real system (AnyPS5).** Every declared export complete, or its gap closed with a witness, or its gap named with
+  the observation, boundary or measurement that would close it. `G_P4` stays below its target as long as the console's
+  undocumented behaviour, its hardware and its services are part of what AnyPS5 must reproduce: that part closes by
+  observation (Pheros L102), not by construction (docs/ANYPS5.md says exactly what remains and why).
 
 ## Non-goals (and why)
 

@@ -172,6 +172,14 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "equilibrium_support":
         gm = secs.get("game")
         return len((gm.get("equilibrium") or {}).get("row_mix", {})) if gm and gm.get("equilibrium") else None
+    if name.startswith("anyps5_"):
+        a = secs.get("anyps5")
+        if not a or a.get("status") == "skipped":
+            return None
+        key = {"anyps5_parity_mismatches": "parity_mismatches", "anyps5_gaps_unclassified": "unclassified",
+               "anyps5_closable_open": "closable_open", "anyps5_complete_fraction": "complete_fraction",
+               "anyps5_witness_disagreements": "witness_disagreements"}.get(name)
+        return a.get(key) if key else None
     if name == "card_programs_passing":
         lang = secs.get("lang")
         return sum(1 for p in lang["programs"].values() if p["status"] == "pass") if lang else None

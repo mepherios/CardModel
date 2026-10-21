@@ -1,0 +1,50 @@
+-- AnyPS5's libm functions that IEEE 754-2008 defines exactly (section 5.3.1 roundToIntegral, 5.3.3 scaleB,
+-- 5.3.1 minNum/maxNum, fdim from ISO C F.10.9.1): the result is the one representable value the standard names,
+-- so any correct implementation returns the same bits up to the sign of zero (which the IR's floats do not
+-- carry: zeros compare equal). Defined on finite inputs; NaN and the infinities are outside `requires`.
+-- anyps5_semantics/libm_exact runs AnyPS5's libc Math.cpp next to these definitions.
+module ps5_libm
+
+fn finite(x: Float) -> Bool = -1.7976931348623157e308 <= x and x <= 1.7976931348623157e308
+fn trunc_f(x: Float) -> Float requires finite(x) = float(int(x))
+fn floor_f(x: Float) -> Float requires finite(x) = if float(int(x)) > x then float(int(x)) - 1.0 else float(int(x))
+fn ceil_f(x: Float) -> Float requires finite(x) = if float(int(x)) < x then float(int(x)) + 1.0 else float(int(x))
+-- round half away from zero (ISO C round); x - trunc(x) is exact, so the comparison with 0.5 is too
+fn round_f(x: Float) -> Float requires finite(x) {
+  let t = float(int(x))
+  if x - t >= 0.5 { return t + 1.0 }
+  if t - x >= 0.5 { return t - 1.0 }
+  return t
+}
+-- round half to even (rint and nearbyint in the default rounding mode)
+fn rint_f(x: Float) -> Float requires finite(x) {
+  let f = floor_f(x)
+  let d = x - f
+  if d > 0.5 { return f + 1.0 }
+  if d < 0.5 { return f }
+  return if int(f) % 2 == 0 then f else f + 1.0
+}
+fn lround_f(x: Float) -> Int requires finite(x), -9.2e18 < x, x < 9.2e18 = int(round_f(x))
+fn lrint_f(x: Float) -> Int requires finite(x), -9.2e18 < x, x < 9.2e18 = int(rint_f(x))
+fn fabs_f(x: Float) -> Float requires finite(x) = abs(x)
+fn fmin_f(x: Float, y: Float) -> Float requires finite(x), finite(y) = min(x, y)
+fn fmax_f(x: Float, y: Float) -> Float requires finite(x), finite(y) = max(x, y)
+fn fdim_f(x: Float, y: Float) -> Float requires finite(x), finite(y), finite(x - y) = if x > y then x - y else 0.0
+-- scaleB within the normal range: x times a power of two, exact
+fn ldexp_f(x: Float, n: Int) -> Float requires finite(x), -1022 <= n, n <= 1023 = x * pow(2.0, float(n))
+fn normal_result(x: Float, n: Int) -> Bool =
+  (x == 0.0 or (2.2250738585072014e-308 <= abs(x * pow(2.0, float(n))) and abs(x * pow(2.0, float(n))) <= 1.7976931348623157e308))
+-- the same for a binary32 result (ldexpf, scalbnf): inside float's normal range the scaling stays exact
+fn normal_result32(x: Float, n: Int) -> Bool =
+  (x == 0.0 or (1.1754943508222875e-38 <= abs(x * pow(2.0, float(n))) and abs(x * pow(2.0, float(n))) <= 3.4028234663852886e38))
+
+theorem floor_brackets(x: Float) requires -1.0e15 <= x, x <= 1.0e15: floor_f(x) <= x and x < floor_f(x) + 1.0
+theorem ceil_mirrors_floor(x: Float) requires -1.0e15 <= x, x <= 1.0e15: ceil_f(x) == 0.0 - floor_f(0.0 - x)
+theorem round_is_nearest(x: Float) requires -1.0e15 <= x, x <= 1.0e15: abs(round_f(x) - x) <= 0.5
+theorem rint_is_nearest(x: Float) requires -1.0e15 <= x, x <= 1.0e15: abs(rint_f(x) - x) <= 0.5
+theorem trunc_toward_zero(x: Float) requires -1.0e15 <= x, x <= 1.0e15: abs(trunc_f(x)) <= abs(x)
+
+test floor_f(-0.5) == -1.0 and ceil_f(-0.5) == 0.0 and trunc_f(-1.7) == -1.0
+test round_f(2.5) == 3.0 and round_f(-2.5) == -3.0 and round_f(0.49999999999999994) == 0.0
+test rint_f(2.5) == 2.0 and rint_f(3.5) == 4.0 and rint_f(-2.5) == -2.0 and lrint_f(-0.5) == 0
+test fdim_f(3.0, 5.0) == 0.0 and fdim_f(5.0, 3.0) == 2.0 and ldexp_f(1.5, 4) == 24.0

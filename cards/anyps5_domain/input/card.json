@@ -1,0 +1,16 @@
+{
+  "category": "anyps5_domain",
+  "cause": "boundary_input_device",
+  "exports": [],
+  "match": "^libSce(Pad|Keyboard|Mouse|Move|BluetoothHid|Usbd|ConvertKeycode|SystemGesture|Ctrlp|HidControl|KbEmulate)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "input",
+  "priority": 10,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Controllers, keyboards, mice, touch, HID."
+}
