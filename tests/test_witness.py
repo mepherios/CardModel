@@ -1,9 +1,12 @@
 """Witnesses: forms vs reference, known-answer vectors, rules; a witness must be able to fail (CM07/CM08)."""
+import random
 import unittest
+from fractions import Fraction
 
 from helpers import SEED, model_ctx, seed_note
 
 from cardmodel.engines import redefs, witness
+from cardmodel.engines.exprs import FUNCS, evaluate, parse
 from cardmodel.kernel.card import Card
 
 
@@ -97,6 +100,57 @@ class Redefinitions(unittest.TestCase):
         refuted = [c.name for c in ctx.store.cards("redefinition")
                    if redefs.verify(c, seed=SEED, symbolic=False)["verdict"] == "refuted"]
         self.assertEqual(refuted, [], seed_note(self))
+
+    def test_float_cancellation_is_no_counterexample(self):
+        # Seed 4292375619 refuted this true identity: its target divides by (2*x**2*y - 4*x - 2)**2, which nearly
+        # vanishes where x**2*y - 2*x is near 1, and floats lost six digits there. Rational forms are now exact.
+        card = model_ctx().store.get("redefinition/auto_v2_670eead414e1362d")
+        r = redefs.verify(card, seed=4292375619, symbolic=False)
+        self.assertEqual((r["verdict"], r["decided"]), ("verified", {"exact": 40}))
+        lhs, rhs = parse(card["source_form"]), parse(card["target_form"])
+        env = {"x": 2.5311382259982365, "y": 0.9461962566039399}
+        self.assertFalse(redefs._close(evaluate(lhs, env, "real"), evaluate(rhs, env, "real")))   # floats disagree
+        outcome, a, b, how = redefs.compare(lhs, rhs, env, "real")
+        self.assertEqual((outcome, how, a == b), ("agree", "exact", True))
+        # tan(2x) as a difference of squares cancels the same way near x = -pi/2; high precision decides there
+        trig = model_ctx().store.get("redefinition/auto_v2_a137bc0eddb7f5e9")
+        self.assertEqual(redefs.verify(trig, seed=562571390, symbolic=False)["verdict"], "verified")
+        lhs, rhs = parse(trig["source_form"]), parse(trig["target_form"])
+        self.assertEqual(redefs.compare(lhs, rhs, {"_x": -1.5708405367815896}, "real")[0], "agree")
+
+    def test_planted_false_identities_are_still_refuted(self):
+        card = model_ctx().store.get("redefinition/auto_v2_670eead414e1362d")
+        near = dict(card, target_form=card["target_form"] + " + x/10**12")       # far below the float tolerance
+        r = redefs.verify(near, seed=4292375619, symbolic=False)
+        self.assertEqual((r["verdict"], r["counterexample"]["decided_by"]), ("refuted", "exact"))
+        trig = model_ctx().store.get("redefinition/auto_v2_a137bc0eddb7f5e9")
+        lhs, rhs = parse(trig["source_form"]), parse(trig["target_form"] + " + 1/1000")
+        outcome, _, _, how = redefs.compare(lhs, rhs, {"_x": -1.5708405367815896}, "real")   # the point floats fail at
+        self.assertEqual((outcome, how), ("differ", "60 digits"))
+        r = redefs.verify(dict(trig, target_form=trig["target_form"] + " + 1/1000"), seed=SEED, symbolic=False)
+        self.assertEqual(r["verdict"], "refuted", seed_note(self))
+        for src, dst, dom in (("(x+1)**2", "x**2 + 2*x", "real"), ("x/(x - 1)", "1 + 1/x", "integer"),
+                              ("sqrt(x**2)", "x", "real"), ("tan(2*x)", "2*tan(x)/(1 + tan(x)**2)", "real")):
+            r = redefs.verify({"name": "planted", "source_form": src, "target_form": dst, "domain": dom},
+                              seed=SEED, symbolic=False)
+            self.assertEqual(r["verdict"], "refuted", (src, dst, seed_note(self)))
+
+    def test_every_function_has_an_exact_or_precise_form(self):
+        self.assertEqual(set(FUNCS) - redefs.EXACT_FUNCS, set(redefs.PRECISE))   # a new function needs one or the other
+        rng = random.Random(SEED)
+        ranges = {"sqrt": (0, 50), "log": (1e-3, 50), "log2": (1e-3, 50), "log10": (1e-3, 50), "asin": (-1, 1),
+                  "acos": (-1, 1), "acosh": (1, 50), "atanh": (-0.99, 0.99), "gamma": (-9.5, 30), "exp": (-50, 50),
+                  "sinh": (-50, 50), "cosh": (-50, 50)}
+        for name in sorted(redefs.PRECISE):
+            lo, hi = ranges.get(name, (-20, 20))
+            for _ in range(12):
+                args = [rng.uniform(lo, hi) for _ in range(2 if name in ("atan2", "hypot") else 1)]
+                tree = ["FN", name, *(["var", f"a{i}"] for i in range(len(args)))]
+                env = {f"a{i}": Fraction(a) for i, a in enumerate(args)}
+                ref, got = FUNCS[name](*args), redefs.exact_value(tree, env, 30)
+                self.assertLess(abs(float(got) - ref), 1e-13 * max(1.0, abs(ref)), (name, args, seed_note(self)))
+                self.assertLess(abs(got - redefs.exact_value(tree, env, 60)), Fraction(1, 10**25) * max(1, abs(got)),
+                                (name, args, seed_note(self)))
 
 
 if __name__ == "__main__":

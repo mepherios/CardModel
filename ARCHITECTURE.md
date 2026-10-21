@@ -26,7 +26,7 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── search.py           rewrite search: proofs (meet in the middle), cost-directed optimisation
 │   │   ├── exprs.py            expression strings <-> op trees, exact/real evaluation
 │   │   ├── witness.py          forms vs reference, known-answer vectors, rule witnesses, anti-vacuity
-│   │   ├── redefs.py           executable redefinitions: seeded numeric checks (+ sympy if present)
+│   │   ├── redefs.py           executable redefinitions: seeded checks, exact or high precision (+ sympy)
 │   │   ├── observe.py          source tree -> observation card (ast for Python, tokens elsewhere)
 │   │   ├── learn.py            observe -> propose -> verify -> promote
 │   │   ├── optimize.py         measurements -> metric cards -> calibrated cost anchors

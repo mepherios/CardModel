@@ -31,6 +31,12 @@ for every vendored registry are in each registry's `_category.json` (`provenance
   * Some were pairs of program names (`cat_original_c → cat_rewritten_rs`): references, not identities, so they were
     moved to `redefinition_note` (count: `docs/VENDOR_REPORT.json`, `name_pair_reference`).
   * Of the executable identities, none is refuted.
+  * The float witness used to refute true identities at some seeds: across 2002 seeds it gave 46 false
+    refutations on 23 cards, about one `verify` in 45. In 7 rational cards a target divides by a square such as
+    `(2*x**2*y - 4*x - 2)**2` that nearly vanishes. In 16 `tan(2x)` cards, squares of `tan(x)` cancel near x = ±pi/2.
+    Rational forms are now evaluated exactly, and any other float disagreement is decided again at high precision.
+    On the same seeds the result is 0 refutations, with the 31 disagreements on the `tan` cards resolved as
+    rounding artefacts.
   * Some auto-generated cards carry examples that bind only some variables (e.g. `x=1` for a form in `x, y`). The
     redefinition witness reports these as `examples.incomplete`, because they made the original L34 check vacuous.
 * **Ting vectors.** Every converted RFC/NIST vector passes in both the model's stdlib-Python forms (including
