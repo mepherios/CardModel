@@ -442,8 +442,16 @@ def arcade(ctx: Ctx, seed: int) -> str:
         g.frame(0, 0)
     entry = server.game_entry(ctx, card)
     _need(entry["id"] == "vector_duel" and entry["title"], f"the store entry is {entry}")
+    player = ""
+    if ctx.store.get("system/gameboy") is not None:
+        from ..arcade import system as S
+        sysc = S.system_card(ctx.store, "gameboy")
+        _need("array cart_kind: Int[256]" in S.tables(ctx, sysc), "no cartridge tables from the cartridge card (CM40)")
+        pe = server.game_entry(ctx, sysc)
+        _need(pe["id"] == "gameboy_player" and pe["kind"] == "system", f"the player's store entry is {pe} (CM40)")
+        player = f"; {pe['title']} v{pe['version']} with the cartridge tables from its cards"
     return (f"tables from the cards, 30 native frames of {entry['title']}, store entry v{entry['version']}"
-            f" ({'build due' if entry['build_due'] else 'build current'})")
+            f" ({'build due' if entry['build_due'] else 'build current'}){player}")
 
 
 def live_hub(ctx: Ctx, seed: int) -> str:

@@ -47,7 +47,7 @@ range to this table in the same commit.
 | CM32–CM35 | games (`claude/sad-sanderson-482207`) | machines are cards; lifted code is the cards; emulation effects are the shell; games are cards |
 | CM36 | AnyPS5 (`claude/recursing-williams-ecc80a`) | unknowns are observation obligations (merged as CM32, renumbered CM36 at integration) |
 | CM37–CM39 | main (self-run) | the core is never lost; the model runs itself; one program |
-| CM40 | games (`claude/sad-sanderson-482207`, from the OAM session's cartridge work) | players are cards (`CM36_players_are_cards` on `claude/festive-margulis-43fde7`, renumbered when the games branch merges it) |
+| CM40 | cartridges (`claude/festive-margulis-43fde7`) | players are cards (written as CM36 on that branch, renumbered CM40 when it caught up with main) |
 | CM41 | main | projects keep their cards current |
 | CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`), announced | the store runs what it lists |
 | CM43 | main (MATH_CORE phase 0) | primes are forever |
