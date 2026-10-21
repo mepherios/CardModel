@@ -1,6 +1,6 @@
 # LAWS (generated from cards/law by `cardmodel docs`; edit the cards, not this file)
 
-31 laws. Each one names the test that witnesses it (CM20); the origins column says which hub (LAWS.md L-numbers) or Pheros (cards/law) laws it consolidates.
+32 laws. Each one names the test that witnesses it (CM20); the origins column says which hub (LAWS.md L-numbers) or Pheros (cards/law) laws it consolidates.
 
 | id | law | origins | witness |
 |---|---|---|---|
@@ -35,5 +35,6 @@
 | CM29_everything_carries | Effects carry instead of resetting: frame advantage, momentum (flow, bank, recoil), posture and stamina carry between exchanges; world facts carry between ticks; every world event has a cause chain back to the actions that made it, and each action's counterfactual impact is measured. | user requirement 2026-10-21 (if you do something in our world it carries) | `tests/test_game.py::test_world_effects_carry_and_explain` |
 | CM30_resources_are_bounded | Heavy subprocesses take machine-wide slots (at most CARDMODEL_MAX_PARALLEL across every cardmodel process), run at lower priority in their own process group, and are killed when the group passes its memory cap; this process stops itself (MemoryBudget) past its own cap; the interpreter caps integer size. A run never takes the machine down. | user requirement 2026-10-21 (do not crash my mac), hub L20 | `tests/test_resources.py::test_child_over_its_cap_is_killed` |
 | CM31_behaviour_is_numbered | A function's canonical form (its shortest annihilating recurrence and initial terms, found from behaviour and checked on unused terms) and the form's Gödel number name its redefinition class; every form of an algorithm card shares one number; identities between functions (shift, composition, cofactor, shared operator) are witnessed as theorems, and verified fast forms carry into improve. | user requirement 2026-10-21 (GCD of functions, Gödel numbering), Servois 1814, Gödel 1931 | `tests/test_funcalg.py::test_canonical_forms_carry_between_functions` |
+| CM32_unknowns_are_observation_obligations | A gap whose semantics no card derives is classified by what would close it and never filled with a made-up success: console-specific behaviour (names, signatures, layouts, error codes, timing) is closed only by observation (Pheros L102), boundaries (hardware, services, DRM) are named, and only what a public standard or the model's own structure fixes is derived, with a witness. | user requirement 2026-10-21 (AnyPS5 by construction), Pheros L102, AnyPS5 AGENTS.md (never return a made-up success) | `tests/test_anyps.py::test_unknown_gaps_are_observation_obligations` |
 
 Laws from the source sets that are not carried over (hub GUI/hub-folder/process laws, Pheros wave/daemon/hub-panel laws) are about those projects' own tooling; see ARCHITECTURE.md § What was not carried over.

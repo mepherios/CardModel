@@ -1,0 +1,35 @@
+{
+  "applies_to": [
+    "anyps5_domain"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "anyps5_domain",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "schema": {
+    "properties": {
+      "cause": {
+        "type": "string"
+      },
+      "match": {
+        "type": "string"
+      },
+      "priority": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "match",
+      "priority",
+      "cause",
+      "statement"
+    ],
+    "type": "object"
+  },
+  "statement": "Fields every anyps5_domain card carries."
+}

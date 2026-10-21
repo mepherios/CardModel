@@ -1,0 +1,145 @@
+-- AnyPS5's libc, as public specifications define it: the compiler runtime's integer builtins (the libgcc runtime
+-- ABI, GCC Internals "The GCC low-level runtime library") and the character classes of the "C" locale (ISO C
+-- 7.4 over ASCII). Each builtin is defined where the ABI defines it (`requires`); what the console does
+-- outside that domain (traps, wrap-around, clz of 0) is observation, kept apart below with its source.
+-- anyps5_semantics/libc_integer_builtins and libc_ctype run AnyPS5's own code next to these definitions.
+module ps5_libc
+
+-- machine words: a 32- or 64-bit register's bits read back as unsigned or as two's complement
+fn u32(x: Int) -> Int = x & 0xFFFFFFFF
+fn u64(x: Int) -> Int = x & 0xFFFFFFFFFFFFFFFF
+fn s32(x: Int) -> Int = if u32(x) >= 0x80000000 then u32(x) - 0x100000000 else u32(x)
+fn s64(x: Int) -> Int = if u64(x) >= 0x8000000000000000 then u64(x) - 0x10000000000000000 else u64(x)
+fn i32(x: Int) -> Bool = -0x80000000 <= x and x <= 0x7FFFFFFF
+fn i64(x: Int) -> Bool = -0x8000000000000000 <= x and x <= 0x7FFFFFFFFFFFFFFF
+fn w32(x: Int) -> Bool = 0 <= x and x <= 0xFFFFFFFF
+fn w64(x: Int) -> Bool = 0 <= x and x <= 0xFFFFFFFFFFFFFFFF
+
+-- C division truncates toward zero; the remainder has the dividend's sign (ISO C 6.5.5)
+fn tdiv(a: Int, b: Int) -> Int requires b != 0 =
+  if (a < 0) == (b < 0) then abs(a) // abs(b) else 0 - abs(a) // abs(b)
+fn tmod(a: Int, b: Int) -> Int requires b != 0 = a - b * tdiv(a, b)
+
+fn popcount(a: Int) -> Int requires 0 <= a {
+  var n = 0
+  var x = a
+  while x > 0 {
+    n += x % 2
+    x = x // 2
+  }
+  return n
+}
+fn bit_width(a: Int) -> Int requires 0 <= a {
+  var n = 0
+  var x = a
+  while x > 0 {
+    x = x // 2
+    n += 1
+  }
+  return n
+}
+fn trailing_zeros(a: Int) -> Int requires 0 < a {
+  var n = 0
+  var x = a
+  while x % 2 == 0 {
+    x = x // 2
+    n += 1
+  }
+  return n
+}
+fn cmp3(a: Int, b: Int) -> Int = if a < b then 0 else (if a > b then 2 else 1)
+
+-- the builtins, on the domain the ABI defines
+fn ashldi3(a: Int, b: Int) -> Int requires i64(a), 0 <= b, b <= 63 = s64(a << b)
+fn ashrdi3(a: Int, b: Int) -> Int requires i64(a), 0 <= b, b <= 63 = a >> b
+fn lshrdi3(a: Int, b: Int) -> Int requires i64(a), 0 <= b, b <= 63 = s64(u64(a) >> b)
+fn muldi3(a: Int, b: Int) -> Int requires i64(a), i64(b) = s64(a * b)
+fn negdi2(a: Int) -> Int requires i64(a) = s64(0 - a)
+fn divdi3(a: Int, b: Int) -> Int requires i64(a), i64(b), b != 0 = s64(tdiv(a, b))
+fn moddi3(a: Int, b: Int) -> Int requires i64(a), i64(b), b != 0 = s64(tmod(a, b))
+fn divsi3(a: Int, b: Int) -> Int requires i32(a), i32(b), b != 0 = s32(tdiv(a, b))
+fn modsi3(a: Int, b: Int) -> Int requires i32(a), i32(b), b != 0 = s32(tmod(a, b))
+fn udivsi3(a: Int, b: Int) -> Int requires w32(a), w32(b), b != 0 = a // b
+fn umodsi3(a: Int, b: Int) -> Int requires w32(a), w32(b), b != 0 = a % b
+fn udivdi3(a: Int, b: Int) -> Int requires w64(a), w64(b), b != 0 = a // b
+fn umoddi3(a: Int, b: Int) -> Int requires w64(a), w64(b), b != 0 = a % b
+fn cmpdi2(a: Int, b: Int) -> Int requires i64(a), i64(b) = cmp3(a, b)
+fn ucmpdi2(a: Int, b: Int) -> Int requires w64(a), w64(b) = cmp3(a, b)
+fn clzsi2(a: Int) -> Int requires 1 <= a, a <= 0xFFFFFFFF = 32 - bit_width(a)
+fn clzdi2(a: Int) -> Int requires 1 <= a, a <= 0xFFFFFFFFFFFFFFFF = 64 - bit_width(a)
+fn ctzsi2(a: Int) -> Int requires 1 <= a, a <= 0xFFFFFFFF = trailing_zeros(a)
+fn ctzdi2(a: Int) -> Int requires 1 <= a, a <= 0xFFFFFFFFFFFFFFFF = trailing_zeros(a)
+fn ffsdi2(a: Int) -> Int requires w64(a) = if a == 0 then 0 else trailing_zeros(a) + 1
+fn paritysi2(a: Int) -> Int requires w32(a) = popcount(a) % 2
+fn paritydi2(a: Int) -> Int requires w64(a) = popcount(a) % 2
+fn popcountsi2(a: Int) -> Int requires w32(a) = popcount(a)
+fn popcountdi2(a: Int) -> Int requires w64(a) = popcount(a)
+-- the trapping variants are defined where nothing overflows
+fn absvsi2(a: Int) -> Int requires i32(a), a != -0x80000000 = abs(a)
+fn absvdi2(a: Int) -> Int requires i64(a), a != -0x8000000000000000 = abs(a)
+fn negvsi2(a: Int) -> Int requires i32(a), a != -0x80000000 = 0 - a
+fn negvdi2(a: Int) -> Int requires i64(a), a != -0x8000000000000000 = 0 - a
+fn addvsi3(a: Int, b: Int) -> Int requires i32(a), i32(b), i32(a + b) = a + b
+fn addvdi3(a: Int, b: Int) -> Int requires i64(a), i64(b), i64(a + b) = a + b
+fn subvsi3(a: Int, b: Int) -> Int requires i32(a), i32(b), i32(a - b) = a - b
+fn subvdi3(a: Int, b: Int) -> Int requires i64(a), i64(b), i64(a - b) = a - b
+fn mulvsi3(a: Int, b: Int) -> Int requires i32(a), i32(b), i32(a * b) = a * b
+fn mulvdi3(a: Int, b: Int) -> Int requires i64(a), i64(b), i64(a * b) = a * b
+
+-- observed on the console, not derived (AnyPS5 docs/dev/debt/libc.md, from the libc.prx a title bundles):
+-- __addv*/__subv* wrap without an overflow check, __udivsi3/__umodsi3 divide by zero to 0 and to the
+-- dividend, and __clzdi2/__ctzdi2 of 0 are 32
+fn console_addvsi3(a: Int, b: Int) -> Int requires i32(a), i32(b) = s32(a + b)
+fn console_addvdi3(a: Int, b: Int) -> Int requires i64(a), i64(b) = s64(a + b)
+fn console_subvsi3(a: Int, b: Int) -> Int requires i32(a), i32(b) = s32(a - b)
+fn console_subvdi3(a: Int, b: Int) -> Int requires i64(a), i64(b) = s64(a - b)
+fn console_udivsi3(a: Int, b: Int) -> Int requires w32(a), w32(b) = if b == 0 then 0 else a // b
+fn console_umodsi3(a: Int, b: Int) -> Int requires w32(a), w32(b) = if b == 0 then a else a % b
+fn console_clzdi2(a: Int) -> Int requires w64(a) = if a == 0 then 32 else clzdi2(a)
+fn console_ctzdi2(a: Int) -> Int requires w64(a) = if a == 0 then 32 else ctzdi2(a)
+
+-- the "C" locale: ASCII classes, nothing above 127, EOF (-1) in no class
+fn c_upper(c: Int) -> Bool = 65 <= c and c <= 90
+fn c_lower(c: Int) -> Bool = 97 <= c and c <= 122
+fn c_digit(c: Int) -> Bool = 48 <= c and c <= 57
+fn c_alpha(c: Int) -> Bool = c_upper(c) or c_lower(c)
+fn c_alnum(c: Int) -> Bool = c_alpha(c) or c_digit(c)
+fn c_xdigit(c: Int) -> Bool = c_digit(c) or (65 <= c and c <= 70) or (97 <= c and c <= 102)
+fn c_space(c: Int) -> Bool = (9 <= c and c <= 13) or c == 32
+fn c_blank(c: Int) -> Bool = c == 9 or c == 32
+fn c_cntrl(c: Int) -> Bool = (0 <= c and c <= 31) or c == 127
+fn c_print(c: Int) -> Bool = 32 <= c and c <= 126
+fn c_graph(c: Int) -> Bool = 33 <= c and c <= 126
+fn c_punct(c: Int) -> Bool = c_graph(c) and not c_alnum(c)
+fn c_toupper(c: Int) -> Int requires -1 <= c, c <= 255 = if c_lower(c) then c - 32 else c
+fn c_tolower(c: Int) -> Int requires -1 <= c, c <= 255 = if c_upper(c) then c + 32 else c
+
+theorem division_identity(a: Int, b: Int) requires -60 <= a, a <= 60, -60 <= b, b <= 60, b != 0:
+  tdiv(a, b) * b + tmod(a, b) == a
+theorem remainder_sign(a: Int, b: Int) requires -60 <= a, a <= 60, -60 <= b, b <= 60, b != 0:
+  tmod(a, b) == 0 or (tmod(a, b) < 0) == (a < 0)
+theorem remainder_smaller(a: Int, b: Int) requires -60 <= a, a <= 60, -60 <= b, b <= 60, b != 0:
+  abs(tmod(a, b)) < abs(b)
+theorem clz_brackets(a: Int) requires 1 <= a, a <= 20000:
+  (1 << (31 - clzsi2(a))) <= a and a < (1 << (32 - clzsi2(a)))
+theorem ctz_strips(a: Int) requires 1 <= a, a <= 20000:
+  a % (1 << ctzsi2(a)) == 0 and (a >> ctzsi2(a)) % 2 == 1
+theorem parity_of_popcount(a: Int) requires 0 <= a, a <= 20000: paritysi2(a) == popcount(a) % 2
+theorem wrap_is_periodic(x: Int): s64(x + 0x10000000000000000) == s64(x)
+theorem wrap_fixes_words(x: Int) requires -0x8000000000000000 <= x, x <= 0x7FFFFFFFFFFFFFFF: s64(x) == x
+theorem ctype_digits_are_not_letters(c: Int) requires -1 <= c, c <= 255: not (c_alpha(c) and c_digit(c))
+theorem ctype_graph_splits(c: Int) requires -1 <= c, c <= 255: c_graph(c) <=> (c_alnum(c) or c_punct(c))
+theorem ctype_case_round_trip(c: Int) requires -1 <= c, c <= 255: c_tolower(c_toupper(c)) == c_tolower(c)
+theorem ctype_print_is_graph_or_space(c: Int) requires -1 <= c, c <= 255: c_print(c) <=> (c_graph(c) or c == 32)
+
+test divdi3(-7, 2) == -3 and moddi3(-7, 2) == -1
+test divdi3(-0x8000000000000000, -1) == -0x8000000000000000 and moddi3(-0x8000000000000000, -1) == 0
+test udivdi3(0xFFFFFFFFFFFFFFFF, 10) == 1844674407370955161
+test ashldi3(1, 63) == -0x8000000000000000 and lshrdi3(-1, 60) == 15 and ashrdi3(-16, 2) == -4
+test clzsi2(1) == 31 and clzdi2(1) == 63 and ctzdi2(0x8000000000000000) == 63
+test ffsdi2(0) == 0 and ffsdi2(8) == 4 and popcountdi2(0xFFFFFFFFFFFFFFFF) == 64 and paritysi2(7) == 1
+test cmpdi2(-1, 1) == 0 and cmpdi2(5, 5) == 1 and ucmpdi2(0xFFFFFFFFFFFFFFFF, 1) == 2
+test console_addvsi3(0x7FFFFFFF, 1) == -0x80000000 and console_udivsi3(9, 0) == 0 and console_umodsi3(9, 0) == 9
+test console_clzdi2(0) == 32 and console_ctzdi2(0) == 32
+test c_punct(33) and not c_punct(65) and c_xdigit(102) and not c_xdigit(103) and c_toupper(97) == 65
+test not c_alpha(200) and c_tolower(-1) == -1 and c_space(11) and not c_blank(11)

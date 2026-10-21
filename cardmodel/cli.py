@@ -24,6 +24,7 @@
   cardmodel repl                         interactive card language
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
+  cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
 
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.
@@ -162,6 +163,10 @@ def cmd_verify(args) -> int:
             extra = (f"{r['laws_passed']}/{r['laws_total']} design laws, equilibrium value {r['equilibrium']['value']} "
                      f"over {len(r['equilibrium']['row_mix'])} options (certificate "
                      f"{'ok' if r['equilibrium']['certificate'] else 'FAILED'})")
+        if sec == "anyps5" and r.get("declared"):
+            extra = (f"{r['complete']}/{r['declared']} exports complete ({r['witnessed']} witnessed), "
+                     f"{r['gap_items']} gaps, {r['unclassified']} unclassified, {r['witness_disagreements']} "
+                     f"witness disagreements")
         if sec == "forms" and r.get("hub_claims"):
             extra = f"{r['counts']} · hub's original domain claims: {r['hub_claims']}"
         lines.append(f"  {sec:<14} {r.get('status', '?'):<8} {extra}  [{rep['timings_s'].get(sec)}s]")
@@ -184,6 +189,8 @@ def _failures(sec: str, r: dict):
     if sec == "lang":
         return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
     if sec == "theorems":
+        return r.get("problems")
+    if sec == "anyps5":
         return r.get("problems")
     cards = r.get("cards", {})
     bad = {}

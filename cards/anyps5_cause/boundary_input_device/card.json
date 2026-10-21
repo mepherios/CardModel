@@ -1,0 +1,29 @@
+{
+  "category": "anyps5_cause",
+  "class": "boundary",
+  "closes_with": "the device and a measured mapping from the host's controller API",
+  "cues": [
+    "\\bhaptic\\b",
+    "\\bvibration\\b",
+    "\\brumble\\b",
+    "\\bmotion sensor\\b",
+    "\\bgyro\\w*\\b",
+    "\\baccelerometer\\b",
+    "\\blight ?bar\\b",
+    "\\btouch ?pad\\b",
+    "\\bdualsense\\b",
+    "\\bbluetooth\\b",
+    "\\busb\\b"
+  ],
+  "debt_priority": 13,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary_input_device",
+  "priority": 13,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Controller and peripheral hardware features (haptics, motion sensors, light bar, VR controllers, special ports)."
+}

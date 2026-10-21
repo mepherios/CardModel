@@ -1,0 +1,21 @@
+{
+  "category": "anyps5_cause",
+  "class": "boundary",
+  "closes_with": "the headset (or a host VR runtime with a measured mapping)",
+  "cues": [
+    "\\bhmd\\b",
+    "\\bheadset\\b",
+    "\\bpsvr2?\\b"
+  ],
+  "debt_priority": 11,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary_vr",
+  "priority": 11,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "PlayStation VR headset and tracking hardware."
+}

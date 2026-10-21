@@ -1,0 +1,17 @@
+{
+  "category": "anyps5_cause",
+  "class": "derivable",
+  "closes_with": "nothing in the model; landing it in AnyPS5 is porting the emitted form (lang emit --lang cpp)",
+  "cues": [],
+  "debt_priority": 1,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "derivable_closed",
+  "priority": 1,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Closed in the card model: a card-language program defines the semantics from a public standard and its witnesses ran (tests and theorems, and AnyPS5's own code compiled next to it agreed)."
+}

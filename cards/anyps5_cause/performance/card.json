@@ -1,0 +1,29 @@
+{
+  "category": "anyps5_cause",
+  "class": "performance",
+  "closes_with": "a measured trace on the target machine",
+  "cues": [
+    "\\bslow(er|ly)?\\b",
+    "\\bfaster\\b",
+    "\\bperformance\\b",
+    "\\blatency\\b",
+    "\\bframe ?time\\b",
+    "\\bstutter\\w*\\b",
+    "\\bthroughput\\b",
+    "\\bper frame\\b",
+    "\\bcache miss\\w*\\b",
+    "\\bcpu time\\b",
+    "\\bspeed ?up\\b"
+  ],
+  "debt_priority": 2,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "performance",
+  "priority": 25,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Speed, latency or memory: closed by a measurement on the target machine (AnyPS5's tools/trace_digest.py), not by a derivation."
+}

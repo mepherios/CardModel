@@ -1,0 +1,7 @@
+{
+  "card_type": "anyps5_semantics",
+  "defined_by": "tools/seed_anyps5.py",
+  "description": "Card-model semantics for AnyPS5 exports: a card-language program derived from a public standard, the exports it covers, the harness that runs AnyPS5's own code next to it, and what remains observation.",
+  "name": "anyps5_semantics",
+  "tier": 1
+}

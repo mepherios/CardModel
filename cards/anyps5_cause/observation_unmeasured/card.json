@@ -1,0 +1,40 @@
+{
+  "category": "anyps5_cause",
+  "class": "observation",
+  "closes_with": "a measurement on a PS5 (AnyPS5's `Closes when: measured on a PS5`)",
+  "cues": [
+    "\\bnot measured\\b",
+    "\\bunmeasured\\b",
+    "\\bnot confirmed\\b",
+    "\\bunconfirmed\\b",
+    "\\bunverified\\b",
+    "\\bnot verified\\b",
+    "\\binferred\\b",
+    "\\bassumed?\\b",
+    "\\bguess\\w*\\b",
+    "\\bnot known\\b",
+    "\\bunknown\\b",
+    "\\bdisassembl\\w*\\b",
+    "\\bshadps4\\b",
+    "\\bfpps4\\b",
+    "\\bsharp\\w*\\b",
+    "\\bopenorbis\\b",
+    "\\bopenagc\\b",
+    "\\bnot compared\\b",
+    "\\bnot modell?ed\\b",
+    "\\bapproximat\\w+\\b",
+    "\\bfirmware\\b",
+    "\\btrace\\b"
+  ],
+  "debt_priority": 6,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observation_unmeasured",
+  "priority": 35,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Behaviour inferred, taken from a PS4 reimplementation or from disassembly, but not measured on a PS5: a console observation closes it (Pheros L102)."
+}

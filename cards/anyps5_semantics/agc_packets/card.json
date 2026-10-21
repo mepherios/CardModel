@@ -1,0 +1,105 @@
+{
+  "category": "anyps5_semantics",
+  "checks": [
+    {
+      "args": [
+        [
+          0,
+          255
+        ],
+        [
+          2,
+          16385
+        ],
+        [
+          0,
+          255
+        ]
+      ],
+      "call": "Agc::Command::Header({0}, {1}, {2})",
+      "edges": [
+        [
+          38,
+          3,
+          0
+        ],
+        [
+          19,
+          2,
+          0
+        ],
+        [
+          16,
+          16385,
+          255
+        ]
+      ],
+      "export": null,
+      "fn": "pm4_header",
+      "note": "internal helper Agc::Command::Header, used by every packet emitter"
+    },
+    {
+      "call": "Agc::Command::Header({0}, {1}, {2})",
+      "edges": [
+        [
+          256,
+          2,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          16386,
+          0
+        ],
+        [
+          0,
+          2,
+          256
+        ]
+      ],
+      "expect": "throws",
+      "export": null,
+      "note": "outside the header's fields AnyPS5 throws (an unexpected state)"
+    },
+    {
+      "call": "GetSize constant vs the emitter's packet",
+      "fn": "packet_bytes",
+      "kind": "size_law"
+    }
+  ],
+  "closes": [],
+  "closes_debt": [],
+  "covers": [],
+  "harness": {
+    "include": [
+      "core/libs/prx/libSceAgc/Command/src/Packet.cpp"
+    ],
+    "language": "cpp",
+    "link": {
+      "darwin": [
+        "-Wl,-undefined,dynamic_lookup"
+      ],
+      "linux": [
+        "-Wl,--unresolved-symbols=ignore-all"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "agc_packets",
+  "program": "stdlib/ps5_agc.card",
+  "provenance": {
+    "by": "the AnyPS5 session (hand-written binding)",
+    "origin": "cardmodel",
+    "written": "2026-10-21"
+  },
+  "source": "core/libs/prx/libSceAgc/Command/src/Packet.cpp",
+  "standard": "AMD PM4 type-3 packet header (AMD GPU documentation; Mesa src/amd/common/sid.h PKT3)",
+  "statement": "libSceAgc's command packets: the PM4 type-3 header AnyPS5 writes for every packet, and the size law (a GetSize export returns 4 bytes per dword of the one packet its emitter writes), checked on every implemented GetSize / emitter pair the scan finds."
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "anyps5_complete_fraction",
+  "name": "G_P4_anyps5_complete_fraction",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Fraction of AnyPS5's declared exports that are complete: implemented, not behaviourally empty, total over their inputs, reaching no stub and named by no open debt entry.",
+  "target": 1.0,
+  "tier": 1
+}

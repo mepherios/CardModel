@@ -1,0 +1,7 @@
+{
+  "card_type": "anyps5_domain",
+  "defined_by": "tools/seed_anyps5.py",
+  "description": "What each AnyPS5 system library is for, matched by name, and the cause its gaps default to.",
+  "name": "anyps5_domain",
+  "tier": 1
+}

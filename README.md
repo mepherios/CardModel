@@ -59,6 +59,10 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel anyps5 cover
+```
+
+```bash
 cd tests && python3 -B -m unittest
 ```
 
@@ -71,6 +75,8 @@ checks with the kernel that each reading is the original proposition, witnesses 
 model's own tactics and rule chains. `algebra gcd` compares two functions by behaviour (common factor, cofactor
 identity, shared dynamics, Gödel number of each canonical form). `game check` computes the combat design's laws on an exact equilibrium,
 and `game play` lets you fight the AI that reads your vectors.
+`anyps5 cover` reports AnyPS5 (a PS5 relinker and its reimplemented system libraries, read from a checkout as
+cards): its badge reproduced, the real coverage behind it, and every gap with the cause that keeps it open.
 `improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
 byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last
 command runs the test suite.
@@ -89,3 +95,5 @@ command runs the test suite.
 | [docs/LANGUAGE.md](docs/LANGUAGE.md) | the card language: functions, logic, theorems, tests and cards in one file |
 | [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md) | crystallised knowledge: logic, theorem cards, discovered laws, Lean import and re-proofs |
 | [game/DESIGN.md](game/DESIGN.md) | the game design (Vector Counter System): pillars, kernel, design laws, AIs, world |
+| [docs/ANYPS5.md](docs/ANYPS5.md) | AnyPS5 as cards: the 95 % question, the real coverage, why each gap is open, what closes it |
+| [docs/ANYPS5_COVERAGE.md](docs/ANYPS5_COVERAGE.md) | AnyPS5's computed coverage and gaps (generated) |

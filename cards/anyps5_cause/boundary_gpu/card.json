@@ -1,0 +1,22 @@
+{
+  "category": "anyps5_cause",
+  "class": "boundary",
+  "closes_with": "an AMD GPU (hw-oracle) or a measured Vulkan mapping",
+  "cues": [
+    "\\bvulkan\\b",
+    "\\bgpu hang\\b",
+    "\\bhardware queue\\b",
+    "\\bgfx10\\w*\\b"
+  ],
+  "debt_priority": 15,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary_gpu",
+  "priority": 15,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "GPU execution, its queues and its debugging."
+}

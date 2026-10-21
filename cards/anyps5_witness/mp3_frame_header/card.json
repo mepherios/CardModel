@@ -1,0 +1,107 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 176,
+      "call": "Mp3Decoder({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": null,
+      "fn": "mp3_field",
+      "inputs": 176,
+      "note": "internal decoder path ParseMp3Frame",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 170,
+      "call": "Mp3Export({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceAjm.native.sceAjmDecMp3ParseFrame",
+      "fn": "mp3_field",
+      "inputs": 170,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 60,
+      "call": "Mp3Export({0}, {1})",
+      "disagree": 105,
+      "examples": [
+        {
+          "anyps5": "-1",
+          "args": [
+            4293103616,
+            4
+          ],
+          "model": 80000
+        },
+        {
+          "anyps5": "417",
+          "args": [
+            4294807652,
+            0
+          ],
+          "model": 522
+        },
+        {
+          "anyps5": "417",
+          "args": [
+            4294938724,
+            0
+          ],
+          "model": 312
+        },
+        {
+          "anyps5": "160000",
+          "args": [
+            4294880253,
+            4
+          ],
+          "model": 320000
+        },
+        {
+          "anyps5": "48000",
+          "args": [
+            4294338985,
+            4
+          ],
+          "model": 96000
+        }
+      ],
+      "expect": "differs",
+      "export": "libSceAjm.native.sceAjmDecMp3ParseFrame",
+      "fn": "mp3_field",
+      "inputs": 165,
+      "note": "debt libSceAjm.native.L10: the layer field is not checked and MPEG-2.5 stops at 64 kbit/s (shadPS4, unconfirmed on a PS5); the standard and AnyPS5's own decoder path disagree with it",
+      "ok": true,
+      "threw": 0
+    }
+  ],
+  "exports": {
+    "libSceAjm.native.sceAjmDecMp3ParseFrame": {
+      "agree": true,
+      "checks": 335,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "mp3_frame_header",
+  "program": "stdlib/ps5_mp3.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:51:00+00:00",
+  "seed": 20261021,
+  "semantics": "mp3_frame_header",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "f791efee646698656c2281639b4f3cb7533a05ca0282c210f487c4c6862eaae4",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

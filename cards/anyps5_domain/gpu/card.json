@@ -1,0 +1,21 @@
+{
+  "category": "anyps5_domain",
+  "cause": "observation_proprietary",
+  "exports": [
+    {
+      "cause": "boundary_gpu",
+      "match": "^sceAgc\\w*(Capture|Instrumentation|Marker\\w*|Workload\\w*)\\w*$"
+    }
+  ],
+  "match": "^libSce(Agc|AgcDriver|GnmDriverCompat1|Sdma)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "gpu",
+  "priority": 13,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "GPU command buffers (packet building is pure; execution is the GPU's)."
+}

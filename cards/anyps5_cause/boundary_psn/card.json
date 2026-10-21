@@ -1,0 +1,23 @@
+{
+  "category": "anyps5_cause",
+  "class": "boundary",
+  "closes_with": "the servers and an account, or an offline stand-in that says it is one",
+  "cues": [
+    "\\bpsn\\b",
+    "\\bplaystation network\\b",
+    "\\bnp server\\b",
+    "\\bweb api\\b",
+    "\\btrophy server\\b"
+  ],
+  "debt_priority": 10,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary_psn",
+  "priority": 10,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "PlayStation Network services: the behaviour is defined by Sony's servers."
+}

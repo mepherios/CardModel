@@ -49,6 +49,16 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   identities, fixed divisors, totals; verified fast forms in `improve` without algorithm cards; the lineage
   as cards (Servois 1814 to Gödel 1931).
 
+## Done (2026-10-21, AnyPS5)
+
+* 🔵 **AnyPS5 as cards** (CM32): every declared export, raw-NID alias, assembly export, debt entry, library and
+  shader instruction as cards with file and line; the libraries and shader badges reproduced name by name; the
+  real coverage ladder; every gap (exports, debt entries, empty modules) classified by rules in
+  `stdlib/anyps5.card` with proofs; the module graph's blockers; eight semantics bindings derived from public
+  standards, witnessed against AnyPS5's own C++ (docs/ANYPS5.md).
+* 🔵 Theorem witnesses sample inside the hypothesis box when it is too large to enumerate (multi-variable
+  bounded statements were vacuous before).
+
 ## Now
 
 * 🟢 **Native path inside improved modules.** Optionally call the C/Rust form of a pure function through

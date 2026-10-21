@@ -1,0 +1,216 @@
+{
+  "category": "anyps5_semantics",
+  "checks": [
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isupper_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isupper_nid_postfix",
+      "fn": "c_upper"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "islower_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.islower_nid_postfix",
+      "fn": "c_lower"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isalpha_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isalpha_nid_postfix",
+      "fn": "c_alpha"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isdigit_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isdigit_nid_postfix",
+      "fn": "c_digit"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isalnum_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isalnum_nid_postfix",
+      "fn": "c_alnum"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isspace_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isspace_nid_postfix",
+      "fn": "c_space"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isblank_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isblank_nid_postfix",
+      "fn": "c_blank"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "iscntrl_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.iscntrl_nid_postfix",
+      "fn": "c_cntrl"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isprint_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isprint_nid_postfix",
+      "fn": "c_print"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isgraph_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isgraph_nid_postfix",
+      "fn": "c_graph"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "ispunct_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.ispunct_nid_postfix",
+      "fn": "c_punct"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "isxdigit_nid_postfix({0})",
+      "compare": "truth",
+      "export": "libc.isxdigit_nid_postfix",
+      "fn": "c_xdigit"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "toupper_nid_postfix({0})",
+      "export": "libc.toupper_nid_postfix",
+      "fn": "c_toupper"
+    },
+    {
+      "args": [
+        [
+          -1,
+          255
+        ]
+      ],
+      "call": "tolower_nid_postfix({0})",
+      "export": "libc.tolower_nid_postfix",
+      "fn": "c_tolower"
+    }
+  ],
+  "closes": [],
+  "closes_debt": [],
+  "covers": [
+    "libc.isalnum_nid_postfix",
+    "libc.isalpha_nid_postfix",
+    "libc.isblank_nid_postfix",
+    "libc.iscntrl_nid_postfix",
+    "libc.isdigit_nid_postfix",
+    "libc.isgraph_nid_postfix",
+    "libc.islower_nid_postfix",
+    "libc.isprint_nid_postfix",
+    "libc.ispunct_nid_postfix",
+    "libc.isspace_nid_postfix",
+    "libc.isupper_nid_postfix",
+    "libc.isxdigit_nid_postfix",
+    "libc.tolower_nid_postfix",
+    "libc.toupper_nid_postfix"
+  ],
+  "harness": {
+    "include": [
+      "core/libs/prx/libc/src/LocaleSupport.cpp"
+    ],
+    "language": "cpp",
+    "link": {
+      "darwin": [
+        "-Wl,-undefined,dynamic_lookup"
+      ],
+      "linux": [
+        "-Wl,--unresolved-symbols=ignore-all"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "libc_ctype",
+  "program": "stdlib/ps5_libc.card",
+  "provenance": {
+    "by": "the AnyPS5 session (hand-written binding)",
+    "origin": "cardmodel",
+    "written": "2026-10-21"
+  },
+  "source": "core/libs/prx/libc/src/LocaleSupport.cpp",
+  "standard": "ISO C 7.4 (character handling) in the \"C\" locale, over ASCII",
+  "statement": "The character classes and case mappings of the C locale AnyPS5's libc exports, for every value the C standard allows (EOF and 0..255)."
+}

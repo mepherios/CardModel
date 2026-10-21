@@ -285,6 +285,29 @@ the balancing log of what the laws found.
 Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALLEL`, `CARDMODEL_CHILD_MB`,
 `CARDMODEL_SELF_MB`, `CARDMODEL_MIN_FREE_MB`).
 
+## 3f. AnyPS5 (a real system, read as cards)
+
+```bash
+./bin/cardmodel anyps5 scan ~/Documents/AnyPS5-main --parity --save --global   # read-only; badge reproduced
+./bin/cardmodel anyps5 witness ~/Documents/AnyPS5-main --global                 # AnyPS5's code vs derived semantics
+./bin/cardmodel anyps5 cover --write docs/ANYPS5_COVERAGE.md                    # the ladder and every gap's cause
+./bin/cardmodel anyps5 why sceKeyboardGetKey2Char                               # gaps, causes, proofs, witnesses
+./bin/cardmodel anyps5 blocks                                                   # pending exports by what they block
+```
+
+* The scan is an observation (packs `anyps5_export`, `anyps5_debt`, `anyps5_library`, `anyps5_instruction`):
+  rescan after AnyPS5 changes; `verify` reports witnesses that belong to an older scan as stale.
+* Knowledge is data: a cause, a library domain or a standard is a card (`tools/seed_anyps5.py` wrote the first
+  ones). A new semantics binding is a card in `cards/anyps5_semantics/<name>/` (program, checks, C++ adapters next
+  to it) plus its program in `stdlib/ps5_*.card`; run `anyps5 witness` and it counts.
+* docs/ANYPS5.md says why the result is not 100 % by construction (observation, boundaries, policy) and what
+  would move it.
+* A checkout with fixes is a card-model project of its own: `cardmodel init` in it, then `anyps5 scan . --parity
+  --save` and `anyps5 witness .` write to its `.cardmodel/`. A scan in a higher layer replaces the model's scan of
+  upstream instead of mixing with it (`scan_cards`), and `anyps5 cover --compare` sets the two side by side.
+  ~/Programmering/AnyPS5-cardmodel is such a copy (its own git repository: the MP3 header fix, the relinker build,
+  `docs/dev/CARDMODEL.md`).
+
 ## 4. How to add things
 
 **A card.** Run `cardmodel new <registry> <name> --statement "..."`, or write `cards/<registry>/<name>/card.json`
@@ -414,6 +437,13 @@ engine, exact equilibria, design laws, AIs and the systemic world.
 function symbols); the game is one-exchange deep (matrix games per state, not a duel-tree search); the world
 is a demonstration map; there is no graphics or engine integration yet beyond the C++ kernel.
 
+**Real since the AnyPS5 build:** a C++ code base read as cards with file and line (exports, debt, libraries,
+shader instructions); its badge reproduced name by name; every gap classified by rules with proofs; AnyPS5's own
+C++ compiled next to card-language semantics and compared on seeded inputs.
+
+**Partial (AnyPS5):** the scan is lexical (no macro expansion); debt causes come from cue words; eight semantics
+bindings cover the pure code a public standard fixes, not all of it.
+
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
 
@@ -455,11 +485,10 @@ a native (ctypes) path inside improved modules (ROADMAP).
 
    The effect shell (input, audio, video, saves, link/online) stays in the runtime unchanged (CM21). ROMs stay local
    test inputs and are never copied into a repository.
-7. **AnyPS5 on the card model (proposed as its own session).** One card per PRX export/NID (implemented, throws, or
-   unknown signature) and one card per debt entry. That gives the real coverage behind its 95 % badge and an honest
-   account of why the rest is missing: unknown console behaviour can only be closed by observation, which is Pheros
-   L102. Then the card-native mechanisms that make the missing pieces explicit, witnessed obligations instead of
-   prose.
+7. **AnyPS5: done (section 3f, docs/ANYPS5.md).** What remains there: the pending blockers `anyps5 blocks`
+   ranks, host mappings for the standard host functions, the string/list IR for the standard data functions,
+   and console observations for the rest (each named with its file, line and debt entry). Fixes go into the copy
+   ~/Programmering/AnyPS5-cardmodel, never into ~/Documents/AnyPS5-main.
 
 ---
 

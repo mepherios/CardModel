@@ -1,0 +1,261 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 257,
+      "call": "isupper_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isupper_nid_postfix",
+      "fn": "c_upper",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "islower_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.islower_nid_postfix",
+      "fn": "c_lower",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isalpha_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isalpha_nid_postfix",
+      "fn": "c_alpha",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isdigit_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isdigit_nid_postfix",
+      "fn": "c_digit",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isalnum_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isalnum_nid_postfix",
+      "fn": "c_alnum",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isspace_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isspace_nid_postfix",
+      "fn": "c_space",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isblank_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isblank_nid_postfix",
+      "fn": "c_blank",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "iscntrl_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.iscntrl_nid_postfix",
+      "fn": "c_cntrl",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isprint_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isprint_nid_postfix",
+      "fn": "c_print",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isgraph_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isgraph_nid_postfix",
+      "fn": "c_graph",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "ispunct_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.ispunct_nid_postfix",
+      "fn": "c_punct",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "isxdigit_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.isxdigit_nid_postfix",
+      "fn": "c_xdigit",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "toupper_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.toupper_nid_postfix",
+      "fn": "c_toupper",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 257,
+      "call": "tolower_nid_postfix({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libc.tolower_nid_postfix",
+      "fn": "c_tolower",
+      "inputs": 257,
+      "ok": true,
+      "threw": 0
+    }
+  ],
+  "exports": {
+    "libc.isalnum_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isalpha_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isblank_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.iscntrl_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isdigit_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isgraph_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.islower_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isprint_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.ispunct_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isspace_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isupper_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.isxdigit_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.tolower_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    },
+    "libc.toupper_nid_postfix": {
+      "agree": true,
+      "checks": 257,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "libc_ctype",
+  "program": "stdlib/ps5_libc.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:50:58+00:00",
+  "seed": 20261021,
+  "semantics": "libc_ctype",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "bdfff06d62c61de7151cbde0546254e0a55e222ad19c03d4abcb011463d1dbe4",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

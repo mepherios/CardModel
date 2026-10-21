@@ -1,0 +1,28 @@
+-- libSceAgc's command packets, derived: the AMD PM4 type-3 packet header (AMD's PM4 packet documentation,
+-- Mesa's PKT3 macro): type 3 in bits 31-30, the payload length minus one in bits 29-16, the opcode in 15-8 and
+-- the predicate and shader-type flags in 7-0. A packet of n dwords (header included) therefore stores n - 2 in
+-- its count field and takes 4 n bytes; a GetSize export returns that size for the packet its emitter writes.
+-- anyps5_semantics/agc_packets runs AnyPS5's Agc::Command::Header next to pm4_header and checks the size law on
+-- every implemented GetSize / emitter pair the scan finds.
+module ps5_agc
+
+fn pm4_header(op: Int, n: Int, flags: Int) -> Int requires 0 <= op, op <= 255, 2 <= n, n <= 0x4001, 0 <= flags, flags <= 255 =
+  0xC0000000 | ((n - 2) << 16) | (op << 8) | flags
+fn pm4_type(h: Int) -> Int requires 0 <= h, h <= 0xFFFFFFFF = h >> 30
+fn pm4_dwords(h: Int) -> Int requires 0 <= h, h <= 0xFFFFFFFF = ((h >> 16) & 0x3FFF) + 2
+fn pm4_opcode(h: Int) -> Int requires 0 <= h, h <= 0xFFFFFFFF = (h >> 8) & 0xFF
+fn pm4_flags(h: Int) -> Int requires 0 <= h, h <= 0xFFFFFFFF = h & 0xFF
+-- bytes a packet takes: its header dword and its payload
+fn packet_bytes(payload: Int) -> Int requires 1 <= payload, payload <= 0x4000 = 4 * (payload + 1)
+-- the one-dword NOP that pads a buffer (Mesa's PKT3_NOP_PAD)
+fn nop_pad() -> Int = 0xFFFF1000
+
+theorem header_round_trip(op: Int, n: Int, flags: Int) requires 0 <= op, op <= 255, 2 <= n, n <= 0x4001, 0 <= flags, flags <= 255:
+  (pm4_type(pm4_header(op, n, flags)) == 3 and pm4_opcode(pm4_header(op, n, flags)) == op
+   and pm4_dwords(pm4_header(op, n, flags)) == n and pm4_flags(pm4_header(op, n, flags)) == flags)
+theorem header_is_a_word(op: Int, n: Int, flags: Int) requires 0 <= op, op <= 255, 2 <= n, n <= 0x4001, 0 <= flags, flags <= 255:
+  0 <= pm4_header(op, n, flags) and pm4_header(op, n, flags) <= 0xFFFFFFFF
+theorem sizes_grow_by_a_dword(p: Int) requires 1 <= p, p <= 0x3FFF: packet_bytes(p + 1) - packet_bytes(p) == 4
+
+test pm4_header(0x26, 3, 0) == 0xC0012600 and pm4_header(0x13, 2, 0) == 0xC0001300
+test packet_bytes(1) == 8 and packet_bytes(2) == 12 and pm4_dwords(nop_pad()) == 0x3FFF + 2

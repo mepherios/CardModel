@@ -1,0 +1,14 @@
+{
+  "category": "anyps5_standard",
+  "cause": "derivable_standard_data",
+  "match": "^(sceAcm_I?FFT|sceNgs2Fft(Init|Process))$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "discrete_fourier_transform",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "The discrete Fourier transform; the work-area sizes around it are Sony's."
+}

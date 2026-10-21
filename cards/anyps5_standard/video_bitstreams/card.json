@@ -1,0 +1,14 @@
+{
+  "category": "anyps5_standard",
+  "cause": "derivable_standard_data",
+  "match": "^sceVdecswGet(Hevc|Vp9)?PictureInfo$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "video_bitstreams",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "ITU-T H.264 / H.265 and the VP9 bitstream specification (sequence and picture headers)."
+}

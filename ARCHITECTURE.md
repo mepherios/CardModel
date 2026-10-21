@@ -49,6 +49,10 @@ cardmodel/                      the repository IS the model (its home)
 │   │                           cards, algorithm resolution), run.py (tests, queries, theorems, build, emit)
 │   ├── game/                   the Vector Counter System: combat.py (engine on the card-language kernel),
 │   │                           analysis.py (exact equilibria, design laws, sensitivity, balance), ai.py, world.py
+│   ├── anyps5/                 AnyPS5 as cards: scan.py (a checkout, read-only, the badge's rule reproduced),
+│   │                           cards.py (packs with file and line), classify.py (facts + stdlib/anyps5.card: every
+│   │                           gap's cause), cover.py (the ladder, causes, findings), witness.py (AnyPS5's C++ next
+│   │                           to card-language semantics), cli.py
 │   ├── emit/                   lean.py (theorems, fail-closed batch checker, lint), lean_logic.py (derivations
 │   │                           as Lean terms), lean_import.py (Lean theorems as cards, faithfulness), lean_chain.py
 │   │                           (rule-card chains as calc proofs), proofs.py, hints.py
@@ -56,7 +60,8 @@ cardmodel/                      the repository IS the model (its home)
 │   └── cli.py                  init observe verify cover rewrite emit learn optimize translate status ...
 ├── stdlib/                     card-language sources the program runs: self.card (its laws), program.card,
 │                               combat.card (the combat kernel), world.card (the systemic world),
-│                               algebra.card (identities between algorithm cards, generated)
+│                               algebra.card (identities between algorithm cards, generated), anyps5.card (AnyPS5's
+│                               gaps and causes as rules), ps5_*.card (semantics derived from public standards)
 ├── game/DESIGN.md              the game design, every claim computed
 ├── examples/lang/              card-language programs: family, math, hierarchy, grammar
 ├── cards/                      the model's own registries (the knowledge; see COVERAGE.md for counts)
@@ -179,6 +184,8 @@ op cards --engines/laws (templates)--> theorem cards --simplifying--> rewrite_ru
 Lean file --emit/lean_import--> theorem cards (lean semantics) --kernel: faithful? witness? re-prove? chains?
 proof tree --emit/lean_logic--> Lean inductive encoding + constructor term --kernel checks the derivation
 store --engines/selflogic--> facts + stdlib/self.card --> the model's laws as logic (0 violations)
+AnyPS5 checkout --anyps5/scan (read-only)--> anyps5_* cards --anyps5/classify + stdlib/anyps5.card--> gaps, causes,
+    proofs --anyps5/cover--> docs/ANYPS5_COVERAGE.md;  stdlib/ps5_*.card + AnyPS5's C++ --anyps5/witness--> anyps5_witness
 move cards + stdlib/combat.card --game/combat--> exchanges --game/analysis--> exact equilibria, design laws
 ```
 

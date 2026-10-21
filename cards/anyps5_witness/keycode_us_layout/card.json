@@ -1,0 +1,91 @@
+{
+  "category": "anyps5_witness",
+  "checks": [
+    {
+      "agree": 256,
+      "call": "UsCharacter({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": null,
+      "fn": "us_char",
+      "inputs": 256,
+      "note": "internal table UsCharacter",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 300,
+      "call": "UsCharacter({0})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": null,
+      "fn": "us_char",
+      "inputs": 300,
+      "note": "internal table UsCharacter",
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 256,
+      "call": "GetCharacter({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceConvertKeycode.sceConvertKeycodeGetCharacter",
+      "fn": "us_char_state",
+      "inputs": 256,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 256,
+      "call": "GetCharacter({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "agree",
+      "export": "libSceConvertKeycode.sceConvertKeycodeGetCharacter",
+      "fn": "us_char_state",
+      "inputs": 256,
+      "ok": true,
+      "threw": 0
+    },
+    {
+      "agree": 4,
+      "call": "GetCharacter({0}, {1})",
+      "disagree": 0,
+      "examples": [],
+      "expect": "throws",
+      "export": "libSceConvertKeycode.sceConvertKeycodeGetCharacter",
+      "fn": null,
+      "inputs": 4,
+      "note": "AnyPS5 throws for the state bits it does not know (the shift bit among them)",
+      "ok": true,
+      "threw": 4
+    }
+  ],
+  "exports": {
+    "libSceConvertKeycode.sceConvertKeycodeGetCharacter": {
+      "agree": true,
+      "checks": 516,
+      "disagree": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "keycode_us_layout",
+  "program": "stdlib/ps5_keycode.card",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "cardmodel anyps5 witness"
+  },
+  "ran_at": "2026-10-21T17:50:58+00:00",
+  "seed": 20261021,
+  "semantics": "keycode_us_layout",
+  "snapshot": "6341d014f2359bdbb37221fa52f6c6b9a0f8267b00691d670fc5b9a06e78f193",
+  "source_sha256": "5193e1c9b2b8a252145e029e3bc5027fd3cea48b0fe267806793f0a44d787e27",
+  "status": "agree",
+  "toolchain": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+}

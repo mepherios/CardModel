@@ -1,0 +1,87 @@
+-- AnyPS5 as logic: which exports are complete, what keeps every gap open, and what blocks what.
+-- The facts come from the anyps5_* cards (cardmodel anyps5 cover | gaps | why | blocks): exports, debt entries
+-- and libraries from a scan, and the knowledge cards (anyps5_cause, anyps5_domain, anyps5_standard,
+-- anyps5_semantics). Every candidate cause of a gap is derived; the strongest one (lowest priority) is the cause.
+module anyps5
+
+-- the gaps a counted export can have
+gap(E, pending) <- export(E), pending(E).
+gap(E, inert) <- export(E), implemented(E), inert(E), not justified(E).
+-- a constant is not a silent stub when the model derives the same value and AnyPS5's code agrees with it
+justified(E) <- inert(E), size_law_holds(E).
+justified(E) <- inert(E), witness_agrees(E).
+gap(E, partial) <- export(E), implemented(E), unsupported_input(E, _).
+gap(E, reaches_stub) <- export(E), implemented(E), helper_stub(E).
+gap(E, reaches_stub) <- export(E), implemented(E), uses(E, G), pending(G).
+gap(E, debt) <- export(E), implemented(E), debt_on(D, E), open_debt(D).
+gapped(E) <- gap(E, _).
+complete(E) <- export(E), implemented(E), not gapped(E).
+witnessed(E) <- complete(E), witness_agrees(E).
+
+-- a gap's candidate causes; a debt gap takes its cause from the debt entry, the other kinds from the code
+code_kind(pending).
+code_kind(inert).
+code_kind(partial).
+code_kind(reaches_stub).
+cand(E, K, derivable_closed, P) <- gap(E, K), code_kind(K), closed(E), priority(derivable_closed, P).
+-- a semantics card that derives part of the gap says what remains: it outranks the heuristics below
+cand(E, K, C, 0) <- gap(E, K), code_kind(K), remaining(E, C), not closed(E).
+cand(E, K, observation_unknown_name, P) <- gap(E, K), unknown_name(E), priority(observation_unknown_name, P).
+cand(E, pending, derivable_packet, P) <- gap(E, pending), size_of(E, X), packet(X, _), implemented(X),
+    priority(derivable_packet, P).
+cand(E, pending, derivable_blocked, P) <- gap(E, pending), size_of(E, X), pending(X), priority(derivable_blocked, P).
+cand(E, reaches_stub, derivable_blocked, P) <- gap(E, reaches_stub), priority(derivable_blocked, P).
+cand(E, K, C, P) <- gap(E, K), code_kind(K), standard(E, S), standard_cause(S, C), priority(C, P).
+cand(E, K, C, P) <- gap(E, K), code_kind(K), export_override(E, C), priority(C, P).
+cand(E, K, C, P) <- gap(E, K), code_kind(K), library_of(E, L), domain(L, D), domain_cause(D, C), priority(C, P).
+cand(E, partial, C, P) <- gap(E, partial), unsupported_input(E, C), priority(C, P).
+cand(E, pending, observation_unknown_signature, P) <- gap(E, pending), no_params(E),
+    priority(observation_unknown_signature, P).
+cand(E, inert, observation_silent, P) <- gap(E, inert), priority(observation_silent, P).
+cand(E, debt, C, P) <- gap(E, debt), debt_on(D, E), open_debt(D), debt_cause(D, C), priority(C, P).
+cand(E, K, observation_proprietary, P) <- gap(E, K), priority(observation_proprietary, P).
+best(E, K, P) <- gap(E, K), P = min Q { cand(E, K, _, Q) }.
+cause(E, K, C) <- best(E, K, P), cand(E, K, C, P).
+caused(E, K) <- cause(E, K, _).
+never: gap(E, K), not caused(E, K).
+
+-- debt entries: open unless a semantics card closes them; a cue in the text names the cause
+open_debt(D) <- debt(D), not debt_closed(D).
+dcand(D, C, P) <- open_debt(D), debt_cue(D, C), debt_priority(C, P).
+dcand(D, boundary_toolchain, P) <- open_debt(D), debt_section(D, build), debt_priority(boundary_toolchain, P).
+dcand(D, C, P) <- open_debt(D), debt_library(D, L), domain(L, Dm), domain_cause(Dm, C), cause_class(C, boundary),
+    debt_priority(C, P).
+dcand(D, C, P) <- open_debt(D), debt_default(C, P).
+-- an entry with no cue still records something AnyPS5 does not know: unmeasured, behind every cue
+debt_default(observation_unmeasured, 90).
+debt_best(D, P) <- open_debt(D), P = min Q { dcand(D, _, Q) }.
+debt_cause(D, C) <- debt_best(D, P), dcand(D, C, P).
+debt_caused(D) <- debt_cause(D, _).
+never: open_debt(D), not debt_caused(D).
+
+-- modules with no declared exports: the export table itself is unknown
+module_gap(L) <- library(L), empty_library(L).
+mcand(L, C, P) <- module_gap(L), domain(L, D), domain_cause(D, C), cause_class(C, boundary), priority(C, P).
+mcand(L, observation_unknown_exports, P) <- module_gap(L), priority(observation_unknown_exports, P).
+module_best(L, P) <- module_gap(L), P = min Q { mcand(L, _, Q) }.
+module_cause(L, C) <- module_best(L, P), mcand(L, C, P).
+module_caused(L) <- module_cause(L, _).
+never: module_gap(L), not module_caused(L).
+
+-- every library is placed in a domain
+has_domain(L) <- domain(L, _).
+never: library(L), not has_domain(L).
+
+-- the module graph: what a missing export blocks
+blocked_by(E, G) <- implemented(E), uses(E, G), pending(G).
+blocked_by(E, G) <- implemented(E), uses(E, H), implemented(H), blocked_by(H, G).
+waits_for(E, X) <- gap(E, pending), size_of(E, X), pending(X).
+blocks(G, N) <- pending(G), N = count { blocked_by(_, G) }.
+unblocks(X, N) <- pending(X), N = count { waits_for(_, X) }.
+-- titles that met a gap (a debt entry names the title and the export)
+observed_in(E, T) <- debt_on(D, E), debt_title(D, T).
+title_gap(T, E) <- observed_in(E, T), gapped(E).
+-- the packet-size law: a GetSize export returns 4 bytes per dword of the one packet its emitter writes
+size_law_holds(E) <- size_of(E, X), packet(X, N), constant(E, B), B == 4 * (N + 1).
+size_law_fails(E) <- size_of(E, X), packet(X, N), constant(E, B), B != 4 * (N + 1).
+never: implemented(E), size_law_fails(E).

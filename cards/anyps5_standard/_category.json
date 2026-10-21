@@ -1,0 +1,7 @@
+{
+  "card_type": "anyps5_standard",
+  "defined_by": "tools/seed_anyps5.py",
+  "description": "Exports whose semantics a public standard fixes, matched by symbol, with the standard.",
+  "name": "anyps5_standard",
+  "tier": 1
+}

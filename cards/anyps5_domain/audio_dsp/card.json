@@ -1,0 +1,16 @@
+{
+  "category": "anyps5_domain",
+  "cause": "observation_proprietary",
+  "exports": [],
+  "match": "^libSce(Audio3d|AudioPropagation|Ngs2\\w*|Acm|Ajm\\w*|At9Enc|Dseehx|S3da)$",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "audio_dsp",
+  "priority": 14,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_anyps5.py"
+  },
+  "statement": "Sony audio engines and DSP (FFT and codecs inside them are standards)."
+}
