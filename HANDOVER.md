@@ -361,10 +361,12 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
 ./bin/cardmodel arcade build vector_duel
 ```
 
-* **Vector Duel** (`cards/game/vector_duel`): the game card holds the data (strings, music, ladder, achievements,
-  store text, versions); its eight `.card` files are the whole game (frame loop, software renderer, duel on the
-  move cards and the combat kernel, AIs, drawing, screens, synth, save). `arcade/gen.py` turns the data cards into
-  tables and solves the exact equilibria the equilibrium AI samples. docs/ARCADE.md describes it.
+* **Vector Duel** (`cards/game/vector_duel`): the game card holds the data (strings, music, ladder, arenas, the
+  boss's phases, the duel tree's depth, achievements, store text, versions); its eight `.card` files are the whole
+  game (frame loop, software renderer, duel on the move cards, chain cards and the combat kernel, AIs, drawing,
+  screens, synth, save). `arcade/gen.py` turns the data cards into tables, solves the exact equilibria the
+  equilibrium AI samples and the duel tree the Oracle plays (`game/tree.py`, cached by a hash of its inputs).
+  docs/ARCADE.md describes it.
 * **The pipeline** (`arcade/build.py`): module -> C card -> `game.dylib`; the platform card's Swift effect shell;
   store pictures drawn by the game; a bundle; a depot of SHA-256 chunks. **The service** (`arcade serve`) builds
   on demand when the cards change and serves catalog, manifests, chunks, pictures and the launcher's pages.
@@ -531,7 +533,8 @@ core import with kernel-checked faithfulness and re-proofs; rule mining; the mod
 engine, exact equilibria, design laws, AIs and the systemic world.
 
 **Partial (second build):** the Lean fragment is arithmetic (Nat/Int/Bool); logic terms are constants (no
-function symbols); the game is one-exchange deep (matrix games per state, not a duel-tree search); the world
+function symbols); the game was one-exchange deep (matrix games per state; the duel tree came with Vector Duel
+0.4.0, over abstract states); the world
 is a demonstration map; there is no graphics or engine integration yet beyond the C++ kernel.
 
 **Real since the AnyPS5 build:** a C++ code base read as cards with file and line (exports, debt, libraries,

@@ -46,7 +46,7 @@ frames (60 fps). A move card is frame data plus a vector:
 * **step**: changes distance.
 
 The kernel decides every counter. It is `stdlib/combat.card`, written in the card language, so it is exact
-integer arithmetic. It is checked as theorems: eight of its ten invariants are proved by exhaustion over their
+integer arithmetic. It is checked as theorems: nine of its eleven invariants are proved by exhaustion over their
 whole finite domains. It also compiles to every language card.
 
 * **alignment** `align(a, g)` is 2 when the guard faces the attack, 1 at 45°, 0 at 90°, −1 and −2 behind
@@ -75,6 +75,16 @@ overextension into a bank; the roll banks nothing because it moves you away.
 exchange. A broken posture allows only `endure` for one exchange, and any attack that lands on it is a
 critical. Then posture resets. Design law GL6 checks that every forced stance exits.
 
+**Strings.** A chain card (`cards/chain`) is one link: an attack that connected (a hit, a block or a pierce)
+may cancel its recovery, inside a window of frames, into another attack, at a damage proration. Seven links
+ship: a jab opens either slash, a slash continues over the top or (left) from below or (right) on the upper
+diagonal, and the sweep goes high. Attacks climb by commitment along the links, so strings end (GL9: the graph
+is acyclic, three hits at most). Every link changes the vector and stays readable: its startup, with the flow
+from the first attack, is at least the reaction frames, and after a clean hit the struck defender's hit-stun
+(the kernel's `hit_stun`, 10 + damage/3 frames) ends at least two frames before a guard would have to be up
+(GL10). So a string is a sequence of reads, not a combo: guess the next vector and redirect it, and the string
+breaks.
+
 ## 3. The design laws (cards in `cards/design_law`, checked by `cardmodel game check`)
 
 | law | what is computed | now |
@@ -87,6 +97,8 @@ critical. Then posture resets. Design law GL6 checks that every forced stance ex
 | GL6 forced states exit | recoil and broken exit within one exchange | holds |
 | GL7 rich equilibrium | exact value 0 (symmetric fighters) and ≥ 6 options mixed | value 0, 8 options |
 | GL8 counters are reads | every defensive option loses to some attack | holds |
+| GL9 strings end | the chain cards form an acyclic graph between attacks; no string is longer than 3 hits | holds, 7 links, 3 hits |
+| GL10 links are answerable | every link's chained startup ≥ the reaction frames; after a hit, ≥ 2 frames to raise a guard | holds, 2 to 3 frames |
 
 The equilibrium is computed exactly: a simplex over rational numbers whose certificate is then checked
 exactly. The row mix guarantees at least the value against every column, and the column mix concedes at most
@@ -125,24 +137,28 @@ numbers last. An AI that wants to break a player's plan looks there first.
 
 | agent | how it plays |
 |---|---|
+| `tree` | the duel tree (`cardmodel/game/tree.py`): backward induction over abstract states (distance, frame advantage in five buckets, each fighter open with low or high posture, recoiling or broken), six exchanges deep with discount 0.75. At depth 1 a state is worth its exchange matrix; deeper, what the exchange changed plus the discounted value of where it leads. Each state's matrix game is solved by the simplex with a checked certificate. It also solves the string sub-game after a connect: each link started early by the recovery it cancels, against the defender freed by the hit-stun |
 | `equilibrium` | samples the exact equilibrium of the current exchange; unexploitable per exchange |
 | `reader` | tracks which vector features you lean on (kind, direction, height, tags; decaying counts), predicts your next move from them, best-responds, and mixes in the equilibrium 25% of the time so it cannot be farmed. It tells you what it thinks you lean on (`game play`). |
 | `greedy` | best one-step value against a uniform opponent |
 | `habit` | a predictable player (overheads and high guards) |
 | `random` | uniform |
 
-Tournament, 10 duels per pair with sides alternating, seed 7:
+Tournament (`cardmodel game tournament`), 10 duels per pair with sides alternating, seed 7:
 
 | agent | score |
 |---|---|
-| equilibrium | 32 |
-| reader | 29.5 |
-| greedy | 21 |
+| tree | 40.5 |
+| equilibrium | 37 |
+| reader | 32.5 |
+| greedy | 22.5 |
 | habit | 16.5 |
 | random | 1 |
 
 The reader beats the habit 8–2 and greedy 6–1–3. It loses 4–6 to the equilibrium player, which is what
-reading should do against an opponent with no habit to read.
+reading should do against an opponent with no habit to read. The tree beats the reader 7–3 and greedy 8–1–1
+and ties the exact per-exchange equilibrium 5–5: its states are abstractions of the exchange the equilibrium
+player solves exactly, but it sees where an exchange leads.
 
 ## 6. The world: everything carries (`stdlib/world.card`)
 
@@ -201,8 +217,12 @@ Twenty-nine are recorded:
   the same inputs. That is the property lockstep and rollback netcode need, which matters for online play.
   `game kernel --lang cpp` gives the C++ to drop into an Unreal module; the move cards are JSON data the
   engine loads.
-* **Next design steps.** Multi-hit strings (cancel windows as move-card edges), weapons as move sets, bosses
-  as fighter cards with phase stances, a duel-tree search AI (several exchanges deep), and the world's
-  factions feeding the story.
+* **A new link** is one chain card. `cardmodel game check` says whether strings still end and every link can
+  still be answered.
+* **Built since the first design:** multi-hit strings (chain cards, GL9, GL10), the duel-tree AI (several
+  exchanges deep), and a boss with phases (Vector Duel's game card: each phase names the AI it plays, its
+  level, how often it strings and how far, its colour, sky and music).
+* **Next design steps.** Weapons as move sets, strings inside the exchange model itself (today a link is the
+  next exchange, started early), and the world's factions feeding the story.
 * **Story.** Deliberately not written yet: design first, story after. The world's factions, memory and
   standing are the hooks it will hang on.
