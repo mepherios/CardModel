@@ -1,0 +1,36 @@
+{
+  "category": "project",
+  "docs": [
+    "README.md",
+    "docs/AUTONOMY.md",
+    "docs/INTEGRATION.md"
+  ],
+  "kind": "program",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "label": "last self-run",
+      "self": "status"
+    },
+    {
+      "label": "last verify",
+      "verify": "*"
+    },
+    {
+      "goal": "G_A4_capabilities_failing",
+      "label": "core capabilities failing"
+    }
+  ],
+  "name": "cardmodel",
+  "order": 6,
+  "paths": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
+  "tier": 1,
+  "title": "The card model"
+}

@@ -1,0 +1,34 @@
+{
+  "category": "project",
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "kind": "research",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "goal": "G_K6_functional_identities",
+      "label": "identities between functions"
+    },
+    {
+      "cards": "functional_identity",
+      "label": "functional identity cards"
+    }
+  ],
+  "name": "godel_functions",
+  "order": 12,
+  "paths": [
+    "cardmodel/engines/funcalg.py",
+    "stdlib/algebra.card",
+    "cards/functional_identity"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Functions as algebra: canonical forms, Gödel numbers, the GCD of functions and the identities that carry between them.",
+  "tier": 1,
+  "title": "Gödel-numbered functions"
+}

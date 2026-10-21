@@ -94,6 +94,17 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   on use (governed, every 6 h); learning into the self layer, quarantine, findings and a ranked plan
   (docs/AUTONOMY.md); docs/STORE.md lists everything in the store and what the model does for it.
 
+## Gödel model: next (GOALS.md "What the card model is")
+
+* 🟢 **The prime ledger**: an append-only pack of atoms with their primes (B₀ from the op cards and logic
+  primitives first); a test that compares it with its git history so no prime is ever renumbered.
+* 🟢 **Gödel vectors on cards**: content vectors computed from constituents (a function card from its IR's ops),
+  beside the structural number funcalg already gives canonical forms.
+* 🟢 **The physics set**: SI base units as primes, derived units as cards with exponent vectors, and a dimensional
+  analysis witness for equations.
+* 🟢 **Homomorphism cards**: maps between sets (language → IR, mathematics → physics) with the product law checked
+  on samples, the GCD condition computed, and the residual factor written as the translation gap.
+
 ## Self-run: next
 
 * 🟢 **Learn from the user's projects**: add them as corpora (`cardmodel self corpus add PATH`) and adopt what the

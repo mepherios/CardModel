@@ -39,6 +39,49 @@ Any new `game` card appears in the store by itself: the service lists every card
 | the launcher | `app/arcade` (`Launcher.swift`, `ui/`) | install / update / verify integrity / play, play time, achievements read from the game's save |
 | the guarantees | tests/test_arcade.py, capability `arcade`, the resource governor | a scripted redirect is a theorem of the kernel (CM35's witness); builds and compiles take machine slots and memory caps (CM30); the self-run checks the store on every cycle |
 
+## 2b. In progress: the live page
+
+The store's **IN PROGRESS** tab shows everything being built, while it is being built (`cardmodel/arcade/hub.py`,
+`cards/app/arcade/ui/dev.js`). The projects are cards (`cards/project`, written by `tools/seed_projects.py`):
+
+* games: Vector Duel's next version, the Game Boy Player, the DS prototype, the combat design, the systemic world;
+* programs: the card model, AnyPS5 on cards and its working copy, Ting, rea-cards;
+* research: the Lean bridge, Gödel-numbered functions, LLVM-IR identity, the lineage cards.
+
+A card says what to watch (the repository, the paths in it, the games, the metrics), never how far along a
+project is. The hub computes each project's status:
+
+* its phase (active now, active today, in development, dormant, not started here, not on this machine);
+* the last commit that touches its paths;
+* the branches with unmerged work on it, ahead/behind main, with the worktree each is checked out in;
+* the files changing right now in any worktree;
+* its metrics, from the latest record of whichever checkout measured them, and the page says which;
+* its builds.
+
+Beside the projects runs an activity feed: commits and merges in every repository watched, verify runs,
+self-run cycles and new builds from the last 7 days.
+
+**Live.** The service watches the git refs and the records it reads (file times, every 2 s). When something
+moves, it pushes the new snapshot to the page as a server-sent event (`/api/events`), with no reload. A verify
+run in any checkout shows up in the feed within seconds. Uncommitted work is re-read every 60 s, and every
+5 minutes in the other repositories.
+
+**Early access.** A worktree's latest build of a game, when it differs from the release, is offered under its
+own library id (`<game>.early.<worktree>`). It is labelled with its branch and installs beside the release. The
+release channel (`/api/catalog`, the Store and Library tabs) never lists it. Its manifest and pictures come from
+that worktree's depot. Its chunks come from whichever store has them, since chunks are named by their SHA-256.
+
+**Read-only.** The hub runs git with `--no-optional-locks`, so `status` never rewrites an index a session might
+be committing to. It runs only `log`, `status`, `rev-list`, `for-each-ref`, `ls-files` and `worktree list`.
+Ting, rea-cards and the AnyPS5 copy are read the same way; nothing is written there (`tests/test_hub.py`
+checks every file under `.git`).
+
+```bash
+./bin/cardmodel arcade serve
+```
+
+Then open `http://127.0.0.1:8770/ui/index.html` (or Cardmodel Arcade) and choose IN PROGRESS.
+
 ## 3. How a product gets into the store
 
 1. A `game` card (title, version, store text, achievements, the screen / audio / input / save interface) and its

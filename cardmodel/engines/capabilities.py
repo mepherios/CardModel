@@ -446,6 +446,45 @@ def arcade(ctx: Ctx, seed: int) -> str:
             f" ({'build due' if entry['build_due'] else 'build current'})")
 
 
+def live_hub(ctx: Ctx, seed: int) -> str:
+    import hashlib
+    import subprocess
+    from unittest import mock
+
+    from ..arcade import hub as H
+    from ..kernel import paths as P
+    from ..kernel.store import Store
+    if shutil.which("git") is None:
+        raise Unavailable("git is not on this host")
+    d = _tmp()
+
+    def sh(cwd, *args):
+        subprocess.run(["git", "-c", "user.name=c", "-c", "user.email=c@c", *args], cwd=cwd, check=True,
+                       capture_output=True, timeout=60)
+    try:
+        (d / "proj").mkdir()
+        (d / "proj" / "a.py").write_text("a = 1\n", encoding="utf-8")
+        sh(d, "init", "-q", "-b", "main")
+        sh(d, "add", "-A")
+        sh(d, "commit", "-q", "-m", "start")
+        (d / "proj" / "a.py").write_text("a = 2\n", encoding="utf-8")         # work in progress, uncommitted
+        st = Store([("model", d / "cards")])
+        st.save({"name": "p", "category": "project", "title": "P", "kind": "game", "statement": "s", "paths": ["proj"]})
+        index = d / ".git" / "index"
+        before = hashlib.sha256(index.read_bytes()).hexdigest()
+        with mock.patch.object(P, "home", lambda: d):
+            hub = H.Hub(Ctx(st))
+            hub.refresh(force=True)
+            snap = hub.current()
+        proj = snap["projects"][0]
+        _need(proj["last"] and proj["last"]["title"] == "start", f"the last commit was not read: {proj['last']}")
+        _need(proj["phase"] == "active now" and proj["changes"], f"uncommitted work was not seen: {proj['phase']}")
+        _need(hashlib.sha256(index.read_bytes()).hexdigest() == before, "reading the repository wrote its index")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    return "a project's phase, last commit and uncommitted work computed from git, without writing to the repository"
+
+
 def anyps5(ctx: Ctx, seed: int) -> str:
     if not ctx.store.cards("anyps5_export"):
         raise Unavailable("no AnyPS5 scan in the store (cardmodel anyps5 scan PATH --save)")
@@ -483,7 +522,7 @@ def integration(ctx: Ctx, seed: int) -> str:
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
-                                  world, machines, emulation, arcade, anyps5, self_run, integration)}
+                                  world, machines, emulation, arcade, live_hub, anyps5, self_run, integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

@@ -1,0 +1,41 @@
+{
+  "category": "project",
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "kind": "research",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "goal": "G_K1_theorems_proved",
+      "label": "theorems proved"
+    },
+    {
+      "goal": "G_K2_lean_imported",
+      "label": "Lean theorems read faithfully"
+    },
+    {
+      "format": "{proved}/{total} rewrite rules proved",
+      "label": "rule proofs",
+      "verify": "proofs"
+    }
+  ],
+  "name": "lean_bridge",
+  "order": 11,
+  "paths": [
+    "cardmodel/emit/lean.py",
+    "cardmodel/emit/lean_import.py",
+    "cardmodel/emit/lean_logic.py",
+    "cardmodel/emit/lean_chain.py",
+    "cardmodel/engines/theorems.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Lean as the proof kernel: theorems, derivations and Lean's own library as cards, re-proved by the model's tactics.",
+  "tier": 1,
+  "title": "The Lean bridge"
+}
