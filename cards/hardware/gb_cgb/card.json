@@ -1,0 +1,110 @@
+{
+  "category": "hardware",
+  "logic": [
+    "cgb.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_cgb",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "rw",
+      "address": 65357,
+      "name": "KEY1",
+      "post_boot_cgb": 126,
+      "read_or": 126
+    },
+    {
+      "access": "rw",
+      "address": 65359,
+      "name": "VBK",
+      "post_boot_cgb": 254,
+      "read_or": 254
+    },
+    {
+      "access": "rw",
+      "address": 65384,
+      "name": "BCPS",
+      "read_or": 64
+    },
+    {
+      "access": "rw",
+      "address": 65385,
+      "name": "BCPD",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65386,
+      "name": "OCPS",
+      "read_or": 64
+    },
+    {
+      "access": "rw",
+      "address": 65387,
+      "name": "OCPD",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65388,
+      "name": "OPRI",
+      "read_or": 254
+    },
+    {
+      "access": "rw",
+      "address": 65392,
+      "name": "SVBK",
+      "post_boot_cgb": 248,
+      "read_or": 248
+    },
+    {
+      "access": "rw",
+      "address": 65394,
+      "name": "FF72",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65395,
+      "name": "FF73",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65396,
+      "name": "FF74",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65397,
+      "name": "FF75",
+      "read_or": 143
+    },
+    {
+      "access": "r",
+      "address": 65398,
+      "name": "PCM12",
+      "read_or": 0
+    },
+    {
+      "access": "r",
+      "address": 65399,
+      "name": "PCM34",
+      "read_or": 0
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "Game Boy Color registers: double speed (KEY1 + STOP), VRAM and WRAM banks, colour palettes, object priority mode, undocumented FF72-FF75.",
+  "tier": 1,
+  "timing": {
+    "speed_switch_mcycles": 2050
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "category": "machine",
+  "name": "lr35902_bench",
+  "isa": "lr35902",
+  "logic": ["bench.card"],
+  "components": [],
+  "export_state": true,
+  "statement": "A test bench for the LR35902 instruction cards: flat 64 KiB RAM, an M-cycle trace, stub halt/stop/hang. `cardmodel isa check` runs every instruction card on it in every engine with seeded random states.",
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

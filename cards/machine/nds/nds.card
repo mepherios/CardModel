@@ -1,0 +1,243 @@
+-- The Nintendo DS (a prototype): two CPUs on one set of ARM instruction cards - the ARM9 at arch 5 and the ARM7
+-- at arch 4 - taking turns on the core's registers (each CPU's registers are saved and restored at a switch),
+-- with the memory maps, I/O and HLE BIOS cards. A frame is 263 lines; per line the ARM9 runs ARM9_SLICE
+-- instructions and the ARM7 ARM7_SLICE (a nominal 2 and 1 instructions per bus-cycle pair: no wait states),
+-- (taking turns every chunk9 / chunk7 instructions, so a handshake between them sees the other side), then
+-- H-blank, timers, and at line 192 V-blank. Direct boot: the host loads both binaries and the header.
+const ARM9_SLICE = 2130
+const ARM7_SLICE = 1065
+export global chunk9: Int = 64            -- the CPUs alternate this finely inside a line (handshakes need it)
+export global chunk7: Int = 32
+array ctx_r: Int[32]
+array ctx_banked: Int[96]
+array ctx_misc: Int[16]
+export array executed: Int[2]
+export global frames: Int = 0
+export global entry9: Int = 0
+export global entry7: Int = 0
+export array exec9: Byte[0x200000]         -- per main-RAM halfword the ARM9 executed: 1 ARM, 2 Thumb
+export array exec7: Byte[0x200000]
+export array exec7w: Byte[0x8000]          -- per ARM7-WRAM halfword the ARM7 executed
+export array exec9i: Byte[0x4000]          -- per ITCM halfword the ARM9 executed
+
+fn save_cpu(c: Int) {
+  for i in 0 .. 16 {
+    ctx_r[c * 16 + i] = regs[i]
+  }
+  for i in 0 .. 48 {
+    ctx_banked[c * 48 + i] = banked[i]
+  }
+  ctx_misc[c * 8] = cpsr
+  ctx_misc[c * 8 + 1] = spsr
+  ctx_misc[c * 8 + 2] = pc
+  ctx_misc[c * 8 + 3] = arch
+}
+fn load_cpu(c: Int) {
+  for i in 0 .. 16 {
+    regs[i] = ctx_r[c * 16 + i]
+  }
+  for i in 0 .. 48 {
+    banked[i] = ctx_banked[c * 48 + i]
+  }
+  cpsr = ctx_misc[c * 8]
+  spsr = ctx_misc[c * 8 + 1]
+  pc = ctx_misc[c * 8 + 2]
+  arch = ctx_misc[c * 8 + 3]
+}
+export fn switch_cpu(c: Int) {
+  if c != cur {
+    save_cpu(cur)
+    load_cpu(c)
+    cur = c
+  }
+}
+fn mark_exec() {
+  let a = pc & MASK32
+  let st = if thumb() then 2 else 1
+  if (a >> 24) == 2 {
+    let h = (a & MAIN_MASK) >> 1
+    if cur == 0 {
+      exec9[h] = exec9[h] | st
+    } else {
+      exec7[h] = exec7[h] | st
+    }
+  } elif cur == 1 and a >= 0x03800000 and a < 0x04000000 {
+    let h = (a & 0xFFFF) >> 1
+    exec7w[h] = exec7w[h] | st
+  } elif cur == 0 and a < itcm_size {
+    let h = (a & 0x7FFF) >> 1
+    exec9i[h] = exec9i[h] | st
+  }
+}
+-- the last 128 instructions of each CPU (pc, then the instruction word), for the debugger
+export array ring: Int[512]
+export array ring_pos: Int[2]
+fn cpu_step() {
+  if ime[cur] != 0 and (ie[cur] & irqf[cur]) != 0 and (cpsr & 0x80) == 0 {
+    take_irq()
+  }
+  mark_exec()
+  let rp = ring_pos[cur]
+  ring[cur * 256 + rp * 2] = pc
+  ring_pos[cur] = (rp + 1) & 127
+  if thumb() {
+    let op = rd16(pc)
+    next_pc = (pc + 2) & MASK32
+    thumb_exec(op)
+  } else {
+    let op = rd32(pc)
+    next_pc = (pc + 4) & MASK32
+    let c = (op >> 28) & 0xF
+    if c == 15 {
+      arm_uncond(op)
+    } elif cond_ok(c) {
+      arm_exec(op)
+    }
+  }
+  pc = next_pc
+  executed[cur] += 1
+}
+-- lifted ARM9 code (cardmodel/machine/lift_arm.py replaces run_block with a switch over lifted blocks)
+export global lifted_on: Int = 0
+export global block_runs: Int = 0
+fn run_block(key: Int) -> Int {
+  return 0
+}
+-- the instruction word a lifted block was made from must still be there (overlays replace code)
+fn guard_word(a: Int) -> Int = rd32(a)
+-- what the interpreter checks before every instruction: a block leaves when any of it may have changed
+fn cpu_must_check() -> Bool {
+  if stopped_cpu[cur] != 0 or halted_cpu[cur] != 0 {
+    return true
+  }
+  return ime[cur] != 0 and (ie[cur] & irqf[cur]) != 0 and (cpsr & 0x80) == 0
+}
+fn run_cpu(c: Int, n: Int) {
+  switch_cpu(c)
+  var k = 0
+  while k < n {
+    if stopped_cpu[c] != 0 {
+      return
+    }
+    if halted_cpu[c] != 0 {
+      if (ie[c] & irqf[c]) == 0 {
+        return
+      }
+      halted_cpu[c] = 0
+    }
+    var ran = 0
+    if lifted_on != 0 and c == 0 and not thumb() and n - k >= 32 {
+      if ime[cur] != 0 and (ie[cur] & irqf[cur]) != 0 and (cpsr & 0x80) == 0 {
+        take_irq()
+      }
+      if not thumb() {
+        ran = run_block(pc)
+      }
+    }
+    if ran > 0 {
+      block_runs += 1
+      k += ran
+    } else {
+      cpu_step()
+      k += 1
+    }
+  }
+}
+fn line_events(line: Int) {
+  vcount = line
+  for c in 0 .. 2 {
+    let lyc = (dispstat[c] >> 8) | ((dispstat[c] & 0x80) << 1)
+    if (dispstat[c] & 0x20) != 0 and lyc == line {
+      request(c, IRQ_VCOUNT)
+    }
+    if line == 192 {
+      if (dispstat[c] & 8) != 0 {
+        request(c, IRQ_VBLANK)
+      }
+      dma_event(c, if c == 0 then 1 else 2)
+    }
+  }
+}
+export fn run_frame() {
+  for line in 0 .. 263 {
+    line_events(line)
+    var done9 = 0
+    var done7 = 0
+    while done9 < ARM9_SLICE or done7 < ARM7_SLICE {
+      if done9 < ARM9_SLICE {
+        run_cpu(0, chunk9)
+        done9 += chunk9
+      }
+      if done7 < ARM7_SLICE {
+        run_cpu(1, chunk7)
+        done7 += chunk7
+      }
+    }
+    for c in 0 .. 2 {
+      if (dispstat[c] & 0x10) != 0 {
+        request(c, IRQ_HBLANK)
+      }
+    }
+    switch_cpu(0)
+    timer_advance(0, 2130)
+    switch_cpu(1)
+    timer_advance(1, 2130)
+  }
+  frames += 1
+}
+-- direct boot: what the BIOS and firmware leave behind before jumping to the game (registers per mode)
+fn boot_cpu(c: Int, entry: Int, sp_sys: Int, sp_irq: Int, sp_svc: Int, version: Int) {
+  for i in 0 .. 16 {
+    regs[i] = 0
+  }
+  for i in 0 .. 48 {
+    banked[i] = 0
+  }
+  banked[2 * 7 + 5] = sp_irq
+  banked[3 * 7 + 5] = sp_svc
+  cpsr = 0xDF
+  spsr = 0
+  regs[12] = entry
+  regs[13] = sp_sys
+  regs[14] = entry
+  pc = entry
+  arch = version
+  save_cpu(c)
+}
+export fn power_on() {
+  cur = 0
+  frames = 0
+  dtcm_base = 0x03000000
+  dtcm_size = 0x4000
+  itcm_size = 0x2000000
+  cp15_ctrl = 0x00012078
+  wramcnt = 3
+  for c in 0 .. 2 {
+    ime[c] = 0
+    ie[c] = 0
+    irqf[c] = 0
+    dispstat[c] = 0
+    ipcsync[c] = 0
+    fifocnt[c] = 0x101
+    fifo_len[c] = 0
+    fifo_head[c] = 0
+    halted_cpu[c] = 0
+    stopped_cpu[c] = 0
+    executed[c] = 0
+  }
+  bios_install()
+  boot_cpu(1, entry7, 0x0380FD80, 0x0380FF80, 0x0380FFC0, 4)
+  boot_cpu(0, entry9, 0x03002F7C, 0x03003F80, 0x03003FC0, 5)
+  load_cpu(0)
+}
+-- the debugger's view of memory (no side effects on I/O)
+export fn dbg_rd8(a: Int) -> Int {
+  if ((a >> 24) & 0xFF) == 4 {
+    return 0
+  }
+  return rd8(a)
+}
+-- one instruction on the CPU now loaded (debugging)
+export fn step_cpu() {
+  cpu_step()
+}

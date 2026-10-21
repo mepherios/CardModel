@@ -1,0 +1,5 @@
+{
+  "description": "Machines as cards: which ISA and which hardware cards make up a machine (their card-language logic compiled together into one card-IR module), its clock, frame and post-boot state, and how the host shell talks to it.",
+  "name": "machine",
+  "tier": 1
+}

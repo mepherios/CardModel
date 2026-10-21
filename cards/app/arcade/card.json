@@ -1,0 +1,59 @@
+{
+  "bundle": {
+    "executable_dir": "Contents/MacOS",
+    "icon_file": "AppIcon.icns",
+    "info_plist": {
+      "CFBundleDisplayName": "Cardmodel Arcade",
+      "CFBundleExecutable": "Cardmodel Arcade",
+      "CFBundleIconFile": "AppIcon",
+      "CFBundleIdentifier": "org.cardmodel.arcade",
+      "CFBundleName": "Cardmodel Arcade",
+      "CFBundlePackageType": "APPL",
+      "CFBundleShortVersionString": "{version}",
+      "CFBundleVersion": "{build}",
+      "CardmodelHome": "{home}",
+      "CardmodelPython": "{python}",
+      "LSApplicationCategoryType": "public.app-category.games",
+      "LSMinimumSystemVersion": "13.0",
+      "NSAppTransportSecurity": {
+        "NSAllowsArbitraryLoadsInWebContent": true,
+        "NSAllowsLocalNetworking": true
+      },
+      "NSHighResolutionCapable": true
+    },
+    "resources_dir": "Contents/Resources",
+    "suffix": ".app"
+  },
+  "category": "app",
+  "compile": [
+    "{exe}",
+    "-O",
+    "-swift-version",
+    "5",
+    "-o",
+    "{out}",
+    "{srcs}",
+    "-framework",
+    "AppKit",
+    "-framework",
+    "WebKit",
+    "-framework",
+    "CryptoKit"
+  ],
+  "install_dir": "~/Applications",
+  "kind": "app",
+  "name": "arcade",
+  "platform": "macos",
+  "port": 8770,
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "sources": [
+    "Launcher.swift"
+  ],
+  "statement": "The launcher: a store, a library and downloads for the games the card model builds. The native client (window, downloads with every chunk's SHA-256 checked, delta updates from unchanged chunks, installs, verification, launching, play time, achievements read from each game's save) is Launcher.swift; the pages are ui/, served by `cardmodel arcade serve`, which builds each game from its cards on demand.",
+  "tier": 1,
+  "title": "Cardmodel Arcade",
+  "ui": "ui",
+  "version": "1.0.0"
+}

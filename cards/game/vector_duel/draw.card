@@ -1,0 +1,647 @@
+-- Drawing the duel: the arena, the fighters (a pose from what their move card is doing this frame: the sword
+-- shows the vector), the vector rings (each fighter's guard, and the other's incoming direction while its
+-- tell shows), sparks, and the HUD. Angles are 1/256 turns, counter-clockwise from screen right; a ring
+-- direction d (0..7) sits at angle 32 * d, the thrust (8) in the middle.
+const C_P1 = 0x58C8FF
+const C_P2 = 0xFF6A58
+const C_BOSS = 0xC77DFF
+const C_INK = 0x0D0F18
+const RING_R = 12
+const RING_Y = 96
+
+global shake_n: Int = 0
+global rings_on: Int = 1
+array hp_trail: Int[2]
+
+fn shake(n: Int) {
+  shake_n = max(shake_n, n)
+}
+fn shake_decay() {
+  if shake_n > 0 {
+    shake_n -= 1
+  }
+}
+fn apply_shake() {
+  if shake_n > 0 {
+    shake_x = rnd(shake_n * 2 + 1) - shake_n
+    shake_y = rnd(shake_n + 1) - shake_n // 2
+  } else {
+    shake_x = 0
+    shake_y = 0
+  }
+}
+fn no_shake() {
+  shake_x = 0
+  shake_y = 0
+}
+fn team_col(i: Int) -> Int {
+  if f_ctl[i] == AI_BOSS {
+    return C_BOSS
+  }
+  return if i == 0 then C_P1 else C_P2
+}
+
+-- the arena: the current stage's palette and weather (the game card's arenas); the title uses the first
+global arena: Int = 0
+
+fn draw_sky(t: Int) {
+  let a = arena
+  vgrad(0, 0, SW, 150, ar_sky0[a], ar_sky1[a])
+  if ar_weather[a] == 1 {
+    for k in 0 .. 70 {
+      let sx = (k * 97 + 13) % SW
+      let sy = (k * 53 + 7) % 110
+      let tw = (sin256(t * 3 + k * 37) + 256) // 4
+      blend(sx, sy, 0xFFFFFF, 60 + tw // 2)
+    }
+  }
+  if ar_orb[a] != 0 {
+    let ox = if ar_orb[a] == 2 then 108 else 372
+    let oy = if ar_orb[a] == 2 then 50 else 58
+    disc_blend(ox, oy, 30, ar_orb_col[a], 40)
+    disc(ox, oy, 16, ar_orb_col[a])
+  }
+  for x in 0 .. SW {
+    let h1 = 112 + (sin256(x * 2 + 40 + a * 31) * 10 + sin256(x * 5 + 7 + a * 11) * 4) // 256
+    rect(x, h1, 1, 150 - h1, ar_ridge0[a])
+    let h2 = 130 + (sin256(x * 3 + 90 + a * 17) * 7) // 256
+    rect(x, h2, 1, 150 - h2, ar_ridge1[a])
+  }
+}
+fn draw_floor(t: Int) {
+  let a = arena
+  vgrad(0, 150, SW, SH - 150, ar_floor0[a], ar_floor1[a])
+  for k in -8 .. 9 {
+    line(240 + k * 18, 150, 240 + k * 90, SH, ar_lines[a])
+  }
+  for k in 0 .. 7 {
+    let y = 150 + (k * k * 3) + k * 4
+    rect(0, y, SW, 1, mix(ar_lines[a], 0xFFFFFF, 20))
+  }
+  rect(0, GROUND, SW, 1, mix(ar_lines[a], 0xFFFFFF, 60))
+  for side in 0 .. 2 {
+    let tx = if side == 0 then 22 else SW - 22
+    rect(tx - 2, GROUND - 60, 4, 60, mix(ar_floor1[a], 0x000000, 80))
+    let fl = 6 + (sin256(t * 9 + side * 77) * 2) // 256 + rnd(2)
+    disc_blend(tx, GROUND - 66, fl + 8, 0xFF8030, 50)
+    disc(tx, GROUND - 66, fl // 2 + 2, 0xFFD070)
+  }
+}
+fn draw_weather(t: Int) {
+  let w = ar_weather[arena]
+  if w == 2 {
+    for k in 0 .. 90 {
+      let x = (k * 73 + t * (1 + k % 3) // 2 + (sin256(t * 2 + k * 29) * 6) // 256) % SW
+      let y = (k * 41 + t * (1 + k % 2)) % SH
+      px(x, y, 0xFFFFFF)
+      if k % 3 == 0 {
+        px(x + 1, y, 0xE8F0FF)
+      }
+    }
+  } elif w == 3 {
+    for k in 0 .. 50 {
+      let y = SH - ((k * 53 + t * (1 + k % 3)) % SH)
+      let x = (k * 97 + (sin256(t * 4 + k * 41) * 10) // 256) % SW
+      blend(x, y, if k % 2 == 0 then 0xFF9040 else 0xFFD060, 200)
+    }
+  } elif w == 4 {
+    for k in 0 .. 110 {
+      let x = (k * 61 + t * 3) % SW
+      let y = (k * 37 + t * 9) % SH
+      line(x, y, x - 2, y + 6, 0x9AB0C0)
+    }
+    if (t % 240) < 3 {
+      rect_blend(0, 0, SW, SH, 0xE0F0FF, 90)
+    }
+  } elif w == 5 {
+    for k in 0 .. 10 {
+      let x = (k * 53 + t // 3) % (SW + 40) - 20
+      let y = 20 + (k * 31) % 100 + (sin256(t * 2 + k * 50) * 8) // 256
+      rect_blend(x, y, 9, 13, 0xF4EEE0, 70)
+      frame_rect(x, y, 9, 13, 0xFFD870)
+    }
+  }
+}
+fn draw_arena(t: Int) {
+  draw_sky(t)
+  draw_floor(t)
+}
+
+-- a fighter --------------------------------------------------------------------------------------------------------
+-- the blade: from the hand at (hx, hy), length l, angle a
+fn blade(hx: Int, hy: Int, a: Int, l: Int, c: Int) {
+  let ex = hx + cos256(a) * l // 256
+  let ey = hy - sin256(a) * l // 256
+  thick(hx, hy, ex, ey, 2, c)
+  px(ex, ey, 0xFFFFFF)
+}
+fn blade_trail(hx: Int, hy: Int, a0: Int, a1: Int, l: Int, c: Int) {
+  let n = 6
+  for k in 0 .. n {
+    let a = a0 + (a1 - a0) * k // n
+    let ex = hx + cos256(a) * l // 256
+    let ey = hy - sin256(a) * l // 256
+    line(hx + (ex - hx) // 3, hy + (ey - hy) // 3, ex, ey, mix(c, 0xFFFFFF, 80 + k * 20))
+  }
+}
+-- the screen angle of vector direction d (0 right, 2 up, 4 left, 6 down)
+fn ring_angle(d: Int) -> Int = d * 32
+-- a blade angle turned to point forward-ish for a fighter facing f
+fn forwardish(a: Int, f: Int) -> Int = if cos256(a) * f < 0 then a + 128 else a
+
+-- the body of fighter type ft, standing at x on gy, facing f; the sword hand at (hx, hy), the blade at angle a
+fn figure(ft: Int, x: Int, gy: Int, f: Int, col: Int, crouch: Int, lean: Int, stride: Int, push: Int,
+          hdx: Int, hdy: Int, a: Int, trail: Bool, a0: Int) {
+  let dark = mix(col, C_INK, 120)
+  let limb = if ft == FT_BRUTE then 4 else (if ft == FT_DUELIST then 2 else 3)
+  let body = if ft == FT_BRUTE then 7 else (if ft == FT_DUELIST then 3 else 4)
+  let head = if ft == FT_BRUTE then 7 else (if ft == FT_DUELIST then 5 else 6)
+  let blen = if ft == FT_BRUTE then 30 else (if ft == FT_DUELIST then 40 else 34)
+  let bthick = if ft == FT_BRUTE then 3 else 2
+  let tall = if ft == FT_DUELIST then 3 else 0
+  let hip_y = gy - 30 - tall + crouch
+  let hip_x = x - lean * f
+  let neck_x = x + (lean + push) * f
+  let neck_y = gy - 54 - tall * 2 + crouch + crouch // 2
+  let knee_dy = 15
+  let kx = stride * f - 2 * f
+  thick(hip_x, hip_y, hip_x + kx, hip_y + knee_dy - crouch // 3, limb, dark)
+  thick(hip_x + kx, hip_y + knee_dy - crouch // 3, hip_x + stride * f, gy, limb, dark)
+  thick(hip_x, hip_y, hip_x - kx, hip_y + knee_dy - crouch // 3, limb, dark)
+  thick(hip_x - kx, hip_y + knee_dy - crouch // 3, hip_x - stride * f - 3 * f, gy, limb, dark)
+  if ft == FT_DUELIST {
+    -- the cape, streaming back from the shoulders
+    thick(neck_x - 2 * f, neck_y + 2, hip_x - 12 * f, hip_y + 8, 3, mix(col, 0x401830, 140))
+  }
+  thick(hip_x, hip_y, neck_x, neck_y, body, col)
+  if ft == FT_BRUTE {
+    thick(neck_x - 7 * f, neck_y + 2, neck_x + 7 * f, neck_y + 2, 4, col)
+  }
+  let hx0 = neck_x + 2 * f
+  let hy0 = neck_y - head - 2
+  disc(hx0, hy0, head, col)
+  rect(hx0 + 2 * f - (if f < 0 then 2 else 0), hy0 - 2, 3, 2, C_INK)
+  if ft == FT_WARDEN {
+    -- a crested helm
+    rect(hx0 - 1, hy0 - head - 4, 3, 5, 0xE8E0C0)
+    rect(hx0 - head, hy0 - 1, head * 2 + 1, 2, mix(col, 0xFFFFFF, 90))
+  } elif ft == FT_DUELIST {
+    -- a brimmed hat with a plume
+    rect(hx0 - head - 3, hy0 - head + 1, head * 2 + 7, 2, C_INK)
+    rect(hx0 - head + 1, hy0 - head - 3, head * 2 - 1, 4, C_INK)
+    thick(hx0 - 2 * f, hy0 - head - 2, hx0 - 9 * f, hy0 - head - 9, 2, 0xFF5070)
+  } else {
+    -- horns
+    thick(hx0 - 4, hy0 - head + 1, hx0 - 8, hy0 - head - 6, 2, 0xE8E0C0)
+    thick(hx0 + 4, hy0 - head + 1, hx0 + 8, hy0 - head - 6, 2, 0xE8E0C0)
+  }
+  let sx = neck_x + 3 * f
+  let sy = neck_y + 6
+  let hx = sx + hdx
+  let hy = sy + hdy
+  thick(sx, sy, (sx + hx) // 2 + 2 * f, (sy + hy) // 2 + 4, max(2, limb - 1), col)
+  thick((sx + hx) // 2 + 2 * f, (sy + hy) // 2 + 4, hx, hy, max(2, limb - 1), col)
+  if trail {
+    blade_trail(hx, hy, a0, a, blen, col)
+  }
+  let ex = hx + cos256(a) * blen // 256
+  let ey = hy - sin256(a) * blen // 256
+  thick(hx, hy, ex, ey, bthick, 0xD8DEEA)
+  px(ex, ey, 0xFFFFFF)
+  -- the guard (crossbar) at the hand
+  let cxv = cos256(a + 64) * 4 // 256
+  let cyv = sin256(a + 64) * 4 // 256
+  thick(hx - cxv, hy + cyv, hx + cxv, hy - cyv, 2, 0x9A8058)
+}
+
+fn draw_fighter(i: Int) {
+  let f = f_face[i]
+  let x = xpx(i)
+  let m = f_move[i]
+  let k = kind_of(i)
+  let t = f_t[i]
+  let ft = f_ft[i]
+  var col = team_col(i)
+  if f_flash[i] > 0 and f_flash[i] % 2 == 0 {
+    col = 0xFFFFFF
+  }
+  let ko = round_state == 2 and f_hp[i] <= 0
+  if ko {
+    let dark = mix(col, C_INK, 120)
+    thick(x - 22 * f, GROUND - 3, x + 10 * f, GROUND - 3, 5, dark)
+    disc(x + 16 * f, GROUND - 6, 6, dark)
+    thick(x - 4 * f, GROUND - 4, x + 24 * f, GROUND - 1, 2, 0x9AA0B0)
+    rect_blend(x - 26, GROUND + 1, 52, 3, 0x000000, 90)
+    return
+  }
+  var lift = 0
+  var crouch = 0
+  var lean = 0
+  var ghost = false
+  if k == K_EVADE {
+    if m == MV_JUMP and t <= mv_if1[m] + 2 {
+      let span = mv_if1[m] + 2
+      lift = 30 * t * (span - t) * 4 // max(1, span * span)
+    }
+    if m == MV_DUCK and t <= mv_if1[m] {
+      crouch = 16
+    }
+    if m == MV_ROLL and t <= mv_if1[m] {
+      crouch = 20
+      lean = -6
+    }
+    if m == MV_SIDESTEP and t <= mv_if1[m] {
+      ghost = true
+    }
+  }
+  if f_stance[i] == ST_BROKEN {
+    crouch = 14
+    lean = 4
+  }
+  if f_stun[i] > 0 and f_stun_kind[i] == 1 {
+    lean = -5
+  }
+  if f_stun[i] > 0 and f_stun_kind[i] == 0 {
+    lean = -3
+  }
+  var stride = 9
+  if f_walk[i] != 0 {
+    stride = 7 + (sin256(f_anim[i] * 12) * 5) // 256
+  }
+  var push = 2
+  -- the sword: where the move puts it (hand offset from the shoulder, blade angle)
+  var hdx = 12 * f
+  var hdy = 6
+  var a = if f > 0 then 40 else 88
+  var trail = false
+  var a0 = 0
+  if m >= 0 and (k == K_ATTACK or k == K_FEINT) {
+    let d = f_shown[i]
+    if d == 8 or d == NO_DIR {
+      let fwd = if f > 0 then 0 else 128
+      a = fwd
+      if t < f_start[i] {
+        hdx = -8 * f
+        hdy = 2
+      } elif t < f_start[i] + mv_active[m] + 2 {
+        hdx = 24 * f
+        hdy = 0
+        push = 7
+      } else {
+        hdx = 14 * f
+        hdy = 4
+      }
+    } else {
+      let from = ring_angle(d)
+      -- the cut sweeps through the forward direction, half a turn from where it started
+      let fwd = if f > 0 then 0 else 128
+      let turn = if sin256(from - fwd) * f > 0 then -128 else 128
+      if t < f_start[i] {
+        let cock = min(256, t * 256 // max(1, f_start[i] - 2))
+        hdx = cos256(from) * 11 // 256
+        hdy = -sin256(from) * 11 // 256
+        a = from - turn * cock // 256 // 8
+      } elif t < f_start[i] + mv_active[m] + 2 {
+        let p = (t - f_start[i]) * 256 // max(1, mv_active[m] + 2)
+        a0 = from
+        a = from + turn * p // 256
+        hdx = 14 * f
+        hdy = -2
+        push = 6
+        trail = true
+      } else {
+        a = from + turn
+        hdx = 10 * f
+        hdy = 8
+      }
+    }
+  } elif m >= 0 and k == K_GRAB {
+    hdx = (if t < f_start[i] then 6 else 20) * f
+    hdy = 2
+    a = if f > 0 then 200 else 184
+    push = if t < f_start[i] then 0 else 8
+  } elif m >= 0 and k == K_GUARD {
+    let g = mv_dir[m]
+    if g == 8 {
+      hdx = 14 * f
+      hdy = -2
+      a = if f > 0 then 0 else 128
+    } else {
+      let ga = ring_angle(g)
+      hdx = cos256(ga) * 11 // 256 + 4 * f
+      hdy = -sin256(ga) * 13 // 256
+      a = forwardish(ga + 64, f)
+    }
+  } elif f_stance[i] == ST_BROKEN {
+    hdx = 8 * f
+    hdy = 24
+    a = if f > 0 then 250 else 134
+  }
+  figure(ft, x, GROUND - lift, f, col, crouch, lean, stride, push, hdx, hdy, a, trail, a0)
+  if ghost {
+    for k2 in 0 .. 3 {
+      disc_blend(x - 14 * f * (k2 + 1), GROUND - 40, 10, col, 40)
+    }
+  }
+  if f_stance[i] == ST_BROKEN {
+    for s in 0 .. 3 {
+      let aa = frame_no * 6 + s * 85
+      disc(x + cos256(aa) * 10 // 256, GROUND - 76 - sin256(aa) * 3 // 256, 2, 0xFFE060)
+    }
+  }
+  rect_blend(x - 14, GROUND + 1, 28, 3, 0x000000, 90)
+}
+
+-- the vectors around a fighter: where the other's cut is coming from (red, flashing in the frames where a guard
+-- raised now would be up in time for a redirect), and the fighter's own guard (blue)
+fn arc(cx: Int, cy: Int, d: Int, r: Int, w: Int, c: Int) {
+  if d == 8 {
+    for a in 0 .. 64 {
+      disc(cx + cos256(a * 4) * 9 // 256, cy - sin256(a * 4) * 9 // 256, w // 2, c)
+    }
+    return
+  }
+  if d < 0 or d > 7 {
+    return
+  }
+  let a0 = ring_angle(d)
+  for k in -12 .. 13 {
+    let aa = a0 + k
+    disc(cx + cos256(aa) * r // 256, cy - sin256(aa) * r // 256, w // 2, c)
+  }
+}
+fn draw_ring(i: Int) {
+  let j = other(i)
+  let cx = xpx(i)
+  let cy = GROUND - 44
+  if kind_of(i) == K_GUARD {
+    arc(cx, cy, mv_dir[f_move[i]], 30, 4, if guard_up(i) then 0x58E0FF else 0x2F6890)
+  }
+  if in_startup(j) and f_shown[j] != NO_DIR {
+    let left = f_start[j] - f_t[j]
+    let glow = 256 - min(256, left * 256 // 24)
+    var c = mix(0x601818, 0xFF3020, glow)
+    -- the redirect window: raise the guard now and it is up just before the cut lands
+    if f_ctl[i] == AI_HUMAN and left >= 2 and left < 2 + 4 and f_start[j] >= REACTION {
+      c = 0xFFF0A0
+    }
+    arc(cx, cy, f_shown[j], 36, 5, c)
+  }
+}
+
+-- sparks -------------------------------------------------------------------------------------------------------------
+fn spark_col(k: Int) -> Int {
+  if k == 4 {
+    return 0x60F0FF
+  }
+  if k == 3 {
+    return 0x80C0FF
+  }
+  if k == 2 {
+    return 0xE0E0E0
+  }
+  if k == 5 {
+    return 0x80E0FF
+  }
+  if k == 6 {
+    return 0x90FF90
+  }
+  return 0xFF7040
+}
+fn draw_sparks() {
+  if hit_kind < 0 or hit_t > 22 {
+    return
+  }
+  let c = spark_col(hit_kind)
+  let n = if hit_kind == 4 then 14 else 9
+  for s in 0 .. n {
+    let a = s * 256 // n + hit_x * 7
+    let r0 = hit_t * 3
+    let r1 = r0 + 6 + (if hit_kind == 4 then 6 else 0)
+    let fade = 256 - hit_t * 11
+    if fade > 0 {
+      let x0 = hit_x + cos256(a) * r0 // 256
+      let y0 = hit_y - sin256(a) * r0 // 256
+      let x1 = hit_x + cos256(a) * r1 // 256
+      let y1 = hit_y - sin256(a) * r1 // 256
+      line(x0, y0, x1, y1, mix(C_INK, c, fade))
+    }
+  }
+  if hit_kind == 4 and hit_t < 8 {
+    disc_blend(hit_x, hit_y, 24 - hit_t * 2, 0xC0F8FF, 120)
+  }
+}
+
+-- the HUD -------------------------------------------------------------------------------------------------------------
+fn bar(x: Int, y: Int, w: Int, h: Int, v: Int, vmax: Int, c: Int, right: Bool) {
+  rect(x - 1, y - 1, w + 2, h + 2, C_INK)
+  rect(x, y, w, h, 0x2A2632)
+  let fw = max(0, min(w, v * w // max(1, vmax)))
+  if right {
+    rect(x + w - fw, y, fw, h, c)
+  } else {
+    rect(x, y, fw, h, c)
+  }
+}
+fn draw_hud() {
+  for i in 0 .. 2 {
+    if hp_trail[i] < f_hp[i] {
+      hp_trail[i] = f_hp[i]
+    }
+    if hp_trail[i] > f_hp[i] {
+      hp_trail[i] = max(f_hp[i], hp_trail[i] - 1)
+    }
+    let right = i == 1
+    let x = if i == 0 then 14 else SW - 14 - 190
+    bar(x, 10, 190, 9, hp_trail[i], f_hpmax[i], 0xF0D060, right)
+    let hc = if f_hp[i] * 4 < f_hpmax[i] then 0xFF5040 else 0x60E070
+    let fw = f_hp[i] * 190 // max(1, f_hpmax[i])
+    if right {
+      rect(x + 190 - fw, 10, fw, 9, hc)
+    } else {
+      rect(x, 10, fw, 9, hc)
+    }
+    let pc = if f_stance[i] == ST_BROKEN then 0xFFFFFF else (if f_post[i] * 4 > f_postmax[i] * 3 then 0xFF6030 else 0xFFB030)
+    bar(x, 23, 130, 4, f_post[i], f_postmax[i], pc, right)
+    bar(x + (if right then 130 + 4 else 134), 23, 56, 4, f_stam[i], f_stammax[i], 0x50C0A0, right)
+    -- name and rounds
+    let nm = fighter_name(f_ft[i])
+    if right {
+      draw_str_sh(nm, SW - 14 - str_width(nm, 1), 31, 1, 0xFFFFFF)
+    } else {
+      draw_str_sh(nm, 14, 31, 1, 0xFFFFFF)
+    }
+    for r in 0 .. ROUNDS_TO_WIN {
+      let rx = if right then SW - 14 - 190 + 6 + r * 10 else 14 + 190 - 6 - r * 10
+      disc(rx, 35, 3, C_INK)
+      if f_rounds[i] > r {
+        disc(rx, 35, 2, 0xFFE070)
+      }
+    }
+    let cn = ctl_name(i)
+    if cn >= 0 {
+      if right {
+        draw_str_sh(cn, SW - 14 - str_width(cn, 1), 41, 1, team_col(i))
+      } else {
+        draw_str_sh(cn, 14, 41, 1, team_col(i))
+      }
+    }
+  }
+  if training == 0 {
+    rect(SW // 2 - 16, 7, 32, 20, C_INK)
+    draw_num_c(seconds_left(), SW // 2, 10, 2, if seconds_left() <= 10 then 0xFF6050 else 0xFFFFFF)
+  }
+  -- what the reader thinks you lean on
+  let j = 1
+  if (f_ctl[j] == AI_READER or f_ctl[j] == AI_BOSS) and read_top(j) != NO_DIR {
+    draw_str_c(S_READS, SW // 2 - 30, 34, 1, 0xC8B8E8)
+    draw_str_sh(dir_name(read_top(j)), SW // 2 + 2, 34, 1, 0xFFE8A0)
+    draw_num(read_share(j), SW // 2 + 2 + str_width(dir_name(read_top(j)), 1) + 6, 34, 1, 0xFFE8A0)
+    draw_char(37, SW // 2 + 2 + str_width(dir_name(read_top(j)), 1) + 6 + num_width(read_share(j), 1) + 2, 34, 1, 0xFFE8A0)
+  }
+}
+fn dir_name(d: Int) -> Int {
+  if d == 2 {
+    return S_D_OVERHEAD
+  }
+  if d == 6 {
+    return S_D_RISING
+  }
+  if d == 4 {
+    return S_D_LEFT
+  }
+  if d == 0 {
+    return S_D_RIGHT
+  }
+  if d == 8 {
+    return S_D_THRUST
+  }
+  return S_D_DIAG
+}
+fn fighter_name(ft: Int) -> Int {
+  if ft == FT_WARDEN {
+    return S_WARDEN
+  }
+  if ft == FT_DUELIST {
+    return S_DUELIST
+  }
+  return S_BRUTE
+}
+fn ai_name(kind: Int) -> Int {
+  if kind == AI_HABIT {
+    return S_AI_HABIT
+  }
+  if kind == AI_GREEDY {
+    return S_AI_GREEDY
+  }
+  if kind == AI_READER {
+    return S_AI_READER
+  }
+  if kind == AI_EQUILIBRIUM {
+    return S_AI_EQUILIBRIUM
+  }
+  if kind == AI_BOSS {
+    return S_AI_BOSS
+  }
+  return S_DUMMY
+}
+fn ctl_name(i: Int) -> Int {
+  let c = f_ctl[i]
+  if c == AI_HUMAN {
+    return if versus != 0 and i == 1 then S_P2 else S_P1
+  }
+  return ai_name(c)
+}
+fn draw_event() {
+  if ev_text < 0 {
+    return
+  }
+  let s = if ev_big != 0 then 3 else 2
+  let rise = min(12, ev_t // 2)
+  var c = ev_col
+  if ev_t > 50 {
+    c = mix(ev_col, C_INK, (ev_t - 50) * 12)
+  }
+  let cx = max(str_width(ev_text, s) // 2 + 6, min(SW - str_width(ev_text, s) // 2 - 6, ev_x))
+  draw_str_c(ev_text, cx, GROUND - 130 - rise, s, c)
+}
+fn draw_duel() {
+  apply_shake()
+  draw_arena(frame_no)
+  for i in 0 .. 2 {
+    draw_fighter(i)
+  }
+  draw_sparks()
+  draw_weather(frame_no)
+  no_shake()
+  if rings_on != 0 {
+    for i in 0 .. 2 {
+      draw_ring(i)
+    }
+  }
+  if flash_t > 0 {
+    rect_blend(0, 0, SW, SH, flash_col, flash_t * 18)
+  }
+  draw_hud()
+  if training != 0 {
+    draw_frame_data()
+  }
+  draw_event()
+  -- the first duel teaches its rules at the bottom of the screen
+  if paused == 0 and (training != 0 or (versus == 0 and stage == 0 and round_no == 1 and duel_t < 900 and round_state == 1)) {
+    rect_blend(0, SH - 24, SW, 24, C_INK, 170)
+    let tip = if (duel_t // 220) % 4 == 0 then S_HOW1 else if (duel_t // 220) % 4 == 1 then S_HOW2 else if (duel_t // 220) % 4 == 2 then S_HOW3 else S_HOW4
+    draw_str_c(tip, SW // 2, SH - 16, 1, 0xFFE8A0)
+  }
+  if round_state == 0 {
+    if round_t < INTRO - 30 {
+      draw_str_c(S_ROUND, SW // 2 - 14, 110, 4, 0xFFFFFF)
+      draw_num_c(round_no, SW // 2 + 74, 110, 4, 0xFFE070)
+      if mode == MODE_ARCADE and round_no == 1 and lad_intro[stage] >= 0 {
+        draw_str_c(lad_intro[stage], SW // 2, 92, 1, 0xC8B8E8)
+      }
+    }
+  }
+}
+
+fn outcome_name(k: Int) -> Int {
+  if k == 0 {
+    return S_O_HIT
+  }
+  if k == 1 {
+    return S_O_PIERCE
+  }
+  if k == 2 {
+    return S_O_BLOCK
+  }
+  if k == 3 {
+    return S_O_DEFLECT
+  }
+  if k == 4 {
+    return S_O_REDIRECT
+  }
+  if k == 5 {
+    return S_O_EVADED
+  }
+  if k == 6 {
+    return S_O_CAUGHT
+  }
+  return S_NONE
+}
+-- training: the last move P1 started and the last impact's outcome
+fn draw_frame_data() {
+  let m = p1_last
+  rect_blend(SW - 170, 52, 160, 52, C_INK, 170)
+  draw_str_sh(S_LAST, SW - 164, 56, 1, 0x9A90B8)
+  if m >= 0 {
+    draw_str_sh(mv_str[m], SW - 164 + 60, 56, 1, 0xFFFFFF)
+    draw_str_sh(S_STARTUP, SW - 164, 66, 1, 0x9A90B8)
+    draw_num(p1_last_start, SW - 164 + 60, 66, 1, 0xFFE070)
+    draw_str_sh(S_ACTIVE, SW - 164, 76, 1, 0x9A90B8)
+    draw_num(mv_active[m], SW - 164 + 60, 76, 1, 0xFFE070)
+    draw_str_sh(S_RECOVERY, SW - 164, 86, 1, 0x9A90B8)
+    draw_num(mv_recovery[m], SW - 164 + 60, 86, 1, 0xFFE070)
+  }
+  draw_str_sh(S_OUTCOME, SW - 164, 96, 1, 0x9A90B8)
+  draw_str_sh(outcome_name(f_last_outcome[1]), SW - 164 + 60, 96, 1, 0x60F0FF)
+}

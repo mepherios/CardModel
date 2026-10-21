@@ -60,6 +60,15 @@ another folder at runtime.
 
 ```bash
 ./bin/cardmodel anyps5 cover
+./bin/cardmodel emu "~/Downloads/GB_GBC/Game Boy/Tetris (World) (Rev A).zip"
+```
+
+```bash
+./bin/cardmodel machine nds "~/Downloads/Pokemon Diamond/Pokemon Diamond.nds"
+```
+
+```bash
+./bin/cardmodel arcade launcher --install
 ```
 
 ```bash
@@ -77,6 +86,12 @@ identity, shared dynamics, Gödel number of each canonical form). `game check` c
 and `game play` lets you fight the AI that reads your vectors.
 `anyps5 cover` reports AnyPS5 (a PS5 relinker and its reimplemented system libraries, read from a checkout as
 cards): its badge reproduced, the real coverage behind it, and every gap with the cause that keeps it open.
+`emu` runs a Game Boy or Game Boy Color game through the card model: its CPU is instruction cards, its hardware
+is hardware cards, its own code is lifted into the card IR and compiled natively, and the browser page around it
+is the effect shell (video, audio, keys, saves). `machine nds` boots a DS game on the ARM instruction cards and
+reports what runs and what is not modelled yet.
+`arcade launcher --install` puts Cardmodel Arcade in ~/Applications: a store, library and downloads for games the
+card model builds. Its first game, Vector Duel, is card-language logic on the combat cards, compiled to native code.
 `improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
 byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last
 command runs the test suite.
@@ -97,3 +112,5 @@ command runs the test suite.
 | [game/DESIGN.md](game/DESIGN.md) | the game design (Vector Counter System): pillars, kernel, design laws, AIs, world |
 | [docs/ANYPS5.md](docs/ANYPS5.md) | AnyPS5 as cards: the 95 % question, the real coverage, why each gap is open, what closes it |
 | [docs/ANYPS5_COVERAGE.md](docs/ANYPS5_COVERAGE.md) | AnyPS5's computed coverage and gaps (generated) |
+| [docs/MACHINES.md](docs/MACHINES.md) | machines as cards: instruction cards, hardware cards, lifting, the effect shell, the DS prototype |
+| [docs/ARCADE.md](docs/ARCADE.md) | native games built from cards (Vector Duel), the depot pipeline and the Cardmodel Arcade launcher |

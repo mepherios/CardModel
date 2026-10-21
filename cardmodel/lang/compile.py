@@ -13,10 +13,20 @@ Typing follows the Python frontend: int/float promotion, ``/`` on ints is
 float division, ``**`` on ints needs a literal exponent >= 0 (use a loop
 or ``algorithm.power``), ``and``/``or``/``not`` and conditions need Bool.
 
+Machine state: ``const`` (compile-time integers, which may read card fields
+``card.<registry>.<name>.<field>``), ``global`` and ``array`` declarations,
+void functions, array stores, call statements and ``switch``. After the
+functions compile, an evaluation-order pass gives every effectful call its own
+statement, in the left-to-right order Python uses (earlier operands that read
+state are saved first). The remaining expressions only read state, so C, which
+leaves operand order unspecified, computes the same thing as Python and the
+reference interpreter.
+
 Honest limits (L1): no strings, lists or user types inside functions; the
 ``Nat`` type is a domain annotation (an int >= 0), not truncating arithmetic;
 a ``match`` substitutes the scrutinee into each arm (it is re-evaluated,
-which is fine for pure expressions).
+which is fine for pure expressions); an effectful call may not sit in the lazy
+operand of ``and``/``or``/``if-then-else`` (write an ``if`` statement).
 """
 from __future__ import annotations
 
@@ -34,7 +44,8 @@ CMP = {"==": "CMP_EQ", "!=": "CMP_NE", "<": "CMP_LT", "<=": "CMP_LE", ">": "CMP_
 PROP_REL = {"==": "eq", "!=": "ne", "<": "lt", "<=": "le", ">": "gt", ">=": "ge"}
 BUILTINS = {"abs": ("ABS", 1), "min": ("MIN", 2), "max": ("MAX", 2), "gcd": ("GCD", 2), "float": ("TO_FLOAT", 1),
             "int": ("TRUNC_INT", 1)}
-AUG = {"+=": "+", "-=": "-", "*=": "*", "//=": "//", "%=": "%"}
+AUG = {"+=": "+", "-=": "-", "*=": "*", "//=": "//", "%=": "%", "|=": "|", "&=": "&", "^=": "^", "<<=": "<<",
+       ">>=": ">>"}
 
 
 class CompileError(ValueError):
@@ -58,6 +69,9 @@ class Module:
     cards: list = field(default_factory=list)
     uses: list = field(default_factory=list)
     resolved: dict = field(default_factory=dict)         # algorithm card -> chosen form
+    consts: dict = field(default_factory=dict)           # name -> int
+    globals: list = field(default_factory=list)          # [{name, type, init, export}]
+    arrays: list = field(default_factory=list)           # [{name, elem, size, init, export}]
 
     def ir_module(self, entry: str | None = None) -> dict:
         """Callers before callees (codegen emits in reverse, so callees are defined first: Lean, Lua, C)."""
@@ -77,7 +91,12 @@ class Module:
         fns = [self.functions[n] for n in reversed(order)]
         if entry is None and fns:
             entry = fns[0]["name"]
-        return {"entry": entry, "functions": fns}
+        out = {"entry": entry, "functions": fns}
+        if self.globals:
+            out["globals"] = list(self.globals)
+        if self.arrays:
+            out["arrays"] = list(self.arrays)
+        return out
 
     def summary(self) -> dict:
         return {"module": self.name, "functions": sorted(self.functions), "facts": len(self.program.facts),
@@ -91,13 +110,15 @@ class Module:
 def _walk_stmts(body):
     for s in body:
         yield s
-        for key in ("then", "else", "body"):
+        for key in ("then", "else", "body", "default"):
             if key in s:
                 yield from _walk_stmts(s[key])
+        for case in s.get("cases") or ():
+            yield from _walk_stmts(case["body"])
 
 
 def _walk_exprs(s):
-    for key in ("value", "cond", "start", "stop", "step"):
+    for key in ("value", "cond", "start", "stop", "step", "index"):
         e = s.get(key)
         if isinstance(e, list):
             stack = [e]
@@ -106,7 +127,7 @@ def _walk_exprs(s):
                 if isinstance(x, list) and x:
                     yield x
                     if x[0] not in ("var", "int", "float", "bool"):
-                        stack.extend(a for a in x[(2 if x[0] == "CALL" else 1):] if isinstance(a, list))
+                        stack.extend(a for a in x[(2 if x[0] in ("CALL", "LOAD") else 1):] if isinstance(a, list))
 
 
 # -- functions -------------------------------------------------------------------------------------
@@ -114,6 +135,7 @@ class FnCompiler:
     def __init__(self, decl: Decl, ops: dict[str, OpSpec], sigs: dict, mod: "Compiler"):
         self.d = decl.data
         self.line = decl.line
+        self.path = decl.path or mod.path
         self.ops = ops
         self.sigs = sigs
         self.mod = mod
@@ -123,16 +145,25 @@ class FnCompiler:
         self.return_types: set[str] = set()
 
     def err(self, msg, line=None):
-        raise CompileError(f"fn {self.d['name']}: {msg}", line or self.line, self.mod.path)
+        raise CompileError(f"fn {self.d['name']}: {msg}", line or self.line, self.path)
 
     def compile(self) -> dict:
         params = []
+        self.void = self.sigs.get(self.d["name"], {}).get("returns") == "void"
         for pname, ptype in self.d["params"]:
             t = "int" if ptype == "nat" else ptype
+            if pname in self.mod.global_types or pname in self.mod.array_specs:
+                self.err(f"parameter {pname!r} shadows a global")
             params.append({"name": pname, "type": t})
             self.env[pname] = t
         requires = [self.cond(r, self.line) for r in self.d.get("requires") or []]
         body = self.block(self.d["body"])
+        if self.void:
+            fn = {"name": self.d["name"], "params": params, "returns": "void", "locals": dict(self.locals),
+                  "body": body}
+            if self.d.get("export"):
+                fn["export"] = True
+            return fn
         if not _always_returns(body):
             self.err("a path can reach the end of the function without `return`")
         declared = self.d.get("returns")
@@ -146,6 +177,8 @@ class FnCompiler:
         else:
             self.err(f"return types disagree ({sorted(self.return_types)}); declare -> Type")
         fn = {"name": self.d["name"], "params": params, "returns": ret, "locals": dict(self.locals), "body": body}
+        if self.d.get("export"):
+            fn["export"] = True
         if requires:
             fn["requires"] = requires
         nat = [p for p, t in self.d["params"] if t == "nat"]
@@ -161,6 +194,8 @@ class FnCompiler:
         return name
 
     def declare(self, name: str, typ: str, line) -> None:
+        if name in self.mod.global_types or name in self.mod.array_specs or name in self.mod.consts:
+            self.err(f"{name!r} shadows a global or constant (pick another name)", line)
         prev = self.env.get(name)
         if prev is not None and prev != typ:
             self.err(f"{name!r} changes type {prev} -> {typ}", line)
@@ -190,12 +225,14 @@ class FnCompiler:
             return [{"k": "assign", "target": name, "value": ir}]
         if k == "assign":
             _, name, op, e, line = s
-            if name not in self.env:
+            if name not in self.env and name not in self.mod.global_types:
+                if name in self.mod.consts:
+                    self.err(f"{name!r} is a constant", line)
                 self.err(f"assignment to undeclared {name!r} (use `let {name} = ...`)", line)
             if op != "=":
                 e = ("bin", AUG[op], ("name", name), e)
             ir, t = self.expr(e, line)
-            want = self.env[name]
+            want = self.env.get(name) or self.mod.global_types[name]
             if t != want:
                 if t == "int" and want == "float":
                     ir = ["TO_FLOAT", ir]
@@ -244,8 +281,66 @@ class FnCompiler:
             stop_var = self.fresh("stop", "int")
             return [{"k": "for_range", "var": var, "start": a, "stop": b, "step": st, "counter": counter,
                      "stop_var": stop_var, "body": self.block(body)}]
+        if k == "store":
+            _, name, idx, op, e, line = s
+            if name not in self.mod.array_specs:
+                self.err(f"{name!r} is not an array", line)
+            iir, it = self.expr(idx, line)
+            if it != "int":
+                self.err(f"an array index must be Int, found {it}", line)
+            out = []
+            if op != "=":
+                if iir[0] not in ("int", "var") or iir[0] == "var" and iir[1] not in self.env:
+                    tmp = self.fresh("idx", "int")
+                    out.append({"k": "assign", "target": tmp, "value": iir})
+                    iir = ["var", tmp]
+                vir, vt = self.expr(e, line)
+                if vt != "int":
+                    self.err(f"array elements are Int, assigned {vt}", line)
+                vir, _ = self.apply(BIN[AUG[op]], [(["LOAD", name, iir], "int"), (vir, "int")], line)
+            else:
+                vir, vt = self.expr(e, line)
+                if vt != "int":
+                    self.err(f"array elements are Int, assigned {vt}", line)
+            out.append({"k": "store", "array": name, "index": iir, "value": vir})
+            return out
+        if k == "call":
+            _, e, line = s
+            ir, t = self.call(e, line, statement=True)
+            return [{"k": "do", "value": ir}]
+        if k == "switch":
+            _, value, cases, default, line = s
+            vir, vt = self.expr(value, line)
+            if vt != "int":
+                self.err(f"switch needs an Int, found {vt}", line)
+            seen: set = set()
+            out_cases = []
+            for vals, blk, cline in cases:
+                match = []
+                for v in vals:
+                    c = self.mod.const_eval(v, cline)
+                    if c in seen:
+                        self.err(f"case {c} appears twice", cline)
+                    seen.add(c)
+                    match.append(c)
+                body = self.block(blk)
+                if any(x["k"] == "break" for x in _shallow(body)):
+                    self.err("`break` inside a switch case (it would leave the switch in C); restructure", cline)
+                out_cases.append({"match": match, "body": body})
+            node = {"k": "switch", "value": vir, "cases": out_cases}
+            if default is not None:
+                node["default"] = self.block(default)
+                if any(x["k"] == "break" for x in _shallow(node["default"])):
+                    self.err("`break` inside a switch default; restructure", line)
+            return [node]
         if k == "return":
             _, e, line = s
+            if e is None:
+                if not self.void:
+                    self.err("`return` without a value in a function that returns one", line)
+                return [{"k": "return"}]
+            if self.void:
+                self.err("a void function returns no value (declare -> Type)", line)
             ir, t = self.expr(e, line)
             declared = self.d.get("returns")
             declared = "int" if declared == "nat" else declared
@@ -293,10 +388,25 @@ class FnCompiler:
         if k == "str":
             self.err("strings are not values inside functions (IR: int/float/bool)", line)
         if k == "name":
-            if e[1] not in self.env:
-                self.err(f"unknown name {e[1]!r}", line)
-            return ["var", e[1]], self.env[e[1]]
+            if e[1] in self.env:
+                return ["var", e[1]], self.env[e[1]]
+            if e[1] in self.mod.global_types:
+                return ["var", e[1]], self.mod.global_types[e[1]]
+            if e[1] in self.mod.consts:
+                return ["int", self.mod.consts[e[1]]], "int"
+            if e[1] in self.mod.array_specs:
+                self.err(f"array {e[1]!r} is not a value (index it: {e[1]}[i])", line)
+            self.err(f"unknown name {e[1]!r}", line)
+        if k == "index":
+            if e[1] not in self.mod.array_specs:
+                self.err(f"{e[1]!r} is not an array", line)
+            iir, it = self.expr(e[2], line)
+            if it != "int":
+                self.err(f"an array index must be Int, found {it}", line)
+            return ["LOAD", e[1], iir], "int"
         if k == "ref":
+            if e[1].startswith("card."):
+                return ["int", self.mod.card_value(e[1], line)], "int"
             self.err(f"card reference {e[1]} is not a value (call it: {e[1]}(...))", line)
         if k == "un":
             op, x = e[1], e[2]
@@ -350,8 +460,10 @@ class FnCompiler:
             return self.call(e, line)
         self.err(f"unsupported expression {k}", line)
 
-    def call(self, e, line):
+    def call(self, e, line, statement: bool = False):
         _, name, args, _ln = e
+        if name in self.sigs and self.sigs[name].get("returns") == "void" and not statement:
+            self.err(f"{name}() returns no value; call it as a statement", line)
         if name.startswith("op."):
             op = name[3:]
             spec = self.spec(op, line)
@@ -622,7 +734,8 @@ class TheoremCompiler(FnCompiler):
 
 # -- the module compiler ----------------------------------------------------------------------------------
 class Compiler:
-    def __init__(self, ops, store=None, path: str | None = None, name: str | None = None):
+    def __init__(self, ops, store=None, path: str | None = None, name: str | None = None, externs: dict | None = None):
+        self.externs = dict(externs or {})            # name -> IR function compiled elsewhere (e.g. on a card)
         self.ops = ops
         self.store = store
         self.path = path
@@ -631,6 +744,99 @@ class Compiler:
         self.sigs: dict = {}
         self.module: Module | None = None
         self._alg_funcs: dict = {}
+        self.consts: dict = {}
+        self.global_types: dict = {}
+        self.array_specs: dict = {}
+
+    # -- machine state ---------------------------------------------------------------------------
+    def card_value(self, ref: str, line) -> int:
+        """``card.<registry>.<name>.<field>...`` -> the integer stored there (a compile-time constant)."""
+        parts = ref.split(".")
+        if len(parts) < 4:
+            raise CompileError(f"{ref}: write card.<registry>.<name>.<field>", line, self.path)
+        if self.store is None:
+            raise CompileError(f"{ref}: no card store to read", line, self.path)
+        card = self.store.get(f"{parts[1]}/{parts[2]}")
+        if card is None:
+            raise CompileError(f"{ref}: no card {parts[1]}/{parts[2]}", line, self.path)
+        v = card
+        for key in parts[3:]:
+            if not isinstance(v, dict) or key not in v:
+                raise CompileError(f"{ref}: the card has no field {key!r}", line, self.path)
+            v = v[key]
+        if isinstance(v, bool) or not isinstance(v, int):
+            raise CompileError(f"{ref} is {v!r}, not an integer", line, self.path)
+        return v
+
+    def const_eval(self, e, line) -> int:
+        k = e[0]
+        if k == "num":
+            if isinstance(e[1], float):
+                raise CompileError("constants are integers", line, self.path)
+            return e[1]
+        if k == "bool":
+            return int(e[1])
+        if k == "name":
+            if e[1] in self.consts:
+                return self.consts[e[1]]
+            raise CompileError(f"{e[1]!r} is not a constant", line, self.path)
+        if k == "ref" and e[1].startswith("card."):
+            return self.card_value(e[1], line)
+        if k == "un":
+            x = self.const_eval(e[2], line)
+            return {"-": -x, "~": ~x, "not": int(not x)}[e[1]]
+        if k == "bin" and e[1] in ("+", "-", "*", "//", "%", "&", "|", "^", "<<", ">>", "**", "==", "!=", "<", "<=",
+                                   ">", ">=", "and", "or"):
+            a, b = self.const_eval(e[2], line), self.const_eval(e[3], line)
+            import operator as o
+            f = {"+": o.add, "-": o.sub, "*": o.mul, "//": o.floordiv, "%": o.mod, "&": o.and_, "|": o.or_,
+                 "^": o.xor, "<<": o.lshift, ">>": o.rshift, "**": o.pow, "==": o.eq, "!=": o.ne, "<": o.lt,
+                 "<=": o.le, ">": o.gt, ">=": o.ge, "and": lambda x, y: x and y, "or": lambda x, y: x or y}[e[1]]
+            return int(f(a, b))
+        if k == "if":
+            return self.const_eval(e[2], line) if self.const_eval(e[1], line) else self.const_eval(e[3], line)
+        if k == "call" and e[1] in ("min", "max", "abs") and e[2]:
+            vals = [self.const_eval(a, line) for a in e[2]]
+            return {"min": min, "max": max, "abs": lambda *v: abs(v[0])}[e[1]](*vals)
+        raise CompileError("not a constant expression", line, self.path)
+
+    def state_decls(self, decls: list[Decl], mod: Module) -> None:
+        taken: dict = {}
+        for d in decls:
+            if d.kind not in ("const", "global", "array"):
+                continue
+            name = d.data["name"]
+            path = d.path or self.path
+            if name in taken:
+                raise CompileError(f"{name!r} is declared twice (also line {taken[name]})", d.line, path)
+            taken[name] = d.line
+            if d.kind == "const":
+                self.consts[name] = self.const_eval(d.data["expr"], d.line)
+            elif d.kind == "global":
+                typ = "int" if d.data["type"] == "nat" else d.data["type"]
+                if typ not in ("int", "bool"):
+                    raise CompileError(f"global {name}: Int or Bool", d.line, path)
+                init = self.const_eval(d.data["init"], d.line)
+                self.global_types[name] = typ
+                g = {"name": name, "type": typ, "init": bool(init) if typ == "bool" else init}
+                if d.data.get("export"):
+                    g["export"] = True
+                mod.globals.append(g)
+            else:
+                size = self.const_eval(d.data["size"], d.line)
+                if size <= 0:
+                    raise CompileError(f"array {name}: size must be positive", d.line, path)
+                a = {"name": name, "elem": d.data["elem"], "size": size}
+                if d.data.get("init") is not None:
+                    vals = [self.const_eval(v, d.line) for v in d.data["init"]]
+                    if len(vals) > size:
+                        raise CompileError(f"array {name}: {len(vals)} initial values for size {size}", d.line, path)
+                    a["init"] = vals
+                if d.data.get("export"):
+                    a["export"] = True
+                self.array_specs[name] = a
+                mod.arrays.append(a)
+        mod.consts = dict(self.consts)
 
     def compile(self, decls: list[Decl], text: str = "") -> Module:
         mod = Module(self.name, self.path, hashlib.sha256(text.encode()).hexdigest()[:12])
@@ -639,13 +845,18 @@ class Compiler:
             if d.kind == "module":
                 self.name = mod.name = d.data["name"]
         mod.program.name = mod.name
+        self.state_decls(decls, mod)
         fn_decls = [d for d in decls if d.kind == "fn"]
         names = [d.data["name"] for d in fn_decls]
         dup = sorted({n for n in names if names.count(n) > 1})
         if dup:
             raise CompileError(f"function(s) defined twice: {', '.join(dup)}", None, self.path)
+        for name, fn in self.externs.items():
+            self.sigs[name] = {"params": [p["type"] for p in fn["params"]], "returns": fn["returns"]}
         for d in fn_decls:
             r = d.data.get("returns")
+            if r is None and not d.data.get("cl") and not _returns_value(d.data["body"]):
+                r = "void"
             self.sigs[d.data["name"]] = {"params": ["int" if t == "nat" else t for _, t in d.data["params"]],
                                          "returns": "int" if r == "nat" else r}
         pending = list(fn_decls)            # un-annotated return types: compile in passes until stable
@@ -698,6 +909,12 @@ class Compiler:
                 mod.cards.append(c)
         for name, fn in self._alg_funcs.items():
             mod.functions.setdefault(name, fn)
+        import copy
+        for name, fn in self.externs.items():
+            if name not in mod.functions:
+                mod.functions[name] = copy.deepcopy(fn)
+        if mod.globals or mod.arrays:
+            order_effects(mod.functions, set(self.global_types), self.ops, self.path)
         labels = [r.name for r in mod.program.rules]
         dup = sorted({n for n in labels if labels.count(n) > 1})
         if dup:
@@ -794,6 +1011,228 @@ def _rename_calls(fn: dict, rename: dict) -> dict:
     return g
 
 
+def _returns_value(body) -> bool:
+    """Does a surface-syntax body contain ``return <expr>`` anywhere?"""
+    for st in body:
+        k = st[0]
+        if k == "return" and st[1] is not None:
+            return True
+        if k == "if" and (any(_returns_value(b) for _, b in st[1]) or _returns_value(st[2] or [])):
+            return True
+        if k in ("while",) and _returns_value(st[2]):
+            return True
+        if k == "for" and _returns_value(st[5]):
+            return True
+        if k == "switch" and (any(_returns_value(b) for _, b, _ in st[2]) or _returns_value(st[3] or [])):
+            return True
+    return False
+
+
+def _shallow(body):
+    """Statements of an IR body, descending into if/else but not into loops (where `break` changes meaning)."""
+    for st in body:
+        yield st
+        if st["k"] == "if":
+            yield from _shallow(st.get("then") or [])
+            yield from _shallow(st.get("else") or [])
+
+
+# -- evaluation order: effectful calls get their own statements -----------------------------------
+def _effects(functions: dict, global_names: set) -> tuple[set, set]:
+    """(functions that change state, functions that read state), transitively over the call graph."""
+    writes, reads, calls = set(), set(), {}
+    for name, fn in functions.items():
+        local = {p["name"] for p in fn["params"]} | set(fn.get("locals") or {})
+        cs = set()
+        for st in _walk_stmts(fn["body"]):
+            if st["k"] == "store" or (st["k"] == "assign" and st["target"] not in local
+                                      and st["target"] in global_names) or \
+                    (st["k"] == "for_range" and st["var"] in global_names and st["var"] not in local):
+                writes.add(name)
+            for e in _walk_exprs(st):
+                if e[0] == "CALL":
+                    cs.add(e[1])
+                elif e[0] == "LOAD" or (e[0] == "var" and e[1] in global_names and e[1] not in local):
+                    reads.add(name)
+        calls[name] = cs
+    changed = True
+    while changed:
+        changed = False
+        for name, cs in calls.items():
+            if name not in writes and cs & writes:
+                writes.add(name)
+                changed = True
+            if name not in reads and cs & (reads | writes):
+                reads.add(name)
+                changed = True
+    return writes, reads
+
+
+def _expr_type(e, types: dict, functions: dict, ops) -> str:
+    head = e[0]
+    if head in ("int", "float", "bool"):
+        return head
+    if head == "var":
+        return types.get(e[1], "int")
+    if head == "LOAD":
+        return "int"
+    if head == "CALL":
+        return functions[e[1]]["returns"] if e[1] in functions else "int"
+    if head in ("AND", "OR", "NOT"):
+        return "bool"
+    if head == "IF_EXPR":
+        return _expr_type(e[2], types, functions, ops)
+    spec = ops.get(head)
+    args = [_expr_type(a, types, functions, ops) for a in e[1:]]
+    rt = spec.result_type(args) if spec else None
+    return rt or "int"
+
+
+def order_effects(functions: dict, global_names: set, ops, path=None) -> None:
+    """Rewrite every function (in place) so each effectful call is its own statement, in Python's order."""
+    writes, reads = _effects(functions, global_names)
+
+    for fname, fn in functions.items():
+        local = {p["name"] for p in fn["params"]} | set(fn.get("locals") or {})
+        types = {p["name"]: p["type"] for p in fn["params"]}
+        types.update(fn.get("locals") or {})
+        counter = [0]
+
+        def fresh(t):
+            counter[0] += 1
+            n = f"cm_ev{counter[0]}"
+            fn.setdefault("locals", {})[n] = t
+            types[n] = t
+            local.add(n)
+            return n
+
+        def impure(e) -> bool:
+            return any(isinstance(x, list) and x and x[0] == "CALL" and x[1] in writes for x in _iter(e))
+
+        def reads_state(e) -> bool:
+            for x in _iter(e):
+                if x[0] == "LOAD" or (x[0] == "var" and x[1] in global_names and x[1] not in local):
+                    return True
+                if x[0] == "CALL" and (x[1] in reads or x[1] in writes):
+                    return True
+            return False
+
+        def anf(e):
+            head = e[0]
+            if head in ("var", "int", "float", "bool"):
+                return [], e
+            if head == "CALL":
+                pre, args = seq(e[2:])
+                call = ["CALL", e[1], *args]
+                if e[1] in writes:
+                    t = fresh(functions[e[1]]["returns"] if e[1] in functions else "int")
+                    if t == "void" or functions.get(e[1], {}).get("returns") == "void":
+                        raise CompileError(f"{fname}: {e[1]}() returns no value", None, path)
+                    pre.append({"k": "assign", "target": t, "value": call})
+                    return pre, ["var", t]
+                return pre, call
+            if head in ("AND", "OR"):
+                pre, a = anf(e[1])
+                if impure(e[2]):
+                    raise CompileError(f"{fname}: an effectful call in the right operand of and/or; use an if "
+                                       "statement", None, path)
+                return pre, [head, a, e[2]]
+            if head == "IF_EXPR":
+                pre, c = anf(e[1])
+                if impure(e[2]) or impure(e[3]):
+                    raise CompileError(f"{fname}: an effectful call inside if-then-else; use an if statement",
+                                       None, path)
+                return pre, [head, c, e[2], e[3]]
+            if head == "LOAD":
+                pre, (i,) = seq([e[2]])
+                return pre, ["LOAD", e[1], i]
+            pre, args = seq(e[1:])
+            return pre, [head, *args]
+
+        def seq(items):
+            pre, out = [], []
+            for it in items:
+                p, x = anf(it)
+                if p:
+                    for j, o in enumerate(out):
+                        if reads_state(o):
+                            t = fresh(_expr_type(o, types, functions, ops))
+                            pre.append({"k": "assign", "target": t, "value": o})
+                            out[j] = ["var", t]
+                    pre.extend(p)
+                out.append(x)
+            return pre, out
+
+        def top(e):
+            """The whole right-hand side: an effectful call may stay where it is (its arguments are ordered)."""
+            if e[0] == "CALL":
+                pre, args = seq(e[2:])
+                return pre, ["CALL", e[1], *args]
+            return anf(e)
+
+        def block(body):
+            out = []
+            for st in body:
+                k = st["k"]
+                if k == "assign":
+                    pre, v = top(st["value"])
+                    out += pre
+                    out.append({**st, "value": v})
+                elif k == "store":
+                    pre, (i, v) = seq([st["index"], st["value"]])
+                    out += pre
+                    out.append({**st, "index": i, "value": v})
+                elif k == "do":
+                    call = st["value"]
+                    pre, args = seq(call[2:])
+                    out += pre
+                    out.append({"k": "do", "value": ["CALL", call[1], *args]})
+                elif k == "return":
+                    if "value" in st:
+                        pre, v = top(st["value"])
+                        out += pre
+                        out.append({**st, "value": v})
+                    else:
+                        out.append(st)
+                elif k == "if":
+                    pre, c = anf(st["cond"])
+                    out += pre
+                    out.append({**st, "cond": c, "then": block(st.get("then") or []),
+                                "else": block(st.get("else") or [])})
+                elif k == "while":
+                    pre, c = anf(st["cond"])
+                    if pre:
+                        body2 = pre + [{"k": "if", "cond": ["NOT", c], "then": [{"k": "break"}], "else": []}] + \
+                            block(st["body"])
+                        out.append({"k": "while", "cond": ["bool", True], "body": body2})
+                    else:
+                        out.append({**st, "body": block(st["body"])})
+                elif k == "for_range":
+                    pre, (a, b) = seq([st["start"], st["stop"]])
+                    out += pre
+                    out.append({**st, "start": a, "stop": b, "body": block(st["body"])})
+                elif k == "switch":
+                    pre, v = anf(st["value"])
+                    out += pre
+                    node = {**st, "value": v, "cases": [{**c, "body": block(c["body"])} for c in st["cases"]]}
+                    if "default" in st:
+                        node["default"] = block(st["default"])
+                    out.append(node)
+                else:
+                    out.append(st)
+            return out
+
+        fn["body"] = block(fn["body"])
+
+
+def _iter(e):
+    if isinstance(e, list) and e:
+        yield e
+        if e[0] not in ("var", "int", "float", "bool"):
+            for a in e[(2 if e[0] in ("CALL", "LOAD") else 1):]:
+                yield from _iter(a)
+
+
 def _flatten_and(e) -> list:
     if e[0] == "bin" and e[1] == "and":
         return _flatten_and(e[2]) + _flatten_and(e[3])
@@ -803,6 +1242,17 @@ def _flatten_and(e) -> list:
 def compile_source(text: str, ops, store=None, path: str | None = None, name: str | None = None) -> Module:
     decls = parse(text, path)
     return Compiler(ops, store, path, name).compile(decls, text)
+
+
+def compile_sources(sources: list[tuple[str, str]], ops, store=None, name: str = "machine",
+                    externs: dict | None = None) -> Module:
+    """Several card-language sources as ONE module: shared constants, globals, arrays and functions (a machine
+    whose pieces live on different cards). ``sources`` is [(text, path label), ...]; ``externs`` are IR functions
+    compiled elsewhere (instruction cards) that the sources may call."""
+    decls = []
+    for text, path in sources:
+        decls += [d for d in parse(text, path) if d.kind != "module"]
+    return Compiler(ops, store, None, name, externs).compile(decls, "\n".join(t for t, _ in sources))
 
 
 def compile_file(path, ops, store=None, _seen: set | None = None) -> Module:
@@ -828,4 +1278,5 @@ def compile_file(path, ops, store=None, _seen: set | None = None) -> Module:
     return mod
 
 
-__all__ = ["CardSyntaxError", "CompileError", "Compiler", "Module", "compile_file", "compile_source"]
+__all__ = ["CardSyntaxError", "CompileError", "Compiler", "Module", "compile_file", "compile_source",
+           "compile_sources", "order_effects"]

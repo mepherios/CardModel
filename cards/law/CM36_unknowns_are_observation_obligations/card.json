@@ -3,7 +3,7 @@
   "metadata": {
     "version": "1.0.0"
   },
-  "name": "CM32_unknowns_are_observation_obligations",
+  "name": "CM36_unknowns_are_observation_obligations",
   "origins": [
     "user requirement 2026-10-21 (AnyPS5 by construction)",
     "Pheros L102",

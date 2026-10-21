@@ -1,0 +1,69 @@
+{
+  "category": "hardware",
+  "logic": [
+    "timer.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_timer",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "rw",
+      "address": 65284,
+      "name": "DIV",
+      "note": "writing clears the whole counter",
+      "post_boot_dmg": 171,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65285,
+      "name": "TIMA",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65286,
+      "name": "TMA",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65287,
+      "name": "TAC",
+      "post_boot_cgb": 248,
+      "post_boot_dmg": 248,
+      "read_or": 248
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "DIV/TIMA/TMA/TAC on a 16-bit counter that advances once per CPU T-cycle; TIMA counts falling edges of (counter bit b AND enable); overflow reads 0 for 4 T-cycles, then TMA is loaded and the timer interrupt requested.",
+  "tier": 1,
+  "timing": {
+    "counter_increments_per_tcycle": 1,
+    "div_hz": 16384,
+    "overflow_reload_delay_tcycles": 4,
+    "tac_counter_bit": {
+      "0": 9,
+      "1": 3,
+      "2": 5,
+      "3": 7
+    },
+    "tac_frequency_hz": {
+      "0": 4096,
+      "1": 262144,
+      "2": 65536,
+      "3": 16384
+    }
+  }
+}

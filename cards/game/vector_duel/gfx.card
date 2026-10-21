@@ -1,0 +1,230 @@
+-- The screen: 480 x 270 RGBA (alpha stays 255), drawn in software every frame. Colours are 0xRRGGBB; blends
+-- take an alpha in 0..256. Text is the font card's 5x7 glyphs, scaled by whole pixels; strings are the game
+-- card's, as character codes (str_off / str_len / str_chr).
+const SW = 480
+const SH = 270
+export array fb: Byte[518400]
+global shake_x: Int = 0
+global shake_y: Int = 0
+
+fn fb_init() {
+  for i in 0 .. SW * SH {
+    fb[i * 4 + 3] = 255
+  }
+}
+fn px(x: Int, y: Int, c: Int) {
+  let xx = x + shake_x
+  let yy = y + shake_y
+  if xx >= 0 and xx < SW and yy >= 0 and yy < SH {
+    let i = (yy * SW + xx) * 4
+    fb[i] = (c >> 16) & 0xFF
+    fb[i + 1] = (c >> 8) & 0xFF
+    fb[i + 2] = c & 0xFF
+  }
+}
+fn blend(x: Int, y: Int, c: Int, a: Int) {
+  let xx = x + shake_x
+  let yy = y + shake_y
+  if xx >= 0 and xx < SW and yy >= 0 and yy < SH and a > 0 {
+    let i = (yy * SW + xx) * 4
+    let k = 256 - a
+    fb[i] = (fb[i] * k + ((c >> 16) & 0xFF) * a) >> 8
+    fb[i + 1] = (fb[i + 1] * k + ((c >> 8) & 0xFF) * a) >> 8
+    fb[i + 2] = (fb[i + 2] * k + (c & 0xFF) * a) >> 8
+  }
+}
+-- linear mix of two colours, t in 0..256
+fn mix(c0: Int, c1: Int, t: Int) -> Int {
+  let r = (((c0 >> 16) & 0xFF) * (256 - t) + ((c1 >> 16) & 0xFF) * t) >> 8
+  let g = (((c0 >> 8) & 0xFF) * (256 - t) + ((c1 >> 8) & 0xFF) * t) >> 8
+  let b = ((c0 & 0xFF) * (256 - t) + (c1 & 0xFF) * t) >> 8
+  return (r << 16) | (g << 8) | b
+}
+fn rect(x: Int, y: Int, w: Int, h: Int, c: Int) {
+  let x0 = max(0, x + shake_x)
+  let y0 = max(0, y + shake_y)
+  let x1 = min(SW, x + w + shake_x)
+  let y1 = min(SH, y + h + shake_y)
+  let r = (c >> 16) & 0xFF
+  let g = (c >> 8) & 0xFF
+  let b = c & 0xFF
+  var yy = y0
+  while yy < y1 {
+    var i = (yy * SW + x0) * 4
+    var xx = x0
+    while xx < x1 {
+      fb[i] = r
+      fb[i + 1] = g
+      fb[i + 2] = b
+      i += 4
+      xx += 1
+    }
+    yy += 1
+  }
+}
+fn rect_blend(x: Int, y: Int, w: Int, h: Int, c: Int, a: Int) {
+  for yy in y .. y + h {
+    for xx in x .. x + w {
+      blend(xx, yy, c, a)
+    }
+  }
+}
+fn frame_rect(x: Int, y: Int, w: Int, h: Int, c: Int) {
+  rect(x, y, w, 1, c)
+  rect(x, y + h - 1, w, 1, c)
+  rect(x, y, 1, h, c)
+  rect(x + w - 1, y, 1, h, c)
+}
+-- a vertical gradient from c0 (top) to c1 (bottom)
+fn vgrad(x: Int, y: Int, w: Int, h: Int, c0: Int, c1: Int) {
+  for k in 0 .. h {
+    rect(x, y + k, w, 1, mix(c0, c1, k * 256 // max(1, h - 1)))
+  }
+}
+fn line(x0: Int, y0: Int, x1: Int, y1: Int, c: Int) {
+  var x = x0
+  var y = y0
+  let dx = abs(x1 - x0)
+  let dy = -abs(y1 - y0)
+  let sx = if x0 < x1 then 1 else -1
+  let sy = if y0 < y1 then 1 else -1
+  var err = dx + dy
+  var n = 0
+  while n < 2000 {
+    px(x, y, c)
+    if x == x1 and y == y1 {
+      break
+    }
+    let e2 = 2 * err
+    if e2 >= dy {
+      err += dy
+      x += sx
+    }
+    if e2 <= dx {
+      err += dx
+      y += sy
+    }
+    n += 1
+  }
+}
+fn disc(cx: Int, cy: Int, r: Int, c: Int) {
+  for dy in -r .. r + 1 {
+    let w = isqrt(r * r - dy * dy)
+    rect(cx - w, cy + dy, 2 * w + 1, 1, c)
+  }
+}
+fn disc_blend(cx: Int, cy: Int, r: Int, c: Int, a: Int) {
+  for dy in -r .. r + 1 {
+    let w = isqrt(r * r - dy * dy)
+    for dx in -w .. w + 1 {
+      blend(cx + dx, cy + dy, c, a)
+    }
+  }
+}
+-- a line of thickness t (discs along the way)
+fn thick(x0: Int, y0: Int, x1: Int, y1: Int, t: Int, c: Int) {
+  let n = max(abs(x1 - x0), abs(y1 - y0))
+  let r = t // 2
+  for k in 0 .. n + 1 {
+    let x = x0 + (x1 - x0) * k // max(1, n)
+    let y = y0 + (y1 - y0) * k // max(1, n)
+    if r <= 0 {
+      px(x, y, c)
+    } else {
+      rect(x - r, y - r, t, t, c)
+    }
+  }
+}
+fn isqrt(v: Int) -> Int {
+  if v <= 0 {
+    return 0
+  }
+  var x = v
+  var y = (x + 1) // 2
+  while y < x {
+    x = y
+    y = (x + v // x) // 2
+  }
+  return x
+}
+-- sine and cosine x 256 for an angle in 1/256 turns (a parabolic approximation, exact at the quarters)
+fn sin256(a: Int) -> Int {
+  let t = a & 255
+  if t < 128 {
+    return 4 * t * (128 - t) * 256 // 16384
+  }
+  let u = t - 128
+  return -(4 * u * (128 - u) * 256 // 16384)
+}
+fn cos256(a: Int) -> Int = sin256(a + 64)
+
+-- text ---------------------------------------------------------------------------------------------------------
+fn glyph_row(ch: Int, row: Int) -> Int {
+  var c = ch
+  if c >= 97 and c <= 122 {
+    c -= 32
+  }
+  if c < FONT_FIRST or c > FONT_LAST {
+    return 0
+  }
+  return font[(c - FONT_FIRST) * FONT_H + row]
+}
+fn draw_char(ch: Int, x: Int, y: Int, s: Int, c: Int) {
+  for row in 0 .. FONT_H {
+    let bitsrow = glyph_row(ch, row)
+    if bitsrow != 0 {
+      for col in 0 .. FONT_W {
+        if ((bitsrow >> (FONT_W - 1 - col)) & 1) != 0 {
+          rect(x + col * s, y + row * s, s, s, c)
+        }
+      }
+    }
+  }
+}
+fn str_width(id: Int, s: Int) -> Int = max(0, str_len[id] * FONT_ADV * s - s)
+fn draw_str(id: Int, x: Int, y: Int, s: Int, c: Int) {
+  let o = str_off[id]
+  for k in 0 .. str_len[id] {
+    draw_char(str_chr[o + k], x + k * FONT_ADV * s, y, s, c)
+  }
+}
+-- with a one-pixel drop shadow
+fn draw_str_sh(id: Int, x: Int, y: Int, s: Int, c: Int) {
+  draw_str(id, x + max(1, s // 2), y + max(1, s // 2), s, 0x000000)
+  draw_str(id, x, y, s, c)
+}
+fn draw_str_c(id: Int, cx: Int, y: Int, s: Int, c: Int) {
+  draw_str_sh(id, cx - str_width(id, s) // 2, y, s, c)
+}
+fn num_digits(n: Int) -> Int {
+  var d = 1
+  var v = abs(n)
+  while v >= 10 {
+    v = v // 10
+    d += 1
+  }
+  return d
+}
+fn draw_num(n: Int, x: Int, y: Int, s: Int, c: Int) {
+  var v = abs(n)
+  var k = num_digits(n)
+  var xx = x
+  if n < 0 {
+    draw_char(45, xx, y, s, c)
+    xx += FONT_ADV * s
+  }
+  while k > 0 {
+    k -= 1
+    var p = 1
+    for i in 0 .. k {
+      p *= 10
+    }
+    draw_char(48 + (v // p) % 10, xx, y, s, c)
+    xx += FONT_ADV * s
+  }
+}
+fn num_width(n: Int, s: Int) -> Int = (num_digits(n) + (if n < 0 then 1 else 0)) * FONT_ADV * s - s
+fn draw_num_c(n: Int, cx: Int, y: Int, s: Int, c: Int) {
+  draw_num(n, cx - num_width(n, s) // 2 + 1, y + 1, s, 0x000000)
+  draw_num(n, cx - num_width(n, s) // 2, y, s, c)
+}

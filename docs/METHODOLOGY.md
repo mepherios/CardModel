@@ -119,7 +119,7 @@ pipeline and scores it:
 Every run is a card in `cards/arena_run/`. Goals `G_O2`–`G_O4` track soundness, recall ≥ 0.9 and speedup ≥ ×10.
 Adding an algorithm card raises recall. Adding a decoy template makes the soundness test stricter.
 
-## 8. Derivation and observation (law CM32)
+## 8. Derivation and observation (law CM36)
 
 A gap in a reimplementation of someone else's system (AnyPS5 reimplementing the PS5's libraries is the worked
 example, docs/ANYPS5.md) closes in one of two ways, and the model keeps them apart:
@@ -135,3 +135,16 @@ example, docs/ANYPS5.md) closes in one of two ways, and the model keeps them apa
 Hardware, services and policy (DRM) are named as boundaries of the effect shell (CM21), with what a host mapping
 or the device would need. Rules decide every gap's cause (`stdlib/anyps5.card`), so each cause comes with the
 proof of how it was reached, and a constraint fails the verify when a gap has none.
+## 9. Machines: the same split at the scale of a console
+
+A console is a pure function too: its state and the buttons in, the next state, a frame and some audio samples
+out. That function is the machine module (docs/MACHINES.md): instruction cards and hardware cards compiled into
+one card-IR module, with no I/O in it at all. The effect shell (`machine/shell.py`) is everything else: the
+browser page, the audio device, the keys, the save files, the wall clock. It is never lifted or specialised, and
+what it shows is exactly the machine's frame (CM34).
+
+Lifting a ROM's code applies the optimisation pipeline's discipline to machine code: every block is the
+instruction cards' own IR specialised to constant bytes (no new semantics are written), it runs only where it is
+provably equivalent to the instructions it replaces (it finishes before the next event and leaves after writes
+that could move one), and a differential run against the interpreter checks every frame (CM33). Speed comes
+second: a block that is not provably equivalent falls back to the interpreter.

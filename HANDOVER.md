@@ -307,6 +307,73 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   upstream instead of mixing with it (`scan_cards`), and `anyps5 cover --compare` sets the two side by side.
   ~/Programmering/AnyPS5-cardmodel is such a copy (its own git repository: the MP3 header fix, the relinker build,
   `docs/dev/CARDMODEL.md`).
+## 3f. Machines: Game Boy, Game Boy Color, and the DS prototype (third build)
+
+```bash
+./bin/cardmodel emu "~/Downloads/GB_GBC/Game Boy/Tetris (World) (Rev A).zip"     # opens the browser page
+```
+
+```bash
+./bin/cardmodel emu game.gbc --headless --frames 900 --input "300:start,306:-" --png shot.png --wav sound.wav
+```
+
+```bash
+./bin/cardmodel isa check lr35902
+```
+
+```bash
+./bin/cardmodel machine survey ~/Downloads/GB_GBC
+```
+
+```bash
+./bin/cardmodel machine diff game.gb --frames 3000
+```
+
+```bash
+./bin/cardmodel machine nds "~/Downloads/Pokemon Diamond/Pokemon Diamond.nds" --frames 600
+```
+
+* A CPU is its **instruction cards** (`cards/isa`), a console its **hardware cards** (`cards/hardware`), and a
+  **machine card** (`cards/machine`) composes them into one card-IR module. docs/MACHINES.md describes all of it.
+* `emu` runs the ROM's **lifted** code (its basic blocks as card IR, specialised, compiled through the C card) with
+  the native interpreter as fallback. The first launch of a ROM profiles 1800 frames headless and compiles (a few
+  seconds); later launches start at once. `--engine native` skips lifting; `--engine host` is the Python
+  fallback (slow); `--engine ir` the reference interpreter (very slow).
+* The page: arrows, X = A, Z = B, Enter = Start, Shift = Select, gamepads. Click once for sound. Ctrl-C stops and
+  saves.
+* Saves: `saves/<game>.sav` in this folder (gitignored), or `--save-dir`. MBC3 clocks are saved in the common
+  48-byte trailer and catch up with the wall clock.
+* Caches: `state/emu/<rom>-<machine>/` holds the profile, the lifted blocks and the library (ROM-derived, never in
+  git). `cardmodel clean` does not touch saves.
+* To extend: an instruction is a card (edit `tools/gen_lr35902.py` or `tools/gen_armv5te.py`, then
+  `cardmodel isa build ISA`); a hardware component is a directory card with registers and timing as data and a
+  `.card` logic file; a bank controller is a case in `gb_cartridge/cart.card` plus an entry in its `types` table.
+  `verify` checks every instruction card in every engine; `machine diff` checks lifting; `machine survey` the
+  collection.
+
+## 3g. The arcade: a native game built from cards, and its launcher (fourth build)
+
+```bash
+./bin/cardmodel arcade launcher --install
+```
+
+```bash
+./bin/cardmodel arcade build vector_duel
+```
+
+* **Vector Duel** (`cards/game/vector_duel`): the game card holds the data (strings, music, ladder, achievements,
+  store text, versions); its eight `.card` files are the whole game (frame loop, software renderer, duel on the
+  move cards and the combat kernel, AIs, drawing, screens, synth, save). `arcade/gen.py` turns the data cards into
+  tables and solves the exact equilibria the equilibrium AI samples. docs/ARCADE.md describes it.
+* **The pipeline** (`arcade/build.py`): module -> C card -> `game.dylib`; the platform card's Swift effect shell;
+  store pictures drawn by the game; a bundle; a depot of SHA-256 chunks. **The service** (`arcade serve`) builds
+  on demand when the cards change and serves catalog, manifests, chunks, pictures and the launcher's pages.
+* **The launcher** (`cards/app/arcade`): downloads with every chunk checked, delta updates, verify, play time,
+  achievements from the save. It lives in ~/Applications and keeps its data in
+  ~/Library/Application Support/Cardmodel Arcade.
+* **Shipping an update**: change the game's cards, bump `version` and add a `changelog` entry in its card.json; the
+  launcher shows Update with the notes, and the service compiles the new build when the player asks for it.
+* Witnesses: `tests/test_arcade.py` (CM35).
 
 ## 4. How to add things
 
@@ -443,6 +510,18 @@ C++ compiled next to card-language semantics and compared on seeded inputs.
 
 **Partial (AnyPS5):** the scan is lexical (no macro expansion); debt causes come from cue words; eight semantics
 bindings cover the pure code a public standard fixes, not all of it.
+**Real since the third build (machines):** the IR and the card language carry machine state (globals, arrays, void
+functions, switch, an evaluation-order pass); the LR35902 and ARMv5TE/ARMv4T instruction cards with per-instruction
+conformance in three engines (reference interpreter, Python, C) and their timing/flag data checked; the Game Boy /
+Color machine from hardware cards; ROM code lifted into card IR and run natively, frame-for-frame identical to the
+interpreter in the differential runs; the effect shell (browser page, headless runs, saves, the RTC); the ROM
+survey; a DS machine prototype that direct-boots and reports its coverage.
+
+**Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; MMM01, MBC6/7, HuC1/3, TAMA5,
+the camera and unlicensed multicart mappers are missing; of the hardware test suites (Blargg, mooneye, acid2)
+only Blargg's oam_bug tests fail (the DMG's OAM corruption bug is not modelled) and tests for a CGB in DMG mode are
+skipped; the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted
+(COVERAGE.md has the numbers).
 
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
@@ -460,6 +539,10 @@ a native (ctypes) path inside improved modules (ROADMAP).
 * Every subprocess has a timeout; every search has a budget.
 * LAWS.md and COVERAGE.md are generated (`cardmodel docs`, `cardmodel cover --write COVERAGE.md`).
 * Never `git push` from automation; commit locally (hub L13).
+* No ROM byte in the repository: ROMs are read where they are (zips in memory); lifted code and profiles live in
+  `state/emu/`, saves in `saves/` (both gitignored). Nothing decrypts or patches DRM or anti-cheat; a DS image with
+  an encrypted secure area is refused.
+* A machine module performs no I/O; everything that touches the world is `machine/shell.py` (CM21, CM34).
 
 ---
 
@@ -489,6 +572,22 @@ a native (ctypes) path inside improved modules (ROADMAP).
    ranks, host mappings for the standard host functions, the string/list IR for the standard data functions,
    and console observations for the rest (each named with its file, line and debt entry). Fixes go into the copy
    ~/Programmering/AnyPS5-cardmodel, never into ~/Documents/AnyPS5-main.
+6. **Games natively: the next pieces** (the machine model is built; docs/MACHINES.md, ROADMAP "Machines").
+   * The hardware test suites are in `~/Downloads/gb-test-suites` (downloaded with the user's go-ahead; run
+     `cardmodel machine testroms ~/Downloads/gb-test-suites`). What is left: the DMG OAM corruption bug (Blargg
+     oam_bug: it needs an "IDU drives this address" hook in the LR35902 bus contract for INC/DEC rr, PUSH/CALL and
+     the reads that increment), then a CGB DMG-compatibility mode (mooneye misc/*-C).
+   * Close the survey's remaining failures (`cardmodel machine survey` lists them): the missing bank controllers
+     (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (the gameboy machine card
+     exports `step` and `peek`: `gb.GameBoy(ctx, rom).m.call("step")`, `.m.call("peek", addr)`).
+   * The DS, in the order its coverage report asks for it: SPI devices (firmware user settings, touchscreen,
+     power), RTC, sound channel status, VRAM banks and the 2D engines (a first picture), then 3D. ARM9 blocks are
+     already lifted (`machine nds ROM --lift`); Thumb, the ARM7 and cheaper word guards are next there.
+7. **AnyPS5 on the card model (proposed as its own session).** One card per PRX export/NID (implemented, throws, or
+   unknown signature) and one card per debt entry. That gives the real coverage behind its 95 % badge and an honest
+   account of why the rest is missing: unknown console behaviour can only be closed by observation, which is Pheros
+   L102. Then the card-native mechanisms that make the missing pieces explicit, witnessed obligations instead of
+   prose.
 
 ---
 
@@ -509,3 +608,11 @@ a native (ctypes) path inside improved modules (ROADMAP).
   `emit` entry or the language card's helper, never the engine.
 * **The sandbox test is skipped:** `sandbox-exec` only exists on macOS. The static self-containment check still runs.
 * **`state/`** is a cache (builds, last verify). `cardmodel clean` removes the build cache.
+* **`cardmodel emu`** prints the page's URL; if the browser does not open, open it yourself. No sound until you click
+  the page once (browsers block autoplay). A port in use: `--port 0` picks a free one. The first launch of a ROM
+  compiles its lifted code (a few seconds, one compile unit per ROM bank, through the resource governor); use
+  `--engine native` to start at once.
+* **A game misbehaves**: compare engines (`--engine native` vs lifted: `cardmodel machine diff ROM`), then look
+  at `cardmodel machine survey`'s classification. A lifted/interpreter difference is a lifter bug (CM33); an
+  interpreter problem is a hardware-card or instruction-card bug: write a synthetic ROM that shows it
+  (`machine/asm.py`) and add it to `tests/test_machine.py`.

@@ -1,0 +1,16 @@
+{
+  "axis": "machines",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "ds_undecodable_executed",
+  "name": "G_M5_ds_decoded",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "Instructions the DS prototype executed that no ARM/Thumb instruction card decodes (last `cardmodel machine nds`).",
+  "target": 0,
+  "tier": 0
+}

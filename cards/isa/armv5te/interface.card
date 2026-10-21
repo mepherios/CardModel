@@ -1,0 +1,39 @@
+-- The bus contract of the ARM cards, as stubs (each changes machine state, so calls stay ordered). A machine
+-- supplies the real ones: byte/halfword/word reads and writes (addresses already aligned by the semantics),
+-- swi (HLE BIOS or the exception), undefined_op, coprocessor reads and writes (CP15 on the ARM9).
+global bus_effect: Int = 0
+
+fn rd8(a: Int) -> Int {
+  bus_effect += 1
+  return 0
+}
+fn rd16(a: Int) -> Int {
+  bus_effect += 1
+  return 0
+}
+fn rd32(a: Int) -> Int {
+  bus_effect += 1
+  return 0
+}
+fn wr8(a: Int, v: Int) {
+  bus_effect += 1
+}
+fn wr16(a: Int, v: Int) {
+  bus_effect += 1
+}
+fn wr32(a: Int, v: Int) {
+  bus_effect += 1
+}
+fn swi(n: Int) {
+  bus_effect += 1
+}
+fn undefined_op(op: Int) {
+  bus_effect += 1
+}
+fn cp_read(op: Int) -> Int {
+  bus_effect += 1
+  return 0
+}
+fn cp_write(op: Int, v: Int) {
+  bus_effect += 1
+}

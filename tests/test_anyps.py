@@ -1,4 +1,4 @@
-"""AnyPS5 as cards (CM32): the badge's rule reproduced, every gap given a cause, unknowns left to observation,
+"""AnyPS5 as cards (CM36): the badge's rule reproduced, every gap given a cause, unknowns left to observation,
 and AnyPS5's own code witnessed against derived semantics. A synthetic checkout stands in for AnyPS5, so the
 suite needs no folder outside the repository; CARDMODEL_ANYPS5=<checkout> adds the check on a real one."""
 import json

@@ -1,0 +1,7 @@
+{
+  "card_type": ["isa_instruction"],
+  "description": "Instruction sets as cards: one card per instruction (encoding, length, cycle-level timing, flag effects as data, semantics in the card language compiled to the card IR), plus one card per ISA with its registers and semantic helpers.",
+  "name": "isa",
+  "status_values": ["healthy", "suspect", "broken", "quarantined"],
+  "tier": 1
+}

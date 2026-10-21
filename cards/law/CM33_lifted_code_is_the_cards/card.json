@@ -1,0 +1,10 @@
+{
+  "category": "law",
+  "metadata": {"version": "1.0.0"},
+  "name": "CM33_lifted_code_is_the_cards",
+  "origins": ["user requirement 2026-10-21 (REA-style distillation kept internal; native through the language cards)", "hub L3", "Pheros L41"],
+  "provenance": {"origin": "cardmodel"},
+  "statement": "Lifted ROM code is the instruction cards' IR specialised to the ROM's bytes (inlining, constant propagation, register caching, dead code), emitted through a language card; a block runs only when it can finish before the next event and leaves after any write that may move one, so a lifted run is frame-for-frame identical to the interpreter; a planted change in a lifted block is caught by the differential run; ROM-derived code stays in the state cache, never in the repository.",
+  "tier": 0,
+  "witness": "tests/test_machine.py::test_lifted_blocks_match_the_interpreter"
+}

@@ -1,0 +1,13 @@
+{
+  "category": "hardware",
+  "name": "nds_bios",
+  "machine": "nds",
+  "statement": "High-level emulation of the DS BIOS calls games make (IntrWait, VBlankIntrWait, Halt, Div, CpuSet, CpuFastSet, Sqrt, GetCRC16, LZ77 and run-length decompression), CP15 for the ARM9 (control, DTCM/ITCM regions, wait for interrupt), and interrupt entry through our own dispatcher words at the IRQ vector. No BIOS image is used: Nintendo's BIOS is not ours to ship.",
+  "swi_modelled": {"0x03": "WaitByLoop", "0x04": "IntrWait", "0x05": "VBlankIntrWait", "0x06": "Halt", "0x07": "Sleep (ARM7)", "0x08": "SoundBias (ARM7, no effect)", "0x09": "Div", "0x0B": "CpuSet", "0x0C": "CpuFastSet", "0x0D": "Sqrt", "0x0E": "GetCRC16", "0x11": "LZ77UnCompWram", "0x12": "LZ77UnCompVram", "0x14": "RLUnCompWram", "0x15": "RLUnCompVram"},
+  "swi_not_modelled": {"0x00": "SoftReset", "0x10": "BitUnPack", "0x13": "HuffUnComp", "0x16-0x18": "Diff unfilters", "0x1A-0x1C": "sine/pitch/volume tables (ARM7)", "0x1D-0x1F": "boot procedures and debug"},
+  "cp15": {"id": "0x41059461", "control": "c1,c0,0 (bit 13: vectors at 0xFFFF0000)", "dtcm": "c9,c1,0", "itcm": "c9,c1,1", "wait_for_interrupt": ["c7,c0,4", "c7,c8,2"]},
+  "sources": ["GBATEK (BIOS functions, CP15)"],
+  "logic": ["bios.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

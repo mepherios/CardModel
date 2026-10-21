@@ -1,0 +1,27 @@
+{
+  "applies_to": ["isa"],
+  "category": "card_type",
+  "metadata": {"version": "1.0.0"},
+  "name": "isa_instruction",
+  "provenance": {"origin": "cardmodel"},
+  "schema": {
+    "properties": {
+      "kind": {"enum": ["instruction", "isa"]},
+      "isa": {"type": "string"},
+      "opcode": {"type": "integer", "minimum": 0},
+      "prefix": {"type": ["integer", "null"]},
+      "mnemonic": {"type": "string"},
+      "bytes": {"type": "integer", "minimum": 1},
+      "cycles": {"type": ["integer", "object"]},
+      "mcycles": {"type": ["array", "object"]},
+      "flags": {"type": "object"},
+      "semantics": {"type": "string"},
+      "ir": {"type": "object"},
+      "vectors": {"type": "array"}
+    },
+    "required": ["kind"],
+    "type": "object"
+  },
+  "statement": "An instruction card (kind instruction): encoding, length, cycle-level timing (cycles, mcycles), flag effects as data, card-language semantics and its compiled IR; or an ISA card (kind isa) naming its semantic library and bus contract.",
+  "tier": 1
+}

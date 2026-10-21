@@ -51,13 +51,59 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 ## Done (2026-10-21, AnyPS5)
 
-* 🔵 **AnyPS5 as cards** (CM32): every declared export, raw-NID alias, assembly export, debt entry, library and
+* 🔵 **AnyPS5 as cards** (CM36): every declared export, raw-NID alias, assembly export, debt entry, library and
   shader instruction as cards with file and line; the libraries and shader badges reproduced name by name; the
   real coverage ladder; every gap (exports, debt entries, empty modules) classified by rules in
   `stdlib/anyps5.card` with proofs; the module graph's blockers; eight semantics bindings derived from public
   standards, witnessed against AnyPS5's own C++ (docs/ANYPS5.md).
 * 🔵 Theorem witnesses sample inside the hypothesis box when it is too large to enumerate (multi-variable
   bounded statements were vacuous before).
+## Done (2026-10-21, third build: machines)
+
+* 🔵 **Machine state in the IR and the card language**: globals, byte/int arrays, void functions, call statements,
+  switch, constants read from cards, an evaluation-order pass (C computes what Python computes), language cards
+  with machine templates and `embed` blocks (Python in-process, C through ctypes), split compilation.
+* 🔵 **Instruction cards**: LR35902 (every base and CB opcode) and ARMv5TE/ARMv4T (ARM and Thumb forms), with
+  timing and flags as data, semantics, IR, vectors; per-instruction conformance in three engines in `verify` (CM32).
+* 🔵 **Game Boy / Game Boy Color from hardware cards**: memory map, MBC1/2/3+RTC/5, timer, interrupts, PPU (DMG and
+  CGB), DMA/HDMA, joypad, serial, APU, CGB registers; lazy, exact component syncing; a ROM survey of the user's
+  collection (COVERAGE.md).
+* 🔵 **Lifting** (REA-style, internal): ROM basic blocks as specialised card IR, compiled natively, frame-for-frame
+  identical to the interpreter (CM33).
+* 🔵 **Effect shell**: `cardmodel emu` (browser page with audio and gamepads, headless PNG/WAV runs, saves, RTC)
+  (CM21, CM34).
+* 🔵 **DS prototype**: both CPUs on the ARM cards, memory maps, IPC, timers, DMA, divider, cartridge reads, HLE
+  BIOS, direct boot; `cardmodel machine nds` measures coverage; the ARM9's ARM code is lifted through the same
+  pipeline (`--lift`), identical to the interpreter in the differential run.
+
+## Done (2026-10-21, fourth build: the arcade)
+
+* 🔵 **Vector Duel**: a complete native game made of cards (data cards + card-language logic on the combat cards and
+  kernel), compiled through the C card; arcade ladder, training, versus, options, saves, achievements (CM35).
+* 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
+  and the arcade service that builds games from their cards into depots of checked chunks.
+
+## Arcade: next
+
+* 🟢 **More of the game**: duel-tree AI (several exchanges deep), multi-hit strings, bosses with phase stances,
+  the systemic world as a campaign map.
+* 🟢 **The Game Boy library in the launcher**: the same native shell runs a machine module (same interface), so
+  each ROM in the collection can be a library entry built from the machine cards.
+* 🟢 **Other platforms**: a platform card per OS (a shell and a bundle layout each).
+
+## Machines: now and next
+
+* 🔵 **Hardware test suites**: Blargg, mooneye and acid2 through `cardmodel machine testroms` (the timing they
+  pinned down is in docs/MACHINES.md §3; COVERAGE.md has the results).
+* 🟢 **The DMG OAM corruption bug** (Blargg oam_bug) and a **CGB DMG-compatibility mode** (mooneye misc).
+* 🟢 **The survey's remaining failures**: MBC7, HuC3 and camera bank controllers as cards; trace the static and
+  blank titles.
+* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); DMG colourisation
+  palettes for DMG games on the CGB (from data, not the boot ROM).
+* 🟢 **DS, as its coverage report asks**: SPI (firmware user settings, touchscreen, power), RTC, sound status,
+  VRAM banks and the 2D engines (a first picture), then 3D; wait states; Thumb and ARM7 lifting, cheaper guards.
+* 🟢 **Lifting further**: superblocks through not-taken branches, a fast path for dynamic WRAM/HRAM accesses,
+  register caching across exits.
 
 ## Now
 

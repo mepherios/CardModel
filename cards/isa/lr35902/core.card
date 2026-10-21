@@ -1,0 +1,205 @@
+-- LR35902 (Sharp SM83, the Game Boy and Game Boy Color CPU): registers and the semantic helpers every
+-- instruction card's `semantics` calls. A machine supplies the bus: rd8(a), wr8(a, v) and idle() (one M-cycle
+-- each), halt(), stop() and hang(). Flags live in F: Z = 0x80, N = 0x40, H = 0x20, C = 0x10; the low nibble
+-- of F is always 0. Post-boot values are the DMG's (the CGB's are set by the machine).
+
+global A: Int = 0x01
+global F: Int = 0xB0
+global B: Int = 0x00
+global C: Int = 0x13
+global D: Int = 0x00
+global E: Int = 0xD8
+global H: Int = 0x01
+global L: Int = 0x4D
+global SP: Int = 0xFFFE
+global PC: Int = 0x0100
+global ime: Int = 0              -- interrupt master enable
+global ime_delay: Int = 0        -- EI: IME turns on after the instruction that follows EI
+global halted: Int = 0
+global halt_bug: Int = 0         -- HALT with IME = 0 and an interrupt pending: the next byte is fetched twice
+global locked: Int = 0           -- an illegal opcode locks the CPU up
+
+const FZ = 0x80
+const FN = 0x40
+const FH = 0x20
+const FC = 0x10
+
+fn bc() -> Int = (B << 8) | C
+fn de() -> Int = (D << 8) | E
+fn hl() -> Int = (H << 8) | L
+fn af() -> Int = (A << 8) | F
+fn set_bc(v: Int) {
+  B = (v >> 8) & 0xFF
+  C = v & 0xFF
+}
+fn set_de(v: Int) {
+  D = (v >> 8) & 0xFF
+  E = v & 0xFF
+}
+fn set_hl(v: Int) {
+  H = (v >> 8) & 0xFF
+  L = v & 0xFF
+}
+fn set_af(v: Int) {
+  A = (v >> 8) & 0xFF
+  F = v & 0xF0
+}
+fn carry() -> Int = (F >> 4) & 1
+fn z8(v: Int) -> Int = if (v & 0xFF) == 0 then FZ else 0
+fn sext8(v: Int) -> Int = if v >= 0x80 then v - 0x100 else v
+
+-- conditions cc: NZ, Z, NC, C
+fn cond_nz() -> Bool = (F & FZ) == 0
+fn cond_z() -> Bool = (F & FZ) != 0
+fn cond_nc() -> Bool = (F & FC) == 0
+fn cond_c() -> Bool = (F & FC) != 0
+
+-- one M-cycle each: the opcode and immediate bytes come from PC
+fn fetch8() -> Int {
+  let v = rd8(PC)
+  if halt_bug != 0 {
+    halt_bug = 0
+  } else {
+    PC = (PC + 1) & 0xFFFF
+  }
+  return v
+}
+fn fetch16() -> Int {
+  let lo = fetch8()
+  let hi = fetch8()
+  return lo | (hi << 8)
+}
+fn push16(v: Int) {
+  SP = (SP - 1) & 0xFFFF
+  wr8(SP, (v >> 8) & 0xFF)
+  SP = (SP - 1) & 0xFFFF
+  wr8(SP, v & 0xFF)
+}
+fn pop16() -> Int {
+  let lo = rd8(SP)
+  SP = (SP + 1) & 0xFFFF
+  let hi = rd8(SP)
+  SP = (SP + 1) & 0xFFFF
+  return lo | (hi << 8)
+}
+
+-- 8-bit arithmetic (A op b)
+fn alu_add(b: Int, c: Int) {
+  let a = A
+  let r = a + b + c
+  F = z8(r) | (if (a & 0xF) + (b & 0xF) + c > 0xF then FH else 0) | (if r > 0xFF then FC else 0)
+  A = r & 0xFF
+}
+fn alu_sub(b: Int, c: Int) {
+  let a = A
+  let r = a - b - c
+  F = z8(r) | FN | (if (a & 0xF) - (b & 0xF) - c < 0 then FH else 0) | (if r < 0 then FC else 0)
+  A = r & 0xFF
+}
+fn alu_cp(b: Int) {
+  let a = A
+  let r = a - b
+  F = z8(r) | FN | (if (a & 0xF) < (b & 0xF) then FH else 0) | (if r < 0 then FC else 0)
+}
+fn alu_and(b: Int) {
+  A = A & b
+  F = z8(A) | FH
+}
+fn alu_xor(b: Int) {
+  A = (A ^ b) & 0xFF
+  F = z8(A)
+}
+fn alu_or(b: Int) {
+  A = (A | b) & 0xFF
+  F = z8(A)
+}
+fn inc8(v: Int) -> Int {
+  let r = (v + 1) & 0xFF
+  F = (F & FC) | z8(r) | (if (v & 0xF) == 0xF then FH else 0)
+  return r
+}
+fn dec8(v: Int) -> Int {
+  let r = (v - 1) & 0xFF
+  F = (F & FC) | z8(r) | FN | (if (v & 0xF) == 0 then FH else 0)
+  return r
+}
+fn add_hl(v: Int) {
+  let h = hl()
+  let r = h + v
+  F = (F & FZ) | (if (h & 0xFFF) + (v & 0xFFF) > 0xFFF then FH else 0) | (if r > 0xFFFF then FC else 0)
+  set_hl(r & 0xFFFF)
+}
+-- SP + e (ADD SP,e and LD HL,SP+e): flags from the unsigned low byte, Z = N = 0
+fn add_sp(e: Int) -> Int {
+  let s = SP
+  F = (if (s & 0xF) + (e & 0xF) > 0xF then FH else 0) | (if (s & 0xFF) + (e & 0xFF) > 0xFF then FC else 0)
+  return (s + sext8(e)) & 0xFFFF
+}
+fn daa() {
+  var a = A
+  var adj = 0
+  var c = 0
+  if (F & FH) != 0 or ((F & FN) == 0 and (a & 0xF) > 9) {
+    adj = 0x06
+  }
+  if (F & FC) != 0 or ((F & FN) == 0 and a > 0x99) {
+    adj = adj | 0x60
+    c = FC
+  }
+  if (F & FN) != 0 {
+    a = (a - adj) & 0xFF
+  } else {
+    a = (a + adj) & 0xFF
+  }
+  F = z8(a) | (F & FN) | c
+  A = a
+}
+
+-- accumulator rotates (Z = 0) and the CB-prefixed shifts (Z from the result)
+fn rlc(v: Int, z: Bool) -> Int {
+  let c = (v >> 7) & 1
+  let r = ((v << 1) | c) & 0xFF
+  F = (if z then z8(r) else 0) | (c << 4)
+  return r
+}
+fn rrc(v: Int, z: Bool) -> Int {
+  let c = v & 1
+  let r = (v >> 1) | (c << 7)
+  F = (if z then z8(r) else 0) | (c << 4)
+  return r
+}
+fn rl(v: Int, z: Bool) -> Int {
+  let c = (v >> 7) & 1
+  let r = ((v << 1) | carry()) & 0xFF
+  F = (if z then z8(r) else 0) | (c << 4)
+  return r
+}
+fn rr(v: Int, z: Bool) -> Int {
+  let c = v & 1
+  let r = (v >> 1) | (carry() << 7)
+  F = (if z then z8(r) else 0) | (c << 4)
+  return r
+}
+fn sla(v: Int) -> Int {
+  let r = (v << 1) & 0xFF
+  F = z8(r) | (((v >> 7) & 1) << 4)
+  return r
+}
+fn sra(v: Int) -> Int {
+  let r = (v >> 1) | (v & 0x80)
+  F = z8(r) | ((v & 1) << 4)
+  return r
+}
+fn swap(v: Int) -> Int {
+  let r = ((v << 4) | (v >> 4)) & 0xFF
+  F = z8(r)
+  return r
+}
+fn srl(v: Int) -> Int {
+  let r = v >> 1
+  F = z8(r) | ((v & 1) << 4)
+  return r
+}
+fn bit_test(n: Int, v: Int) {
+  F = (F & FC) | FH | (if (v & (1 << n)) == 0 then FZ else 0)
+}

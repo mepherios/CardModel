@@ -6,7 +6,7 @@
   anyps5_domain    what each system library is for (a pattern over library names) and the cause its gaps default to
   anyps5_standard  exports whose semantics a public standard fixes (C, POSIX, FreeBSD, ELF, RFCs, ISO codecs)
   card_type/*      schemas for the anyps5_* registries
-  goal/G_P*        the AnyPS5 goals; law/CM32       unknowns are observation obligations
+  goal/G_P*        the AnyPS5 goals; law/CM36       unknowns are observation obligations
 
 Run once: ``python3 -B tools/seed_anyps5.py`` (``--force`` rewrites, with versioning). The packed registries
 (anyps5_export, anyps5_debt, anyps5_library, anyps5_instruction) come from ``cardmodel anyps5 scan``, and the
@@ -291,7 +291,7 @@ GOALS = [
 ]
 
 LAW = {
-    "name": "CM32_unknowns_are_observation_obligations",
+    "name": "CM36_unknowns_are_observation_obligations",
     "statement": "A gap whose semantics no card derives is classified by what would close it and never filled with "
                  "a made-up success: console-specific behaviour (names, signatures, layouts, error codes, timing) "
                  "is closed only by observation (Pheros L102), boundaries (hardware, services, DRM) are named, and "

@@ -1,0 +1,192 @@
+{
+  "category": "hardware",
+  "duty_patterns": [
+    "00000001",
+    "10000001",
+    "10000111",
+    "01111110"
+  ],
+  "limits": "point-sampled (no band limiting); the length-enable extra clock, the wave RAM access window and the 'zombie' envelope writes are not modelled",
+  "logic": [
+    "apu.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_apu",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "rw",
+      "address": 65296,
+      "name": "NR10",
+      "read_or": 128
+    },
+    {
+      "access": "rw",
+      "address": 65297,
+      "name": "NR11",
+      "read_or": 63
+    },
+    {
+      "access": "rw",
+      "address": 65298,
+      "name": "NR12",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65299,
+      "name": "NR13",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65300,
+      "name": "NR14",
+      "read_or": 191
+    },
+    {
+      "access": "rw",
+      "address": 65301,
+      "name": "FF15",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65302,
+      "name": "NR21",
+      "read_or": 63
+    },
+    {
+      "access": "rw",
+      "address": 65303,
+      "name": "NR22",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65304,
+      "name": "NR23",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65305,
+      "name": "NR24",
+      "read_or": 191
+    },
+    {
+      "access": "rw",
+      "address": 65306,
+      "name": "NR30",
+      "read_or": 127
+    },
+    {
+      "access": "rw",
+      "address": 65307,
+      "name": "NR31",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65308,
+      "name": "NR32",
+      "read_or": 159
+    },
+    {
+      "access": "rw",
+      "address": 65309,
+      "name": "NR33",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65310,
+      "name": "NR34",
+      "read_or": 191
+    },
+    {
+      "access": "rw",
+      "address": 65311,
+      "name": "FF1F",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65312,
+      "name": "NR41",
+      "read_or": 255
+    },
+    {
+      "access": "rw",
+      "address": 65313,
+      "name": "NR42",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65314,
+      "name": "NR43",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65315,
+      "name": "NR44",
+      "read_or": 191
+    },
+    {
+      "access": "rw",
+      "address": 65316,
+      "name": "NR50",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65317,
+      "name": "NR51",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65318,
+      "name": "NR52",
+      "read_or": 112
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "Sound: square 1 (with sweep), square 2, wave (32 x 4-bit samples), noise (LFSR); frame sequencer at 512 Hz (length 256 Hz, sweep 128 Hz, envelope 64 Hz); NR50 volume, NR51 panning, NR52 power and status. Output: signed 16-bit stereo at sample_rate.",
+  "tier": 1,
+  "timing": {
+    "envelope_step": 7,
+    "frame_sequencer_dots": 8192,
+    "frame_sequencer_hz": 512,
+    "length_steps": [
+      0,
+      2,
+      4,
+      6
+    ],
+    "noise_divisors": [
+      8,
+      16,
+      32,
+      48,
+      64,
+      80,
+      96,
+      112
+    ],
+    "square_dots_per_step": "(2048 - f) * 4",
+    "sweep_steps": [
+      2,
+      6
+    ],
+    "wave_dots_per_sample": "(2048 - f) * 2"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "category": "hardware",
+  "logic": [
+    "serial.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_serial",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "rw",
+      "address": 65281,
+      "name": "SB",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65282,
+      "name": "SC",
+      "note": "CGB: bit 1 is the fast clock, unused bits 0x7C",
+      "post_boot_cgb": 127,
+      "post_boot_dmg": 126,
+      "read_or": 126
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "SB/SC: with the internal clock, 8 bits shift at 8192 Hz (CGB fast mode 262144 Hz); with no partner the byte received is 0xFF. Bytes sent are logged in serial_out (test ROMs print their results there).",
+  "tier": 1,
+  "timing": {
+    "dots_per_byte": 4096,
+    "dots_per_byte_cgb_fast": 128
+  }
+}

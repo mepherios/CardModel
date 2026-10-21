@@ -1,0 +1,151 @@
+{
+  "category": "hardware",
+  "dmg_shades_rgb": [
+    [
+      224,
+      248,
+      208
+    ],
+    [
+      136,
+      192,
+      112
+    ],
+    [
+      52,
+      104,
+      86
+    ],
+    [
+      8,
+      24,
+      32
+    ]
+  ],
+  "limits": "a scanline renderer: register changes in the middle of mode 3 apply to the whole line; the LY=153 early-zero quirk, the first-frame-after-enable blank and exact mode 3 lengths are not modelled",
+  "logic": [
+    "ppu.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_ppu",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "rw",
+      "address": 65344,
+      "name": "LCDC",
+      "post_boot_cgb": 145,
+      "post_boot_dmg": 145,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65345,
+      "name": "STAT",
+      "post_boot_cgb": 133,
+      "post_boot_dmg": 133,
+      "read_or": 128
+    },
+    {
+      "access": "rw",
+      "address": 65346,
+      "name": "SCY",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65347,
+      "name": "SCX",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    },
+    {
+      "access": "r",
+      "address": 65348,
+      "name": "LY",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65349,
+      "name": "LYC",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65350,
+      "name": "DMA",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 255,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65351,
+      "name": "BGP",
+      "post_boot_cgb": 252,
+      "post_boot_dmg": 252,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65352,
+      "name": "OBP0",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65353,
+      "name": "OBP1",
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65354,
+      "name": "WY",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    },
+    {
+      "access": "rw",
+      "address": 65355,
+      "name": "WX",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    }
+  ],
+  "screen": {
+    "height": 144,
+    "width": 160
+  },
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "The LCD controller: 154 lines x 456 dots per frame (70224 dots, 59.73 Hz); modes 2 (80 dots), 3 (172 + SCX & 7 + 6 per object + 6 for the window, at most 289), 0 (rest of the line), 1 (lines 144-153). Drawn per line when mode 3 ends.",
+  "tier": 1,
+  "timing": {
+    "dots_per_line": 456,
+    "frame_dots": 70224,
+    "lines": 154,
+    "mode2_dots": 80,
+    "mode3_max_dots": 289,
+    "mode3_min_dots": 172,
+    "mode3_per_object_dots": 6,
+    "mode3_window_dots": 6,
+    "objects": 40,
+    "objects_per_line": 10,
+    "vblank_line": 144,
+    "visible_lines": 144
+  }
+}

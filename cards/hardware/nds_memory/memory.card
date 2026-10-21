@@ -1,0 +1,196 @@
+-- The Nintendo DS memory maps (direct boot, no BIOS images): the ARM9 sees ITCM (32 KiB, mirrored below
+-- 0x02000000 here), main RAM (4 MiB at 0x02000000, mirrored to 0x02FFFFFF), DTCM (16 KiB wherever CP15 puts
+-- it), shared WRAM (32 KiB at 0x03000000), I/O at 0x04000000, palettes (0x05), VRAM (0x06, one flat 656 KiB
+-- window here), OAM (0x07), the empty GBA slot (0x08-0x0A, open bus: 0xFF) and its HLE BIOS stub at 0xFFFF0000. The ARM7 sees main RAM, shared WRAM, its own
+-- 64 KiB WRAM (0x03800000), I/O and its stub at 0x00000000. Every access is little-endian.
+const MAIN_MASK = 0x3FFFFF
+global cur: Int = 0                        -- the CPU now running: 0 = ARM9, 1 = ARM7
+global itcm_size: Int = 0x8000
+global dtcm_base: Int = 0x027E0000
+global dtcm_size: Int = 0x4000
+global cp15_ctrl: Int = 0x00002078         -- bit 13: exception vectors at 0xFFFF0000
+global wramcnt: Int = 3                    -- shared WRAM: 0 all ARM9, 1/2 split, 3 all ARM7 (after boot)
+export array mram: Byte[0x400000]
+array swram: Byte[0x8000]
+array wram7: Byte[0x10000]
+array itcm: Byte[0x8000]
+array dtcm: Byte[0x4000]
+array pal: Byte[0x800]
+export array vram: Byte[0xA4000]
+array oam: Byte[0x800]
+array bios9: Byte[0x1000]
+array bios7: Byte[0x1000]
+export global unmapped_reads: Int = 0
+export global unmapped_writes: Int = 0
+export global last_unmapped: Int = 0
+-- a debugger watchpoint: the last write to the word at watch_a (which CPU, its pc, the byte, how many)
+export global watch_a: Int = -1
+export global watch_pc: Int = 0
+export global watch_cpu: Int = 0
+export global watch_v: Int = 0
+export global watch_n: Int = 0
+export global break_on_watch: Int = 0
+
+-- shared WRAM as CPU c sees it at x (0x03000000-0x03FFFFFF): an index into swram, -1 unmapped, -2 = ARM7 WRAM
+fn swram_index(x: Int) -> Int {
+  if cur == 1 and x >= 0x03800000 {
+    return -2
+  }
+  let o = x & 0x7FFF
+  let m = wramcnt & 3
+  if cur == 0 {
+    if m == 0 {
+      return o
+    }
+    if m == 1 {
+      return 0x4000 | (o & 0x3FFF)
+    }
+    if m == 2 {
+      return o & 0x3FFF
+    }
+    return -1
+  }
+  if m == 0 {
+    return -2
+  }
+  if m == 1 {
+    return o & 0x3FFF
+  }
+  if m == 2 {
+    return 0x4000 | (o & 0x3FFF)
+  }
+  return o
+}
+fn rd8(a: Int) -> Int {
+  let x = a & MASK32
+  if cur == 0 {
+    if x < itcm_size {
+      return itcm[x & 0x7FFF]
+    }
+    if x >= dtcm_base and x < dtcm_base + dtcm_size {
+      return dtcm[(x - dtcm_base) & 0x3FFF]
+    }
+  }
+  let region = x >> 24
+  if region == 2 {
+    return mram[x & MAIN_MASK]
+  }
+  if region == 3 {
+    let k = swram_index(x)
+    if k == -2 {
+      return wram7[x & 0xFFFF]
+    }
+    if k >= 0 {
+      return swram[k]
+    }
+    unmapped_reads += 1
+    last_unmapped = x
+    return 0
+  }
+  if region == 4 {
+    return io_read8(x)
+  }
+  if cur == 0 {
+    if region == 5 {
+      return pal[x & 0x7FF]
+    }
+    if region == 6 {
+      return vram[(x & 0xFFFFF) % 0xA4000]
+    }
+    if region == 7 {
+      return oam[x & 0x7FF]
+    }
+    if x >= 0xFFFF0000 {
+      return bios9[x & 0xFFF]
+    }
+  } else {
+    if x < 0x4000 {
+      return bios7[x & 0xFFF]
+    }
+    if region == 6 {
+      return vram[(x & 0xFFFFF) % 0xA4000]
+    }
+  }
+  if region >= 8 and region < 0x0B {
+    return 0xFF
+  }
+  unmapped_reads += 1
+  last_unmapped = x
+  return 0
+}
+fn rd16(a: Int) -> Int = rd8(a) | (rd8(a + 1) << 8)
+fn rd32(a: Int) -> Int {
+  let x = a & MASK32
+  if (x >> 24) == 4 {
+    return io_read32(x)
+  }
+  return rd8(x) | (rd8(x + 1) << 8) | (rd8(x + 2) << 16) | (rd8(x + 3) << 24)
+}
+fn wr8(a: Int, v: Int) {
+  let x = a & MASK32
+  if (x & 0xFFFFFFFC) == watch_a {
+    watch_pc = pc
+    watch_cpu = cur
+    watch_v = v & 0xFF
+    watch_n += 1
+    if break_on_watch != 0 and watch_n >= break_on_watch {
+      stopped_cpu[0] = 1
+      stopped_cpu[1] = 1
+    }
+  }
+  if cur == 0 {
+    if x < itcm_size {
+      itcm[x & 0x7FFF] = v
+      return
+    }
+    if x >= dtcm_base and x < dtcm_base + dtcm_size {
+      dtcm[(x - dtcm_base) & 0x3FFF] = v
+      return
+    }
+  }
+  let region = x >> 24
+  if region == 2 {
+    mram[x & MAIN_MASK] = v
+  } elif region == 3 {
+    let k = swram_index(x)
+    if k == -2 {
+      wram7[x & 0xFFFF] = v
+    } elif k >= 0 {
+      swram[k] = v
+    } else {
+      unmapped_writes += 1
+      last_unmapped = x
+    }
+  } elif region == 4 {
+    io_write8(x, v & 0xFF)
+  } elif region == 5 and cur == 0 {
+    pal[x & 0x7FF] = v
+  } elif region == 6 {
+    vram[(x & 0xFFFFF) % 0xA4000] = v
+  } elif region == 7 and cur == 0 {
+    oam[x & 0x7FF] = v
+  } else {
+    unmapped_writes += 1
+    last_unmapped = x
+  }
+}
+fn wr16(a: Int, v: Int) {
+  let x = a & MASK32
+  if (x >> 24) == 4 {
+    io_write16(x, v & 0xFFFF)
+    return
+  }
+  wr8(x, v)
+  wr8(x + 1, v >> 8)
+}
+fn wr32(a: Int, v: Int) {
+  let x = a & MASK32
+  if (x >> 24) == 4 {
+    io_write32(x, v & MASK32)
+    return
+  }
+  wr8(x, v)
+  wr8(x + 1, v >> 8)
+  wr8(x + 2, v >> 16)
+  wr8(x + 3, v >> 24)
+}

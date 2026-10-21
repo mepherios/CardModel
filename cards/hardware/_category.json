@@ -1,0 +1,5 @@
+{
+  "description": "Hardware components as cards: registers (addresses, read masks, post-boot values), timing (cycle-level, as data) and behaviour (card-language logic files next to card.json, compiled into the machine's IR module).",
+  "name": "hardware",
+  "tier": 1
+}

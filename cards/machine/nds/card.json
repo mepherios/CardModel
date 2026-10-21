@@ -1,0 +1,16 @@
+{
+  "category": "machine",
+  "name": "nds",
+  "isa": "armv5te",
+  "components": ["nds_memory", "nds_io", "nds_bios"],
+  "logic": ["nds.card"],
+  "export_state": true,
+  "statement": "The Nintendo DS as a prototype: the ARM9 (ARMv5TE) and the ARM7 (ARMv4T) on one set of ARM/Thumb instruction cards, the memory maps, I/O (interrupts, IPC, timers, DMA, divider, cartridge bus) and an HLE BIOS; direct boot from a ROM image. Graphics (2D/3D engines), sound, touch and firmware are not modelled yet: see the coverage report of `cardmodel machine nds ROM`.",
+  "clock": {"bus_hz": 33513982, "arm9_hz": 67027964, "arm7_hz": 33513982, "frame_hz": 59.8261},
+  "direct_boot": {"arm9_sp": {"sys": "0x03002F7C", "irq": "0x03003F80", "svc": "0x03003FC0"},
+                  "arm7_sp": {"sys": "0x0380FD80", "irq": "0x0380FF80", "svc": "0x0380FFC0"},
+                  "cpsr": "0xDF", "header_copy": "0x027FFE00", "chip_id": "0x027FF800, 0x027FF804, 0x027FFC00, 0x027FFC04",
+                  "user_settings": "0x027FFC80"},
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

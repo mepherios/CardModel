@@ -1,0 +1,56 @@
+-- The serial port: SB (FF01) and SC (FF02). With the internal clock (SC bit 0) a transfer shifts 8 bits at
+-- 8192 Hz (262144 Hz with the CGB fast bit). The clock is a bit of the system counter (the one DIV shows), so
+-- the bits shift on its edges, not counted from the SC write: a transfer ends on the 8th edge after the write
+-- (mooneye boot_sclk_align). No link partner is attached, so the byte received is 0xFF. Every byte sent is
+-- also kept in serial_out (test ROMs report through it).
+const SERIAL_LOG = 4096
+const SERIAL_CLOCK_BIT = 9       -- 8192 Hz: one bit per 512 counts of the system counter
+const SERIAL_FAST_BIT = 4        -- 262144 Hz (CGB, SC bit 1)
+global sb: Int = 0
+global sc: Int = 0x7E
+global serial_end: Int = -1
+export global serial_n: Int = 0
+export array serial_out: Byte[SERIAL_LOG]
+
+fn serial_read(r: Int) -> Int {
+  if r == 0x01 {
+    return sb
+  }
+  if cgb != 0 {
+    return sc | 0x7C
+  }
+  return sc | 0x7E
+}
+fn serial_write(r: Int, v: Int) {
+  if r == 0x01 {
+    sb = v
+  } else {
+    sc = v
+    if (v & 0x81) == 0x81 {
+      if serial_n < SERIAL_LOG {
+        serial_out[serial_n] = sb
+        serial_n += 1
+      }
+      var k = SERIAL_CLOCK_BIT
+      if cgb != 0 and (v & 2) != 0 {
+        k = SERIAL_FAST_BIT
+      }
+      let edge = ((div_counter >> k) + 8) << k
+      serial_end = now + ((edge - div_counter) >> ds)
+    }
+  }
+}
+fn serial_sync() {
+  if serial_end >= 0 and now >= serial_end {
+    sb = 0xFF
+    sc = sc & 0x7F
+    serial_end = -1
+    request_irq(IRQ_SERIAL)
+  }
+}
+fn serial_next() -> Int {
+  if serial_end >= 0 {
+    return serial_end
+  }
+  return FAR
+}

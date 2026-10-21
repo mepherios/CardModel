@@ -1,0 +1,580 @@
+-- The screens: boot, title, fighter select, the arcade ladder, the duel (with pause), results, options and
+-- credits. Each screen is an update (input, state) and a draw; core.card calls the current one every frame.
+const MODE_ARCADE = 0
+const MODE_TRAINING = 1
+const MODE_VERSUS = 2
+
+global sel: Int = 0
+global sel2: Int = 0
+global mode: Int = 0
+global player_ft: Int = 0
+global p2_ft: Int = 1
+global stage: Int = 0
+global paused: Int = 0
+global pause_sel: Int = 0
+global result_sel: Int = 0
+global options_sel: Int = 0
+global options_from: Int = 1
+global credits_t: Int = 0
+global title_sel: Int = 0
+
+fn start_duel() {
+  paused = 0
+  arena = if mode == MODE_ARCADE then lad_arena[stage] else (if mode == MODE_TRAINING then 0 else (frame_no // 7) % N_ARENAS)
+  training = if mode == MODE_TRAINING then 1 else 0
+  versus = if mode == MODE_VERSUS then 1 else 0
+  if mode == MODE_ARCADE {
+    duel_setup(player_ft, AI_HUMAN, lad_fighter[stage], lad_ai[stage])
+    ai_level[1] = lad_level[stage]
+  } elif mode == MODE_TRAINING {
+    duel_setup(player_ft, AI_HUMAN, FT_WARDEN, AI_DUMMY)
+    ai_level[1] = 3
+  } else {
+    duel_setup(player_ft, AI_HUMAN, p2_ft, AI_HUMAN)
+  }
+  hp_trail[0] = f_hp[0]
+  hp_trail[1] = f_hp[1]
+  music(if mode == MODE_ARCADE and lad_ai[stage] == AI_BOSS then 2 else 1)
+  go(SCR_DUEL)
+}
+
+fn screens_update() {
+  if scr == SCR_BOOT {
+    if scr_t > 150 or confirm_pressed() {
+      music(0)
+      go(SCR_TITLE)
+    }
+  } elif scr == SCR_TITLE {
+    title_update()
+  } elif scr == SCR_SELECT {
+    select_update()
+  } elif scr == SCR_LADDER {
+    if confirm_pressed() {
+      sfx(SFX_CONFIRM)
+      start_duel()
+    } elif back_pressed() {
+      sfx(SFX_BACK)
+      go(SCR_TITLE)
+    }
+  } elif scr == SCR_DUEL {
+    duel_screen_update()
+  } elif scr == SCR_RESULT {
+    result_update()
+  } elif scr == SCR_OPTIONS {
+    options_update()
+  } elif scr == SCR_CREDITS {
+    credits_t += 1
+    if (credits_t > 120 and confirm_pressed()) or credits_t > 1500 {
+      music(0)
+      go(SCR_TITLE)
+    }
+  }
+}
+fn screens_draw() {
+  no_shake()
+  if scr == SCR_BOOT {
+    boot_draw()
+  } elif scr == SCR_TITLE {
+    title_draw()
+  } elif scr == SCR_SELECT {
+    select_draw()
+  } elif scr == SCR_LADDER {
+    ladder_draw()
+  } elif scr == SCR_DUEL {
+    draw_duel()
+    if paused != 0 {
+      pause_draw()
+    }
+  } elif scr == SCR_RESULT {
+    result_draw()
+  } elif scr == SCR_OPTIONS {
+    options_draw()
+  } elif scr == SCR_CREDITS {
+    credits_draw()
+  }
+  draw_toast()
+}
+
+-- boot and title ---------------------------------------------------------------------------------------------------
+fn card_stack(cx: Int, cy: Int, s: Int, t: Int) {
+  for k in 0 .. 3 {
+    let off = (2 - k) * 5 * s
+    let c = if k == 2 then 0xF4EEE0 else mix(0x8A7CA8, 0xF4EEE0, k * 80)
+    rect(cx - 10 * s + off - 2 * s, cy - 14 * s - off + 2 * s, 20 * s, 28 * s, C_INK)
+    rect(cx - 10 * s + off - 2 * s + s, cy - 14 * s - off + 2 * s + s, 20 * s - 2 * s, 28 * s - 2 * s, c)
+  }
+  -- a vector on the top card
+  let a = t * 3
+  thick(cx - 2 * s, cy + 2 * s, cx - 2 * s + cos256(a) * 7 * s // 256, cy + 2 * s - sin256(a) * 7 * s // 256, s + 1, 0xD04040)
+}
+fn boot_draw() {
+  rect(0, 0, SW, SH, 0x0B0A12)
+  let fade = min(256, scr_t * 6)
+  let out = if scr_t > 120 then (scr_t - 120) * 9 else 0
+  let c = mix(0x0B0A12, 0xF4EEE0, max(0, fade - out))
+  card_stack(SW // 2, 112, 2, scr_t)
+  draw_str_c(S_MADE, SW // 2, 170, 2, c)
+  draw_str_c(S_EVERY, SW // 2, 192, 1, mix(0x0B0A12, 0x9A90B8, max(0, fade - out)))
+}
+fn title_update() {
+  title_sel = menu_step(title_sel, 5)
+  if confirm_pressed() {
+    sfx(SFX_CONFIRM)
+    if title_sel == 0 {
+      mode = MODE_ARCADE
+      stage = 0
+      sel = player_ft
+      go(SCR_SELECT)
+    } elif title_sel == 1 {
+      mode = MODE_TRAINING
+      sel = player_ft
+      go(SCR_SELECT)
+    } elif title_sel == 2 {
+      mode = MODE_VERSUS
+      sel = player_ft
+      sel2 = p2_ft
+      go(SCR_SELECT)
+    } elif title_sel == 3 {
+      options_from = SCR_TITLE
+      options_sel = 0
+      go(SCR_OPTIONS)
+    } else {
+      write_save()
+      quit_req = 1
+    }
+  }
+}
+fn logo(cx: Int, y: Int, t: Int) {
+  -- VECTOR DUEL, big, with a cut through it
+  draw_str_c(S_TITLE, cx + 3, y + 3, 6, 0x000000)
+  draw_str(S_TITLE, cx - str_width(S_TITLE, 6) // 2, y, 6, 0xF4EEE0)
+  let w = str_width(S_TITLE, 6)
+  let sweep = (t * 5) % (w + 120) - 60
+  for k in 0 .. 5 {
+    line(cx - w // 2 + sweep + k, y - 6, cx - w // 2 + sweep + 30 + k, y + 48, mix(0xF4EEE0, 0xFF4030, 120 + k * 20))
+  }
+  draw_str_c(S_TAGLINE, cx, y + 54, 1, 0xC8B8E8)
+}
+fn title_draw() {
+  draw_arena(frame_no)
+  rect_blend(0, 0, SW, SH, 0x0B0A12, 110)
+  logo(SW // 2, 40, scr_t)
+  for k in 0 .. 5 {
+    let id = if k == 0 then S_ARCADE else if k == 1 then S_TRAINING else if k == 2 then S_VERSUS else if k == 3 then S_OPTIONS else S_QUIT
+    let y = 136 + k * 18
+    if k == title_sel {
+      rect_blend(SW // 2 - 70, y - 4, 140, 15, 0x58C8FF, 60)
+      draw_str_c(id, SW // 2, y, 1, 0xFFFFFF)
+      draw_char(62, SW // 2 - 64, y, 1, 0x58C8FF)
+    } else {
+      draw_str_c(id, SW // 2, y, 1, 0x9A90B8)
+    }
+  }
+  draw_str_sh(S_VERSION, 6, SH - 12, 1, 0x6A6080)
+  draw_str_sh(S_K_SYS, SW - 6 - str_width(S_K_SYS, 1), SH - 12, 1, 0x6A6080)
+}
+
+-- fighter select ------------------------------------------------------------------------------------------------------
+fn fighter_desc(ft: Int) -> Int {
+  if ft == FT_WARDEN {
+    return S_WARDEN_D
+  }
+  if ft == FT_DUELIST {
+    return S_DUELIST_D
+  }
+  return S_BRUTE_D
+}
+fn select_update() {
+  let p_sel = if mode == MODE_VERSUS then press1 else press1 | press2
+  if (p_sel & B_LEFT) != 0 {
+    sel = (sel + N_FIGHTERS - 1) % N_FIGHTERS
+    sfx(SFX_MOVE)
+  }
+  if (p_sel & B_RIGHT) != 0 {
+    sel = (sel + 1) % N_FIGHTERS
+    sfx(SFX_MOVE)
+  }
+  if mode == MODE_VERSUS {
+    if (press2 & B_LEFT) != 0 {
+      sel2 = (sel2 + N_FIGHTERS - 1) % N_FIGHTERS
+    }
+    if (press2 & B_RIGHT) != 0 {
+      sel2 = (sel2 + 1) % N_FIGHTERS
+    }
+  }
+  if confirm_pressed() {
+    sfx(SFX_CONFIRM)
+    player_ft = sel
+    p2_ft = sel2
+    if mode == MODE_ARCADE {
+      go(SCR_LADDER)
+    } else {
+      start_duel()
+    }
+  } elif back_pressed() {
+    sfx(SFX_BACK)
+    go(SCR_TITLE)
+  }
+}
+fn stat_row(x: Int, y: Int, label: Int, v: Int, vmax: Int, c: Int) {
+  draw_str_sh(label, x, y, 1, 0x9A90B8)
+  bar(x + 60, y, 70, 6, v, vmax, c, false)
+}
+fn select_draw() {
+  draw_arena(frame_no)
+  rect_blend(0, 0, SW, SH, 0x0B0A12, 140)
+  draw_str_c(S_CHOOSE, SW // 2, 16, 2, 0xF4EEE0)
+  for ft in 0 .. N_FIGHTERS {
+    let cx = 90 + ft * 150
+    let on = ft == sel
+    let on2 = mode == MODE_VERSUS and ft == sel2
+    rect(cx - 64, 44, 128, 196, if on then 0x2A2444 else 0x17141F)
+    frame_rect(cx - 64, 44, 128, 196, if on then C_P1 else (if on2 then C_P2 else 0x3A3448))
+    draw_fighter_at(cx, 150, ft)
+    draw_str_c(fighter_name(ft), cx, 160, 2, if on then 0xFFFFFF else 0x9A90B8)
+    stat_row(cx - 58, 184, S_HP, ft_hp[ft], 260, 0x60E070)
+    stat_row(cx - 58, 196, S_POSTURE, ft_posture[ft], 130, 0xFFB030)
+    stat_row(cx - 58, 208, S_STAMINA, ft_stamina[ft], 120, 0x50C0A0)
+  }
+  draw_str_c(fighter_desc(sel), SW // 2, 248, 1, 0xC8B8E8)
+}
+-- a standing fighter at an arbitrary place (select screen, ladder)
+fn draw_fighter_at(cx: Int, ground: Int, ft: Int) {
+  figure(ft, cx, ground, 1, C_P1, 0, 0, 9, 2, 12, 6, 40, false, 0)
+}
+
+-- the ladder ------------------------------------------------------------------------------------------------------------
+fn ladder_draw() {
+  arena = lad_arena[stage]
+  draw_arena(frame_no)
+  rect_blend(0, 0, SW, SH, 0x0B0A12, 150)
+  draw_str_c(S_ARCADE, SW // 2, 14, 2, 0xF4EEE0)
+  for s in 0 .. N_STAGES {
+    let y = 40 + s * 29
+    let done = s < stage
+    let now = s == stage
+    let c = if now then 0xFFFFFF else (if done then 0x6A6080 else 0x9A90B8)
+    rect(70, y, 340, 26, if now then 0x2A2444 else 0x17141F)
+    if now {
+      frame_rect(70, y, 340, 26, C_P2)
+    }
+    draw_str_sh(S_STAGE, 80, y + 5, 1, c)
+    draw_num(s + 1, 80 + str_width(S_STAGE, 1) + 6, y + 5, 1, c)
+    draw_str_sh(fighter_name(lad_fighter[s]), 160, y + 5, 1, c)
+    draw_str_sh(lad_name[s], 240, y + 5, 1, if now then 0xFFE070 else c)
+    draw_str_sh(ar_name[lad_arena[s]], 240, y + 15, 1, mix(c, C_INK, 90))
+  }
+  if stage > 0 and lad_intro[stage] >= 0 {
+    draw_str_c(lad_intro[stage], SW // 2, 226, 1, 0xC8B8E8)
+  }
+  if stage == 0 {
+    -- how to duel, before the first one
+    rect(60, 218, 360, 36, 0x17141F)
+    frame_rect(60, 218, 360, 36, 0xFFE070)
+    draw_str_sh(S_HOW, 70, 222, 1, 0xFFE070)
+    draw_str_sh(S_HOW1, 70, 232, 1, 0xC8B8E8)
+    draw_str_sh(S_HOW3, 70, 242, 1, 0xC8B8E8)
+  }
+  draw_str_c(S_PRESS, SW // 2, SH - 12, 1, if (frame_no // 30) % 2 == 0 then 0xFFFFFF else 0x9A90B8)
+}
+
+-- the duel screen -------------------------------------------------------------------------------------------------------
+fn pause_items() -> Int = if training != 0 then 5 else 4
+fn pause_item(k: Int) -> Int {
+  if training != 0 {
+    return if k == 0 then S_RESUME else if k == 1 then S_DUMMY_IS else if k == 2 then S_RESTART else if k == 3 then S_OPTIONS else S_TO_TITLE
+  }
+  return if k == 0 then S_RESUME else if k == 1 then S_RESTART else if k == 2 then S_OPTIONS else S_TO_TITLE
+}
+fn dummy_name() -> Int = if dummy_mode == 0 then S_D_IDLE else if dummy_mode == 1 then S_D_GUARD else if dummy_mode == 2 then S_D_ATTACK else S_D_READER
+fn duel_screen_update() {
+  if paused != 0 {
+    pause_sel = menu_step(pause_sel, pause_items())
+    let item = pause_item(pause_sel)
+    if item == S_DUMMY_IS and (either_pressed(B_LEFT) or either_pressed(B_RIGHT) or confirm_pressed()) {
+      dummy_mode = (dummy_mode + (if either_pressed(B_LEFT) then 3 else 1)) % 4
+      sfx(SFX_MOVE)
+      return
+    }
+    if pressed(B_PAUSE) and scr_t > 2 {
+      paused = 0
+    } elif confirm_pressed() {
+      sfx(SFX_CONFIRM)
+      if item == S_RESUME {
+        paused = 0
+      } elif item == S_RESTART {
+        start_duel()
+      } elif item == S_OPTIONS {
+        options_from = SCR_DUEL
+        options_sel = 0
+        go(SCR_OPTIONS)
+      } else {
+        write_save()
+        music(0)
+        go(SCR_TITLE)
+      }
+    }
+    return
+  }
+  if pressed(B_PAUSE) {
+    paused = 1
+    pause_sel = 0
+    sfx(SFX_BACK)
+    return
+  }
+  if training != 0 {
+    -- left / right in training with the feint and catch held together: the dummy's behaviour
+    if (held1 & B_CATCH) != 0 and (press1 & B_FEINT) != 0 {
+      dummy_mode = (dummy_mode + 1) % 4
+      sfx(SFX_MOVE)
+    }
+  }
+  duel_update()
+  if duel_winner >= 0 {
+    duel_over()
+  }
+}
+fn duel_over() {
+  result_sel = 0
+  if mode == MODE_ARCADE {
+    let won = duel_winner == 0
+    if won {
+      record_win(stage)
+    }
+    note_duel_played()
+  }
+  write_save()
+  sfx(if duel_winner == 0 or mode == MODE_VERSUS then SFX_WIN else SFX_LOSE)
+  go(SCR_RESULT)
+}
+fn pause_draw() {
+  rect_blend(0, 0, SW, SH, 0x0B0A12, 150)
+  draw_str_c(S_PAUSED, SW // 2, 70, 3, 0xF4EEE0)
+  for k in 0 .. pause_items() {
+    let id = pause_item(k)
+    let y = 112 + k * 16
+    if id == S_DUMMY_IS {
+      draw_str_sh(id, SW // 2 - 60, y, 1, if k == pause_sel then 0xFFFFFF else 0x9A90B8)
+      draw_str_sh(dummy_name(), SW // 2 + 4, y, 1, 0xFFE070)
+    } else {
+      draw_str_c(id, SW // 2, y, 1, if k == pause_sel then 0xFFFFFF else 0x9A90B8)
+    }
+    if k == pause_sel {
+      draw_char(62, SW // 2 - 76, y, 1, C_P1)
+    }
+  }
+  draw_str_c(S_K_DIR, SW // 2, 200, 1, 0x9A90B8)
+  draw_str_c(S_K_ATK, SW // 2, 212, 1, 0x9A90B8)
+  draw_str_c(S_K_DEF, SW // 2, 224, 1, 0x9A90B8)
+  draw_str_c(S_K_TIP, SW // 2, 244, 1, 0xFFE8A0)
+}
+
+-- results ---------------------------------------------------------------------------------------------------------------
+fn result_update() {
+  let n = 2
+  result_sel = menu_step(result_sel, n)
+  if confirm_pressed() {
+    sfx(SFX_CONFIRM)
+    if result_sel == 1 {
+      music(0)
+      go(SCR_TITLE)
+      return
+    }
+    if mode == MODE_ARCADE and duel_winner == 0 {
+      stage += 1
+      if stage >= N_STAGES {
+        record_clear()
+        credits_t = 0
+        music(3)
+        go(SCR_CREDITS)
+        return
+      }
+      go(SCR_LADDER)
+      return
+    }
+    start_duel()
+  }
+}
+fn result_draw() {
+  draw_duel()
+  rect_blend(0, 0, SW, SH, 0x0B0A12, 150)
+  let won = duel_winner == 0
+  if mode == MODE_VERSUS {
+    draw_str_c(if duel_winner == 0 then S_P1 else S_P2, SW // 2 - 40, 60, 3, 0xFFE070)
+    draw_str_c(S_WINS, SW // 2 + 60, 60, 3, 0xF4EEE0)
+  } else {
+    draw_str_c(if won then S_YOU_WIN else S_YOU_LOSE, SW // 2, 60, 4, if won then 0xFFE070 else 0xFF6050)
+  }
+  draw_str_c(S_STATS, SW // 2, 112, 1, 0x9A90B8)
+  if (f_ctl[1] == AI_READER or f_ctl[1] == AI_BOSS) and read_top(1) != NO_DIR {
+    draw_str_sh(S_LEARNED, SW // 2 - 110, 150, 1, 0xC8B8E8)
+    draw_str_sh(dir_name(read_top(1)), SW // 2 - 110 + str_width(S_LEARNED, 1) + 6, 150, 1, 0xFFE8A0)
+    draw_num(read_share(1), SW // 2 - 110 + str_width(S_LEARNED, 1) + 6 + str_width(dir_name(read_top(1)), 1) + 6, 150, 1, 0xFFE8A0)
+  }
+  draw_num_c(st_redirects[0], SW // 2 - 82, 128, 2, 0x60F0FF)
+  draw_num_c(st_deflects[0], SW // 2 - 4, 128, 2, 0x80C0FF)
+  draw_num_c(st_hits[0], SW // 2 + 74, 128, 2, 0xFFFFFF)
+  for k in 0 .. 2 {
+    var id = S_TO_TITLE
+    if k == 0 {
+      id = if mode == MODE_ARCADE and won then S_NEXT else S_RETRY
+    }
+    draw_str_c(id, SW // 2, 170 + k * 18, 1, if k == result_sel then 0xFFFFFF else 0x9A90B8)
+    if k == result_sel {
+      draw_char(62, SW // 2 - 70, 170 + k * 18, 1, C_P1)
+    }
+  }
+}
+
+-- options -------------------------------------------------------------------------------------------------------------
+fn options_update() {
+  options_sel = menu_step(options_sel, 5)
+  let l = either_pressed(B_LEFT)
+  let r = either_pressed(B_RIGHT) or confirm_pressed()
+  if l or r {
+    let d = if r then 1 else -1
+    if options_sel == 0 {
+      vol_music = max(0, min(10, vol_music + d))
+    } elif options_sel == 1 {
+      vol_sfx = max(0, min(10, vol_sfx + d))
+      sfx(SFX_MOVE)
+    } elif options_sel == 2 {
+      rings_on = 1 - rings_on
+    } elif options_sel == 3 {
+      difficulty = (difficulty + 3 + d) % 3
+    }
+    if options_sel == 4 and confirm_pressed() {
+      write_save()
+      go(options_from)
+      if options_from == SCR_DUEL {
+        paused = 1
+      }
+      return
+    }
+    save_settings()
+  }
+  if back_pressed() {
+    write_save()
+    go(options_from)
+    if options_from == SCR_DUEL {
+      paused = 1
+    }
+  }
+}
+fn options_draw() {
+  draw_arena(frame_no)
+  rect_blend(0, 0, SW, SH, 0x0B0A12, 160)
+  draw_str_c(S_OPTIONS, SW // 2, 30, 3, 0xF4EEE0)
+  for k in 0 .. 5 {
+    let y = 84 + k * 22
+    let on = k == options_sel
+    let c = if on then 0xFFFFFF else 0x9A90B8
+    let id = if k == 0 then S_MUSIC else if k == 1 then S_SFX else if k == 2 then S_RINGS else if k == 3 then S_DIFFICULTY else S_BACK
+    draw_str_sh(id, 140, y, 1, c)
+    if on {
+      draw_char(62, 128, y, 1, C_P1)
+    }
+    if k == 0 or k == 1 {
+      bar(260, y, 80, 6, if k == 0 then vol_music else vol_sfx, 10, 0x58C8FF, false)
+    } elif k == 2 {
+      draw_str_sh(if rings_on != 0 then S_ON else S_OFF, 260, y, 1, c)
+    } elif k == 3 {
+      draw_str_sh(if difficulty == 0 then S_EASY else if difficulty == 1 then S_NORMAL else S_HARD, 260, y, 1, c)
+    }
+  }
+  draw_str_c(S_CONTROLS, SW // 2, 200, 1, 0xF4EEE0)
+  draw_str_c(S_K_DIR, SW // 2, 214, 1, 0x9A90B8)
+  draw_str_c(S_K_ATK, SW // 2, 226, 1, 0x9A90B8)
+  draw_str_c(S_K_DEF, SW // 2, 238, 1, 0x9A90B8)
+  draw_str_c(S_P2_KEYS, SW // 2, 252, 1, 0x6A6080)
+}
+
+-- credits ---------------------------------------------------------------------------------------------------------------
+fn credits_draw() {
+  draw_arena(frame_no)
+  rect_blend(0, 0, SW, SH, 0x0B0A12, 170)
+  let y0 = SH - credits_t // 2
+  draw_str_c(S_CLEAR, SW // 2, y0, 3, 0xFFE070)
+  draw_str_c(S_TITLE, SW // 2, y0 + 60, 2, 0xF4EEE0)
+  draw_str_c(S_C1, SW // 2, y0 + 100, 1, 0xC8B8E8)
+  draw_str_c(S_C2, SW // 2, y0 + 120, 1, 0xC8B8E8)
+  draw_str_c(S_C3, SW // 2, y0 + 140, 1, 0xC8B8E8)
+  draw_str_c(S_C4, SW // 2, y0 + 160, 1, 0xC8B8E8)
+  draw_str_c(S_C5, SW // 2, y0 + 180, 1, 0xC8B8E8)
+  card_stack(SW // 2, y0 + 240, 2, credits_t)
+  draw_str_c(S_THANKS, SW // 2, y0 + 290, 2, 0xFFFFFF)
+}
+
+-- the application icon, drawn into the top-left 128 x 128 of the screen (black outside the rounded square is
+-- the transparent part); the build reads it for the bundle and the store
+export fn draw_icon() {
+  no_shake()
+  rect(0, 0, 128, 128, 0x000000)
+  for y in 0 .. 128 {
+    for x in 0 .. 128 {
+      let dx = max(0, max(18 - x, x - 109))
+      let dy = max(0, max(18 - y, y - 109))
+      if dx * dx + dy * dy <= 324 {
+        px(x, y, mix(0x2E2152, 0x110C1E, y * 2))
+      }
+    }
+  }
+  for a in 0 .. 256 {
+    disc(64 + cos256(a) * 42 // 256, 64 - sin256(a) * 42 // 256, 1, 0x5E4E86)
+  }
+  thick(34, 96, 94, 36, 6, 0xD8DEEA)
+  thick(34, 36, 94, 96, 6, 0xB8C0D0)
+  rect(28, 92, 14, 6, 0x8A7050)
+  rect(86, 92, 14, 6, 0x8A7050)
+  -- the vector coming in (red) and the guard that meets it (blue)
+  thick(10, 64, 40, 64, 7, 0xFF4030)
+  thick(40, 54, 52, 64, 5, 0xFF4030)
+  thick(40, 74, 52, 64, 5, 0xFF4030)
+  for a in 96 .. 160 {
+    disc(64 + cos256(a) * 30 // 256, 64 - sin256(a) * 30 // 256, 2, 0x58E0FF)
+  }
+}
+
+-- the store's portrait capsule: a 180 x 270 scene in the left of the screen (the build scales it up)
+export fn draw_poster() {
+  no_shake()
+  rect(0, 0, SW, SH, 0x000000)
+  vgrad(0, 0, 180, 160, 0x1A1440, 0xD8705A)
+  disc_blend(122, 66, 26, 0xFFE0C0, 40)
+  disc(122, 66, 14, 0xFFF2DC)
+  for x in 0 .. 180 {
+    let h1 = 118 + (sin256(x * 3 + 40) * 9) // 256
+    rect(x, h1, 1, 160 - h1, 0x3A2850)
+  }
+  vgrad(0, 160, 180, 110, 0x3B2E3A, 0x17121C)
+  for k in -4 .. 5 {
+    line(90 + k * 10, 160, 90 + k * 46, SH, 0x46364A)
+  }
+  -- the two of them, the moment before the cut
+  round_state = 1
+  for i in 0 .. 2 {
+    f_ft[i] = i
+    f_ctl[i] = if i == 0 then AI_HUMAN else AI_READER
+    f_stance[i] = ST_NEUTRAL
+    f_stun[i] = 0
+    f_flash[i] = 0
+    f_walk[i] = 0
+    f_hp[i] = 1
+  }
+  f_x[0] = 62 * PX
+  f_x[1] = 118 * PX
+  f_face[0] = 1
+  f_face[1] = -1
+  f_move[0] = MV_GUARD_HIGH
+  f_t[0] = 4
+  f_start[0] = 2
+  f_up_at[0] = 0
+  f_move[1] = MV_OVERHEAD
+  f_t[1] = 12
+  f_start[1] = 16
+  f_shown[1] = 2
+  draw_fighter(0)
+  draw_fighter(1)
+  draw_str_c(S_TITLE, 90, 24, 2, 0xF4EEE0)
+  rect(40, 44, 100, 1, 0xFF4030)
+}

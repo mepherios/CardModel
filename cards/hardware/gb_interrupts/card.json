@@ -1,0 +1,41 @@
+{
+  "category": "hardware",
+  "logic": [
+    "interrupts.card"
+  ],
+  "machine": "gameboy",
+  "name": "gb_interrupts",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "this card's data and logic, written here"
+  },
+  "registers": [
+    {
+      "access": "rw",
+      "address": 65295,
+      "name": "IF",
+      "post_boot_cgb": 225,
+      "post_boot_dmg": 225,
+      "read_or": 224
+    },
+    {
+      "access": "rw",
+      "address": 65535,
+      "name": "IE",
+      "post_boot_cgb": 0,
+      "post_boot_dmg": 0,
+      "read_or": 0
+    }
+  ],
+  "sources": [
+    "Pan Docs (hardware reference)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "IE (FFFF) and IF (FF0F): five interrupt sources, bit 0 highest priority. Dispatch: 5 M-cycles (two internal, push PC high, push PC low, jump); the vector is chosen after the high byte is pushed, so a push that clears IE sends the CPU to 0x0000. Waking from HALT takes one more M-cycle.",
+  "tier": 1,
+  "timing": {
+    "dispatch_mcycles": 5,
+    "ei_delay_instructions": 1,
+    "halt_exit_mcycles": 1
+  }
+}

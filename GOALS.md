@@ -27,6 +27,9 @@ filesystem registry. The program takes part in software development in any proje
 11. **account for a real system**: AnyPS5 (a PS5 relinker and its reimplemented system libraries) read as cards,
     its badge reproduced, its real coverage computed, every gap given the cause that keeps it open, and its pure
     code witnessed against semantics derived from public standards (docs/ANYPS5.md).
+11. **run machines**: a CPU is its instruction cards and a console is its hardware cards; their card-language
+    semantics compile to the card IR, run in every engine, and a ROM's own code is lifted into the same IR and
+    emitted natively, behind an effect shell for video, audio, input and saves (docs/MACHINES.md).
 
 At runtime it needs only its own folder and the project it is pointed at. That is a goal with a test
 (`tests/test_self_contained.py`), not just a hope.
@@ -70,6 +73,11 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_P3_anyps5_closable_open` | computation | AnyPS5 gaps the model can derive and express in the IR now but has not closed with a passing witness | = 0 |
 | `G_P4_anyps5_complete_fraction` | computation | AnyPS5's declared exports complete by its own records (implemented, not empty, total, no stub reached, no open debt) | ≥ 1.0 |
 | `G_P5_anyps5_witness_disagreements` | computation | inputs where AnyPS5's code and the model's derived semantics disagree in the latest witness runs | = 0 |
+| `G_M1_isa_conformance` | machines | instruction cards failing per-instruction conformance (engines, cycles, flags, vectors) | = 0 |
+| `G_M2_roms_boot` | machines | fraction of surveyed ROMs that boot and animate in the native engine | ≥ 0.95 |
+| `G_M3_lifted_identical` | machines | differential runs where lifted code and the interpreter disagree | = 0 |
+| `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye, acid2) passing | = 1.0 |
+| `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
 
 ### What "done" would mean on each axis
 
@@ -89,6 +97,9 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
   the observation, boundary or measurement that would close it. `G_P4` stays below its target as long as the console's
   undocumented behaviour, its hardware and its services are part of what AnyPS5 must reproduce: that part closes by
   observation (Pheros L102), not by construction (docs/ANYPS5.md says exactly what remains and why).
+* **Machines.** Every instruction card agrees with its own data and across engines; the hardware test suites pass;
+  every game in a collection boots, and lifted code is frame-for-frame identical to the interpreter; for the DS,
+  every executed instruction decodes and the unmodelled hardware the games touch shrinks to nothing.
 
 ## Non-goals (and why)
 

@@ -1,0 +1,16 @@
+{
+  "axis": "machines",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "roms_boot_fraction",
+  "name": "G_M2_roms_boot",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "Fraction of the ROMs in the last `cardmodel machine survey` that boot and animate (drawn and changing) in the native engine.",
+  "target": 0.95,
+  "tier": 0
+}

@@ -1,0 +1,94 @@
+{
+  "category": "isa",
+  "clock_hz": 4194304,
+  "core": "core.card",
+  "decode": {
+    "fields": "x = op >> 6, y = (op >> 3) & 7, z = op & 7, p = y >> 1, q = y & 1",
+    "prefixes": {
+      "CB": 203
+    }
+  },
+  "dispatch": {
+    "": "exec_op",
+    "203": "cb_dispatch"
+  },
+  "flag_bits": {
+    "C": 4,
+    "H": 5,
+    "N": 6,
+    "Z": 7
+  },
+  "flag_codes": {
+    "*": "computed from the result",
+    "-": "unchanged",
+    "0": "always reset",
+    "1": "always set"
+  },
+  "interface": "interface.card",
+  "interface_functions": [
+    "rd8",
+    "wr8",
+    "idle",
+    "halt",
+    "stop",
+    "hang",
+    "cb_dispatch"
+  ],
+  "kind": "isa",
+  "mcycle_kinds": {
+    "fetch": "opcode fetch at PC",
+    "internal": "an M-cycle without a bus access",
+    "read": "a bus read",
+    "write": "a bus write"
+  },
+  "mcycle_tcycles": 4,
+  "name": "lr35902",
+  "post_boot": {
+    "cgb": {
+      "A": 17,
+      "B": 0,
+      "C": 0,
+      "D": 255,
+      "E": 86,
+      "F": 128,
+      "H": 0,
+      "L": 13,
+      "PC": 256,
+      "SP": 65534
+    },
+    "dmg": {
+      "A": 1,
+      "B": 0,
+      "C": 19,
+      "D": 0,
+      "E": 216,
+      "F": 176,
+      "H": 1,
+      "L": 77,
+      "PC": 256,
+      "SP": 65534
+    }
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/gen_lr35902.py"
+  },
+  "registers": {
+    "A": 8,
+    "B": 8,
+    "C": 8,
+    "D": 8,
+    "E": 8,
+    "F": 8,
+    "H": 8,
+    "L": 8,
+    "PC": 16,
+    "SP": 16
+  },
+  "sources": [
+    "Pan Docs (CPU registers and flags, instruction set, power up sequence)",
+    "Gekkio, Game Boy: Complete Technical Reference"
+  ],
+  "statement": "The Sharp LR35902 (SM83) CPU of the Game Boy and Game Boy Color: an 8080/Z80 relative with 8-bit registers A F B C D E H L, 16-bit SP and PC, flags Z N H C in the high nibble of F, 256 base opcodes and 256 CB-prefixed ones. One instruction card per opcode (registry isa, pack lr35902).",
+  "tier": 1
+}

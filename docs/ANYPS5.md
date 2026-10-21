@@ -58,7 +58,7 @@ witness evidence, and the proof the logic engine kept (the derivation can be che
 
 ## Why it is not 100 % by construction
 
-The model derives what a public standard or the model's own structure fixes, and nothing else (law CM32,
+The model derives what a public standard or the model's own structure fixes, and nothing else (law CM36,
 after Pheros L102 and AnyPS5's own rule "never return a made-up success"). Every gap falls in one of four
 classes, and the class says what can close it:
 

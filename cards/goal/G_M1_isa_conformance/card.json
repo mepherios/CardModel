@@ -1,0 +1,16 @@
+{
+  "axis": "machines",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "isa_cards_failing",
+  "name": "G_M1_isa_conformance",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "Instruction cards (every ISA) failing per-instruction conformance in the last verify: engines disagree, or a card's cycles, M-cycles, flags or vectors do not hold.",
+  "target": 0,
+  "tier": 0
+}

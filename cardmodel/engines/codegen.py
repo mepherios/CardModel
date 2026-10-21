@@ -21,6 +21,15 @@ Lowering rules shared by every non-native target:
     (incrementing first keeps ``continue`` correct, and ``i`` keeps
     Python's last-iterated value after the loop).
 
+Machine state (globals, arrays, store/do/switch statements, LOAD, void
+functions; see ir.py) uses more ``codegen`` templates, all optional: ``global``
+/ ``global_export``, ``global_use`` (languages that must declare the globals a
+function assigns), ``array`` / ``array_init`` / ``array_export`` keyed by element
+type, ``load`` / ``store`` keyed by element type, ``do``, ``return_void``,
+``func_export``, ``export_prefix`` and ``switch`` (head/case/body_open/body_close/
+default/tail). Without a ``switch`` block a switch is lowered to a binary search
+of ``if`` statements on a temporary.
+
 Honest limits (L1): templates are only as right as the conformance matrix
 that checks them; identifiers are renamed only for the language card's
 ``reserved`` list; emitted code is plain (no formatting pass).
@@ -74,6 +83,11 @@ class Emitter:
         self.ops = ops
         self.requires: set[str] = set()
         self.loop_id = 0
+        self.exports: set[str] = set()
+        self.arrays: dict[str, dict] = {}
+        self.global_names: set[str] = set()
+        self.fn_returns: dict[str, str] = {}
+        self.tmp_id = 0
 
     @staticmethod
     def _lineage(store, lang):
@@ -109,13 +123,45 @@ class Emitter:
         return lits.get("int", "{v}").format(v=int(v))
 
     def ident(self, name: str) -> str:
-        """A safe identifier: "_" and the language card's ``reserved`` words get a suffix."""
+        """A safe identifier: "_" and the language card's ``reserved`` words get a suffix; exported names get the
+        card's ``export_prefix`` (so a symbol never collides with the platform's own)."""
+        if name in self.exports and self.cg.get("export_prefix"):
+            return self.cg["export_prefix"] + name
         reserved = self.lang.get("reserved") or []
         if name == "_" and self.cg.get("underscore_ok") is not True:
             return "cm_u"
         if name in reserved:
             return f"{name}_cm"
         return name
+
+    def state(self, module: dict) -> None:
+        """Note the module's globals, arrays and exports (machine state) before emitting its functions."""
+        self.exports = {x["name"] for x in (*(module.get("globals") or []), *(module.get("arrays") or []),
+                                            *module["functions"]) if x.get("export")}
+        self.arrays = {a["name"]: a for a in module.get("arrays") or []}
+        self.global_names = {g["name"] for g in module.get("globals") or []}
+        self.global_types = {g["name"]: g.get("type", "int") for g in module.get("globals") or []}
+
+    def state_source(self, module: dict) -> str:
+        """Definitions of the module's globals and arrays."""
+        out = []
+        for g in module.get("globals") or []:
+            key = "global_export" if g.get("export") and "global_export" in self.cg else "global"
+            out.append(self.tmpl(key, name=self.ident(g["name"]), type=self.T(g.get("type", "int")),
+                                 value=self.lit(g.get("type", "int"), g.get("init", 0))))
+        for a in module.get("arrays") or []:
+            elem = a.get("elem", "u8")
+            init = a.get("init")
+            key = "array_export" if a.get("export") and "array_export" in self.cg else "array"
+            if init:
+                key = "array_init"
+            t = (self.cg.get(key) or {}).get(elem)
+            if t is None:
+                raise EmitGap(f"{self.lang_name}: no {key} template for {elem} arrays")
+            padded = list(init or []) + [0] * (int(a["size"]) - len(init or [])) if init else []
+            values = ", ".join(str(int(v) & 0xFF if elem == "u8" else int(v)) for v in padded)
+            out.append(t.format(name=self.ident(a["name"]), size=int(a["size"]), values=values))
+        return "".join(x if x.endswith("\n") else x + "\n" for x in out)
 
     def var(self, name: str) -> str:
         return self.cg.get("var", "{name}").format(name=self.ident(name))
@@ -150,7 +196,11 @@ class Emitter:
     def expr(self, e, types: dict[str, str]) -> tuple[str, str]:
         head = e[0]
         if head == "var":
-            return self.var(e[1]), types[e[1]]
+            if e[1] in types:
+                return self.var(e[1]), types[e[1]]
+            if e[1] in self.global_names:
+                return self.var(e[1]), self.global_types[e[1]]
+            raise EmitGap(f"unknown variable {e[1]!r}")
         if head in ("int", "float", "bool"):
             return self.lit(head, e[1]), head
         if head == "RAW":
@@ -164,6 +214,15 @@ class Emitter:
             sep = self.cg.get("call_sep", ", ")
             text = self.cg.get("call", "{name}({args})").format(name=self.ident(e[1]), args=sep.join(args))
             return text, self.fn_returns[e[1]]
+        if head == "LOAD":
+            spec = self.arrays.get(e[1])
+            if spec is None:
+                raise EmitGap(f"LOAD from unknown array {e[1]!r}")
+            t = (self.cg.get("load") or {}).get(spec.get("elem", "u8"))
+            if t is None:
+                raise EmitGap(f"{self.lang_name}: no load template")
+            idx, _ = self.expr(e[2], types)
+            return t.format(arr=self.ident(e[1]), idx=idx), "int"
         subs = [self.expr(a, types) for a in e[1:]]
         arg_types = [t for _, t in subs]
         rtype = self.result_type(head, arg_types)
@@ -198,8 +257,26 @@ class Emitter:
                 v, _ = self.expr(s["value"], types)
                 out.append(ind + self.tmpl("assign", name=self.var(s["target"]), value=v))
             elif k == "return":
+                if "value" not in s:
+                    out.append(ind + self.tmpl("return_void"))
+                    continue
                 v, _ = self.expr(s["value"], types)
                 out.append(ind + self.tmpl("return", value=v))
+            elif k == "store":
+                spec = self.arrays.get(s["array"])
+                if spec is None:
+                    raise EmitGap(f"store to unknown array {s['array']!r}")
+                t = (self.cg.get("store") or {}).get(spec.get("elem", "u8"))
+                if t is None:
+                    raise EmitGap(f"{self.lang_name}: no store template")
+                idx, _ = self.expr(s["index"], types)
+                v, _ = self.expr(s["value"], types)
+                out.append(ind + t.format(arr=self.ident(s["array"]), idx=idx, value=v))
+            elif k == "do":
+                v, _ = self.expr(s["value"], types)
+                out.append(ind + self.tmpl("do", value=v))
+            elif k == "switch":
+                out += self.switch(s, types, depth, loop)
             elif k == "if":
                 c, _ = self.expr(s["cond"], types)
                 out.append(ind + self.tmpl("if", cond=c))
@@ -233,6 +310,55 @@ class Emitter:
                 raise EmitGap(f"statement {k!r}")
         return out
 
+    def switch(self, s, types, depth, loop) -> list[str]:
+        sw = self.cg.get("switch")
+        for case in [*s["cases"], {"body": s.get("default") or []}]:
+            if any(x["k"] == "break" for x in _shallow(case["body"])):
+                raise EmitGap("`break` directly inside a switch case (it would leave the switch in some languages)")
+        if not sw:
+            return self.block(self.lower_switch(s, types), types, depth, loop)
+        ind = self.cg.get("indent", "    ") * depth
+        v, _ = self.expr(s["value"], types)
+        out = [ind + sw["head"].format(value=v)]
+        for case in s["cases"]:
+            for m in case["match"]:
+                out.append(ind + sw["case"].format(v=self.lit("int", m)))
+            out.append(ind + sw["body_open"].format())
+            out += self.block(case["body"], types, depth + 1, loop)
+            out.append(ind + sw["body_close"].format())
+        if s.get("default"):
+            out.append(ind + sw["default"].format())
+            out.append(ind + sw["body_open"].format())
+            out += self.block(s["default"], types, depth + 1, loop)
+            out.append(ind + sw["body_close"].format())
+        out.append(ind + sw["tail"].format())
+        return out
+
+    def lower_switch(self, s, types) -> list:
+        """A switch as a binary search of ``if`` statements on a temporary (declared on the fly)."""
+        self.tmp_id += 1
+        tmp = f"cm_sw{self.tmp_id}"
+        types[tmp] = "int"
+        self.extra_locals[tmp] = "int"
+        pairs = sorted((m, i) for i, c in enumerate(s["cases"]) for m in c["match"])
+        bodies = [c["body"] for c in s["cases"]]
+        default = s.get("default") or []
+
+        def tree(lo, hi):
+            if lo >= hi:
+                return default
+            if hi - lo <= 3:
+                node = default
+                for m, i in reversed(pairs[lo:hi]):
+                    node = [{"k": "if", "cond": ["CMP_EQ", ["var", tmp], ["int", m]], "then": bodies[i],
+                             "else": node}]
+                return node
+            mid = (lo + hi) // 2
+            return [{"k": "if", "cond": ["CMP_LT", ["var", tmp], ["int", pairs[mid][0]]], "then": tree(lo, mid),
+                     "else": tree(mid, hi)}]
+
+        return [{"k": "assign", "target": tmp, "value": s["value"]}, *tree(0, len(pairs))]
+
     def for_range(self, s, types, depth) -> list[str]:
         ind = self.cg.get("indent", "    ") * depth
         if self.cg.get("native_for_range"):
@@ -264,23 +390,31 @@ class Emitter:
         ind = self.cg.get("indent", "    ")
         assigned = {s["target"] for s in _stmts(fn["body"]) if s["k"] == "assign"} | \
                    {s["var"] for s in _stmts(fn["body"]) if s["k"] == "for_range"}
+        self.extra_locals: dict[str, str] = {}
+        body_lines = self.block(fn["body"], types, 1)
         lines: list[str] = []
+        global_assigned = sorted(n for n in assigned if n not in types and n in self.global_names)
+        if global_assigned and self.cg.get("global_use"):
+            lines.append(ind + self.cg["global_use"].format(names=", ".join(self.ident(n) for n in global_assigned)))
         if self.cg.get("param_rebind"):
             for p in fn["params"]:
                 if p["name"] in assigned:
                     lines.append(ind + self.cg["param_rebind"].format(name=self.var(p["name"]), type=self.T(p["type"])))
         if self.cg.get("hoist", True):
-            for name, t in (fn.get("locals") or {}).items():
+            for name, t in {**(fn.get("locals") or {}), **self.extra_locals}.items():
                 if self.cg.get("native_for_range") and name.startswith(("cm_it", "cm_stop")):
                     continue
                 zero = (self.cg.get("zero") or {}).get(t, "0")
                 lines.append(ind + self.tmpl("declare", name=self.var(name), type=self.T(t), value=zero))
-        lines += self.block(fn["body"], types, 1)
+        lines += body_lines
+        if not body_lines and self.cg.get("empty"):
+            lines.append(ind + self.cg["empty"].format())
         sep = self.cg.get("param_sep", ", ")
         params = sep.join(self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
                           for p in fn["params"])
         body = "\n".join(lines) + "\n"
-        return self.tmpl("func", name=self.ident(fn["name"]), params=params, ret=self.T(fn["returns"]), body=body)
+        key = "func_export" if fn.get("export") and "func_export" in self.cg else "func"
+        return self.tmpl(key, name=self.ident(fn["name"]), params=params, ret=self.T(fn["returns"]), body=body)
 
     def program(self, module: dict, calls: list, mode: str = "test", reps: int = 1) -> str:
         """A complete program: helpers + functions + a harness.
@@ -292,9 +426,10 @@ class Emitter:
                       arguments pass through the language's ``opaque``
                       template so the compiler cannot constant-fold the calls."""
         self.requires = set()
+        self.state(module)
         fns = {f["name"]: f for f in module["functions"]}
         self.fn_returns = {n: f["returns"] for n, f in fns.items()}
-        protos = self.prototypes(module)
+        protos = self.state_source(module) + self.prototypes(module)
         funcs = [self.function(f) for f in reversed(module["functions"])]
         entry_name = module.get("entry", module["functions"][0]["name"])
         sep = self.cg.get("call_sep", ", ")
@@ -344,21 +479,74 @@ class Emitter:
         if not self.cg.get("prototype"):
             return ""
         sep0 = self.cg.get("param_sep", ", ")
-        return "".join(self.tmpl("prototype", name=self.ident(f["name"]), ret=self.T(f["returns"]), params=sep0.join(
-            self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
-            for p in f["params"])) + "\n" for f in module["functions"] if only is None or f["name"] in only) + "\n"
+        out = []
+        for f in module["functions"]:
+            if only is not None and f["name"] not in only:
+                continue
+            key = "prototype_export" if f.get("export") and "prototype_export" in self.cg else "prototype"
+            out.append(self.tmpl(key, name=self.ident(f["name"]), ret=self.T(f["returns"]), params=sep0.join(
+                self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
+                for p in f["params"])) + "\n")
+        return "".join(out) + "\n"
 
     def module_source(self, module: dict, only: list[str] | None = None) -> str:
         """Just the functions (+ helpers), without a harness: what a translation emits.
         ``only``: emit just these functions; the others are known callees defined elsewhere."""
         self.requires = set()
+        self.state(module)
         self.fn_returns = {f["name"]: f["returns"] for f in module["functions"]}
         funcs = "\n".join(self.function(f) for f in reversed(module["functions"])
                            if only is None or f["name"] in only)
         protos = self.prototypes(module, only) if len([f for f in module["functions"]
                                                         if only is None or f["name"] in only]) > 1 else ""
-        helpers = self.helpers_for(funcs)
-        return self._prelude("lib_prelude") + helpers + protos + funcs + self.cg.get("lib_epilogue", "")
+        state = self.state_source(module)
+        helpers = self.helpers_for(state + funcs)
+        return self._prelude("lib_prelude") + helpers + state + protos + funcs + self.cg.get("lib_epilogue", "")
+
+    def split_sources(self, module: dict, groups: list[list[str]]) -> list[str]:
+        """The module as several compile units: part 0 holds the state and every function not in a group, part
+        k the functions of group k-1. Every symbol must be exported (so the parts link); each part declares the
+        state (``global_extern`` / ``array_extern``) and the functions (``prototype_export``) it uses."""
+        if not self.cg.get("global_extern") or not self.cg.get("array_extern"):
+            raise EmitGap(f"{self.lang_name}: no extern templates; this language cannot split a module")
+        self.requires = set()
+        self.state(module)
+        self.fn_returns = {f["name"]: f["returns"] for f in module["functions"]}
+        grouped = {n for g in groups for n in g}
+        by = {f["name"]: f for f in module["functions"]}
+        externs = []
+        for g in module.get("globals") or []:
+            externs.append(self.cg["global_extern"].format(name=self.ident(g["name"]), type=self.T(g.get("type", "int"))))
+        for a in module.get("arrays") or []:
+            t = self.cg["array_extern"].get(a.get("elem", "u8"))
+            if t is None:
+                raise EmitGap(f"{self.lang_name}: no array_extern for {a.get('elem')}")
+            externs.append(t.format(name=self.ident(a["name"]), size=int(a["size"])))
+        extern_text = "".join(x + "\n" for x in externs)
+        core = {"functions": [f for f in module["functions"] if f["name"] not in grouped]}
+        funcs0 = "\n".join(self.function(f) for f in reversed(core["functions"]))
+        state0 = self.state_source(module)
+        core_called = {e[1] for f in core["functions"] for st in _stmts(f["body"])
+                       for key in ("value", "cond", "index", "start", "stop") if isinstance(st.get(key), list)
+                       for e in _walk(st[key]) if e[0] == "CALL"}
+        protos_all = self.prototypes({"functions": [f for f in module["functions"]
+                                                    if f["name"] not in grouped or f["name"] in core_called]})
+        parts = []
+        req0 = set(self.requires)
+        parts.append((state0 + protos_all + funcs0, req0))
+        for g in groups:
+            self.requires = set()
+            fs = [by[n] for n in g]
+            body = "\n".join(self.function(f) for f in fs)
+            called = {e[1] for f in fs for st in _stmts(f["body"]) for key in ("value", "cond", "index", "start", "stop")
+                      if isinstance(st.get(key), list) for e in _walk(st[key]) if e[0] == "CALL"}
+            protos = self.prototypes({"functions": [by[n] for n in sorted(called | set(g)) if n in by]})
+            parts.append((extern_text + protos + body, set(self.requires)))
+        out = []
+        for code, req in parts:
+            self.requires = req
+            out.append(self._prelude("lib_prelude") + self.helpers_for(code) + code)
+        return out
 
     def helpers_for(self, code: str) -> str:
         """Helper functions referenced by ``code``, dependencies first.
@@ -395,9 +583,28 @@ class Emitter:
 def _stmts(body):
     for s in body:
         yield s
-        for key in ("then", "else", "body"):
+        for key in ("then", "else", "body", "default"):
             if key in s:
                 yield from _stmts(s[key])
+        for case in s.get("cases") or ():
+            yield from _stmts(case["body"])
+
+
+def _walk(e):
+    if isinstance(e, list) and e:
+        yield e
+        if e[0] not in LEAVES:
+            for a in e[(2 if e[0] in ("CALL", "LOAD") else 1):]:
+                yield from _walk(a)
+
+
+def _shallow(body):
+    """Statements of a body, descending into if/else and nested switch cases but not into loops."""
+    for s in body:
+        yield s
+        if s["k"] == "if":
+            yield from _shallow(s.get("then") or [])
+            yield from _shallow(s.get("else") or [])
 
 
 def emit_module(store, ops, lang: str, module: dict, only: list[str] | None = None) -> str:

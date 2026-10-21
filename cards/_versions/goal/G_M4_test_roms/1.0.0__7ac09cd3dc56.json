@@ -1,0 +1,16 @@
+{
+  "axis": "machines",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "test_roms_pass_rate",
+  "name": "G_M4_test_roms",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "Fraction of hardware test ROMs (Blargg, mooneye) passing in the last `cardmodel machine testroms`.",
+  "target": 1.0,
+  "tier": 0
+}

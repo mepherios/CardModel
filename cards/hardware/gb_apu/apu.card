@@ -1,0 +1,558 @@
+-- The APU: two square channels (the first with a frequency sweep), a 32-sample wave channel and a noise channel
+-- (15- or 7-bit LFSR), clocked by the 512 Hz frame sequencer (length at 256 Hz, sweep at 128 Hz, envelope at
+-- 64 Hz), mixed by NR51 (panning) and NR50 (master volume). Samples (signed 16-bit stereo, little endian) go to
+-- `audio` at `sample_rate` Hz; the shell drains it. sample_rate = 0 keeps every register-visible behaviour
+-- (status bits, lengths, envelopes) and skips waveform synthesis.
+--
+-- The quirks Blargg's dmg_sound / cgb_sound check (as gbdev's "obscure behaviour" and SameBoy describe them):
+-- enabling a length counter while the frame sequencer's next step does not clock length clocks it once, and a
+-- trigger then loads one less than the maximum; leaving sweep negate mode after a negate calculation disables
+-- channel 1; power-off clears every register and the channels' internal state (lengths too on the CGB); the
+-- wave channel's first fetch after a trigger comes 6 dots late, and while it plays, wave RAM is the byte it is
+-- playing (on the DMG only in the very dot it fetches it: otherwise reads give 0xFF and writes are lost, and a
+-- trigger in that dot rewrites the first bytes of wave RAM).
+const FS_DOTS = 8192
+const CPU_HZ = 4194304
+const AUDIO_BYTES = 16384
+const WAVE_TICK = 2                -- the wave channel counts in 2 MHz ticks
+const WAVE_TRIGGER_DELAY = 6       -- 3 ticks more before the first fetch after a trigger
+export global sample_rate: Int = 48000
+export global audio_n: Int = 0
+export array audio: Byte[AUDIO_BYTES]
+array nr: Byte[0x30]
+array nr_or: Byte[0x30] = [0x80, 0x3F, 0x00, 0xFF, 0xBF, 0xFF, 0x3F, 0x00, 0xFF, 0xBF, 0x7F, 0xFF, 0x9F, 0xFF, 0xBF,
+                           0xFF, 0xFF, 0x00, 0x00, 0xBF, 0x00, 0x00, 0x70, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                           0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                           0x00, 0x00, 0x00]
+array duty_tab: Int[4] = [0x01, 0x81, 0x87, 0x7E]
+array noise_div: Int[8] = [8, 16, 32, 48, 64, 80, 96, 112]
+global apu_on: Int = 1
+global apu_last: Int = 0
+global fs_next: Int = 8192
+global fs_step: Int = 0
+global smp_acc: Int = 0
+-- per channel: enabled, length counter, timer, position, volume, envelope timer
+global c1_on: Int = 0
+global c1_len: Int = 0
+global c1_timer: Int = 0
+global c1_pos: Int = 0
+global c1_vol: Int = 0
+global c1_env: Int = 0
+global c1_freq: Int = 0
+global sw_on: Int = 0
+global sw_timer: Int = 0
+global sw_shadow: Int = 0
+global sw_negated: Int = 0        -- a sweep calculation in negate mode happened since the trigger
+global c2_on: Int = 0
+global c2_len: Int = 0
+global c2_timer: Int = 0
+global c2_pos: Int = 0
+global c2_vol: Int = 0
+global c2_env: Int = 0
+global c3_on: Int = 0
+global c3_len: Int = 0
+global c3_timer: Int = 0
+global c3_pos: Int = 0
+global c3_sample: Int = 0
+global c3_fetched: Int = -1       -- the dot of the wave channel's latest fetch from wave RAM
+global c4_on: Int = 0
+global c4_len: Int = 0
+global c4_timer: Int = 0
+global c4_vol: Int = 0
+global c4_env: Int = 0
+global c4_lfsr: Int = 0x7FFF
+global hp_l: Int = 0              -- the output capacitor (a high-pass filter): its charge, x 256
+global hp_r: Int = 0
+
+fn reg(r: Int) -> Int = nr[r - 0x10]
+fn c1_period() -> Int = (2048 - c1_freq) * 4
+fn c2_period() -> Int = (2048 - (((reg(0x19) & 7) << 8) | reg(0x18))) * 4
+fn c3_period() -> Int = (2048 - (((reg(0x1E) & 7) << 8) | reg(0x1D))) * 2
+fn c4_period() -> Int = noise_div[reg(0x22) & 7] << (reg(0x22) >> 4)
+fn dac1() -> Bool = (reg(0x12) & 0xF8) != 0
+fn dac2() -> Bool = (reg(0x17) & 0xF8) != 0
+fn dac3() -> Bool = (reg(0x1A) & 0x80) != 0
+fn dac4() -> Bool = (reg(0x21) & 0xF8) != 0
+
+fn apu_read(r: Int) -> Int {
+  apu_sync()
+  if r == 0x26 {
+    return 0x70 | (apu_on << 7) | c1_on | (c2_on << 1) | (c3_on << 2) | (c4_on << 3)
+  }
+  if r >= 0x30 {
+    if not wave_open() {
+      return 0xFF
+    }
+    return nr[wave_index(r)]
+  }
+  return nr[r - 0x10] | nr_or[r - 0x10]
+}
+-- the wave RAM byte an access to r reaches: while the channel plays, the one it plays (wave_open says whether
+-- the access gets through at all)
+fn wave_index(r: Int) -> Int {
+  if c3_on == 0 {
+    return r - 0x10
+  }
+  return 0x20 + (c3_pos >> 1)
+}
+fn wave_open() -> Bool = c3_on == 0 or cgb != 0 or c3_fetched == now
+fn apu_power_off() {
+  for i in 0 .. 0x16 {
+    nr[i] = 0
+  }
+  c1_on = 0
+  c2_on = 0
+  c3_on = 0
+  c4_on = 0
+  sw_on = 0
+  c1_freq = 0
+  c1_pos = 0
+  c2_pos = 0
+  c3_pos = 0
+  c3_sample = 0
+  if cgb != 0 {
+    c1_len = 0
+    c2_len = 0
+    c3_len = 0
+    c4_len = 0
+  }
+}
+fn apu_write(r: Int, v: Int) {
+  apu_sync()
+  if r >= 0x30 {
+    if wave_open() {
+      nr[wave_index(r)] = v
+    }
+    return
+  }
+  if r == 0x26 {
+    let was = apu_on
+    apu_on = (v >> 7) & 1
+    if was == 1 and apu_on == 0 {
+      apu_power_off()
+    }
+    if was == 0 and apu_on == 1 {
+      fs_step = 0
+    }
+    return
+  }
+  if apu_on == 0 {
+    if cgb == 0 and (r == 0x11 or r == 0x16 or r == 0x1B or r == 0x20) {
+      length_load(r, v)
+    }
+    return
+  }
+  let old = nr[r - 0x10]
+  nr[r - 0x10] = v
+  if r == 0x11 or r == 0x16 or r == 0x1B or r == 0x20 {
+    length_load(r, v)
+  } elif r == 0x14 or r == 0x19 or r == 0x1E or r == 0x23 {
+    length_enable(r, old, v)
+  } elif r == 0x10 {
+    if (old & 8) != 0 and (v & 8) == 0 and sw_negated != 0 {
+      c1_on = 0
+    }
+  }
+  if r == 0x12 {
+    if not dac1() {
+      c1_on = 0
+    }
+  } elif r == 0x17 {
+    if not dac2() {
+      c2_on = 0
+    }
+  } elif r == 0x1A {
+    if not dac3() {
+      c3_on = 0
+    }
+  } elif r == 0x21 {
+    if not dac4() {
+      c4_on = 0
+    }
+  } elif r == 0x13 {
+    c1_freq = (c1_freq & 0x700) | v
+  } elif r == 0x14 {
+    c1_freq = (c1_freq & 0xFF) | ((v & 7) << 8)
+    if (v & 0x80) != 0 {
+      trigger1()
+    }
+  } elif r == 0x19 {
+    if (v & 0x80) != 0 {
+      trigger2()
+    }
+  } elif r == 0x1E {
+    if (v & 0x80) != 0 {
+      trigger3()
+    }
+  } elif r == 0x23 {
+    if (v & 0x80) != 0 {
+      trigger4()
+    }
+  }
+}
+-- the frame sequencer's next step does not clock length (the first half of a length period)
+fn length_half() -> Bool = (fs_step & 1) == 1
+-- NRx4 written: enabling length in the first half of a period clocks it once (a channel it empties stops,
+-- unless this write also triggers it)
+fn length_enable(r: Int, old: Int, v: Int) {
+  if not length_half() or (old & 0x40) != 0 or (v & 0x40) == 0 {
+    return
+  }
+  if r == 0x14 and c1_len > 0 {
+    c1_len -= 1
+    if c1_len == 0 and (v & 0x80) == 0 {
+      c1_on = 0
+    }
+  } elif r == 0x19 and c2_len > 0 {
+    c2_len -= 1
+    if c2_len == 0 and (v & 0x80) == 0 {
+      c2_on = 0
+    }
+  } elif r == 0x1E and c3_len > 0 {
+    c3_len -= 1
+    if c3_len == 0 and (v & 0x80) == 0 {
+      c3_on = 0
+    }
+  } elif r == 0x23 and c4_len > 0 {
+    c4_len -= 1
+    if c4_len == 0 and (v & 0x80) == 0 {
+      c4_on = 0
+    }
+  }
+}
+-- the length a trigger loads into an empty counter
+fn length_full(r: Int, full: Int) -> Int = if (reg(r) & 0x40) != 0 and length_half() then full - 1 else full
+fn length_load(r: Int, v: Int) {
+  if r == 0x11 {
+    c1_len = 64 - (v & 0x3F)
+  } elif r == 0x16 {
+    c2_len = 64 - (v & 0x3F)
+  } elif r == 0x1B {
+    c3_len = 256 - v
+  } else {
+    c4_len = 64 - (v & 0x3F)
+  }
+}
+fn sweep_calc() -> Int {
+  let d = sw_shadow >> (reg(0x10) & 7)
+  var f = sw_shadow + d
+  if (reg(0x10) & 8) != 0 {
+    f = sw_shadow - d
+    sw_negated = 1
+  }
+  if f > 2047 {
+    c1_on = 0
+  }
+  return f
+}
+fn trigger1() {
+  c1_on = if dac1() then 1 else 0
+  if c1_len == 0 {
+    c1_len = length_full(0x14, 64)
+  }
+  sw_negated = 0
+  c1_timer = c1_period()
+  c1_vol = reg(0x12) >> 4
+  c1_env = reg(0x12) & 7
+  sw_shadow = c1_freq
+  sw_timer = (reg(0x10) >> 4) & 7
+  if sw_timer == 0 {
+    sw_timer = 8
+  }
+  sw_on = if (reg(0x10) & 0x77) != 0 then 1 else 0
+  if (reg(0x10) & 7) != 0 {
+    let f = sweep_calc()
+  }
+}
+fn trigger2() {
+  c2_on = if dac2() then 1 else 0
+  if c2_len == 0 {
+    c2_len = length_full(0x19, 64)
+  }
+  c2_timer = c2_period()
+  c2_vol = reg(0x17) >> 4
+  c2_env = reg(0x17) & 7
+}
+fn trigger3() {
+  -- DMG: retriggered in the dot before a fetch, the byte about to be read (or its aligned group of four)
+  -- overwrites the start of wave RAM
+  if cgb == 0 and c3_on != 0 and c3_timer == WAVE_TICK {
+    let b = ((c3_pos + 1) >> 1) & 0x0F
+    if b < 4 {
+      nr[0x20] = nr[0x20 + b]
+    } else {
+      for k in 0 .. 4 {
+        nr[0x20 + k] = nr[0x20 + (b & 0x0C) + k]
+      }
+    }
+  }
+  c3_on = if dac3() then 1 else 0
+  if c3_len == 0 {
+    c3_len = length_full(0x1E, 256)
+  }
+  c3_timer = c3_period() + WAVE_TRIGGER_DELAY
+  c3_pos = 0
+}
+fn trigger4() {
+  c4_on = if dac4() then 1 else 0
+  if c4_len == 0 {
+    c4_len = length_full(0x23, 64)
+  }
+  c4_timer = c4_period()
+  c4_vol = reg(0x21) >> 4
+  c4_env = reg(0x21) & 7
+  c4_lfsr = 0x7FFF
+}
+fn fs_tick() {
+  if (fs_step & 1) == 0 {
+    if (reg(0x14) & 0x40) != 0 and c1_len > 0 {
+      c1_len -= 1
+      if c1_len == 0 {
+        c1_on = 0
+      }
+    }
+    if (reg(0x19) & 0x40) != 0 and c2_len > 0 {
+      c2_len -= 1
+      if c2_len == 0 {
+        c2_on = 0
+      }
+    }
+    if (reg(0x1E) & 0x40) != 0 and c3_len > 0 {
+      c3_len -= 1
+      if c3_len == 0 {
+        c3_on = 0
+      }
+    }
+    if (reg(0x23) & 0x40) != 0 and c4_len > 0 {
+      c4_len -= 1
+      if c4_len == 0 {
+        c4_on = 0
+      }
+    }
+  }
+  if fs_step == 2 or fs_step == 6 {
+    if sw_on != 0 {
+      sw_timer -= 1
+      if sw_timer <= 0 {
+        sw_timer = (reg(0x10) >> 4) & 7
+        if sw_timer == 0 {
+          sw_timer = 8
+        }
+        if ((reg(0x10) >> 4) & 7) != 0 {
+          let f = sweep_calc()
+          if f <= 2047 and (reg(0x10) & 7) != 0 {
+            sw_shadow = f
+            c1_freq = f
+            let g = sweep_calc()
+          }
+        }
+      }
+    }
+  }
+  if fs_step == 7 {
+    c1_vol = envelope(0x12, c1_vol, 1)
+    c2_vol = envelope(0x17, c2_vol, 2)
+    c4_vol = envelope(0x21, c4_vol, 4)
+  }
+  fs_step = (fs_step + 1) & 7
+}
+fn envelope(r: Int, vol: Int, which: Int) -> Int {
+  let p = reg(r) & 7
+  if p == 0 {
+    return vol
+  }
+  var t = 0
+  if which == 1 {
+    c1_env -= 1
+    t = c1_env
+  } elif which == 2 {
+    c2_env -= 1
+    t = c2_env
+  } else {
+    c4_env -= 1
+    t = c4_env
+  }
+  if t > 0 {
+    return vol
+  }
+  if which == 1 {
+    c1_env = p
+  } elif which == 2 {
+    c2_env = p
+  } else {
+    c4_env = p
+  }
+  if (reg(r) & 8) != 0 and vol < 15 {
+    return vol + 1
+  }
+  if (reg(r) & 8) == 0 and vol > 0 {
+    return vol - 1
+  }
+  return vol
+}
+-- the channels' timers over the d dots that end at dot t: the squares and the wave channel in closed form (the
+-- wave position is register-visible), the noise LFSR step by step and only while samples are made
+fn advance_channels(d: Int, t: Int) {
+  if c1_on != 0 {
+    c1_timer -= d
+    if c1_timer <= 0 {
+      let p1 = c1_period()
+      let n1 = (p1 - c1_timer) // p1
+      c1_timer += n1 * p1
+      c1_pos = (c1_pos + n1) & 7
+    }
+  }
+  if c2_on != 0 {
+    c2_timer -= d
+    if c2_timer <= 0 {
+      let p2 = c2_period()
+      let n2 = (p2 - c2_timer) // p2
+      c2_timer += n2 * p2
+      c2_pos = (c2_pos + n2) & 7
+    }
+  }
+  if c3_on != 0 {
+    c3_timer -= d
+    if c3_timer <= 0 {
+      let p3 = c3_period()
+      let n3 = (p3 - c3_timer) // p3
+      c3_timer += n3 * p3
+      c3_pos = (c3_pos + n3) & 31
+      c3_fetched = t + c3_timer - p3
+      let b = nr[0x20 + (c3_pos >> 1)]
+      c3_sample = if (c3_pos & 1) == 0 then b >> 4 else b & 0x0F
+    }
+  }
+  if c4_on != 0 and sample_rate > 0 {
+    c4_timer -= d
+    while c4_timer <= 0 {
+      c4_timer += c4_period()
+      let x = (c4_lfsr ^ (c4_lfsr >> 1)) & 1
+      c4_lfsr = (c4_lfsr >> 1) | (x << 14)
+      if (reg(0x22) & 8) != 0 {
+        c4_lfsr = (c4_lfsr & 0x7FBF) | (x << 6)
+      }
+    }
+  }
+}
+fn out1() -> Int {
+  if c1_on == 0 {
+    return 0
+  }
+  return ((duty_tab[(reg(0x11) >> 6) & 3] >> c1_pos) & 1) * c1_vol
+}
+fn out2() -> Int {
+  if c2_on == 0 {
+    return 0
+  }
+  return ((duty_tab[(reg(0x16) >> 6) & 3] >> c2_pos) & 1) * c2_vol
+}
+fn out3() -> Int {
+  if c3_on == 0 {
+    return 0
+  }
+  let code = (reg(0x1C) >> 5) & 3
+  if code == 0 {
+    return 0
+  }
+  return c3_sample >> (code - 1)
+}
+fn out4() -> Int {
+  if c4_on == 0 {
+    return 0
+  }
+  return ((c4_lfsr & 1) ^ 1) * c4_vol
+}
+fn analog(v: Int, on: Bool) -> Int = if on then v * 2 - 15 else 0
+fn clip16(v: Int) -> Int = if v > 32767 then 32767 else if v < -32768 then -32768 else v
+fn emit_sample() {
+  if audio_n + 4 > AUDIO_BYTES {
+    return
+  }
+  var l = 0
+  var r = 0
+  if apu_on != 0 {
+    let a1 = analog(out1(), dac1())
+    let a2 = analog(out2(), dac2())
+    let a3 = analog(out3(), dac3())
+    let a4 = analog(out4(), dac4())
+    let pan = reg(0x25)
+    if (pan & 0x10) != 0 {
+      l += a1
+    }
+    if (pan & 0x20) != 0 {
+      l += a2
+    }
+    if (pan & 0x40) != 0 {
+      l += a3
+    }
+    if (pan & 0x80) != 0 {
+      l += a4
+    }
+    if (pan & 0x01) != 0 {
+      r += a1
+    }
+    if (pan & 0x02) != 0 {
+      r += a2
+    }
+    if (pan & 0x04) != 0 {
+      r += a3
+    }
+    if (pan & 0x08) != 0 {
+      r += a4
+    }
+    l = l * (((reg(0x24) >> 4) & 7) + 1) * 64
+    r = r * ((reg(0x24) & 7) + 1) * 64
+  }
+  -- the capacitor removes the DC level of the DACs (time constant about 256 samples)
+  hp_l += ((l << 8) - hp_l) >> 8
+  hp_r += ((r << 8) - hp_r) >> 8
+  l = clip16(l - (hp_l >> 8))
+  r = clip16(r - (hp_r >> 8))
+  audio[audio_n] = l & 0xFF
+  audio[audio_n + 1] = (l >> 8) & 0xFF
+  audio[audio_n + 2] = r & 0xFF
+  audio[audio_n + 3] = (r >> 8) & 0xFF
+  audio_n += 4
+}
+fn apu_sync() {
+  while apu_last < now {
+    var t = now
+    if fs_next < t {
+      t = fs_next
+    }
+    var due = FAR
+    if sample_rate > 0 {
+      due = apu_last + (CPU_HZ - smp_acc + sample_rate - 1) // sample_rate
+      if due < t {
+        t = due
+      }
+    }
+    let d = t - apu_last
+    advance_channels(d, t)
+    if sample_rate > 0 {
+      smp_acc += d * sample_rate
+    }
+    apu_last = t
+    if t == fs_next {
+      fs_next += FS_DOTS
+      if apu_on != 0 {
+        fs_tick()
+      }
+    }
+    if sample_rate > 0 and smp_acc >= CPU_HZ {
+      smp_acc -= CPU_HZ
+      emit_sample()
+    }
+  }
+}
+-- writing DIV restarts the frame sequencer's divider; a falling edge of its bit 12 (13 in double speed) clocks it
+fn apu_div_reset() {
+  apu_sync()
+  if ((div_counter >> (12 + ds)) & 1) != 0 and apu_on != 0 {
+    fs_tick()
+  }
+  fs_next = now + FS_DOTS
+}
+fn apu_pcm12() -> Int = out1() | (out2() << 4)
+fn apu_pcm34() -> Int = out3() | (out4() << 4)

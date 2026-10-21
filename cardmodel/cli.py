@@ -26,6 +26,11 @@
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
 
+  machines as cards (machine/cli.py):
+  cardmodel emu ROM [--headless ...]     run a Game Boy / Color ROM: lifted card IR, native, with a web shell
+  cardmodel isa build|check|list [ISA]   instruction cards: compile semantics, conformance in every engine
+  cardmodel machine survey|lift|diff|info|testroms TARGET   boot many ROMs, lift one, differential runs
+
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.
 """
@@ -181,6 +186,9 @@ def cmd_verify(args) -> int:
 def _failures(sec: str, r: dict):
     if sec == "kernel":
         return {k: r[k] for k in ("load_errors", "schema_errors", "unresolved_references", "registry_errors") if r[k]}
+    if sec == "machine":
+        return {k: {"drifted": v.get("drifted"), "failing": v.get("failing")} for k, v in r["isas"].items()
+                if v["status"] == "fail"}
     if sec == "conformance":
         return {lang: {n: c for n, c in lr["cells"].items() if c["status"] in ("fail", "error")}
                 for lang, lr in r["languages"].items()}

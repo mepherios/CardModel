@@ -7,7 +7,10 @@ Questions answered (rea-cards coverage.py style: one number per question):
                      function cards agreeing in >= 3 implementations
   4. witnesses       vectors, rules (numeric + Lean), redefinitions
   5. contracts       how many vendored computation cards satisfy primitive_contract
-  6. goals           every goal card's metric against its target
+  6. machines        instruction cards per ISA and their conformance (last verify), the last ROM survey, lifted
+                     differential runs, test ROMs and the DS coverage report (state files written by the
+                     `cardmodel machine ...` commands; ROM titles never leave the state directory)
+  7. goals           every goal card's metric against its target
 
 Inputs: the store and ``state/last_verify.json`` (written by ``cardmodel
 verify``). Numbers that need a verify run say "not run yet" instead of 0.
@@ -88,8 +91,48 @@ def compute(ctx: Ctx) -> dict:
     if prim is not None and comp:
         ok = sum(1 for c in comp if not validate(dict(c), prim["schema"]))
         rep["primitive_contract"] = {"computation_cards": len(comp), "satisfy": ok}
+    rep["machines"] = machines(ctx, secs)
     rep["goals"] = goals(ctx, rep, secs)
     return rep
+
+
+def machines(ctx: Ctx, secs: dict) -> dict:
+    st = ctx.store
+    out: dict = {"isas": {}}
+    for card in st.cards("isa"):
+        if card.get("kind") == "isa":
+            n = sum(1 for c in st.cards("isa") if c.get("kind") == "instruction" and c.get("isa") == card.name)
+            v = ((secs.get("machine") or {}).get("isas") or {}).get(card.name) or {}
+            out["isas"][card.name] = {"instruction_cards": n, "passed": v.get("passed"), "failed": v.get("failed"),
+                                      "engines": v.get("engines"), "runs": v.get("runs")}
+    out["machines"] = sorted(c.name for c in st.cards("machine"))
+    out["hardware_cards"] = len(st.cards("hardware"))
+    sv = ctx.load_state("emu_survey")
+    if sv:
+        out["survey"] = {k: sv.get(k) for k in ("folder_files", "frames", "engine", "counts", "unsupported_mappers",
+                                                "runs_fraction")}
+    diffs = ctx.load_state("emu_diffs") or {}
+    if diffs:
+        out["lifted_differential"] = {"runs": len(diffs),
+                                      "identical": sum(1 for d in diffs.values() if d.get("verdict") == "identical"),
+                                      "frames": sum(d.get("frames_compared", 0) for d in diffs.values())}
+    tr = ctx.load_state("emu_testroms")
+    if tr:
+        out["test_roms"] = {"total": tr.get("total"), "passed": tr.get("passed"), "skipped": tr.get("skipped"),
+                            "suites": tr.get("suites") or {},
+                            "failing": [r["file"].rsplit("/", 1)[-1] for r in tr.get("rows", [])
+                                        if r.get("verdict") not in ("pass", "skipped")][:12]}
+    nds = ctx.load_state("nds_coverage")
+    if nds:
+        ld = nds.get("lifted_differential") or {}
+        if ld:
+            out["nds_lifted"] = {k: ld.get(k) for k in ("verdict", "frames_compared", "blocks", "instructions_lifted",
+                                                        "speedup")}
+        out["nds"] = {"frames": nds.get("frames"), "cpus": {
+            n: {k: c.get(k) for k in ("instructions_executed", "distinct_instruction_addresses", "cards_used",
+                                      "undecodable_executed", "unmodelled_hardware_touched", "swi_unmodelled")}
+            for n, c in (nds.get("cpus") or {}).items()}}
+    return out
 
 
 def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
@@ -183,6 +226,23 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "card_programs_passing":
         lang = secs.get("lang")
         return sum(1 for p in lang["programs"].values() if p["status"] == "pass") if lang else None
+    if name == "isa_cards_failing":
+        m = secs.get("machine")
+        return sum(v.get("failed", 0) or 0 for v in (m.get("isas") or {}).values()) if m else None
+    if name == "roms_boot_fraction":
+        sv = ctx.load_state("emu_survey")
+        return sv.get("runs_fraction") if sv else None
+    if name == "lifted_runs_differing":
+        diffs = ctx.load_state("emu_diffs") or {}
+        nds_l = (ctx.load_state("nds_coverage") or {}).get("lifted_differential")
+        runs = list(diffs.values()) + ([nds_l] if nds_l else [])
+        return sum(1 for d in runs if d.get("verdict") != "identical") if runs else None
+    if name == "test_roms_pass_rate":
+        tr = ctx.load_state("emu_testroms")
+        return round(tr["passed"] / tr["total"], 4) if tr and tr.get("total") else None
+    if name == "ds_undecodable_executed":
+        nds = ctx.load_state("nds_coverage")
+        return sum(c.get("undecodable_executed", 0) for c in (nds.get("cpus") or {}).values()) if nds else None
     runs = sorted(st.cards("arena_run"), key=lambda c: c["score"].get("finished", ""))
     if name == "arena_unsound_runs":
         return sum(1 for r in runs if not r["score"].get("sound")) if runs else None
@@ -240,6 +300,44 @@ def markdown(rep: dict) -> str:
     L += ["", "## Witnesses", ""]
     for sec in ("forms", "vectors", "rules", "redefinitions", "proofs", "functions", "kernel"):
         L.append(f"* **{sec}**: {rep.get(sec)}")
+    mc = rep.get("machines") or {}
+    if mc:
+        L += ["", "## Machines", "", f"Machine cards: {', '.join(mc.get('machines') or [])}; "
+              f"{mc.get('hardware_cards')} hardware cards.", "",
+              "| ISA | instruction cards | pass | fail | engines | one-instruction runs |", "|---|---:|---:|---:|---|---:|"]
+        for name, v in sorted((mc.get("isas") or {}).items()):
+            L.append(f"| {name} | {v['instruction_cards']} | {v['passed'] if v['passed'] is not None else 'not run'} | "
+                     f"{v['failed'] if v['failed'] is not None else '—'} | {', '.join(v['engines'] or [])} | "
+                     f"{v['runs'] if v['runs'] is not None else '—'} |")
+        if mc.get("survey"):
+            sv = mc["survey"]
+            L += ["", f"* **ROM survey** ({sv['folder_files']} ROMs, {sv['frames']} frames each, engine {sv['engine']}): "
+                  f"{sv['counts']}; runs {sv['runs_fraction']:.1%}; unsupported bank controllers "
+                  f"{sv['unsupported_mappers']}."]
+        if mc.get("lifted_differential"):
+            d = mc["lifted_differential"]
+            L.append(f"* **lifted vs interpreter**: {d['identical']} of {d['runs']} differential runs identical "
+                     f"({d['frames']} frames compared).")
+        if mc.get("test_roms"):
+            t = mc["test_roms"]
+            per = ", ".join(f"{k} {v['passed']}/{v['total']}" for k, v in (t.get("suites") or {}).items())
+            L.append(f"* **test ROMs**: {t['passed']} of {t['total']} pass ({per}); {t.get('skipped') or 0} skipped "
+                     f"(for other hardware revisions, or not self-checking)"
+                     + (f"; failing: {', '.join(t['failing'])}." if t.get("failing") else "."))
+        else:
+            L.append("* **test ROMs**: not run yet (`cardmodel machine testroms DIR`; the suites are not on this "
+                     "machine).")
+        if mc.get("nds"):
+            n = mc["nds"]
+            for cpu, c in n["cpus"].items():
+                L.append(f"* **DS {cpu}** ({n['frames']} frames): {c['instructions_executed']} instructions, "
+                         f"{c['distinct_instruction_addresses']} distinct, {c['cards_used']} cards used, "
+                         f"{c['undecodable_executed']} undecodable; not modelled yet: "
+                         f"{', '.join(c['unmodelled_hardware_touched'] or {}) or 'nothing'}.")
+        if mc.get("nds_lifted"):
+            d = mc["nds_lifted"]
+            L.append(f"* **DS ARM9 lifted code**: {d['blocks']} blocks ({d['instructions_lifted']} instructions), "
+                     f"{d['verdict']} to the interpreter over {d['frames_compared']} frames ({d['speedup']}x).")
     if "primitive_contract" in rep:
         p = rep["primitive_contract"]
         L.append(f"* **primitive_contract**: {p['satisfy']} of {p['computation_cards']} vendored computation cards "

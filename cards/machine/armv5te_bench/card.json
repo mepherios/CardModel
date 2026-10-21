@@ -1,0 +1,11 @@
+{
+  "category": "machine",
+  "name": "armv5te_bench",
+  "isa": "armv5te",
+  "logic": ["bench.card"],
+  "components": [],
+  "export_state": true,
+  "statement": "A test bench for the ARM and Thumb instruction cards: flat 64 KiB memory, an access trace, stub SWI/undefined/coprocessor hooks. `cardmodel isa check armv5te` runs every card on it in every engine with seeded random instruction words and states.",
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}
