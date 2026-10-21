@@ -140,3 +140,4 @@ command runs the test suite.
 | [docs/STORE.md](docs/STORE.md) | what is in the store, what the model does for each piece, which products run through it |
 | [docs/AUTONOMY.md](docs/AUTONOMY.md) | the model runs itself: the self-run cycle, the core capabilities, the self layer, findings and the plan |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | how parallel sessions land as one program: rules, the number registry, who works where, the log |
+| [docs/MATH_CORE.md](docs/MATH_CORE.md) | proposal (awaiting the user's yes): the four sources around the Gödel model, an audit of understand vs imitate, the semantic core, the migration plan |

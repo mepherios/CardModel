@@ -1,0 +1,35 @@
+{
+  "category": "chain",
+  "damage_pct": 80,
+  "depends_on": [
+    "move/sweep",
+    "move/overhead",
+    "precedent/for_honor_chains",
+    "precedent/tekken_strings"
+  ],
+  "from": "sweep",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sweep_to_overhead",
+  "on": [
+    "hit",
+    "block",
+    "pierce"
+  ],
+  "precedent": [
+    "for_honor_chains",
+    "tekken_strings"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Low, then high: the brute's string.",
+  "tier": 1,
+  "to": "overhead",
+  "window": [
+    0,
+    12
+  ]
+}

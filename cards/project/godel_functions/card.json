@@ -24,9 +24,9 @@
     "the physics set"
   ],
   "metadata": {
-    "previous_content_hash": "e9369e149c39ec8cc5e881ca23242401dd9105860f7e41b8c46faec4db32066d",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "71c0c9aba6a51d8d67c8c67ee7d65d73a4b79ba676746c7016d2da477ec0f17a",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -60,6 +60,6 @@
   "statement": "Functions as algebra: canonical forms, Gödel numbers, the GCD of functions and the identities that carry between them.",
   "tier": 1,
   "title": "Gödel-numbered functions",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

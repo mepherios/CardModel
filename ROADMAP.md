@@ -88,6 +88,10 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Work in progress in the launcher**: a Work tab with every session's branch and its programs; a program's
   version on a branch installs like a beta (built there with that branch's own code); Update falls back to the
   last good build when the cards in progress do not build; every title and datum on the pages opens something.
+* 🔵 **Vector Duel 0.4.0** (shipped as a launcher update): multi-hit strings as chain cards with two design laws
+  (GL9 strings end, GL10 every link is answerable), the duel-tree AI (`game/tree.py`: backward induction six
+  exchanges deep over abstract states, string sub-games after every connect) as a new stage, the Oracle, and a
+  boss whose three phases are written on the game card. Impacts are now judged after both fighters move.
 
 ## Done (2026-10-21, fifth build: the model runs itself)
 
@@ -122,10 +126,11 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 ## Arcade: next
 
-* 🟢 **More of the game**: duel-tree AI (several exchanges deep), multi-hit strings, bosses with phase stances,
-  the systemic world as a campaign map.
-* 🟢 **The players, further**: lifted blocks in the Game Boy Player (built per cartridge on first play), a DS
-  player once the DS picture hardware has cards, a CGB player choice for DMG cartridges (compatibility mode).
+* 🟢 **More of the game**: weapons as move sets, strings inside the exchange model itself, the systemic world as a
+  campaign map.
+* 🟢 **The players, further**: lifted blocks in the Game Boy Player (built per cartridge on first play), a store
+  page per cartridge (today each is a library entry the player runs), a DS player once the DS picture hardware has
+  cards, a CGB player choice for DMG cartridges (compatibility mode).
 * 🟢 **Other platforms**: a platform card per OS (a shell and a bundle layout each).
 
 ## Machines: now and next
@@ -181,9 +186,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **Crypto atoms without third-party code.** Pure-Python XChaCha20-Poly1305 (HChaCha20 + ChaCha20-Poly1305) and
   AES-GCM, so each of Ting's atoms has two runnable stdlib forms.
 
-* 🟢 **Game, next design steps.** Multi-hit strings (cancel windows as move-card edges), weapon move sets,
-  bosses as fighter cards with phase stances, a duel-tree AI (several exchanges deep), the Unreal module around
-  `game kernel --lang cpp`, and the story on the world's factions, memory and standing.
+* 🟢 **Game, next design steps.** Weapon move sets, the Unreal module around `game kernel --lang cpp`, and the
+  story on the world's factions, memory and standing. (Strings, the duel tree and boss phases shipped in Vector
+  Duel 0.4.0.)
 * 🟢 **Lean fragment.** `∃`, `Int.gcd`/`emod` lemmas with casts, Bool lemmas; Mathlib projects when present
   (probe a lakefile), which would turn many "witnessed" laws into "proved".
 * 🟢 **Logic.** Function symbols (lists, trees as terms) with a depth budget; magic-set rewriting for

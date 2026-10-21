@@ -38,18 +38,23 @@ launchers, that installs builds of the game made by the card model and launches 
 
 | card | holds |
 |---|---|
-| `game/vector_duel` | the game's data: title, version, changelog, strings, music, ladder, achievements, store text, the screen / audio / input / save interface; `logic` lists its card-language files next to it |
+| `game/vector_duel` | the game's data: title, version, changelog, strings, music, ladder, arenas, the boss's phases, the duel tree's depth, achievements, store text, the screen / audio / input / save interface; `logic` lists its card-language files next to it |
 | `game/vector_duel/*.card` | the game: frame loop, software renderer, duel, AIs, drawing, screens, synth, save (`core`, `gfx`, `duel`, `ai`, `draw`, `screens`, `audio`, `save`) |
-| `move/*`, `fighter/*`, `payoff/default`, `stdlib/combat.card` | the rules (the same cards `cardmodel game check` proves laws about) |
+| `move/*`, `fighter/*`, `chain/*`, `payoff/default`, `stdlib/combat.card` | the rules (the same cards `cardmodel game check` proves laws about); a chain card is one link of a string |
 | `asset/font_5x7` | the font |
 | `platform/macos` | how a module becomes a macOS app: the library's language card, the effect shell (`GameShell.swift`) and its compile command, the bundle layout, the icon tool |
 | `app/arcade` | the launcher: `Launcher.swift` (the native client) and `ui/` (its pages) |
 | `system/gameboy`, `system/nds` | consoles your own cartridges play on: the machine card, the card-language player (`player.card`), how the library lists them (section 5) |
 
 The card language has no strings or records, so `cardmodel/arcade/gen.py` turns the data cards into integer tables
-the logic reads (one array per move-card field, the glyph rows, the strings as character codes, the music as
-step tables, the ladder). It also solves, exactly, the equilibrium of the exchange game for every fighter pair and
-distance with the model's own simplex (`cardmodel/game/analysis.py`): the equilibrium AI samples those mixes.
+the logic reads (one array per move-card and chain-card field, the glyph rows, the strings as character codes,
+the music as step tables, the ladder, the boss's phases). It also solves, exactly, the equilibrium of the
+exchange game for every fighter pair and distance with the model's own simplex (`cardmodel/game/analysis.py`):
+the equilibrium AI samples those mixes. And it solves the duel tree (`cardmodel/game/tree.py`) for every pair
+of fighters: backward induction over 240 abstract states (distance, frame advantage in five buckets, each
+fighter's posture and stance), as deep as the game card's `duel_tree.depth` (6), plus the string sub-game after
+every connect. The tree AI samples those mixes. The tables are cached in the state folder by a hash of every card
+and line of code they come from (solving them takes a few seconds).
 
 ## 2. From cards to a download
 
@@ -112,12 +117,30 @@ library groups fold, the service light shows the service's checkout and branch.
   flashes white in the frames where raising the matching guard (L + that direction) makes it come up within the
   guard card's perfect window before the impact: a redirect. Your guard is a blue arc. Every outcome (hit,
   pierce, block, deflect, redirect, evade, catch, grab, posture break, critical) is the kernel's.
-* **Modes**: arcade (six opponents from the game card's ladder: habit, opportunist, two readers, the equilibrium,
-  the boss), training (a dummy that stands, guards, attacks or reads you), local versus, options (music, sound,
-  vector arcs, difficulty).
+* **Strings**: when a cut connects (a hit, a block or a pierce), attack again from a new side inside the chain
+  card's window to cancel its recovery into the link (J + the direction; the press is kept through the hit's
+  freeze). Links are prorated, show their own red arc, and can be redirected: that breaks the string. The
+  counter shows the hits. Every link is answerable (GL10): after a clean hit the struck side is free a few frames
+  before the link lands.
+* **Modes**: arcade (seven opponents from the game card's ladder: habit, opportunist, two readers, the
+  equilibrium, the Oracle, the boss), training (a dummy that stands, guards, attacks, attacks in strings or reads
+  you; the frame data shows your last move's cancel window), local versus, options (music, sound, vector arcs,
+  difficulty).
 * **The AIs press buttons** like a player and see what a player sees: the other's tell once it has been up for
   their reaction time, and only readable tells (startup of at least the payoff card's reaction frames). The
-  reader counts what you lean on and says so on screen.
+  reader counts what you lean on and says so on screen. The Oracle plays the duel tree: at every decision it
+  looks up its abstract state (distance, frame advantage, both postures and stances) and samples the mix the
+  model solved six exchanges deep; it still reads tells to guard. Each kind decides strings its own way (the
+  habit always the same link, the reader where you guard least, the tree and the equilibrium from the model's
+  string mixes).
+* **The Architect** fights in three phases written on the game card (`boss.phases`): each starts when its
+  health falls to a share (100, 66, 33 %) and names the AI it plays (reader, then the tree), its level, how often
+  and how far it strings, its colour, sky, weather, music and tempo. A phase change stops the fight, clears its
+  posture and announces itself.
+* **Both fighters move, then the frame's impacts are judged**: neither side acts first (two impacts on one frame
+  trade, at the distance before either pushes the other back). Before 0.4 the first fighter's impact was judged
+  before the second had moved, which favoured player 1 (a reader mirror went 32-8); now it is even (26-34 over 60
+  duels).
 
 ## 5. Consoles: your own cartridges (law CM40)
 
@@ -145,10 +168,21 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
 
 ## 6. Witnesses
 
-`tests/test_arcade.py`: the tables come from the cards; the module gives the same state in the native and the
-Python emission; a scripted versus exchange in which a high guard comes up one frame before an overhead lands is
-a redirect, and an early guard only blocks (no HP through when aligned, posture taken); the build's chunks
-reassemble its files exactly; the service serves catalog, manifest and chunks; the native package runs headless.
+`tests/test_arcade.py`: the tables come from the cards (chains, one duel tree per fighter pair at the card's
+depth, the boss's phases); the module gives the same state in the native and the Python emission; a scripted
+versus exchange in which a high guard comes up one frame before an overhead lands is a redirect, and an early
+guard only blocks (no HP through when aligned, posture taken); a slash that hits links into an overhead that
+lands at 80 %, a slash that whiffs does not link, and a struck defender holding the high guard redirects the
+link (the string breaks); the boss changes phase at the card's share of health, at that phase's level and tempo,
+and fights on; the build's chunks reassemble its files exactly; the service serves catalog, manifest and chunks;
+the native package runs headless. `tests/test_game.py` holds the model side: GL9 and GL10 (and a planted loop and
+a planted true combo that they catch), and the duel tree (depth 1 is the exchange matrix, a mirror's states are
+worth exactly opposite values, a broken opponent takes the heaviest attack, linking after a hit is an option).
+
+Measured, not witnessed (warden mirror, level 7, 20 duels a side with the sides swapped and a fresh seed per
+duel): the tree AI won 39 of 40 against the reader and 39 of 40 against the equilibrium AI, and split its own
+mirror 9-11. The Oracle (a duelist) at level 6 beats the fourth stage's reader (a warden, level 4) 10 of 16; at
+level 3 it loses all 16.
 
 `tests/test_arcade_systems.py` (synthetic cartridges from the card assembler): the cartridge tables come from the
 card; the player configures every board as the Python host does; its picture is the machine's at the same
@@ -170,9 +204,13 @@ service) while the last good build stays installable.
 * macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker.
 * The launcher remembers this checkout's path to start the service: after moving the repository, run
   `cardmodel arcade launcher --install` again.
-* The game is a 480 x 270 software renderer with stick-figure fighters; the AIs' strength is tuned by hand in
-  `ai.card` (reaction, accuracy, timing per level), not learned.
-* The store pictures are fixed moments of a scripted run.
+* The game is a 480 x 270 software renderer with stick-figure fighters; the AIs' reflexes (reaction, accuracy,
+  timing per level) are tuned by hand in `ai.card`; their choices come from the model (the equilibrium, the duel
+  tree, the string mixes) or from the reader's counts.
+* The duel tree is solved on the exchange model's abstraction of the duel (`cardmodel/game/tree.py`'s honest
+  limits), not on the real-time game itself.
+* The store pictures are fixed moments of scripted runs (the boss scene sets the boss's health just above its
+  second phase before the slash that crosses it).
 * A branch is asked about its programs in the background, a few seconds after it changes; until then its version
   says it is asking. A branch's build runs that branch's code, which may be broken mid-edit (then its last good
   build installs). The service only reads the other worktrees and writes under their `state/`; versions compare

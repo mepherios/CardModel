@@ -1,7 +1,5 @@
 {
-  "blockers": [
-    "the merge into main needs the user's go-ahead"
-  ],
+  "blockers": [],
   "branches": [
     "claude/festive-margulis-*",
     "claude/strange-dewdney-*"
@@ -23,7 +21,9 @@
     "gameboy_player"
   ],
   "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
-  "in_progress": [],
+  "in_progress": [
+    "a runnable app per cartridge, first the user's Pokémon games, built from the player and the cartridge's own code lifted into card IR"
+  ],
   "kind": "game",
   "left": [
     "merge the branch into main and reinstall Cardmodel Arcade from main",
@@ -32,8 +32,8 @@
     "the DS playable: its 2D engines, VRAM banks, 3D, sound"
   ],
   "metadata": {
-    "previous_content_hash": "dd26687a64257466811fefd6759ef75bfdaf93a64becf9c4635fc75808e52407",
-    "version": "2.0.1",
+    "previous_content_hash": "363ded0dd9a7f0c2aa7502acff51d706664eb3ea66964f3945b59f429a372173",
+    "version": "2.0.3",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -53,8 +53,10 @@
   ],
   "name": "gameboy_player",
   "next_steps": [
-    "the main session asks the user to approve merging claude/festive-margulis-43fde7",
-    "after the merge: install the launcher from main and check Update, the WORK tab and the cartridges in the app"
+    "the main session merges claude/festive-margulis-43fde7 into main and reinstalls Cardmodel Arcade from main",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted; measure what still falls back to the instruction-at-a-time interpreter (code in RAM, after EI and HALT, jump targets no profile saw) and close each gap by distillation from the instruction cards",
+    "MATH_CORE (approved): new behaviour is card-language or IR semantics (hardware and mapper cards), never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method",
+    "MATH_CORE phase 1: trace the player, the library and the lifted code to the definition, transformation, action and method registries once main has them"
   ],
   "order": 2,
   "owner": {
@@ -79,22 +81,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "Committed on claude/festive-margulis-43fde7 and caught up with main (c8aeb4c): the Game Boy Player installs and plays like a game, the library lists every cartridge with its title screen and verdict, and the launcher has a WORK tab, branch versions and an Update that falls back to the last good build; it waits for the user's go-ahead to merge into main.",
+  "standing": "Committed on claude/festive-margulis-43fde7 and caught up with main (e0eca75, with Vector Duel 0.4.0 as the release); the user approved merging it into main, which the main session does next, then reinstalls Cardmodel Arcade from main.",
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T00:38:39+02:00",
-  "user_actions": [
-    {
-      "action": "Approve merging claude/festive-margulis-43fde7 into main",
-      "unblocks": [
-        "Update that falls back to the last good build",
-        "every title and datum clickable",
-        "the WORK tab and branch versions",
-        "your Game Boy / Color cartridges in the library",
-        "one In progress tab instead of two"
-      ],
-      "why": "the launcher you use is built from main: the working Update, the clickable pages, the WORK tab and your cartridges reach it only through that merge"
-    }
-  ]
+  "updated": "2026-10-22T01:05:52+02:00",
+  "user_actions": []
 }

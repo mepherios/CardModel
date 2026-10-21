@@ -1,0 +1,35 @@
+{
+  "category": "chain",
+  "damage_pct": 85,
+  "depends_on": [
+    "move/jab",
+    "move/slash_left",
+    "precedent/for_honor_chains",
+    "precedent/tekken_strings"
+  ],
+  "from": "jab",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "jab_to_slash_left",
+  "on": [
+    "hit",
+    "block",
+    "pierce"
+  ],
+  "precedent": [
+    "for_honor_chains",
+    "tekken_strings"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "A jab opens a cut from the left: the poke buys the time for a real swing.",
+  "tier": 1,
+  "to": "slash_left",
+  "window": [
+    2,
+    8
+  ]
+}

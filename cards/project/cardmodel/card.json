@@ -17,23 +17,24 @@
     "resource governor, function algebra",
     "every session branch merged as of 7e4323a",
     "self-run (CM38), capabilities (CM37), one program (CM39)",
-    "the live In progress page with early access (bb480fb)"
+    "the live In progress page with early access (bb480fb)",
+    "law CM41: detailed, current project cards (c8aeb4c)",
+    "docs/MATH_CORE.md proposal (de22b52)"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
-    "law CM41: detailed project cards",
-    "docs/MATH_CORE.md"
+    "waiting for the user's yes on MATH_CORE.md"
   ],
   "kind": "program",
   "left": [
-    "the semantic core migration, after the user's yes",
-    "one In progress tab after the cartridge merge",
-    "the prime ledger and Gödel vectors"
+    "phase 0 of MATH_CORE: the prime ledger, content vectors, core types, an e-graph, symbolic LR35902",
+    "the semantic core migration, after the yes",
+    "one In progress tab after the cartridge merge"
   ],
   "metadata": {
-    "previous_content_hash": "4ab952a99a8188d88d7744eed88ec9cb290e868e6b66c4b8ee2f6fd7482e78a2",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "f5114263df38e1819a3a9509941e6e7cfcd6c888afbe1486f2959daf9075b97f",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -51,9 +52,8 @@
   ],
   "name": "cardmodel",
   "next_steps": [
-    "finish CM41",
-    "write MATH_CORE.md and its summary",
-    "merge the waiting branches"
+    "after the yes: start MATH_CORE phase 0 and 1",
+    "merge the branches the user approves"
   ],
   "order": 6,
   "owner": {
@@ -65,11 +65,11 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main: 40 laws carried by 27 capabilities, verify passes, the self-run on every use, the live store page; docs/MATH_CORE.md is being written for the user's approval.",
+  "standing": "On main: 41 laws carried by 27 capabilities, verify passes, the self-run on every use, the live store page with Waiting on you, project cards under CM41; MATH_CORE.md is written and waits for the user's yes.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:38:37+02:00",
   "user_actions": [
     {
       "action": "Read the MATH_CORE summary and say yes, or what to change",

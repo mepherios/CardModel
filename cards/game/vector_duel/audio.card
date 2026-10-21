@@ -30,6 +30,8 @@ const SFX_BELL = 14
 const SFX_KO = 15
 const SFX_WIN = 16
 const SFX_LOSE = 17
+const SFX_LINK = 18
+const SFX_PHASE = 19
 
 export array audio: Byte[AUDIO_BYTES]
 export global audio_n: Int = 0
@@ -53,6 +55,7 @@ array v_arp_k: Int[7]
 array v_pan: Int[7]
 
 global mus_track: Int = -1
+global mus_tempo: Int = 100
 global mus_step: Int = 0
 global mus_t: Int = 0
 global sfx_next: Int = 0
@@ -160,9 +163,22 @@ fn sfx(id: Int) {
   } elif id == SFX_LOSE {
     voice(v, W_SQUARE, 72, 0, 1500, 800)
     arp(v, 72, 68, 63, 60, 140)
+  } elif id == SFX_LINK {
+    voice(v, W_SQUARE, 81, 0, 900, 90)
+    arp(v, 81, 88, 93, 93, 25)
+    v_duty[v] = 10000
+  } elif id == SFX_PHASE {
+    voice(v, W_TRI, 52, -2, 3400, 1100)
+    let w = sfx_voice()
+    voice(w, W_SQUARE, 64, 0, 1400, 1000)
+    arp(w, 64, 67, 71, 76, 160)
+    v_duty[w] = 7000
+    let x = sfx_voice()
+    voice(x, W_NOISE, 70, -2, 1600, 700)
   }
 }
 fn music(t: Int) {
+  mus_tempo = 100
   if t != mus_track {
     mus_track = t
     mus_step = 0
@@ -230,7 +246,7 @@ fn audio_frame() {
   if audio_n + SPF * 4 > AUDIO_BYTES {
     audio_n = 0
   }
-  let step_len = if mus_track >= 0 then RATE * 15 // max(40, mus_bpm[mus_track]) else 0
+  let step_len = if mus_track >= 0 then RATE * 15 * 100 // (max(40, mus_bpm[mus_track]) * max(50, mus_tempo)) else 0
   for n in 0 .. SPF {
     if step_len > 0 {
       mus_t += 1

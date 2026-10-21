@@ -136,7 +136,7 @@ PROJECTS = [
 ]
 
 
-UPDATED = "2026-10-22T00:55:00+02:00"
+UPDATED = "2026-10-22T00:30:00+02:00"
 ME = {"session": "local_fcae30d2-ac51-4132-b69b-731309e141cc", "name": "cardmodel main (integration)"}
 GAMES = {"session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b", "name": "cardmodel-games"}
 OAM = {"session": "local_978e773c-d0b7-4c45-9824-80cad4f52163", "name": "model-the-dmg-oam-corrup"}

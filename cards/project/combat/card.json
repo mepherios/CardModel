@@ -19,9 +19,9 @@
     "a store entry that launches the terminal prototype"
   ],
   "metadata": {
-    "previous_content_hash": "a6a1da157615e61c5ed64f1e42166d9ba22d03992696235c21252ed0e8523e99",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "10ca7a3fb79fd0d4a51744cea3cb9f20733551f939d2707c7183d3b310d84f92",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -63,6 +63,6 @@
   "statement": "The combat design: moves, stances and fighters as cards; its design laws are computed on exact equilibria and its AIs read your vectors (cardmodel game play).",
   "tier": 1,
   "title": "Vector Counter System",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

@@ -21,9 +21,9 @@
     "proofs linking emitted code to definitions"
   ],
   "metadata": {
-    "previous_content_hash": "d35d2506877c449c7624614e2175a90726b25790d1ac6e32eed0c76ab793c388",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "9cdcbcfddcd45aeb318bfd6862d4a9d4415e54fb69dbb0bde798a815448f94fa",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -64,6 +64,6 @@
   "statement": "Lean as the proof kernel: theorems, derivations and Lean's own library as cards, re-proved by the model's tactics.",
   "tier": 1,
   "title": "The Lean bridge",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

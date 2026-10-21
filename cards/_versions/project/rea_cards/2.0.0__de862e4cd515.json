@@ -1,0 +1,46 @@
+{
+  "blockers": [],
+  "branches": [],
+  "category": "project",
+  "done": [],
+  "goal": "rea's reconstruction tooling as cards.",
+  "in_progress": [],
+  "kind": "program",
+  "left": [],
+  "metadata": {
+    "previous_content_hash": "c66fa5ca0dc148484c78df20d3a9be53af5045a062cca7622bc6dee261c5f956",
+    "version": "2.0.0",
+    "version_bump_reason": "major"
+  },
+  "metrics": [
+    {
+      "git_files": "cards/",
+      "label": "cards committed"
+    },
+    {
+      "count": "dirs",
+      "git_files": "cards/re_flaw/",
+      "label": "flaws recorded"
+    }
+  ],
+  "name": "rea_cards",
+  "next_steps": [
+    "publish .cardmodel/project.json"
+  ],
+  "order": 10,
+  "owner": {
+    "name": "rea-cards",
+    "session": "local_15d5214f-47df-4362-a79d-79a9516cef94"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "repo": "~/Programmering/rea-cards",
+  "standing": "Kept by its own session; its detail belongs in ~/Programmering/rea-cards/.cardmodel/project.json.",
+  "statement": "rea's reconstruction tooling as cards (~/Programmering/rea-cards), read here only.",
+  "tier": 1,
+  "title": "rea as cards",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
+}

@@ -22,9 +22,9 @@
     "Thumb and the ARM7 in the lifter"
   ],
   "metadata": {
-    "previous_content_hash": "738da9152eede894bcd1901ffd5f08932623a272146a98add5f9ef42efe3a27f",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "7ff437bdaf1e15b8c2dee617fb79554937f653cfc81a677102f9c6f1ccbd667d",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -67,6 +67,6 @@
   "statement": "Both DS CPUs direct-booted on the ARM instruction cards, the ARM9's code lifted; no graphics or sound yet.",
   "tier": 1,
   "title": "Nintendo DS prototype",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

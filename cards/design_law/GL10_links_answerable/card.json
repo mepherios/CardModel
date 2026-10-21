@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "links_answerable",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL10_links_answerable",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Every link of a string can be answered: its tell is readable (its chained startup is at least the reaction frames) and, after a clean hit, the defender's hit-stun ends early enough to raise a guard at least 2 frames before the link lands.",
+  "threshold": 2,
+  "tier": 0
+}

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from fractions import Fraction
 
-from .combat import Combat, State
+from .combat import NO_DIR, Combat, State
 
 
 def matrix(game: Combat, state: State, rows=None, cols=None) -> tuple[list, list, list]:
@@ -42,8 +42,12 @@ def solve(M, exact: bool = True) -> dict:
     A = [[num(x) for x in row] for row in M]
     m, n = len(A), len(A[0])
     lo = min(min(r) for r in A)
-    shift = (num(1) - lo) if lo <= 0 else num(0)
-    P = [[x + shift for x in row] for row in A]
+    if exact:
+        span, shift = num(1), (num(1) - lo) if lo <= 0 else num(0)
+    else:                                       # floating point: rescale to [1, 2] (a positive affine map keeps
+        span = (max(max(r) for r in A) - lo) or 1.0     # the mixes) so the pivots stay well conditioned
+        shift = span - lo
+    P = [[(x + shift) / span for x in row] for row in A]
     # maximise sum(y) s.t. P y <= 1, y >= 0  (column player's LP); duals give the row mix
     T = [[*P[i], *[num(1) if k == i else num(0) for k in range(m)], num(1)] for i in range(m)]
     obj = [num(-1)] * n + [num(0)] * m + [num(0)]
@@ -79,7 +83,7 @@ def solve(M, exact: bool = True) -> dict:
     q = [v / total for v in y]
     su = sum(u)
     p = [v / su for v in u]
-    value = 1 / total - shift
+    value = span / total - shift
     cert = certificate(A, p, q, value, exact)
     return {"value": value, "p": p, "q": q, "certificate": cert}
 
@@ -90,7 +94,7 @@ def certificate(A, p, q, v, exact=True) -> dict:
     col_pay = [sum(p[i] * A[i][j] for i in range(m)) for j in range(n)]
     row_pay = [sum(q[j] * A[i][j] for j in range(n)) for i in range(m)]
     tol = 0 if exact else 1e-9
-    ok = min(col_pay) >= v - tol and max(row_pay) <= v + tol and all(x >= 0 for x in p) and all(x >= 0 for x in q)
+    ok = min(col_pay) >= v - tol and max(row_pay) <= v + tol and all(x >= -tol for x in p) and all(x >= -tol for x in q)
     return {"ok": bool(ok), "row_guarantee": min(col_pay), "column_concession": max(row_pay)}
 
 
@@ -143,7 +147,7 @@ def check(game: Combat, state: State | None = None) -> dict:
     k = kinds(game, rows)
     attacks = [j for j, c in enumerate(cols) if game.moves[c]["kind"] in ("attack", "feint", "grab")]
     defensive = [i for i, r in enumerate(rows) if game.moves[r]["kind"] in ("guard", "evade", "catch", "step")]
-    for law in sorted(game.ctx.store.cards("design_law"), key=lambda c: c.name):
+    for law in sorted(game.ctx.store.cards("design_law"), key=lambda c: (len(c.name.split("_")[0]), c.name)):
         chk, thr = law["check"], law.get("threshold")
         if chk == "dominance":
             dom = [rows[i] for i in range(n) if all(all(M[i][c] >= M[j][c] for c in range(len(cols)))
@@ -195,6 +199,10 @@ def check(game: Combat, state: State | None = None) -> dict:
         elif chk == "answer_risk":
             safe = [rows[i] for i in defensive if all(M[i][c] >= 0 for c in attacks)]
             res = {"ok": len(safe) < thr, "never_punished": safe}
+        elif chk == "strings_end":
+            res = strings_end(game, thr)
+        elif chk == "links_answerable":
+            res = links_answerable(game, thr)
         else:
             res = {"ok": False, "error": f"unknown check {chk}"}
         out[law.name] = {"statement": law["statement"], **res}
@@ -203,6 +211,73 @@ def check(game: Combat, state: State | None = None) -> dict:
                             "row_mix": {rows[i]: str(x) for i, x in enumerate(sol["p"]) if x > 0},
                             "certificate": sol["certificate"]["ok"]},
             "moves": len(rows)}
+
+
+# -- strings (chain cards) -------------------------------------------------------------------------------------------
+def string_graph(game: Combat) -> dict[str, list[str]]:
+    """The chain cards as a graph: each attack and the attacks it can cancel into."""
+    out: dict[str, list[str]] = {}
+    for c in sorted(game.chains.values(), key=lambda c: c["name"]):
+        out.setdefault(c["from"], []).append(c["to"])
+    return out
+
+
+def strings_end(game: Combat, most: int) -> dict:
+    """GL9: the links join attacks, form no cycle, and no string is longer than ``most`` hits."""
+    graph = string_graph(game)
+    not_attacks = sorted(c["name"] for c in game.chains.values()
+                         if game.moves.get(c["from"], {}).get("kind") != "attack"
+                         or game.moves.get(c["to"], {}).get("kind") != "attack")
+    longest: dict[str, int] = {}
+    seen: dict[str, int] = {}
+    cycles: list[str] = []
+
+    def hits(m: str, path: list[str]) -> int:
+        if seen.get(m) == 1:
+            cycles.append(" -> ".join(path + [m]))
+            return 1
+        if seen.get(m) == 2:
+            return longest[m]
+        seen[m] = 1
+        best = 1 + max([hits(n, path + [m]) for n in graph.get(m, [])] or [0])
+        seen[m] = 2
+        longest[m] = best
+        return best
+
+    n = max([hits(m, []) for m in sorted(graph)] or [0])
+    return {"ok": not not_attacks and not cycles and n <= most, "links": len(game.chains), "longest_string": n,
+            "cycles": cycles, "not_attacks": not_attacks}
+
+
+def link_timing(game: Combat, chain: dict) -> dict:
+    """One link's frame data: its startup when chained (the kernel's flow from the first attack), the frames from
+    the first impact to the link's at the earliest cancel, and how many of them the struck defender has left
+    after the kernel's hit-stun to raise the fastest guard."""
+    k = game.k
+    x, y = game.moves[chain["from"]], game.moves[chain["to"]]
+    startup = k["flow_startup"](y["startup"], x.get("momentum", 0) // 2, x.get("dir", NO_DIR), y.get("dir", NO_DIR))
+    lands = x.get("active", 3) + chain["window"][0] + startup
+    guard = min(m["startup"] for m in game.moves.values() if m["kind"] == "guard")
+    return {"startup": startup, "lands": lands, "spare": lands - k["hit_stun"](x.get("damage", 0)) - guard}
+
+
+def links_answerable(game: Combat, spare: int) -> dict:
+    """GL10: every link's tell is readable and, after a clean hit, leaves at least ``spare`` frames to guard."""
+    bad, out = [], {}
+    for c in sorted(game.chains.values(), key=lambda c: c["name"]):
+        if c["from"] not in game.moves or c["to"] not in game.moves:
+            bad.append(f"{c['name']}: unknown move")
+            continue
+        t = link_timing(game, c)
+        out[c["name"]] = t["spare"]
+        lo, hi = c["window"]
+        if not 0 <= lo <= hi < game.moves[c["from"]].get("recovery", 0):
+            bad.append(f"{c['name']}: window {c['window']} is not inside the recovery")
+        if t["startup"] < game.reaction:
+            bad.append(f"{c['name']}: chained startup {t['startup']} < reaction {game.reaction} (unreadable)")
+        if "hit" in c.get("on", []) and t["spare"] < spare:
+            bad.append(f"{c['name']}: {t['spare']} frames to guard after a hit (< {spare})")
+    return {"ok": not bad, "unanswerable": bad, "spare_frames": out}
 
 
 def _spearman(xs, ys) -> float:
