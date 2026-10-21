@@ -10,7 +10,7 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   JavaScript, TypeScript, C, C++, Rust, Go, Swift, Java, Ruby, Lua, Lean). It is verified by the op × language conformance matrix through the real
   toolchains on this Mac.
 * 🔵 Function translation with lift fidelity, inferred domains, overflow-aware comparison, and evidence cards (`xleq`).
-* 🔵 Witnesses for forms, known-answer vectors, rules, redefinitions (numeric + optional sympy) and Lean theorems
+* 🔵 Witnesses for forms, known-answer vectors, rules, redefinitions (exact rationals or high precision, + optional sympy) and Lean theorems
   (grind/omega). Anti-vacuity is built into each witness.
 * 🔵 Rewrite: cheapest form (domain, availability, measured), suggestions, cost-vector rank and pareto, rewrite search
   (proofs, optimisation).
