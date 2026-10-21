@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Where the model's methods come from: each card names a work, what it established, and where the model implements it.",
+  "name": "lineage",
+  "tier": 0
+}

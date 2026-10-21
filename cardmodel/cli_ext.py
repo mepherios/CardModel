@@ -6,6 +6,7 @@
   cardmodel logic code PATH ['query'] [--facts]     a Python code base as facts + stdlib/program.card rules
   cardmodel laws [--save] [--no-lean] [--deep] [--seed N]
   cardmodel lean import FILE.lean ... | --core [--save] [--limit N] [--no-reprove]   ·   lean check FILE.lean
+  cardmodel algebra form|gcd|total F [G] | scan [--write] | godel SEQ   functions as algebra (engines/funcalg.py)
   cardmodel repl
 
 SOURCE is a .card file or the name of a theory card.
@@ -332,6 +333,150 @@ def cmd_lean(args) -> int:
     return 0 if not refuted else 1
 
 
+def _algebra_fn(ctx, spec: str):
+    """A one-integer function from: algorithm/NAME[:FORM], FILE.py:FUNC, FILE.card:FUNC or expr:EXPRESSION in n."""
+    if spec.startswith("expr:"):
+        from .engines.exprs import evaluate, parse
+        tree = parse(spec[5:])
+        return lambda n: evaluate(tree, {"n": n}, mode="int")
+    if spec.startswith("algorithm/"):
+        from .engines.witness import python_callable
+        name, _, form_name = spec[len("algorithm/"):].partition(":")
+        card = ctx.store.get(f"algorithm/{name}")
+        if card is None:
+            raise ValueError(f"no algorithm card {name}")
+        form = next((f for f in card["forms"] if f["name"] == (form_name or card.get("reference_form"))), None)
+        if form is None:
+            raise ValueError(f"algorithm/{name} has no form {form_name!r}")
+        return python_callable(ctx, form, card)
+    path, _, fn = spec.rpartition(":")
+    if path.endswith(".card"):
+        from .engines.ir import Interpreter
+        mod, err = _load_module(ctx, path)
+        if err:
+            raise ValueError(err)
+        interp = Interpreter(mod.ir_module(fn), ctx.ops, step_limit=5_000_000)
+        return lambda n: interp.call(fn, [n])
+    if path.endswith(".py"):
+        from .engines.improve import _functions_only, _load
+        ns = _load(_functions_only(Path(path).read_text(encoding="utf-8")))
+        if fn not in ns:
+            raise ValueError(f"no function {fn} in {path}")
+        return ns[fn]
+    raise ValueError("a function is algorithm/NAME[:FORM], FILE.py:FUNC, FILE.card:FUNC or expr:EXPRESSION")
+
+
+def _short_number(n: int) -> str:
+    t = str(n)
+    return t if len(t) <= 40 else f"{t[:18]}…{t[-12:]} ({len(t)} digits)"
+
+
+def cmd_algebra(args) -> int:
+    from .engines import funcalg as FA
+    cli = _cli()
+    ctx = cli._ctx(args)
+    try:
+        if args.action == "godel":
+            seq = [int(x) for x in args.targets[0].replace(",", " ").split()] if args.targets else []
+            if args.number:
+                dec = FA.godel_decode(int(args.number))
+                cli._out(args, {"decoded": dec}, f"{args.number} -> {dec}")
+                return 0
+            num = FA.godel_encode(seq)
+            cli._out(args, {"number": str(num), "decoded": FA.godel_decode(num)},
+                     f"{seq} -> {num}\ndecodes back to {FA.godel_decode(num)}")
+            return 0
+        if args.action == "scan":
+            r = FA.scan_algorithms(ctx)
+            lines = [f"{len(r['forms'])} one-integer algorithm cards with a canonical form; "
+                     f"{sum(len(i['forms']) for i in r['forms'].values())} forms, each card's forms share one "
+                     f"Gödel number{' EXCEPT: ' + '; '.join(r['problems']) if r['problems'] else ''}"]
+            for n, i in r["forms"].items():
+                lines.append(f"  {n:<16} {i['kind']:<32} {i['canonical']}   #{_short_number(int(i['godel']))}")
+            for c in r["classes"]:
+                lines.append(f"  same function: {', '.join(c)}")
+            for rel in r["relations"]:
+                parts = [rel[k] for k in ("shift", "composition", "composition_rev", "cross_identity", "basis_change")
+                         if k in rel]
+                lines.append(f"  {rel['f']} ~ {rel['g']}: " + " | ".join(parts)
+                             + (f"  [shared operator {rel['shared_operator']}]" if rel.get("shared_operator") else ""))
+            for n, d in r["fixed_divisors"].items():
+                lines.append(f"  every value of {n} is divisible by {d}")
+            if args.write:
+                from .kernel import paths
+                out = paths.home() / "stdlib" / "algebra.card"
+                out.write_text(FA.card_source(r), encoding="utf-8")
+                layer = cli._layer(ctx, args)
+                cards = []
+                for rel in r["relations"]:
+                    cards.append({"name": f"{rel['f']}__{rel['g']}", "category": "functional_identity",
+                                  "statement": " | ".join(str(rel[k]) for k in ("shift", "composition",
+                                                                                "composition_rev", "cross_identity",
+                                                                                "basis_change") if k in rel),
+                                  "f": f"algorithm/{rel['f']}", "g": f"algorithm/{rel['g']}",
+                                  **{k: v for k, v in rel.items() if k not in ("f", "g")},
+                                  "depends_on": [f"algorithm/{rel['f']}", f"algorithm/{rel['g']}"],
+                                  "provenance": {"origin": "cardmodel algebra scan", "engine": "engines/funcalg.py"}})
+                for n, i in r["forms"].items():
+                    cards.append({"name": f"form__{n}", "category": "functional_identity", "kind": "canonical_form",
+                                  "statement": f"algorithm/{n}: {i['canonical']}", "canonical": i["canonical"],
+                                  "godel": i["godel"], "implementations": i["forms"], "checked": i["checked"],
+                                  "depends_on": [f"algorithm/{n}"],
+                                  "provenance": {"origin": "cardmodel algebra scan", "engine": "engines/funcalg.py"}})
+                path = ctx.store.save_pack("functional_identity", "algorithms", cards, layer=layer,
+                                           description="Identities between functions found from their behaviour "
+                                           "(engines/funcalg.py): canonical forms with Gödel numbers, shifts, "
+                                           "compositions, cofactor identities, shared operators.")
+                lines.append(f"wrote {out} and {len(cards)} functional_identity cards to {path}")
+            r.pop("_forms", None)
+            cli._out(args, r, "\n".join(lines))
+            return 0
+        fns = [_algebra_fn(ctx, t) for t in args.targets]
+        if args.action in ("form", "total"):
+            f = FA.fit(fns[0], args.start)
+            if f is None:
+                cli._out(args, {"form": None}, f"{args.targets[0]}: no linear recurrence of order <= {FA.MAX_ORDER} "
+                         "fits its behaviour (no canonical form here)")
+                return 1
+            if args.action == "total":
+                f = FA.total(f)
+            src = FA.python_source(f, "fast", "n")
+            text = (f"{args.targets[0]}{' (running total)' if args.action == 'total' else ''}: {f.kind()}\n"
+                    f"  {f.describe()}\n  annihilator {f.annihilator().text('E')}   checked on {f.checked} unused terms\n"
+                    f"  Gödel number {_short_number(f.godel())}"
+                    + (f"\n  fixed divisor {FA.fixed_divisor(f)}" if f.poly is not None else "")
+                    + (f"\n  fast form:\n{src}" if src else ""))
+            cli._out(args, {"kind": f.kind(), "canonical": f.describe(), "godel": str(f.godel()), "fast": src}, text)
+            return 0
+        if args.action == "gcd":
+            if len(fns) != 2:
+                print("error: algebra gcd F G", file=sys.stderr)
+                return 2
+            fa, fb = FA.fit(fns[0], args.start), FA.fit(fns[1], args.start)
+            if fa is None or fb is None:
+                print("error: one of the functions has no canonical form here", file=sys.stderr)
+                return 1
+            r = FA.gcd_functions(fa, fb)
+            lines = [f"f = {args.targets[0]}: {r['f']}", f"g = {args.targets[1]}: {r['g']}",
+                     f"operators: gcd {r['operators']['gcd']}  lcm {r['operators']['lcm']}  "
+                     f"(cofactors {r['operators']['cofactor_f']} | {r['operators']['cofactor_g']})"]
+            for k in ("shift", "basis_change", "composition", "composition_rev"):
+                if r.get(k):
+                    lines.append(f"{k.replace('_', ' ')}: {r[k]}")
+            if r.get("values"):
+                v = r["values"]
+                lines.append(f"values: common factor {v['common_factor']}, cofactors {v['cofactor_f']} | "
+                             f"{v['cofactor_g']}" + (f"; {v['cross_identity']}" if v.get("cross_identity") else ""))
+            if r.get("fixed_divisors"):
+                lines.append(f"fixed divisors: {r['fixed_divisors']}")
+            cli._out(args, r, "\n".join(lines))
+            return 0
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 2
+
+
 def cmd_repl(args) -> int:
     """A line-at-a-time session: declarations accumulate; an expression is evaluated; ?- queries; :help."""
     from .engines import logic as L
@@ -423,6 +568,11 @@ def register(sub) -> None:
     s.set_defaults(fn=cmd_lean)
     s = sub.add_parser("repl", help="interactive card language")
     s.set_defaults(fn=cmd_repl)
+    s = sub.add_parser("algebra", help="functions as algebra: canonical forms, GCD of functions, totals, Gödel numbers")
+    s.add_argument("action", choices=["form", "gcd", "total", "scan", "godel"]); s.add_argument("targets", nargs="*")
+    s.add_argument("--start", type=int, default=0); s.add_argument("--write", action="store_true")
+    s.add_argument("--number"); s.add_argument("--global", dest="global_", action="store_true")
+    s.set_defaults(fn=cmd_algebra)
     from .game import cli as game_cli
     game_cli.register(sub)
 

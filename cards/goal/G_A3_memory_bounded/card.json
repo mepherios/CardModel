@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "peak_memory_mb",
+  "name": "G_A3_memory_bounded",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Peak memory of the cardmodel process in the last verify, in MB (its own cap is CARDMODEL_SELF_MB; children are capped separately).",
+  "target": 1024,
+  "tier": 0
+}

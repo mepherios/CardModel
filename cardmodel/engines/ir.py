@@ -26,6 +26,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 LEAVES = ("var", "int", "float", "bool")
+MAX_INT_BITS = 1 << 22          # 4 Mbit (512 KiB) per integer: far beyond any real input, far below a crash
 SPECIAL = ("AND", "OR", "IF_EXPR", "CALL")
 TYPES = ("int", "float", "bool")
 
@@ -166,6 +167,9 @@ class Interpreter:
             b = abs(v).bit_length()
             if b > self.max_bits:
                 self.max_bits = b
+                if b > MAX_INT_BITS:
+                    raise IRError(f"an intermediate integer has {b} bits (cap {MAX_INT_BITS}): stopped before it "
+                                  "exhausts memory")
         return v
 
     def _block(self, body, env, depth):

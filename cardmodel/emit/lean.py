@@ -22,6 +22,7 @@ import tempfile
 from pathlib import Path
 
 from ..engines import probes
+from ..kernel import resources
 from ..engines.exprs import parse
 
 LEAN_INFIX = {"ADD": "+", "SUB": "-", "MUL": "*", "POW": "^", "FLOORDIV": "/", "MOD": "%"}
@@ -76,8 +77,7 @@ def check_source(source: str, exe: str) -> tuple[bool, str]:
         f = Path(d) / "Check.lean"
         f.write_text(source, encoding="utf-8")
         try:
-            p = subprocess.run([exe, str(f)], capture_output=True, text=True, timeout=TIMEOUT_S,
-                               stdin=subprocess.DEVNULL)
+            p = resources.run([exe, str(f)], timeout=TIMEOUT_S, stdin=subprocess.DEVNULL)
         except subprocess.TimeoutExpired:
             return False, "timeout"
     return p.returncode == 0 and "error" not in p.stdout, (p.stdout + p.stderr)[-800:]
@@ -108,11 +108,15 @@ def check_batch(exe: str, items: list[tuple[str, str]], header: list[str] | None
             f = Path(d) / "Batch.lean"
             f.write_text("\n".join(lines) + "\n", encoding="utf-8")
             try:
-                p = subprocess.run([exe, str(f)], capture_output=True, text=True, timeout=timeout_s,
-                                   stdin=subprocess.DEVNULL)
+                p = resources.run([exe, str(f)], timeout=timeout_s, stdin=subprocess.DEVNULL)
                 log, code = p.stdout + p.stderr, p.returncode
             except subprocess.TimeoutExpired:
                 log, code = "timeout", -1
+        if "[cardmodel] killed" in log and len(pending) > 1:
+            half = len(pending) // 2                   # over the memory cap: check each half on its own
+            result.update(check_batch(exe, pending[:half], header, timeout_s, rounds))
+            result.update(check_batch(exe, pending[half:], header, timeout_s, rounds))
+            return result
         errors: dict[str, str] = {}
         last_line = 0
         for m in re.finditer(r":(\d+):\d+: error[^:]*: ?(.*)", log):

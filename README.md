@@ -47,6 +47,10 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel algebra gcd 'expr:n*(n+1)//2' 'expr:n*(n+1)*(2*n+1)//6'
+```
+
+```bash
 ./bin/cardmodel game check
 ```
 
@@ -64,7 +68,8 @@ cd tests && python3 -B -m unittest
 the theorems are witnessed and sent to Lean. `logic why` explains a derived fact and has the Lean kernel check
 the derivation (here, a parse tree). `lean import --core` reads Lean's own Nat/Int library into theorem cards,
 checks with the kernel that each reading is the original proposition, witnesses it, and re-proves it with the
-model's own tactics and rule chains. `game check` computes the combat design's laws on an exact equilibrium,
+model's own tactics and rule chains. `algebra gcd` compares two functions by behaviour (common factor, cofactor
+identity, shared dynamics, Gödel number of each canonical form). `game check` computes the combat design's laws on an exact equilibrium,
 and `game play` lets you fight the AI that reads your vectors.
 `improve` makes a whole program faster with verified substitutions and leaves I/O, network and login code
 byte-identical. `arena` generates a suboptimal program of any size and scores how well it is fixed. The last

@@ -238,6 +238,8 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         timings[sec] = round(time.perf_counter() - t0, 2)
         report["sections"][sec] = res
     report["timings_s"] = timings
+    from ..kernel import resources
+    report["peak_memory_mb"] = round(resources.peak_mb(), 1)
     report["status"] = "fail" if any(r.get("status") == "fail" for r in report["sections"].values()) else "pass"
     ctx.save_state("last_verify", report)
     if record:

@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/bootstrap.py",
+  "description": "Identities between functions found from their behaviour (engines/funcalg.py): canonical forms with Gödel numbers, shifts, compositions, cofactor identities, shared operators.",
+  "name": "functional_identity",
+  "tier": 1
+}

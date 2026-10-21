@@ -288,6 +288,41 @@ def algorithm_candidates(ctx: Ctx, fn_ir: dict, ref, inputs: list) -> list[dict]
     return out
 
 
+def algebra_candidates(ctx: Ctx, fn_ir: dict, ref) -> list[dict]:
+    """Redefinitions from the function's own behaviour (engines/funcalg.py), with no algorithm card needed: a
+    polynomial becomes its exact integer closed form, a linear recurrence becomes matrix powering. The form
+    holds from the start it was fitted at (checked on unused terms); below that the original runs."""
+    from . import funcalg as FA
+    ptypes, rtype = _signature_types(fn_ir)
+    if ptypes != ["int"] or rtype != "int":
+        return []
+    param = fn_ir["params"][0]["name"]
+    for start in (0, 1):
+        form = FA.fit(ref, start)
+        if form is None or form.order == 0:
+            continue
+        fast_name = f"{fn_ir['name']}__algebra"
+        src = FA.python_source(form, fast_name, param)
+        if src is None:
+            continue
+        pre = f"{param} >= {start}"
+        if form.poly is not None:                    # the closed form may hold for negative inputs too
+            agree = True
+            for k in range(1, 9):
+                kind, v = _outcome(ref, (-k,))
+                if kind != "ok" or v != form.value(-k):
+                    agree = False
+                    break
+            if agree:
+                pre = None
+        return [{"kind": "algebra", "card": "algebra/" + ("polynomial" if form.poly is not None else "recurrence"),
+                 "form": "closed_form" if form.poly is not None else "matrix_power", "scale": 1, "shift": 0,
+                 "complexity": "O(1)" if form.poly is not None else f"O({form.order}^3 log n)",
+                 "fast_name": fast_name, "fast_src": src, "precondition": pre, "needs_math": False,
+                 "canonical": form.describe(), "godel": str(form.godel())}]
+    return []
+
+
 def _fit_affine(pairs: list, rtype: str):
     """(1, 0) when the user's outputs equal the card's; for int results also (a, b) with
     user == a * card + b exactly on every pair (a != 0, integers). None when neither holds or the
@@ -400,7 +435,7 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
             continue
         orig_src = "".join(lines[node.lineno - 1 - len(node.decorator_list): node.end_lineno])
         cands = []
-        for c in algorithm_candidates(ctx, fn_ir, ref, inputs):
+        for c in algorithm_candidates(ctx, fn_ir, ref, inputs) + algebra_candidates(ctx, fn_ir, ref):
             params = ", ".join(f"{p['name']}: {p['type']}" for p in fn_ir["params"])
             call = ", ".join(p["name"] for p in fn_ir["params"])
             fast_call = f"{c['fast_name']}({call})"
@@ -453,7 +488,7 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
                 best, best_t = c, c["seconds"]
         entry["candidates"] = [{k: v for k, v in c.items() if k in ("kind", "card", "form", "complexity", "checks",
                                                                     "seconds", "rejected", "changes", "scale",
-                                                                    "shift")}
+                                                                    "shift", "canonical")}
                                for c in cands]
         entry["original_seconds"] = t_orig
         if best is not None and t_orig / best_t > 1 + NOISE:

@@ -47,6 +47,8 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 
+from ..kernel import resources
+
 AGG_FNS = ("count", "sum", "min", "max")
 _IDENT = re.compile(r"^[a-z][A-Za-z0-9_]*$")
 
@@ -870,7 +872,7 @@ def _sort_key(t):
     return tuple((0, x) if isinstance(x, (int, float)) else (1, str(x)) for x in t)
 
 
-def evaluate(program: Program, ops: dict, max_facts: int = 2_000_000, max_rounds: int = 100_000,
+def evaluate(program: Program, ops: dict, max_facts: int = 400_000, max_rounds: int = 100_000,
              call=None) -> Model:
     """Least model of a stratified program, with first-derivation provenance and constraint violations."""
     problems = program.check()
@@ -924,6 +926,7 @@ def evaluate(program: Program, ops: dict, max_facts: int = 2_000_000, max_rounds
             rounds += 1
             if rounds > max_rounds:
                 raise LogicLimit(f"more than {max_rounds} rounds (raise max_rounds or check for unbounded arithmetic)")
+            resources.guard("logic evaluation")
             pending = {}
             for r in rules:
                 for pos, lit in enumerate(r.body):

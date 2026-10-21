@@ -1,0 +1,19 @@
+{
+  "category": "lineage",
+  "in_the_model": "canonical forms and redefinition classes (engines/funcalg.py); rewrite rules carrying identities into the optimizer (engines/laws.py, CM25), each re-witnessed where it is applied",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "peacock_1830",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "sources": [
+    "https://mathscitech.org/articles/how-algebra-became-abstract"
+  ],
+  "statement": "The principle of the permanence of equivalent forms: forms equivalent in arithmetic stay equivalent when their symbols are generalised.",
+  "tier": 0,
+  "work": "G. Peacock, A Treatise on Algebra (1830); Report on the recent progress and present state of certain branches of analysis (1833)",
+  "year": 1830
+}

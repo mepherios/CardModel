@@ -21,6 +21,8 @@ from __future__ import annotations
 import random
 from concurrent.futures import ThreadPoolExecutor
 
+from ..kernel import resources
+
 from . import values as V
 from .codegen import EmitGap, Emitter
 from .context import Ctx
@@ -136,7 +138,7 @@ def matrix(ctx: Ctx, langs: list[str] | None = None, seed: int | None = None,
     fns = [f for f in op_functions(ctx.ops) if not ops or f["op"] in ops]
     cases = _cases(ctx.ops, fns, rng, samples)
     langs = langs or ctx.codegen_languages()
-    with ThreadPoolExecutor(max_workers=min(8, len(langs) or 1)) as pool:
+    with ThreadPoolExecutor(max_workers=min(resources.max_parallel(), len(langs) or 1)) as pool:
         results = dict(zip(langs, pool.map(lambda l: run_language(ctx, l, fns, cases), langs)))
     summary = {}
     for lang, r in results.items():

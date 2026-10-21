@@ -60,6 +60,8 @@ class Laws(unittest.TestCase):
                         node.func.attr in ("run", "Popen", "check_output", "call") and \
                         isinstance(node.func.value, ast.Name) and node.func.value.id == "subprocess":
                     if not any(k.arg == "timeout" for k in node.keywords):
+                        if f.name == "resources.py" and node.func.attr == "Popen":
+                            continue    # the governor's Popen is bounded by communicate(timeout=...) and a watchdog
                         missing.append(f"{f.relative_to(ROOT)}:{node.lineno}")
         self.assertEqual(missing, [])
 

@@ -161,6 +161,11 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "self_violations":
         lg = secs.get("logic")
         return lg.get("violation_count") if lg else None
+    if name == "functional_identities":
+        return sum(1 for c in st.cards("functional_identity") if c.get("kind") != "canonical_form")
+    if name == "peak_memory_mb":
+        return rep.get("peak_memory_mb") if isinstance(rep, dict) and rep.get("peak_memory_mb") else \
+            (ctx.load_state("last_verify") or {}).get("peak_memory_mb")
     if name == "design_laws_failing":
         gm = secs.get("game")
         return len(gm.get("failing", [])) if gm and "failing" in gm else None

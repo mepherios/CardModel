@@ -1,0 +1,17 @@
+{
+  "category": "lineage",
+  "in_the_model": "engines/logic.py: rules as cards evaluated as an algebra of relations, with proofs",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boole_1847",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "sources": [],
+  "statement": "Logic as an algebra of operations (elective symbols), in the line of the calculus of operations.",
+  "tier": 0,
+  "work": "G. Boole, The Mathematical Analysis of Logic (1847)",
+  "year": 1847
+}

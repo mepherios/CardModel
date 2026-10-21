@@ -39,6 +39,7 @@ from __future__ import annotations
 import random
 import re
 
+from ..kernel import resources
 from . import values as V
 from .codegen import EmitGap, Emitter
 from .logic import eval_expr
@@ -349,6 +350,8 @@ def witness(card, ops: dict, seed: int | None = None, samples: int = 400, call=N
             env = {v["name"]: _draw(v["type"], rng) for v in vs}
         k += 1
         tried += 1
+        if tried % 1024 == 0:
+            resources.guard("theorem witness")
         try:
             if not all(eval_prop(h, env, ops, call) for h in hyps):
                 continue

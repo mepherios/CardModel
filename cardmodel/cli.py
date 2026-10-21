@@ -22,6 +22,7 @@
   cardmodel laws [--save]                discover the laws the op cards obey; prove them; promote to rules
   cardmodel lean import F.lean | --core  Lean theorems as cards: faithful reading, witness, re-proof
   cardmodel repl                         interactive card language
+  cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
 
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).

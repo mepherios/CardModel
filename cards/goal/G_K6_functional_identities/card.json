@@ -1,0 +1,17 @@
+{
+  "axis": "knowledge",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "functional_identities",
+  "name": "G_K6_functional_identities",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Identities between functions found from behaviour (functional_identity cards other than canonical forms).",
+  "target": 5,
+  "tier": 0
+}

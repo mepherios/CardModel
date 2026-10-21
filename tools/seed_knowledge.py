@@ -12,6 +12,11 @@ REGISTRIES = {
     "theorem": ("Mathematical statements with evidence. Status: refuted < conjecture < witnessed < proved "
                 "(Lean kernel). Discovered laws, card-language theorems and imported Lean theorems.", 1),
     "program": ("Card-language modules: source hash, what they declare, what they use.", 1),
+    "lineage": ("Where the model's methods come from: each card names a work, what it established, and where "
+                "the model implements it.", 0),
+    "functional_identity": ("Identities between functions found from their behaviour (engines/funcalg.py): "
+                            "canonical forms with Gödel numbers, shifts, compositions, cofactor identities, shared "
+                            "operators.", 1),
 }
 STATUS_VALUES = {"theorem": ["conjecture", "witnessed", "proved", "refuted", "vacuous"]}
 
@@ -73,12 +78,56 @@ LAWS = [
      "tests/test_logic.py::test_self_theory_holds_and_catches_breaks"),
 ]
 
+LINEAGE = [
+    ("servois_1814", 1814, "F.-J. Servois, Essai sur un nouveau mode d'exposition des principes du calcul "
+     "différentiel (Annales de mathématiques pures et appliquées, vol. 5, 1814)",
+     "Named the distributive (f(x + y + ...) = f(x) + f(y) + ...) and commutative properties of functions and "
+     "operators, and showed that linear operators that commute obey the laws of algebra, so identities proved for "
+     "numbers carry to them: the calculus of operations, used as a proof method.",
+     "engines/laws.py (commutative, distributive, homomorphism templates witnessed over every op card); "
+     "engines/funcalg.py (functions as annihilating operator polynomials in the shift E: gcd, lcm, cofactors)",
+     ["https://mathshistory.st-andrews.ac.uk/Biographies/Servois/",
+      "https://en.wikipedia.org/wiki/Fran%C3%A7ois-Joseph_Servois"]),
+    ("peacock_1830", 1830, "G. Peacock, A Treatise on Algebra (1830); Report on the recent progress and present "
+     "state of certain branches of analysis (1833)",
+     "The principle of the permanence of equivalent forms: forms equivalent in arithmetic stay equivalent when "
+     "their symbols are generalised.",
+     "canonical forms and redefinition classes (engines/funcalg.py); rewrite rules carrying identities into the "
+     "optimizer (engines/laws.py, CM25), each re-witnessed where it is applied",
+     ["https://mathscitech.org/articles/how-algebra-became-abstract"]),
+    ("boole_1847", 1847, "G. Boole, The Mathematical Analysis of Logic (1847)",
+     "Logic as an algebra of operations (elective symbols), in the line of the calculus of operations.",
+     "engines/logic.py: rules as cards evaluated as an algebra of relations, with proofs", []),
+    ("hankel_1867", 1867, "H. Hankel, Theorie der complexen Zahlensysteme (1867)",
+     "The principle of permanence of formal laws: an extended number system keeps the laws of the old one.",
+     "law templates re-checked on every new operator, including Lean-semantic ones (engines/laws.py, "
+     "emit/lean_import.py)", ["https://arxiv.org/pdf/2310.10192"]),
+    ("godel_1931", 1931, "K. Gödel, Über formal unentscheidbare Sätze der Principia Mathematica und verwandter "
+     "Systeme I (1931)",
+     "Gödel numbering: syntax encoded as natural numbers (products of prime powers), so statements about "
+     "structure become statements of arithmetic.",
+     "engines/funcalg.py (the Gödel number of a function's canonical form names its redefinition class; "
+     "encode/decode are exact); card content hashes (kernel/canon.py) as the practical identity of every card", []),
+]
+
 LAWS += [
     ("CM28_design_is_computed", "Combat design claims are computed, not asserted: every design_law card holds on the "
      "exact equilibrium of the exchange (rational simplex with a checked certificate), a planted imbalance is "
      "caught, and the combat kernel's invariants are theorems of stdlib/combat.card.",
      ["user requirement 2026-10-21 (superior counteraction design)", "hub L1", "Pheros L41"],
      "tests/test_game.py::test_design_laws_hold_and_catch_imbalance"),
+    ("CM30_resources_are_bounded", "Heavy subprocesses take machine-wide slots (at most CARDMODEL_MAX_PARALLEL "
+     "across every cardmodel process), run at lower priority in their own process group, and are killed when the "
+     "group passes its memory cap; this process stops itself (MemoryBudget) past its own cap; the interpreter "
+     "caps integer size. A run never takes the machine down.", ["user requirement 2026-10-21 (do not crash my mac)",
+                                                               "hub L20"],
+     "tests/test_resources.py::test_child_over_its_cap_is_killed"),
+    ("CM31_behaviour_is_numbered", "A function's canonical form (its shortest annihilating recurrence and initial "
+     "terms, found from behaviour and checked on unused terms) and the form's Gödel number name its redefinition "
+     "class; every form of an algorithm card shares one number; identities between functions (shift, composition, "
+     "cofactor, shared operator) are witnessed as theorems, and verified fast forms carry into improve.",
+     ["user requirement 2026-10-21 (GCD of functions, Gödel numbering)", "Servois 1814", "Gödel 1931"],
+     "tests/test_funcalg.py::test_canonical_forms_carry_between_functions"),
     ("CM29_everything_carries", "Effects carry instead of resetting: frame advantage, momentum (flow, bank, recoil), "
      "posture and stamina carry between exchanges; world facts carry between ticks; every world event has a cause "
      "chain back to the actions that made it, and each action's counterfactual impact is measured.",
@@ -97,6 +146,10 @@ GOALS = [
      "self_violations", 0, "lower"),
     ("G_K5_programs_pass", "knowledge", "Card-language programs (examples/lang, stdlib) that pass.",
      "card_programs_passing", 6, "higher"),
+    ("G_K6_functional_identities", "knowledge", "Identities between functions found from behaviour (functional_identity "
+     "cards other than canonical forms).", "functional_identities", 5, "higher"),
+    ("G_A3_memory_bounded", "autonomy", "Peak memory of the cardmodel process in the last verify, in MB (its own cap "
+     "is CARDMODEL_SELF_MB; children are capped separately).", "peak_memory_mb", 1024, "lower"),
     ("G_D1_design_laws", "design", "Design laws (design_law cards) that fail on the neutral exchange.",
      "design_laws_failing", 0, "lower"),
     ("G_D2_equilibrium_support", "design", "Options the exact neutral equilibrium mixes (richness of play).",

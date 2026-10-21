@@ -42,6 +42,13 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   8 design laws holding, sensitivity, automated balancing, AIs (equilibrium, vector reader), a systemic world
   with causes and counterfactual impact (`game/DESIGN.md`).
 
+* 🔵 **Bounded resources** (CM30): machine-wide slots for heavy subprocesses, per-group memory caps enforced
+  through libproc, a self cap, an integer-size cap, a smaller logic fact budget.
+* 🔵 **Function algebra** (CM31): canonical forms from behaviour (annihilating recurrences), Gödel numbers of
+  redefinition classes, GCD/LCM of functions (operator and value views), shifts, compositions, cofactor
+  identities, fixed divisors, totals; verified fast forms in `improve` without algorithm cards; the lineage
+  as cards (Servois 1814 to Gödel 1931).
+
 ## Now
 
 * 🟢 **Native path inside improved modules.** Optionally call the C/Rust form of a pure function through

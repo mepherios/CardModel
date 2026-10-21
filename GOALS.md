@@ -58,6 +58,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_K3_lean_mismatches` | knowledge | imported Lean-proved statements the card semantics refute | = 0 |
 | `G_K4_self_violations` | knowledge | violations of the model's own laws as logic (stdlib/self.card) | = 0 |
 | `G_K5_programs_pass` | knowledge | card-language programs (examples/lang, stdlib) that pass | ≥ 6 |
+| `G_K6_functional_identities` | knowledge | identities between functions found from behaviour | ≥ 5 |
+| `G_A3_memory_bounded` | autonomy | peak memory of the cardmodel process in the last verify (MB) | ≤ 1024 |
 | `G_D1_design_laws` | design | design laws failing on the neutral exchange | = 0 |
 | `G_D2_equilibrium_support` | design | options the exact neutral equilibrium mixes | ≥ 8 |
 

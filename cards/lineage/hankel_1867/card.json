@@ -1,0 +1,19 @@
+{
+  "category": "lineage",
+  "in_the_model": "law templates re-checked on every new operator, including Lean-semantic ones (engines/laws.py, emit/lean_import.py)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "hankel_1867",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "sources": [
+    "https://arxiv.org/pdf/2310.10192"
+  ],
+  "statement": "The principle of permanence of formal laws: an extended number system keeps the laws of the old one.",
+  "tier": 0,
+  "work": "H. Hankel, Theorie der complexen Zahlensysteme (1867)",
+  "year": 1867
+}

@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM30_resources_are_bounded",
+  "origins": [
+    "user requirement 2026-10-21 (do not crash my mac)",
+    "hub L20"
+  ],
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "Heavy subprocesses take machine-wide slots (at most CARDMODEL_MAX_PARALLEL across every cardmodel process), run at lower priority in their own process group, and are killed when the group passes its memory cap; this process stops itself (MemoryBudget) past its own cap; the interpreter caps integer size. A run never takes the machine down.",
+  "tier": 0,
+  "witness": "tests/test_resources.py::test_child_over_its_cap_is_killed"
+}

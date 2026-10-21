@@ -26,6 +26,8 @@ import hashlib
 import random
 from concurrent.futures import ThreadPoolExecutor
 
+from ..kernel import resources
+
 from . import values as V
 from .codegen import EmitGap, Emitter, emit_module
 from .context import Ctx
@@ -198,7 +200,7 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
             res.update(args=bad[0], expected=bad[1], got=bad[2])
         return lang, res
 
-    with ThreadPoolExecutor(max_workers=min(8, max(1, len(langs)))) as pool:
+    with ThreadPoolExecutor(max_workers=min(resources.max_parallel(), max(1, len(langs)))) as pool:
         for lang, res in pool.map(one, langs):
             results["languages"][lang] = res
     passed = sorted(l for l, r in results["languages"].items() if r["status"] == "pass")

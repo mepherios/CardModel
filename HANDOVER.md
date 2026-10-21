@@ -272,6 +272,19 @@ A move is a card (`cards/move`), an enemy is a fighter card, a design law is a c
 `game/analysis.py`, and the kernel is `stdlib/combat.card`. Everything is described in game/DESIGN.md, including
 the balancing log of what the laws found.
 
+## 3e. Function algebra and bounded resources
+
+```bash
+./bin/cardmodel algebra form algorithm/fibonacci:naive_recursive    # canonical form, Gödel number, fast form
+./bin/cardmodel algebra gcd 'expr:n*(n+1)//2' 'expr:n*(n+1)*(2*n+1)//6'
+./bin/cardmodel algebra total 'expr:n**3'                            # the running sum, canonical again
+./bin/cardmodel algebra scan --write --global                        # identities between algorithm cards
+```
+
+`improve` now also gets fast forms from the algebra, so a loop needs no algorithm card to be redefined.
+Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALLEL`, `CARDMODEL_CHILD_MB`,
+`CARDMODEL_SELF_MB`, `CARDMODEL_MIN_FREE_MB`).
+
 ## 4. How to add things
 
 **A card.** Run `cardmodel new <registry> <name> --statement "..."`, or write `cards/<registry>/<name>/card.json`
@@ -456,6 +469,9 @@ a native (ctypes) path inside improved modules (ROADMAP).
   `lean` can start a network download of a newer toolchain. That happened once while this was built, and the
   download completed: `leanprover--lean4---v4.35.0` is installed beside v4.30.0, and the probe uses it. Every
   proof records its toolchain. Delete that folder if you do not want it. Override with `CARDMODEL_LEAN=/path/to/lean`.
+* **Memory.** If the machine gets tight, lower `CARDMODEL_MAX_PARALLEL` (for example to 2) and
+  `CARDMODEL_CHILD_MB`, and run one heavy job at a time. A child over its cap shows
+  `[cardmodel] killed: … over the … MB cap`; this process stops with `MemoryBudget` past `CARDMODEL_SELF_MB`.
 * **Lean batches** set `maxErrors` high and attribute errors by line. A declaration counts as checked only if Lean
   reached it without error (see `emit/lean.check_batch`).
 * **A slow full verify** comes from the baked-input compiles (see Now). Use `--quick` or `--langs python,javascript,c`

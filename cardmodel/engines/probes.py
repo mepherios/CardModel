@@ -34,6 +34,8 @@ import re
 import shutil
 import subprocess
 
+from ..kernel import resources
+
 PROBE_TIMEOUT_S = 20
 
 
@@ -51,8 +53,7 @@ def _version_tuple(text: str) -> tuple[int, ...] | None:
 @functools.lru_cache(maxsize=None)
 def _run_version(exe: str, args: tuple[str, ...]) -> tuple[int, str]:
     try:
-        p = subprocess.run([exe, *args], capture_output=True, text=True, timeout=PROBE_TIMEOUT_S,
-                           stdin=subprocess.DEVNULL)
+        p = resources.run([exe, *args], timeout=PROBE_TIMEOUT_S, heavy=False, stdin=subprocess.DEVNULL)
         return p.returncode, (p.stdout + p.stderr).strip()
     except (OSError, subprocess.TimeoutExpired) as exc:
         return -1, f"{type(exc).__name__}: {exc}"

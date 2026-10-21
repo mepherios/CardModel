@@ -445,6 +445,10 @@ def main(argv=None) -> int:
                     "domain": "int", "condition": cond, "bidirectional": bidi,
                     "statement": f"{lhs} == {rhs}" + (f" when {cond}" if cond else ""),
                     "provenance": {"origin": origin, **PROV}}, args.force, stats)
+    for name, year, work, statement, where, sources in SK.LINEAGE:
+        put(store, {"name": name, "category": "lineage", "tier": 0, "year": year, "work": work,
+                    "statement": statement, "in_the_model": where, "sources": sources, "provenance": PROV},
+            args.force, stats)
     for name, statement, origins, witness in LAWS + SK.LAWS:
         put(store, {"name": name, "category": "law", "tier": 0, "statement": statement, "origins": origins,
                     "witness": witness, "provenance": PROV}, args.force, stats)

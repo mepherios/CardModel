@@ -32,6 +32,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..kernel import resources
 from . import probes
 
 RUN_TIMEOUT_S = 60
@@ -133,7 +134,7 @@ def call_node(code: str, entry: str, calls: list[list], node: str | None = None,
     with tempfile.TemporaryDirectory(prefix="cardmodel_node_") as d:
         h = Path(d) / "harness.mjs"
         h.write_text(NODE_HARNESS, encoding="utf-8")
-        p = subprocess.run([node, str(h)], input=req, capture_output=True, text=True, timeout=timeout)
+        p = resources.run([node, str(h)], input=req, timeout=timeout)
     if p.returncode != 0:
         raise RuntimeError(f"node exited {p.returncode}: {p.stderr.strip()[:500]}")
     out = json.loads(p.stdout)
@@ -214,8 +215,8 @@ def run_program(lang_card: dict, source: str, state_root: Path, timeout: float =
         else:
             t0 = time.perf_counter()
             try:
-                p = subprocess.run(_fill(runner["compile"], **kw), capture_output=True, text=True, cwd=d,
-                                   timeout=COMPILE_TIMEOUT_S, env=env, stdin=subprocess.DEVNULL)
+                p = resources.run(_fill(runner["compile"], **kw), cwd=d, timeout=COMPILE_TIMEOUT_S, env=env,
+                                  stdin=subprocess.DEVNULL)
             except subprocess.TimeoutExpired:
                 res.status, res.detail = "timeout", "compile timed out"
                 return res
@@ -226,8 +227,7 @@ def run_program(lang_card: dict, source: str, state_root: Path, timeout: float =
             stamp.write_text("ok")
     t0 = time.perf_counter()
     try:
-        p = subprocess.run(_fill(runner["run"], **kw), capture_output=True, text=True, cwd=d, timeout=timeout,
-                           env=env, stdin=subprocess.DEVNULL)
+        p = resources.run(_fill(runner["run"], **kw), cwd=d, timeout=timeout, env=env, stdin=subprocess.DEVNULL)
     except subprocess.TimeoutExpired:
         res.status, res.detail = "timeout", f"run exceeded {timeout}s"
         return res

@@ -737,9 +737,11 @@ class Compiler:
         if card is None:
             raise CompileError(f"no algorithm card {name!r}", line, self.path)
         from ..engines.frontend_python import lift_source, module_for
-        forms = [f for f in card.get("forms") or [] if f.get("runnable") and f.get("domain", "any") == "any"
-                 and f.get("lang", "python") == "python"]
-        forms.sort(key=lambda f: (f.get("cost", 1e9), f["name"]))
+        forms = [f for f in card.get("forms") or [] if f.get("runnable") and f.get("lang", "python") == "python"
+                 and f.get("code")]
+        # prefer forms valid everywhere, then the card's own domain; never prefer a form the card marks suboptimal
+        forms.sort(key=lambda f: (f.get("domain", "any") != "any", f.get("role") == "suboptimal",
+                                  f.get("cost", 1e9), f["name"]))
         reasons = []
         for form in forms:
             lifted = lift_source(form["code"], self.ops)
@@ -757,6 +759,7 @@ class Compiler:
             if self.module is not None:
                 self.module.resolved[f"algorithm/{name}"] = {"form": form["name"], "cost": form.get("cost"),
                                                              "complexity": form.get("complexity"),
+                                                             "domain": form.get("domain", "any"),
                                                              "precondition": card.get("precondition")}
             return fname
         raise CompileError(f"algorithm.{name}: no form lifts into the IR ({'; '.join(reasons)[:300]})", line,

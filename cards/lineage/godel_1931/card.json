@@ -1,0 +1,17 @@
+{
+  "category": "lineage",
+  "in_the_model": "engines/funcalg.py (the Gödel number of a function's canonical form names its redefinition class; encode/decode are exact); card content hashes (kernel/canon.py) as the practical identity of every card",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "godel_1931",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "sources": [],
+  "statement": "Gödel numbering: syntax encoded as natural numbers (products of prime powers), so statements about structure become statements of arithmetic.",
+  "tier": 0,
+  "work": "K. Gödel, Über formal unentscheidbare Sätze der Principia Mathematica und verwandter Systeme I (1931)",
+  "year": 1931
+}

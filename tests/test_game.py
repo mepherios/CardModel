@@ -86,11 +86,18 @@ class DesignTest(unittest.TestCase):
         self.assertTrue(sv["top"] and sv["top"][0]["exploitability"] > 0)
 
     def test_reader_exploits_a_habit(self):
-        wins = 0
-        for k in range(6):
-            r = ai.duel(self.g, ai.ReaderAgent(), ai.HabitAgent(), seed=SEED % 1000 + k)
-            wins += r["winner"] == "a"
-        self.assertGreaterEqual(wins, 5, seed_note(self))
+        import random
+        reader = ai.ReaderAgent(epsilon=0.0)
+        for _ in range(10):
+            reader.observe(self.g, "guard_high", "overhead")       # the opponent keeps swinging overheads
+        self.assertIn(("dir:2", 7.07), [(k, round(v, 2)) for k, v in reader.focus()])
+        s = self.g.start()
+        pick = reader.choose(self.g, s, "a", random.Random(SEED))
+        after, _ = self.g.resolve(s, pick, "overhead")
+        self.assertGreater(self.g.value(s, after, "a"), 0, f"{pick} does not beat the habit")
+        # statistically, on fixed seeds (a win rate is a measurement, not a seeded witness): 11 of 12 at last count
+        wins = sum(ai.duel(self.g, ai.ReaderAgent(), ai.HabitAgent(), seed=k)["winner"] == "a" for k in range(12))
+        self.assertGreaterEqual(wins, 9, seed_note(self))
 
 
 class WorldTest(unittest.TestCase):

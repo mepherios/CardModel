@@ -1,0 +1,20 @@
+{
+  "category": "lineage",
+  "in_the_model": "engines/laws.py (commutative, distributive, homomorphism templates witnessed over every op card); engines/funcalg.py (functions as annihilating operator polynomials in the shift E: gcd, lcm, cofactors)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "servois_1814",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "sources": [
+    "https://mathshistory.st-andrews.ac.uk/Biographies/Servois/",
+    "https://en.wikipedia.org/wiki/Fran%C3%A7ois-Joseph_Servois"
+  ],
+  "statement": "Named the distributive (f(x + y + ...) = f(x) + f(y) + ...) and commutative properties of functions and operators, and showed that linear operators that commute obey the laws of algebra, so identities proved for numbers carry to them: the calculus of operations, used as a proof method.",
+  "tier": 0,
+  "work": "F.-J. Servois, Essai sur un nouveau mode d'exposition des principes du calcul différentiel (Annales de mathématiques pures et appliquées, vol. 5, 1814)",
+  "year": 1814
+}

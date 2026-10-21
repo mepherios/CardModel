@@ -23,7 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from ..kernel import paths
+from ..kernel import paths, resources
 
 # path fragments, not names: docstrings may credit where an idea came from, code may not point there
 FORBIDDEN = ("Claude_Hub/", "Pheros_Studio/", "rea-main/", "Programmering/", "~/Documents", "/Users/", "/home/")
@@ -59,8 +59,8 @@ def run_sandboxed(cmd: list[str], deny: list[Path], cwd: Path, timeout: int = 90
     prof = Path(cwd) / ".cm_sandbox.sb"
     prof.write_text(sandbox_profile(deny), encoding="utf-8")
     try:
-        return subprocess.run([exe, "-f", str(prof), *cmd], cwd=cwd, capture_output=True, text=True, timeout=timeout,
-                              env=env or os.environ.copy(), stdin=subprocess.DEVNULL)
+        return resources.run([exe, "-f", str(prof), *cmd], cwd=cwd, timeout=timeout, env=env or os.environ.copy(),
+                             stdin=subprocess.DEVNULL)
     finally:
         prof.unlink(missing_ok=True)
 
@@ -149,9 +149,8 @@ def portability(seed: int) -> dict:
             runs.append({"python": py, "version": v, "status": "skipped (needs >= 3.9)"})
             continue
         try:
-            r = subprocess.run([py, "-B", "-m", "cardmodel", "--no-project", "verify", "--only", "kernel,rules",
-                                "--seed", str(seed)], capture_output=True, text=True, timeout=900, env=env,
-                               cwd=str(paths.home()))
+            r = resources.run([py, "-B", "-m", "cardmodel", "--no-project", "verify", "--only", "kernel,rules",
+                               "--seed", str(seed)], timeout=900, env=env, cwd=str(paths.home()))
             ok = r.returncode == 0
             detail = "" if ok else (r.stderr or r.stdout)[-400:]
         except subprocess.TimeoutExpired:

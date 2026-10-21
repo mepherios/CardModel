@@ -88,7 +88,25 @@ Two honest boundaries:
    second frontend (machine code or C → IR), plus string/array support, before this pipeline applies to them. Those
    are the separate game sessions proposed in HANDOVER.md.
 
-## 6. Scaling it: the arena
+## 6. Bounded resources (law CM30)
+
+Nothing cardmodel runs may take the machine down. `kernel/resources.py` sets the policy:
+
+* **Machine-wide slots.** Every heavy subprocess (compilers, runtimes, Lean, sandboxed self-checks) takes one of
+  `CARDMODEL_MAX_PARALLEL` slots: a file lock in the system temp folder, shared by every cardmodel process,
+  including tests, CLI runs and other checkouts. Default: min(4, cpus/2, RAM GiB/4).
+* **Per-child memory cap.** Each child runs at lower priority in its own process group. A watchdog reads the
+  group's resident memory through macOS `libproc` (macOS does not enforce `RLIMIT_AS`) and kills the group past
+  `CARDMODEL_CHILD_MB`. Default: 40% of RAM shared by the slots. A Lean batch that hits the cap is split and
+  re-checked.
+* **This process.** It stops itself with `MemoryBudget` past `CARDMODEL_SELF_MB`. The IR interpreter caps
+  integers at 4 Mbit. The logic engine has a fact budget (400,000) and checks memory every round.
+* **Waiting for memory.** Heavy work waits up to a minute while the machine's available memory is below
+  `CARDMODEL_MIN_FREE_MB`.
+* **Running one heavy job at a time** (the full tests, then a verify) is still the right habit: the slots
+  bound compilers, not two Python suites.
+
+## 7. Scaling it: the arena
 
 `cardmodel arena --count N` generates a program of any size. It contains planted slow functions, look-alike decoys
 that must *not* be substituted, already-optimal code, rewrite candidates and effectful functions. It runs the whole

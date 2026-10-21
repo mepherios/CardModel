@@ -11,6 +11,7 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── schema.py           dependency-free JSON-Schema subset validator
 │   │   ├── types.py            card types are cards; validation; closure (L45)
 │   │   ├── versioning.py       semver bump + archive + verify-before-overwrite
+│   │   ├── resources.py        bounded resources: machine-wide slots, child memory caps, self cap (CM30)
 │   │   ├── canon.py            canonical JSON (Ting) + card content hash
 │   │   └── paths.py            home and project discovery (.cardmodel/, like .git)
 │   ├── engines/
@@ -42,7 +43,8 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── laws.py             law discovery over op cards; simplifying laws -> rewrite rules
 │   │   ├── mine.py             decipher rules from facts (support, confidence, counterexamples)
 │   │   ├── selflogic.py        the store as facts + stdlib/self.card (the model's laws as logic)
-│   │   └── codefacts.py        a Python code base as facts (calls, effects, liftable) for stdlib/program.card
+│   │   ├── codefacts.py        a Python code base as facts (calls, effects, liftable) for stdlib/program.card
+│   │   └── funcalg.py          functions as algebra: canonical forms, Gödel numbers, GCD of functions (CM31)
 │   ├── lang/                   the card language: syntax.py (lexer, parser), compile.py (IR, logic, theorems,
 │   │                           cards, algorithm resolution), run.py (tests, queries, theorems, build, emit)
 │   ├── game/                   the Vector Counter System: combat.py (engine on the card-language kernel),
@@ -53,7 +55,8 @@ cardmodel/                      the repository IS the model (its home)
 │   ├── cli_ext.py              run, lang, logic, laws, lean, repl (+ game via game/cli.py)
 │   └── cli.py                  init observe verify cover rewrite emit learn optimize translate status ...
 ├── stdlib/                     card-language sources the program runs: self.card (its laws), program.card,
-│                               combat.card (the combat kernel), world.card (the systemic world)
+│                               combat.card (the combat kernel), world.card (the systemic world),
+│                               algebra.card (identities between algorithm cards, generated)
 ├── game/DESIGN.md              the game design, every claim computed
 ├── examples/lang/              card-language programs: family, math, hierarchy, grammar
 ├── cards/                      the model's own registries (the knowledge; see COVERAGE.md for counts)
