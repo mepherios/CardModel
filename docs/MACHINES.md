@@ -21,6 +21,10 @@ the ROM survey, differential runs, DS coverage) are in `COVERAGE.md` and come fr
 ```
 
 ```bash
+./bin/cardmodel emu "path/to/dmg-game.zip" --model cgb       # a DMG game on the CGB, in DMG compatibility mode
+```
+
+```bash
 ./bin/cardmodel machine diff game.gb --frames 3000          # lifted code vs the interpreter, frame by frame
 ```
 
@@ -90,8 +94,10 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   them outside the repository). Blargg's report over serial and at 0xA000; mooneye leaves 3 5 8 13 21 34 in
   B..L; dmg-acid2 and cgb-acid2 must draw their reference image pixel for pixel (DMG shades mapped through the
   PPU card's shade table). Each test runs on the model whose hardware revision its name gives (mooneye's
-  `-dmgABC`, `-GS`, `-C`... against the machine card's `revisions`); a test for other hardware, or one that is
-  not self-checking, is reported as skipped and not counted. So is a single ROM that cannot report on any
+  `-dmgABC`, `-GS`, `-C`... against the machine card's `revisions`); a DMG cartridge for a CGB revision runs in
+  the CGB's DMG compatibility mode, and a DMG screen test whose suite also has the CGB's picture (dmg-acid2's
+  `reference-cgb.png`) runs on both models. A test for other hardware, or one that is not self-checking, is
+  reported as skipped and not counted. So is a single ROM that cannot report on any
   accurate machine, with the evidence in the runner (`CANNOT_REPORT`): Blargg's oam_bug 7-timing_effect.gb logs
   about 10 KB of OAM dumps into 8 KiB of cartridge RAM and the overflow lands on its own code in WRAM; the same
   test passes inside the combined oam_bug.gb, and passes alone with the log switched off.
@@ -111,6 +117,20 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   output capacitor).
 * **Boot**: no boot ROM (it is not ours to ship); the documented post-boot state, DMG or CGB per the header; the
   CGB hands over in V-blank (games touch VRAM at once), the DMG at the start of line 0.
+* **DMG compatibility mode**: a DMG cartridge (header byte 0x143 without bit 7) on the CGB model
+  (`--model cgb`) runs as the CGB's boot ROM leaves it. KEY0 = 0x04 and OPRI = 1 (objects by X coordinate);
+  the default compatibility palette is card data (`hardware/gb_cgb`, `dmg_compat.palettes`: BG 7FFF 1BEF 6180
+  0000, OBJ0 = OBJ1 7FFF 421F 1CF2 0000), written to BG 0 and OBJ 0/1 the way the boot ROM writes it (BCPS left
+  at 8, OCPS at 16); A=11 F=80 B=the title checksum (Nintendo-licensed cartridges, else 00) C=00 D=00 E=08,
+  HL=007C (991A when B is 43 or 58); the system counter 0x2678; P1 reads 0xFF. The CGB-mode registers lock as
+  each register's `dmg_compat` field says: KEY1, HDMA1-5, BCPD, OCPD, OPRI, SVBK and FF74 read 0xFF and ignore
+  writes, VBK reads its bank (0) and ignores writes, BCPS, OCPS, FF72, FF73, FF75 and PCM12/34 work, and SC's
+  fast-clock bit reads 1 as on the DMG. The PPU draws the DMG way (no attributes, VRAM bank 0, LCDC bit 0
+  blanks the background) with BGP/OBP0/OBP1 picking colours of the CGB palettes. What stays the CGB's: the
+  APU, the unusable FEA0-FEFF range, no OAM corruption bug, the hand-over in V-blank. In the cards `cgb` is the
+  console and `cgb_mode` its CGB features (`cgb_boot_mode` in `hardware/gb_cgb`). `machine survey --model cgb`
+  and `machine diff --model cgb` run a collection or a game this way: in the user's collection every DMG
+  cartridge classifies as it does on the DMG, and the lifted code stays identical to the interpreter.
 * **What the test suites pinned down** (each a card, each witnessed by the tests named in it): OAM DMA blocks
   OAM from its first transfer through the M-cycle of the last, and a restart keeps it blocked; a run of EIs
   enables IME after the second; a running CPU takes a PPU interrupt raised exactly at an instruction boundary at
@@ -123,7 +143,11 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   the IDU putting an address in FE00-FEFF on the bus (INC/DEC rr, PUSH, CALL, RST, LD A,(HL+/-), POP's reads)
   rewrites the scanned row from the one before by Pan Docs' write, read and read-increase patterns, and the
   unusable FEA0-FEFF range reads 0xFF and corrupts while OAM is blocked. The IDU is part of the LR35902 bus
-  contract (`idu`, `rd8_idu` in `isa/lr35902/interface.card`).
+  contract (`idu`, `rd8_idu` in `isa/lr35902/interface.card`). The CGB raises line 144's mode 2 STAT source one
+  M-cycle (4 dots) before V-blank, the DMG with it (mooneye vblank_stat_intr-C and -GS). DMG compatibility
+  mode's registers, I/O values and locks (boot_regs-cgb, boot_hwio-C, unused_hwio-C), its system counter
+  (boot_div-cgbABCDE pins it to 0x2678-0x267B, one M-cycle) and its palette (dmg-acid2's CGB picture, pixel for
+  pixel).
 
 ## 4. Lifting ROM code (REA-style, kept internal)
 
@@ -186,9 +210,14 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 * PPU: a scanline renderer (mid-mode-3 changes apply to the whole line); the window's exact mode-3 cost, the
   LY=153 quirk and the blank first frame after LCD enable are not modelled.
 * APU: point sampled (no band limiting); the noise channel's LFSR only steps while samples are made.
-* A DMG cartridge on the CGB runs in CGB mode (no DMG-compatibility mode), so tests for that case are skipped.
 * No MMM01, MBC6, MBC7, HuC1/HuC3, TAMA5, camera, or unlicensed multicart mappers.
-* DMG games on a CGB run as DMG (no boot ROM colourisation).
+* DMG compatibility mode gives every cartridge the boot ROM's default palette: the per-title palettes the boot
+  ROM picks for Nintendo's own games (by title checksum) and the hand-picked ones (a d-pad combination during
+  the logo) are not modelled. `--model auto` runs a DMG cartridge on the DMG.
+* What no test pins in DMG compatibility mode follows SameBoy: VBK and the palette data registers ignore writes;
+  the hand-over is in V-blank as in CGB mode (LY, STAT and LCDC after the boot depend on the header and are not
+  tested). The CGB's early line-144 STAT source is measured in single speed; in double speed it is the same 4
+  dots, unverified.
 * Lifting: code in RAM, code right after EI and the HALT/STOP/illegal opcodes always run in the interpreter.
 * DS: no 2D/3D graphics, sound, touch, SPI devices, RTC or Wi-Fi yet; no wait states; flat VRAM. ARM lifting
   covers ARM-state ARM9 code only; its word guards read through the bus, so it saves the decode but not the

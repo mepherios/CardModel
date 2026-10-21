@@ -543,15 +543,17 @@ bindings cover the pure code a public standard fixes, not all of it.
 **Real since the third build (machines):** the IR and the card language carry machine state (globals, arrays, void
 functions, switch, an evaluation-order pass); the LR35902 and ARMv5TE/ARMv4T instruction cards with per-instruction
 conformance in three engines (reference interpreter, Python, C) and their timing/flag data checked; the Game Boy /
-Color machine from hardware cards; ROM code lifted into card IR and run natively, frame-for-frame identical to the
-interpreter in the differential runs; the effect shell (browser page, headless runs, saves, the RTC); the ROM
-survey; a DS machine prototype that direct-boots and reports its coverage.
+Color machine from hardware cards (a DMG cartridge on the CGB runs in DMG compatibility mode); ROM code lifted
+into card IR and run natively, frame-for-frame identical to the interpreter in the differential runs; the effect
+shell (browser page, headless runs, saves, the RTC); the ROM survey; a DS machine prototype that direct-boots and
+reports its coverage.
 
-**Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; MMM01, MBC6/7, HuC1/3, TAMA5,
-the camera and unlicensed multicart mappers are missing; the hardware test suites (Blargg, mooneye, acid2) all
-pass except what is skipped: tests for other hardware revisions, for a CGB in DMG mode, and one Blargg single that
-overflows its own log (docs/MACHINES.md section 2); the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted
-(COVERAGE.md has the numbers).
+**Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; DMG compatibility mode has the
+boot ROM's default palette only (not its per-title ones); MMM01, MBC6/7, HuC1/3, TAMA5, the camera and unlicensed
+multicart mappers are missing; the hardware test suites (Blargg, mooneye, acid2) all pass except what is skipped:
+tests for other hardware revisions and one Blargg single that overflows its own log (docs/MACHINES.md section 2);
+the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted (COVERAGE.md
+has the numbers).
 
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
@@ -595,7 +597,12 @@ each. Beyond that:
    the self-run learns from a tree whenever it changes. Review what it learned with `cardmodel list` and
    `cardmodel self adopt --dry-run`, then adopt and commit.
 5. **Games natively: the next pieces** (the machine model is built; docs/MACHINES.md, ROADMAP "Machines").
-   * The CGB's DMG-compatibility mode is done on `claude/strange-dewdney-f8f39d` (05178e1), not merged yet.
+   * The hardware test suites are in `~/Downloads/gb-test-suites` (downloaded with the user's go-ahead; run
+     `cardmodel machine testroms ~/Downloads/gb-test-suites`). Every runnable test passes, the CGB's DMG
+     compatibility mode included (mooneye's misc -C tests, dmg-acid2's CGB picture); what is skipped is for
+     other hardware revisions (dmg0, mgb, sgb, cgb0, agb) or not self-checking. Next there: the boot ROM's
+     per-title compatibility palettes for Nintendo's DMG games, as card data (Pan Docs documents how they are
+     chosen), if colourised DMG games are wanted.
    * Close the survey's remaining failures (`cardmodel machine survey` lists them): the missing bank controllers
      (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (the gameboy machine card
      exports `step` and `peek`: `gb.GameBoy(ctx, rom).m.call("step")`, `.m.call("peek", addr)`).

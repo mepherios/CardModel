@@ -2,6 +2,7 @@
 -- (the effect shell) loads the ROM into `rom`, configures the cartridge from the header, calls power_on, then
 -- run_frame once per frame; it reads `frame` (RGB888), drains `audio`, sets `buttons`, saves `cram`.
 const FRAME_DOTS = 70224
+const COMPAT_DIV = card.hardware.gb_cgb.dmg_compat.div_counter
 export global model: Int = 0
 export global frame_deadline: Int = 0
 export global instructions: Int = 0
@@ -170,11 +171,13 @@ fn clear_memory() {
     nr[i] = 0
   }
 }
--- the state after the boot ROM (which is not used: it is not ours to ship)
+-- the state after the boot ROM (which is not used: it is not ours to ship). A CGB's boot ROM picks the mode
+-- from the cartridge header: CGB mode, or DMG compatibility mode for a DMG cartridge (cgb_boot_mode).
 export fn power_on(want_cgb: Int) {
   cgb = want_cgb
   model = want_cgb
-  if cgb != 0 {
+  cgb_boot_mode(want_cgb)
+  if cgb_mode != 0 {
     A = 0x11
     F = 0x80
     B = 0x00
@@ -183,6 +186,17 @@ export fn power_on(want_cgb: Int) {
     E = 0x56
     H = 0x00
     L = 0x0D
+  } elif cgb != 0 {
+    -- DMG compatibility mode (mooneye boot_regs-cgb): B is the boot ROM's title checksum, which also picks HL
+    A = 0x11
+    F = 0x80
+    B = title_checksum()
+    C = 0x00
+    D = 0x00
+    E = 0x08
+    let hl = if B == 0x43 or B == 0x58 then 0x991A else 0x007C
+    H = hl >> 8
+    L = hl & 0xFF
   } else {
     A = 0x01
     F = 0xB0
@@ -205,7 +219,12 @@ export fn power_on(want_cgb: Int) {
   ds = 0
   ie_reg = 0
   if_reg = 0x01
-  div_counter = if cgb != 0 then 0x1EA0 else 0xABCC
+  div_counter = 0xABCC
+  if cgb_mode != 0 {
+    div_counter = 0x1EA0
+  } elif cgb != 0 {
+    div_counter = COMPAT_DIV
+  }
   timer_last = 0
   tima = 0
   tma = 0
@@ -240,7 +259,8 @@ export fn power_on(want_cgb: Int) {
   wram_bank = 1
   svbk = 0
   key1 = 0
-  p1_sel = 0x00
+  -- P1 reads 0xCF, or 0xFF after the compatibility path (mooneye boot_hwio-C)
+  p1_sel = if cgb != 0 and cgb_mode == 0 then 0x30 else 0x00
   sb = 0
   sc = 0x7E
   serial_end = -1
@@ -285,10 +305,12 @@ export fn power_on(want_cgb: Int) {
   for i in 0 .. 69120 {
     frame[i] = 0xFF
   }
-  if cgb != 0 {
+  if cgb_mode != 0 {
     for i in 0 .. 64 {
       bgpal[i] = 0xFF
     }
+  } elif cgb != 0 {
+    boot_dmg_compat()
   }
   next_event = 0
 }

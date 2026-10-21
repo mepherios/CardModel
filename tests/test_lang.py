@@ -78,6 +78,21 @@ class LangTest(unittest.TestCase):
         with self.assertRaises(CompileError):
             compile_source("parent(X, bob).", self.ctx.ops, self.ctx.store)        # facts are ground
 
+    def test_machine_state_reads_card_data(self):
+        """A constant, and an array's initial values, may come from card fields (the hardware cards' data)."""
+        src = ("const LINE = card.hardware.gb_ppu.timing.dots_per_line\n"
+               "array pal: Int[4] = card.hardware.gb_cgb.dmg_compat.palettes.bg\n")
+        mod = compile_source(src, self.ctx.ops, self.ctx.store)
+        bg = self.ctx.store.get("hardware/gb_cgb").get("dmg_compat")["palettes"]["bg"]
+        self.assertEqual([a["init"] for a in mod.arrays if a["name"] == "pal"], [bg])
+        self.assertEqual(mod.consts["LINE"], 456)
+        for bad in ("array p: Int[2] = card.hardware.gb_cgb.dmg_compat.palettes.bg",     # 4 values, size 2
+                    "array p: Int[4] = card.hardware.gb_cgb.dmg_compat.statement",       # not a list
+                    "array p: Int[4] = card.hardware.gb_cgb.no_such_field",
+                    "array p: Int[4] = 3"):
+            with self.assertRaises(CompileError, msg=bad):
+                compile_source(bad, self.ctx.ops, self.ctx.store)
+
     def test_ir_is_the_reference(self):
         interp = Interpreter(self.mod.ir_module("factorial"), self.ctx.ops)
         self.assertEqual(interp.call("factorial", [10]), 3628800)

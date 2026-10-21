@@ -115,11 +115,14 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 * 🔵 **Hardware test suites**: Blargg, mooneye and acid2 through `cardmodel machine testroms`, the DMG's OAM
   corruption bug included (the timing they pinned down is in docs/MACHINES.md §3; COVERAGE.md has the results).
-* 🟢 **A CGB DMG-compatibility mode** (the skipped mooneye misc tests).
+* 🔵 **The CGB's DMG compatibility mode** (2026-10-21): a DMG cartridge on the CGB model runs as the CGB's boot
+  ROM leaves it (KEY0, OPRI, the CGB-mode registers locked, the default compatibility palette as card data, the
+  CGB's line-144 STAT timing); mooneye's misc -C tests and dmg-acid2's CGB picture pass (docs/MACHINES.md §3).
 * 🟢 **The survey's remaining failures**: MBC7, HuC3 and camera bank controllers as cards; trace the static and
   blank titles.
-* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); DMG colourisation
-  palettes for DMG games on the CGB (from data, not the boot ROM).
+* 🟢 **PPU accuracy**: a pixel FIFO (mid-line effects, exact mode 3 lengths, the LY=153 quirk); the boot ROM's
+  per-title colourisation palettes for Nintendo's DMG games on the CGB (from data, not the boot ROM; the default
+  palette is done).
 * 🟢 **DS, as its coverage report asks**: SPI (firmware user settings, touchscreen, power), RTC, sound status,
   VRAM banks and the 2D engines (a first picture), then 3D; wait states; Thumb and ARM7 lifting, cheaper guards.
 * 🟢 **Lifting further**: superblocks through not-taken branches, a fast path for dynamic WRAM/HRAM accesses,

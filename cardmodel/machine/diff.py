@@ -16,11 +16,11 @@ from . import lift
 from .survey import script
 
 
-def differential(ctx, rom: bytes, frames: int = 1200) -> dict:
+def differential(ctx, rom: bytes, frames: int = 1200, model: str = "auto") -> dict:
     m, rep = lift.lifted_machine(ctx, rom)
-    lifted = G.GameBoy(ctx, rom, machine=m, sample_rate=0)
+    lifted = G.GameBoy(ctx, rom, machine=m, sample_rate=0, model=model)
     m.set("lifted_on", 1)
-    ref = G.GameBoy(ctx, rom, "native", sample_rate=0, fresh=True)
+    ref = G.GameBoy(ctx, rom, "native", sample_rate=0, fresh=True, model=model)
     ti = tl = 0.0
     first = None
     for f in range(frames):
@@ -37,7 +37,7 @@ def differential(ctx, rom: bytes, frames: int = 1200) -> dict:
             first = f
             break
     n = frames if first is None else first + 1
-    return {"verdict": "identical" if first is None else "different", "frames_compared": n,
+    return {"verdict": "identical" if first is None else "different", "frames_compared": n, "model": ref.model,
             "first_difference": first, "interp_s": round(ti, 3), "lifted_s": round(tl, 3),
             "speedup": round(ti / tl, 2) if tl else None, "blocks": rep["blocks"],
             "block_runs": m.get("block_runs"), "instructions": m.get("instructions"), "lift": rep}
