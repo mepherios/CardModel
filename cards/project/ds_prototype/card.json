@@ -1,0 +1,72 @@
+{
+  "blockers": [
+    "no graphics yet: the store can only list it as unplayable"
+  ],
+  "branches": [],
+  "category": "project",
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "done": [
+    "ARMv5TE/ARMv4T instruction cards, conformant in every engine",
+    "direct boot of both CPUs, measured",
+    "ARM9 code lifted, identical to the interpreter"
+  ],
+  "goal": "Nintendo DS games running on the ARM instruction cards, lifted like the Game Boy.",
+  "in_progress": [],
+  "kind": "game",
+  "left": [
+    "SPI devices, RTC, sound channel status",
+    "VRAM banks and the 2D engines",
+    "3D",
+    "Thumb and the ARM7 in the lifter"
+  ],
+  "metadata": {
+    "previous_content_hash": "738da9152eede894bcd1901ffd5f08932623a272146a98add5f9ef42efe3a27f",
+    "version": "2.0.0",
+    "version_bump_reason": "major"
+  },
+  "metrics": [
+    {
+      "label": "instructions executed by the cards",
+      "state": "nds_coverage",
+      "sum": "cpus.*.instructions_executed"
+    },
+    {
+      "label": "lifted vs interpreter",
+      "path": "lifted_differential.verdict",
+      "state": "nds_coverage"
+    },
+    {
+      "goal": "G_M5_ds_decoded",
+      "label": "executed instructions no card decodes"
+    }
+  ],
+  "name": "ds_prototype",
+  "next_steps": [
+    "the 2D engines, for a first picture"
+  ],
+  "order": 3,
+  "owner": {
+    "name": "cardmodel-games",
+    "session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b"
+  },
+  "paths": [
+    "cardmodel/machine/nds.py",
+    "cardmodel/machine/lift_arm.py",
+    "cards/machine/nds",
+    "cards/isa/armv5te",
+    "cards/machine/armv5te_bench",
+    "tools/gen_armv5te.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "Both CPUs boot directly and the ARM9 code is lifted (identical to the interpreter over 300 frames); no graphics or sound yet, so nothing is playable.",
+  "statement": "Both DS CPUs direct-booted on the ARM instruction cards, the ARM9's code lifted; no graphics or sound yet.",
+  "tier": 1,
+  "title": "Nintendo DS prototype",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": []
+}

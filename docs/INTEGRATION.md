@@ -70,7 +70,7 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main).
 | cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 032dc88 (merge ab76427); still active (a Game Boy Player store entry) |
 | cardmodel-anyps5 | `claude/recursing-williams-ecc80a` | `cardmodel/anyps5`, `stdlib/ps5_*.card`, `cards/anyps5_*`, docs/ANYPS5*.md, tests/test_anyps.py, tools/seed_anyps5.py | up to 10c688f (merge 65a059c) |
 | model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | d4fb3c9 (merge 9469e58); 538f29c goes to main through the games branch |
-| game-boy-cgb-dmg-compati | `claude/strange-dewdney-f8f39d` | the CGB's DMG compatibility mode | d4fb3c9 is on main; 05178e1 is not merged yet |
+| game-boy-cgb-dmg-compati | `claude/strange-dewdney-f8f39d` | the CGB's DMG compatibility mode | 05178e1 (merge 7e4323a) |
 | self-running-improvement | `claude/jolly-liskov-2d97a8` | the same request as main's self-run, built in parallel (`cardmodel/cycle`, store inventory and launch checks); asked to build on `cardmodel self` | nothing yet (uncommitted when main's self-run landed) |
 | fix-flaky-arena-test-dec | `claude/sharp-goldwasser-8b0d81` | the arena's triangular decoy | d9e2ba3 (merge 05c54ea) |
 | fix-flaky-numeric-check | `claude/brave-montalcini-19f1b8` | float rounding in the redefinition witness | 60e72ca (merge cf775f2) |
@@ -85,6 +85,42 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main).
   (`cardmodel cover --write COVERAGE.md`), docs/ANYPS5_COVERAGE.md (`cardmodel anyps5 cover --write docs/ANYPS5_COVERAGE.md`),
   stdlib/algebra.card (`cardmodel algebra scan --write`), the `_pack_*.jsonl` card packs (their tools).
 
+## 4b. Project cards (law CM41)
+
+Every project in progress keeps a detailed card, and its owning session keeps it current. The store's In progress
+page and its "Waiting on you" list are built from these cards (`cardmodel/arcade/hub.py`, `engines/projects.py`),
+and `cardmodel verify` (section `projects`) fails when one is missing or stale.
+
+* **Where.** Projects in this repository: `cards/project/<name>/card.json`. Revise it on your branch in the same
+  commit as the work, or within a day of it. A project in another repository keeps its detail there, committed, in
+  `.cardmodel/project.json`. The hub reads that with `git show HEAD:...` and never writes it, and it overrides the
+  card here.
+* **Fields** (the card's what-to-watch fields `repo`, `paths`, `games`, `metrics`, `docs` stay as they are):
+
+```json
+{
+  "goal": "one sentence: what the project is for",
+  "standing": "one sentence: where it stands now (`status` is every card's lifecycle field)",
+  "done": ["finished pieces"],
+  "in_progress": ["what is being worked on"],
+  "left": ["what remains"],
+  "blockers": ["what stops it, if anything"],
+  "next_steps": ["the next concrete steps"],
+  "user_actions": [{"action": "what the user must do or decide", "why": "why it matters",
+                    "unblocks": ["what it unblocks"]}],
+  "owner": {"session": "local_<id>", "name": "the owning session's short name"},
+  "branches": ["claude/<your-branch>*"],
+  "updated": "2026-10-22T00:55:00+02:00"
+}
+```
+
+* **Stale.** A commit that touches the project's `paths` (in another repository, any commit) more than 24 hours
+  after `updated` makes the card stale.
+* **Missing.** On main, every branch with unmerged commits from the last week must be listed in some card's
+  `branches`. On a branch, that branch must be listed.
+* **Computed, not written.** The phase, the last commits, ahead/behind counts, uncommitted work, metrics (with
+  the checkout that measured them) and builds are computed by the hub. Never type them into the card.
+
 ## 5. Integration log
 
 | date | commit | what landed |
@@ -94,7 +130,8 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main).
 | 2026-10-21 | 65a059c | `claude/recursing-williams-ecc80a`: AnyPS5 as cards (scan, classification, coverage, witnesses), verify section `anyps5`, goals G_P1–G_P5 |
 | 2026-10-21 | ab76427 | `claude/sad-sanderson-482207`: machines as cards, lifted ROM code and the effect shell, the DS prototype, hardware test suites, Vector Duel and Cardmodel Arcade; verify section `machine`; AnyPS5's law renumbered CM32 -> CM36 |
 | 2026-10-21 | 9469e58 | `claude/festive-margulis-43fde7`: the DMG's OAM corruption bug; every runnable hardware test ROM passes |
-| 2026-10-21 | (this commit) | main: core capabilities as cards (CM37), the self-run (CM38), the integrity check (CM39), docs/AUTONOMY.md, docs/STORE.md, this page |
+| 2026-10-21 | f38dce7 | main: core capabilities as cards (CM37), the self-run (CM38), the integrity check (CM39), docs/AUTONOMY.md, docs/STORE.md, this page |
+| 2026-10-21 | 7e4323a | `claude/strange-dewdney-f8f39d`: the CGB's DMG compatibility mode (05178e1); HANDOVER.md merged as a union, COVERAGE.md regenerated |
 
-Each merge was followed by the full test suite and a full verify on the merged code (168 tests and 16 of 16
-sections passing after 9469e58).
+Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
+sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a.

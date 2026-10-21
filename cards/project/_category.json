@@ -1,0 +1,7 @@
+{
+  "card_type": "project",
+  "defined_by": "tools/seed_projects.py",
+  "description": "The games, programs and research lines in progress that the store's In development page follows. A card says what to watch; the hub (cardmodel/arcade/hub.py) computes the status.",
+  "name": "project",
+  "tier": 1
+}

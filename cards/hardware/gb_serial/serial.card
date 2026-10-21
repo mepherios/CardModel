@@ -1,8 +1,8 @@
 -- The serial port: SB (FF01) and SC (FF02). With the internal clock (SC bit 0) a transfer shifts 8 bits at
--- 8192 Hz (262144 Hz with the CGB fast bit). The clock is a bit of the system counter (the one DIV shows), so
--- the bits shift on its edges, not counted from the SC write: a transfer ends on the 8th edge after the write
--- (mooneye boot_sclk_align). No link partner is attached, so the byte received is 0xFF. Every byte sent is
--- also kept in serial_out (test ROMs report through it).
+-- 8192 Hz (262144 Hz with the fast bit, CGB mode only). The clock is a bit of the system counter (the one DIV
+-- shows), so the bits shift on its edges, not counted from the SC write: a transfer ends on the 8th edge after
+-- the write (mooneye boot_sclk_align). No link partner is attached, so the byte received is 0xFF. Every byte
+-- sent is also kept in serial_out (test ROMs report through it).
 const SERIAL_LOG = 4096
 const SERIAL_CLOCK_BIT = 9       -- 8192 Hz: one bit per 512 counts of the system counter
 const SERIAL_FAST_BIT = 4        -- 262144 Hz (CGB, SC bit 1)
@@ -16,7 +16,7 @@ fn serial_read(r: Int) -> Int {
   if r == 0x01 {
     return sb
   }
-  if cgb != 0 {
+  if cgb_mode != 0 {
     return sc | 0x7C
   }
   return sc | 0x7E
@@ -32,7 +32,7 @@ fn serial_write(r: Int, v: Int) {
         serial_n += 1
       }
       var k = SERIAL_CLOCK_BIT
-      if cgb != 0 and (v & 2) != 0 {
+      if cgb_mode != 0 and (v & 2) != 0 {
         k = SERIAL_FAST_BIT
       }
       let edge = ((div_counter >> k) + 8) << k

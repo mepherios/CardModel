@@ -195,6 +195,9 @@ def cmd_verify(args) -> int:
         if sec == "capabilities" and r.get("counts"):
             extra = f"{r['counts']}" + (f"; LOST: {', '.join(r['failing'])}" if r["failing"] else "") + \
                 (f"; unavailable here: {', '.join(r['unavailable'])}" if r["unavailable"] else "")
+        if sec == "projects" and "cards" in r:
+            extra = (f"{r['cards']} project cards, {sum(1 for x in r['projects'].values() if x['stale'])} stale; "
+                     f"{len(r['problems'])} problems")
         if sec == "integrity" and "laws" in r:
             extra = (f"{r['laws']} laws, {r['goals']} goals, {r['capabilities']} capabilities, {r['commands']} commands, "
                      f"{r['sections']} sections, {r['docs']} docs; {len(r['problems'])} problems")
@@ -224,7 +227,7 @@ def _failures(sec: str, r: dict):
         return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
     if sec == "theorems":
         return r.get("problems")
-    if sec in ("anyps5", "integrity"):
+    if sec in ("anyps5", "integrity", "projects"):
         return r.get("problems")
     if sec == "capabilities":
         return {n: c.get("reason") for n, c in r["capabilities"].items() if c["status"] == "fail"}

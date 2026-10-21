@@ -1,0 +1,29 @@
+{
+  "category": "project",
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "kind": "research",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "cards": "lineage",
+      "label": "lineage cards"
+    }
+  ],
+  "name": "lineage",
+  "order": 14,
+  "paths": [
+    "cards/lineage",
+    "tools/seed_knowledge.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Where the model's methods come from: Servois, Peacock, Boole, Hankel, Gödel.",
+  "tier": 1,
+  "title": "The lineage cards"
+}

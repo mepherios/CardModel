@@ -127,6 +127,7 @@ function render() {
   else if (S.view === "library") v.innerHTML = libraryView();
   else if (S.view === "downloads") v.innerHTML = downloadsView();
   else if (S.view === "news") v.innerHTML = newsView();
+  else if (S.view === "dev") v.innerHTML = devView();          // dev.js: everything in progress, live
   else if (S.view === "profile") v.innerHTML = profileView();
   bind();
   renderProgress();

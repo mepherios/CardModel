@@ -5,6 +5,8 @@ Sections (all on by default; ``only`` selects):
   integrity     one program (CM39): unique law and goal numbers, every law carried by a capability, every
                 command, section and doc described, LAWS.md / GOALS.md in sync, no merge markers, no publishing
   capabilities  every capability card's smoke check: a core capability that no longer behaves fails (CM37)
+  projects      every project card carries its detail and is current: missing detail, a stale card, or a branch
+                with unmerged work that no card lists fails (CM41)
   forms         op / call / re_operation forms vs their reference (witness.verify_forms)
   vectors       known-answer vectors (crypto atoms, detect_format, ...)
   rules         rewrite rules on seeded integers
@@ -43,10 +45,11 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "integrity", "capabilities", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms",
-            "vectors", "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck", "portability")
-QUICK = ["kernel", "integrity", "capabilities", "logic", "lang", "theorems", "game", "anyps5", "machine", "forms",
-         "vectors", "rules", "redefinitions"]
+SECTIONS = ("kernel", "integrity", "capabilities", "projects", "logic", "lang", "theorems", "game", "anyps5", "machine",
+            "forms", "vectors", "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck",
+            "portability")
+QUICK = ["kernel", "integrity", "capabilities", "projects", "logic", "lang", "theorems", "game", "anyps5", "machine",
+         "forms", "vectors", "rules", "redefinitions"]
 
 
 def _kernel(ctx: Ctx) -> dict:
@@ -277,6 +280,9 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         elif sec == "capabilities":
             from . import capabilities
             res = capabilities.run(ctx, seed)
+        elif sec == "projects":
+            from . import projects
+            res = projects.check(ctx)
         elif sec == "logic":
             res = _logic(ctx)
         elif sec == "lang":

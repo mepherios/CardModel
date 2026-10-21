@@ -1,0 +1,17 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM41_projects_keep_their_cards_current",
+  "origins": [
+    "user requirement 2026-10-22 (force every project by law to keep its detail for later updates)"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "statement": "Every project in progress keeps a detailed project card: its goal, status, what is done, in progress and left, blockers, next steps, what the user must do or decide (each with what it unblocks), its owning session, its branches and when the detail was last revised. A commit touching the project more than a day after that revision makes the card stale, and a branch with unmerged work that no card lists is missing one; verify fails on either. The store's hub reads these cards and gathers every user action into one list, most unblocking first. Our model keeps them current; other tools never have to.",
+  "tier": 0,
+  "witness": "tests/test_projects.py::test_missing_or_stale_project_cards_fail"
+}

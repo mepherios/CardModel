@@ -16,15 +16,17 @@
       "name": "SB",
       "post_boot_cgb": 0,
       "post_boot_dmg": 0,
+      "post_boot_dmg_compat": 0,
       "read_or": 0
     },
     {
       "access": "rw",
       "address": 65282,
       "name": "SC",
-      "note": "CGB: bit 1 is the fast clock, unused bits 0x7C",
+      "note": "CGB mode: bit 1 is the fast clock, unused bits 0x7C; DMG compatibility mode: as the DMG",
       "post_boot_cgb": 127,
       "post_boot_dmg": 126,
+      "post_boot_dmg_compat": 126,
       "read_or": 126
     }
   ],

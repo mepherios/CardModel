@@ -1,0 +1,122 @@
+{
+  "applies_to": [
+    "project"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "previous_content_hash": "8ab491097b35b6a7ffeea9e6510bbc32deac3e9a6d149b1b01b95f20b7416432",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "project",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "schema": {
+    "properties": {
+      "blockers": {
+        "type": "array"
+      },
+      "branches": {
+        "type": "array"
+      },
+      "docs": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "done": {
+        "type": "array"
+      },
+      "games": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "goal": {
+        "type": "string"
+      },
+      "in_progress": {
+        "type": "array"
+      },
+      "kind": {
+        "enum": [
+          "game",
+          "program",
+          "research"
+        ]
+      },
+      "left": {
+        "type": "array"
+      },
+      "metrics": {
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "next_steps": {
+        "type": "array"
+      },
+      "order": {
+        "type": "integer"
+      },
+      "owner": {
+        "required": [
+          "session"
+        ],
+        "type": "object"
+      },
+      "paths": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "repo": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      },
+      "updated": {
+        "type": "string"
+      },
+      "user_actions": {
+        "items": {
+          "required": [
+            "action",
+            "unblocks"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "title",
+      "kind",
+      "statement",
+      "goal",
+      "status",
+      "done",
+      "in_progress",
+      "left",
+      "blockers",
+      "next_steps",
+      "user_actions",
+      "owner",
+      "branches",
+      "updated"
+    ],
+    "type": "object"
+  },
+  "statement": "A project in progress: what the hub watches, never how far along it is.",
+  "tier": 0
+}

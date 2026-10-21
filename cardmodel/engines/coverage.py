@@ -249,6 +249,9 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "integrity_problems":
         it = secs.get("integrity")
         return len(it.get("problems", [])) if it and "problems" in it else None
+    if name == "project_card_problems":
+        pr = secs.get("projects")
+        return len(pr.get("problems", [])) if pr and "problems" in pr else None
     if name == "laws_uncarried":
         carried = {law for c in st.cards("capability") for law in c.get("laws") or []}
         return sum(1 for law in st.cards("law") if law.qualified not in carried)

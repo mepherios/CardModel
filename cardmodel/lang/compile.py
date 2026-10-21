@@ -14,7 +14,8 @@ float division, ``**`` on ints needs a literal exponent >= 0 (use a loop
 or ``algorithm.power``), ``and``/``or``/``not`` and conditions need Bool.
 
 Machine state: ``const`` (compile-time integers, which may read card fields
-``card.<registry>.<name>.<field>``), ``global`` and ``array`` declarations,
+``card.<registry>.<name>.<field>``), ``global`` and ``array`` declarations (an
+array's initial values may be a card field holding a list of integers),
 void functions, array stores, call statements and ``switch``. After the
 functions compile, an evaluation-order pass gives every effectful call its own
 statement, in the left-to-right order Python uses (earlier operands that read
@@ -751,6 +752,22 @@ class Compiler:
     # -- machine state ---------------------------------------------------------------------------
     def card_value(self, ref: str, line) -> int:
         """``card.<registry>.<name>.<field>...`` -> the integer stored there (a compile-time constant)."""
+        v = self.card_field(ref, line)
+        if isinstance(v, bool) or not isinstance(v, int):
+            raise CompileError(f"{ref} is {v!r}, not an integer", line, self.path)
+        return v
+
+    def card_list(self, e, line) -> list:
+        """An array's initial values from ``card.<registry>.<name>.<field>...``: a list of integers there."""
+        if e[0] != "ref" or not e[1].startswith("card."):
+            raise CompileError("an array's initial values: [v, ...] or card.<registry>.<name>.<field>", line,
+                               self.path)
+        v = self.card_field(e[1], line)
+        if not isinstance(v, list) or any(isinstance(x, bool) or not isinstance(x, int) for x in v):
+            raise CompileError(f"{e[1]} is {v!r}, not a list of integers", line, self.path)
+        return list(v)
+
+    def card_field(self, ref: str, line):
         parts = ref.split(".")
         if len(parts) < 4:
             raise CompileError(f"{ref}: write card.<registry>.<name>.<field>", line, self.path)
@@ -764,8 +781,6 @@ class Compiler:
             if not isinstance(v, dict) or key not in v:
                 raise CompileError(f"{ref}: the card has no field {key!r}", line, self.path)
             v = v[key]
-        if isinstance(v, bool) or not isinstance(v, int):
-            raise CompileError(f"{ref} is {v!r}, not an integer", line, self.path)
         return v
 
     def const_eval(self, e, line) -> int:
@@ -828,7 +843,9 @@ class Compiler:
                     raise CompileError(f"array {name}: size must be positive", d.line, path)
                 a = {"name": name, "elem": d.data["elem"], "size": size}
                 if d.data.get("init") is not None:
-                    vals = [self.const_eval(v, d.line) for v in d.data["init"]]
+                    init = d.data["init"]
+                    vals = ([self.const_eval(v, d.line) for v in init] if isinstance(init, list)
+                            else self.card_list(init, d.line))
                     if len(vals) > size:
                         raise CompileError(f"array {name}: {len(vals)} initial values for size {size}", d.line, path)
                     a["init"] = vals

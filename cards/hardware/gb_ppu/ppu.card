@@ -1,10 +1,14 @@
 -- The PPU (LCD controller). A frame is 154 lines of 456 dots (70224 dots). Visible lines 0-143 go through mode 2
 -- (OAM scan, 80 dots), mode 3 (drawing, 172 dots + penalties for SCX and sprites) and mode 0 (H-blank, the rest);
 -- lines 144-153 are mode 1 (V-blank, requested at the start of line 144). STAT requests an interrupt on the
--- rising edge of (LY=LYC and bit 6) or (mode 0 and bit 3) or (mode 1 and bit 4) or (mode 2 and bit 5).
+-- rising edge of (LY=LYC and bit 6) or (mode 0 and bit 3) or (mode 1 and bit 4) or (mode 2 and bit 5). Line 144
+-- also raises the mode 2 source: with V-blank on the DMG, one M-cycle before it on the CGB (mooneye
+-- vblank_stat_intr-GS and -C).
 -- A line is drawn when mode 3 ends, from the registers as they are then (a scanline renderer: changes made in
 -- the middle of mode 3 apply to the whole line). DMG shades and CGB colours (RGB555) both end as RGB888 in
--- `frame`. VRAM is blocked in mode 3 and OAM in modes 2 and 3 while the LCD is on.
+-- `frame`; in DMG compatibility mode the CGB draws the DMG way (no attributes, VRAM bank 0, objects by X, LCDC
+-- bit 0 blanks the background) and BGP/OBP0/OBP1 pick colours from its palettes BG 0 and OBJ 0/1. VRAM is
+-- blocked in mode 3 and OAM in modes 2 and 3 while the LCD is on.
 --
 -- What the CPU sees lags the PPU's own transitions by a dot, so an access at the start of an M-cycle sees a
 -- change only from the next one (mooneye lcdon_timing, intr_2_mode3/mode0/oam_ok_timing): on a line starting
@@ -20,6 +24,7 @@ const MODE3_DOTS = 172
 const VIEW_LAG = 1               -- dots the CPU's view of a mode change lags it
 const LCDON_SHORT = 4            -- the first line after LCD enable is this much shorter
 const OBJ_FETCH_DOTS = 6
+const CGB_VBLANK_M2_LEAD = 4     -- dots before V-blank at which the CGB raises line 144's mode 2 STAT source
 const SCREEN_W = 160
 const SCREEN_H = 144
 global lcdc: Int = 0x91
@@ -275,14 +280,21 @@ fn ppu_step() {
     render_line()
     mode = 0
     ppu_next = line_start + DOTS_PER_LINE
+    if cgb != 0 and ly == SCREEN_H - 1 {
+      ppu_next -= CGB_VBLANK_M2_LEAD
+    }
     hdma_hblank()
+  } elif ppu_next < line_start + DOTS_PER_LINE {
+    -- the CGB, at the end of line 143: line 144's mode 2 source, one M-cycle before V-blank
+    vblank_m2 = 1
+    ppu_next = line_start + DOTS_PER_LINE
   } else {
     line_start = line_start + DOTS_PER_LINE
     first_line = 0
     ly += 1
     if ly == SCREEN_H {
       mode = 1
-      vblank_m2 = 1
+      vblank_m2 = if cgb != 0 then 0 else 1
       request_irq(IRQ_VBLANK)
       frame_done = 1
       frames += 1
@@ -486,7 +498,7 @@ fn draw_bg_span(x0: Int, x1: Int, map_base: Int, px: Int, py: Int) {
     let col = mx >> 3
     let tile = vram[map_base + ((py >> 3) << 5) + col]
     var attr = 0
-    if cgb != 0 {
+    if cgb_mode != 0 {
       attr = vram[0x2000 + map_base + ((py >> 3) << 5) + col]
     }
     var row = py & 7
@@ -517,7 +529,8 @@ fn draw_sprites(n: Int) {
     return
   }
   let h = sprite_height()
-  -- priority: CGB = OAM order; DMG = smaller X first, then OAM order. Draw best-first, never overwrite.
+  -- priority: CGB mode = OAM order; DMG and DMG compatibility mode (OPRI = 1 from the boot ROM) = smaller X
+  -- first, then OAM order. Draw best-first, never overwrite.
   var done = 0
   var used = 0
   while done < n {
@@ -528,7 +541,7 @@ fn draw_sprites(n: Int) {
       if (used & (1 << k)) == 0 {
         let i = sprites[k]
         let sx = oam[i * 4 + 1]
-        if best < 0 or (cgb == 0 and sx < bx) {
+        if best < 0 or (cgb_mode == 0 and sx < bx) {
           best = k
           bx = sx
         }
@@ -551,14 +564,14 @@ fn draw_sprites(n: Int) {
       row = row & 7
     }
     var bank = 0
-    if cgb != 0 {
+    if cgb_mode != 0 {
       bank = (attr >> 3) & 1
     }
     let addr = (bank << 13) + tile * 16 + row * 2
     let lo = vram[addr]
     let hi = vram[addr + 1]
     var pal = (attr >> 4) & 1
-    if cgb != 0 {
+    if cgb_mode != 0 {
       pal = attr & 7
     }
     for px in 0 .. 8 {
@@ -595,8 +608,8 @@ fn render_line() {
   if ly >= SCREEN_H {
     return
   }
-  -- background (on the DMG, LCDC bit 0 off means a blank background)
-  if cgb != 0 or (lcdc & 0x01) != 0 {
+  -- background (on the DMG and in DMG compatibility mode, LCDC bit 0 off means a blank background)
+  if cgb_mode != 0 or (lcdc & 0x01) != 0 {
     var map_bg = 0x1800
     if (lcdc & 0x08) != 0 {
       map_bg = 0x1C00
@@ -629,7 +642,7 @@ fn render_line() {
     let sp = line_sp[x]
     var use_sp = false
     if sp != 0 {
-      if cgb != 0 and (lcdc & 0x01) == 0 {
+      if cgb_mode != 0 and (lcdc & 0x01) == 0 {
         use_sp = true
       } elif c == 0 {
         use_sp = true
@@ -637,7 +650,7 @@ fn render_line() {
         use_sp = true
       }
     }
-    if cgb != 0 {
+    if cgb_mode != 0 {
       if use_sp {
         let p = ((sp >> 8) & 7) * 8 + ((sp & 0xFF) - 1) * 2
         put_cgb(x, obpal[p], obpal[p + 1])
@@ -647,14 +660,25 @@ fn render_line() {
       }
     } else {
       var shade = (bgp >> (c * 2)) & 3
+      var p = shade * 2
       if use_sp {
         var op = obp0
         if ((sp >> 8) & 1) != 0 {
           op = obp1
         }
         shade = (op >> (((sp & 0xFF) - 1) * 2)) & 3
+        p = ((sp >> 8) & 1) * 8 + shade * 2
       }
-      put_pixel(x, shade_r[shade], shade_g[shade], shade_b[shade])
+      if cgb != 0 {
+        -- DMG compatibility mode: the shade is a colour of the CGB palette BG 0 or OBJ 0/1
+        if use_sp {
+          put_cgb(x, obpal[p], obpal[p + 1])
+        } else {
+          put_cgb(x, bgpal[p], bgpal[p + 1])
+        }
+      } else {
+        put_pixel(x, shade_r[shade], shade_g[shade], shade_b[shade])
+      }
     }
   }
 }
