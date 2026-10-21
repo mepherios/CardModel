@@ -355,9 +355,14 @@ def run(profile: str | None = None, record: bool = False, record_verdicts: bool 
             target = Path(write) if write else home / "WEAKNESSES.md"
             target.write_text(md, encoding="utf-8")
             written.append(str(target))
+        env.note(regressions=an["regressions"], last_status=out["status"], last_started=started)
+        if record:          # the goals read this run's numbers only now (regressions): the generated table follows
+            from ..engines import coverage
+            (home / "COVERAGE.md").write_text(coverage.markdown(coverage.compute(ctx)), encoding="utf-8")
+            if "COVERAGE.md" not in written:
+                written.append("COVERAGE.md")
         out["written"] = written
         out["fingerprint"] = fingerprint(home)
-        env.note(regressions=an["regressions"], last_status=out["status"], last_started=started)
         if commit_changes:
             out["commit"] = commit(home, out, clean_before) if record else \
                 {"committed": False, "reason": "--commit needs --record (only recorded evidence is committed)"}

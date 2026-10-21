@@ -1,0 +1,659 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ABS",
+    "op/ADD",
+    "op/CMP_EQ",
+    "op/CMP_NE",
+    "op/MAX",
+    "op/MOD",
+    "op/OR"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef common_period(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    if a == 0 or b == 0:\n        return 0\n    m = max(a, b)\n    step = m\n    while m % a != 0 or m % b != 0:\n        m += step\n    return m",
+      "cost": 1.0,
+      "entry": "common_period",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t cm_max_i(int64_t a, int64_t b) { return b > a ? b : a; }\nstatic int64_t common_period(int64_t a, int64_t b) {\n    int64_t m = 0;\n    int64_t step = 0;\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if (((a == INT64_C(0)) || (b == INT64_C(0)))) {\n        return INT64_C(0);\n    }\n    m = cm_max_i(a, b);\n    step = m;\n    while (((cm_floormod(m, a) != INT64_C(0)) || (cm_floormod(m, b) != INT64_C(0)))) {\n        m = (m + step);\n    }\n    return m;\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_abs_i(a int64) int64 {\n\tif a < 0 {\n\t\treturn -a\n\t}\n\treturn a\n}\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc cm_max_i(a int64, b int64) int64 {\n\tif b > a {\n\t\treturn b\n\t}\n\treturn a\n}\nfunc common_period(a int64, b int64) int64 {\n\tvar m int64 = 0\n\t_ = m\n\tvar step int64 = 0\n\t_ = step\n\ta = cm_abs_i(a)\n\tb = cm_abs_i(b)\n\tif ((a == int64(0)) || (b == int64(0))) {\n\t\treturn int64(0)\n\t}\n\tm = cm_max_i(a, b)\n\tstep = m\n\tfor ((cm_floormod(m, a) != int64(0)) || (cm_floormod(m, b) != int64(0))) {\n\t\tm = (m + step)\n\t}\n\treturn m\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction cm_max_i(a, b) { return b > a ? b : a; }\nfunction common_period(a, b) {\n    let m = 0n;\n    let step = 0n;\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if (((a === (0n)) || (b === (0n)))) {\n        return (0n);\n    }\n    m = cm_max_i(a, b);\n    step = m;\n    while (((cm_floormod(m, a) !== (0n)) || (cm_floormod(m, b) !== (0n)))) {\n        m = (m + step);\n    }\n    return m;\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def common_period(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    if ((a == 0) or (b == 0)):\n        return 0\n    m = max(a, b)\n    step = m\n    while (((m % a) != 0) or ((m % b) != 0)):\n        m = (m + step)\n    return m\n\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_abs_i(a: i64) -> i64 { if a < 0 { -a } else { a } }\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn cm_max_i(a: i64, b: i64) -> i64 { if b > a { b } else { a } }\nfn common_period(a: i64, b: i64) -> i64 {\n    let mut a: i64 = a;\n    let mut b: i64 = b;\n    let mut m: i64 = 0;\n    let mut step: i64 = 0;\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if ((a == (0i64)) || (b == (0i64))) {\n        return (0i64);\n    }\n    m = cm_max_i(a, b);\n    step = m;\n    while ((cm_floormod(m, a) != (0i64)) || (cm_floormod(m, b) != (0i64))) {\n        m = (m + step);\n    }\n    return m;\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t cm_max_i(int64_t a, int64_t b) { return b > a ? b : a; }\nstatic int64_t common_period(int64_t a, int64_t b) {\n    int64_t m = 0;\n    int64_t step = 0;\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if (((a == INT64_C(0)) || (b == INT64_C(0)))) {\n        return INT64_C(0);\n    }\n    m = cm_max_i(a, b);\n    step = m;\n    while (((cm_floormod(m, a) != INT64_C(0)) || (cm_floormod(m, b) != INT64_C(0)))) {\n        m = (m + step);\n    }\n    return m;\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long common_period(long a, long b) {\n    long m = 0L;\n    long step = 0L;\n    a = Math.abs(a);\n    b = Math.abs(b);\n    if (((a == (0L)) || (b == (0L)))) {\n        return (0L);\n    }\n    m = Math.max(a, b);\n    step = m;\n    while (((Math.floorMod(m, a) != (0L)) || (Math.floorMod(m, b) != (0L)))) {\n        m = (m + step);\n    }\n    return m;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def common_period (a : Int) (b : Int) : Int := Id.run do\n  let mut a : Int := a\n  let mut b : Int := b\n  let mut m : Int := 0\n  let mut step : Int := 0\n  a := (Int.ofNat (Int.natAbs a))\n  b := (Int.ofNat (Int.natAbs b))\n  if ((a == (0 : Int)) || (b == (0 : Int))) then\n    return (0 : Int)\n  m := (max a b)\n  step := m\n  while (((Int.fmod m a) != (0 : Int)) || ((Int.fmod m b) != (0 : Int))) do\n    m := (m + step)\n  return m\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function cm_max_i(a, b) if b > a then return b else return a end end\nfunction common_period(a, b)\n  local m = 0\n  local step = 0\n  a = math.abs(a)\n  b = math.abs(b)\n  if ((a == (0)) or (b == (0))) then\n    return (0)\n  end\n  m = cm_max_i(a, b)\n  step = m\n  while (((m % a) ~= (0)) or ((m % b) ~= (0))) do\n    m = (m + step)\n    ::cm_continue_1::\n  end\n  return m\nend\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def cm_max_i(a, b)\n  b > a ? b : a\nend\ndef common_period(a, b)\n  m = 0\n  step = 0\n  a = ((a).abs)\n  b = ((b).abs)\n  if ((a == (0)) || (b == (0)))\n    return (0)\n  end\n  m = cm_max_i(a, b)\n  step = m\n  while (((m % a) != (0)) || ((m % b) != (0)))\n    m = (m + step)\n  end\n  return m\nend\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc cm_max_i(_ a: Int, _ b: Int) -> Int { return b > a ? b : a }\nfunc common_period(_ a: Int, _ b: Int) -> Int {\n    var a: Int = a\n    var b: Int = b\n    var m: Int = 0\n    var step: Int = 0\n    a = abs(a)\n    b = abs(b)\n    if ((a == (0)) || (b == (0))) {\n        return (0)\n    }\n    m = cm_max_i(a, b)\n    step = m\n    while ((cm_floormod(m, a) != (0)) || (cm_floormod(m, b) != (0))) {\n        m = (m + step)\n    }\n    return m\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction cm_max_i(a, b) { return b > a ? b : a; }\nfunction common_period(a: bigint, b: bigint): bigint {\n    let m: bigint = 0n;\n    let step: bigint = 0n;\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if (((a === (0n)) || (b === (0n)))) {\n        return (0n);\n    }\n    m = cm_max_i(a, b);\n    step = m;\n    while (((cm_floormod(m, a) !== (0n)) || (cm_floormod(m, b) !== (0n)))) {\n        m = (m + step);\n    }\n    return m;\n}\n",
+      "cost": 1.0,
+      "entry": "common_period",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "common_period",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "a",
+            "value": [
+              "ABS",
+              [
+                "var",
+                "a"
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "b",
+            "value": [
+              "ABS",
+              [
+                "var",
+                "b"
+              ]
+            ]
+          },
+          {
+            "cond": [
+              "OR",
+              [
+                "CMP_EQ",
+                [
+                  "var",
+                  "a"
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ],
+              [
+                "CMP_EQ",
+                [
+                  "var",
+                  "b"
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "int",
+                  0
+                ]
+              }
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "m",
+            "value": [
+              "MAX",
+              [
+                "var",
+                "a"
+              ],
+              [
+                "var",
+                "b"
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "step",
+            "value": [
+              "var",
+              "m"
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "m",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "m"
+                  ],
+                  [
+                    "var",
+                    "step"
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "OR",
+              [
+                "CMP_NE",
+                [
+                  "MOD",
+                  [
+                    "var",
+                    "m"
+                  ],
+                  [
+                    "var",
+                    "a"
+                  ]
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ],
+              [
+                "CMP_NE",
+                [
+                  "MOD",
+                  [
+                    "var",
+                    "m"
+                  ],
+                  [
+                    "var",
+                    "b"
+                  ]
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "m"
+            ]
+          }
+        ],
+        "locals": {
+          "m": "int",
+          "step": "int"
+        },
+        "name": "common_period",
+        "params": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_common_period_94844bfae3a1",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3132429613,
+    "source_sha256_12": "94844bfae3a1"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "common_period(a: int, b: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        -1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -50,
+        -50
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        50,
+        50
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        -28,
+        26
+      ],
+      "out": 364
+    },
+    {
+      "args": [
+        -43,
+        37
+      ],
+      "out": 1591
+    },
+    {
+      "args": [
+        26,
+        -43
+      ],
+      "out": 1118
+    },
+    {
+      "args": [
+        -19,
+        -30
+      ],
+      "out": 570
+    },
+    {
+      "args": [
+        -19,
+        -21
+      ],
+      "out": 399
+    },
+    {
+      "args": [
+        7,
+        -46
+      ],
+      "out": 322
+    },
+    {
+      "args": [
+        2,
+        -24
+      ],
+      "out": 24
+    },
+    {
+      "args": [
+        23,
+        -45
+      ],
+      "out": 1035
+    },
+    {
+      "args": [
+        27,
+        -17
+      ],
+      "out": 459
+    },
+    {
+      "args": [
+        23,
+        19
+      ],
+      "out": 437
+    },
+    {
+      "args": [
+        -29,
+        46
+      ],
+      "out": 1334
+    },
+    {
+      "args": [
+        -34,
+        -4
+      ],
+      "out": 68
+    },
+    {
+      "args": [
+        -11,
+        -42
+      ],
+      "out": 462
+    },
+    {
+      "args": [
+        -28,
+        -21
+      ],
+      "out": 84
+    },
+    {
+      "args": [
+        -5,
+        -11
+      ],
+      "out": 55
+    },
+    {
+      "args": [
+        19,
+        2
+      ],
+      "out": 38
+    },
+    {
+      "args": [
+        -23,
+        -11
+      ],
+      "out": 253
+    },
+    {
+      "args": [
+        -38,
+        26
+      ],
+      "out": 494
+    },
+    {
+      "args": [
+        -49,
+        -1
+      ],
+      "out": 49
+    },
+    {
+      "args": [
+        47,
+        -3
+      ],
+      "out": 141
+    },
+    {
+      "args": [
+        -21,
+        39
+      ],
+      "out": 273
+    },
+    {
+      "args": [
+        -11,
+        -17
+      ],
+      "out": 187
+    },
+    {
+      "args": [
+        -6,
+        4
+      ],
+      "out": 12
+    },
+    {
+      "args": [
+        9,
+        -25
+      ],
+      "out": 225
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3132429613
+    }
+  }
+}

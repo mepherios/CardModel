@@ -1,0 +1,535 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef xp_for_level(level: int) -> int:\n    \"\"\"Total XP to reach ``level``: 10 * (1^2 + 2^2 + ... + level^2).\"\"\"\n    total = 0\n    for i in range(1, level + 1):\n        total += i * i * 10\n    return total",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t xp_for_level(int64_t level) {\n    int64_t total = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    total = INT64_C(0);\n    cm_it1 = INT64_C(1);\n    cm_stop2 = (level + INT64_C(1));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        total = (total + ((i * i) * INT64_C(10)));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc xp_for_level(level int64) int64 {\n\tvar total int64 = 0\n\t_ = total\n\tvar i int64 = 0\n\t_ = i\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\ttotal = int64(0)\n\tcm_it1 = int64(1)\n\tcm_stop2 = (level + int64(1))\n\tfor (cm_it1 < cm_stop2) {\n\t\ti = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\ttotal = (total + ((i * i) * int64(10)))\n\t}\n\treturn total\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function xp_for_level(level) {\n    let total = 0n;\n    let i = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    total = (0n);\n    cm_it1 = (1n);\n    cm_stop2 = (level + (1n));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        total = (total + ((i * i) * (10n)));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def xp_for_level(level: int) -> int:\n    total = 0\n    for i in range(1, (level + 1), 1):\n        total = (total + ((i * i) * 10))\n    return total\n\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn xp_for_level(level: i64) -> i64 {\n    let mut total: i64 = 0;\n    let mut i: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    total = (0i64);\n    cm_it1 = (1i64);\n    cm_stop2 = (level + (1i64));\n    while (cm_it1 < cm_stop2) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        total = (total + ((i * i) * (10i64)));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t xp_for_level(int64_t level) {\n    int64_t total = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    total = INT64_C(0);\n    cm_it1 = INT64_C(1);\n    cm_stop2 = (level + INT64_C(1));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        total = (total + ((i * i) * INT64_C(10)));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long xp_for_level(long level) {\n    long total = 0L;\n    long i = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    total = (0L);\n    cm_it1 = (1L);\n    cm_stop2 = (level + (1L));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        total = (total + ((i * i) * (10L)));\n    }\n    return total;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def xp_for_level (level : Int) : Int := Id.run do\n  let mut total : Int := 0\n  let mut i : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  total := (0 : Int)\n  cm_it1 := (1 : Int)\n  cm_stop2 := (level + (1 : Int))\n  while (decide (cm_it1 < cm_stop2)) do\n    i := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    total := (total + ((i * i) * (10 : Int)))\n  return total\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function xp_for_level(level)\n  local total = 0\n  local i = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  total = (0)\n  cm_it1 = (1)\n  cm_stop2 = (level + (1))\n  while (cm_it1 < cm_stop2) do\n    i = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    total = (total + ((i * i) * (10)))\n    ::cm_continue_1::\n  end\n  return total\nend\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def xp_for_level(level)\n  total = 0\n  i = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  total = (0)\n  cm_it1 = (1)\n  cm_stop2 = (level + (1))\n  while (cm_it1 < cm_stop2)\n    i = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    total = (total + ((i * i) * (10)))\n  end\n  return total\nend\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc xp_for_level(_ level: Int) -> Int {\n    var total: Int = 0\n    var i: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    total = (0)\n    cm_it1 = (1)\n    cm_stop2 = (level + (1))\n    while (cm_it1 < cm_stop2) {\n        i = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        total = (total + ((i * i) * (10)))\n    }\n    return total\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function xp_for_level(level: bigint): bigint {\n    let total: bigint = 0n;\n    let i: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    total = (0n);\n    cm_it1 = (1n);\n    cm_stop2 = (level + (1n));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        total = (total + ((i * i) * (10n)));\n    }\n    return total;\n}\n",
+      "cost": 1.0,
+      "entry": "xp_for_level",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "xp_for_level",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "total",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "total",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "total"
+                  ],
+                  [
+                    "MUL",
+                    [
+                      "MUL",
+                      [
+                        "var",
+                        "i"
+                      ],
+                      [
+                        "var",
+                        "i"
+                      ]
+                    ],
+                    [
+                      "int",
+                      10
+                    ]
+                  ]
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              1
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "ADD",
+              [
+                "var",
+                "level"
+              ],
+              [
+                "int",
+                1
+              ]
+            ],
+            "stop_var": "cm_stop2",
+            "var": "i"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "total"
+            ]
+          }
+        ],
+        "locals": {
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "i": "int",
+          "total": "int"
+        },
+        "name": "xp_for_level",
+        "params": [
+          {
+            "name": "level",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_xp_for_level_0634eac7a068",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/game.py",
+    "seed": 3558831672,
+    "source_sha256_12": "0634eac7a068"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "level",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "xp_for_level(level: int) -> int lifted from slowframework/game.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        -1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -50
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        50
+      ],
+      "out": 429250
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 62010
+    },
+    {
+      "args": [
+        39
+      ],
+      "out": 205400
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 33110
+    },
+    {
+      "args": [
+        37
+      ],
+      "out": 175750
+    },
+    {
+      "args": [
+        33
+      ],
+      "out": 125290
+    },
+    {
+      "args": [
+        -8
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -43
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 94550
+    },
+    {
+      "args": [
+        -36
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 85550
+    },
+    {
+      "args": [
+        -38
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -4
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -29
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -25
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -39
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -24
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        -18
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 14960
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 5060
+    },
+    {
+      "args": [
+        -19
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 8190
+    },
+    {
+      "args": [
+        -23
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -13
+      ],
+      "out": 0
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}

@@ -1,0 +1,488 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/MOD",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef next_seed(seed: int) -> int:\n    return (seed * 1103515245 + 12345) % 2147483648",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t next_seed(int64_t seed) {\n    return cm_floormod(((seed * INT64_C(1103515245)) + INT64_C(12345)), INT64_C(2147483648));\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc next_seed(seed int64) int64 {\n\treturn cm_floormod(((seed * int64(1103515245)) + int64(12345)), int64(2147483648))\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction next_seed(seed) {\n    return cm_floormod(((seed * (1103515245n)) + (12345n)), (2147483648n));\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def next_seed(seed: int) -> int:\n    return (((seed * 1103515245) + 12345) % 2147483648)\n\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn next_seed(seed: i64) -> i64 {\n    return cm_floormod(((seed * (1103515245i64)) + (12345i64)), (2147483648i64));\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic int64_t next_seed(int64_t seed) {\n    return cm_floormod(((seed * INT64_C(1103515245)) + INT64_C(12345)), INT64_C(2147483648));\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long next_seed(long seed) {\n    return Math.floorMod(((seed * (1103515245L)) + (12345L)), (2147483648L));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def next_seed (seed : Int) : Int := Id.run do\n  return (Int.fmod ((seed * (1103515245 : Int)) + (12345 : Int)) (2147483648 : Int))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function next_seed(seed)\n  return (((seed * (1103515245)) + (12345)) % (2147483648))\nend\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def next_seed(seed)\n  return (((seed * (1103515245)) + (12345)) % (2147483648))\nend\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc next_seed(_ seed: Int) -> Int {\n    return cm_floormod(((seed * (1103515245)) + (12345)), (2147483648))\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction next_seed(seed: bigint): bigint {\n    return cm_floormod(((seed * (1103515245n)) + (12345n)), (2147483648n));\n}\n",
+      "cost": 1.0,
+      "entry": "next_seed",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "next_seed",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "return",
+            "value": [
+              "MOD",
+              [
+                "ADD",
+                [
+                  "MUL",
+                  [
+                    "var",
+                    "seed"
+                  ],
+                  [
+                    "int",
+                    1103515245
+                  ]
+                ],
+                [
+                  "int",
+                  12345
+                ]
+              ],
+              [
+                "int",
+                2147483648
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "next_seed",
+        "params": [
+          {
+            "name": "seed",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_next_seed_40a3f1152067",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/game.py",
+    "seed": 3558831672,
+    "source_sha256_12": "40a3f1152067"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "seed",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "next_seed(seed: int) -> int lifted from slowframework/game.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 12345
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1103527590
+    },
+    {
+      "args": [
+        -1
+      ],
+      "out": 1043980748
+    },
+    {
+      "args": [
+        -50
+      ],
+      "out": 658824943
+    },
+    {
+      "args": [
+        50
+      ],
+      "out": 1488683395
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 774121291
+    },
+    {
+      "args": [
+        39
+      ],
+      "out": 87433940
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 1698996010
+    },
+    {
+      "args": [
+        37
+      ],
+      "out": 27887098
+    },
+    {
+      "args": [
+        33
+      ],
+      "out": 2056277062
+    },
+    {
+      "args": [
+        -8
+      ],
+      "out": 1909308625
+    },
+    {
+      "args": [
+        -43
+      ],
+      "out": 1940980714
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 893214975
+    },
+    {
+      "args": [
+        -36
+      ],
+      "out": 1075652837
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 1937183378
+    },
+    {
+      "args": [
+        -38
+      ],
+      "out": 1016105995
+    },
+    {
+      "args": [
+        -4
+      ],
+      "out": 2028402309
+    },
+    {
+      "args": [
+        -29
+      ],
+      "out": 210324960
+    },
+    {
+      "args": [
+        -25
+      ],
+      "out": 329418644
+    },
+    {
+      "args": [
+        -39
+      ],
+      "out": 2060074398
+    },
+    {
+      "args": [
+        -24
+      ],
+      "out": 1432933889
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 59559187
+    },
+    {
+      "args": [
+        -18
+      ],
+      "out": 1611574415
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 476387081
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 1401261800
+    },
+    {
+      "args": [
+        -19
+      ],
+      "out": 508059170
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 1460808642
+    },
+    {
+      "args": [
+        -23
+      ],
+      "out": 388965486
+    },
+    {
+      "args": [
+        -13
+      ],
+      "out": 686699696
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}

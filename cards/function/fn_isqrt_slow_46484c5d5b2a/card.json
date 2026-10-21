@@ -1,0 +1,517 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_LE",
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef isqrt_slow(n: int) -> int:\n    r = 0\n    while (r + 1) * (r + 1) <= n:\n        r += 1\n    return r",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t isqrt_slow(int64_t n) {\n    int64_t r = 0;\n    r = INT64_C(0);\n    while ((((r + INT64_C(1)) * (r + INT64_C(1))) <= n)) {\n        r = (r + INT64_C(1));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc isqrt_slow(n int64) int64 {\n\tvar r int64 = 0\n\t_ = r\n\tr = int64(0)\n\tfor (((r + int64(1)) * (r + int64(1))) <= n) {\n\t\tr = (r + int64(1))\n\t}\n\treturn r\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function isqrt_slow(n) {\n    let r = 0n;\n    r = (0n);\n    while ((((r + (1n)) * (r + (1n))) <= n)) {\n        r = (r + (1n));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def isqrt_slow(n: int) -> int:\n    r = 0\n    while (((r + 1) * (r + 1)) <= n):\n        r = (r + 1)\n    return r\n\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn isqrt_slow(n: i64) -> i64 {\n    let mut r: i64 = 0;\n    r = (0i64);\n    while (((r + (1i64)) * (r + (1i64))) <= n) {\n        r = (r + (1i64));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t isqrt_slow(int64_t n) {\n    int64_t r = 0;\n    r = INT64_C(0);\n    while ((((r + INT64_C(1)) * (r + INT64_C(1))) <= n)) {\n        r = (r + INT64_C(1));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long isqrt_slow(long n) {\n    long r = 0L;\n    r = (0L);\n    while ((((r + (1L)) * (r + (1L))) <= n)) {\n        r = (r + (1L));\n    }\n    return r;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def isqrt_slow (n : Int) : Int := Id.run do\n  let mut r : Int := 0\n  r := (0 : Int)\n  while (decide (((r + (1 : Int)) * (r + (1 : Int))) <= n)) do\n    r := (r + (1 : Int))\n  return r\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function isqrt_slow(n)\n  local r = 0\n  r = (0)\n  while (((r + (1)) * (r + (1))) <= n) do\n    r = (r + (1))\n    ::cm_continue_1::\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def isqrt_slow(n)\n  r = 0\n  r = (0)\n  while (((r + (1)) * (r + (1))) <= n)\n    r = (r + (1))\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc isqrt_slow(_ n: Int) -> Int {\n    var r: Int = 0\n    r = (0)\n    while (((r + (1)) * (r + (1))) <= n) {\n        r = (r + (1))\n    }\n    return r\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function isqrt_slow(n: bigint): bigint {\n    let r: bigint = 0n;\n    r = (0n);\n    while ((((r + (1n)) * (r + (1n))) <= n)) {\n        r = (r + (1n));\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "isqrt_slow",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "isqrt_slow",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "r",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "r",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "r"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_LE",
+              [
+                "MUL",
+                [
+                  "ADD",
+                  [
+                    "var",
+                    "r"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ],
+                [
+                  "ADD",
+                  [
+                    "var",
+                    "r"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              ],
+              [
+                "var",
+                "n"
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "r"
+            ]
+          }
+        ],
+        "locals": {
+          "r": "int"
+        },
+        "name": "isqrt_slow",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_isqrt_slow_46484c5d5b2a",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3132429613,
+    "source_sha256_12": "46484c5d5b2a"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "isqrt_slow(n: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        5
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        14
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        24
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        25
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 4
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 4
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 3132429613
+    }
+  }
+}
