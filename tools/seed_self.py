@@ -205,6 +205,12 @@ CAPABILITIES = [
       "tests/test_godel.py::test_structural_numbers_decode_exactly"],
      ["GOALS.md", "docs/MATH_CORE.md"], ["cardmodel godel"], ["cardmodel/engines/godel.py"],
      "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."),
+    ("distillation", "Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms "
+     "land in one class, the cheapest term is the canonical one and its hash names it (MATH_CORE phase 0).",
+     L("CM25_laws_carry_into_optimization"),
+     ["tests/test_egraph.py::test_saturation_proves_and_canonicalizes", "tests/test_egraph.py::test_congruence"],
+     ["docs/MATH_CORE.md"], ["cardmodel distill"], ["cardmodel/engines/egraph.py"],
+     "Two pieces of code that mean the same thing are recognised as one, and the cheapest is chosen."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],

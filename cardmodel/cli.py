@@ -31,6 +31,7 @@
   cardmodel repl                         interactive card language
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel godel ledger|vector|gcd|number CARD...   the expanding Gödel model: primes, content, structure (CM43)
+  cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
 

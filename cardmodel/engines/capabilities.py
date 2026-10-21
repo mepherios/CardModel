@@ -496,6 +496,23 @@ def live_hub(ctx: Ctx, seed: int) -> str:
             "revised before the project's last change is stale")
 
 
+def distillation(ctx: Ctx, seed: int) -> str:
+    from . import egraph as E
+    from . import search
+    from .exprs import parse
+    rules, costs = E.rules_from_cards(ctx.store), search.op_costs(ctx.store)
+    _need(rules, "no equalities to saturate with")
+    r = E.equal(parse("max(a, b) + min(b, a)"), parse("a + b"), rules)
+    _need(r["equal"], "max(a, b) + min(b, a) == a + b is no longer proved by saturation")
+    c1 = E.canonical(parse("b * a + c"), rules, costs)
+    c2 = E.canonical(parse("c + a * b"), rules, costs)
+    _need(c1["hash"] == c2["hash"], "two equal terms got different canonical forms")
+    w = E.witness(parse("max(a, b) + min(b, a)"), parse("a + b"), seed)
+    _need(w["status"] == "witnessed", f"the witness disagrees: {w}")
+    return (f"{len(rules)} equalities saturate; a law-level identity is proved; equal terms share one canonical term "
+            f"({c1['hash'][:19]})")
+
+
 def godel_model(ctx: Ctx, seed: int) -> str:
     from collections import Counter
 
@@ -564,8 +581,8 @@ def integration(ctx: Ctx, seed: int) -> str:
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
-                                  world, machines, emulation, arcade, live_hub, godel_model, anyps5, self_run,
-                                  integration)}
+                                  world, machines, emulation, arcade, live_hub, godel_model, distillation, anyps5,
+                                  self_run, integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

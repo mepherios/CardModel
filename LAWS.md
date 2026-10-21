@@ -50,7 +50,7 @@ Laws from the source sets that are not carried over (hub GUI/hub-folder/process 
 
 ## The core: capabilities that carry the laws (CM37)
 
-28 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
+29 capability cards (cards/capability). Each one's smoke check runs in every `cardmodel verify` and every self-run (`cardmodel self capabilities`); a core capability that stops behaving fails verify, and every law above is carried by at least one of them.
 
 | capability | what the model can do | laws it carries | smoke check | witness tests |
 |---|---|---|---|---|
@@ -81,4 +81,5 @@ Laws from the source sets that are not carried over (hub GUI/hub-folder/process 
 | live_hub | The store follows everything in progress: project cards say what to watch and keep their owner's detail current (CM41); the hub computes each one's phase, branches, uncommitted work, metrics and builds from git and the model's records, read-only, gathers what waits on the user, and pushes changes to the launcher as they happen; early-access builds install beside the release. | CM01, CM35, CM41 | `live_hub` | `test_status_is_computed_from_git_and_state`, `test_git_reads_never_write`, `test_changes_are_pushed`, `test_early_access_is_separate_and_installable`, `test_missing_or_stale_project_cards_fail` |
 | godel_model | The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded exactly; maps between Gödel sets with their gaps. | CM43, CM31 | `godel_model` | `test_ledger_is_append_only`, `test_content_algebra_and_carry`, `test_structural_numbers_decode_exactly` |
 | self_run | The model runs itself: cycles of checks, learning and optimization with findings and a ranked plan; the core is never lost. | CM37, CM38 | `self_run` | `test_core_capabilities_are_never_lost`, `test_self_run_finds_flaws_and_ranks_them` |
+| distillation | Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms land in one class, the cheapest term is the canonical one and its hash names it (MATH_CORE phase 0). | CM25 | `distillation` | `test_saturation_proves_and_canonicalizes`, `test_congruence` |
 | integration | One program: unique law and goal numbers, every law carried by a capability, every command, section and doc described, generated docs in sync. | CM20, CM39 | `integration` | `test_laws_md_in_sync`, `test_one_program_integrity` |

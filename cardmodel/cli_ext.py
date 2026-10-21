@@ -569,6 +569,38 @@ def cmd_godel(args) -> int:
     return 2
 
 
+def cmd_distill(args) -> int:
+    from .engines import egraph as E
+    from .engines import search
+    from .engines import values as V
+    from .engines.exprs import parse, to_text
+    cli = _cli()
+    ctx = cli._ctx(args)
+    rules, costs = E.rules_from_cards(ctx.store), search.op_costs(ctx.store)
+    budget = {"max_iter": args.iterations, "max_nodes": args.nodes}
+    if args.measure:
+        r = E.measure(ctx)
+        cli._out(args, r, f"{r['terms']} function-card terms through {r['rules']} equalities: {r['reduced']} reduced, "
+                          f"{r['saturated']} saturated, {len(r['shared'])} canonical terms shared by several cards")
+        return 0
+    if not args.exprs or len(args.exprs) > 2:
+        print("usage: cardmodel distill EXPR [EXPR2] | --measure", file=sys.stderr)
+        return 2
+    terms = [parse(e) for e in args.exprs]
+    if len(terms) == 1:
+        r = E.canonical(terms[0], rules, costs, **budget)
+        cli._out(args, r, f"{to_text(r['term'])}   cost {r['cost']}   {r['hash']}\n"
+                          f"{r['iterations']} iterations, {r['nodes']} nodes, {'saturated' if r['saturated'] else 'budget spent'}; "
+                          f"equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")
+        return 0
+    r = E.equal(terms[0], terms[1], rules, **budget)
+    w = E.witness(terms[0], terms[1], V.fresh_seed() if args.seed is None else args.seed)
+    verdict = "equal" if r["equal"] else "not shown equal (within the budget; not a disproof)"
+    cli._out(args, {**r, "witness": w}, f"{verdict}; witness {w['status']} on {w['checks']} inputs "
+                                        f"(seed {w.get('seed')}); equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")
+    return 0 if r["equal"] else 1
+
+
 def register(sub) -> None:
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
@@ -605,6 +637,11 @@ def register(sub) -> None:
     s.add_argument("--start", type=int, default=0); s.add_argument("--write", action="store_true")
     s.add_argument("--number"); s.add_argument("--global", dest="global_", action="store_true")
     s.set_defaults(fn=cmd_algebra)
+    s = sub.add_parser("distill", help="equality saturation: a term's canonical form and semantic hash, or whether "
+                                       "two terms are equal")
+    s.add_argument("exprs", nargs="*"); s.add_argument("--measure", action="store_true")
+    s.add_argument("--iterations", type=int, default=8); s.add_argument("--nodes", type=int, default=4000)
+    s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_distill)
     s = sub.add_parser("godel", help="the expanding Gödel model: the prime ledger, content vectors, GCD and LCM")
     s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm"]); s.add_argument("cards", nargs="*")
     s.add_argument("--limit", type=int, default=20); s.set_defaults(fn=cmd_godel)
