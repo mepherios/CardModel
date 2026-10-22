@@ -187,7 +187,10 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
 
 * **The shell** gained three optional fields in game.json: `cartridge` (the array the cartridge's bytes go into and
   the function that decodes them; `--rom PATH` names the file, a .zip is read in memory), `clock` (an Int64 the
-  shell keeps at the Unix time) and `flush` (called before quitting). A game without them runs as before.
+  shell keeps at the Unix time) and `flush` (called before quitting). A game without them runs as before. Every
+  offset and size a zip gives is checked against the file and the card's cartridge slot before it is used: an
+  empty, half-copied or damaged file (or none) ends the player with status 1, the reason on stderr and, with a
+  window, in an alert, never a crash.
 * **The library** (`arcade/library.py`): every file in a system's folders, read where it is, nothing copied, with
   its header, the ROM survey's verdict as a compatibility badge (verified, playable, unsupported) and a title
   screen the machine draws headless (ten seconds, no buttons; cached in `state/arcade/covers/`; a screen that stays
@@ -263,7 +266,8 @@ level 3 it loses all 16.
 card; the player configures every board as the Python host does; its picture is the machine's at the same
 V-blank, with 1/60 s of sound per frame; battery RAM and the clock survive closing (an hour closed is an hour on
 the cartridge's clock); No-Intro names read as titles; a zipped cartridge is listed where it is and gets a title
-screen; the native package plays a zipped cartridge and shows what the module computes; a file without a No-Intro
+screen; the native package plays a zipped cartridge and shows what the module computes, and refuses an empty, half
+or damaged one (a name or size past the file or the slot) with status 1; a file without a No-Intro
 name is titled by its header; the check cartridge comes from the system card (its board, picture and save); a
 player reused for cartridge after cartridge starts each as a fresh one (and fails when the old cartridge's bytes
 are left behind); every cartridge of a synthetic library (a plain file, a zip, a battery cartridge whose save

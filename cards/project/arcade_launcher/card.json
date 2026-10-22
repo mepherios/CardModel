@@ -15,7 +15,8 @@
     "controls per program or cartridge (keyboard and controller), passed to the game as --controls",
     "controller setup with a live test, and the launcher driven with a controller",
     "installs never stop: a refused or lost build ends the wait, installs queue, one launcher at a time, the installed list follows the library folder",
-    "a console player's button opens its cartridges instead of starting it with nothing to play"
+    "a console player's button opens its cartridges instead of starting it with nothing to play",
+    "a damaged, empty or half-copied cartridge is refused with a message, never a player crash"
   ],
   "goal": "Every game the card model runs installs, updates and plays from one launcher, with your own keys and any controller, on every device you have.",
   "in_progress": [
@@ -55,7 +56,7 @@
   "statement": "The Steam-like launcher: store, library, downloads and updates for everything the card model plays natively, with the player's own controls and any controller.",
   "tier": 1,
   "title": "Cardmodel Arcade",
-  "updated": "2026-10-22T17:58:31+02:00",
+  "updated": "2026-10-22T18:29:59+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/sad-sanderson-482207 into main",
