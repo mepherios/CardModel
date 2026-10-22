@@ -88,7 +88,10 @@ change on disk; code changes need a restart.
   in a staging folder and swaps it in. When the cards in progress do not build, the last good build installs
   instead (a notice says so) and the pages show the build's error with *Try the build again*; a failed build is
   remembered with what it was built from (`state/arcade/build-errors.json`), so Update only comes back when the
-  cards change again.
+  cards change again. The wait for a build always ends: a build the service refuses ends it with the service's
+  reason, and one it no longer knows (it restarted) is asked for again after 2 s and ends the wait 10 s later
+  (`client.wait_build` is the same steps). Downloads go one at a time, like a store's queue: an Install or Update
+  asked for while one runs waits its turn (*Queued*; Downloads lists it under *Up next* with *Remove*).
 * **Versions and branches** (`arcade/work.py`): every git worktree of the repository is a branch, a session's work
   in progress. A program's version on a branch is listed on its store and library pages and installs like a
   beta: the service builds it in that worktree with the worktree's own `bin/cardmodel` (its code, its cards) and
@@ -98,9 +101,30 @@ change on disk; code changes need a restart.
 * **The service**: the app starts `cardmodel arcade serve` from the checkout it was installed from when it is not
   running, and again whenever the pages lose it (a crash, a restart), then reloads them.
 * **Verify integrity**: re-hashes every installed file against the manifest and re-acquires what fails.
+* **Controls** (like a store's input settings, so no game needs its own): every program's page (a game, a
+  console player, a cartridge) has *Configure controls*: each action of the program's card (`input.bits`) with its
+  keys for player 1 and player 2 and its controller button; click + and press a key or a button. The app keeps
+  them in `controls/<id>.json` (a cartridge's own, else its player's) and starts the program with
+  `--controls FILE`; the shell (`GameShell.swift`) then maps those keys and buttons instead of the card's (any
+  section the file gives replaces the card's; `--dump-controls` prints the mapping and quits). Letters, digits,
+  punctuation, F1 to F12, the keypad, the arrows and Shift / Control / Option can be given to a game; Command stays
+  with macOS. F toggles full screen only while no control uses F. A build made before this shell ignores the file
+  until the program is updated.
+* **Controllers**: macOS needs no driver for Xbox, PlayStation and MFi controllers (USB or Bluetooth). The
+  controller button in the header shows what is connected, live; in the games the first controller is player 1
+  and the second player 2 (the shell's GameController); in the launcher the stick or d-pad moves a highlight to
+  the nearest thing in that direction, A clicks it (twice on a cover plays), B is Back and Menu is the library
+  (the pages' Gamepad API, only while the launcher is in front and nothing it started is running).
 * **Play**: starts the game's executable, keeps play time and last played; **achievements** come from the game's
-  save (one byte each from offset 32, the layout `save.card` documents).
+  save (one byte each from offset 32, the layout `save.card` documents). A console player's button is *Your
+  cartridges* (its shelf in the library): started on its own it has nothing to play.
 * Everything lives in `~/Library/Application Support/Cardmodel Arcade/` (`library/`, `saves/`, `launcher.json`).
+  The library folder is the truth of what is installed: at start the launcher checks `launcher.json` against it
+  (an installation the record lost comes back from its own manifest, keeping its play time; a record whose folder
+  is gone goes; `--check-library` prints the result without a window, in the folder `CARDMODEL_ARCADE_SUPPORT`
+  names). One launcher runs at a time: opening the app again only brings it forward, so a second one is a
+  reinstall or another copy, and it takes over once the first has saved and quit (two used to save their own
+  records over each other's, losing installs).
 
 The pages (`cards/app/arcade/ui/`) are Store (featured, New & Noteworthy, categories, search over games, branch
 versions and cartridges, store pages with screenshots, about, requirements, achievements, patch notes, versions
@@ -111,7 +135,11 @@ with their build state and an Install button), Downloads (rate graph,
 progress, pause, cancel), News, a profile, and settings (bandwidth limit, cartridge folders). Everything that
 shows data opens something: crumbs, tags and developers list their games, a release date or size opens the
 build's details, stats go to the profile or the achievements, an achievement opens its card, patch notes and
-library groups fold, the service light shows the service's checkout and branch.
+library groups fold, the service light shows the service's checkout and branch. A cover has its own Play button,
+and a second click on a cover or a list entry plays it. The pages are rebuilt only when what they show changed
+(a refresh, the app's state reports and the featured picture's turn no longer rebuild them, so a click is never
+lost under a rebuild), and an open page reloads itself when the service's pages change (`/api/status` carries
+their hash): a reinstalled launcher never keeps old pages on screen.
 
 ## 4. The game
 
@@ -161,11 +189,16 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   the function that decodes them; `--rom PATH` names the file, a .zip is read in memory), `clock` (an Int64 the
   shell keeps at the Unix time), `clockOffset` (an Int64 it keeps at the local time's offset from UTC, in seconds:
   a system card's `clock_offset`, for a console whose clock shows the local time) and `flush` (called before
-  quitting). A game without them runs as before.
+  quitting). A game without them runs as before. Every offset and size a zip gives is checked against the file and
+  the card's cartridge slot before it is used: an empty, half-copied or damaged file (or none) ends the player with
+  status 1, the reason on stderr and, with a window, in an alert, never a crash.
 * **The library** (`arcade/library.py`): every file in a system's folders, read where it is, nothing copied, with
   its header, the ROM survey's verdict as a compatibility badge (verified, playable, unsupported) and a title
   screen the machine draws headless (ten seconds, no buttons; cached in `state/arcade/covers/`; a screen that stays
-  blank gets no picture). Its title is its No-Intro file name when it has one (region tags in parentheses), else the
+  blank gets no picture). The service looks at every new cartridge itself in the background: its picture, and the
+  survey's own run for it (`machine/survey.boot_one`: 1200 frames, the scripted taps, the same classification),
+  kept by SHA-1 in `state/arcade/verdicts.json`; so no cartridge stays *not checked yet*, and each console's shelf
+  says how many run. Its title is its No-Intro file name when it has one (region tags in parentheses), else the
   title in its cartridge header; the cartridge page says which. The folders are the user's (Settings in the
   launcher, or `arcade library --add`), kept in `library.json` beside the saves, so no card carries a user's path
   (CM13). Nothing derived from a cartridge (pictures, the survey, lifted code) leaves `state/`, which git ignores,
@@ -237,7 +270,8 @@ level 3 it loses all 16.
 card; the player configures every board as the Python host does; its picture is the machine's at the same
 V-blank, with 1/60 s of sound per frame; battery RAM and the clock survive closing (an hour closed is an hour on
 the cartridge's clock); No-Intro names read as titles; a zipped cartridge is listed where it is and gets a title
-screen; the native package plays a zipped cartridge and shows what the module computes; a file without a No-Intro
+screen; the native package plays a zipped cartridge and shows what the module computes, and refuses an empty, half
+or damaged one (a name or size past the file or the slot) with status 1; a file without a No-Intro
 name is titled by its header; the check cartridge comes from the system card (its board, picture and save); a
 player reused for cartridge after cartridge starts each as a fresh one (and fails when the old cartridge's bytes
 are left behind); every cartridge of a synthetic library (a plain file, a zip, a battery cartridge whose save
@@ -273,7 +307,9 @@ contributes to each piece, is docs/STORE.md.
 
 ## 7. Honest limits
 
-* macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker.
+* macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker (an iPhone
+  and iPad platform is being built in its own session).
+* Controls are per program (or per cartridge), not per player profile; the stick and the d-pad always move.
 * The launcher remembers a checkout's path to start the service: after moving the repository, run
   `cardmodel arcade launcher --install` again. Installed from a linked worktree, it points at the main checkout
   (`--home` chooses another).

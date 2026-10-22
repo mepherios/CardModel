@@ -134,7 +134,8 @@ def run(ctx, folder, frames: int = 1200, engine: str = "native", limit: int | No
     for r in rows:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     unsupported = sum(1 for r in rows if r.get("unsupported_mapper"))
-    return {"folder_files": len(paths), "frames": frames, "engine": machine.engine, "model": model, "counts": counts,
+    return {"folder_files": len(paths), "frames": frames, "engine": machine.engine, "model": model,
+            "machine": ir.get("hash"), "counts": counts,
             "unsupported_mappers": unsupported, "runs_fraction": round(counts.get("runs", 0) / max(1, len(rows)), 4),
             "rows": rows}
 

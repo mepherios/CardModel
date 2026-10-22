@@ -52,13 +52,23 @@ struct Spec: Decodable {
     let flush: String?             // called before the shell quits (unsaved battery RAM)
 }
 
+// the player's own controls (the launcher's Controls page): any section given replaces the game card's
+struct Controls: Decodable {
+    let keys: [String: [String]]?
+    let keys2: [String: [String]]?
+    let gamepad: [String: String]?
+}
+
 typealias VoidFn = @convention(c) () -> Void
 typealias FrameFn = @convention(c) (Int64, Int64) -> Int64
 typealias LoadFn = @convention(c) (Int64) -> Void
 
 // a cartridge file's bytes: the file itself, or the first member of a .zip with one of the extensions
-func readCartridge(_ path: String, _ exts: [String]) -> Data? {
-    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { return nil }
+// a cartridge file, or the first member of a .zip with one of the extensions; every offset and size the zip gives is
+// checked against the file and the card's slot (limit) first, so a damaged, empty or half-copied file is "cannot
+// read", never a crash or a giant allocation
+func readCartridge(_ path: String, _ exts: [String], limit: Int) -> Data? {
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)), !data.isEmpty else { return nil }
     if !path.lowercased().hasSuffix(".zip") { return data }
     let b = [UInt8](data)
     func u16(_ o: Int) -> Int { Int(b[o]) | Int(b[o + 1]) << 8 }
@@ -72,20 +82,38 @@ func readCartridge(_ path: String, _ exts: [String]) -> Data? {
         guard o + 46 <= b.count, u32(o) == 0x02014b50 else { return nil }
         let method = u16(o + 10), csize = u32(o + 20), usize = u32(o + 24)
         let nlen = u16(o + 28), elen = u16(o + 30), clen = u16(o + 32), local = u32(o + 42)
+        guard o + 46 + nlen <= b.count else { return nil }
         let name = String(decoding: b[(o + 46)..<(o + 46 + nlen)], as: UTF8.self).lowercased()
         o += 46 + nlen + elen + clen
-        guard exts.contains(where: { name.hasSuffix($0) }), local + 30 <= b.count else { continue }
+        guard exts.contains(where: { name.hasSuffix($0) }), local + 30 <= b.count, u32(local) == 0x04034b50,
+              usize > 0, usize <= limit else { continue }
         let start = local + 30 + u16(local + 26) + u16(local + 28)
         guard start + csize <= b.count else { return nil }
         if method == 0 { return Data(b[start..<(start + csize)]) }
         guard method == 8 else { return nil }
-        var out = [UInt8](repeating: 0, count: max(usize, 1))
+        var out = [UInt8](repeating: 0, count: usize)
         let n = b.withUnsafeBufferPointer { src in
-            compression_decode_buffer(&out, usize, src.baseAddress! + start, csize, nil, COMPRESSION_ZLIB)
+            src.baseAddress.map { compression_decode_buffer(&out, usize, $0 + start, csize, nil, COMPRESSION_ZLIB) } ?? 0
         }
-        return n == usize ? Data(out[0..<n]) : nil
+        return n == usize ? Data(out) : nil
     }
     return nil
+}
+
+// a cartridge this player cannot start: said on stderr (the launcher and the checks read it) and, with a window, in an
+// alert; then the player quits with status 1 (not a crash)
+func cannotPlay(_ message: String) -> Never {
+    FileHandle.standardError.write((message + "\n").data(using: .utf8)!)
+    let a = CommandLine.arguments
+    if !a.contains("--frames") && !a.contains("--dump-controls") {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "This cartridge can't be played"
+        alert.informativeText = message
+        alert.runModal()
+    }
+    exit(1)
 }
 
 final class Game {
@@ -130,11 +158,16 @@ final class Game {
         saveURL = dir.appendingPathComponent("save.bin")
         unsafeBitCast(sym(spec.entry.reset), to: VoidFn.self)()
         if let c = spec.cartridge {
-            guard let path = romPath ?? c.path else { fatalError("\(spec.title) plays a cartridge: start it with --rom PATH") }
-            guard let data = readCartridge(path, c.extensions) else { fatalError("cannot read a cartridge from \(path)") }
+            guard let path = romPath ?? c.path else {
+                cannotPlay("\(spec.title) plays your cartridges: open one from Cardmodel Arcade's library (or start it with --rom PATH).")
+            }
+            guard let data = readCartridge(path, c.extensions, limit: c.bytes) else {
+                cannotPlay("cannot read a cartridge from \(path): the file is empty, incomplete or damaged, or holds no "
+                           + c.extensions.joined(separator: " / ") + " cartridge.")
+            }
             let dst = sym(c.symbol).assumingMemoryBound(to: UInt8.self)
             let n = min(data.count, c.bytes)
-            data.withUnsafeBytes { raw in _ = memcpy(dst, raw.baseAddress!, n) }
+            data.withUnsafeBytes { raw in if let a = raw.baseAddress { _ = memcpy(dst, a, n) } }
             unsafeBitCast(sym(c.load), to: LoadFn.self)(Int64(n))
         }
         if let c = spec.clock {
@@ -263,14 +296,23 @@ final class Ring {
     }
 }
 
-// key names (game card) to macOS virtual key codes
+// key names (game card, the launcher's Controls page) to macOS virtual key codes
 let keyCodes: [String: UInt16] = [
     "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11, "q": 12, "w": 13,
     "e": 14, "r": 15, "y": 16, "t": 17, "o": 31, "u": 32, "i": 34, "p": 35, "l": 37, "j": 38, "k": 40, "n": 45,
     "m": 46, "return": 36, "tab": 48, "space": 49, "backspace": 51, "escape": 53, "left": 123, "right": 124,
     "down": 125, "up": 126, "keypad0": 82, "keypad1": 83, "keypad2": 84, "keypad3": 85, "keypad4": 86,
     "keypad5": 87, "keypad6": 88, "keypad7": 89, "keypad8": 91, "keypad9": 92, "keypadenter": 76,
+    "1": 18, "2": 19, "3": 20, "4": 21, "5": 23, "6": 22, "7": 26, "8": 28, "9": 25, "0": 29,
+    "minus": 27, "equal": 24, "leftbracket": 33, "rightbracket": 30, "semicolon": 41, "quote": 39, "comma": 43,
+    "period": 47, "slash": 44, "backslash": 42, "grave": 50, "keypadplus": 69, "keypadminus": 78,
+    "keypadmultiply": 67, "keypaddivide": 75, "keypaddecimal": 65,
+    "f1": 122, "f2": 120, "f3": 99, "f4": 118, "f5": 96, "f6": 97, "f7": 98, "f8": 100, "f9": 101, "f10": 109,
+    "f11": 103, "f12": 111,
+    "shift": 56, "rshift": 60, "control": 59, "rcontrol": 62, "option": 58, "roption": 61,
 ]
+// a modifier key's code and the flag that says it is down (they come as flagsChanged, not as keyDown / keyUp)
+let modifierFlag: [UInt16: NSEvent.ModifierFlags] = [56: .shift, 60: .shift, 59: .control, 62: .control, 58: .option, 61: .option]
 
 final class Screen: NSView {
     override var acceptsFirstResponder: Bool { true }
@@ -291,6 +333,7 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var held = Set<UInt16>()
     var map1: [UInt16: Int64] = [:]
     var map2: [UInt16: Int64] = [:]
+    var gamepadMap: [String: String] = [:]
     var timer: Timer?
     var last = CACurrentMediaTime()
     var acc = 0.0
@@ -303,6 +346,8 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var romPath: String?
     var titleText: String?
     var reliftFlag = false
+    var controlsPath: String?
+    var dumpControls = false
 
     func applicationDidFinishLaunching(_ note: Notification) {
         parseArgs()
@@ -310,8 +355,26 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
         game.reliftOnQuit = maxFrames < 0 || reliftFlag
         parseScript(scriptText)
         let s = game.spec
-        for (name, keys) in s.keys { if let b = s.bits.firstIndex(of: name) { for k in keys { if let c = keyCodes[k] { map1[c, default: 0] |= 1 << Int64(b) } } } }
-        for (name, keys) in s.keys2 { if let b = s.bits.firstIndex(of: name) { for k in keys { if let c = keyCodes[k] { map2[c, default: 0] |= 1 << Int64(b) } } } }
+        // the launcher's controls for this player (a file it passes), else the game card's
+        var own: Controls?
+        if let cp = controlsPath, let d = try? Data(contentsOf: URL(fileURLWithPath: cp)) {
+            own = try? JSONDecoder().decode(Controls.self, from: d)
+        }
+        gamepadMap = own?.gamepad ?? s.gamepad
+        for (name, keys) in own?.keys ?? s.keys { if let b = s.bits.firstIndex(of: name) { for k in keys { if let c = keyCodes[k] { map1[c, default: 0] |= 1 << Int64(b) } } } }
+        for (name, keys) in own?.keys2 ?? s.keys2 { if let b = s.bits.firstIndex(of: name) { for k in keys { if let c = keyCodes[k] { map2[c, default: 0] |= 1 << Int64(b) } } } }
+        if dumpControls {                  // what the keys and buttons would do, for checks: then quit
+            let names = Dictionary(keyCodes.map { ($0.value, $0.key) }, uniquingKeysWith: { a, _ in a })
+            func dump(_ m: [UInt16: Int64]) -> [String: Int64] {
+                Dictionary(uniqueKeysWithValues: m.map { (names[$0.key] ?? String($0.key), $0.value) })
+            }
+            let out: [String: Any] = ["keys": dump(map1), "keys2": dump(map2), "gamepad": gamepadMap, "bits": s.bits]
+            if let d = try? JSONSerialization.data(withJSONObject: out, options: [.sortedKeys]) {
+                print(String(data: d, encoding: .utf8) ?? "{}")
+            }
+            NSApp.terminate(nil)
+            return
+        }
         if maxFrames >= 0 { headless(); return }
         let w = CGFloat(s.screen.width * s.screen.scale), h = CGFloat(s.screen.height * s.screen.scale)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: w, height: h),
@@ -360,6 +423,8 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
             case "--rom": romPath = a[i + 1]; i += 1
             case "--title": titleText = a[i + 1]; i += 1
             case "--relift": reliftFlag = true
+            case "--controls": controlsPath = a[i + 1]; i += 1
+            case "--dump-controls": dumpControls = true
             default: break
             }
             i += 1
@@ -410,10 +475,17 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func key(_ e: NSEvent) {
         if e.type == .keyDown {
             if e.isARepeat { return }
-            if e.keyCode == 3 && !e.modifierFlags.contains(.command) { window.toggleFullScreen(nil); return }
+            // F is full screen unless the player's controls give F to the game (the menu's Command-F still works)
+            if e.keyCode == 3 && !e.modifierFlags.contains(.command) && map1[3] == nil && map2[3] == nil {
+                window.toggleFullScreen(nil); return
+            }
             held.insert(e.keyCode)
         } else if e.type == .keyUp {
             held.remove(e.keyCode)
+        } else if e.type == .flagsChanged, let flag = modifierFlag[e.keyCode] {
+            if e.modifierFlags.contains(flag) { held.insert(e.keyCode) } else {
+                for (code, f) in modifierFlag where f == flag { held.remove(code) }
+            }
         }
     }
 
@@ -431,8 +503,10 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
             "a": pad.buttonA, "b": pad.buttonB, "x": pad.buttonX, "y": pad.buttonY,
             "leftShoulder": pad.leftShoulder, "rightShoulder": pad.rightShoulder,
             "leftTrigger": pad.leftTrigger, "rightTrigger": pad.rightTrigger, "menu": pad.buttonMenu,
+            "options": pad.buttonOptions, "leftThumbstickButton": pad.leftThumbstickButton,
+            "rightThumbstickButton": pad.rightThumbstickButton,
         ]
-        for (name, button) in s.gamepad {
+        for (name, button) in gamepadMap {
             if let bt = buttons[button] ?? nil, bt.isPressed { b |= bit(name) }
         }
         return b

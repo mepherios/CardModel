@@ -192,6 +192,23 @@ class BossPhases(unittest.TestCase):
         self.assertEqual(g.m.get("round_state"), 1)
 
 
+class Pages(unittest.TestCase):
+    def test_the_pages_hash_changes_with_the_pages(self):
+        """/api/status carries a hash of the launcher's pages: an open page that sees it change loads the new ones
+        (a reinstalled launcher, a service restarted from another checkout)."""
+        import tempfile
+        from pathlib import Path
+        from cardmodel.arcade import server
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_ui_"))
+        (d / "index.html").write_text("<p>one</p>")
+        a = server.ui_hash(d)
+        (d / "app.js").write_text("// two")
+        b = server.ui_hash(d)
+        self.assertTrue(a and b and a != b)
+        self.assertEqual(server.ui_hash(d), b, "the same pages, the same hash")
+        self.assertEqual(server.ui_hash(None), "")
+
+
 @unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
 class Depot(unittest.TestCase):
     @classmethod
@@ -276,6 +293,123 @@ class Depot(unittest.TestCase):
                            "--shot", d + "/shot.png"], timeout=120, heavy=False)
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertIn("ran 120 frames", p.stdout)
+
+
+class BuildWait(unittest.TestCase):
+    """The launcher's wait for a build (Launcher.install; client.wait_build is the same steps) always ends: a build
+    the service refuses ends it with the service's reason, and a build the service no longer knows (it restarted) is
+    asked for again and, if it stays unknown, ends it. It used to wait for ever, and the launcher then ignored every
+    later install until it was restarted."""
+
+    @classmethod
+    def setUpClass(cls):
+        from http.server import ThreadingHTTPServer
+        from cardmodel.arcade import client
+        from cardmodel.arcade import server
+        cls.S, cls.C = server, client
+        server.Handler.ctx = model_ctx()
+        server.Handler.ui_dir = None
+        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()
+        cls.base = f"http://127.0.0.1:{cls.httpd.server_address[1]}"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+        cls.httpd.server_close()
+
+    def setUp(self):
+        self.real, self.limits = self.S.start_build, (self.C.LOST_ASK_AGAIN, self.C.LOST_GIVE_UP)
+        self.C.LOST_ASK_AGAIN, self.C.LOST_GIVE_UP = 2, 6         # the launcher's 2 s and 10 s, shortened
+        self.asked = []
+
+    def tearDown(self):
+        self.S.start_build = self.real
+        self.C.LOST_ASK_AGAIN, self.C.LOST_GIVE_UP = self.limits
+        self.S._builds.pop("vector_duel", None)
+
+    def forget_until(self, n):
+        """The service forgets each build it starts (as a restart does) until it has been asked n times."""
+        def start(ctx, gid):
+            self.asked.append(gid)
+            if len(self.asked) >= n:
+                self.S._builds[gid] = {"state": "done", "step": 6, "of": 6, "label": "ready", "build": "b1"}
+            return {"state": "building"}
+        self.S.start_build = start
+
+    def test_a_lost_build_is_asked_for_again(self):
+        self.forget_until(2)
+        self.assertEqual(self.C.wait_build(self.base, "vector_duel", timeout=60), "b1")
+        self.assertEqual(self.asked, ["vector_duel", "vector_duel"])
+
+    def test_a_build_that_stays_lost_ends_the_wait(self):
+        import time
+        self.forget_until(99)
+        t0 = time.monotonic()
+        with self.assertRaisesRegex(self.C.StoreError, "lost the build of vector_duel"):
+            self.C.wait_build(self.base, "vector_duel", timeout=60)
+        self.assertLess(time.monotonic() - t0, 20)
+        self.assertEqual(len(self.asked), 2, "asked once more, then the wait ended")
+
+    def test_a_refused_build_ends_the_wait_with_the_reason(self):
+        with self.assertRaisesRegex(self.C.StoreError, "would not build no_such_program: no such game"):
+            self.C.wait_build(self.base, "no_such_program", timeout=60)
+
+
+@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+class LauncherRecord(unittest.TestCase):
+    def test_the_record_follows_the_library_folder(self):
+        """The launcher compiles, and at start what it records as installed is what its library folder holds: an
+        installation the record lost (another launcher had saved over it) comes back from its own manifest, one
+        updated behind the record's back gets the folder's build and keeps its play time, a record whose folder is
+        gone goes, and a half-done install (its .staging folder) is no installation. Everything else in the record
+        stays. (--check-library runs this without a window, in the folder CARDMODEL_ARCADE_SUPPORT names.)"""
+        import os
+        import tempfile
+        from pathlib import Path
+        from cardmodel.kernel import resources
+        ctx = model_ctx()
+        app = ctx.store.get("app/arcade")
+        plat = ctx.store.get(f"platform/{app['platform']}")
+        work = Path(tempfile.mkdtemp(prefix="cardmodel_launcher_"))
+        exe = work / "launcher"
+        p = resources.run([B._tool(plat["probe"]), "-Onone", "-swift-version", "5", "-o", str(exe)]
+                          + [str(app.path / s) for s in app["sources"]]
+                          + ["-framework", "AppKit", "-framework", "WebKit", "-framework", "CryptoKit"], timeout=900)
+        self.assertEqual(p.returncode, 0, p.stderr[-3000:])
+        sup = work / "support"
+
+        def manifest(i, version, build):
+            d = sup / "library" / i
+            d.mkdir(parents=True)
+            (d / ".manifest.json").write_text(json.dumps({
+                "id": i.split(".")[0], "title": i, "version": version, "build": build, "app": f"{i}.app",
+                "executable": f"{i}.app/Contents/MacOS/{i}", "size": 10, "files": []}))
+
+        def record(version, build, seconds):
+            return {"version": version, "build": build, "size": 1, "installedAt": 1.0, "playSeconds": seconds,
+                    "lastPlayed": 2.0, "app": "x.app", "executable": "x", "manifest": "/depot/x"}
+        manifest("kept", "1.1.0", "b2")              # updated behind the record's back
+        manifest("lost", "0.4.0", "b9")              # installed, the record lost it
+        manifest("lost.staging", "0.5.0", "zz")      # an install that did not finish
+        (sup / "launcher.json").write_text(json.dumps({
+            "library": {"kept": record("1.0.0", "b1", 50.0), "gone": record("2.0.0", "b3", 7.0)},
+            "settings": {"bandwidth": 0, "user": "T"}, "played": {"rom-1": {"playSeconds": 3.0, "lastPlayed": 4.0}}}))
+        r = resources.run([str(exe), "--check-library"], timeout=60, heavy=False,
+                          env={**os.environ, "CARDMODEL_ARCADE_SUPPORT": str(sup)})
+        self.assertEqual(r.returncode, 0, r.stderr[-2000:])
+        lib = json.loads(r.stdout)
+        self.assertEqual(sorted(lib), ["kept", "lost"])
+        kept = lib["kept"]
+        self.assertEqual((kept["build"], kept["version"], kept["playSeconds"]), ("b2", "1.1.0", 50))
+        self.assertEqual((lib["lost"]["build"], lib["lost"]["playSeconds"]), ("b9", 0))
+        self.assertEqual(lib["lost"]["executable"], "lost.app/Contents/MacOS/lost")
+        saved = json.loads((sup / "launcher.json").read_text())
+        self.assertEqual(sorted(saved["library"]), ["kept", "lost"], "the healed record is saved")
+        self.assertEqual(saved["library"]["kept"]["installedAt"], 1.0)
+        self.assertEqual(saved["library"]["lost"]["manifest"], "/depot/lost/0.4.0+b9/manifest.json")
+        self.assertEqual(saved["played"], {"rom-1": {"playSeconds": 3, "lastPlayed": 4}})
+        self.assertEqual(saved["settings"]["user"], "T")
 
 
 class Store(unittest.TestCase):
