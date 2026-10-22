@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "quadratic in the order",
+  "decides": "the shortest linear recurrence of a one-integer function, its canonical form and Gödel number",
+  "limits": "fitted from values and checked on unused terms, not proved; no form when the behaviour is not a linear recurrence",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "fit_recurrence",
+  "procedure": "cardmodel/engines/funcalg.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "the shortest linear recurrence of a one-integer function, its canonical form and Gödel number",
+  "status": "built",
+  "tier": 0
+}

@@ -4,13 +4,27 @@
   "decides": "a statement, with a proof the Lean kernel accepts",
   "limits": "the statement must be expressible in Lean; failing tactics are not a disproof",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "30eb40d62f2539e5991b2393af751d22049d2af3746f2bb8a385b0d9407bddaf",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "lean_kernel",
   "procedure": "cardmodel/emit/lean.py",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Def-4",
+      "Rule-11",
+      "Ph-15"
+    ],
+    "decides": "decidable",
+    "general": "is the statement provable",
+    "general_rank": "Σ1",
+    "question": "whether a given proof term checks against its statement",
+    "why": "checking a proof is the decidable Proof(y, x) of Def-4; provability Prov(x) = ∃y Proof(y, x) is Σ1, confirmed by a proof and never refuted in general (Gödel's first incompleteness theorem)"
   },
   "statement": "a statement, with a proof the Lean kernel accepts",
   "status": "built",

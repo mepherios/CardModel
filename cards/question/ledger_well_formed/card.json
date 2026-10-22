@@ -1,0 +1,20 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-18"
+  ],
+  "instead": "godel.check: indices without gaps, each prime the n-th prime, each atom once, a prefix of HEAD",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ledger_well_formed",
+  "promise": "answered",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "decidable",
+  "statement": "Is the ledger well formed and append-only since the last commit?",
+  "tier": 0
+}

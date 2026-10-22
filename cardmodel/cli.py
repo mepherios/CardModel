@@ -35,6 +35,7 @@
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
   cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics
   cardmodel tiers census|prove ALGORITHM    each claim's tier; prove an algorithm's forms by sized witnesses (CM46)
+  cardmodel difficulty                     the rank of what each method decides; the questions left open (W-15)
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
 

@@ -25,7 +25,7 @@ memory on this machine, and a session started by another session's message canno
 
 | W | question | branch | status |
 |---|---|---|---|
-| W-15 | which of the product's questions are decidable? | `claude/godel-w15-difficulty` | started |
+| W-15 | which of the product's questions are decidable? | `claude/godel-w15-difficulty` | done |
 | W-3 | which code should identify a card? | `claude/godel-w3-identity` | waiting |
 | W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | waiting |
 | W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | waiting |
@@ -38,3 +38,33 @@ freeness behind GM-3 in plain Lean (T1 to T4 of the research handover).
 ## Results
 
 Each workstream adds its section here when it merges.
+
+### W-15: the difficulty census (Cap-18, Ph-15, GM-7)
+
+Every method card now carries `rank`: the arithmetical rank of the question it decides, and of the general question
+it serves (`cardmodel difficulty`, `engines/difficulty.py`). A rank is an upper bound read from the question's
+logical form: an ∃ over a decidable relation is Σ1, a ∀ is Π1, ∀∃ is Π2 (tier proof for the bound; completeness for
+the level is cited from the literature).
+
+| method | decides (rank) | serves (rank) |
+|---|---|---|
+| lift_python, emit, learn, witness, fit_recurrence | a finite translation or finitely many checks (decidable) | equality with the meaning on every input (Π1) |
+| sized_witness | equality inside a recognized class (decidable) | equality of two integer functions (Π1) |
+| saturate | equality within a budget (decidable) | equality under the rules: the word problem (Σ1) |
+| lean_kernel | whether a given proof checks (decidable) | provability (Σ1, Def-4) |
+| symbolic_execution | terms of loop-free fixed-width code (decidable) | their equality with the semantics on every 8-bit input (decidable: a finite domain) |
+| human_written | nothing by itself | its correctness (Π1) |
+
+Of the 18 questions the product asks (`cards/question`), 7 are decidable and promised: a valid code, a well-formed
+ledger, part-of and gcd, gcd preservation under a carry map, a proof checks, instruction terms on 8-bit inputs, and
+forms in a recognized class. 11 are left open, each card stating what the product does instead:
+
+* Σ1, confirmed by a witness and never refuted in general: provable, halts, equal under the rule cards.
+* Π1, refuted by one counterexample and never confirmed by finitely many checks: two total programs equal, the
+  model consistent (never certified from inside, Rule-12), a learned card right, a term's shortest description.
+* Π2: a program total, the rewrite system terminating, the basis complete (Gödel's first theorem already says no
+  for a consistent basis containing Q).
+* Beyond the arithmetical hierarchy: whether an arithmetic sentence is true (Tarski, Rule-13).
+
+GM-7 as a law (verify fails on a method or claim without its rank or tier) is the user's decision; the tiers half is
+law CM46 already.

@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "Cap-16",
+    "Ph-15"
+  ],
+  "instead": "prove termination for its class (primitive recursion, System T, a decreasing measure), else leave it open (Cap-16)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "total",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Π2",
+  "statement": "Is this program total: does it halt on every input?",
+  "tier": 0
+}
