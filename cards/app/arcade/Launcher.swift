@@ -4,7 +4,9 @@
 // verify an installation, launch a game and keep its play time, read its achievements from its save.
 //
 // Everything lives in ~/Library/Application Support/Cardmodel Arcade: library/ (installed games),
-// saves/ (each game's save, written by the game), launcher.json (what is installed, play time, settings).
+// saves/ (each game's save, written by the game), launcher.json (what is installed, play time, settings); the
+// library folder is the truth of what is installed (launcher.json is checked against it at start). One launcher
+// runs at a time, and downloads go one at a time with the others queued behind.
 // The user's own cartridges are played by an installed console player (a system build): it is started with
 // --rom on the cartridge where it is, and a save folder per cartridge. A program can also be installed from
 // another branch of the repository (a session's work in progress, like a beta): the service builds it there and
@@ -16,8 +18,10 @@ import WebKit
 
 let port = 8770
 let base = URL(string: "http://127.0.0.1:\(port)")!
-let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-    .appendingPathComponent("Cardmodel Arcade", isDirectory: true)
+// CARDMODEL_ARCADE_SUPPORT puts it elsewhere (the tests' own folder; never the player's)
+let support = ProcessInfo.processInfo.environment["CARDMODEL_ARCADE_SUPPORT"].map { URL(fileURLWithPath: $0, isDirectory: true) }
+    ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("Cardmodel Arcade", isDirectory: true)
 let libraryDir = support.appendingPathComponent("library", isDirectory: true)
 let savesDir = support.appendingPathComponent("saves", isDirectory: true)
 // the player's own controls per program (or per cartridge): what the Controls page writes, passed to the game
@@ -89,11 +93,24 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
     var running: [String: (Process, Double)] = [:]
     var download: Task<Void, Never>?
     var downloadId: String?
+    var queue: [(id: String, branch: String)] = []      // installs and updates waiting for the one download slot
     var paused = false
     var cancelled = false
 
     // -- start ---------------------------------------------------------------------------------------------------------
     func applicationDidFinishLaunching(_ n: Notification) {
+        // one launcher at a time: two would each keep their own record of what is installed and save it over the
+        // other's. Opening the app again only brings it forward, so a second one is a reinstall or another copy:
+        // it takes over once the other has saved and quit (a game the other started keeps running)
+        let me = ProcessInfo.processInfo.processIdentifier
+        let others = Bundle.main.bundleIdentifier.map { NSRunningApplication.runningApplications(withBundleIdentifier: $0) }
+            .map { $0.filter { $0.processIdentifier != me } } ?? []
+        others.forEach { $0.terminate() }
+        let until = Date().addingTimeInterval(10)
+        while others.contains(where: { !$0.isTerminated }) && Date() < until {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        others.filter { !$0.isTerminated }.forEach { $0.forceTerminate() }
         try? FileManager.default.createDirectory(at: libraryDir, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: savesDir, withIntermediateDirectories: true)
         load()
@@ -212,6 +229,31 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
     // -- state -----------------------------------------------------------------------------------------------------
     func load() {
         if let d = try? Data(contentsOf: stateFile), let s = try? JSONDecoder().decode(LauncherState.self, from: d) { state = s }
+        if reconcile() { save() }
+    }
+    // what is installed is what the library folder holds: an installation the record lost (another launcher saved
+    // over it) comes back from its own manifest, keeping its play time, and a record without its folder goes
+    func reconcile() -> Bool {
+        let fm = FileManager.default
+        var changed = false
+        for id in state.library.keys where !fm.fileExists(atPath: installDir(id).appendingPathComponent(".manifest.json").path) {
+            state.library[id] = nil
+            changed = true
+        }
+        for dir in (try? fm.contentsOfDirectory(at: libraryDir, includingPropertiesForKeys: [.creationDateKey])) ?? [] {
+            guard let d = try? Data(contentsOf: dir.appendingPathComponent(".manifest.json")),
+                  let m = try? JSONDecoder().decode(Manifest.self, from: d), m.id == dir.lastPathComponent,
+                  state.library[m.id]?.build != m.build else { continue }
+            let old = state.library[m.id]
+            let made = (try? dir.resourceValues(forKeys: [.creationDateKey]).creationDate)?.timeIntervalSince1970
+            state.library[m.id] = Installed(version: m.version, build: m.build, size: m.size,
+                                            installedAt: old?.installedAt ?? made ?? Date().timeIntervalSince1970,
+                                            playSeconds: old?.playSeconds ?? 0, lastPlayed: old?.lastPlayed ?? 0,
+                                            app: m.app, executable: m.executable,
+                                            manifest: "/depot/\(m.id)/\(m.version)+\(m.build)/manifest.json", source: old?.source)
+            changed = true
+        }
+        return changed
     }
     func save() {
         if let d = try? JSONEncoder().encode(state) { try? d.write(to: stateFile, options: .atomic) }
@@ -243,7 +285,7 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         }
         return ["library": lib, "played": carts, "controls": controls,
                 "settings": ["bandwidth": state.settings.bandwidth, "user": state.settings.user],
-                "downloading": downloadId as Any, "paused": paused, "native": true,
+                "downloading": downloadId as Any, "queued": queue.map { $0.id }, "paused": paused, "native": true,
                 "libraryPath": libraryDir.path]
     }
 
@@ -264,6 +306,7 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         case "pause": paused = true; emit(["type": "state", "state": snapshot()])
         case "resume": paused = false; emit(["type": "state", "state": snapshot()])
         case "cancel": cancelled = true; paused = false
+        case "dequeue": queue.removeAll { $0.id == id }; emit(["type": "state", "state": snapshot()])
         case "play": play(id)
         case "play_rom":
             playRom(id, player: body["player"] as? String ?? "", path: body["path"] as? String ?? "",
@@ -305,7 +348,11 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
     }
 
     func emit(_ obj: [String: Any]) {
-        guard let d = try? JSONSerialization.data(withJSONObject: obj), let s = String(data: d, encoding: .utf8) else { return }
+        guard JSONSerialization.isValidJSONObject(obj), let d = try? JSONSerialization.data(withJSONObject: obj),
+              let s = String(data: d, encoding: .utf8) else {
+            NSLog("Cardmodel Arcade: an event for the page could not be written: %@", String(describing: obj["type"]))
+            return
+        }
         DispatchQueue.main.async { self.web.evaluateJavaScript("window.arcade && window.arcade.event(\(s))") }
     }
 
@@ -326,21 +373,33 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
     }
 
     func startDownload(_ id: String, branch: String) {
-        if download != nil { return }
+        if download != nil {
+            // one download at a time: this one waits its turn (asking again for the one in progress changes nothing)
+            if id != downloadId && !queue.contains(where: { $0.id == id }) { queue.append((id, branch)) }
+            emit(["type": "state", "state": snapshot()])
+            return
+        }
+        queue.removeAll { $0.id == id }
         downloadId = id
         paused = false
         cancelled = false
         emit(["type": "state", "state": snapshot()])
         download = Task {
+            var failure: String? = nil
             do {
                 try await self.install(id, branch: branch)
-                self.emit(["type": "done", "id": id])
             } catch {
-                self.emit(["type": "error", "id": id, "message": "\(error)"])
+                failure = "\(error)"
             }
-            self.download = nil
-            self.downloadId = nil
-            self.emit(["type": "state", "state": self.snapshot()])
+            // whatever happened, the slot is free again, and the next in the queue starts
+            await MainActor.run {
+                self.download = nil
+                self.downloadId = nil
+                if let f = failure { self.emit(["type": "error", "id": id, "message": f]) }
+                else { self.emit(["type": "done", "id": id]) }
+                if self.queue.isEmpty { self.emit(["type": "state", "state": self.snapshot()]) }
+                else { let next = self.queue.removeFirst(); self.startDownload(next.id, branch: next.branch) }
+            }
         }
     }
 
@@ -354,11 +413,28 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         if (entry["build_due"] as? Bool) == true {
             let req = { () -> URLRequest in
                 var r = URLRequest(url: self.url("api/build/\(id)\(q)")); r.httpMethod = "POST"; return r }()
-            _ = try await URLSession.shared.data(for: req)
+            let (bd, br) = try await URLSession.shared.data(for: req)
+            if (br as? HTTPURLResponse)?.statusCode != 200 {
+                let why = ((try? JSONSerialization.jsonObject(with: bd)) as? [String: Any])?["error"] as? String
+                throw ArcadeError.message("the arcade service would not build \(id)\(from): \(why ?? "no reason given")")
+            }
+            let began = Date()
+            var lost = 0
             while true {
                 try await Task.sleep(nanoseconds: 250_000_000)
                 guard let st = try await fetchJSON("api/build/\(id)\(q)") as? [String: Any] else { continue }
                 let s = st["state"] as? String ?? ""
+                // the service no longer knows the build (it restarted): ask once more, then say so
+                if s != "building" && s != "done" && s != "error" {
+                    lost += 1
+                    if lost == 8 { _ = try? await URLSession.shared.data(for: req) }
+                    if lost > 40 { throw ArcadeError.message("the arcade service lost the build of \(id)\(from) (it restarted?): try again") }
+                    continue
+                }
+                lost = 0
+                if Date().timeIntervalSince(began) > 30 * 60 {
+                    throw ArcadeError.message("the build of \(id)\(from) took more than 30 minutes: try again")
+                }
                 progress(id, "building", st["step"] as? Int ?? 0, st["of"] as? Int ?? 6, 0,
                          st["label"] as? String ?? "")
                 if s == "done" { break }
@@ -566,6 +642,18 @@ extension Arcade {
             emit(["type": "error", "id": id, "message": "could not start: \(error)"])
         }
     }
+}
+
+// --check-library (the tests): the record after the start-up check against the library folder, then exit (no
+// window, no other launcher touched)
+if CommandLine.arguments.contains("--check-library") {
+    let a = Arcade()
+    a.load()
+    let lib = a.state.library.mapValues { ["version": $0.version, "build": $0.build, "playSeconds": $0.playSeconds,
+                                           "executable": $0.executable] as [String: Any] }
+    let d = try! JSONSerialization.data(withJSONObject: lib, options: [.sortedKeys])
+    print(String(data: d, encoding: .utf8)!)
+    exit(0)
 }
 
 let app = NSApplication.shared

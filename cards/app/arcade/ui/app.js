@@ -20,7 +20,12 @@ function send(cmd, extra) {
 }
 window.arcade = {
   event(e) {
-    if (e.type === "state") { S.native = e.state; render(); return; }
+    if (e.type === "state") {
+      S.native = e.state;
+      // one download at a time: progress left from one that ended (its last event lost) must not keep a busy button
+      for (const id of Object.keys(S.progress)) if (id !== S.native.downloading) delete S.progress[id];
+      render(); return;
+    }
     if (e.type === "progress") {
       S.progress[e.id] = e;
       if (e.phase === "downloading") {
@@ -37,6 +42,8 @@ window.arcade = {
     if (e.type === "error") { delete S.progress[e.id]; S.lastErr[e.id] = e.message; toast("Problem: " + e.message); render(); return; }
     if (e.type === "notice") { S.notice[e.id] = e.message; toast(e.message); render(); return; }
     if (e.type === "verified") {
+      delete S.progress[e.id];               // its button said Validating; a repair, if any, reports its own progress
+      render();
       toast(e.ok ? `All ${e.files} files validated.` : `${e.bad} file(s) failed to validate and will be reacquired.`); return;
     }
     if (e.type === "running") { toast(`${(game(e.id) || rom(e.id) || {}).title || e.id} is running.`); }
@@ -165,13 +172,26 @@ async function details(id, wt) {
 function status(g) {
   const inst = S.native.library[g.id];
   const p = S.progress[g.id];
-  if (S.native.downloading === g.id || p) return { kind: "busy", label: p ? phaseLabel(p) : "Queued" };
+  if (S.native.downloading === g.id || p) return { kind: "busy", label: p ? phaseLabel(p) : "Starting" };
+  if ((S.native.queued || []).includes(g.id)) return { kind: "busy", label: "Queued" };
   if (!inst) return { kind: "install", label: "Install" };
   if (inst.running) return { kind: "stop", label: "Stop" };
   const v = sourceOf(g);
   if (v && v.build && v.build.build !== inst.build) return { kind: "update", label: "Update" };
   if (v && v.build_due && !v.build_error && !v.building) return { kind: "update", label: "Update" };
+  // a console player plays cartridges: started on its own it has nothing to play, so its button goes to them
+  if (g.kind === "system") return { kind: "carts", label: "Your cartridges" };
   return { kind: "play", label: "Play" };
+}
+// a console player's cartridges: the library's shelf of its first console that has some
+function cartridgesOf(g) {
+  const sy = S.lib.systems.find((s) => s.player === g.id);
+  const subs = (sy && sy.systems) || [];
+  const sub = subs.find((x) => S.lib.roms.some((r) => r.system_card === sy.id && r.system === x.id));
+  S.libSel = "home"; S.libQuery = "";
+  go("library", "home");
+  if (sub) setTimeout(() => scrollTo("shelf-" + sub.label.replace(/\W+/g, "-")), 60);
+  else toast(`${g.title} plays your cartridges: add a folder of them in Settings.`);
 }
 function phaseLabel(p) {
   if (p.phase === "building") return `Building from cards ${p.done}/${p.total}`;
@@ -186,12 +206,13 @@ function act(g) {
   const branch = inst ? instWt(g) : wtOf(shown(g));
   if (st.kind === "install" || st.kind === "update") send(st.kind, { id: g.id, branch });
   else if (st.kind === "play") send("play", { id: g.id });
+  else if (st.kind === "carts") cartridgesOf(g);
   else if (st.kind === "stop") send("stop", { id: g.id });
 }
 function bigButton(g, small) {
   const st = status(g);
-  const cls = st.kind === "busy" ? "busy" : st.kind;
-  const icon = st.kind === "play" ? "&#9654;&nbsp; " : st.kind === "install" || st.kind === "update" ? "&#11015;&nbsp; " : "";
+  const cls = st.kind === "busy" ? "busy" : st.kind === "carts" ? "play" : st.kind;
+  const icon = st.kind === "play" || st.kind === "carts" ? "&#9654;&nbsp; " : st.kind === "install" || st.kind === "update" ? "&#11015;&nbsp; " : "";
   return `<button class="btn ${cls}${small ? " small" : ""}" data-act="${esc(g.id)}">${icon}${esc(st.label)}</button>`;
 }
 // one version of a program: what its build is, and the button that installs exactly it
@@ -728,6 +749,9 @@ function downloadsView() {
         <div id="progress-${esc(g.id)}" class="progress"></div></div>
       <div class="ctl">${S.native.paused ? `<button class="btn small install" data-resume="1">Resume</button>` : `<button class="btn small ghost" data-pause="1">Pause</button>`}
         <button class="btn small ghost" data-cancel="1">Cancel</button></div></div>` : `<div class="empty">Nothing is downloading.</div>`}
+    ${(S.native.queued || []).length ? `<div class="section-title">Up next</div>` + S.native.queued.map((qid) => { const qg = game(qid); return qg ? `<div class="dlitem"><div class="art" data-lib="${esc(qg.id)}" style="background-image:url('${art(qg, "header_460x215")}')"></div>
+      <div><a class="name" data-lib="${esc(qg.id)}">${esc(qg.title)}</a><div class="phase">Queued</div></div>
+      <div class="ctl"><button class="btn small ghost" data-dequeue="${esc(qg.id)}">Remove</button></div></div>` : ""; }).join("") : ""}
     <div class="section-title">Completed</div>
     ${S.completed.length ? S.completed.map((c) => { const cg = game(c.id); return cg ? `<div class="dlitem"><div class="art" data-lib="${esc(cg.id)}" style="background-image:url('${art(cg, "header_460x215")}')"></div>
       <div><a class="name" data-lib="${esc(cg.id)}">${esc(cg.title)}</a><div class="phase">Installed ${new Date(c.at).toLocaleTimeString()}</div></div>
@@ -1166,6 +1190,7 @@ function bind() {
   on("[data-pause]", () => send("pause"));
   on("[data-resume]", () => send("resume"));
   on("[data-cancel]", () => send("cancel"));
+  on("[data-dequeue]", (el) => send("dequeue", { id: el.dataset.dequeue }));
   on("[data-browse]", (el) => go("browse", { mode: el.dataset.browse }));
   on("[data-gostore]", () => go("store"));
   on("[data-goview]", (el) => { $("#modal").classList.add("hidden"); go(el.dataset.goview); });

@@ -1,8 +1,9 @@
 """client — the launcher's side of the arcade service in Python: what Cardmodel Arcade.app does, step for step, so
 the store can be checked end to end wherever the toolchains are (law CM42; the self-run's `store` step).
 
-    install(base, gid, library)   ask the service to build when the cards changed (POST /api/build/ID, then poll
-                                  its progress), fetch the manifest, download every chunk that is not already
+    install(base, gid, library)   ask the service to build when the cards changed (wait_build: POST /api/build/ID,
+                                  then poll its progress; a refused or lost build ends the wait), fetch the
+                                  manifest, download every chunk that is not already
                                   installed, check each chunk's and each file's SHA-256, assemble the files in a
                                   staging folder and swap it in; ``repair`` reuses every intact chunk of the
                                   installed build and fetches only what failed (the launcher's verify -> repair)
@@ -38,6 +39,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -70,25 +72,51 @@ def _post(base: str, path: str):
         return json.loads(r.read())
 
 
+LOST_ASK_AGAIN, LOST_GIVE_UP = 8, 40     # polls of 0.25 s the service may not know the build (Launcher.install)
+
+
+def wait_build(base: str, gid: str, timeout: float = 900, say=None) -> str | None:
+    """Ask the service to build gid and wait for it, as the launcher does: a request the service refuses ends the
+    wait with its reason; a build it no longer knows (it restarted) is asked for once more after 2 s, and after
+    10 s more the wait ends, so an install never waits on a build that will not finish."""
+    say = say or (lambda *a: None)
+    try:
+        _post(base, f"/api/build/{gid}")
+    except urllib.error.HTTPError as exc:
+        with exc:
+            why = json.loads(exc.read() or b"{}").get("error") or exc.reason
+        raise StoreError(f"the arcade service would not build {gid}: {why}") from None
+    deadline, lost = time.monotonic() + timeout, 0
+    while True:
+        time.sleep(0.25)
+        st = _json(base, f"/api/build/{gid}")
+        if st.get("state") not in ("building", "done", "error"):
+            lost += 1
+            if lost == LOST_ASK_AGAIN:
+                try:
+                    _post(base, f"/api/build/{gid}")
+                except urllib.error.HTTPError as exc:
+                    exc.close()
+            if lost > LOST_GIVE_UP:
+                raise StoreError(f"the arcade service lost the build of {gid} (it restarted?): try again")
+            continue
+        lost = 0
+        say("building", st.get("step"), st.get("of"), st.get("label"))
+        if st.get("state") == "done":
+            return st.get("build")
+        if st.get("state") == "error":
+            raise StoreError(f"the service could not build {gid}: {st.get('error')}")
+        if time.monotonic() > deadline:
+            raise StoreError(f"building {gid} took longer than {timeout:.0f} s")
+
+
 def install(base: str, gid: str, library: Path, repair: bool = False, build_timeout: float = 900,
             progress=None) -> dict:
     say = progress or (lambda *a: None)
     entry = _json(base, f"/api/game/{gid}")
     built = None
     if entry.get("build_due"):
-        _post(base, f"/api/build/{gid}")
-        deadline = time.monotonic() + build_timeout
-        while True:
-            time.sleep(0.25)
-            st = _json(base, f"/api/build/{gid}")
-            say("building", st.get("step"), st.get("of"), st.get("label"))
-            if st.get("state") == "done":
-                built = st.get("build")
-                break
-            if st.get("state") == "error":
-                raise StoreError(f"the service could not build {gid}: {st.get('error')}")
-            if time.monotonic() > deadline:
-                raise StoreError(f"building {gid} took longer than {build_timeout:.0f} s")
+        built = wait_build(base, gid, build_timeout, say)
         entry = _json(base, f"/api/game/{gid}")
     b = entry.get("build")
     if not b:
@@ -447,4 +475,4 @@ def _play_check_cartridge(ctx, card, lib: Path, gid: str, work: Path, frames: in
 
 
 __all__ = ["Reference", "StoreError", "achievements", "check_cartridges", "check_catalog", "install", "pages",
-           "picture", "play", "serve_here", "verify"]
+           "picture", "play", "serve_here", "verify", "wait_build"]
