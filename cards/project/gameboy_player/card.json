@@ -29,24 +29,26 @@
     "`arcade check` (CM42) launches every listed cartridge in the store-installed player as the launcher does and compares its picture with the cards': 971 of 971 on the user's library (224 s); the self-run's store step counts the ones that fail (G_S1)",
     "tests use synthetic cartridges and a library of their own; no tracked file is or zips a cartridge",
     "on claude/sad-clarke-108d42: MBC7 (Kirby Tilt 'n' Tumble: the d-pad tilts, the EEPROM is in the save), HuC3 (Robopon: the clock chip, infrared), the Game Boy Camera (registers, capture time, a synthetic scene), Wisdom Tree and Sachen boards, all card language (gb_cartridge: cart.card, mbc7.card, huc3.card, camera.card), each tested on an assembled cartridge, lifted code identical to the interpreter",
-    "on claude/sad-clarke-108d42: a CGB game gets BCPS as the boot ROM leaves it (Jurassic Boy 2's background); the survey runs a static ROM again without input (Jeopardy! pauses on START) and names pass-through devices"
+    "on claude/sad-clarke-108d42: a CGB game gets BCPS as the boot ROM leaves it (Jurassic Boy 2's background); the survey runs a static ROM again without input (Jeopardy! pauses on START) and names pass-through devices",
+    "a lifted STOP skips one byte, not two (the CGB speed switch): Pokemon Puzzle Challenge, the Trading Card Game, Kirby Tilt 'n' Tumble and Jurassic Boy II are frame-identical to the interpreter (on main: 16ea9fc)",
+    "code in RAM by every encoding seen at its address (routines copied over each other, operands patched): Pokemon Puzzle Challenge from 97.83 % to 100.00 % lifted on an unseen walk (0 interpreted; 177 RAM encodings)",
+    "an app build lifts what its witness interpreted and witnesses again on a new seed (up to three rounds)",
+    "the nine Pokemon apps rebuilt and installed: Red, Blue, Yellow, Gold, Silver, Crystal, Puzzle Challenge 100.00 % with 0 instructions interpreted on an unseen walk; Trading Card Game 100.00 % (0 interpreted, after a second round); Pinball 100.00 % (0 interpreted, after a second round); every witness frame-identical",
+    "the Game Boy Player picks colour through the board (a Sachen board scrambles the header page), as the host does",
+    "for the DS player: game.json's clockOffset (the shell keeps the local time's offset) and DS rows playable once the DS card has a machine and a player"
   ],
   "games": [
     "gameboy_player"
   ],
   "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
-  "in_progress": [
-    "rebuilding the nine Pokémon apps with the fall-through fix"
-  ],
+  "in_progress": [],
   "kind": "game",
   "left": [
-    "player.card: decide colour from the board's view of the header (cart_power_on, rom_read(0x143)) once main has the new cartridge boards (claude/sad-clarke)",
-    "the DS playable (the DS session has it; the shell's touch input and tables are ready)",
     "the GameSharks: a pass-through model (a cartridge from the library in their slot) and Datel's registers, which are not documented; the GameShark (USA) file also lacks its font bank"
   ],
   "metadata": {
-    "previous_content_hash": "6ebef1c07cdf444e1e7e1d215ff6edb120fd90ed3c49b8bc66566d78d1475d24",
-    "version": "2.1.2",
+    "previous_content_hash": "3c179159ea2c4250f92ce622ffc8fe4b0274836657b2010b95b1a3877d42ceed",
+    "version": "2.1.3",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -97,10 +99,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main: the player and the library; per-cartridge apps whose code is lifted card IR (Pokemon Crystal 100 % on an unseen run), the static pass, relift and DS touch input (claude/festive-margulis-43fde7); and the store launching every cartridge the library lists (`arcade check`: 971 of the user's 971; claude/frosty-lumiere-98e2b7). Both merged 2026-10-22 with the user's approval. Since 593fe5c every bank controller in the user's folders is a card (MBC7, HuC3, the Game Boy Camera, the Wisdom Tree and Sachen boards): the survey boots 969 of 971; the two GameShark cheat devices cannot run from their files (docs/MACHINES.md says why). The lifted STOP fix (73e6220) is on main too (16ea9fc).",
+  "standing": "On main: the player, the library, the store check, per-cartridge apps whose code is lifted card IR, the static pass, relift, DS touch input and the lifted STOP fix. On claude/festive-margulis-43fde7 (waiting for the user's approval): every RAM encoding lifted, witness rounds, the Sachen colour fix and the DS clock offset; all nine Pokemon apps are rebuilt from it and installed.",
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; the store installs the player and launches every cartridge it lists.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T16:39:44+02:00",
+  "updated": "2026-10-22T18:05:15+02:00",
   "user_actions": []
 }

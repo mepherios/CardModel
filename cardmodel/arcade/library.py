@@ -185,7 +185,9 @@ def scan(ctx, force: bool = False) -> dict:
                 row["title"], row["tags"], row["title_from"] = entry_title(p.stem, head)
                 v = survey.get(row.get("sha1"))
                 if card.name == "nds":
-                    row["verdict"] = {"level": "unavailable", "text": card.get("playable_note", ""), "detail": nds_status(ctx)}
+                    row["verdict"] = ({"level": "playable", "text": f"Plays in the {card['title']} (not surveyed yet)"}
+                                      if playable else {"level": "unavailable", "text": card.get("playable_note", "")})
+                    row["verdict"]["detail"] = nds_status(ctx)
                 elif v:
                     level, text = VERDICTS.get(v.get("status"), ("unknown", v.get("status", "")))
                     if v.get("unsupported_mapper"):

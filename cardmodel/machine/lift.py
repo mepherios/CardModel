@@ -27,12 +27,13 @@ it: split into parts by bank and size so no compile unit outgrows a compiler, co
 into one library cached per ROM and machine.
 
 Code the cartridge copies into RAM (work RAM, HRAM: the OAM DMA routine every game has) is lifted too, one
-instruction at a time, from the bytes the profile saw it run with: each lifted RAM instruction first checks
-that RAM still holds those bytes (and, during OAM DMA, that it is in HRAM, the only memory the CPU can read
-then), and otherwise leaves it to the interpreter.
+instruction at a time: at each address, one case for every encoding the profiles saw an instruction start with
+there (routines copied over each other), guarded by its opcode as RAM holds it when it runs, with its operands
+read from RAM then (code that patches its own operands); during OAM DMA only HRAM's (the only memory the CPU can
+read then). RAM holding none of them leaves the instruction to the interpreter.
 
-Honest limits (L1): code no profile or static successor reached, RAM code whose bytes changed since it was
-seen, code in video or cartridge RAM, illegal opcodes and the instruction after a HALT bug run in the
+Honest limits (L1): code no profile or static successor reached, RAM code with an encoding no profile saw at
+its address, code in video or cartridge RAM, illegal opcodes and the instruction after a HALT bug run in the
 interpreter (the machine counts them: ``interpreted``, ``interpreted_ram``), and so does a Sachen board's
 scrambled header page (0x0100-0x01FF: the bytes there are not what the CPU reads); a key is (ROM offset, which
 half of the address space), so a bank mapped at an unusual place gets its own blocks; MBC1 multicart remapping
@@ -60,6 +61,7 @@ STOP = 0x10                                    # one opcode byte, and it skips t
 LIFTER = 5                                     # the lifted blocks' shape (in the cache key)
 PART_STATEMENTS = 120000                       # at most this many IR statements in one compile unit
 RAM_LIFTED = ((0xC000, 0xFE00), (0xFF80, 0xFFFF))   # work RAM and its echo, HRAM (not video or cartridge RAM)
+RAM_BASE = 0xC000                              # the RAM profile's first address (32 bytes, 256 bits, per address)
 MAX_INSTRUCTIONS = 48
 LEAVES = ("var", "int", "float", "bool")
 
@@ -588,19 +590,20 @@ class Lifter:
         return {x[1] for x in _iter(e) if x[0] == "var"}
 
     # ---- a whole block ----
-    def entered(self, card, imm: list, pc: int, locals_: dict) -> tuple[int, list]:
+    def entered(self, card, imm: list | None, pc: int, locals_: dict, operands_at: int | None = None
+                ) -> tuple[int, list]:
         """PC as the card's IR finds it (past the opcode, a prefix and the operands its fetches take: STOP's IR skips
-        its second byte itself) and that IR with the bytes in."""
-        body = self.instance(card, imm, locals_)
+        its second byte itself) and that IR with the bytes in (``instance``)."""
+        body = self.instance(card, imm, locals_, operands_at)
         npc = (pc + 1 + (card.get("prefix") is not None) + self.taken) & 0xFFFF
         return npc, [{"k": "assign", "target": "PC", "value": ["int", npc]}] + body
 
-    def step_ir(self, card, imm: list, pc: int, locals_: dict) -> list:
+    def step_ir(self, card, imm: list | None, pc: int, locals_: dict, operands_at: int | None = None) -> list:
         """One instruction's statements: its fetch time, PC past it, its card's IR with the bytes in, specialised."""
         ins: list = [{"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]}]
         if card.get("prefix") is not None:
             ins.append({"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]})
-        npc, body = self.entered(card, imm, pc, locals_)
+        npc, body = self.entered(card, imm, pc, locals_, operands_at)
         ins += body
         consts = {"PC": ["int", npc]}
         ins = self.fold_block(ins, dict(consts), locals_)
@@ -668,33 +671,42 @@ class Lifter:
                   keys=[_key(phys, pc) for pc, phys, _c, _i in ext])
         return fn
 
-    def lift_ram(self, image: bytes, addr: int, dec: Decoder) -> dict | None:
-        """The instruction at RAM address addr, from the bytes the profile saw (image: the 64 KB address space),
-        run only while RAM still holds them."""
-        card, n, imm = dec.at(image, addr, 0xFFFF)
-        if card.get("illegal") or not all(any(lo <= a < hi for lo, hi in RAM_LIFTED) for a in range(addr, addr + n)):
+    def lift_ram(self, addr: int, encodings: list, dec: Decoder) -> dict | None:
+        """``lram_<addr>``: the instruction at RAM address addr, one case for each encoding (opcode, a CB prefix's
+        second byte) the profiles saw start there, chosen by the bytes RAM holds when it runs, with its operands read
+        from RAM then; 0 when RAM holds none of them, or during OAM DMA outside HRAM (the interpreter runs it)."""
+        locals_: dict = {"lf_op": "int", "lf_cb": "int"}
+        done = [{"k": "assign", "target": "instructions", "value": ["ADD", ["var", "instructions"], ["int", 1]]},
+                {"k": "return", "value": ["int", 1]}]
+        plain: list = []
+        cb: list = []
+        for op, second in sorted(encodings, key=lambda e: (e[0], -1 if e[1] is None else e[1])):
+            card = dec.table[(0xCB, second)] if op == 0xCB else dec.table[(None, op)]
+            n = 2 if op == 0xCB else card["bytes"]
+            if card.get("illegal") or not all(any(lo <= a < hi for lo, hi in RAM_LIFTED) for a in range(addr, addr + n)):
+                continue
+            body = self.step_ir(card, None, addr, locals_, operands_at=(addr + (2 if op == 0xCB else 1)) & 0xFFFF)
+            (cb if op == 0xCB else plain).append((second if op == 0xCB else op,
+                                                  body + copy.deepcopy(COUNTDOWN) + copy.deepcopy(done)))
+        if not plain and not cb:
             return None
-        locals_: dict = {}
-        ins = self.step_ir(card, imm, addr, locals_)
-        # the guard reads each byte with a statement of its own (so the read is specialised to its memory)
-        guard: list = []
-        same = ["CMP_EQ", ["var", "dma_active"], ["int", 0]] if addr < 0xFF80 else ["bool", True]
-        for j in range(n):
-            locals_[f"lf_b{j}"] = "int"
-            guard.append({"k": "assign", "target": f"lf_b{j}", "value": ["CALL", "code_byte", ["int", addr + j]]})
-            same = ["AND", same, ["CMP_EQ", ["var", f"lf_b{j}"], ["int", image[addr + j]]]]
-        guard.append({"k": "assign", "target": "lf_same", "value": same})
-        locals_["lf_same"] = "bool"
-        guard = self.inline_stmts(guard, locals_, {})
-        guard = self.fold_block(guard, {}, locals_)
-        countdown = [{"k": "if", "cond": ["CMP_NE", ["var", "ime_delay"], ["int", 0]], "else": [],
-                      "then": [{"k": "assign", "target": "ime_delay", "value": ["SUB", ["var", "ime_delay"], ["int", 1]]},
-                               {"k": "if", "cond": ["CMP_EQ", ["var", "ime_delay"], ["int", 0]], "else": [],
-                                "then": [{"k": "assign", "target": "ime", "value": ["int", 1]}]}]}]
-        body = guard + [{"k": "if", "cond": ["NOT", ["var", "lf_same"]], "then": [{"k": "return", "value": ["int", 0]}],
-                         "else": []}] + ins + countdown + [
-            {"k": "assign", "target": "instructions", "value": ["ADD", ["var", "instructions"], ["int", 1]]},
-            {"k": "return", "value": ["int", 1]}]
+
+        def chain(var: str, cases: list) -> list:
+            out = [{"k": "return", "value": ["int", 0]}]
+            for v, b in reversed(cases):
+                out = [{"k": "if", "cond": ["CMP_EQ", ["var", var], ["int", v]], "then": b, "else": out}]
+            return out
+
+        def read(var: str, a: int) -> list:
+            return self.inline_stmts([{"k": "assign", "target": var, "value": ["CALL", "code_byte", ["int", a]]}],
+                                     locals_, {})
+        if cb:
+            plain.append((0xCB, read("lf_cb", (addr + 1) & 0xFFFF) + chain("lf_cb", cb)))
+            plain.sort(key=lambda c: c[0])
+        body = read("lf_op", addr) + chain("lf_op", plain)
+        if addr < 0xFF80:
+            body = [{"k": "if", "cond": ["CMP_NE", ["var", "dma_active"], ["int", 0]],
+                     "then": [{"k": "return", "value": ["int", 0]}], "else": []}] + body
         body = self.fold_block(body, {}, locals_)
         self._locals = set(locals_)
         self._exit_live = set()
@@ -703,10 +715,11 @@ class Lifter:
                {s["target"] for s in _stmts(body) if s["k"] == "assign"}
         return {"name": f"lram_{addr:x}", "params": [{"name": "single", "type": "int"}], "returns": "int",
                 "locals": {k: v for k, v in locals_.items() if k in used}, "body": body, "pc": addr,
-                "bytes": list(image[addr:addr + n]), "instructions": 1}
+                "encodings": sorted([op, second] for op, second in encodings), "instructions": len(cb) + len(plain) - bool(cb)}
 
-    def instance(self, card, imm: list, locals_: dict) -> list:
-        """The card's IR with its locals renamed and every fetch replaced by the byte it would read."""
+    def instance(self, card, imm: list | None, locals_: dict, operands_at: int | None = None) -> list:
+        """The card's IR with its locals renamed and every fetch replaced by the byte it would read: the
+        instruction's own bytes (imm), or, with operands_at, what memory holds there when it runs (code in RAM)."""
         if card.get("prefix") is not None:
             fn = card["ir"]
         else:
@@ -733,7 +746,15 @@ class Lifter:
                 k = 1 if s["value"][1] == "fetch8" else 2
                 for _ in range(k):
                     out.append({"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]})
-                out.append({"k": "assign", "target": s["target"], "value": ["int", take(k)]})
+                if operands_at is None:
+                    out.append({"k": "assign", "target": s["target"], "value": ["int", take(k)]})
+                    continue
+                a = (operands_at + pos[0]) & 0xFFFF
+                v = ["CALL", "code_byte", ["int", a]]
+                if k == 2:
+                    v = ["BIT_OR", v, ["SHIFT_LEFT", ["CALL", "code_byte", ["int", (a + 1) & 0xFFFF]], ["int", 8]]]
+                pos[0] += k
+                out.append({"k": "assign", "target": s["target"], "value": v})
                 continue
             if any(x[0] == "CALL" and x[1] in ("fetch8", "fetch16", "cb_dispatch") for st in _stmts([s])
                    for x in _exprs(st)):
@@ -866,19 +887,32 @@ def scrambled_page(store, rom: bytes) -> tuple | None:
     return int(lo), int(hi)
 
 
-def ram_image(ram_seen: bytes | None, ram_code: bytes | None) -> tuple[bytes, list[int]]:
-    """The 64 KB address space with the RAM code the profile saw, and the addresses instructions started at."""
-    image = bytearray(0x10000)
-    if not ram_seen or not ram_code:
-        return bytes(image), []
-    image[0x8000:0x8000 + len(ram_code[:0x8000])] = ram_code[:0x8000]
-    starts = [0x8000 + i * 8 + b for i, x in enumerate(ram_seen[:0x1000]) if x for b in range(8) if x >> b & 1]
-    return bytes(image), starts
+def ram_encodings(ram_ops: bytes | None, ram_cb: bytes | None) -> dict[int, list[tuple[int, int | None]]]:
+    """{RAM address: [(opcode, a CB prefix's second byte or None)]}: every encoding the profile saw an instruction
+    start with at each address (the machine's ram_ops and ram_cb: 256 bits per address from RAM_BASE)."""
+    out: dict = {}
+    ops, cbs = ram_ops or b"", ram_cb or b""
+    for row in range((len(ops) + 31) >> 5):                  # a stored profile ends at its last byte in use
+        bits = ops[row << 5:(row + 1) << 5].ljust(32, b"\0")
+        if not any(bits):
+            continue
+        found = []
+        for op in range(256):
+            if not bits[op >> 3] >> (op & 7) & 1:
+                continue
+            if op != 0xCB:
+                found.append((op, None))
+                continue
+            second = cbs[row << 5:(row + 1) << 5].ljust(32, b"\0")
+            found += [(0xCB, c) for c in range(256) if second[c >> 3] >> (c & 7) & 1]
+        if found:
+            out[RAM_BASE + row] = found
+    return out
 
 
 def lift_blocks(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
-                machine: str = "gameboy", cache: dict | None = None, ram_seen: bytes | None = None,
-                ram_code: bytes | None = None) -> tuple[list, list, dict]:
+                machine: str = "gameboy", cache: dict | None = None, ram_ops: bytes | None = None,
+                ram_cb: bytes | None = None) -> tuple[list, list, dict]:
     """Discover and lift every block, and every RAM instruction the profile saw: (blocks, RAM instructions,
     report). ``cache`` maps block keys to blocks lifted before (for the same ROM and machine) and receives the new
     ones."""
@@ -913,8 +947,8 @@ def lift_blocks(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: 
             if k not in singles:
                 singles[k] = cached(f"i{k}", lambda k=k: lifter.single(rom, k, mask, dec))
     blocks += [s for s in singles.values() if s is not None]
-    image, starts = ram_image(ram_seen, ram_code)
-    ram = [r for r in (lifter.lift_ram(image, a, dec) for a in starts) if r is not None]
+    encodings = ram_encodings(ram_ops, ram_cb)
+    ram = [r for r in (lifter.lift_ram(a, e, dec) for a, e in sorted(encodings.items())) if r is not None]
     stmts = sum(1 for b in blocks for _ in _stmts(b["body"]))
     seen_n = sum(bin(x).count("1") for x in seen) if seen else 0
     nblk = sum(1 for b in blocks if b["name"].startswith("blk_"))
@@ -922,16 +956,17 @@ def lift_blocks(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: 
            "instructions_lifted": instrs, "statements": stmts,
            "profiled_instructions": seen_n, "visited": found["visited"],
            "mean_block_instructions": round(instrs / max(1, nblk), 2),
-           "ram_instructions_seen": len(starts), "ram_instructions_lifted": len(ram)}
+           "ram_instructions_seen": sum(len(e) for e in encodings.values()),
+           "ram_instructions_lifted": sum(r["instructions"] for r in ram), "ram_addresses_lifted": len(ram)}
     return blocks, ram, rep
 
 
 def lift_rom(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
-             machine: str = "gameboy", cache: dict | None = None, ram_seen: bytes | None = None,
-             ram_code: bytes | None = None) -> tuple[dict, dict]:
+             machine: str = "gameboy", cache: dict | None = None, ram_ops: bytes | None = None,
+             ram_cb: bytes | None = None) -> tuple[dict, dict]:
     """The machine with the ROM's lifted blocks (and its lifted RAM code): (module, report)."""
     ir = Bd.module(ctx, machine)
-    blocks, ram, rep = lift_blocks(ctx, rom, mask, seen, entries, machine, cache, ram_seen, ram_code)
+    blocks, ram, rep = lift_blocks(ctx, rom, mask, seen, entries, machine, cache, ram_ops, ram_cb)
     mod = lifted_module(ir, blocks, ram)
     mod["hash"] = hashlib.sha256((ir["hash"] + json.dumps([blocks, ram], sort_keys=True)).encode()).hexdigest()[:20]
     return mod, rep
@@ -1015,7 +1050,7 @@ def build_parts(ctx, mod: dict, lang: str, out_dir: Path, per_part: int = 1500, 
 # -- the lifted engine for a ROM ------------------------------------------------------------------------
 def profile(ctx, rom: bytes, frames: int = 1800, machine: str = "gameboy", script=None) -> dict:
     """Run the interpreter headless with a scripted input (the survey's by default) and return what it ran:
-    {seen, entries} (ROM bitmaps), {ram_seen, ram_code} (RAM instructions and their bytes)."""
+    {seen, entries} (ROM bitmaps), {ram_ops, ram_cb} (the encodings seen at each RAM address)."""
     from . import gb as G
     from .survey import script as survey_script
     press = script or survey_script
@@ -1025,8 +1060,7 @@ def profile(ctx, rom: bytes, frames: int = 1800, machine: str = "gameboy", scrip
         g.set_buttons(press(i))
         g.run_frame()
     n = (int(g.m.get("rom_mask")) + 1) // 8
-    out = {"seen": g.m.read("seen", 0, n), "entries": g.m.read("entries", 0, n),
-           "ram_seen": g.m.read("ram_seen", 0, 0x1000), "ram_code": g.m.read("ram_code", 0, 0x8000)}
+    out = {"seen": g.m.read("seen", 0, n), "entries": g.m.read("entries", 0, n), **ram_profile(g.m)}
     if hasattr(g.m, "close"):
         g.m.close()
     return out
@@ -1038,18 +1072,12 @@ def profile_rom(ctx, rom: bytes, frames: int = 1800, machine: str = "gameboy") -
     return p["seen"], p["entries"]
 
 
-def merge_ram(d: Path, ram_seen: bytes, ram_code: bytes) -> tuple[bytes, bytes]:
-    """Add RAM instructions to a ROM's profile: the bits OR together; an instruction's bytes are the newest seen."""
-    old_code = bytearray((d / "ram_code.bin").read_bytes() if (d / "ram_code.bin").is_file() else bytes(0x8000))
-    old_code = old_code.ljust(0x8000, b"\0")
-    image, starts = ram_image(ram_seen, ram_code.ljust(0x8000, b"\0"))
-    for a in starts:
-        for j in range(3):
-            if a + j < 0x10000:
-                old_code[a - 0x8000 + j] = image[a + j]
-    merged_seen = merge_profile(d, "ram_seen", ram_seen)
-    (d / "ram_code.bin").write_bytes(bytes(old_code))
-    return merged_seen, bytes(old_code)
+def ram_profile(m) -> dict:
+    """What a machine saw run in RAM: {ram_ops, ram_cb}, only the rows in use (an empty profile is b"")."""
+    return {k: m.read(k, 0, 0x80000).rstrip(b"\0") for k in ("ram_ops", "ram_cb")}
+
+
+PROFILE = ("seen", "entries", "ram_ops", "ram_cb")     # a profile's bitmaps (each merges by OR)
 
 
 def stored_profile(d: Path) -> dict:
@@ -1057,15 +1085,13 @@ def stored_profile(d: Path) -> dict:
     def get(name):
         p = d / f"{name}.bin"
         return p.read_bytes() if p.is_file() else b""
-    return {"seen": get("seen"), "entries": get("entries"), "ram_seen": get("ram_seen"), "ram_code": get("ram_code")}
+    return {k: get(k) for k in PROFILE}
 
 
 def add_profile(d: Path, p: dict) -> dict:
     """Merge a profile run into the ROM's lift folder; returns the merged profile."""
-    merge_profile(d, "seen", p.get("seen") or b"")
-    merge_profile(d, "entries", p.get("entries") or b"")
-    if p.get("ram_seen"):
-        merge_ram(d, p["ram_seen"], p.get("ram_code") or b"")
+    for k in PROFILE:
+        merge_profile(d, k, p.get(k) or b"")
     return stored_profile(d)
 
 
@@ -1085,8 +1111,8 @@ def lifted_machine(ctx, rom: bytes, lang: str = "native", machine: str = "gamebo
         add_profile(d, profile(ctx, rom, profile_frames, machine))
     prof = stored_profile(d)
     seen, entries = prof["seen"], prof["entries"]
-    bits = sum(bin(x).count("1") for x in entries) + sum(bin(x).count("1") for x in prof["ram_seen"])
-    pkey = hashlib.sha256(seen + b"\0" + entries + b"\0" + prof["ram_seen"] + prof["ram_code"]).hexdigest()[:16]
+    bits = sum(bin(x).count("1") for x in entries + prof["ram_ops"] + prof["ram_cb"])
+    pkey = hashlib.sha256(b"\0".join(prof[k] for k in PROFILE)).hexdigest()[:16]
     meta_p = d / f"lifted-{pkey}-{lang}-l{LIFTER}.json"
     latest = d / f"latest-{lang}-l{LIFTER}.json"
     if not meta_p.is_file() and latest.is_file() and not relift:
@@ -1108,8 +1134,8 @@ def lifted_machine(ctx, rom: bytes, lang: str = "native", machine: str = "gamebo
     bc = d / f"blocks-l{LIFTER}.json"
     cache = json.loads(bc.read_text(encoding="utf-8")) if bc.is_file() else {}
     n0 = len(cache)
-    mod, rep = lift_rom(ctx, rom, size - 1, seen, entries, machine, cache=cache, ram_seen=prof["ram_seen"],
-                        ram_code=prof["ram_code"])
+    mod, rep = lift_rom(ctx, rom, size - 1, seen, entries, machine, cache=cache, ram_ops=prof["ram_ops"],
+                        ram_cb=prof["ram_cb"])
     if len(cache) != n0:
         tmp = bc.with_suffix(".tmp")
         tmp.write_text(json.dumps(cache), encoding="utf-8")
@@ -1130,11 +1156,10 @@ def save_profile(ctx, rom: bytes, m, machine: str = "gameboy") -> dict:
     d = cache_dir(ctx, info["sha1"], Bd.module(ctx, machine)["hash"])
     n = (int(m.get("rom_mask")) + 1) // 8
     before = (d / "entries.bin").read_bytes() if (d / "entries.bin").is_file() else b""
-    after = add_profile(d, {"seen": m.read("seen", 0, n), "entries": m.read("entries", 0, n),
-                            "ram_seen": m.read("ram_seen", 0, 0x1000), "ram_code": m.read("ram_code", 0, 0x8000)})
+    after = add_profile(d, {"seen": m.read("seen", 0, n), "entries": m.read("entries", 0, n), **ram_profile(m)})
     return {"new_entries": sum(bin(x).count("1") for x in after["entries"]) - sum(bin(x).count("1") for x in before)}
 
 
 __all__ = ["Decoder", "Lifter", "add_profile", "conditional", "block_extent", "build_parts", "cache_dir", "discover", "effects",
-           "lift_blocks", "lift_rom", "lifted_machine", "lifted_module", "merge_profile", "merge_ram", "profile",
-           "profile_rom", "ram_image", "save_profile", "stored_profile"]
+           "lift_blocks", "lift_rom", "lifted_machine", "lifted_module", "merge_profile", "profile", "profile_rom",
+           "ram_encodings", "ram_profile", "save_profile", "stored_profile"]
