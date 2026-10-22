@@ -26,7 +26,7 @@ memory on this machine, and a session started by another session's message canno
 | W | question | branch | status |
 |---|---|---|---|
 | W-15 | which of the product's questions are decidable? | `claude/godel-w15-difficulty` | done |
-| W-3 | which code should identify a card? | `claude/godel-w3-identity` | waiting |
+| W-3 | which code should identify a card? | `claude/godel-w3-identity` | done |
 | W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | waiting |
 | W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | waiting |
 | W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | waiting |
@@ -68,3 +68,37 @@ forms in a recognized class. 11 are left open, each card stating what the produc
 
 GM-7 as a law (verify fails on a method or claim without its rank or tier) is the user's decision; the tiers half is
 law CM46 already.
+
+### W-3: identity and size (Def-9 to Def-16, Ph-2, Ph-3, GM-2, GM-8)
+
+`cardmodel godel sizes` (`engines/codes.py`) measures six codes for every card with a term: 2308 terms
+(40 definition, 504 instruction, 114 rule, 1650 theorem). Bits, from the run that wrote the finding cards:
+
+| code | median | 95th percentile | largest |
+|---|---|---|---|
+| positional | 400 | 43702 | 51888784 |
+| content | 8 | 101 | 898 |
+| cantor | 2405 | 9006904 | 48655110121721 |
+| szudzik (built ones) | 2770 | 185411 | 1418119 |
+| base_k | 132 | 576 | 4836 |
+| sha256 | 256 | 256 | 256 |
+
+* **The size model.** Nothing has to be built to know a code's size: the positional and content codes follow
+  their logarithmic formulas (Σ c_i·log2 p_i and Σ e·log2 p_k), within one bit of the built integer on every term
+  small enough to build; the Cantor tree code follows a log2 recurrence up the tree, exact on every built code.
+  The handover's example holds: 10 tokens over atoms near index 10^6 cost about 9.8·10^7 bits as a positional code
+  and about 239 as a content code (finding `W3_size_model`).
+* **Ph-2 measured.** The positional code is larger than the content code for every term in the store; the largest
+  are the CALL instructions, whose 16-bit constants have token codes near 400,000 (Rule-23: constants are not
+  atoms, so the content code does not see them).
+* **Ph-3 measured.** Pairing tree codes double with every level: the largest Cantor code, of a depth-13 instruction term, has
+  about 4.9e+13 bits. They are not identities.
+
+**Decision record for GM-2 (and the bound GM-8 needs).** The identity of a card is the sha256 of its canonical term
+(CM45 already stores it as `identity.hash`). Gödel's positional code stays a decodable witness, computed on demand
+for terms of at most 4096 bits (86% of
+today's terms), never stored, and never nested inside another code. Pairing codes are not used to identify
+anything. Today the definitions store the positional number as a decimal string up to 200 digits (CM45); GM-8 would
+drop that storage. Adopting GM-2 amends CM43, whose text calls the structural number the identity: that is the
+user's decision (finding `W3_gm2_decision`).
+

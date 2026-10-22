@@ -1,0 +1,35 @@
+{
+  "category": "finding",
+  "cites": [
+    "GM-2",
+    "GM-8",
+    "Ph-2",
+    "Ph-3",
+    "Rule-23"
+  ],
+  "data": {
+    "bound_bits": 4096,
+    "positional_under": {
+      "1024": 0.721,
+      "256": 0.3826,
+      "4096": 0.8583,
+      "65536": 0.9632,
+      "664": 0.6404
+    }
+  },
+  "evidence": "cardmodel godel sizes; tests/test_codes.py",
+  "evidence_tier": "bounded",
+  "limits": "a decision from this store's measurement; the bound keeps any on-demand code under half a kilobyte",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W3_gm2_decision",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-3",
+    "tool": "tools/seed_codes.py"
+  },
+  "statement": "Decision record for GM-2 and GM-8: the identity is the sha256 of the canonical term (as CM45 already stores); Gödel's positional code is computed on demand only for terms of at most 4096 bits (86% of today's terms), never stored, never nested; pairing tree codes are not used as identities. Adopting GM-2 amends CM43 and needs the user's yes.",
+  "tier": 1,
+  "workstream": "W-3"
+}

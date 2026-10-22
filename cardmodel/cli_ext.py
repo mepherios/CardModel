@@ -529,6 +529,25 @@ def cmd_godel(args) -> int:
     cli = _cli()
     ctx = cli._ctx(args)
     idx = GD.index_of(ctx.store)
+    if args.action == "sizes":
+        from .engines import codes as CO
+        m = CO.measure(ctx)
+        sm = m["summary"]
+        lines = [f"{sm['cards']} terms {sm['by_kind']}; bits (median, p95, max):"]
+        for code in ("positional", "content", "cantor", "szudzik", "base_k", "hash"):
+            v = sm.get(code) or {}
+            lines.append(f"  {code:<11} {v.get('median', 0):>14.0f} {v.get('p95', 0):>16.0f} {v.get('max', 0):>18.0f}")
+        fb = sm["formula_vs_built"]
+        lines.append(f"formulas vs built integers: positional {fb['positional']['checked']} within "
+                     f"{fb['positional']['max_bits_off']} bit, content {fb['content']['checked']} within "
+                     f"{fb['content']['max_bits_off']} bit; pairing estimate vs built: {sm.get('model_cantor')}")
+        lines.append(f"positional code within a bound: {sm['positional_under']}; larger than content for "
+                     f"{sm['positional_over_content']:.0%}")
+        for r in sorted(m["rows"], key=lambda r: -r["positional"])[:args.limit]:
+            lines.append(f"  {r['card']}: {r['tokens']} tokens, depth {r['depth']}, largest constant "
+                         f"{r['max_const']}: positional {r['positional']:.0f} bits, content {r['content']:.0f}")
+        cli._out(args, sm, "\n".join(lines))
+        return 0
     if args.action == "ledger":
         rows = GD.ledger(ctx.store)
         sets = Counter(e["set"] for e in rows)
@@ -763,7 +782,7 @@ def register(sub) -> None:
     s.add_argument("action", choices=["check", "build"]); s.add_argument("--write", action="store_true")
     s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_sources)
     s = sub.add_parser("godel", help="the expanding Gödel model: the prime ledger, content vectors, GCD and LCM")
-    s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm"]); s.add_argument("cards", nargs="*")
+    s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm", "sizes"]); s.add_argument("cards", nargs="*")
     s.add_argument("--limit", type=int, default=20); s.set_defaults(fn=cmd_godel)
     from .game import cli as game_cli
     game_cli.register(sub)

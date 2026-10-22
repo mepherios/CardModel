@@ -1,0 +1,103 @@
+{
+  "category": "finding",
+  "cites": [
+    "Def-9",
+    "Def-10",
+    "Def-11",
+    "Def-12",
+    "Def-15",
+    "Def-16",
+    "Ph-2",
+    "Ph-3"
+  ],
+  "data": {
+    "base_k": {
+      "max": 4836.0,
+      "median": 132.0,
+      "p95": 576.0
+    },
+    "by_kind": {
+      "definition": 40,
+      "instruction": 504,
+      "rule": 114,
+      "theorem": 1650
+    },
+    "cantor": {
+      "max": 48655110121721,
+      "median": 2405.0,
+      "p95": 9006904
+    },
+    "cantor_estimated": 190,
+    "cards": 2308,
+    "content": {
+      "max": 898.3936415848469,
+      "median": 7.636624620543649,
+      "p95": 101.20753100702144
+    },
+    "formula_vs_built": {
+      "content": {
+        "checked": 2308,
+        "max_bits_off": 1
+      },
+      "positional": {
+        "checked": 2223,
+        "max_bits_off": 1.0
+      }
+    },
+    "hash": {
+      "max": 256.0,
+      "median": 256.0,
+      "p95": 256.0
+    },
+    "model_cantor": {
+      "checked": 2118,
+      "median_rel_error": 0.0,
+      "p95_rel_error": 0.0
+    },
+    "positional": {
+      "max": 51888784.2101905,
+      "median": 400.48798365648327,
+      "p95": 43701.76381771587
+    },
+    "positional_over_content": 1.0,
+    "positional_under": {
+      "1024": 0.721,
+      "256": 0.3826,
+      "4096": 0.8583,
+      "65536": 0.9632,
+      "664": 0.6404
+    },
+    "statistics_model_base_k": {
+      "median_rel_error": 0.0,
+      "p95_rel_error": 0.0
+    },
+    "statistics_model_content": {
+      "median_rel_error": 0.0,
+      "p95_rel_error": 0.0266
+    },
+    "statistics_model_positional": {
+      "median_rel_error": 0.1434,
+      "p95_rel_error": 0.7753
+    },
+    "szudzik": {
+      "max": 1418119.0,
+      "median": 2770.0,
+      "p95": 185411.0
+    }
+  },
+  "evidence": "cardmodel godel sizes; tests/test_codes.py",
+  "evidence_tier": "bounded",
+  "limits": "every card with a term in this store, at this commit; multi-statement bodies are read as their expressions",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W3_code_sizes",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-3",
+    "tool": "tools/seed_codes.py"
+  },
+  "statement": "Over the store's 2308 terms ({'definition': 40, 'instruction': 504, 'theorem': 1650, 'rule': 114}), in bits (median, 95th percentile, largest): positional 400, 43702, 51888784; content 8, 101, 898; Cantor tree code 2405, 9006904, 48655110121721; bijective base-16 132, 576, 4836; sha256 256. The positional code is larger than the content code for 100% of terms, and pairing codes explode with nesting.",
+  "tier": 1,
+  "workstream": "W-3"
+}
