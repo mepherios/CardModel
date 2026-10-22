@@ -1,0 +1,47 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/godel-w3-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [],
+  "goal": "Which code should identify a card?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "sizes of the positional, content, pairing, bijective base-k and hash codes for every card",
+    "a size model that predicts them",
+    "a decision record for GM-2 with the size bound for GM-2 and GM-8"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [],
+  "name": "godel_w3_identity_size",
+  "next_steps": [
+    "start on claude/godel-w3-*"
+  ],
+  "order": 42,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cardmodel/engines/codes.py",
+    "cards/finding/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "statement": "Gödel method research program, wave 1: Which code should identify a card?",
+  "tier": 1,
+  "title": "W-3 Identity and size of codes",
+  "updated": "2026-10-22T02:22:50+02:00",
+  "user_actions": []
+}
