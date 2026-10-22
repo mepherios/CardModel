@@ -9,9 +9,10 @@
   cardmodel arcade run gameboy_player --rom PATH   a cartridge in the latest player build
   cardmodel arcade library [--draw]             the cartridges the system cards find (--draw: their title screens)
   cardmodel arcade library --add DIR --system gameboy   look for cartridges in DIR (--remove DIR to stop)
+  cardmodel arcade check [GAME] [--launcher] [--no-build] [--cartridges N]   every catalogue item launched
+                                                through the store as the launcher does it (install, verify, repair,
+                                                play headless), then every cartridge the library lists
   cardmodel arcade app ROM [--install]          one cartridge as its own app, its code lifted into cards (cartapp.py)
-  cardmodel arcade check [GAME] [--launcher] [--no-build]   every catalogue item launched through the store as
-                                                the launcher does it (install, verify, repair, play headless)
 
 Honest limits (L1): the launcher remembers a checkout's path (to start the service): after moving the
 repository, run `cardmodel arcade launcher --install` again. Installing from a linked git worktree points the
@@ -294,7 +295,7 @@ def cmd_arcade(args) -> int:
         from . import client
         say = (lambda m: print(f"[store] {m}", file=sys.stderr)) if not args.json else (lambda m: None)
         rep = client.check_catalog(ctx, frames=args.frames or 120, only=[args.target] if args.target else None,
-                                   build=not args.no_build, progress=say)
+                                   build=not args.no_build, progress=say, cartridges=args.cartridges)
         if args.launcher and rep["status"] != "skipped":
             import time
             t0 = time.perf_counter()
@@ -308,12 +309,27 @@ def cmd_arcade(args) -> int:
         for gid, r in rep["items"].items():
             if r.get("ok"):
                 pl, ins = r["play"], r["install"]
+                on = (" on its check cartridge (the picture its cards compute, the save kept)" if "save_kept" in pl
+                      else "")
                 lines.append(f"  ok    {gid:<14} v{ins['version']} build {ins['build']}: {ins['files']} files "
                              f"{ins['size']:,} bytes checked; repair re-fetched {r['repair']['fetched']:,} bytes; "
-                             f"played {args.frames or 120} frames in {pl['seconds']} s "
+                             f"played {args.frames or 120} frames{on} in {pl['seconds']} s "
                              f"({pl['picture']['colours_sampled']} colours on screen)")
             else:
                 lines.append(f"  FAIL  {gid:<14} {r.get('error') or json.dumps(r, default=str)[:400]}")
+        ct = rep.get("cartridges")
+        if ct:
+            per = "; ".join(f"{pid}: {t['launched']} of {t['listed']} ({t['colourful']} show more than one colour)"
+                            for pid, t in ct["players"].items())
+            none = ", ".join(f"{n} for {s_} (no player yet)" for s_, n in ct["unplayable"].items())
+            lines.append(f"  {'ok  ' if not ct['failed'] else 'FAIL'}  cartridges     {ct['launched']} of "
+                         f"{ct['checked']} launched through the store and showed the picture their cards compute "
+                         f"after {ct['frames']} frames ({ct['seconds']} s){': ' + per if per else ''}"
+                         + (f"; listed, not launchable: {none}" if none else "")
+                         + (f"; only the first {ct['limit']} of {ct['listed']} checked" if ct["limit"] is not None
+                            else ""))
+            for f in ct["failing"][:20]:
+                lines.append(f"  FAIL  {f['title'][:40]:<40} {f['error']}  ({f['path']})")
         pg = rep.get("pages") or {}
         lines.append(f"  pages {'ok' if pg.get('ok') else 'FAIL'}  assets {pg.get('assets')}, endpoints the page "
                      f"uses {pg.get('api')}" + (f", unknown {pg['unknown_endpoints']}" if pg.get("unknown_endpoints")
@@ -347,6 +363,7 @@ def register(sub) -> None:
     s.add_argument("--system", help="library: which system card the folder is for (default gameboy)")
     s.add_argument("--launcher", action="store_true", help="check: also compile the launcher")
     s.add_argument("--no-build", action="store_true", help="check: fail instead of building when cards changed")
+    s.add_argument("--cartridges", type=int, help="check: launch only the first N listed cartridges (0: none)")
     s.set_defaults(fn=cmd_arcade)
 
 

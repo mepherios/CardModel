@@ -89,6 +89,7 @@ class Store(unittest.TestCase):
         self.assertEqual(res["status"], "pass", res)
         self.assertEqual(res["failing"], [])
         self.assertIn("vector_duel", res["launched"])
+        self.assertIn("gameboy_player", res["launched"])
         self.assertEqual(section["failing"], [])
         from cardmodel.engines import coverage
         self.assertEqual(coverage._metric(model_ctx(), "store_items_failing", {}, {"store": section}), 0)

@@ -242,22 +242,28 @@ class Depot(unittest.TestCase):
             httpd.server_close()
 
     def test_every_catalogue_item_launches_from_the_store(self):
-        """CM42: every item the catalogue lists (games, and console players fed a cartridge assembled from the
-        instruction cards), through the service exactly as the launcher does it: installed with every chunk and file
-        checked, verified, damaged and repaired (only the damaged file is fetched again), played natively headless
-        with its own save folder, drawing a frame that is not one flat colour; the launcher's pages are served and
-        name only routes the service documents."""
+        """CM42: every program the catalogue lists (the games and the console players), through the service exactly
+        as the launcher does it: installed with every chunk and file checked, verified, damaged and repaired (only
+        the damaged file is fetched again), played natively headless with its own save folder, drawing a frame that
+        is not one flat colour (a player plays its system card's check cartridge: the picture its cards compute,
+        the card's byte in the save); the launcher's pages are served and name only routes the service documents."""
         from cardmodel.arcade import client
+        from cardmodel.arcade import system as S
         rep = client.check_catalog(self.ctx, frames=60)
         self.assertEqual(rep["status"], "pass", json.dumps(rep, default=str)[:3000])
-        games = {c.name for c in self.ctx.store.cards("game")}
-        self.assertTrue(games <= set(rep["items"]), "every game card is listed and launched")
-        self.assertEqual(sorted(rep["items"]), sorted(rep["catalog"]))
+        players = [S.arcade_id(c) for c in self.ctx.store.cards("system") if c.get("machine") and c.get("logic")]
+        self.assertEqual(players, ["gameboy_player"])
+        self.assertEqual(sorted(rep["items"]), sorted([c.name for c in self.ctx.store.cards("game")] + players))
+        self.assertEqual(sorted(rep["items"]), sorted(rep["catalog"]), "the release catalogue lists exactly these")
         for gid, r in rep["items"].items():
             self.assertTrue(r["repair"]["seen"], gid)
             self.assertLess(r["repair"]["fetched"], r["install"]["size"], f"{gid}: repair fetched only the damage")
             self.assertGreater(r["play"]["picture"]["colours_sampled"], 1, gid)
+        gbp = rep["items"]["gameboy_player"]["play"]
+        self.assertTrue(gbp["same_as_cards"] and gbp["save_kept"], gbp)
+        self.assertEqual(rep["cartridges"]["listed"], 0, "the tests' own library is empty (tests/helpers.py)")
         self.assertTrue(rep["pages"]["ok"], rep["pages"])
+        self.assertIn("/api/library", rep["pages"]["api"])
 
     def test_native_package_runs_headless(self):
         import tempfile
@@ -285,14 +291,16 @@ class Store(unittest.TestCase):
         B.latest = lambda ctx, name: root
         resources.run = lambda cmd, **kw: (seen.append(cmd), type("P", (), {"stdout": "", "returncode": 0})())[1]
         try:
-            args = argparse.Namespace(action="run", target="vector_duel", frames=10, shot=None, input=None, rom=None,
-                                      save_dir=None, json=False, cards=None, no_project=True, project=None)
-            self.assertEqual(A.cmd_arcade(args), 0)
+            for target, rom in (("vector_duel", None), ("gameboy", "/somewhere/Cart (World).gb")):
+                args = argparse.Namespace(action="run", target=target, frames=10, shot=None, input=None, rom=rom,
+                                          save_dir=None, json=False, cards=None, no_project=True, project=None)
+                self.assertEqual(A.cmd_arcade(args), 0)
         finally:
             B.latest, resources.run = old_latest, old_run
-        cmd = seen[0]
-        self.assertIn("--save-dir", cmd)
-        self.assertNotIn("Cardmodel Arcade", cmd[cmd.index("--save-dir") + 1])
+        for cmd in seen:                        # a game, and a cartridge in a console player
+            self.assertIn("--save-dir", cmd)
+            self.assertNotIn("Cardmodel Arcade", cmd[cmd.index("--save-dir") + 1])
+        self.assertEqual(seen[1][seen[1].index("--rom") + 1], "/somewhere/Cart (World).gb")
 
     def test_the_launcher_starts_the_service_from_the_main_checkout(self):
         import tempfile

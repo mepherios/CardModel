@@ -549,7 +549,8 @@ function romPage(r) {
   const pl = playerOf(r);
   const vtext = { verified: "Verified", playable: "Playable", unsupported: "Unsupported", unavailable: "Not playable yet", unknown: "Unknown" }[v.level] || v.level;
   const facts = r.system_card === "gameboy" ? [
-    ["Cartridge", h.title], ["Bank controller", (h.mbc || "none").toUpperCase() + (h.supported === false ? " (no card yet)" : "")],
+    ["Cartridge", h.title], ["Title from", r.title_from === "header" ? "the cartridge header" : "the file name (No-Intro)"],
+    ["Bank controller", (h.mbc || "none").toUpperCase() + (h.supported === false ? " (no card yet)" : "")],
     ["RAM", h.ram ? mb(h.ram) + (h.battery ? ", battery" : "") : "none"], ["Clock", h.rtc ? "MBC3 real-time clock" : "none"],
     ["ROM", mb(r.size)], ["Colour", r.system === "gbc" ? (h.cgb_only ? "Game Boy Color only" : "Game Boy Color enhanced") : "Game Boy"],
   ] : [["Cartridge", h.title], ["Game code", h.code], ["Size", mb(r.size)]];

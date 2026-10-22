@@ -23,7 +23,11 @@
     "code found by reasoning (machine/absint.py): an abstract run of the machine's cards through far calls and jump tables (Pokemon Crystal: 1,163 more leaders); arcade app runs it once per cartridge",
     "the WORK tab and branch versions, folded into main's IN PROGRESS by the main session (a5ed2d5)",
     "100 % of a cartridge's code as cards: recursive descent follows the fall-through of conditional returns (the last gap); Pokemon Crystal ran every instruction of an unseen run as lifted card IR (0 interpreted), frame-identical to the interpreter",
-    "an app that ever interprets code keeps it beside its save and rebuilds itself in the background when you quit (relift), so the next launch runs it as cards"
+    "an app that ever interprets code keeps it beside its save and rebuilds itself in the background when you quit (relift), so the next launch runs it as cards",
+    "a cartridge without a No-Intro file name is titled by its header; a blank title screen gets no picture instead of a broken link",
+    "the system card carries a check cartridge assembled from the instruction cards: the player is checked on no one's game (its picture and its save)",
+    "`arcade check` (CM42) launches every listed cartridge in the store-installed player as the launcher does and compares its picture with the cards': 971 of 971 on the user's library (224 s); the self-run's store step counts the ones that fail (G_S1)",
+    "tests use synthetic cartridges and a library of their own; no tracked file is or zips a cartridge"
   ],
   "games": [
     "gameboy_player"
@@ -38,9 +42,9 @@
     "the DS playable (the DS session has it; the shell's touch input and tables are ready)"
   ],
   "metadata": {
-    "previous_content_hash": "e660762a7f883b101b717f0465d902be4adac1aef3fefcc2e8f0206576eb06f0",
-    "version": "2.0.7",
-    "version_bump_reason": "patch"
+    "previous_content_hash": "eacd325566eed4aa03a286e071b1cf10efd91c6386181d3287274062e37e8e79",
+    "version": "2.1.0",
+    "version_bump_reason": "minor"
   },
   "metrics": [
     {
@@ -59,8 +63,8 @@
   ],
   "name": "gameboy_player",
   "next_steps": [
-    "merge this branch into main",
-    "rebuild the per-cartridge apps from main once merged (they record the checkout they were built from)",
+    "rebuild the per-cartridge apps from main (they record the checkout they were built from)",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted: widen the abstract run (values loaded from ROM tables, returns through pushed addresses), rebuild apps after play",
     "MATH_CORE (approved): new behaviour is card-language or IR semantics, never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method"
   ],
   "order": 2,
@@ -88,10 +92,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "Pokemon Crystal runs 100 % as lifted card IR on an unseen run. This branch (per-cartridge apps, the lifter, the static pass, relift, DS touch input) is approved for main and waiting for the main session's merge.",
-  "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
+  "standing": "On main: the player and the library; per-cartridge apps whose code is lifted card IR (Pokemon Crystal 100 % on an unseen run), the static pass, relift and DS touch input (claude/festive-margulis-43fde7); and the store launching every cartridge the library lists (`arcade check`: 971 of the user's 971; claude/frosty-lumiere-98e2b7). Both merged 2026-10-22 with the user's approval.",
+  "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; the store installs the player and launches every cartridge it lists.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T03:07:24+02:00",
+  "updated": "2026-10-22T04:57:59+02:00",
   "user_actions": []
 }

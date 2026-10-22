@@ -385,7 +385,11 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   the gameboy machine card plus `player.card`, built and installed like a game; the library lists every cartridge
   in the user's folders (`arcade library --add DIR`, kept in library.json beside the saves) where it is, with the
   survey's verdict and a title screen the machine draws; Play starts the player on the file. The DS is listed,
-  not playable yet.
+  not playable yet. A cartridge is titled by its No-Intro file name, else by its header. `arcade check` (CM42)
+  installs the player through the store, plays it on the system card's check cartridge (assembled from the
+  instruction cards), then starts every listed cartridge in it as the launcher does and compares the picture with
+  the one the cards compute (`--cartridges N` for the first N; about 0.2 s a cartridge). Tests point the library
+  at their own empty file (`CARDMODEL_LIBRARY`, tests/helpers.py) and use only synthetic cartridges.
 * **Work in progress in the launcher** (`arcade/work.py`, docs/ARCADE.md section 3): the *Every branch* section
   of the IN PROGRESS tab (once a WORK tab of its own) with every
   worktree (branch, last commit, commits not on main and their files, uncommitted changes, areas, programs), and a

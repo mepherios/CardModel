@@ -58,7 +58,10 @@ range to this table in the same commit.
 | **CM49 onward** | free | take the next one |
 
 Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M6 (machines), G_S1 (the store). The next free one is the axis's next number (G_A11, G_U10, G_C6, G_K7, G_M7, G_P6, G_S2 ...).
+(AnyPS5), G_M1–M6 (machines; G_M6 is MATH_CORE's), G_S1 (products: the store, `claude/jolly-liskov-2d97a8`).
+G_A10 is that branch's law-witness goal, written G_A9 there and renumbered where it met MATH_CORE's G_A9
+(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U10, G_C6, G_K7, G_M7,
+G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened
@@ -80,6 +83,7 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 | model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | up to 11284a6 (merge f25e82a): cartridges, players, per-cartridge apps, the lifter, the static pass, DS touch input |
 | game-boy-cgb-dmg-compati | `claude/strange-dewdney-f8f39d` | the CGB's DMG compatibility mode | 05178e1 (merge 7e4323a) |
 | self-running-improvement | `claude/jolly-liskov-2d97a8` | folded into `cardmodel self`: the `law_witnesses`, `observe_self`, `store` and `tests` steps (`engines/selfrun.py`, `engines/witness_runner.py`), step deadlines (`kernel/resources.deadline`), the store's end-to-end check (`arcade/client.py`, `arcade check`, CM42, G_A10, G_S1), goal floors in the integrity check (§4a), fixes in translate, exprs, coverage and verify | up to 984fc7a (merged 2026-10-22 with the user's approval); its goal floors replaced main's dccedca |
+| game-boy-library | `claude/frosty-lumiere-98e2b7` | the Game Boy library (header titles, the system card's check cartridge, a player reused cartridge after cartridge) and the store check over every listed cartridge (`arcade/client.py` check_cartridges and Reference, `arcade check --cartridges N`) | up to b15b527 (merged 2026-10-22 with the user's approval); its console-player check replaced main's test_cartridge |
 | fix-flaky-arena-test-dec | `claude/sharp-goldwasser-8b0d81` | the arena's triangular decoy | d9e2ba3 (merge 05c54ea) |
 | fix-flaky-numeric-check | `claude/brave-montalcini-19f1b8` | float rounding in the redefinition witness | 60e72ca (merge cf775f2) |
 

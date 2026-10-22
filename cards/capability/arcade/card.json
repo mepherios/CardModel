@@ -15,7 +15,9 @@
     "law/CM42_the_store_runs_what_it_lists"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "8de89843e71668465145176a626b040937778ed4f1d191553c84fd51f87ae5f1",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/arcade"
@@ -26,12 +28,12 @@
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"
   },
-  "statement": "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, serves and launches; a console player is the machine cards plus a card-language player, built the same way; every item the store lists installs, verifies, repairs and runs through the store's own protocol (the self-run's store step).",
+  "statement": "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, serves and launches; a console player is the machine cards plus a card-language player, built the same way; every program and cartridge the store lists installs, verifies, repairs and runs through the store's own protocol (the self-run's store step).",
   "tests": [
     "tests/test_arcade.py::test_a_timed_guard_redirects",
+    "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store",
     "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host",
-    "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked",
-    "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store"
+    "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked"
   ],
   "tier": 0,
   "usefulness": "Games made from the model's cards, and the user's own cartridges, ship through Cardmodel Arcade."

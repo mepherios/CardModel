@@ -7,16 +7,25 @@ the store can be checked end to end wherever the toolchains are (law CM42; the s
                                   staging folder and swap it in; ``repair`` reuses every intact chunk of the
                                   installed build and fetches only what failed (the launcher's verify -> repair)
     verify(library, gid)          re-hash every installed file against the installed manifest
-    play(library, gid, ...)       start the installed executable with its own save folder; with ``frames`` it
-                                  runs headless and draws its last frame into a PNG
+    play(library, gid, ...)       start the installed executable with its own save folder (and, for a console
+                                  player, the cartridge where it is: Launcher.playRom); with ``frames`` it runs
+                                  headless and draws its last frame into a PNG
     achievements(save_dir, info)  the unlocked achievements, read from the save the way the launcher reads them
-    check_catalog(ctx)            every game in the catalogue, through the service: install, verify, corrupt a
-                                  file and repair it, play headless, look at the picture it drew; the store's
-                                  pages are served and name only endpoints the service has
+    check_catalog(ctx)            every program in the catalogue (games and console players), through the service:
+                                  install, verify, corrupt a file and repair it, play headless, look at the
+                                  picture it drew; then every cartridge the library lists (check_cartridges); the
+                                  store's pages are served and name only endpoints the service has
+    check_cartridges(...)         each listed cartridge started in its store-installed player as the launcher
+                                  starts it, headless: it runs, exits cleanly, keeps its save folder where the
+                                  launcher keeps it and shows the picture its system's cards compute (Reference)
 
 Honest limits (L1): this mirrors Launcher.swift (the native window and its page bridge are not driven; the
 launcher is checked by compiling it); a game counts as launched when its native executable runs the frames it
-was asked for, exits cleanly and draws a frame that is not one flat colour.
+was asked for, exits cleanly and draws a frame that is not one flat colour. A cartridge counts as launched when
+the installed player runs it and shows exactly the picture the player module computes in this process for the
+same bytes and frames: that checks the store's path (listing, player, shell, cartridge reading), not how well
+the game itself runs (the ROM survey's verdict says that, and many games still show a blank or white screen
+after the check's frames).
 """
 from __future__ import annotations
 
@@ -157,12 +166,13 @@ def picture(png: bytes) -> dict:
 
 
 def play(library: Path, gid: str, frames: int, save_dir: Path, shot: Path | None = None, script: str | None = None,
-         timeout: float = 300, rom: Path | None = None) -> dict:
+         timeout: float = 300, rom: str | Path | None = None, title: str | None = None) -> dict:
     man = json.loads((library / gid / ".manifest.json").read_text(encoding="utf-8"))
     exe = library / gid / man["executable"]
-    cmd = [str(exe), "--frames", str(frames), "--save-dir", str(save_dir)]
-    if rom:
-        cmd += ["--rom", str(rom)]
+    cmd = [str(exe)]
+    if rom is not None:                      # a console player: what Launcher.playRom passes
+        cmd += ["--rom", str(rom), "--title", title or Path(rom).stem]
+    cmd += ["--frames", str(frames), "--save-dir", str(save_dir)]
     if shot:
         cmd += ["--shot", str(shot)]
     if script:
@@ -202,7 +212,7 @@ def pages(base: str) -> dict:
             continue
         if a.endswith(".js"):
             script += body.decode("utf-8", "replace")
-    named = sorted(set(re.findall(r'"(/api/[a-z_]+)/?', script)))
+    named = sorted(set(re.findall(r'["\'`](/api/[a-z_]+)', script)))
     from . import server
     documented = set(re.findall(r"(/api/[a-z_]+)", server.__doc__ or ""))   # the service lists every route it serves
     unknown = [n for n in named if n not in documented]
@@ -225,62 +235,142 @@ def serve_here(ctx, ui_dir: Path | None):
     return f"http://127.0.0.1:{httpd.server_address[1]}", stop
 
 
-def test_cartridge(ctx, system: str, folder: Path) -> Path | None:
-    """A cartridge for a console player, assembled from the instruction cards (a checkerboard, then V-blank HALTs):
-    the store check never needs one of the user's ROMs. None when this system has no assembler card here."""
-    import zipfile
-    if system != "gameboy":
-        return None
-    from ..machine import asm
-    tile = bytes([0xAA, 0x55] * 8)
-    prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 0), ("LDH (n),A", 0x40), ("LD HL,nn", 0x8010), ("LD DE,nn", "tile"),
-            ("LD B,n", 16), ("label", "copy"), ("LD A,(DE)",), ("LD (HL+),A",), ("INC DE",), ("DEC B",),
-            ("JR NZ,e", "copy"), ("LD HL,nn", 0x9800), ("LD BC,nn", 0x0400), ("label", "fill"), ("LD A,n", 1),
-            ("LD (HL+),A",), ("DEC BC",), ("LD A,B",), ("OR C",), ("JR NZ,e", "fill"), ("LD A,n", 0xE4),
-            ("LDH (n),A", 0x47), ("LD A,n", 0x01), ("LDH (n),A", 0xFF), ("LD A,n", 0x91), ("LDH (n),A", 0x40),
-            ("EI",), ("label", "idle"), ("HALT",), ("JR e", "idle"), ("label", "tile"), ("db", tile)]
-    vblank = asm.assemble(ctx.store, [("LDH A,(n)", 0x44), ("RETI",)], org=0x40)
-    rom = asm.rom(ctx.store, prog, title="STORETEST", extra={0x40: vblank})
-    folder.mkdir(parents=True, exist_ok=True)
-    out = folder / "storetest.zip"
-    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("storetest.gb", rom)
-    return out
+class Reference:
+    """What a system's cards compute for a cartridge: its player module loaded once in this process (a fresh copy
+    of the native library, system.Player), each cartridge inserted as the shell inserts it and run the same frames
+    with no buttons, the sound buffer emptied every frame as the shell empties it."""
+
+    def __init__(self, ctx, system: str):
+        self.ctx, self.system, self.player = ctx, system, None
+
+    def picture(self, rom: bytes, frames: int) -> tuple[int, int, bytes]:
+        from . import system as Sy
+        if self.player is None:
+            self.player = Sy.Player(self.ctx, self.system, rom, "native", fresh=True)
+        else:
+            self.player.start(rom)
+        p = self.player
+        count = p.card["audio"]["count"]
+        for _ in range(frames):
+            p.frame(0)
+            p.m.set(count, 0)
+        return p.card["screen"]["width"], p.card["screen"]["height"], p.rgb()
+
+    def close(self) -> None:
+        if self.player is not None and hasattr(self.player.m, "close"):
+            self.player.m.close()
+
+
+def check_cartridges(ctx, base: str, library: Path, work: Path, frames: int, installed: set, refs: dict,
+                     limit: int | None = None, progress=None) -> dict:
+    """Every cartridge the store's library lists (GET /api/library), started the way Launcher.playRom starts it
+    (the store-installed player, the cartridge where it is, its title, a save folder per cartridge under the
+    check's own saves), headless: it must run its frames, exit cleanly, keep that save folder, and show the
+    picture its system's cards compute for the same bytes (Reference). A cartridge of a console with no player
+    yet (the DS) is listed but not launchable, and is counted as such. ``limit`` checks only the first N."""
+    from . import library as Lib
+    from ..machine.gb import frame_stats, png_read
+    say = progress or (lambda m: None)
+    listing = _json(base, "/api/library")
+    systems = {s_["id"]: s_ for s_ in listing.get("systems") or []}
+    roms = list(listing.get("roms") or [])
+    todo = roms if limit is None else roms[:max(0, int(limit))]
+    players: dict = {}
+    failed, unplayable = [], {}
+    launched = colourful = saves_written = 0
+    t0 = time.perf_counter()
+    for k, r in enumerate(todo):
+        sy = systems.get(r.get("system_card")) or {}
+        if not sy.get("playable"):
+            key = r.get("system_card") or "?"
+            unplayable[key] = unplayable.get(key, 0) + 1
+            continue
+        pid = sy.get("player")
+        tally = players.setdefault(pid, {"listed": 0, "launched": 0, "colourful": 0, "verdicts": {}})
+        tally["listed"] += 1
+        level = (r.get("verdict") or {}).get("level", "unknown")
+        tally["verdicts"][level] = tally["verdicts"].get(level, 0) + 1
+        try:
+            missing = [f for f in ("id", "title", "path", "system_card") if not r.get(f)]
+            if missing:
+                raise StoreError(f"the library lists it without {', '.join(missing)}")
+            if pid not in installed:
+                raise StoreError(f"its player {pid} did not pass the store's own check (install, verify, repair, "
+                                 "its check cartridge)")
+            if not Path(r["path"]).is_file():                   # Launcher.playRom's own guard
+                raise StoreError(f"the cartridge is not at {r['path']} any more")
+            if r.get("cover") and not _get(base, r["cover"]).startswith(b"\x89PNG"):
+                raise StoreError("its picture in the store is not a PNG")
+            saves = work / "saves" / r["id"]
+            shot = work / "shots" / f"{r['id']}.png"
+            shot.parent.mkdir(parents=True, exist_ok=True)
+            out = play(library, pid, frames, saves, shot=shot, rom=r["path"], title=r["title"], timeout=120)
+            if out.get("returncode") != 0 or not out.get("ran"):
+                raise StoreError("the installed player did not run it: "
+                                 + (out.get("reason") or (out.get("stderr") or "").strip()[-300:] or str(out)))
+            if not saves.is_dir():
+                raise StoreError("the player did not keep the save folder the launcher gives it")
+            card = ctx.store.get(f"system/{r['system_card']}")
+            exts = tuple((card.get("cartridge") or {}).get("extensions") or ())
+            ref = refs.get(r["system_card"]) or refs.setdefault(r["system_card"], Reference(ctx, r["system_card"]))
+            want = ref.picture(Lib.read_cartridge(Path(r["path"]), exts), frames)
+            got = png_read(shot.read_bytes())
+            if got != want:
+                raise StoreError(f"after {frames} frames it shows a picture its cards do not compute")
+            launched += 1
+            tally["launched"] += 1
+            if frame_stats(got[2])["colours"] > 1:
+                colourful += 1
+                tally["colourful"] += 1
+            saves_written += (saves / "save.bin").is_file()
+        except (StoreError, OSError, ValueError, KeyError) as exc:
+            failed.append({"id": r.get("id"), "title": r.get("title"), "path": r.get("path"),
+                           "error": f"{type(exc).__name__}: {exc}"[:600]})
+        if k % 100 == 99:
+            say(f"cartridges: {k + 1} of {len(todo)} started through the store")
+    shutil.rmtree(work / "shots", ignore_errors=True)
+    return {"listed": len(roms), "checked": len(todo) - sum(unplayable.values()), "launched": launched,
+            "failed": len(failed), "failed_ids": [f["id"] for f in failed], "failing": failed[:50],
+            "colourful": colourful, "saves_written": saves_written, "unplayable": unplayable, "players": players,
+            "frames": frames, "limit": limit, "seconds": round(time.perf_counter() - t0, 1)}
 
 
 def check_catalog(ctx, frames: int = 120, only: list[str] | None = None, build: bool = True,
-                  progress=None) -> dict:
-    """Every item of the store's release catalogue (games and console players; not other worktrees' branch
-    versions), launched through the store as the launcher would, in a temporary library with temporary saves: the
-    player's own installation is never touched. A game card the catalogue does not list fails too."""
+                  progress=None, cartridges: int | None = None) -> dict:
+    """Every item of the store's release catalogue (not other worktrees' branch versions), launched through the
+    store as the launcher would (a temporary library and saves: the player's own installation is never touched):
+    the games, and each console player played on its system card's check cartridge; then, when a player is
+    checked, every cartridge the library lists (check_cartridges; ``cartridges`` checks only the first N, 0 none).
+    A game or player card the catalogue does not list fails too."""
     from . import build as B
+    from . import system as Sy
     say = progress or (lambda m: None)
     app = ctx.store.get("app/arcade")
     ui = (app.path / app["ui"]) if app is not None and app.get("ui") else None
-    games = [c for c in ctx.store.cards("game") if not only or c.name in only]
-    plat = ctx.store.get("platform/macos") if not games else B.platform_card(ctx.store, games[0])
-    if plat is None:
-        return {"status": "vacuous", "reason": "no platform card to build the catalogue with", "items": {}}
-    probe = plat.get("probe")
+    games = [(c, c.name) for c in ctx.store.cards("game") if not only or c.name in only]
+    systems = [(c, Sy.arcade_id(c)) for c in ctx.store.cards("system")
+               if c.get("machine") and c.get("logic") and (not only or Sy.arcade_id(c) in only)]
+    programs = games + systems
+    if not programs:
+        return {"status": "vacuous", "reason": "no game or player cards in the catalogue", "items": {}}
+    probe = B.platform_card(ctx.store, programs[0][0]).get("probe")
     from ..engines import probes
     ok, why = probes.probe(probe) if probe else (True, "")
     if not ok:
         return {"status": "skipped", "reason": f"the platform card's toolchain is not here: {why}", "items": {}}
     base, stop = serve_here(ctx, ui)
     work = Path(tempfile.mkdtemp(prefix="cardmodel_store_"))
-    items, catalog = {}, []
+    items, catalog, refs = {}, [], {}
     page: dict = {"ok": False, "reason": "not reached"}
+    carts: dict | None = None
     try:
         catalog = [g for g in _json(base, "/api/catalog") if not g.get("worktree")]     # the release channel
         page = pages(base) if ui is not None else {"ok": False, "reason": "no launcher pages (app/arcade)"}
-        listed = {g["id"]: g for g in catalog if not only or g["id"] in only}
-        wanted = list(listed) + [c.name for c in games if c.name not in listed]
-        if not wanted:
-            return {"status": "vacuous", "reason": "the catalogue lists nothing", "items": {}, "pages": page}
-        for gid in wanted:
-            e = listed.get(gid) or {}
-            row: dict = {"title": e.get("title"), "version": e.get("version"), "kind": e.get("kind", "game"),
-                         "listed": gid in listed}
+        listed = {g["id"]: g for g in catalog}
+        lib = work / "library"
+        for card, gid in programs:
+            row: dict = {"title": card.get("title"), "version": card.get("version"), "listed": gid in listed,
+                         "kind": card.category}
             items[gid] = row
             t0 = time.perf_counter()
             try:
@@ -289,7 +379,6 @@ def check_catalog(ctx, frames: int = 120, only: list[str] | None = None, build: 
                 if listed[gid].get("build_due") and not build:
                     raise StoreError("its cards changed since the last build (building was not allowed)")
                 say(f"{gid}: installing through the store")
-                lib = work / "library"
                 inst = install(base, gid, lib)
                 row["install"] = {k: inst[k] for k in ("build", "version", "files", "size", "fetched", "built")}
                 row["verify"] = verify(lib, gid)
@@ -301,27 +390,61 @@ def check_catalog(ctx, frames: int = 120, only: list[str] | None = None, build: 
                 fixed = install(base, gid, lib, repair=True)
                 row["repair"] = {"file": victim["path"], "seen": victim["path"] in broken["bad"],
                                  "fetched": fixed["fetched"], "reused": fixed["reused"], "ok": verify(lib, gid)["ok"]}
-                saves = work / "saves" / gid
-                rom = test_cartridge(ctx, e.get("system"), work / "cartridges") if e.get("kind") == "system" else None
-                if e.get("kind") == "system" and rom is None:
-                    raise StoreError(f"no test cartridge for the {e.get('system')} player")
-                say(f"{gid}: playing {frames} frames headless" + (" with a cartridge assembled from the cards"
-                                                                  if rom else ""))
-                row["play"] = play(lib, gid, frames, saves, shot=work / f"{gid}.png", rom=rom)
-                row["achievements_readable"] = isinstance(achievements(saves, inst), list)
+                if card.category == "system":
+                    row["play"] = _play_check_cartridge(ctx, card, lib, gid, work, frames, refs)
+                else:
+                    saves = work / "saves" / gid
+                    say(f"{gid}: playing {frames} frames headless")
+                    row["play"] = play(lib, gid, frames, saves, shot=work / f"{gid}.png")
+                    row["achievements_readable"] = isinstance(achievements(saves, inst), list)
                 row["ok"] = bool(row["verify"]["ok"] and row["repair"]["seen"] and row["repair"]["ok"]
                                  and row["repair"]["fetched"] <= victim["size"] and row["play"]["ok"])
             except (StoreError, OSError, ValueError, KeyError, StopIteration) as exc:
                 row["ok"] = False
                 row["error"] = f"{type(exc).__name__}: {exc}"
             row["seconds"] = round(time.perf_counter() - t0, 2)
+        if systems and cartridges != 0:
+            installed = {gid for _, gid in systems if items.get(gid, {}).get("ok")}
+            say("cartridges: every one the library lists, started through the store")
+            carts = check_cartridges(ctx, base, lib, work, frames, installed, refs, limit=cartridges, progress=say)
+            for _, gid in systems:          # playing cartridges leaves the installed player as it was
+                if items.get(gid, {}).get("ok"):
+                    items[gid]["verify_after_cartridges"] = verify(lib, gid)
+                    items[gid]["ok"] = items[gid]["verify_after_cartridges"]["ok"]
     finally:
         stop()
+        for ref in refs.values():
+            ref.close()
         shutil.rmtree(work, ignore_errors=True)
     failing = [g for g, r in items.items() if not r.get("ok")]
-    return {"status": "fail" if failing or not page.get("ok") else "pass", "items": items, "failing": failing,
-            "pages": page, "catalog": [g["id"] for g in catalog], "frames": frames}
+    bad = bool(failing or not page.get("ok") or (carts and carts["failed"]))
+    return {"status": "fail" if bad else "pass", "items": items, "failing": failing, "pages": page,
+            "catalog": [g["id"] for g in catalog], "frames": frames, "cartridges": carts}
 
 
-__all__ = ["StoreError", "achievements", "check_catalog", "install", "pages", "picture", "play", "serve_here",
-           "verify"]
+def _play_check_cartridge(ctx, card, lib: Path, gid: str, work: Path, frames: int, refs: dict) -> dict:
+    """A console player, played as the launcher plays a cartridge, on its system card's check cartridge (no one's
+    game): it must show the picture its cards compute and leave the card's byte in the save, in the save folder
+    the launcher gives that cartridge."""
+    from . import system as Sy
+    from ..machine.gb import png_read
+    cc = Sy.check_cartridge(ctx, card.name)
+    if cc is None:
+        raise StoreError(f"system/{card.name} has no check_cartridge to play")
+    rom = work / "cartridges" / cc["file"]
+    rom.parent.mkdir(parents=True, exist_ok=True)
+    rom.write_bytes(cc["bytes"])
+    saves = work / "saves" / f"check-{card.name}"
+    shot = work / f"{gid}.png"
+    out = play(lib, gid, frames, saves, shot=shot, rom=rom, title=Path(cc["file"]).stem)
+    ref = refs.get(card.name) or refs.setdefault(card.name, Reference(ctx, card.name))
+    out["same_as_cards"] = shot.is_file() and png_read(shot.read_bytes()) == ref.picture(cc["bytes"], frames)
+    save = (saves / "save.bin").read_bytes() if (saves / "save.bin").is_file() else b""
+    want = cc.get("save")
+    out["save_kept"] = want is None or (len(save) > want["offset"] and save[want["offset"]] == want["byte"])
+    out["ok"] = bool(out["ok"] and out["same_as_cards"] and out["save_kept"])
+    return out
+
+
+__all__ = ["Reference", "StoreError", "achievements", "check_cartridges", "check_catalog", "install", "pages",
+           "picture", "play", "serve_here", "verify"]

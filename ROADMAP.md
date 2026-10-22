@@ -126,6 +126,17 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Goal floors**: `floor/goals` records the hardest target every goal has had (`cardmodel docs`), and the integrity
   check fails on a goal made easier, re-aimed or removed without a written reason (docs/INTEGRATION.md 4a).
 
+## Done (2026-10-22, the Game Boy library in the store)
+
+* 🔵 **The Game Boy library in the launcher**: the store runs the user's Game Boy / Color cartridges through the
+  Game Boy Player (the machine cards plus `player.card`, built once like a game). Each cartridge in the user's
+  folders is a library entry read where it is, titled by its No-Intro name or its header, with the survey's
+  verdict and a title screen the machine draws; nothing derived from a cartridge leaves `state/`.
+* 🔵 **Every listed entry launches through the store**: `cardmodel arcade check` installs the player like a game,
+  plays it on the system card's check cartridge (assembled from the instruction cards), then starts every listed
+  cartridge in that installed player as the launcher does and compares its picture with the one its cards compute;
+  the self-run's `store` step counts the cartridges that do not launch (G_S1).
+
 ## Gödel model: next (GOALS.md "What the card model is")
 
 * 🟢 **The prime ledger**: an append-only pack of atoms with their primes (B₀ from the op cards and logic

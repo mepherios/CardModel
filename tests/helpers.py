@@ -17,6 +17,8 @@ os.environ["CARDMODEL_SELF"] = "0"
 # the arcade service lists only its own checkout's programs, not the other worktrees' (tests/test_arcade_work.py
 # sets up worktrees of its own)
 os.environ["CARDMODEL_BRANCHES"] = "0"
+# the arcade's cartridge library is the tests' own (empty unless a test adds folders), never the user's cartridges
+os.environ["CARDMODEL_LIBRARY"] = str(Path(tempfile.mkdtemp(prefix="cardmodel_library_")) / "library.json")
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

@@ -186,13 +186,13 @@ CAPABILITIES = [
      "Your Game Boy / Color games run through the model, natively."),
     ("arcade", "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, "
      "serves and launches; a console player is the machine cards plus a card-language player, built the same way; "
-     "every item the store lists installs, verifies, repairs and runs through the store's own protocol (the "
-     "self-run's store step).",
+     "every program and cartridge the store lists installs, verifies, repairs and runs through the store's own "
+     "protocol (the self-run's store step).",
      L("CM35_games_are_cards", "CM40_players_are_cards", "CM42_the_store_runs_what_it_lists"),
      ["tests/test_arcade.py::test_a_timed_guard_redirects",
+      "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store",
       "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host",
-      "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked",
-      "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store"],
+      "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked"],
      ["docs/ARCADE.md", "docs/STORE.md"], ["cardmodel arcade"], ["cardmodel/arcade"],
      "Games made from the model's cards, and the user's own cartridges, ship through Cardmodel Arcade."),
     ("live_hub", "The store follows everything in progress: project cards say what to watch and keep their owner's "
