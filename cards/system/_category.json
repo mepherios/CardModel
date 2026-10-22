@@ -1,0 +1,5 @@
+{
+  "name": "system",
+  "tier": 1,
+  "description": "Consoles the arcade plays the user's own cartridges on. A system card names the machine card that is the console, the card-language player that makes it an arcade program (a cartridge in; picture, sound and save out), the library folders and file kinds its cartridges come from, and how the arcade lists them. Cartridges are read where they are and never copied."
+}

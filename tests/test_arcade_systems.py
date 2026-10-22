@@ -1,0 +1,173 @@
+"""Consoles in the arcade: the Game Boy player (system/gameboy) is the gameboy machine plus card-language glue. It
+configures a cartridge exactly as the Python host does, shows the picture the machine finished, keeps battery RAM
+and the clock in its save, and its native package plays a zipped cartridge headless. The library lists cartridges
+where they are. Every cartridge here is synthetic (built by the card assembler): no ROM is stored or needed."""
+import json
+import tempfile
+import unittest
+import zipfile
+from pathlib import Path
+
+from helpers import model_ctx
+
+from cardmodel.arcade import build as B
+from cardmodel.arcade import library as L
+from cardmodel.arcade import system as S
+from cardmodel.engines import probes
+from cardmodel.machine import asm, gb as G, native as N
+
+
+def cart(ctx, cart_type=0x00, ram_code=0, cgb=0x00, rom_code=0, title="CARDTEST"):
+    """The graphics program of the machine tests (a checkerboard, a sprite, V-blank HALTs) on a chosen board."""
+    tile = bytes([0xAA, 0x55] * 8)
+    prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 0), ("LDH (n),A", 0x40),
+            ("LD HL,nn", 0x8010), ("LD DE,nn", "tile"), ("LD B,n", 16),
+            ("label", "copy"), ("LD A,(DE)",), ("LD (HL+),A",), ("INC DE",), ("DEC B",), ("JR NZ,e", "copy"),
+            ("LD HL,nn", 0x9800), ("LD BC,nn", 0x0400),
+            ("label", "fill"), ("LD A,n", 1), ("LD (HL+),A",), ("DEC BC",), ("LD A,B",), ("OR C",),
+            ("JR NZ,e", "fill"),
+            ("LD A,n", 0xE4), ("LDH (n),A", 0x47), ("LD A,n", 0x01), ("LDH (n),A", 0xFF), ("LD A,n", 0x91),
+            ("LDH (n),A", 0x40), ("EI",), ("label", "idle"), ("HALT",), ("JR e", "idle"), ("label", "tile"), ("db", tile)]
+    vblank = asm.assemble(ctx.store, [("LDH A,(n)", 0x44), ("RETI",)], org=0x40)
+    return asm.rom(ctx.store, prog, title=title, cart_type=cart_type, ram_size_code=ram_code, cgb=cgb,
+                   rom_size_code=rom_code, extra={0x40: vblank})
+
+
+def ram_writer(ctx):
+    """MBC3 + RAM + battery + RTC: enables RAM, writes 0x5A at 0xA010, then waits."""
+    prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 0x0A), ("LD (nn),A", 0x0000), ("LD A,n", 0x5A), ("LD (nn),A", 0xA010),
+            ("label", "end"), ("HALT",), ("JR e", "end")]
+    return asm.rom(ctx.store, prog, title="SAVECLOCK", cart_type=0x10, ram_size_code=2)
+
+
+class GameBoyPlayer(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_tables_come_from_the_cartridge_card(self):
+        card = S.system_card(self.ctx.store, "gameboy")
+        src = S.tables(self.ctx, card)
+        cc = self.ctx.store.get("hardware/gb_cartridge")
+        kinds = [int(x) for x in src.split("array cart_kind: Int[256] = [")[1].split("]")[0].split(", ")]
+        self.assertEqual(kinds[0x13], int(cc["mbc_kind"]["mbc3"]))
+        self.assertEqual(kinds[0x1B], int(cc["mbc_kind"]["mbc5"]))
+        self.assertEqual(kinds[0x22], 0, "an unsupported controller (MBC7) runs as ROM only, as the Python host does")
+        self.assertIn(f"const CART_RAM_UNSIZED = {cc['ram_unsized_bytes']}", src)
+
+    def test_the_player_configures_a_cartridge_like_the_host(self):
+        m = N.load(self.ctx, S.module(self.ctx, "gameboy"), "native", fresh=True)
+        names = ("mbc_kind", "rom_mask", "ram_mask", "has_rtc", "mbc1m", "cgb")
+        boards = [(0x00, 0, 0x00, 0), (0x03, 2, 0x80, 2), (0x13, 3, 0xC0, 1), (0x10, 2, 0x00, 0), (0x06, 0, 0x00, 1),
+                  (0x02, 0, 0x00, 0), (0x1B, 4, 0x80, 3), (0x22, 0, 0x00, 0)]
+        for t, ram, cgb, rom_code in boards:
+            rom = cart(self.ctx, t, ram, cgb, rom_code)
+            m.call("reset_all")
+            m.write("rom", rom)
+            m.call("player_load", len(rom))
+            info = G.header(rom, self.ctx.store)
+            want = {"mbc_kind": info["mbc_kind"], "rom_mask": G._pow2(max(len(rom), info["rom_size"])) - 1,
+                    "ram_mask": info["ram_size"] - 1 if info["ram_size"] else -1, "has_rtc": int(info["rtc"]),
+                    "mbc1m": int(info["mbc1m"]), "cgb": int(info["cgb"])}
+            self.assertEqual({n: m.get(n) for n in names}, want, hex(t))
+
+    def test_the_picture_is_the_one_the_machine_finished(self):
+        rom = cart(self.ctx)
+        p = S.Player(self.ctx, "gameboy", rom, "native", fresh=True)
+        ref = G.GameBoy(self.ctx, rom, "native", sample_rate=48000, fresh=True)
+        seen = 0
+        for k in range(90):
+            p.frame(0)
+            self.assertIn(len(p.drain_audio()) // 4, (800, 801), "1/60 s of sound at 48 kHz per frame")
+            while ref.m.get("frames") < p.m.get("frames"):
+                ref.run_frame()
+            if k % 15 == 14:
+                self.assertEqual(p.rgb(), ref.frame())
+                seen += 1
+        self.assertGreater(seen, 0)
+        self.assertEqual(set(p.rgba()[3::4]), {255})
+
+    def test_battery_ram_and_the_clock_survive_closing(self):
+        rom = ram_writer(self.ctx)
+        p = S.Player(self.ctx, "gameboy", rom, "native", fresh=True, clock=1_000_000)
+        for _ in range(70):                       # the write, then a second without changes: the save is packed
+            p.frame(0)
+        self.assertEqual(p.m.get("player_save_dirty"), 1)
+        p.m.set("rtc_h", 5)
+        p.m.call("player_flush")
+        save = p.m.read("player_save")
+        self.assertEqual(save[0x10], 0x5A)
+        self.assertEqual(bytes(save[0x20030:0x20034]), b"CMSV")
+        q = S.Player(self.ctx, "gameboy", rom, "native", fresh=True, clock=1_000_000 + 3600, save=save)
+        self.assertEqual(q.m.read("cram", 0x10, 1)[0], 0x5A)
+        self.assertEqual(q.m.get("rtc_h"), 6, "an hour closed is an hour on the cartridge's clock")
+
+
+class Library(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_no_intro_names_read_as_titles(self):
+        self.assertEqual(L.display_title("Legend of Zelda, The - Link's Awakening (USA, Europe) (Rev B)"),
+                         ("The Legend of Zelda - Link's Awakening", "(USA, Europe) (Rev B)"))
+        self.assertEqual(L.display_title("Tetris (World) (Rev A)"), ("Tetris", "(World) (Rev A)"))
+        self.assertEqual(L.display_title("Plain"), ("Plain", ""))
+
+    def test_a_folder_of_cartridges_is_listed_where_it_is(self):
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_carts_"))
+        rom = cart(self.ctx, 0x00, 0, 0x80, 0, "COLORTEST")
+        with zipfile.ZipFile(d / "Color Test (World).zip", "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("Color Test (World).gbc", rom)
+        card = S.system_card(self.ctx.store, "gameboy")
+        row = L.describe(self.ctx, card, d / "Color Test (World).zip", (".gb", ".gbc"))
+        self.assertEqual((row["title"], row["tags"], row["system"]), ("Color Test", "(World)", "gbc"))
+        self.assertEqual(row["header"]["title"], "COLORTEST")
+        self.assertEqual(L.read_cartridge(d / "Color Test (World).zip", (".gbc",)), rom)
+        (d / "Plain Test (World).gb").write_bytes(cart(self.ctx))      # a DMG cartridge: BGP sets its shades
+        m = N.load(self.ctx, S.Bd.module(self.ctx, "gameboy"), "native", fresh=True)
+        png = L.draw_cover(self.ctx, m, d / "Plain Test (World).gb")
+        self.assertTrue(png.startswith(b"\x89PNG"))
+        self.assertGreater(G.frame_stats(G.png_read(png)[2])["colours"], 1)
+
+
+@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+class PlayerPackage(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+        cls.old_root = B.ROOT_OVERRIDE
+        B.ROOT_OVERRIDE = Path(tempfile.mkdtemp(prefix="cardmodel_arcade_"))   # not the live depots
+        cls.info = S.build(cls.ctx, "gameboy")
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        shutil.rmtree(B.ROOT_OVERRIDE, ignore_errors=True)
+        B.ROOT_OVERRIDE = cls.old_root
+
+    def test_the_package_plays_a_zipped_cartridge(self):
+        from cardmodel.kernel import resources
+        root = B.latest(self.ctx, "gameboy_player")
+        man = json.loads((root / "manifest.json").read_text())
+        self.assertEqual(man["kind"], "system")
+        spec = json.loads(next((root / "content").rglob("game.json")).read_text())
+        self.assertEqual(spec["cartridge"]["extensions"], [".gb", ".gbc", ".sgb"])
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_gbp_"))
+        rom = cart(self.ctx)
+        with zipfile.ZipFile(d / "test.zip", "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("test.gb", rom)
+        p = resources.run([str(root / "content" / man["executable"]), "--rom", str(d / "test.zip"), "--frames", "60",
+                           "--save-dir", str(d / "save"), "--shot", str(d / "shot.png")], timeout=120, heavy=False)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertIn("ran 60 frames", p.stdout)
+        w, h, rgb = G.png_read((d / "shot.png").read_bytes())
+        ref = S.Player(self.ctx, "gameboy", rom, "native", fresh=True)
+        for _ in range(60):
+            ref.frame(0)
+        self.assertEqual((w, h), (160, 144))
+        self.assertEqual(rgb, ref.rgb(), "the native package shows what the module computes")
+
+
+if __name__ == "__main__":
+    unittest.main()

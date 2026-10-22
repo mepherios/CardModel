@@ -185,18 +185,24 @@ CAPABILITIES = [
      ["cardmodel/machine/lift.py", "cardmodel/machine/shell.py", "cardmodel/machine/gb.py"],
      "Your Game Boy / Color games run through the model, natively."),
     ("arcade", "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, "
-     "serves and launches; every game the store lists installs, verifies, repairs and runs through the store's own "
-     "protocol (the self-run's store step).", L("CM35_games_are_cards", "CM42_the_store_runs_what_it_lists"),
+     "serves and launches; a console player is the machine cards plus a card-language player, built the same way; "
+     "every item the store lists installs, verifies, repairs and runs through the store's own protocol (the "
+     "self-run's store step).",
+     L("CM35_games_are_cards", "CM40_players_are_cards", "CM42_the_store_runs_what_it_lists"),
      ["tests/test_arcade.py::test_a_timed_guard_redirects",
-      "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store"], ["docs/ARCADE.md", "docs/STORE.md"],
-     ["cardmodel arcade"], ["cardmodel/arcade"], "Games made from the model's cards ship through Cardmodel Arcade."),
+      "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host",
+      "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked",
+      "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store"],
+     ["docs/ARCADE.md", "docs/STORE.md"], ["cardmodel arcade"], ["cardmodel/arcade"],
+     "Games made from the model's cards, and the user's own cartridges, ship through Cardmodel Arcade."),
     ("live_hub", "The store follows everything in progress: project cards say what to watch and keep their owner's "
      "detail current (CM41); the hub computes each one's phase, branches, uncommitted work, metrics and builds from "
      "git and the model's records, read-only, gathers what waits on the user, and pushes changes to the launcher as "
-     "they happen; early-access builds install beside the release.",
+     "they happen; early access is a program's version on a branch, installed from its store page like a beta "
+     "(one mechanism with the store's branches).",
      L("CM01_honest_limits", "CM35_games_are_cards", "CM41_projects_keep_their_cards_current"),
      ["tests/test_hub.py::test_status_is_computed_from_git_and_state", "tests/test_hub.py::test_git_reads_never_write",
-      "tests/test_hub.py::test_changes_are_pushed", "tests/test_hub.py::test_early_access_is_separate_and_installable",
+      "tests/test_hub.py::test_changes_are_pushed", "tests/test_hub.py::test_early_access_is_the_branch_version",
       "tests/test_projects.py::test_missing_or_stale_project_cards_fail"],
      ["docs/STORE.md"], ["cardmodel arcade serve (the In progress page)"], ["cardmodel/arcade/hub.py"],
      "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."),
@@ -213,6 +219,12 @@ CAPABILITIES = [
      ["tests/test_egraph.py::test_saturation_proves_and_canonicalizes", "tests/test_egraph.py::test_congruence"],
      ["docs/MATH_CORE.md"], ["cardmodel distill"], ["cardmodel/engines/egraph.py"],
      "Two pieces of code that mean the same thing are recognised as one, and the cheapest is chosen."),
+    ("symbolic_instructions", "Instruction cards as mathematics: symbolic execution gives each instruction's "
+     "registers as terms over what it reads, with its bus effects and their conditions, checked against the "
+     "executable semantics (MATH_CORE phase 0, F5).", L("CM32_machines_are_cards"),
+     ["tests/test_symbolic.py::test_terms_agree_with_the_semantics", "tests/test_symbolic.py::test_a_wrong_term_is_caught"],
+     ["docs/MATH_CORE.md", "docs/MACHINES.md"], ["cardmodel symbolic"], ["cardmodel/machine/symbolic.py"],
+     "A CPU's instructions are understood, not only run: each one is a formula the model can reason about."),
     ("four_sources", "The four sources: every algorithm and function has a definition (truth) with its term, "
      "canonical form, Gödel numbers and proof obligations; every implementation is an action linked to it by a "
      "witness or proof; identities are transformations; procedures are methods with their limits.",

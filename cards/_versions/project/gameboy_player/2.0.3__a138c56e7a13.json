@@ -1,0 +1,90 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/festive-margulis-*",
+    "claude/strange-dewdney-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "done": [
+    "960 of 971 surveyed ROMs boot; every runnable hardware test ROM passes (153 of 153: the DMG OAM bug, the CGB's DMG mode)",
+    "the Game Boy Player (system/gameboy: the gameboy machine card plus player.card, law CM40) builds, installs and plays like a game; battery saves and the MBC3 clock survive closing",
+    "the library: every cartridge in the user's folders read where it is (a zip in memory), with its header, the survey's verdict and a title screen the machine draws headless; the folders live in library.json",
+    "the DS listed with its coverage, not playable",
+    "the launcher's Update installs the last good build when the cards in progress do not build, remembers the error across restarts, and the pages restart a stopped service",
+    "a WORK tab (every branch's commits, uncommitted changes, areas, programs) and a Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its own cardmodel",
+    "every title and datum on the launcher's pages opens something (230 clicks over 11 views, no errors)"
+  ],
+  "games": [
+    "gameboy_player"
+  ],
+  "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
+  "in_progress": [
+    "a runnable app per cartridge, first the user's Pokémon games, built from the player and the cartridge's own code lifted into card IR"
+  ],
+  "kind": "game",
+  "left": [
+    "merge the branch into main and reinstall Cardmodel Arcade from main",
+    "fold the WORK tab into main's IN PROGRESS tab, and branch versions into early access (one mechanism)",
+    "one store page per cartridge (today cartridges are library entries played by the player)",
+    "the DS playable: its 2D engines, VRAM banks, 3D, sound"
+  ],
+  "metadata": {
+    "previous_content_hash": "363ded0dd9a7f0c2aa7502acff51d706664eb3ea66964f3945b59f429a372173",
+    "version": "2.0.3",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "goal": "G_M2_roms_boot",
+      "label": "surveyed ROMs that boot"
+    },
+    {
+      "goal": "G_M4_test_roms",
+      "label": "hardware test ROMs passing"
+    },
+    {
+      "format": "{passed}/{total}",
+      "label": "test ROMs (count)",
+      "state": "emu_testroms"
+    }
+  ],
+  "name": "gameboy_player",
+  "next_steps": [
+    "the main session merges claude/festive-margulis-43fde7 into main and reinstalls Cardmodel Arcade from main",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted; measure what still falls back to the instruction-at-a-time interpreter (code in RAM, after EI and HALT, jump targets no profile saw) and close each gap by distillation from the instruction cards",
+    "MATH_CORE (approved): new behaviour is card-language or IR semantics (hardware and mapper cards), never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method",
+    "MATH_CORE phase 1: trace the player, the library and the lifted code to the definition, transformation, action and method registries once main has them"
+  ],
+  "order": 2,
+  "owner": {
+    "name": "model-the-dmg-oam-corrup",
+    "session": "local_978e773c-d0b7-4c45-9824-80cad4f52163"
+  },
+  "paths": [
+    "cardmodel/machine/gb.py",
+    "cardmodel/machine/lift.py",
+    "cardmodel/machine/shell.py",
+    "cardmodel/machine/survey.py",
+    "cardmodel/machine/testroms.py",
+    "cards/hardware",
+    "cards/machine/gameboy",
+    "cards/isa/lr35902",
+    "cards/system",
+    "cardmodel/arcade/system.py",
+    "cardmodel/arcade/library.py",
+    "cardmodel/arcade/work.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "Committed on claude/festive-margulis-43fde7 and caught up with main (e0eca75, with Vector Duel 0.4.0 as the release); the user approved merging it into main, which the main session does next, then reinstalls Cardmodel Arcade from main.",
+  "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
+  "tier": 1,
+  "title": "Game Boy Player",
+  "updated": "2026-10-22T01:05:52+02:00",
+  "user_actions": []
+}

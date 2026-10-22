@@ -61,7 +61,11 @@ SETS = [
                  "it."),
     ("computation", "B0", "The op cards beyond the IR's basis (squares, modular inverses, elliptic-curve "
                           "operations, ...): atoms of the computing domain, each to be defined over B0 where it can."),
+    ("machines", "B0", "The effects a machine's instructions have on the world outside the CPU: bus reads and "
+                       "writes, internal cycles, halt, stop, a locked CPU, a prefix dispatch."),
 ]
+EFFECT_ATOMS = ["effect/rd8", "effect/wr8", "effect/idle", "effect/idu", "effect/rd8_idu", "effect/halt",
+                "effect/stop", "effect/hang", "effect/cb_dispatch"]
 
 LAWS = [
     ("CM43_primes_are_forever", "The Gödel model's atoms take primes in an append-only ledger: an atom keeps its "
@@ -119,6 +123,7 @@ def main(argv=None) -> int:
     new = GD.sync(store, GD.basis_atoms(store, ctx.ops), "B0")
     rest = sorted(f"op/{c.name}" for c in store.cards("op") if c.name not in ctx.ops)
     new += GD.sync(store, rest, "computation")
+    new += GD.sync(store, EFFECT_ATOMS, "machines")
     stats["ledger_appended"] = len(new)
     stats["ledger"] = len(GD.ledger(store))
     print(json.dumps(stats))

@@ -621,6 +621,32 @@ def cmd_sources(args) -> int:
     return 1 if r["status"] == "fail" else 0
 
 
+def cmd_symbolic(args) -> int:
+    from .engines import values as V
+    from .engines.exprs import to_text
+    from .machine import symbolic as SY
+    cli = _cli()
+    ctx = cli._ctx(args)
+    seed = V.fresh_seed() if args.seed is None else args.seed
+    only = args.cards or None
+    r = SY.check(ctx, args.isa, seed=seed, samples=args.samples, only=only)
+    lines = [f"seed {seed}: {r['counts']} ({sum(c.get('runs', 0) for c in r['cards'].values())} runs against the "
+             f"executable semantics)"]
+    for name, row in r["cards"].items():
+        if only or row["status"] not in ("pass",):
+            lines.append(f"  {name}: {row['status']} {row.get('problems') or row.get('reason') or ''}")
+        if only and name in r["results"]:
+            res = r["results"][name]
+            for k, t in res["state"].items():
+                lines.append(f"      {k} = {to_text(t)}")
+            for e in res["effects"]:
+                g = f" if {to_text(e['guard'])}" if e["guard"] is not None else ""
+                lines.append(f"      {e['op']}({', '.join(to_text(a) for a in e['args'])}){g}")
+    r.pop("results", None)
+    cli._out(args, r, "\n".join(lines))
+    return 1 if r["status"] == "fail" else 0
+
+
 def register(sub) -> None:
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
@@ -662,6 +688,10 @@ def register(sub) -> None:
     s.add_argument("exprs", nargs="*"); s.add_argument("--measure", action="store_true")
     s.add_argument("--iterations", type=int, default=8); s.add_argument("--nodes", type=int, default=4000)
     s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_distill)
+    s = sub.add_parser("symbolic", help="instruction cards as terms: symbolic execution, checked against their "
+                                        "executable semantics")
+    s.add_argument("isa", nargs="?", default="lr35902"); s.add_argument("cards", nargs="*")
+    s.add_argument("--samples", type=int, default=4); s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_symbolic)
     s = sub.add_parser("sources", help="the four sources: definitions (truth), actions, transformations, methods")
     s.add_argument("action", choices=["check", "build"]); s.add_argument("--write", action="store_true")
     s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_sources)

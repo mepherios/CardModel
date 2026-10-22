@@ -111,8 +111,11 @@ reports what runs and what is not modelled yet.
 `arcade launcher --install` puts Cardmodel Arcade in ~/Applications: a store, library and downloads for games the
 card model builds (install it from this checkout, not a worktree). Its first game, Vector Duel, is card-language
 logic on the combat cards, compiled to native code; docs/STORE.md lists everything in the store and what the
-model does for each piece. `arcade check` launches every game in the catalogue through the store exactly as the
-launcher does (a download with every chunk checked, verify, a damaged file repaired, a native run).
+model does for each piece. `arcade library --add DIR` puts your own Game Boy / Color cartridges in its library,
+played natively by the Game Boy Player (the machine cards as an arcade program). Its Work tab shows every
+session's branch with the programs on it, each installable like a beta. `arcade check` launches every game in the
+catalogue through the store exactly as the launcher does (a download with every chunk checked, verify, a damaged
+file repaired, a native run).
 `self run` runs one cycle of the model on itself: the core capability checks, the integrity check, verify,
 learning, law and identity rediscovery, the arena and measurements when due, and every goal; `self report` shows
 what it found (flaws, weaknesses, strengths) and the ranked plan of what to improve next. Any other command starts

@@ -1,12 +1,15 @@
-"""The store's In progress page: status computed from git and records, read-only, pushed live, early access apart."""
+"""The store's In progress page: status computed from git and records, read-only, pushed live; early access is the
+store's branch versions."""
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import tempfile
 import threading
 import time
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 from unittest import mock
@@ -112,22 +115,28 @@ class Live(unittest.TestCase):
 
 
 class EarlyAccess(unittest.TestCase):
-    def test_early_access_is_separate_and_installable(self):
-        with World() as w:
+    def test_early_access_is_the_branch_version(self):
+        """One mechanism: early access is a program's version on a branch with unmerged work, read from the store's
+        branch versions (arcade/work.py) and installed from its store page; the hub serves no builds of its own."""
+        from cardmodel.arcade import work as W
+        with World() as w, mock.patch.dict(os.environ, {"CARDMODEL_BRANCHES": "1"}):
+            W._cache.update(trees=None, trees_at=0.0, data=None, at=0.0)
+            card = w.wt / "cards" / "game" / "g1" / "card.json"
+            card.parent.mkdir(parents=True)
+            card.write_text(json.dumps({"name": "g1", "category": "game", "title": "G One", "version": "0.2.0"}))
             depot = w.wt / "state" / "arcade" / "depots" / "g1" / "0.2.0+abc123"
             depot.mkdir(parents=True)
-            data = b"early bytes"
-            sha = hashlib.sha256(data).hexdigest()
-            chunks = w.wt / "state" / "arcade" / "chunks"
-            chunks.mkdir(parents=True)
-            (chunks / sha).write_bytes(data)
             (depot / "manifest.json").write_text(json.dumps({
                 "id": "g1", "title": "G One", "version": "0.2.0", "build": "abc123", "created": "2026-10-22T00:00:00+0000",
-                "size": len(data), "executable": "G", "app": "G.app", "files": [{"path": "f", "size": len(data),
-                "sha256": sha, "chunks": [{"sha256": sha, "size": len(data)}]}], "media": []}))
+                "size": 11}))
             (depot.parent / "latest").write_text("0.2.0+abc123")
             h = H.Hub(w.ctx)
             h.refresh(force=True)
+            snap = h.current()
+            self.assertEqual([(e["game"], e["worktree"], e["branch"], e["version"], e["build"]) for e in snap["early"]],
+                             [("g1", "wt1", "feature", "0.2.0", "abc123")])
+            p = next(x for x in snap["projects"] if x["id"] == "p")
+            self.assertEqual([b["channel"] for b in p["builds"]], ["early access"])
             with mock.patch.object(H, "_HUB", h):
                 server.Handler.ctx, server.Handler.ui_dir = w.ctx, None
                 httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
@@ -135,22 +144,15 @@ class EarlyAccess(unittest.TestCase):
                 base = f"http://127.0.0.1:{httpd.server_address[1]}"
                 get = lambda path: urllib.request.urlopen(base + path, timeout=30).read()  # noqa: E731
                 try:
-                    entry = json.loads(get("/api/game/g1.early.wt1"))
-                    self.assertTrue(entry["early_access"])
-                    self.assertFalse(entry["build_due"])
-                    man = json.loads(get(entry["build"]["manifest"]))
-                    self.assertEqual(man["build"], "abc123")
-                    self.assertEqual(get(f"/chunk/{sha}"), data)
-                    self.assertEqual(json.loads(get("/api/catalog")), [])          # the release channel is apart
-                    dev = json.loads(get("/api/dev"))
-                    self.assertEqual([e["id"] for e in dev["early"]], ["g1.early.wt1"])
-                    p = next(x for x in dev["projects"] if x["id"] == "p")
-                    self.assertEqual([b["channel"] for b in p["builds"]], ["early access"])
-                    with self.assertRaises(urllib.error.HTTPError):
-                        get("/early/wt1/g1/..%2F..%2Fsecrets/manifest.json")
+                    self.assertEqual(json.loads(get("/api/dev"))["early"][0]["worktree"], "wt1")
+                    with self.assertRaises(urllib.error.HTTPError):               # no second way to serve a build
+                        get("/early/wt1/g1/0.2.0+abc123/manifest.json")
                 finally:
                     httpd.shutdown()
                     httpd.server_close()
+            sh(w.root, "merge", "-q", "feature")                                 # merged: the release's past
+            h.refresh(force=True)
+            self.assertEqual(h.current()["early"], [])
 
 
 if __name__ == "__main__":

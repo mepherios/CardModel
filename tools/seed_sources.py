@@ -69,8 +69,10 @@ METHODS = [
     ("learn", "cardmodel/engines/learn.py", "new cards from observed code, promoted only with evidence",
      "linear in the observed tree", "names and statistics, not semantics, for code it cannot lift", "built"),
     ("symbolic_execution", "cardmodel/machine/symbolic.py", "an instruction card's meaning as core terms over "
-                           "symbolic registers and memory (MATH_CORE phase 0, F5)", "linear in the semantics",
-     "checked against the executable semantics exhaustively on small widths", "planned"),
+                           "symbolic registers and the bytes it reads, with its bus effects and their conditions "
+                           "(MATH_CORE phase 0, F5)", "linear in the semantics (both sides of every condition)",
+     "checked against the executable semantics on seeded states, not yet exhaustively or by proof; no loops",
+     "built"),
 ]
 
 LAWS = [
@@ -90,6 +92,8 @@ GOALS = [
      "cheapest term, or a recurrence's canonical form).", "canonical_definitions", 0.9, "higher"),
     ("G_A9_actions_without_truth", "autonomy", "Actions (implementations) that name no definition (CM44).",
      "actions_without_truth", 0, "lower"),
+    ("G_M6_symbolic_instructions", "machines", "Instruction cards whose symbolic terms agree with their executable "
+     "semantics (MATH_CORE phase 0, F5; LR35902 and ARM).", "symbolic_instructions", 679, "higher"),
 ]
 
 
@@ -137,6 +141,13 @@ def main(argv=None) -> int:
     ctx = Ctx(store)
     built = SO.build(ctx, seed=args.seed)
     stats.update(SO.write(ctx, built))
+    from cardmodel.machine import symbolic as SY
+    checked = SY.check(ctx, "lr35902", seed=args.seed, samples=4)
+    defs, acts = SY.definitions(ctx, "lr35902", checked)
+    ctx.store.save_pack("definition", "isa_lr35902", defs, layer="model")
+    ctx.store.save_pack("action", "isa_lr35902", acts, layer="model")
+    stats["instruction_definitions"] = len(defs)
+    stats["instructions_checked"] = checked["counts"]
     print(json.dumps(stats))
     return 0
 

@@ -1,0 +1,90 @@
+{
+  "about": [
+    "Your Game Boy and Game Boy Color cartridges, played natively. The console is the card model's own: the LR35902 instruction cards and the hardware cards (memory map, bank controllers, timer, interrupts, picture, sound), checked against the Blargg, mooneye and acid2 hardware test suites.",
+    "Point the arcade at the folder your cartridges are in. Each one shows up in your library with its title screen and how far the card model gets with it; Play starts it in its own window. Nothing is copied: the player reads the cartridge where it is.",
+    "Battery saves and the MBC3 clock are kept per cartridge, and the clock keeps running while the game is closed."
+  ],
+  "audio": {
+    "array": "audio",
+    "count": "audio_n",
+    "format": "s16le stereo",
+    "rate": 48000
+  },
+  "cartridge": {
+    "array": "rom",
+    "bytes": 8388608,
+    "extensions": [".gb", ".gbc", ".sgb"],
+    "load": "player_load",
+    "zip": true
+  },
+  "category": "system",
+  "changelog": [
+    {
+      "notes": [
+        "The Game Boy and Game Boy Color from the instruction and hardware cards, as a native player.",
+        "Your library: every cartridge in your folders, with its title screen and the survey's verdict.",
+        "Battery saves and the real-time clock per cartridge."
+      ],
+      "title": "First release",
+      "version": "1.0.0"
+    }
+  ],
+  "clock": "player_clock",
+  "controls": "Arrows or W A S D: the pad. X or K: A. Z or J: B. Return: Start. Backspace or Tab: Select. F: full screen. Gamepads: stick or pad, A, B, Menu for Start, Y for Select.",
+  "developer": "the card model",
+  "entry": {
+    "frame": "player_frame",
+    "fullscreen": "player_fullscreen",
+    "init": "player_init",
+    "quit": "player_quit"
+  },
+  "genre": ["Utilities"],
+  "input": {
+    "bits": ["right", "left", "up", "down", "a", "b", "select", "start"],
+    "gamepad": {"a": "a", "b": "b", "select": "y", "start": "menu"},
+    "keys": {
+      "a": ["x", "k"],
+      "b": ["z", "j"],
+      "down": ["down", "s"],
+      "left": ["left", "a"],
+      "right": ["right", "d"],
+      "select": ["backspace", "tab"],
+      "start": ["return"],
+      "up": ["up", "w"]
+    },
+    "keys2": {}
+  },
+  "kind": "system",
+  "library": {
+    "folders": [],
+    "systems": [
+      {"cgb_flags": [0], "id": "gb", "label": "Game Boy"},
+      {"cgb_flags": [128, 192], "id": "gbc", "label": "Game Boy Color"}
+    ]
+  },
+  "logic": ["player.card"],
+  "machine": "gameboy",
+  "name": "gameboy",
+  "platform": "macos",
+  "provenance": {"origin": "cardmodel"},
+  "save": {
+    "array": "player_save",
+    "bytes": 131124,
+    "dirty": "player_save_dirty",
+    "layout": "battery RAM (128 KiB, the cartridge's size used), the RTC in the common 48-byte trailer (10 registers as 32-bit little-endian words, then the Unix time), then CMSV"
+  },
+  "screen": {
+    "array": "player_fb",
+    "format": "rgba8",
+    "height": 144,
+    "scale": 4,
+    "width": 160
+  },
+  "short_description": "Play your own Game Boy and Game Boy Color cartridges natively, on a console made of cards.",
+  "statement": "The Game Boy / Game Boy Color machine card (instruction cards plus hardware cards) as an arcade player: player.card decodes the cartridge header with the cartridge card's tables, runs the machine 1/60 s per frame, presents the last finished picture as RGBA and keeps battery RAM and the clock in one save. The platform card's effect shell reads the cartridge file and does the I/O.",
+  "tables": "hardware/gb_cartridge",
+  "tags": ["Emulation", "Game Boy", "Game Boy Color", "Your library"],
+  "tier": 1,
+  "title": "Game Boy Player",
+  "version": "1.0.0"
+}
