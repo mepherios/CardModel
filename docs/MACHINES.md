@@ -154,7 +154,8 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
 `machine/lift.py`. The interpreter records an execution profile (an opcode bitmap and an "entered other than by
 falling through" bitmap). Leaders come from recursive descent through bank 0 from the vectors, the profile's
 entries, and static successors. A **block** is one IR function made of its instruction cards' IR with every fetch
-replaced by the byte it would read; it is then specialised:
+replaced by the byte it would read, PC set where the card's IR finds it in the interpreter (past the opcode, a
+prefix and the bytes its fetches take: STOP's IR skips its second byte itself); it is then specialised:
 
 1. inlining of the instruction semantics, the CPU helpers and the bus; a constant address goes through the
    machine's own bus logic and folds (an HRAM read becomes an array load);
@@ -193,8 +194,8 @@ it had left the code after every conditional return to profiles). Pokemon Crysta
 (the survey's presses, then a seeded walk) and the abstract run, on a run with another seed: every one of its
 instructions ran as lifted card IR (0 interpreted, none from RAM), frame-identical to the interpreter.
 
-Blocks are cached per ROM, machine and lifter version, emitted through the C card in per-bank parts, linked into
-one library. The profile grows with each session (the shell saves the new entries at exit, and an app made for
+Blocks are cached per ROM, machine and lifter version (the profile per ROM and machine: a new lifter keeps it),
+emitted through the C card in per-bank parts, linked into one library. The profile grows with each session (the shell saves the new entries at exit, and an app made for
 one cartridge keeps them beside its save: docs/ARCADE.md section 5); a launch re-lifts when it grew enough.
 
 ## 5. The effect shell (CM21, CM34)

@@ -29,7 +29,7 @@ import time
 from . import build as Bd
 from . import lift
 
-VERSION = 1                       # what the analysis finds (in the lift folder's marker)
+VERSION = 2                       # what the analysis finds (in the lift folder's marker)
 TOP = None
 JP_HL = 0xE9
 MAX_STEPS = 600
@@ -356,8 +356,7 @@ class Abstract:
                 got = (card, n, None)
             else:
                 locals_: dict = {}
-                body = [{"k": "assign", "target": "PC", "value": ["int", (pc + n) & 0xFFFF]}]
-                body += self.lifter.instance(card, imm, locals_)
+                body = self.lifter.entered(card, imm, pc, locals_)[1]
                 got = (card, n, body)
             self._ins[key] = got
         return got
