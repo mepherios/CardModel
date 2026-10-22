@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 0,
+  "measures": "named_fraction",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "observe_self",
+  "on_change": [],
+  "order": 55,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "observe_self",
+  "statement": "the model observes its own code (cardmodel/): the named fraction of what it is made of",
+  "tier": 0
+}

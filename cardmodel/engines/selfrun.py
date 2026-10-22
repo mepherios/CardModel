@@ -17,7 +17,14 @@ the first sighting only records the baseline). The steps:
   algebra        canonical forms and identities of the algorithm cards when they changed
   arena          a small arena run: the optimizer's soundness, recall and speed (goals O2-O4)
   optimize       measure the op cards' forms on this host (metric cards, CM09)
+  law_witnesses  every law card's witness test, run test by test in a child process with the cycle's seed (CM20)
+  observe_self   the model observes its own code (cardmodel/): the named fraction of the code it is made of
+  store          every catalogue item launched through the arcade's store as the launcher does it (CM42)
+  tests          the whole unit suite, test by test, in a child process
   goals          every goal's value from the latest result of each verify section, against the last cycle
+
+Every step runs under a deadline (what is left of the cycle's budget): a step that does not return in time is
+stopped and reported as crashed, and the cycle goes on (CM30).
 
 Then: findings (strengths, weaknesses, flaws, each with its evidence and the command that acts on it), the
 plan (findings ranked: self-determinism), the trend against the previous cycle, the record
@@ -39,11 +46,13 @@ when its time budget is spent or memory is short, and says which steps it left.
 """
 from __future__ import annotations
 
+import ast
 import fcntl
 import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 import traceback
@@ -55,8 +64,9 @@ from . import values as V
 from .context import Ctx
 
 SEVERITY = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+# store_cartridges: how many of the library's cartridges the store step launches (None: every one, about 0.2 s each)
 DEFAULT_CONFIG = {"auto": True, "interval_hours": 6, "budget_minutes": 45, "corpora": [], "learn_max_functions": 12,
-                  "arena_count": 24}
+                  "arena_count": 24, "store_cartridges": None}
 KEEP_RUNS = 60
 KEEP_LOGS = 20
 QUIET = {"self", "clean", "verify", "cover", "docs", "learn", "laws", "arena", "optimize", "improve", "lean"}
@@ -71,6 +81,8 @@ MEASURED_BY = {
     "arena_geomean_speedup": "cardmodel self run --only arena", "roms_boot_fraction": "cardmodel machine survey DIR",
     "lifted_runs_differing": "cardmodel machine diff ROM", "test_roms_pass_rate": "cardmodel machine testroms DIR",
     "ds_undecodable_executed": "cardmodel machine nds ROM", "lean_imported": "cardmodel lean import --core",
+    "law_witnesses_failing": "cardmodel self run --only law_witnesses",
+    "store_items_failing": "cardmodel self run --only store (or cardmodel arcade check)",
 }
 # what moves an unmet goal: the command or place a finding proposes
 IMPROVED_BY = {
@@ -89,6 +101,8 @@ IMPROVED_BY = {
     "capabilities_failing": "cardmodel self capabilities",
     "project_card_problems": "revise the project cards verify names (docs/INTEGRATION.md: project cards)",
     "integrity_problems": "cardmodel verify --only integrity",
+    "law_witnesses_failing": "cardmodel self run --only law_witnesses (each failing law names its witness test)",
+    "store_items_failing": "cardmodel arcade check GAME (it says which step of the launch fails)",
 }
 
 
@@ -209,6 +223,12 @@ class Cycle:
         self.seed, self.cfg, self.state, self.say = seed, cfg, state, say
         self.ctx = read_ctx()
         self._w: Ctx | None = None
+        self.deadline = time.monotonic() + float(cfg.get("budget_minutes", 45)) * 60
+
+    def remaining(self, cap: float | None = None) -> float:
+        """Seconds left of the cycle's budget (at least a minute, so a step that starts can finish its setup)."""
+        left = max(60.0, self.deadline - time.monotonic())
+        return min(left, cap) if cap else left
 
     @property
     def wctx(self) -> Ctx:
@@ -305,7 +325,8 @@ def _verify_full(c: Cycle) -> dict:
 def _slim(res: dict) -> dict:
     """What later cycles need of a step's result to report on it (no per-card details, no goal lists)."""
     keep = ("status", "summary", "failing", "unavailable", "problems", "sections", "quarantined", "promoted",
-            "learned", "score", "disagreeing_anchors", "capabilities", "seed")
+            "learned", "score", "disagreeing_anchors", "capabilities", "seed", "skipped", "witnesses", "errors",
+            "pages", "reason", "details", "named_fraction")
     out = {k: res[k] for k in keep if k in res}
     for r in (out.get("learned") or {}).values():
         r.pop("promoted", None)
@@ -404,8 +425,136 @@ def _goals(c: Cycle) -> dict:
             "summary": f"{met} of {len(goals)} goals met, {unmeasured} not measured yet"}
 
 
+def _test_class(path: Path, test: str) -> str | None:
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return None
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and any(isinstance(f, ast.FunctionDef) and f.name == test
+                                                   for f in node.body):
+            return node.name
+    return None
+
+
+def run_tests(c: Cycle, ids: list[str] | None, timeout: float) -> dict:
+    """The witness runner in a child (tests/ as its folder, the cycle's seed, no self layer). It holds no machine
+    slot itself: the compilers it starts take theirs."""
+    from ..kernel import resources
+    from .witness_runner import MARK
+    home = paths.home()
+    env = dict(os.environ, PYTHONPATH=str(home), PYTHONDONTWRITEBYTECODE="1", CARDMODEL_SELF="0",
+               CARDMODEL_TEST_SEED=str(c.seed))
+    args = [sys.executable, "-B", "-m", "cardmodel.engines.witness_runner", *(ids or ["--discover"])]
+    try:
+        p = resources.run(args, cwd=str(home / "tests"), env=env, timeout=timeout, heavy=False,
+                          mem_cap_mb=max(2048, resources.policy()["child_mb"]), stdin=subprocess.DEVNULL)
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "reason": f"the tests did not finish within {timeout:.0f} s", "tests": {}}
+    line = next((x for x in reversed((p.stdout or "").splitlines()) if x.startswith(MARK)), None)
+    if line is None:
+        return {"ok": False, "tests": {},
+                "reason": f"the runner reported nothing (exit {p.returncode}): {(p.stderr or p.stdout or '')[-600:]}"}
+    return dict(json.loads(line[len(MARK):]), ok=True)
+
+
+def _outcome(tests: dict, tid: str) -> dict:
+    """A test's outcome, or its class's (setUpClass) or module's failure when the test itself never ran."""
+    if tid in tests:
+        return tests[tid]
+    mod, _, rest = tid.partition(".")
+    for k in (f"setUpClass ({mod}.{rest.partition('.')[0]})", f"setUpModule ({mod})"):
+        if k in tests:
+            return dict(tests[k], detail="fixture failed: " + tests[k].get("detail", ""))
+    return {"status": "error", "seconds": 0.0, "detail": "not reported by the runner"}
+
+
+def _law_witnesses(c: Cycle) -> dict:
+    home = paths.home()
+    rows, ids = {}, {}
+    for law in sorted(c.ctx.store.cards("law"), key=lambda x: x.name):
+        w = law.get("witness") or ""
+        path, _, test = w.partition("::")
+        cls = _test_class(home / path, test) if path and test else None
+        if cls is None:
+            rows[law.name] = {"witness": w, "status": "missing", "detail": "no such test"}
+            continue
+        tid = f"{Path(path).stem}.{cls}.{test}"
+        ids.setdefault(tid, []).append(law.name)
+        rows[law.name] = {"witness": w, "test": tid}
+    res = run_tests(c, sorted(ids), timeout=c.remaining(cap=1800)) if ids else {"ok": True, "tests": {}}
+    for tid, names in ids.items():
+        o = _outcome(res["tests"], tid) if res.get("ok") else {"status": "error", "detail": res.get("reason")}
+        for n in names:
+            rows[n].update(status=o["status"], seconds=o.get("seconds"), detail=(o.get("detail") or "")[-600:])
+    failing = sorted(n for n, r in rows.items() if r["status"] in ("fail", "error", "missing"))
+    skipped = sorted(n for n, r in rows.items() if r["status"] == "skip")
+    result = {"status": "fail" if failing else ("pass" if rows else "vacuous"), "failing": failing,
+              "skipped": skipped, "laws": len(rows)}
+    c.state.setdefault("sections", {})["law_witnesses"] = {"at": _iso(_now()), "seed": c.seed, "result": result}
+    return {**result, "witnesses": rows, "seconds_child": res.get("seconds"),
+            "summary": f"{len(rows) - len(failing) - len(skipped)} of {len(rows)} law witnesses pass"
+                       + (f"; failing: {', '.join(failing)}" if failing else "")
+                       + (f"; skipped on this host: {', '.join(skipped)}" if skipped else "")}
+
+
+def _observe_self(c: Cycle) -> dict:
+    """The model observes its own code; the observation goes to the self layer once per content hash (CM15), so the
+    named-fraction goal measures the code the model is made of, not a corpus it learned from."""
+    from .observe import observe
+    obs = observe(c.ctx, paths.home() / "cardmodel")
+    t = obs["totals"]
+    new = c.ctx.store.get(f"observation/{obs['name']}") is None
+    if new:
+        c.wctx.store.save(obs, layer="self", category="observation")
+        c.refresh()
+    top = [f"{k} x{n}" for k, n in list(obs["top_fallback_calls"].items())[:8] if k != "<expression>"]
+    return {"status": "pass", "named_fraction": t["named_fraction"], "files": t["files"],
+            "functions": t["functions"], "liftable": t["functions_liftable"], "observation": obs["name"],
+            "summary": f"{t['files']} files, named fraction {t['named_fraction']}"
+                       + (" (a new observation)" if new else "") + (f"; top unnamed calls {', '.join(top)}" if top else "")}
+
+
+def _store(c: Cycle) -> dict:
+    from ..arcade import client
+    limit = c.cfg.get("store_cartridges")            # None: every cartridge the library lists
+    rep = client.check_catalog(c.ctx, frames=int(c.cfg.get("store_frames", 60)),
+                               progress=lambda m: c.say(f"[self]   store: {m}"),
+                               cartridges=None if limit is None else int(limit))
+    ok = sorted(g for g, r in rep["items"].items() if r.get("ok"))
+    carts = rep.get("cartridges") or {}
+    # every entry the store lists that does not launch: its programs, then its cartridges (G_S1 counts both)
+    failing = list(rep.get("failing", [])) + [f"cartridge/{i}" for i in carts.get("failed_ids") or []]
+    result = {"status": rep["status"], "failing": failing, "items": len(rep["items"]),
+              "launched": ok, "pages": (rep.get("pages") or {}).get("ok"), "reason": rep.get("reason"),
+              "cartridges": {k: carts.get(k) for k in ("listed", "checked", "launched", "failed", "unplayable")}
+              if carts else None}
+    c.state.setdefault("sections", {})["store"] = {"at": _iso(_now()), "seed": c.seed, "result": result}
+    errors = {g: r.get("error") or r.get("play") for g, r in rep["items"].items() if not r.get("ok")}
+    cart_errors = [f"{f['title']}: {f['error']}" for f in carts.get("failing") or []]
+    return {**result, "errors": errors, "cartridge_errors": cart_errors[:20],
+            "summary": rep.get("reason") or (f"{len(ok)} of {len(rep['items'])} catalogue items installed, "
+                                             f"verified, repaired and played through the store"
+                                             + (f"; {carts['launched']} of {carts['checked']} listed cartridges "
+                                                f"launched in their store-installed player" if carts else "")
+                                             + ("" if result["pages"] else "; the launcher's pages are broken"))}
+
+
+def _tests(c: Cycle) -> dict:
+    res = run_tests(c, None, timeout=c.remaining(cap=3600))
+    if not res.get("ok"):
+        return {"status": "error", "summary": res.get("reason")}
+    rows = res["tests"]
+    failing = sorted(t for t, r in rows.items() if r["status"] in ("fail", "error"))
+    n = {s_: sum(1 for r in rows.values() if r["status"] == s_) for s_ in ("pass", "fail", "error", "skip")}
+    return {"status": "fail" if failing else "pass", "failing": failing, "ran": res.get("ran"),
+            "details": {t: rows[t].get("detail", "")[-400:] for t in failing[:20]},
+            "summary": f"{res.get('ran')} tests: " + ", ".join(f"{v} {k}" for k, v in n.items() if v)}
+
+
 STEPS = {"capabilities": _capabilities, "integrity": _integrity, "verify": _verify, "verify_full": _verify_full,
          "learn": _learn, "laws": _laws, "algebra": _algebra, "arena": _arena, "optimize": _optimize,
+         "law_witnesses": _law_witnesses, "observe_self": _observe_self, "store": _store, "tests": _tests,
          "goals": _goals}
 
 
@@ -490,7 +639,8 @@ def _cycle(only, auto, force, say) -> dict:
         t1 = time.monotonic()
         try:
             resources.guard(f"self-run step {s['name']}")
-            res = fn(c) if fn else {"status": "fail", "summary": f"no step function {s['run']!r} in the program"}
+            with resources.deadline(c.remaining()):
+                res = fn(c) if fn else {"status": "fail", "summary": f"no step function {s['run']!r} in the program"}
         except Exception as exc:  # noqa: BLE001 -- a crashed step is a finding, not the end of the cycle
             tb = traceback.extract_tb(exc.__traceback__)[-1]
             res = {"status": "error", "summary": f"{type(exc).__name__}: {exc} ({Path(tb.filename).name}:{tb.lineno})"}
@@ -618,6 +768,43 @@ def _findings(rep: dict) -> list[dict]:
         out.append(_finding("weakness", "low", "optimize",
                             f"{len(opt['disagreeing_anchors'])} cost anchors disagree with this host's measurements",
                             ", ".join(opt["disagreeing_anchors"][:8]), "cardmodel optimize --apply"))
+    lw = steps_.get("law_witnesses") or {}
+    for n in lw.get("failing") or []:
+        w = (lw.get("witnesses") or {}).get(n) or {}
+        out.append(_finding("flaw", "critical", f"law/{n}", f"law {n} is not upheld: its witness test "
+                            f"{w.get('status', 'fails')}", (w.get("detail") or "").strip().splitlines()[-1:][0][:300]
+                            if (w.get("detail") or "").strip() else w.get("witness", ""),
+                            f"cd tests && python3 -B -m unittest {w.get('test', '')}".rstrip()))
+    for n in lw.get("skipped") or []:
+        out.append(_finding("weakness", "low", f"law/{n}", f"law {n}'s witness is skipped on this host",
+                            ((lw.get("witnesses") or {}).get(n) or {}).get("detail", "")[:200]))
+    if lw.get("status") == "pass":
+        out.append(_finding("strength", "info", "law_witnesses", "every law is upheld by its witness test",
+                            lw.get("summary", "")))
+    st = steps_.get("store") or {}
+    for g in [x for x in st.get("failing") or [] if not x.startswith("cartridge/")]:
+        out.append(_finding("flaw", "high", f"store/{g}", f"{g} does not launch through the store",
+                            str((st.get("errors") or {}).get(g, ""))[:400], f"cardmodel arcade check {g}"))
+    bad = [x for x in st.get("failing") or [] if x.startswith("cartridge/")]
+    if bad:
+        out.append(_finding("flaw", "high", "store/cartridges", f"{len(bad)} listed cartridges do not launch "
+                            "through the store", "; ".join(st.get("cartridge_errors") or [])[:400],
+                            "cardmodel arcade check gameboy_player"))
+    if st.get("pages") is False:
+        out.append(_finding("flaw", "high", "store/pages", "the launcher's pages are missing files or name "
+                            "endpoints the service does not have", "", "cardmodel arcade check"))
+    if st.get("status") == "skipped":
+        out.append(_finding("weakness", "medium", "store", "the store cannot be checked on this host",
+                            st.get("reason") or "", "cardmodel probe"))
+    elif st.get("status") == "pass":
+        out.append(_finding("strength", "info", "store", "the store launches its catalogue", st.get("summary", "")))
+    ts = steps_.get("tests") or {}
+    for t in (ts.get("failing") or [])[:20]:
+        detail = ((ts.get("details") or {}).get(t) or "").strip().splitlines()[-1:]
+        out.append(_finding("flaw", "high", f"test/{t}", f"test {t} fails", detail[0][:300] if detail else "",
+                            f"cd tests && python3 -B -m unittest {t}"))
+    if ts.get("status") == "pass":
+        out.append(_finding("strength", "info", "tests", "the whole test suite passes", ts.get("summary", "")))
     for g in rep.get("goals") or []:
         if g["met"] is None:
             out.append(_finding("weakness", "low", f"goal/{g['goal']}", f"{g['goal']} is not measured yet",

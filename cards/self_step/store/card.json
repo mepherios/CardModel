@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 0,
+  "measures": "store_items_failing",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "store",
+  "on_change": [],
+  "order": 85,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "store",
+  "statement": "every catalogue item launched through the store as the launcher does it: a checked download, verify, a repair, a native run (CM42)",
+  "tier": 0
+}

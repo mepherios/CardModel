@@ -16,30 +16,23 @@
     "docs/INTEGRATION.md"
   ],
   "done": [
-    "consolidation, knowledge layer, card language, Lean bridge",
-    "resource governor, function algebra",
-    "self-run (CM38), capabilities (CM37), one program (CM39)",
-    "the live In progress page (bb480fb); law CM41 (c8aeb4c)",
-    "MATH_CORE phase 0 (03b1c6e, 51a70b2, 8dbd200) and phase 1 (bcdbdde)",
-    "claude/festive-margulis-43fde7 merged (4d9d755, the user's approval); launcher reinstalled from main",
-    "one store mechanism: early access is the branch versions, every branch inside In progress (a5ed2d5)",
-    "the handover's storage rules (CM45), witness tiers (CM46), the Lean formal core T1-T6"
+    "consolidation, knowledge layer, card language, Lean bridge; self-run, capabilities, one program",
+    "the live In progress page; law CM41; one store mechanism for work in progress (a5ed2d5)",
+    "MATH_CORE phases 0 and 1; the research handover's storage rules (CM45), witness tiers (CM46), the formal core T1-T6",
+    "Gödel method wave 1: difficulty census, code sizes and the GM-2 decision record, admissible numberings, Gödel's 46 definitions with a proof checker, arithmetized instruction terms",
+    "the self-running-improvement merge (984fc7a): law witnesses, the store's end-to-end check (CM42), goal floors on floor/goals"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
-  "in_progress": [
-    "R3 beyond the first classes: C-finite recursion, Boolean functions, bit-vectors (exhaustive 8-bit for the instruction terms)"
-  ],
+  "in_progress": [],
   "kind": "program",
   "left": [
-    "the formal core on Mathlib's Finsupp (needs the user's yes to download Mathlib), T7 and T8 in Lean",
-    "R4: e-graph extraction by cost vector and an e-class to vector map",
-    "the ARM instruction cards as terms (G_M6: 511 of 679)",
-    "canonical forms for more definitions (G_U7 0.3 of 0.9)",
-    "terminal-launch store entries for combat and world"
+    "W-2 on Mathlib after the user's yes; wave 2 (W-4, W-10, W-11, W-13, W-16)",
+    "the ARM instruction cards as terms (G_M6)",
+    "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "b08da6add9c2da62e5336a43c6ddb472d9bacdcfef2d9ed54f5a4235a2cd951d",
-    "version": "2.0.11",
+    "previous_content_hash": "361792e15e3e463f0f680f7ec2ecc5bbb2e2c632bfce7725d269809215ccfdff",
+    "version": "2.0.13",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -66,9 +59,8 @@
   ],
   "name": "cardmodel",
   "next_steps": [
-    "size witnesses for more classes: Boolean inputs, P-recursive sequences, while loops with a counted bound (G_U9: 8 of 25 algorithm forms proved)",
-    "exhaustive 8-bit checks of the LR35902 terms (bounded tier)",
-    "the semantic-hash library and instant lookup (phase 2)"
+    "wave 2 of the Gödel method: W-4 (the Gödel record on every card) first",
+    "W-2 once Mathlib is allowed"
   ],
   "order": 6,
   "owner": {
@@ -80,19 +72,18 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "MATH_CORE phases 0 and 1 are on main and phase 0 follows the research handover: content stored as sparse vectors with basis versions and identity hashes (CM45), every claim tiered (CM46: 2,667 claims, 1,626 at tier proof), the formal core proved in Lean (T1-T6, 6 of 6 cards, no sorry). The cartridge store is merged and In progress is one tab.",
+  "standing": "On main: MATH_CORE phases 0 and 1 by the research handover, and Gödel method wave 1 (W-15, W-3, W-5, W-1, W-12 merged, each after a full verify; W-2 waits for the Mathlib download). 260 tests pass.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T04:18:08+02:00",
+  "updated": "2026-10-22T04:50:55+02:00",
   "user_actions": [
     {
-      "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",
+      "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",
       "unblocks": [
-        "law CM42 (the store runs what it lists)",
-        "goals G_A9 and G_S1"
+        "wave 3's enforcement of the Gödel record"
       ],
-      "why": "its session folded its loop into main's self-run (law witnesses, observe_self, the store client, CM42); the user decides the merge"
+      "why": "wave 1 produced the evidence; adopting a law is the user's decision"
     }
   ]
 }

@@ -22,6 +22,10 @@ rounds, witnesses, arena, function algebra) call it, so a runaway becomes a clea
 ``spawn_background`` starts a detached, low-priority process (background QoS on macOS) for the self-run's
 automatic cycles; it refuses to start one while memory is short.
 
+``deadline(seconds)`` bounds code that runs in this process: past the time it raises ``Deadline`` (a real-time
+timer signal, main thread only), so a step that never returns is stopped instead of holding a cycle; a ``run``
+it interrupts kills its process group.
+
 Honest limits (L1): the watchdog samples every POLL_S seconds, so a child can briefly exceed its cap between
 samples; peak memory (ru_maxrss) never goes down, so once the self cap trips this process stays tripped.
 """
@@ -41,6 +45,10 @@ WAIT_S = 60.0
 
 class MemoryBudget(MemoryError):
     """This process passed its memory cap (CARDMODEL_SELF_MB)."""
+
+
+class Deadline(Exception):
+    """Code under ``deadline`` ran past its time."""
 
 
 def _env_int(name: str, default: int) -> int:
@@ -246,6 +254,12 @@ def run(args, *, timeout: float, heavy: bool = True, mem_cap_mb: int | None = No
             p.communicate()
             done.set()
             raise
+        except BaseException:      # interrupted (Ctrl-C, a caller's deadline): never leave the group running
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+            raise
         finally:
             done.set()
         if state["killed"]:
@@ -257,6 +271,33 @@ def run(args, *, timeout: float, heavy: bool = True, mem_cap_mb: int | None = No
     finally:
         if heavy:
             slot.__exit__(None, None, None)
+
+
+class deadline:  # noqa: N801 -- used as a context manager: with resources.deadline(60): ...
+    """Raise ``Deadline`` in this thread after ``seconds`` (main thread only; elsewhere, and for None or 0, no
+    bound). It interrupts Python code; one long call inside C (a single huge integer operation) finishes first."""
+
+    def __init__(self, seconds: float | None):
+        self.seconds = seconds
+        self.armed = False
+
+    def __enter__(self):
+        if not self.seconds or not hasattr(signal, "setitimer") or \
+                threading.current_thread() is not threading.main_thread():
+            return self
+
+        def ring(signum, frame):
+            raise Deadline(f"ran past its deadline ({self.seconds:.0f} s)")
+        self.old = signal.signal(signal.SIGALRM, ring)
+        signal.setitimer(signal.ITIMER_REAL, float(self.seconds))
+        self.armed = True
+        return self
+
+    def __exit__(self, *exc):
+        if self.armed:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            signal.signal(signal.SIGALRM, self.old)
+        return False
 
 
 def spawn_background(args, *, log_path, env: dict | None = None, cwd=None) -> int | None:
@@ -284,5 +325,5 @@ def spawn_background(args, *, log_path, env: dict | None = None, cwd=None) -> in
     return p.pid
 
 
-__all__ = ["MemoryBudget", "available_mb", "guard", "max_parallel", "peak_mb", "policy", "run", "spawn_background",
-           "total_ram_mb"]
+__all__ = ["Deadline", "MemoryBudget", "available_mb", "deadline", "guard", "max_parallel", "peak_mb", "policy", "run",
+           "spawn_background", "total_ram_mb"]

@@ -109,7 +109,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_C5_functions_translated` | computation | function cards whose forms agree in ≥ 3 implementations | ≥ 20 |
 | `G_U1_closure` | understanding | unresolved `depends_on` references (L45) | = 0 |
 | `G_U2_rules_witnessed` | understanding | rewrite rules with a passing numeric witness | ≥ 12 |
-| `G_U3_named_fraction` | understanding | named-card fraction of the last observation (hub card_coverage) | ≥ 0.6 |
+| `G_U3_named_fraction` | understanding | named-card fraction of the model's own code (`cardmodel/`), newest observation of it (hub card_coverage) | ≥ 0.6 |
 | `G_U4_valid_cards` | understanding | cards failing their card-type schema | = 0 |
 | `G_U5_content_vectors` | understanding | fraction of op, function and algorithm cards whose content vector is computed (CM43) | ≥ 1.0 |
 | `G_U6_definitions` | understanding | fraction of algorithm and function cards with a definition card (truth, CM44) | ≥ 1.0 |
@@ -149,6 +149,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_M4_test_roms` | machines | fraction of hardware test ROMs (Blargg, mooneye, acid2) passing | = 1.0 |
 | `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
 | `G_M6_symbolic_instructions` | machines | instruction cards whose symbolic terms agree with their executable semantics (LR35902 and ARM) | ≥ 679 |
+| `G_A10_law_witnesses_pass` | autonomy | law cards whose witness test fails, errs or is missing in the last self-run's `law_witnesses` step (CM20, CM38) | = 0 |
+| `G_S1_store_launches` | products | catalogue items that do not install, verify, repair and launch through the arcade's store in the last check (CM42) | = 0 |
 
 ### What "done" would mean on each axis
 
@@ -168,6 +170,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
   the observation, boundary or measurement that would close it. `G_P4` stays below its target as long as the console's
   undocumented behaviour, its hardware and its services are part of what AnyPS5 must reproduce: that part closes by
   observation (Pheros L102), not by construction (docs/ANYPS5.md says exactly what remains and why).
+* **Autonomy, as one unit.** Every law's witness test passes in every self-run that runs them.
+* **Products.** Every game in the store's catalogue builds from its cards and launches through the store.
 * **Machines.** Every instruction card agrees with its own data and across engines; the hardware test suites pass;
   every game in a collection boots, and lifted code is frame-for-frame identical to the interpreter; for the DS,
   every executed instruction decodes and the unmodelled hardware the games touch shrinks to nothing.

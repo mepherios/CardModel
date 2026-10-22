@@ -1,0 +1,534 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/CMP_EQ",
+    "op/CMP_LT",
+    "op/MOD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef is_prime_level(n: int) -> bool:\n    if n < 2:\n        return False\n    for d in range(2, n):\n        if n % d == 0:\n            return False\n    return True",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic bool is_prime_level(int64_t n) {\n    int64_t d = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    if ((n < INT64_C(2))) {\n        return false;\n    }\n    cm_it1 = INT64_C(2);\n    cm_stop2 = n;\n    while ((cm_it1 < cm_stop2)) {\n        d = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        if ((cm_floormod(n, d) == INT64_C(0))) {\n            return false;\n        }\n    }\n    return true;\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}\nfunc is_prime_level(n int64) bool {\n\tvar d int64 = 0\n\t_ = d\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\tif (n < int64(2)) {\n\t\treturn false\n\t}\n\tcm_it1 = int64(2)\n\tcm_stop2 = n\n\tfor (cm_it1 < cm_stop2) {\n\t\td = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\tif (cm_floormod(n, d) == int64(0)) {\n\t\t\treturn false\n\t\t}\n\t}\n\treturn true\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction is_prime_level(n) {\n    let d = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    if ((n < (2n))) {\n        return false;\n    }\n    cm_it1 = (2n);\n    cm_stop2 = n;\n    while ((cm_it1 < cm_stop2)) {\n        d = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        if ((cm_floormod(n, d) === (0n))) {\n            return false;\n        }\n    }\n    return true;\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def is_prime_level(n: int) -> bool:\n    if (n < 2):\n        return False\n    for d in range(2, n, 1):\n        if ((n % d) == 0):\n            return False\n    return True\n\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }\nfn is_prime_level(n: i64) -> bool {\n    let mut d: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    if (n < (2i64)) {\n        return false;\n    }\n    cm_it1 = (2i64);\n    cm_stop2 = n;\n    while (cm_it1 < cm_stop2) {\n        d = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        if (cm_floormod(n, d) == (0i64)) {\n            return false;\n        }\n    }\n    return true;\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_floormod(int64_t a, int64_t b) { int64_t r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }\nstatic bool is_prime_level(int64_t n) {\n    int64_t d = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    if ((n < INT64_C(2))) {\n        return false;\n    }\n    cm_it1 = INT64_C(2);\n    cm_stop2 = n;\n    while ((cm_it1 < cm_stop2)) {\n        d = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        if ((cm_floormod(n, d) == INT64_C(0))) {\n            return false;\n        }\n    }\n    return true;\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static boolean is_prime_level(long n) {\n    long d = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    if ((n < (2L))) {\n        return false;\n    }\n    cm_it1 = (2L);\n    cm_stop2 = n;\n    while ((cm_it1 < cm_stop2)) {\n        d = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        if ((Math.floorMod(n, d) == (0L))) {\n            return false;\n        }\n    }\n    return true;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def is_prime_level (n : Int) : Bool := Id.run do\n  let mut d : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  if (decide (n < (2 : Int))) then\n    return false\n  cm_it1 := (2 : Int)\n  cm_stop2 := n\n  while (decide (cm_it1 < cm_stop2)) do\n    d := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    if ((Int.fmod n d) == (0 : Int)) then\n      return false\n  return true\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function is_prime_level(n)\n  local d = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  if (n < (2)) then\n    return false\n  end\n  cm_it1 = (2)\n  cm_stop2 = n\n  while (cm_it1 < cm_stop2) do\n    d = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    if ((n % d) == (0)) then\n      return false\n    end\n    ::cm_continue_1::\n  end\n  return true\nend\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def is_prime_level(n)\n  d = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  if (n < (2))\n    return false\n  end\n  cm_it1 = (2)\n  cm_stop2 = n\n  while (cm_it1 < cm_stop2)\n    d = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    if ((n % d) == (0))\n      return false\n    end\n  end\n  return true\nend\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }\nfunc is_prime_level(_ n: Int) -> Bool {\n    var d: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    if (n < (2)) {\n        return false\n    }\n    cm_it1 = (2)\n    cm_stop2 = n\n    while (cm_it1 < cm_stop2) {\n        d = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        if (cm_floormod(n, d) == (0)) {\n            return false\n        }\n    }\n    return true\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }\nfunction is_prime_level(n: bigint): boolean {\n    let d: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    if ((n < (2n))) {\n        return false;\n    }\n    cm_it1 = (2n);\n    cm_stop2 = n;\n    while ((cm_it1 < cm_stop2)) {\n        d = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        if ((cm_floormod(n, d) === (0n))) {\n            return false;\n        }\n    }\n    return true;\n}\n",
+      "cost": 1.0,
+      "entry": "is_prime_level",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "is_prime_level",
+    "functions": [
+      {
+        "body": [
+          {
+            "cond": [
+              "CMP_LT",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                2
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "bool",
+                  false
+                ]
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "cond": [
+                  "CMP_EQ",
+                  [
+                    "MOD",
+                    [
+                      "var",
+                      "n"
+                    ],
+                    [
+                      "var",
+                      "d"
+                    ]
+                  ],
+                  [
+                    "int",
+                    0
+                  ]
+                ],
+                "else": [],
+                "k": "if",
+                "then": [
+                  {
+                    "k": "return",
+                    "value": [
+                      "bool",
+                      false
+                    ]
+                  }
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              2
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "var",
+              "n"
+            ],
+            "stop_var": "cm_stop2",
+            "var": "d"
+          },
+          {
+            "k": "return",
+            "value": [
+              "bool",
+              true
+            ]
+          }
+        ],
+        "locals": {
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "d": "int"
+        },
+        "name": "is_prime_level",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "bool"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_is_prime_level_3e70d2741710",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3558831672,
+    "source_sha256_12": "3e70d2741710"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "bool"
+  },
+  "statement": "is_prime_level(n: int) -> bool lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        10
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        5
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": true
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}

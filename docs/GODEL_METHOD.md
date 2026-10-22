@@ -30,10 +30,19 @@ memory on this machine, and a session started by another session's message canno
 | W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | done |
 | W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | done |
 | W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | done |
-| W-2 | can the content algebra and carry-over be kernel-checked on Mathlib? | `claude/godel-w2-mathlib` | blocked: the Mathlib and Foundation downloads need the user's yes |
+| W-2 | can the content algebra and carry-over be kernel-checked on Mathlib? | `claude/godel-w2-mathlib` | blocked: the Mathlib and Foundation downloads need the user's yes; the plain-Lean core already proves the content algebra, carry-over and freeness (`formal/GodelCore`) |
 
 The parts of W-2 that need no download are already on main: `formal/GodelCore` proves Rule-19, Rule-20 and the
 freeness behind GM-3 in plain Lean (T1 to T4 of the research handover).
+
+## Wave 1 in short
+
+Five of six workstreams are done and merged, each after a full verify on its branch. W-15 ranks what every method
+decides; W-3 measured six codes and wrote the GM-2 decision record; W-5 found two numberings that were not admissible
+until their arities were stated; W-1 runs all 46 of Gödel's definitions in Python and Lean with a proof checker for
+system P; W-12 turned all 1,075 instruction outputs into constraints over a prime field that provably agree with the
+terms. W-2 waits for the user's yes to download Mathlib and Foundation. Every result is a `finding` card citing the
+handover's ids, with its tier. The proposed laws GM-1 to GM-9 remain proposals for the user.
 
 ## Results
 

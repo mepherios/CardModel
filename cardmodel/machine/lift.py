@@ -11,18 +11,31 @@ function made of its instruction cards' IR with the bytes filled in. That functi
   written back at every exit;
 * **dead code** - flags computed and overwritten before anything reads them disappear.
 
-A block runs only when it can finish before the next event (``now + its longest time <= next_event``); inside
-it, nothing can raise an interrupt except the CPU's own writes, so after any instruction that may move
-``next_event`` (an I/O or bank-switch write) the block checks and leaves. Otherwise the interpreter runs, so a
-block is always equivalent to the instructions it replaces (the differential runs check this, frame by frame).
+A block runs whole only when it can finish before the next event (``now + its longest time <= next_event``);
+inside it, nothing can raise an interrupt except the CPU's own writes, so after any instruction that may move
+``next_event`` (an I/O or bank-switch write) the block checks and leaves. Every instruction start the blocks cover
+is also lifted on its own (``ins_K``: the instruction specialised to its bytes, then what the interpreter does
+after every instruction): a block whose next event is too close, a step right after EI or after the frame ended,
+and an entry into the middle of a block (an interrupt's return) run these, one instruction per step. HALT, STOP
+and EI are only lifted on their own. So the ROM's code that was found runs as lifted card IR, and the
+interpreter runs only what discovery did not find; a block is always equivalent to the instructions it replaces
+(the differential runs check this, frame by frame).
 
-The lifted functions join the machine module (``run_block`` becomes a switch over block keys) and are emitted
-through a language card like the rest of it: split into parts so no compile unit is huge, compiled one part per
-slot, linked into one library cached per ROM and machine.
+The lifted functions join the machine module (``run_block`` becomes a switch over every instruction start: a
+leader goes to its block, any other to its instruction) and are emitted through a language card like the rest of
+it: split into parts by bank and size so no compile unit outgrows a compiler, compiled one part per slot, linked
+into one library cached per ROM and machine.
 
-Honest limits (L1): code in RAM, code after EI and the HALT/STOP/illegal opcodes always run in the interpreter;
-a key is (ROM offset, which half of the address space), so a bank mapped at an unusual place gets its own
-blocks; MBC1 multicart remapping is treated like any bank.
+Code the cartridge copies into RAM (work RAM, HRAM: the OAM DMA routine every game has) is lifted too, one
+instruction at a time, from the bytes the profile saw it run with: each lifted RAM instruction first checks
+that RAM still holds those bytes (and, during OAM DMA, that it is in HRAM, the only memory the CPU can read
+then), and otherwise leaves it to the interpreter.
+
+Honest limits (L1): code no profile or static successor reached, RAM code whose bytes changed since it was
+seen, code in video or cartridge RAM, illegal opcodes and the instruction after a HALT bug run in the
+interpreter (the machine counts them: ``interpreted``, ``interpreted_ram``); a key is (ROM offset, which half of
+the address space), so a bank mapped at an unusual place gets its own blocks; MBC1 multicart remapping is
+treated like any bank.
 """
 from __future__ import annotations
 
@@ -41,7 +54,11 @@ from . import native as N
 
 REGS = ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC")
 ENDS = ("jump", "call", "ret")                 # groups that end a block
-EXCLUDED = {0x76, 0x10, 0xFB}                  # HALT, STOP, EI always run in the interpreter
+EXCLUDED = {0x76, 0x10, 0xFB}                  # HALT, STOP, EI: each a block of its own (one instruction)
+STOP = 0x10                                    # one opcode byte, and it skips the next byte (PC + 2)
+LIFTER = 4                                     # the lifted blocks' shape (in the cache key)
+PART_STATEMENTS = 120000                       # at most this many IR statements in one compile unit
+RAM_LIFTED = ((0xC000, 0xFE00), (0xFF80, 0xFFFF))   # work RAM and its echo, HRAM (not video or cartridge RAM)
 MAX_INSTRUCTIONS = 48
 LEAVES = ("var", "int", "float", "bool")
 
@@ -144,9 +161,11 @@ def block_extent(dec: Decoder, rom: bytes, key: int, mask: int) -> list:
     region_end = 0x8000 if pc >= 0x4000 else 0x4000
     while len(out) < MAX_INSTRUCTIONS:
         card, n, imm = dec.at(rom, phys, mask)
-        if card.get("illegal") or (card.get("prefix") is None and card["opcode"] in EXCLUDED):
+        if card.get("illegal") or pc + n > region_end:
             break
-        if pc + n > region_end:
+        if card.get("prefix") is None and card["opcode"] in EXCLUDED:
+            if not out:                    # HALT, STOP, EI: a block of one instruction, then the step loop
+                out.append((pc, phys, card, imm))
             break
         out.append((pc, phys, card, imm))
         pc += n
@@ -156,12 +175,20 @@ def block_extent(dec: Decoder, rom: bytes, key: int, mask: int) -> list:
     return out
 
 
+CONDITIONS = ("Z", "NZ", "C", "NC")
+
+
+def conditional(mnemonic: str) -> bool:
+    """A jump, call or return that may not be taken (JP NZ,nn; CALL Z,nn; JR C,e; RET NC): it can fall through."""
+    return mnemonic.partition(" ")[2].split(",")[0] in CONDITIONS
+
+
 def successors(card, pc: int, n: int, imm: list) -> list[int]:
     """Statically known next addresses (CPU addresses)."""
     m = card["mnemonic"]
     nxt = pc + n
     out = []
-    if card["group"] not in ENDS or "," in m and card["group"] in ("jump", "call", "ret"):
+    if card["group"] not in ENDS or (card["group"] in ("jump", "call", "ret") and conditional(m)):
         out.append(nxt)
     if m.startswith("JR"):
         e = imm[0] - 256 if imm[0] >= 128 else imm[0]
@@ -211,6 +238,8 @@ def discover(store, rom: bytes, mask: int, seen: bytes | None = None, entries: b
             elif t < 0x8000 and pc >= 0x4000:
                 tphys = (phys & ~0x3FFF) | (t & 0x3FFF)       # same switchable bank
                 work.append(_key(tphys, t))
+        if card.get("prefix") is None and card["opcode"] == STOP:
+            n = 2
         if len(ext) == MAX_INSTRUCTIONS or (card["group"] not in ENDS):
             npc = pc + n
             if npc < (0x8000 if pc >= 0x4000 else 0x4000):
@@ -235,7 +264,8 @@ class Lifter:
                 core_mod_fns.add(d.data["name"])
         self.inline_always = {n for n in core_mod_fns | {"rd8", "wr8", "idle", "idu", "rd8_idu", "fetch8", "fetch16"}
                               if n in self.fns and _loop_free(self.fns[n])}
-        self.inline_const = {"bus_read", "bus_write", "wram_index", "io_read", "io_write", "rom_read", "peek8"}
+        self.inline_const = {"bus_read", "bus_write", "wram_index", "io_read", "io_write", "rom_read", "peek8",
+                             "code_byte"}
         self.n = 0
 
     def fresh(self, base: str) -> str:
@@ -548,55 +578,124 @@ class Lifter:
         return {x[1] for x in _iter(e) if x[0] == "var"}
 
     # ---- a whole block ----
-    def lift(self, rom: bytes, key: int, mask: int, dec: Decoder) -> dict | None:
-        ext = block_extent(dec, rom, key, mask)
-        if not ext:
-            return None
-        name = f"blk_{key:x}"
-        locals_: dict = {}
-        body: list = []
-        max_mc = 0
-        count = 0
-        exits_after = []
-        for pc, phys, card, imm in ext:
-            n = 1 + len(imm)
-            npc = (pc + n) & 0xFFFF
-            mcs = card["mcycles"]
-            max_mc += max(len(v) for v in mcs.values()) if isinstance(mcs, dict) else len(mcs)
-            ins: list = [{"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]}]
-            if card.get("prefix") is not None:
-                ins.append({"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]})
-            ins.append({"k": "assign", "target": "PC", "value": ["int", npc]})
-            ins += self.instance(card, imm, locals_)
-            count += 1
-            consts = {"PC": ["int", npc]}
-            ins = self.fold_block(ins, dict(consts), locals_)
-            ins = self.inline_stmts(ins, locals_, consts)
-            ins = self.fold_block(ins, dict(consts), locals_)
-            body += ins
-            if self._moves_event(ins) and (pc, phys, card, imm) != ext[-1]:
-                body.append({"k": "if", "cond": ["CMP_GE", ["var", "now"], ["var", "next_event"]],
-                             "then": [{"k": "assign", "target": "instructions",
-                                       "value": ["ADD", ["var", "instructions"], ["int", count]]},
-                                      {"k": "return", "value": ["int", 1]}], "else": []})
-                exits_after.append(count)
-        body.append({"k": "assign", "target": "instructions",
-                     "value": ["ADD", ["var", "instructions"], ["int", count]]})
-        body.append({"k": "return", "value": ["int", 1]})
-        pre = [{"k": "if", "cond": ["CMP_GT", ["ADD", ["var", "now"], ["MUL", ["int", max_mc], ["var", "md"]]],
-                                    ["var", "next_event"]],
-                "then": [{"k": "return", "value": ["int", 0]}], "else": []}]
-        body = self.fold_block(pre + body, {}, locals_)
-        body = self.cache_registers(body, locals_)
+    def step_ir(self, card, imm: list, pc: int, locals_: dict) -> list:
+        """One instruction's statements: its fetch time, PC past it, its card's IR with the bytes in, specialised."""
+        n = 1 + len(imm)
+        npc = (pc + n) & 0xFFFF
+        ins: list = [{"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]}]
+        if card.get("prefix") is not None:
+            ins.append({"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]})
+        ins.append({"k": "assign", "target": "PC", "value": ["int", npc]})
+        ins += self.instance(card, imm, locals_)
+        consts = {"PC": ["int", npc]}
+        ins = self.fold_block(ins, dict(consts), locals_)
+        ins = self.inline_stmts(ins, locals_, consts)
+        return self.fold_block(ins, dict(consts), locals_)
+
+    def finish(self, name: str, params: list, body: list, locals_: dict, cache_regs: bool) -> dict:
+        body = self.fold_block(body, {}, locals_)
+        if cache_regs:
+            body = self.cache_registers(body, locals_)
         self._locals = set(locals_)
         self._exit_live = set()
         body, _ = self.dce(body, set())
         used = {x[1] for s in _stmts(body) for x in _exprs(s) if x[0] == "var"} | \
                {s["target"] for s in _stmts(body) if s["k"] == "assign"}
-        fn = {"name": name, "params": [], "returns": "int", "locals": {k: v for k, v in locals_.items() if k in used},
-              "body": body, "pc": _pc_of(key), "phys": key >> 1, "instructions": count, "max_mcycles": max_mc,
-              "exits": exits_after}
+        return {"name": name, "params": params, "returns": "int",
+                "locals": {k: v for k, v in locals_.items() if k in used}, "body": body}
+
+    def single(self, rom: bytes, key: int, mask: int, dec: Decoder) -> dict | None:
+        """``ins_K``: the instruction at key on its own, exactly what the interpreter does for it (with EI's delay
+        counted down after it), specialised to its bytes."""
+        phys, pc = key >> 1, _pc_of(key)
+        card, n, imm = dec.at(rom, phys, mask)
+        if card.get("illegal") or pc + n > (0x8000 if pc >= 0x4000 else 0x4000):
+            return None
+        locals_: dict = {}
+        body = self.step_ir(card, imm, pc, locals_) + copy.deepcopy(COUNTDOWN) + [
+            {"k": "assign", "target": "instructions", "value": ["ADD", ["var", "instructions"], ["int", 1]]},
+            {"k": "return", "value": ["int", 1]}]
+        fn = self.finish(f"ins_{key:x}", [], body, locals_, cache_regs=False)
+        fn.update(pc=pc, phys=phys, instructions=1)
         return fn
+
+    def lift(self, rom: bytes, key: int, mask: int, dec: Decoder) -> dict | None:
+        """``blk_K(single)``: the block that leads at key, whole when its longest time fits before the next event
+        (and not single), else its first instruction on its own (``ins_K``). None for HALT, STOP and EI, which are
+        only lifted on their own."""
+        ext = block_extent(dec, rom, key, mask)
+        if not ext or (ext[0][2].get("prefix") is None and ext[0][2]["opcode"] in EXCLUDED):
+            return None
+        locals_: dict = {}
+        body: list = []
+        max_mc = 0
+        exits_after = []
+        add = lambda k: {"k": "assign", "target": "instructions",  # noqa: E731
+                         "value": ["ADD", ["var", "instructions"], ["int", k]]}
+        for i, (pc, phys, card, imm) in enumerate(ext):
+            mcs = card["mcycles"]
+            max_mc += max(len(v) for v in mcs.values()) if isinstance(mcs, dict) else len(mcs)
+            ins = self.step_ir(card, imm, pc, locals_)
+            body += ins
+            if self._moves_event(ins) and i < len(ext) - 1:
+                body.append({"k": "if", "cond": ["CMP_GE", ["var", "now"], ["var", "next_event"]],
+                             "then": [add(i + 1), {"k": "return", "value": ["int", 1]}], "else": []})
+                exits_after.append(i + 1)
+        body += [add(len(ext)), {"k": "return", "value": ["int", 1]}]
+        pre = [{"k": "if", "cond": ["OR", ["CMP_NE", ["var", "single"], ["int", 0]],
+                                    ["CMP_GT", ["ADD", ["var", "now"], ["MUL", ["int", max_mc], ["var", "md"]]],
+                                     ["var", "next_event"]]],
+                "then": [{"k": "return", "value": ["CALL", f"ins_{key:x}"]}], "else": []}]
+        fn = self.finish(f"blk_{key:x}", [{"name": "single", "type": "int"}], pre + body, locals_, cache_regs=True)
+        fn.update(pc=_pc_of(key), phys=key >> 1, instructions=len(ext), max_mcycles=max_mc, exits=exits_after,
+                  keys=[_key(phys, pc) for pc, phys, _c, _i in ext])
+        return fn
+
+    def lift_ram(self, image: bytes, addr: int, dec: Decoder) -> dict | None:
+        """The instruction at RAM address addr, from the bytes the profile saw (image: the 64 KB address space),
+        run only while RAM still holds them."""
+        card, n, imm = dec.at(image, addr, 0xFFFF)
+        if card.get("illegal") or not all(any(lo <= a < hi for lo, hi in RAM_LIFTED) for a in range(addr, addr + n)):
+            return None
+        locals_: dict = {}
+        npc = (addr + n) & 0xFFFF
+        ins: list = [{"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]}]
+        if card.get("prefix") is not None:
+            ins.append({"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]})
+        ins.append({"k": "assign", "target": "PC", "value": ["int", npc]})
+        ins += self.instance(card, imm, locals_)
+        consts = {"PC": ["int", npc]}
+        ins = self.fold_block(ins, dict(consts), locals_)
+        ins = self.inline_stmts(ins, locals_, consts)
+        ins = self.fold_block(ins, dict(consts), locals_)
+        # the guard reads each byte with a statement of its own (so the read is specialised to its memory)
+        guard: list = []
+        same = ["CMP_EQ", ["var", "dma_active"], ["int", 0]] if addr < 0xFF80 else ["bool", True]
+        for j in range(n):
+            locals_[f"lf_b{j}"] = "int"
+            guard.append({"k": "assign", "target": f"lf_b{j}", "value": ["CALL", "code_byte", ["int", addr + j]]})
+            same = ["AND", same, ["CMP_EQ", ["var", f"lf_b{j}"], ["int", image[addr + j]]]]
+        guard.append({"k": "assign", "target": "lf_same", "value": same})
+        locals_["lf_same"] = "bool"
+        guard = self.inline_stmts(guard, locals_, {})
+        guard = self.fold_block(guard, {}, locals_)
+        countdown = [{"k": "if", "cond": ["CMP_NE", ["var", "ime_delay"], ["int", 0]], "else": [],
+                      "then": [{"k": "assign", "target": "ime_delay", "value": ["SUB", ["var", "ime_delay"], ["int", 1]]},
+                               {"k": "if", "cond": ["CMP_EQ", ["var", "ime_delay"], ["int", 0]], "else": [],
+                                "then": [{"k": "assign", "target": "ime", "value": ["int", 1]}]}]}]
+        body = guard + [{"k": "if", "cond": ["NOT", ["var", "lf_same"]], "then": [{"k": "return", "value": ["int", 0]}],
+                         "else": []}] + ins + countdown + [
+            {"k": "assign", "target": "instructions", "value": ["ADD", ["var", "instructions"], ["int", 1]]},
+            {"k": "return", "value": ["int", 1]}]
+        body = self.fold_block(body, {}, locals_)
+        self._locals = set(locals_)
+        self._exit_live = set()
+        body, _ = self.dce(body, set())
+        used = {x[1] for s in _stmts(body) for x in _exprs(s) if x[0] == "var"} | \
+               {s["target"] for s in _stmts(body) if s["k"] == "assign"}
+        return {"name": f"lram_{addr:x}", "params": [{"name": "single", "type": "int"}], "returns": "int",
+                "locals": {k: v for k, v in locals_.items() if k in used}, "body": body, "pc": addr,
+                "bytes": list(image[addr:addr + n]), "instructions": 1}
 
     def instance(self, card, imm: list, locals_: dict) -> list:
         """The card's IR with its locals renamed and every fetch replaced by the byte it would read."""
@@ -678,26 +777,50 @@ class Lifter:
             return out
 
         pro = [{"k": "assign", "target": f"r_{r}", "value": ["var", r]} for r in regs]
-        body = conv(body)
-        # the precheck return happens before anything changed: it must not write registers back
-        if body and body[0]["k"] == "if" and body[0]["then"] and body[0]["then"][-1].get("value") == ["int", 0]:
-            body[0] = {**body[0], "then": [{"k": "return", "value": ["int", 0]}]}
-            return [body[0], *pro, *body[1:]]
-        return pro + body
+        # a precheck that only returns (nothing changed yet) stays before the registers are loaded
+        pre = []
+        if body and body[0]["k"] == "if" and len(body[0]["then"]) == 1 and body[0]["then"][0]["k"] == "return" \
+                and not body[0].get("else"):
+            pre, body = [body[0]], body[1:]
+        return pre + pro + conv(body)
 
 
 # -- the lifted machine --------------------------------------------------------------------------------
-def lifted_module(machine_ir: dict, blocks: list) -> dict:
+# what the interpreter does after every instruction: EI's delay counts down, then interrupts are enabled
+COUNTDOWN = [{"k": "if", "cond": ["CMP_NE", ["var", "ime_delay"], ["int", 0]], "else": [],
+              "then": [{"k": "assign", "target": "ime_delay", "value": ["SUB", ["var", "ime_delay"], ["int", 1]]},
+                       {"k": "if", "cond": ["CMP_EQ", ["var", "ime_delay"], ["int", 0]], "else": [],
+                        "then": [{"k": "assign", "target": "ime", "value": ["int", 1]}]}]}]
+
+
+def lifted_module(machine_ir: dict, blocks: list, ram: list = ()) -> dict:
+    """The machine with the lifted code: ``run_block(key, single)`` switches over every instruction start, to the
+    block it leads (``blk_K``) or else to the instruction on its own (``ins_K``); ``run_ram(pc, single)`` over the
+    lifted RAM instructions. ``blocks``: blocks and single instructions together."""
     mod = copy.deepcopy(machine_ir)
-    for b in blocks:
+    for b in (*blocks, *ram):
         f = {k: v for k, v in b.items() if k in ("name", "params", "returns", "locals", "body")}
         f["export"] = True
         mod["functions"].append(f)
-    cases = [{"match": [int(b["name"][4:], 16)], "body": [{"k": "return", "value": ["CALL", b["name"]]}]}
-             for b in blocks]
+    where: dict = {}
+    for b in blocks:
+        k = int(b["name"][4:], 16)
+        if b["name"].startswith("blk_"):
+            where[k] = ["CALL", b["name"], ["var", "single"]]
+    for b in blocks:
+        k = int(b["name"][4:], 16)
+        if b["name"].startswith("ins_"):
+            where.setdefault(k, ["CALL", b["name"]])
+    cases = [{"match": [k], "body": [{"k": "return", "value": call}]} for k, call in sorted(where.items())]
+    ram_cases = [{"match": [r["pc"]], "body": [{"k": "return", "value": ["CALL", r["name"], ["var", "single"]]}]}
+                 for r in sorted(ram, key=lambda r: r["pc"])]
     for f in mod["functions"]:
         if f["name"] == "run_block":
             f["body"] = [{"k": "switch", "value": ["var", "key"], "cases": cases},
+                         {"k": "return", "value": ["int", 0]}]
+            f["export"] = True
+        if f["name"] == "run_ram" and ram_cases:
+            f["body"] = [{"k": "switch", "value": ["var", "pc"], "cases": ram_cases},
                          {"k": "return", "value": ["int", 0]}]
             f["export"] = True
     for x in (*mod.get("globals", []), *mod.get("arrays", []), *mod["functions"]):
@@ -706,7 +829,7 @@ def lifted_module(machine_ir: dict, blocks: list) -> dict:
 
 
 def cache_dir(ctx, rom_sha: str, machine_hash: str) -> Path:
-    d = ctx.state_root / "emu" / f"{rom_sha[:16]}-{machine_hash[:10]}"
+    d = ctx.state_root / "emu" / f"{rom_sha[:16]}-{machine_hash[:10]}-l{LIFTER}"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -721,36 +844,73 @@ def merge_profile(d: Path, name: str, data: bytes) -> bytes:
     return merged
 
 
-def lift_rom(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
-             machine: str = "gameboy", cache: dict | None = None) -> tuple[dict, dict]:
-    """Discover and lift every block; returns (lifted module, report). ``cache`` maps block keys to blocks
-    lifted before (for the same ROM and machine) and receives the new ones."""
+def ram_image(ram_seen: bytes | None, ram_code: bytes | None) -> tuple[bytes, list[int]]:
+    """The 64 KB address space with the RAM code the profile saw, and the addresses instructions started at."""
+    image = bytearray(0x10000)
+    if not ram_seen or not ram_code:
+        return bytes(image), []
+    image[0x8000:0x8000 + len(ram_code[:0x8000])] = ram_code[:0x8000]
+    starts = [0x8000 + i * 8 + b for i, x in enumerate(ram_seen[:0x1000]) if x for b in range(8) if x >> b & 1]
+    return bytes(image), starts
+
+
+def lift_blocks(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
+                machine: str = "gameboy", cache: dict | None = None, ram_seen: bytes | None = None,
+                ram_code: bytes | None = None) -> tuple[list, list, dict]:
+    """Discover and lift every block, and every RAM instruction the profile saw: (blocks, RAM instructions,
+    report). ``cache`` maps block keys to blocks lifted before (for the same ROM and machine) and receives the new
+    ones."""
     ir = Bd.module(ctx, machine)
     found = discover(ctx.store, rom, mask, seen, entries)
     lifter = Lifter(ctx, ir)
     dec = Decoder(ctx.store)
     blocks = []
+    singles: dict = {}
     instrs = 0
     reused = 0
-    for key in found["leaders"]:
-        resources.guard("lift")
-        b = (cache or {}).get(str(key))
+
+    def cached(ck, make):
+        nonlocal reused
+        b = (cache or {}).get(ck)
         if b is None:
-            b = lifter.lift(rom, key, mask, dec)
+            b = make()
             if cache is not None and b is not None:
-                cache[str(key)] = b
+                cache[ck] = b
         else:
             reused += 1
+        return b
+    for key in found["leaders"]:
+        resources.guard("lift")
+        b = cached(str(key), lambda: lifter.lift(rom, key, mask, dec))
+        keys = b["keys"] if b is not None else [key]
         if b is not None:
             blocks.append(b)
             instrs += b["instructions"]
-    mod = lifted_module(ir, blocks)
-    mod["hash"] = hashlib.sha256((ir["hash"] + json.dumps(blocks, sort_keys=True)).encode()).hexdigest()[:20]
+        for k in keys:
+            if k not in singles:
+                singles[k] = cached(f"i{k}", lambda k=k: lifter.single(rom, k, mask, dec))
+    blocks += [s for s in singles.values() if s is not None]
+    image, starts = ram_image(ram_seen, ram_code)
+    ram = [r for r in (lifter.lift_ram(image, a, dec) for a in starts) if r is not None]
     stmts = sum(1 for b in blocks for _ in _stmts(b["body"]))
     seen_n = sum(bin(x).count("1") for x in seen) if seen else 0
-    rep = {"blocks": len(blocks), "reused": reused, "instructions_lifted": instrs, "statements": stmts,
+    nblk = sum(1 for b in blocks if b["name"].startswith("blk_"))
+    rep = {"blocks": nblk, "single_instructions": len(blocks) - nblk, "reused": reused,
+           "instructions_lifted": instrs, "statements": stmts,
            "profiled_instructions": seen_n, "visited": found["visited"],
-           "mean_block_instructions": round(instrs / max(1, len(blocks)), 2)}
+           "mean_block_instructions": round(instrs / max(1, nblk), 2),
+           "ram_instructions_seen": len(starts), "ram_instructions_lifted": len(ram)}
+    return blocks, ram, rep
+
+
+def lift_rom(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
+             machine: str = "gameboy", cache: dict | None = None, ram_seen: bytes | None = None,
+             ram_code: bytes | None = None) -> tuple[dict, dict]:
+    """The machine with the ROM's lifted blocks (and its lifted RAM code): (module, report)."""
+    ir = Bd.module(ctx, machine)
+    blocks, ram, rep = lift_blocks(ctx, rom, mask, seen, entries, machine, cache, ram_seen, ram_code)
+    mod = lifted_module(ir, blocks, ram)
+    mod["hash"] = hashlib.sha256((ir["hash"] + json.dumps([blocks, ram], sort_keys=True)).encode()).hexdigest()[:20]
     return mod, rep
 
 
@@ -765,16 +925,30 @@ def build_parts(ctx, mod: dict, lang: str, out_dir: Path, per_part: int = 1500) 
     ok, exe = N.probes.probe(card.get("probe"))
     if not ok:
         raise N.EngineError(f"{lang} is not available: {exe}")
-    blocks = sorted((int(f["name"][4:], 16), f["name"]) for f in mod["functions"] if f["name"].startswith("blk_"))
-    # stable groups: one part per ROM bank (split further when a bank is very busy), the dispatcher on its own,
-    # so a grown profile recompiles only the banks that gained blocks
+    lifted = [f for f in mod["functions"] if f["name"].startswith(("blk_", "ins_"))]
+    blocks = sorted((int(f["name"][4:], 16), f["name"]) for f in lifted)
+    size = {f["name"]: sum(1 for _ in _stmts(f["body"])) for f in lifted}
+    # stable groups: one part per ROM bank (split further when a bank is very busy: at most per_part blocks and
+    # PART_STATEMENTS statements, so no compile unit outgrows a compiler's memory), the dispatcher on its own, so a
+    # grown profile recompiles only the banks that gained blocks
     by_bank: dict = {}
     for key, name in blocks:
         by_bank.setdefault(key >> 15, []).append(name)
     groups = [["run_block"]]
     for bank in sorted(by_bank):
-        names = by_bank[bank]
-        groups += [names[i:i + per_part] for i in range(0, len(names), per_part)]
+        cur: list = []
+        n = 0
+        for name in by_bank[bank]:
+            if cur and (len(cur) >= per_part or n + size[name] > PART_STATEMENTS):
+                groups.append(cur)
+                cur, n = [], 0
+            cur.append(name)
+            n += size[name]
+        if cur:
+            groups.append(cur)
+    ram = [f["name"] for f in mod["functions"] if f["name"].startswith("lram_")]
+    if ram:
+        groups.append(ram + ["run_ram"])
     em = Emitter(ctx.store, lang, ctx.ops)
     parts = em.split_sources(mod, groups)
     objs = []
@@ -811,20 +985,60 @@ def build_parts(ctx, mod: dict, lang: str, out_dir: Path, per_part: int = 1500) 
 
 
 # -- the lifted engine for a ROM ------------------------------------------------------------------------
-def profile_rom(ctx, rom: bytes, frames: int = 1800, machine: str = "gameboy") -> tuple[bytes, bytes]:
-    """Run the interpreter headless with the survey's scripted input and return (seen, entries) bitmaps."""
+def profile(ctx, rom: bytes, frames: int = 1800, machine: str = "gameboy", script=None) -> dict:
+    """Run the interpreter headless with a scripted input (the survey's by default) and return what it ran:
+    {seen, entries} (ROM bitmaps), {ram_seen, ram_code} (RAM instructions and their bytes)."""
     from . import gb as G
-    from .survey import script
+    from .survey import script as survey_script
+    press = script or survey_script
     g = G.GameBoy(ctx, rom, "native", sample_rate=0, fresh=True)
     g.m.set("profiling", 1)
     for i in range(frames):
-        g.set_buttons(script(i))
+        g.set_buttons(press(i))
         g.run_frame()
     n = (int(g.m.get("rom_mask")) + 1) // 8
-    out = g.m.read("seen", 0, n), g.m.read("entries", 0, n)
+    out = {"seen": g.m.read("seen", 0, n), "entries": g.m.read("entries", 0, n),
+           "ram_seen": g.m.read("ram_seen", 0, 0x1000), "ram_code": g.m.read("ram_code", 0, 0x8000)}
     if hasattr(g.m, "close"):
         g.m.close()
     return out
+
+
+def profile_rom(ctx, rom: bytes, frames: int = 1800, machine: str = "gameboy") -> tuple[bytes, bytes]:
+    """(seen, entries) of a profile run (``profile``)."""
+    p = profile(ctx, rom, frames, machine)
+    return p["seen"], p["entries"]
+
+
+def merge_ram(d: Path, ram_seen: bytes, ram_code: bytes) -> tuple[bytes, bytes]:
+    """Add RAM instructions to a ROM's profile: the bits OR together; an instruction's bytes are the newest seen."""
+    old_code = bytearray((d / "ram_code.bin").read_bytes() if (d / "ram_code.bin").is_file() else bytes(0x8000))
+    old_code = old_code.ljust(0x8000, b"\0")
+    image, starts = ram_image(ram_seen, ram_code.ljust(0x8000, b"\0"))
+    for a in starts:
+        for j in range(3):
+            if a + j < 0x10000:
+                old_code[a - 0x8000 + j] = image[a + j]
+    merged_seen = merge_profile(d, "ram_seen", ram_seen)
+    (d / "ram_code.bin").write_bytes(bytes(old_code))
+    return merged_seen, bytes(old_code)
+
+
+def stored_profile(d: Path) -> dict:
+    """The profile kept in a ROM's lift folder (empty bitmaps where there is none yet)."""
+    def get(name):
+        p = d / f"{name}.bin"
+        return p.read_bytes() if p.is_file() else b""
+    return {"seen": get("seen"), "entries": get("entries"), "ram_seen": get("ram_seen"), "ram_code": get("ram_code")}
+
+
+def add_profile(d: Path, p: dict) -> dict:
+    """Merge a profile run into the ROM's lift folder; returns the merged profile."""
+    merge_profile(d, "seen", p.get("seen") or b"")
+    merge_profile(d, "entries", p.get("entries") or b"")
+    if p.get("ram_seen"):
+        merge_ram(d, p["ram_seen"], p.get("ram_code") or b"")
+    return stored_profile(d)
 
 
 def lifted_machine(ctx, rom: bytes, lang: str = "native", machine: str = "gameboy", profile_frames: int = 1800,
@@ -837,15 +1051,14 @@ def lifted_machine(ctx, rom: bytes, lang: str = "native", machine: str = "gamebo
     info = G.header(rom, ctx.store)
     base = Bd.module(ctx, machine)
     d = cache_dir(ctx, info["sha1"], base["hash"])
-    seen_p, ent_p = d / "seen.bin", d / "entries.bin"
+    ent_p = d / "entries.bin"
     if not ent_p.is_file():
         say(f"profiling {profile_frames} frames in the interpreter (first run of this ROM)")
-        seen, entries = profile_rom(ctx, rom, profile_frames, machine)
-        merge_profile(d, "seen", seen)
-        merge_profile(d, "entries", entries)
-    seen, entries = seen_p.read_bytes(), ent_p.read_bytes()
-    bits = sum(bin(x).count("1") for x in entries)
-    pkey = hashlib.sha256(seen + b"\0" + entries).hexdigest()[:16]
+        add_profile(d, profile(ctx, rom, profile_frames, machine))
+    prof = stored_profile(d)
+    seen, entries = prof["seen"], prof["entries"]
+    bits = sum(bin(x).count("1") for x in entries) + sum(bin(x).count("1") for x in prof["ram_seen"])
+    pkey = hashlib.sha256(seen + b"\0" + entries + b"\0" + prof["ram_seen"] + prof["ram_code"]).hexdigest()[:16]
     meta_p = d / f"lifted-{pkey}-{lang}.json"
     latest = d / f"latest-{lang}.json"
     if not meta_p.is_file() and latest.is_file() and not relift:
@@ -867,7 +1080,8 @@ def lifted_machine(ctx, rom: bytes, lang: str = "native", machine: str = "gamebo
     bc = d / "blocks.json"
     cache = json.loads(bc.read_text(encoding="utf-8")) if bc.is_file() else {}
     n0 = len(cache)
-    mod, rep = lift_rom(ctx, rom, size - 1, seen, entries, machine, cache=cache)
+    mod, rep = lift_rom(ctx, rom, size - 1, seen, entries, machine, cache=cache, ram_seen=prof["ram_seen"],
+                        ram_code=prof["ram_code"])
     if len(cache) != n0:
         tmp = bc.with_suffix(".tmp")
         tmp.write_text(json.dumps(cache), encoding="utf-8")
@@ -888,10 +1102,11 @@ def save_profile(ctx, rom: bytes, m, machine: str = "gameboy") -> dict:
     d = cache_dir(ctx, info["sha1"], Bd.module(ctx, machine)["hash"])
     n = (int(m.get("rom_mask")) + 1) // 8
     before = (d / "entries.bin").read_bytes() if (d / "entries.bin").is_file() else b""
-    merge_profile(d, "seen", m.read("seen", 0, n))
-    after = merge_profile(d, "entries", m.read("entries", 0, n))
-    return {"new_entries": sum(bin(x).count("1") for x in after) - sum(bin(x).count("1") for x in before)}
+    after = add_profile(d, {"seen": m.read("seen", 0, n), "entries": m.read("entries", 0, n),
+                            "ram_seen": m.read("ram_seen", 0, 0x1000), "ram_code": m.read("ram_code", 0, 0x8000)})
+    return {"new_entries": sum(bin(x).count("1") for x in after["entries"]) - sum(bin(x).count("1") for x in before)}
 
 
-__all__ = ["Decoder", "Lifter", "block_extent", "build_parts", "cache_dir", "discover", "effects", "lift_rom",
-           "lifted_machine", "lifted_module", "merge_profile", "profile_rom", "save_profile"]
+__all__ = ["Decoder", "Lifter", "add_profile", "conditional", "block_extent", "build_parts", "cache_dir", "discover", "effects",
+           "lift_blocks", "lift_rom", "lifted_machine", "lifted_module", "merge_profile", "merge_ram", "profile",
+           "profile_rom", "ram_image", "save_profile", "stored_profile"]

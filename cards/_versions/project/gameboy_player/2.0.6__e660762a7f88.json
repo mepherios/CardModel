@@ -1,0 +1,96 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/festive-margulis-*",
+    "claude/frosty-lumiere-*",
+    "claude/sad-clarke-*",
+    "claude/strange-dewdney-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "done": [
+    "960 of 971 surveyed ROMs boot; every runnable hardware test ROM passes (153 of 153: the DMG OAM bug, the CGB's DMG mode)",
+    "the Game Boy Player (system/gameboy: the gameboy machine card plus player.card, law CM40) builds, installs and plays like a game; battery saves and the MBC3 clock survive closing",
+    "the library: every cartridge in the user's folders read where it is (a zip in memory), with its header, the survey's verdict and a title screen the machine draws headless; the folders live in library.json",
+    "the DS listed with its coverage, not playable",
+    "the launcher's Update installs the last good build when the cards in progress do not build, remembers the error across restarts, and the pages restart a stopped service",
+    "a WORK tab (every branch's commits, uncommitted changes, areas, programs) and a Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its own cardmodel",
+    "every title and datum on the launcher's pages opens something (230 clicks over 11 views, no errors)",
+    "a cartridge as its own app (cardmodel arcade app ROM --install): the player with the cartridge's code lifted into card IR, witnessed frame by frame against the plain player; Pokemon Crystal installed in ~/Applications/Cardmodel Games",
+    "the lifter: blocks plus every instruction start lifted on its own (near events, after EI, mid-block entries), HALT, STOP and EI lifted, RAM code lifted behind byte guards; compile units split by size; the machine counts what the interpreter still runs (Pokemon Crystal 98.4 % lifted on an unseen run, none of it RAM)",
+    "code found by reasoning (machine/absint.py): an abstract run of the machine's cards through far calls and jump tables (Pokemon Crystal: 1,163 more leaders); arcade app runs it once per cartridge",
+    "the WORK tab and branch versions, folded into main's IN PROGRESS by the main session (a5ed2d5)"
+  ],
+  "games": [
+    "gameboy_player"
+  ],
+  "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
+  "in_progress": [
+    "rebuilding the nine Pokémon apps with the new lifter layout and the static pass"
+  ],
+  "kind": "game",
+  "left": [
+    "the last 0.4-1.6 % of a game's code: what neither a profile nor the abstract run reached runs in the interpreter until a build after it was played",
+    "player.card: decide colour from the board's view of the header (cart_power_on, rom_read(0x143)) once main has the new cartridge boards (claude/sad-clarke)",
+    "the DS playable (the DS session has it; the shell's touch input and tables are ready)"
+  ],
+  "metadata": {
+    "previous_content_hash": "b8ef481e268ce6eb5f4c7a2e240aef29a0e0e181132e68c8893cd82e3bc65489",
+    "version": "2.0.6",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "goal": "G_M2_roms_boot",
+      "label": "surveyed ROMs that boot"
+    },
+    {
+      "goal": "G_M4_test_roms",
+      "label": "hardware test ROMs passing"
+    },
+    {
+      "format": "{passed}/{total}",
+      "label": "test ROMs (count)",
+      "state": "emu_testroms"
+    }
+  ],
+  "name": "gameboy_player",
+  "next_steps": [
+    "merge this branch into main (the per-cartridge apps, the lifter, the static pass, DS touch input)",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted: widen the abstract run (values loaded from ROM tables, returns through pushed addresses), rebuild apps after play",
+    "MATH_CORE (approved): new behaviour is card-language or IR semantics, never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method"
+  ],
+  "order": 2,
+  "owner": {
+    "name": "model-the-dmg-oam-corrup",
+    "session": "local_978e773c-d0b7-4c45-9824-80cad4f52163"
+  },
+  "paths": [
+    "cardmodel/arcade/cartapp.py",
+    "cardmodel/arcade/library.py",
+    "cardmodel/arcade/system.py",
+    "cardmodel/arcade/work.py",
+    "cardmodel/machine/gb.py",
+    "cardmodel/machine/lift.py",
+    "cardmodel/machine/shell.py",
+    "cardmodel/machine/survey.py",
+    "cardmodel/machine/testroms.py",
+    "cards/hardware",
+    "cards/isa/lr35902",
+    "cards/machine/gameboy",
+    "cards/platform/macos/GameShell.swift",
+    "cards/system"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "Main has the player, the library and the launcher work (merged 4d9d755). This branch adds per-cartridge apps whose code is lifted card IR (nine Pokemon cartridges, 98.4-99.6 % lifted), the static pass, and the DS touch input; waiting for a merge into main.",
+  "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
+  "tier": 1,
+  "title": "Game Boy Player",
+  "updated": "2026-10-22T02:21:14+02:00",
+  "user_actions": []
+}

@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 24,
+  "measures": "law_witnesses_failing",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "law_witnesses",
+  "on_change": [],
+  "order": 45,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "law_witnesses",
+  "statement": "every law card's witness test, in a child process with the cycle's seed (CM20)",
+  "tier": 0
+}

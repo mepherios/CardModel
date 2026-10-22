@@ -1,0 +1,537 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef combo_bonus(hits: int) -> int:\n    \"\"\"5 + 10 + 15 + ... for every hit after the first.\"\"\"\n    s = 0\n    x = 5\n    for _ in range(hits):\n        s += x\n        x += 5\n    return s",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t combo_bonus(int64_t hits) {\n    int64_t s = 0;\n    int64_t x = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    s = INT64_C(0);\n    x = INT64_C(5);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = hits;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        s = (s + x);\n        x = (x + INT64_C(5));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc combo_bonus(hits int64) int64 {\n\tvar s int64 = 0\n\t_ = s\n\tvar x int64 = 0\n\t_ = x\n\tvar cm_u int64 = 0\n\t_ = cm_u\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\ts = int64(0)\n\tx = int64(5)\n\tcm_it1 = int64(0)\n\tcm_stop2 = hits\n\tfor (cm_it1 < cm_stop2) {\n\t\tcm_u = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\ts = (s + x)\n\t\tx = (x + int64(5))\n\t}\n\treturn s\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function combo_bonus(hits) {\n    let s = 0n;\n    let x = 0n;\n    let cm_u = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    s = (0n);\n    x = (5n);\n    cm_it1 = (0n);\n    cm_stop2 = hits;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        s = (s + x);\n        x = (x + (5n));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def combo_bonus(hits: int) -> int:\n    s = 0\n    x = 5\n    for _ in range(0, hits, 1):\n        s = (s + x)\n        x = (x + 5)\n    return s\n\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn combo_bonus(hits: i64) -> i64 {\n    let mut s: i64 = 0;\n    let mut x: i64 = 0;\n    let mut cm_u: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    s = (0i64);\n    x = (5i64);\n    cm_it1 = (0i64);\n    cm_stop2 = hits;\n    while (cm_it1 < cm_stop2) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        s = (s + x);\n        x = (x + (5i64));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t combo_bonus(int64_t hits) {\n    int64_t s = 0;\n    int64_t x = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    s = INT64_C(0);\n    x = INT64_C(5);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = hits;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        s = (s + x);\n        x = (x + INT64_C(5));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long combo_bonus(long hits) {\n    long s = 0L;\n    long x = 0L;\n    long cm_u = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    s = (0L);\n    x = (5L);\n    cm_it1 = (0L);\n    cm_stop2 = hits;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        s = (s + x);\n        x = (x + (5L));\n    }\n    return s;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def combo_bonus (hits : Int) : Int := Id.run do\n  let mut s : Int := 0\n  let mut x : Int := 0\n  let mut cm_u : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  s := (0 : Int)\n  x := (5 : Int)\n  cm_it1 := (0 : Int)\n  cm_stop2 := hits\n  while (decide (cm_it1 < cm_stop2)) do\n    cm_u := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    s := (s + x)\n    x := (x + (5 : Int))\n  return s\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function combo_bonus(hits)\n  local s = 0\n  local x = 0\n  local _ = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  s = (0)\n  x = (5)\n  cm_it1 = (0)\n  cm_stop2 = hits\n  while (cm_it1 < cm_stop2) do\n    _ = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    s = (s + x)\n    x = (x + (5))\n    ::cm_continue_1::\n  end\n  return s\nend\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def combo_bonus(hits)\n  s = 0\n  x = 0\n  cm_u = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  s = (0)\n  x = (5)\n  cm_it1 = (0)\n  cm_stop2 = hits\n  while (cm_it1 < cm_stop2)\n    cm_u = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    s = (s + x)\n    x = (x + (5))\n  end\n  return s\nend\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc combo_bonus(_ hits: Int) -> Int {\n    var s: Int = 0\n    var x: Int = 0\n    var cm_u: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    s = (0)\n    x = (5)\n    cm_it1 = (0)\n    cm_stop2 = hits\n    while (cm_it1 < cm_stop2) {\n        cm_u = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        s = (s + x)\n        x = (x + (5))\n    }\n    return s\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function combo_bonus(hits: bigint): bigint {\n    let s: bigint = 0n;\n    let x: bigint = 0n;\n    let cm_u: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    s = (0n);\n    x = (5n);\n    cm_it1 = (0n);\n    cm_stop2 = hits;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        s = (s + x);\n        x = (x + (5n));\n    }\n    return s;\n}\n",
+      "cost": 1.0,
+      "entry": "combo_bonus",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "combo_bonus",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "s",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "x",
+            "value": [
+              "int",
+              5
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "s",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "s"
+                  ],
+                  [
+                    "var",
+                    "x"
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "x",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "x"
+                  ],
+                  [
+                    "int",
+                    5
+                  ]
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              0
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "var",
+              "hits"
+            ],
+            "stop_var": "cm_stop2",
+            "var": "_"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "s"
+            ]
+          }
+        ],
+        "locals": {
+          "_": "int",
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "s": "int",
+          "x": "int"
+        },
+        "name": "combo_bonus",
+        "params": [
+          {
+            "name": "hits",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_combo_bonus_ccb263c5315a",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/game.py",
+    "seed": 3558831672,
+    "source_sha256_12": "ccb263c5315a"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "hits",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "combo_bonus(hits: int) -> int lifted from slowframework/game.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        -1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -50
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        50
+      ],
+      "out": 6375
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 1755
+    },
+    {
+      "args": [
+        39
+      ],
+      "out": 3900
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 1155
+    },
+    {
+      "args": [
+        37
+      ],
+      "out": 3515
+    },
+    {
+      "args": [
+        33
+      ],
+      "out": 2805
+    },
+    {
+      "args": [
+        -8
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -43
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 2325
+    },
+    {
+      "args": [
+        -36
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 2175
+    },
+    {
+      "args": [
+        -38
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -4
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -29
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -25
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -39
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -24
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 15
+    },
+    {
+      "args": [
+        -18
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 680
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 330
+    },
+    {
+      "args": [
+        -19
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 455
+    },
+    {
+      "args": [
+        -23
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -13
+      ],
+      "out": 0
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}
