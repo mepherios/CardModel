@@ -1,0 +1,23 @@
+{
+  "category": "finding",
+  "cites": [
+    "Def-2",
+    "Rule-4"
+  ],
+  "data": {},
+  "evidence": "tests/test_godel1931.py; cardmodel/engines/godel1931.py; formal/Godel1931",
+  "evidence_tier": "bounded",
+  "limits": "found by comparing with the literal searches on inputs below 60",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W1_literal_searches",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "Read literally, prFactor (definition 3) does not stop at the last prime factor: past it gives 0 and then starts again from the smallest, with period the number of factors plus one, and item (definition 6) follows. Both forms keep that behaviour, and agree with the paper's searches on every small input.",
+  "tier": 1,
+  "workstream": "W-1"
+}

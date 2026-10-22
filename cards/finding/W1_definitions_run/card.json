@@ -1,0 +1,37 @@
+{
+  "category": "finding",
+  "cites": [
+    "Def-2",
+    "Def-4",
+    "Def-9",
+    "Rule-2",
+    "Rule-4",
+    "Cap-1"
+  ],
+  "data": {
+    "agreement": {
+      "calls": 237,
+      "status": "pass"
+    },
+    "literal": {
+      "checked": 766,
+      "status": "pass"
+    },
+    "round_trips": "pass"
+  },
+  "evidence": "tests/test_godel1931.py; cardmodel/engines/godel1931.py; formal/Godel1931",
+  "evidence_tier": "sample",
+  "limits": "the Lean forms are executable (partial definitions for the searches), not proofs that they equal the paper's definitions; agreement is on seeded generated codes",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W1_definitions_run",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "All 46 of Gödel's definitions run as cards. The 45 primitive recursive ones have a Python and a Lean form, which agree on all 237 generated calls (pass); 60 generated formulas round-trip (code, decode, parse; pass); and the direct forms equal the paper's own bounded searches on all 766 small inputs those searches can finish (pass). Definition 46, provable, is a Σ1 proposition in Lean and a search over given candidates in Python.",
+  "tier": 1,
+  "workstream": "W-1"
+}

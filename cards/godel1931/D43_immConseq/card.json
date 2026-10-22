@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 8,
+    "status": "pass"
+  },
+  "bound": "v ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "one inference or rewrite step",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:imm_conseq",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.immConseq",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "d0bdc035026059ba441e56b48e5db1cfc67f7c0d44f6d7b1d8f6562acf1c6105",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D43_immConseq",
+  "notation": "immConseq(x, y, z)",
+  "number": 43,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x follows from y and z by modus ponens, or from y by generalization",
+  "tier": 1
+}

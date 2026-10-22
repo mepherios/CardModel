@@ -27,11 +27,15 @@ launchers, that installs builds of the game made by the card model and launches 
 ```
 
 ```bash
-./bin/cardmodel arcade library --add ~/Downloads/GB_GBC --system gameboy   # your cartridges, where they are
+./bin/cardmodel arcade library --add "path/to/your/cartridges" --system gameboy   # your cartridges, where they are
 ```
 
 ```bash
 ./bin/cardmodel arcade run gameboy_player --rom "path/to/game.zip"          # one of them, natively
+```
+
+```bash
+./bin/cardmodel arcade check                     # every catalogue item launched through the store (CM42)
 ```
 
 ## 1. What is a card here
@@ -158,14 +162,33 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   shell keeps at the Unix time) and `flush` (called before quitting). A game without them runs as before.
 * **The library** (`arcade/library.py`): every file in a system's folders, read where it is, nothing copied, with
   its header, the ROM survey's verdict as a compatibility badge (verified, playable, unsupported) and a title
-  screen the machine draws headless (ten seconds, no buttons; cached in `state/arcade/covers/`). The folders are
-  the user's (Settings in the launcher, or `arcade library --add`), kept in `library.json` beside the saves, so no
-  card carries a user's path (CM13).
+  screen the machine draws headless (ten seconds, no buttons; cached in `state/arcade/covers/`; a screen that stays
+  blank gets no picture). Its title is its No-Intro file name when it has one (region tags in parentheses), else the
+  title in its cartridge header; the cartridge page says which. The folders are the user's (Settings in the
+  launcher, or `arcade library --add`), kept in `library.json` beside the saves, so no card carries a user's path
+  (CM13). Nothing derived from a cartridge (pictures, the survey, lifted code) leaves `state/`, which git ignores,
+  and no depot carries one: the player is the same for every cartridge.
 * **The launcher**: Library has a group per console with search, a home of title-screen shelves, and a page per
   cartridge (Play, or Install Game Boy Player first; play time; the verdict; the header; the file). Play starts
   the installed player with `--rom` on the file and a save folder per cartridge.
 * **The DS** (`system/nds`) is listed with what the DS machine does so far (its coverage report) and is not
   playable: the DS picture, sound and input hardware have no cards yet.
+* **The store check** (`cardmodel arcade check`, CM42; section 6) installs the player through the store like a
+  game, plays it on the system card's `check_cartridge` (a program assembled from the instruction cards, no one's
+  game: a checkerboard and one byte of battery RAM), then starts every cartridge the library lists in that
+  installed player, as the launcher starts it.
+* **One cartridge as its own app** (`arcade/cartapp.py`, `cardmodel arcade app ROM [--install]`): the Game Boy
+  Player with the cartridge's own code lifted into card IR (docs/MACHINES.md section 4: every block a long
+  profile found or an abstract run of the machine's cards found by reasoning, every instruction also on its own,
+  the code the cartridge copies into RAM), compiled
+  natively and packed as `<title>.app` (with `--install`: in `~/Applications/Cardmodel Games`). The cartridge is
+  read where it is when the app starts; the app shares its save folder with the library's entry for that
+  cartridge. Before packing, the lifted player plays the cartridge headless next to the plain one with the same
+  buttons (pictures and sound must be equal) and reports its purity: the share of instructions that ran as lifted
+  card IR. The app keeps what the interpreter still ran while it was played (`profile-*.bin` beside the save; the
+  shell's new `keep` and `globals` fields in game.json), and when anything did, quitting starts the app's own next
+  build in the background (`relift` in game.json: at low priority, one at a time, `relift.log` beside the save),
+  so the next launch runs that code as cards too.
 
 ## 6. Witnesses
 
@@ -176,9 +199,29 @@ guard only blocks (no HP through when aligned, posture taken); a slash that hits
 lands at 80 %, a slash that whiffs does not link, and a struck defender holding the high guard redirects the
 link (the string breaks); the boss changes phase at the card's share of health, at that phase's level and tempo,
 and fights on; the build's chunks reassemble its files exactly; the service serves catalog, manifest and chunks;
-the native package runs headless. `tests/test_game.py` holds the model side: GL9 and GL10 (and a planted loop and
+the native package runs headless; every catalogue item launches from the store (below); a headless run never
+writes the player's save; the launcher is pointed at the main checkout when installed from a worktree.
+`tests/test_game.py` holds the model side: GL9 and GL10 (and a planted loop and
 a planted true combo that they catch), and the duel tree (depth 1 is the exchange matrix, a mirror's states are
 worth exactly opposite values, a broken opponent takes the heaviest attack, linking after a hit is an option).
+
+**The store, end to end** (`cardmodel arcade check`, law CM42, goal G_S1, the self-run's `store` step): for every game in
+the catalogue, `arcade/client.py` does what `Launcher.swift` does, through the service on a free local port: asks
+for a build when the cards changed and waits for it, downloads every chunk and checks its SHA-256 and every file's,
+assembles and installs the files in a temporary library, verifies them, damages one file and repairs it (only that
+file is fetched again: the launcher's verify -> repair), runs the installed executable headless with its own save
+folder, and looks at the frame it drew (more than one colour). A console player is played the way the launcher
+plays a cartridge (`--rom`, its title, a save folder of its own) on its system card's check cartridge: its picture
+must be the one the player module computes in the check's own process for the same bytes and frames, and the
+card's byte must be in the save it left. Then every cartridge the library lists (`GET /api/library`) is started
+as `Launcher.playRom` starts it: the store-installed player, the file where it is (a missing file is refused, as
+the launcher refuses it), its title, a save folder per cartridge; it must run its frames, exit cleanly, keep that
+folder and show exactly the picture its cards compute. A console without a player (the DS) is counted as listed,
+not launchable; `--cartridges N` checks only the first N. It also checks that the launcher's pages are served
+and name only API endpoints the service has; `--launcher` compiles the launcher. The player's installation in
+~/Library/Application Support and the user's saves are never touched.
+
+**What goes into the store**, and what the model contributes to each piece, is docs/STORE.md.
 
 Measured, not witnessed (warden mirror, level 7, 20 duels a side with the sides swapped and a fresh seed per
 duel): the tree AI won 39 of 40 against the reader and 39 of 40 against the equilibrium AI, and split its own
@@ -189,9 +232,16 @@ level 3 it loses all 16.
 card; the player configures every board as the Python host does; its picture is the machine's at the same
 V-blank, with 1/60 s of sound per frame; battery RAM and the clock survive closing (an hour closed is an hour on
 the cartridge's clock); No-Intro names read as titles; a zipped cartridge is listed where it is and gets a title
-screen; the native package plays a zipped cartridge and shows what the module computes. On the user's own
-library the player configured all 971 cartridges exactly as the host does, and its pictures matched the
-machine's over 900 frames in five games.
+screen; the native package plays a zipped cartridge and shows what the module computes; a file without a No-Intro
+name is titled by its header; the check cartridge comes from the system card (its board, picture and save); a
+player reused for cartridge after cartridge starts each as a fresh one (and fails when the old cartridge's bytes
+are left behind); every cartridge of a synthetic library (a plain file, a zip, a battery cartridge whose save
+lands in its own folder, a DS file with no player) launches through the store; a cartridge moved after the
+listing does not, a picture one pixel off what the cards compute fails, and no cartridge launches when its player
+failed its own check; no tracked file is or zips a cartridge (checked against planted ones), and state/ and
+saves/ are ignored by git. On the user's own library the player configured all 971 cartridges exactly as the host
+does, its pictures matched the machine's over 900 frames in five games, and `arcade check` launched all 971
+through the store with the pictures their cards compute (2026-10-22, 224 s; docs/STORE.md).
 
 `tests/test_arcade_work.py` (a throwaway repository with a worktree on a branch and a stand-in for its
 `bin/cardmodel`): every worktree is listed with its commits not on main, its uncommitted files, its areas and
@@ -200,11 +250,28 @@ branch (manifest, chunk, picture; unknown worktrees refused); the branch's own `
 a build; a build there runs the branch's cardmodel, and a failed one keeps its error (across a restart of the
 service) while the last good build stays installable.
 
+`tests/test_cartapp.py` (a synthetic cartridge that copies a routine into HRAM and calls it every frame): the
+lifted player equals the plain one frame by frame, every instruction it runs (the HRAM routine, HALT, EI) runs as
+lifted card IR, and the app plays the cartridge from where it is and keeps what ran beside the save.
+
+**The store, end to end** (`cardmodel arcade check`, law CM42, goal G_S1, the self-run's `store` step): for every
+item in the release catalogue (the games, and the Game Boy Player, which plays a cartridge assembled from the
+instruction cards: never one of your ROMs), `arcade/client.py` does what `Launcher.swift` does, through the service
+on a free local port:
+asks for a build when the cards changed and waits for it, downloads every chunk and checks its SHA-256 and every
+file's, assembles and installs the files in a temporary library, verifies them, damages one file and repairs it
+(only that file is fetched again: the launcher's verify -> repair), runs the installed executable headless with its
+own save folder, and looks at the frame it drew (more than one colour). It also checks that the launcher's pages
+are served and name only API endpoints the service has; `--launcher` compiles the launcher. The player's
+installation in ~/Library/Application Support is never touched. What goes into the store, and what the model
+contributes to each piece, is docs/STORE.md.
+
 ## 7. Honest limits
 
 * macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker.
-* The launcher remembers this checkout's path to start the service: after moving the repository, run
-  `cardmodel arcade launcher --install` again.
+* The launcher remembers a checkout's path to start the service: after moving the repository, run
+  `cardmodel arcade launcher --install` again. Installed from a linked worktree, it points at the main checkout
+  (`--home` chooses another).
 * The game is a 480 x 270 software renderer with stick-figure fighters; the AIs' reflexes (reaction, accuracy,
   timing per level) are tuned by hand in `ai.card`; their choices come from the model (the equilibrium, the duel
   tree, the string mixes) or from the reader's counts.
@@ -219,3 +286,7 @@ service) while the last good build stays installable.
 * The Game Boy player runs the machine in the interpreter (native C, far faster than real time) without the lifted
   blocks, which are built per cartridge; a cartridge's title screen is picked by colour from its first ten
   seconds, so some show a company logo; a DMG cartridge plays as a DMG.
+* The store check's "launched" means the store's path works for that cartridge (listed, its player installed, the
+  file read where it is, the picture the cards compute): it says nothing about how far the game gets, which is
+  the ROM survey's verdict. After the check's 120 frames, 44 of the user's 971 cartridges still show one flat
+  colour (a white or blank start), and the DS cartridge has no player.

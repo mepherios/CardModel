@@ -1,0 +1,604 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_LE",
+    "op/MUL",
+    "op/NEG"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef tiles_in_circle(r: int) -> int:\n    \"\"\"Lattice points with x^2 + y^2 <= r^2 (no card knows a faster exact form: kept).\"\"\"\n    count = 0\n    for x in range(-r, r + 1):\n        for y in range(-r, r + 1):\n            if x * x + y * y <= r * r:\n                count += 1\n    return count",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t tiles_in_circle(int64_t r) {\n    int64_t count = 0;\n    int64_t x = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    int64_t y = 0;\n    int64_t cm_it3 = 0;\n    int64_t cm_stop4 = 0;\n    count = INT64_C(0);\n    cm_it1 = (-r);\n    cm_stop2 = (r + INT64_C(1));\n    while ((cm_it1 < cm_stop2)) {\n        x = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        cm_it3 = (-r);\n        cm_stop4 = (r + INT64_C(1));\n        while ((cm_it3 < cm_stop4)) {\n            y = cm_it3;\n            cm_it3 = (cm_it3 + INT64_C(1));\n            if ((((x * x) + (y * y)) <= (r * r))) {\n                count = (count + INT64_C(1));\n            }\n        }\n    }\n    return count;\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc tiles_in_circle(r int64) int64 {\n\tvar count int64 = 0\n\t_ = count\n\tvar x int64 = 0\n\t_ = x\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\tvar y int64 = 0\n\t_ = y\n\tvar cm_it3 int64 = 0\n\t_ = cm_it3\n\tvar cm_stop4 int64 = 0\n\t_ = cm_stop4\n\tcount = int64(0)\n\tcm_it1 = (-r)\n\tcm_stop2 = (r + int64(1))\n\tfor (cm_it1 < cm_stop2) {\n\t\tx = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\tcm_it3 = (-r)\n\t\tcm_stop4 = (r + int64(1))\n\t\tfor (cm_it3 < cm_stop4) {\n\t\t\ty = cm_it3\n\t\t\tcm_it3 = (cm_it3 + int64(1))\n\t\t\tif (((x * x) + (y * y)) <= (r * r)) {\n\t\t\t\tcount = (count + int64(1))\n\t\t\t}\n\t\t}\n\t}\n\treturn count\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function tiles_in_circle(r) {\n    let count = 0n;\n    let x = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    let y = 0n;\n    let cm_it3 = 0n;\n    let cm_stop4 = 0n;\n    count = (0n);\n    cm_it1 = (-r);\n    cm_stop2 = (r + (1n));\n    while ((cm_it1 < cm_stop2)) {\n        x = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        cm_it3 = (-r);\n        cm_stop4 = (r + (1n));\n        while ((cm_it3 < cm_stop4)) {\n            y = cm_it3;\n            cm_it3 = (cm_it3 + (1n));\n            if ((((x * x) + (y * y)) <= (r * r))) {\n                count = (count + (1n));\n            }\n        }\n    }\n    return count;\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def tiles_in_circle(r: int) -> int:\n    count = 0\n    for x in range((-r), (r + 1), 1):\n        for y in range((-r), (r + 1), 1):\n            if (((x * x) + (y * y)) <= (r * r)):\n                count = (count + 1)\n    return count\n\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn tiles_in_circle(r: i64) -> i64 {\n    let mut count: i64 = 0;\n    let mut x: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    let mut y: i64 = 0;\n    let mut cm_it3: i64 = 0;\n    let mut cm_stop4: i64 = 0;\n    count = (0i64);\n    cm_it1 = (-r);\n    cm_stop2 = (r + (1i64));\n    while (cm_it1 < cm_stop2) {\n        x = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        cm_it3 = (-r);\n        cm_stop4 = (r + (1i64));\n        while (cm_it3 < cm_stop4) {\n            y = cm_it3;\n            cm_it3 = (cm_it3 + (1i64));\n            if (((x * x) + (y * y)) <= (r * r)) {\n                count = (count + (1i64));\n            }\n        }\n    }\n    return count;\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t tiles_in_circle(int64_t r) {\n    int64_t count = 0;\n    int64_t x = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    int64_t y = 0;\n    int64_t cm_it3 = 0;\n    int64_t cm_stop4 = 0;\n    count = INT64_C(0);\n    cm_it1 = (-r);\n    cm_stop2 = (r + INT64_C(1));\n    while ((cm_it1 < cm_stop2)) {\n        x = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        cm_it3 = (-r);\n        cm_stop4 = (r + INT64_C(1));\n        while ((cm_it3 < cm_stop4)) {\n            y = cm_it3;\n            cm_it3 = (cm_it3 + INT64_C(1));\n            if ((((x * x) + (y * y)) <= (r * r))) {\n                count = (count + INT64_C(1));\n            }\n        }\n    }\n    return count;\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long tiles_in_circle(long r) {\n    long count = 0L;\n    long x = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    long y = 0L;\n    long cm_it3 = 0L;\n    long cm_stop4 = 0L;\n    count = (0L);\n    cm_it1 = (-r);\n    cm_stop2 = (r + (1L));\n    while ((cm_it1 < cm_stop2)) {\n        x = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        cm_it3 = (-r);\n        cm_stop4 = (r + (1L));\n        while ((cm_it3 < cm_stop4)) {\n            y = cm_it3;\n            cm_it3 = (cm_it3 + (1L));\n            if ((((x * x) + (y * y)) <= (r * r))) {\n                count = (count + (1L));\n            }\n        }\n    }\n    return count;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def tiles_in_circle (r : Int) : Int := Id.run do\n  let mut count : Int := 0\n  let mut x : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  let mut y : Int := 0\n  let mut cm_it3 : Int := 0\n  let mut cm_stop4 : Int := 0\n  count := (0 : Int)\n  cm_it1 := (-r)\n  cm_stop2 := (r + (1 : Int))\n  while (decide (cm_it1 < cm_stop2)) do\n    x := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    cm_it3 := (-r)\n    cm_stop4 := (r + (1 : Int))\n    while (decide (cm_it3 < cm_stop4)) do\n      y := cm_it3\n      cm_it3 := (cm_it3 + (1 : Int))\n      if (decide (((x * x) + (y * y)) <= (r * r))) then\n        count := (count + (1 : Int))\n  return count\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function tiles_in_circle(r)\n  local count = 0\n  local x = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  local y = 0\n  local cm_it3 = 0\n  local cm_stop4 = 0\n  count = (0)\n  cm_it1 = (-r)\n  cm_stop2 = (r + (1))\n  while (cm_it1 < cm_stop2) do\n    x = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    cm_it3 = (-r)\n    cm_stop4 = (r + (1))\n    while (cm_it3 < cm_stop4) do\n      y = cm_it3\n      cm_it3 = (cm_it3 + (1))\n      if (((x * x) + (y * y)) <= (r * r)) then\n        count = (count + (1))\n      end\n      ::cm_continue_2::\n    end\n    ::cm_continue_1::\n  end\n  return count\nend\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def tiles_in_circle(r)\n  count = 0\n  x = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  y = 0\n  cm_it3 = 0\n  cm_stop4 = 0\n  count = (0)\n  cm_it1 = (-r)\n  cm_stop2 = (r + (1))\n  while (cm_it1 < cm_stop2)\n    x = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    cm_it3 = (-r)\n    cm_stop4 = (r + (1))\n    while (cm_it3 < cm_stop4)\n      y = cm_it3\n      cm_it3 = (cm_it3 + (1))\n      if (((x * x) + (y * y)) <= (r * r))\n        count = (count + (1))\n      end\n    end\n  end\n  return count\nend\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc tiles_in_circle(_ r: Int) -> Int {\n    var count: Int = 0\n    var x: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    var y: Int = 0\n    var cm_it3: Int = 0\n    var cm_stop4: Int = 0\n    count = (0)\n    cm_it1 = (-r)\n    cm_stop2 = (r + (1))\n    while (cm_it1 < cm_stop2) {\n        x = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        cm_it3 = (-r)\n        cm_stop4 = (r + (1))\n        while (cm_it3 < cm_stop4) {\n            y = cm_it3\n            cm_it3 = (cm_it3 + (1))\n            if (((x * x) + (y * y)) <= (r * r)) {\n                count = (count + (1))\n            }\n        }\n    }\n    return count\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function tiles_in_circle(r: bigint): bigint {\n    let count: bigint = 0n;\n    let x: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    let y: bigint = 0n;\n    let cm_it3: bigint = 0n;\n    let cm_stop4: bigint = 0n;\n    count = (0n);\n    cm_it1 = (-r);\n    cm_stop2 = (r + (1n));\n    while ((cm_it1 < cm_stop2)) {\n        x = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        cm_it3 = (-r);\n        cm_stop4 = (r + (1n));\n        while ((cm_it3 < cm_stop4)) {\n            y = cm_it3;\n            cm_it3 = (cm_it3 + (1n));\n            if ((((x * x) + (y * y)) <= (r * r))) {\n                count = (count + (1n));\n            }\n        }\n    }\n    return count;\n}\n",
+      "cost": 1.0,
+      "entry": "tiles_in_circle",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "tiles_in_circle",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "count",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "body": [
+                  {
+                    "cond": [
+                      "CMP_LE",
+                      [
+                        "ADD",
+                        [
+                          "MUL",
+                          [
+                            "var",
+                            "x"
+                          ],
+                          [
+                            "var",
+                            "x"
+                          ]
+                        ],
+                        [
+                          "MUL",
+                          [
+                            "var",
+                            "y"
+                          ],
+                          [
+                            "var",
+                            "y"
+                          ]
+                        ]
+                      ],
+                      [
+                        "MUL",
+                        [
+                          "var",
+                          "r"
+                        ],
+                        [
+                          "var",
+                          "r"
+                        ]
+                      ]
+                    ],
+                    "else": [],
+                    "k": "if",
+                    "then": [
+                      {
+                        "k": "assign",
+                        "target": "count",
+                        "value": [
+                          "ADD",
+                          [
+                            "var",
+                            "count"
+                          ],
+                          [
+                            "int",
+                            1
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "counter": "cm_it3",
+                "k": "for_range",
+                "start": [
+                  "NEG",
+                  [
+                    "var",
+                    "r"
+                  ]
+                ],
+                "step": [
+                  "int",
+                  1
+                ],
+                "stop": [
+                  "ADD",
+                  [
+                    "var",
+                    "r"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ],
+                "stop_var": "cm_stop4",
+                "var": "y"
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "NEG",
+              [
+                "var",
+                "r"
+              ]
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "ADD",
+              [
+                "var",
+                "r"
+              ],
+              [
+                "int",
+                1
+              ]
+            ],
+            "stop_var": "cm_stop2",
+            "var": "x"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "count"
+            ]
+          }
+        ],
+        "locals": {
+          "cm_it1": "int",
+          "cm_it3": "int",
+          "cm_stop2": "int",
+          "cm_stop4": "int",
+          "count": "int",
+          "x": "int",
+          "y": "int"
+        },
+        "name": "tiles_in_circle",
+        "params": [
+          {
+            "name": "r",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_tiles_in_circle_b5e12a3c4fdd",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/game.py",
+    "seed": 3558831672,
+    "source_sha256_12": "b5e12a3c4fdd"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "r",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "tiles_in_circle(r: int) -> int lifted from slowframework/game.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 5
+    },
+    {
+      "args": [
+        -1
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -50
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        50
+      ],
+      "out": 7845
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 2121
+    },
+    {
+      "args": [
+        39
+      ],
+      "out": 4777
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 1373
+    },
+    {
+      "args": [
+        37
+      ],
+      "out": 4293
+    },
+    {
+      "args": [
+        33
+      ],
+      "out": 3409
+    },
+    {
+      "args": [
+        -8
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -43
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 2821
+    },
+    {
+      "args": [
+        -36
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        29
+      ],
+      "out": 2629
+    },
+    {
+      "args": [
+        -38
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -4
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -29
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -25
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -39
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -24
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 13
+    },
+    {
+      "args": [
+        -18
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 797
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 377
+    },
+    {
+      "args": [
+        -19
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 529
+    },
+    {
+      "args": [
+        -23
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        -13
+      ],
+      "out": 0
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 20,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_set_bits_404de4e9c521",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 3132429613,
+  "statement": "set_bits: same outputs in 12 implementations",
+  "subject": "function/fn_set_bits_404de4e9c521",
+  "tier": 3
+}

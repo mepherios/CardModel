@@ -1,0 +1,57 @@
+{
+  "blockers": [
+    "Mathlib and Foundation are not installed: downloading them needs the user's yes"
+  ],
+  "branches": [
+    "claude/godel-w2-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [],
+  "goal": "Can the content algebra and the carry-over laws be kernel-checked?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "Rule-19 and Rule-20 over Finsupp and Multiset",
+    "the freeness argument behind GM-3",
+    "Foundation's incompleteness and GL results imported as truth cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [],
+  "name": "godel_w2_formal_core",
+  "next_steps": [
+    "start on claude/godel-w2-*"
+  ],
+  "order": 41,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "formal/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "statement": "Gödel method research program, wave 1: Can the content algebra and the carry-over laws be kernel-checked?",
+  "tier": 1,
+  "title": "W-2 Formal core in Lean, on Mathlib",
+  "updated": "2026-10-22T02:22:50+02:00",
+  "user_actions": [
+    {
+      "action": "Allow downloading Mathlib (with its prebuilt cache) and FormalizedFormalLogic/Foundation for the formal core",
+      "unblocks": [
+        "W-2",
+        "W-10 and W-11 in wave 2"
+      ],
+      "why": "W-2 proves the content algebra over Finsupp and imports Foundation's incompleteness and GL results; both are multi-gigabyte downloads"
+    }
+  ]
+}

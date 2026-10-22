@@ -64,10 +64,16 @@ is due:
 | laws | when the op cards change | rediscovers laws (witness, Lean, simplifying rules) |
 | algebra | when the algorithm cards change | canonical forms, Gödel numbers and identities between algorithms |
 | arena | every 24 h | a small arena run: is the optimizer sound, what fraction of planted slow functions does it fix, how much faster |
+| law_witnesses | every 24 h | every law card's witness test, run test by test in a child process with the cycle's seed: a law whose witness fails is a critical flaw (CM20; goal G_A10) |
+| observe_self | every cycle | the model observes its own code (`cardmodel/`); a new observation goes to the self layer, so the named-fraction goal (G_U3) measures the code it is made of, not a corpus it learned from |
+| store | every cycle | every catalogue item launched through the store exactly as the launcher does it: a download with every chunk checked, verify, a damaged file repaired, a native headless run that draws a frame (CM42, goal G_S1; `cardmodel arcade check`) |
 | optimize | every 168 h | measures the op cards' forms on this host (metric cards); flags cost anchors that measurement contradicts |
+| tests | every 168 h | the whole unit suite, test by test, in a child process; a failing test is a flaw |
 | goals | every cycle | every goal from the latest result of each verify section, against the previous cycle |
 
-A step that watches registries records a baseline the first time it sees them, and runs when they change.
+A step that watches registries records a baseline the first time it sees them, and runs when they change. Every
+step runs under a deadline (what is left of the cycle's budget, `resources.deadline`): a step that does not return
+is stopped and reported as crashed, and the cycle goes on.
 
 ## 3. What a cycle produces
 

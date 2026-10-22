@@ -1,0 +1,508 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef total_points(n: int) -> int:\n    t = 0\n    for i in range(1, n + 1):\n        t = t + i\n    return t",
+      "cost": 1.0,
+      "entry": "total_points",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t total_points(int64_t n) {\n    int64_t t = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    t = INT64_C(0);\n    cm_it1 = INT64_C(1);\n    cm_stop2 = (n + INT64_C(1));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        t = (t + i);\n    }\n    return t;\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc total_points(n int64) int64 {\n\tvar t int64 = 0\n\t_ = t\n\tvar i int64 = 0\n\t_ = i\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\tt = int64(0)\n\tcm_it1 = int64(1)\n\tcm_stop2 = (n + int64(1))\n\tfor (cm_it1 < cm_stop2) {\n\t\ti = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\tt = (t + i)\n\t}\n\treturn t\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function total_points(n) {\n    let t = 0n;\n    let i = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    t = (0n);\n    cm_it1 = (1n);\n    cm_stop2 = (n + (1n));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        t = (t + i);\n    }\n    return t;\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def total_points(n: int) -> int:\n    t = 0\n    for i in range(1, (n + 1), 1):\n        t = (t + i)\n    return t\n\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn total_points(n: i64) -> i64 {\n    let mut t: i64 = 0;\n    let mut i: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    t = (0i64);\n    cm_it1 = (1i64);\n    cm_stop2 = (n + (1i64));\n    while (cm_it1 < cm_stop2) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        t = (t + i);\n    }\n    return t;\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t total_points(int64_t n) {\n    int64_t t = 0;\n    int64_t i = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    t = INT64_C(0);\n    cm_it1 = INT64_C(1);\n    cm_stop2 = (n + INT64_C(1));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        t = (t + i);\n    }\n    return t;\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long total_points(long n) {\n    long t = 0L;\n    long i = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    t = (0L);\n    cm_it1 = (1L);\n    cm_stop2 = (n + (1L));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        t = (t + i);\n    }\n    return t;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def total_points (n : Int) : Int := Id.run do\n  let mut t : Int := 0\n  let mut i : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  t := (0 : Int)\n  cm_it1 := (1 : Int)\n  cm_stop2 := (n + (1 : Int))\n  while (decide (cm_it1 < cm_stop2)) do\n    i := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    t := (t + i)\n  return t\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function total_points(n)\n  local t = 0\n  local i = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  t = (0)\n  cm_it1 = (1)\n  cm_stop2 = (n + (1))\n  while (cm_it1 < cm_stop2) do\n    i = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    t = (t + i)\n    ::cm_continue_1::\n  end\n  return t\nend\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def total_points(n)\n  t = 0\n  i = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  t = (0)\n  cm_it1 = (1)\n  cm_stop2 = (n + (1))\n  while (cm_it1 < cm_stop2)\n    i = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    t = (t + i)\n  end\n  return t\nend\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc total_points(_ n: Int) -> Int {\n    var t: Int = 0\n    var i: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    t = (0)\n    cm_it1 = (1)\n    cm_stop2 = (n + (1))\n    while (cm_it1 < cm_stop2) {\n        i = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        t = (t + i)\n    }\n    return t\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function total_points(n: bigint): bigint {\n    let t: bigint = 0n;\n    let i: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    t = (0n);\n    cm_it1 = (1n);\n    cm_stop2 = (n + (1n));\n    while ((cm_it1 < cm_stop2)) {\n        i = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        t = (t + i);\n    }\n    return t;\n}\n",
+      "cost": 1.0,
+      "entry": "total_points",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "total_points",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "t",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "t",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "t"
+                  ],
+                  [
+                    "var",
+                    "i"
+                  ]
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              1
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "ADD",
+              [
+                "var",
+                "n"
+              ],
+              [
+                "int",
+                1
+              ]
+            ],
+            "stop_var": "cm_stop2",
+            "var": "i"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "t"
+            ]
+          }
+        ],
+        "locals": {
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "i": "int",
+          "t": "int"
+        },
+        "name": "total_points",
+        "params": [
+          {
+            "name": "n",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 43,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_total_points_4214df27c4ee",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3558831672,
+    "source_sha256_12": "4214df27c4ee"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "total_points(n: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        30
+      ],
+      "out": 465
+    },
+    {
+      "args": [
+        19
+      ],
+      "out": 190
+    },
+    {
+      "args": [
+        22
+      ],
+      "out": 253
+    },
+    {
+      "args": [
+        17
+      ],
+      "out": 153
+    },
+    {
+      "args": [
+        28
+      ],
+      "out": 406
+    },
+    {
+      "args": [
+        21
+      ],
+      "out": 231
+    },
+    {
+      "args": [
+        20
+      ],
+      "out": 210
+    },
+    {
+      "args": [
+        10
+      ],
+      "out": 55
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 6
+    },
+    {
+      "args": [
+        27
+      ],
+      "out": 378
+    },
+    {
+      "args": [
+        26
+      ],
+      "out": 351
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 66
+    },
+    {
+      "args": [
+        5
+      ],
+      "out": 15
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 21
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        13
+      ],
+      "out": 91
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 36
+    },
+    {
+      "args": [
+        16
+      ],
+      "out": 136
+    },
+    {
+      "args": [
+        15
+      ],
+      "out": 120
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 28
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 45
+    },
+    {
+      "args": [
+        18
+      ],
+      "out": 171
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 10
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 78
+    },
+    {
+      "args": [
+        23
+      ],
+      "out": 276
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 43,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 27,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 43,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}

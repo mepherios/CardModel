@@ -90,7 +90,10 @@ def _conv(n, pv):
         if isinstance(n.op, ast.Not):
             return ["NOT", x]
     if isinstance(n, ast.Compare) and len(n.ops) == 1:
-        return [CMP[type(n.ops[0])], _conv(n.left, pv), _conv(n.comparators[0], pv)]
+        op = CMP.get(type(n.ops[0]))
+        if not op:   # in, not in, is, is not: no op card (a ParseError, so callers fall back instead of crashing)
+            raise ParseError(f"comparison {type(n.ops[0]).__name__}")
+        return [op, _conv(n.left, pv), _conv(n.comparators[0], pv)]
     if isinstance(n, ast.BoolOp):
         head = "AND" if isinstance(n.op, ast.And) else "OR"
         e = _conv(n.values[0], pv)

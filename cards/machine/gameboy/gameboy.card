@@ -6,6 +6,8 @@ const COMPAT_DIV = card.hardware.gb_cgb.dmg_compat.div_counter
 export global model: Int = 0
 export global frame_deadline: Int = 0
 export global instructions: Int = 0
+export global interpreted: Int = 0        -- of those, run by the interpreter one at a time (the rest: lifted blocks)
+export global interpreted_ram: Int = 0    -- of those, from RAM (code the cartridge copied there)
 -- lifted code (cardmodel/machine/lift.py replaces run_block with a switch over the ROM's lifted blocks)
 export global lifted_on: Int = 0
 export global block_runs: Int = 0
@@ -13,6 +15,8 @@ export global profiling: Int = 0
 global fall_pc: Int = -1
 export array seen: Byte[0x100000]        -- 1 bit per ROM byte: an instruction started there
 export array entries: Byte[0x100000]     -- 1 bit per ROM byte: reached other than by falling through
+export array ram_seen: Byte[0x1000]      -- 1 bit per address 8000-FFFF: an instruction started there (code in RAM)
+export array ram_code: Byte[0x8000]      -- each RAM instruction's bytes as it last ran (what the lifter reads)
 
 fn full_sync() {
   sync_components(now)
@@ -93,7 +97,31 @@ fn rom_phys(pc: Int) -> Int {
 }
 -- a block key: the ROM byte offset and which half of the address space it runs in
 fn block_key(pc: Int) -> Int = (rom_phys(pc) << 1) | (pc >> 14)
-fn run_block(key: Int) -> Int {
+-- run the lifted block that has the instruction at key, from that instruction (single: that one only, as the
+-- interpreter would); 0 when no block has it
+fn run_block(key: Int, single: Int) -> Int {
+  return 0
+}
+-- the byte at a as code there reads, without touching the hardware (RAM code's profile and guards)
+export fn code_byte(a: Int) -> Int {
+  if a >= 0xFF80 and a < 0xFFFF {
+    return hram[a - 0xFF80]
+  }
+  if a >= 0xFE00 {
+    return 0xFF
+  }
+  return peek8(a)
+}
+fn ram_mark() {
+  let r = PC - 0x8000
+  ram_seen[r >> 3] = ram_seen[r >> 3] | (1 << (r & 7))
+  let n = op_bytes[code_byte(PC)]
+  for j in 0 .. n {
+    ram_code[(r + j) & 0x7FFF] = code_byte((PC + j) & 0xFFFF)
+  }
+}
+-- run the lifted instruction at RAM address pc when RAM still holds the bytes it was lifted from; 0 otherwise
+fn run_ram(pc: Int, single: Int) -> Int {
   return 0
 }
 fn profile_mark() {
@@ -104,13 +132,21 @@ fn profile_mark() {
   }
 }
 fn interp_one() {
-  if profiling != 0 and PC < 0x8000 {
-    profile_mark()
+  if profiling != 0 {
+    if PC < 0x8000 {
+      profile_mark()
+    } else {
+      ram_mark()
+    }
   }
   let pc0 = PC
   let op = fetch8()
   exec_op(op)
   instructions += 1
+  interpreted += 1
+  if pc0 >= 0x8000 {
+    interpreted_ram += 1
+  }
   fall_pc = (pc0 + op_bytes[op]) & 0xFFFF
   if ime_delay != 0 {
     ime_delay -= 1
@@ -123,10 +159,21 @@ export fn step() {
   if not boundary() {
     return
   }
-  -- a block is the instructions it replaces only while nothing outside it is waiting for an instruction
-  -- boundary: not after the sync that ended the frame (run_frame stops after one more instruction)
-  if lifted_on != 0 and frame_done == 0 and PC < 0x8000 and halt_bug == 0 and ime_delay == 0 {
-    if run_block(block_key(PC)) != 0 {
+  -- a whole block is the instructions it replaces only while nothing outside it is waiting for an instruction
+  -- boundary: after the sync that ended the frame (run_frame stops after one more instruction) and right after
+  -- EI the block runs one instruction (single); after a HALT bug the next fetch repeats a byte (interpreter)
+  if lifted_on != 0 and halt_bug == 0 {
+    var single = 0
+    if frame_done != 0 or ime_delay != 0 {
+      single = 1
+    }
+    var ran = 0
+    if PC < 0x8000 {
+      ran = run_block(block_key(PC), single)
+    } else {
+      ran = run_ram(PC, single)
+    }
+    if ran != 0 {
       block_runs += 1
       fall_pc = -1
       return

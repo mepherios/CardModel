@@ -1,8 +1,10 @@
 """Every project keeps a detailed, current card (CM41): missing detail, a stale card, an unlisted branch fail."""
 import json
+import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from test_hub import World, sh
@@ -21,7 +23,8 @@ class ProjectCards(unittest.TestCase):
         w.store.invalidate()
 
     def test_missing_or_stale_project_cards_fail(self):
-        with World() as w:
+        # this test is about branches, so it looks at the World's branches (the other tests do not: CARDMODEL_BRANCHES=0)
+        with World() as w, mock.patch.dict(os.environ, {"CARDMODEL_BRANCHES": "1"}):
             # the World's cards have no detail at all: every field is reported, and the feature branch is unlisted
             r = PJ.check(w.ctx)
             self.assertEqual(r["status"], "fail")

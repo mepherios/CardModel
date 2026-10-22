@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "z ≤ nthPrime(length(x) + length(y))^(x + y)",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "a rewrite at one position",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:insert",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.insert",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "127ad20d74bdcf6b20fdb2df6ca2e7b22b134140335c3bfa0ee5a0841e552b18",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D27_insert",
+  "notation": "insert(x, n, y)",
+  "number": 27,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x with its n-th entry replaced by the sequence y",
+  "tier": 1
+}

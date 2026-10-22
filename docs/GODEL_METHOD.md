@@ -28,12 +28,21 @@ memory on this machine, and a session started by another session's message canno
 | W-15 | which of the product's questions are decidable? | `claude/godel-w15-difficulty` | done |
 | W-3 | which code should identify a card? | `claude/godel-w3-identity` | done |
 | W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | done |
-| W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | waiting |
-| W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | waiting |
-| W-2 | can the content algebra and carry-over be kernel-checked on Mathlib? | `claude/godel-w2-mathlib` | blocked: the Mathlib and Foundation downloads need the user's yes |
+| W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | done |
+| W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | done |
+| W-2 | can the content algebra and carry-over be kernel-checked on Mathlib? | `claude/godel-w2-mathlib` | blocked: the Mathlib and Foundation downloads need the user's yes; the plain-Lean core already proves the content algebra, carry-over and freeness (`formal/GodelCore`) |
 
 The parts of W-2 that need no download are already on main: `formal/GodelCore` proves Rule-19, Rule-20 and the
 freeness behind GM-3 in plain Lean (T1 to T4 of the research handover).
+
+## Wave 1 in short
+
+Five of six workstreams are done and merged, each after a full verify on its branch. W-15 ranks what every method
+decides; W-3 measured six codes and wrote the GM-2 decision record; W-5 found two numberings that were not admissible
+until their arities were stated; W-1 runs all 46 of Gödel's definitions in Python and Lean with a proof checker for
+system P; W-12 turned all 1,075 instruction outputs into constraints over a prime field that provably agree with the
+terms. W-2 waits for the user's yes to download Mathlib and Foundation. Every result is a `finding` card citing the
+handover's ids, with its tier. The proposed laws GM-1 to GM-9 remain proposals for the user.
 
 ## Results
 
@@ -127,4 +136,57 @@ not be parsed back. Each set card now states its `arities` (read from the op car
 EC_ADD, EC_SCALAR_MUL and BIT_NOR), and an effect's guard slot holds `logic/true` when the effect always happens.
 The `godel` verify section reports every set's numbering; GM-4 as a law (verify fails on a set without an
 admissible numbering) is the user's decision.
+
+### W-1: Gödel's 46 definitions as cards (Def-2, Def-4, Def-9, Rule-4, Cap-1, Cap-10)
+
+Every definition of section 2 of Gödel's paper (in Martin Hirzel's translation) is a card in `cards/godel1931`, with
+a Python form (`engines/godel1931.py`) and a Lean form (`formal/Godel1931`). The 45 primitive recursive ones are
+functions on codes; definition 46, provable, is a Σ1 proposition in Lean and, in Python, a search that only
+confirms (Def-4).
+
+* **The forms agree.** On 237 seeded calls covering definitions 1 to 45 (numbers, generated
+  formulas of system P, corrupted codes, axioms and proofs), the Python and Lean forms give the same answers. Large
+  codes travel between them as their signs, and results come back as fingerprints (bit length and two residues),
+  because printing a million-bit number in decimal is quadratic.
+* **The codes round-trip**: generated formulas code, decode and parse back to themselves.
+* **The direct forms are Gödel's functions.** Definitions 1 to 7, 11 and 12 also exist as the paper's own bounded
+  searches (`literal`), and on every small input those searches can finish the two agree. Read literally, prFactor
+  does not stop at the last prime factor: past it, it gives 0 and then starts again from the smallest (finding
+  `W1_literal_searches`), and both forms keep that.
+* **The proof checker** (definitions 44 and 45) accepts a five-step proof of p ⇒ p from the propositional schemas
+  and modus ponens (p the elementary formula x2(x1)), and rejects every corruption tried: steps out of order, a
+  premise dropped, the conclusion changed, an axiom replaced. The Peano axioms and the set axiom are written with =
+  expanded as P defines it, ∀x2 (x2(x) ⇒ x2(y)).
+* **Gödel's own codes explode where Ph-2 and Ph-3 say.** The set axiom has 141,771 bits; lifted one type,
+  2,349,852; two types, 40,175,911 (a type-5 variable's sign code is 17^5, in an exponent). A
+  proof's own number, 2^Φ(f1)·3^Φ(f2)···, would need about Φ(f1) bits, so a proof is read as the sequence of its
+  formulas' codes, which is what item(n, x) gives. Definition 41 is decided from the size formula and one
+  comparison, never by factoring.
+
+The Lean forms are executable definitions compared on samples, not proofs that they equal the paper's (that would be
+Cap-10, proof by reflection: W-11 in wave 2).
+
+### W-12: arithmetized execution (Cap-11, Ph-11)
+
+`machine/arith.py` compiles every LR35902 symbolic term (F5) to gates over the Goldilocks field
+p = 2^64 - 2^32 + 1, each gate one constraint of degree at most 2 (AND z = xy, XOR z = x + y - 2xy,
+OR z = x + y - xy, NOT z = 1 - x, MUX z = b + t(a - b)); on bits each polynomial is its Boolean gate. Words are
+40-bit two's complement: ripple-carry addition, subtraction, shifts, comparisons by sign, IF_EXPR as a MUX.
+
+* **The constraints agree with the terms on every input.** All 1,075 outputs (register updates, bus
+  arguments, guards; 20,608 gates): z3 proves each equal to its term at word level (unsat for all, in
+  1.7 s), and exhaustive bit-sliced evaluation confirms the 948 outputs whose
+  inputs have at most 16 bits (33,912,934 inputs, 345.9 s). The other
+  127 read 16-bit registers too and are covered by z3 alone.
+* **Schwartz-Zippel over F_p.** For 3 instructions the whole input space becomes one trace: every wire a
+  column interpolated on the N-th roots of unity, the gate constraints combined at random; all rows hold exactly when
+  X^N - 1 divides the composition, checked at one random point with error at most 2N/p. Honest traces pass; one
+  flipped gate output in one row fails (`W12_schwartz_zippel_trace`).
+* **Over Z/2^w the bound fails.** The random-point test accepted the nonzero polynomial 2^7·x in
+  1991 of 4000 trials over Z/2^8 and in 0 over F_p.
+* **The three methods** (`W12_methods_compared`): exhaustive evaluation is a proof over a finite domain but stops at
+  about 16 input bits in Python; SMT is a proof by a decision procedure and the fastest here; the trace identity is a
+  probabilistic proof with a stated bound, one check for a whole instruction, and the basis of succinct proofs that
+  code ran correctly. The trace check here evaluates the polynomials itself: there are no commitments and no
+  low-degree test yet.
 

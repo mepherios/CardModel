@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": null,
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "atom logic/not",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:neg",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.neg",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "854ea4f27a2333764948227dacc018b475a22340c5eb00ee7fa636f2857b4eb3",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D13_not",
+  "notation": "not(x)",
+  "number": 13,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "negation",
+  "tier": 1
+}

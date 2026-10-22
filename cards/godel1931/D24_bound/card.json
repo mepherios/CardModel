@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "a, b, c ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "binding analysis",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:bound",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.bound",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "7de7556668b594c3f715225159fcc98d870f36c2386ffad8f51a6f2cf45dfab4",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D24_bound",
+  "notation": "bound(v, n, x)",
+  "number": 24,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "v is bound at position n of x",
+  "tier": 1
+}

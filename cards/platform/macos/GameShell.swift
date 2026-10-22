@@ -7,9 +7,11 @@
 //   --shot PATH         with --frames: write the last frame as a PNG
 //   --input SCRIPT      frame:button+button,... pressed for one frame each (tests)
 //   --save-dir DIR      where save.bin lives (default ~/Library/Application Support/Cardmodel Arcade/saves/ID)
-//   --rom PATH          a cartridge, for a console player (game.json has "cartridge"): read where it is (a .zip
+//   --rom PATH          a cartridge, for a console player (game.json has "cartridge"; its "path" when no --rom,
+//                       an app made for one cartridge): read where it is (a .zip
 //                       in memory), its bytes copied into the module, which decodes it
 //   --title TEXT        the window's title
+//   --relift            also after a headless run: start game.json's "relift" command if the counter is not 0
 
 import AppKit
 import AVFoundation
@@ -33,8 +35,18 @@ struct Spec: Decodable {
     let keys: [String: [String]]
     let keys2: [String: [String]]
     let gamepad: [String: String]
-    struct Cartridge: Decodable { let symbol: String; let bytes: Int; let load: String; let extensions: [String]; let zip: Bool }
+    struct Cartridge: Decodable { let symbol: String; let bytes: Int; let load: String; let extensions: [String]; let zip: Bool
+                                  let path: String? }
+    struct Keep: Decodable { let symbol: String; let bytes: Int; let file: String; let mode: String? }
     let cartridge: Cartridge?      // a console player: the cartridge array and the function that decodes it
+    let keep: [Keep]?              // arrays kept beside the save: bits ORed in ("or"), or bytes that are set copied
+                                   // over ("copy"): what ran where, for the next build of an app for one cartridge
+    let globals: [String: Int64]?  // Int64 globals set before the module starts (e.g. profiling on)
+    struct Area: Decodable { let x: Int; let y: Int; let width: Int; let height: Int }
+    struct Pointer: Decodable { let x: String; let y: String; let down: String; let area: Area }
+    let pointer: Pointer?          // a touch screen: the left button held inside area (screen pixels) sets down, x, y
+    struct Relift: Decodable { let counter: String; let argv: [String]; let log: String }
+    let relift: Relift?            // at quit, when the counter (Int64) is not 0: start argv in the background, once
     let clock: String?             // an Int64 the shell keeps at the Unix time (a cartridge's real-time clock)
     let flush: String?             // called before the shell quits (unsaved battery RAM)
 }
@@ -88,6 +100,10 @@ final class Game {
     let saveURL: URL
     var clock: UnsafeMutablePointer<Int64>?
     var flushFn: VoidFn?
+    var kept: [(UnsafeMutablePointer<UInt8>, Spec.Keep)] = []
+    var touch: (x: UnsafeMutablePointer<Int64>, y: UnsafeMutablePointer<Int64>, down: UnsafeMutablePointer<Int64>)?
+    var reliftCounter: UnsafeMutablePointer<Int64>?
+    var reliftOnQuit = false
 
     init(bundle: Bundle, saveDir: URL?, romPath: String?) {
         let specURL = bundle.url(forResource: "game", withExtension: "json")!
@@ -112,7 +128,7 @@ final class Game {
         saveURL = dir.appendingPathComponent("save.bin")
         unsafeBitCast(sym(spec.entry.reset), to: VoidFn.self)()
         if let c = spec.cartridge {
-            guard let path = romPath else { fatalError("\(spec.title) plays a cartridge: start it with --rom PATH") }
+            guard let path = romPath ?? c.path else { fatalError("\(spec.title) plays a cartridge: start it with --rom PATH") }
             guard let data = readCartridge(path, c.extensions) else { fatalError("cannot read a cartridge from \(path)") }
             let dst = sym(c.symbol).assumingMemoryBound(to: UInt8.self)
             let n = min(data.count, c.bytes)
@@ -124,6 +140,13 @@ final class Game {
             clock?.pointee = Int64(Date().timeIntervalSince1970)
         }
         if let f = spec.flush { flushFn = unsafeBitCast(sym(f), to: VoidFn.self) }
+        for (name, value) in spec.globals ?? [:] { sym(name).assumingMemoryBound(to: Int64.self).pointee = value }
+        for k in spec.keep ?? [] { kept.append((sym(k.symbol).assumingMemoryBound(to: UInt8.self), k)) }
+        if let r = spec.relift { reliftCounter = sym(r.counter).assumingMemoryBound(to: Int64.self) }
+        if let pt = spec.pointer {
+            touch = (sym(pt.x).assumingMemoryBound(to: Int64.self), sym(pt.y).assumingMemoryBound(to: Int64.self),
+                     sym(pt.down).assumingMemoryBound(to: Int64.self))
+        }
         if let data = try? Data(contentsOf: saveURL) {
             data.withUnsafeBytes { raw in
                 let n = min(raw.count, spec.save.bytes)
@@ -140,10 +163,42 @@ final class Game {
         return q != 0
     }
 
-    // before quitting: let the module save what it has not, then write it
+    // before quitting: let the module save what it has not, then write it; merge the kept bit arrays
     func finish() {
         flushFn?()
         if saveDirty.pointee != 0 { writeSave() }
+        for (ptr, k) in kept {
+            let url = saveURL.deletingLastPathComponent().appendingPathComponent(k.file)
+            var bytes = [UInt8]((try? Data(contentsOf: url)) ?? Data())
+            if bytes.count < k.bytes { bytes += [UInt8](repeating: 0, count: k.bytes - bytes.count) }
+            if k.mode == "copy" {
+                for i in 0..<k.bytes where ptr[i] != 0 { bytes[i] = ptr[i] }
+            } else {
+                for i in 0..<k.bytes { bytes[i] |= ptr[i] }
+            }
+            try? Data(bytes).write(to: url, options: .atomic)
+        }
+        relift()
+    }
+
+    // what still ran in the interpreter is kept beside the save (keep); this starts the build that lifts it, in the
+    // background at low priority, unless one started in the last half hour is still going (its lock file)
+    func relift() {
+        guard reliftOnQuit, let r = spec.relift, let c = reliftCounter, c.pointee != 0, !r.argv.isEmpty else { return }
+        let dir = saveURL.deletingLastPathComponent()
+        let lock = dir.appendingPathComponent("relift.lock")
+        if let a = try? FileManager.default.attributesOfItem(atPath: lock.path), let d = a[.modificationDate] as? Date,
+           Date().timeIntervalSince(d) < 1800 { return }
+        FileManager.default.createFile(atPath: lock.path, contents: nil)
+        func q(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+        let log = dir.appendingPathComponent(r.log).path
+        let cmd = "(CARDMODEL_SELF=0 nice -n 15 " + r.argv.map(q).joined(separator: " ") + " > " + q(log)
+            + " 2>&1; rm -f " + q(lock.path) + ") </dev/null >/dev/null 2>&1 &"
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/bin/sh")
+        p.arguments = ["-c", cmd]
+        try? p.run()
+        p.waitUntilExit()
     }
 
     func writeSave() {
@@ -240,10 +295,12 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var scriptText = ""
     var romPath: String?
     var titleText: String?
+    var reliftFlag = false
 
     func applicationDidFinishLaunching(_ note: Notification) {
         parseArgs()
         game = Game(bundle: Bundle.main, saveDir: saveDir, romPath: romPath)
+        game.reliftOnQuit = maxFrames < 0 || reliftFlag
         parseScript(scriptText)
         let s = game.spec
         for (name, keys) in s.keys { if let b = s.bits.firstIndex(of: name) { for k in keys { if let c = keyCodes[k] { map1[c, default: 0] |= 1 << Int64(b) } } } }
@@ -272,6 +329,12 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if e.modifierFlags.contains(.command) { return e }
             return nil
         }
+        if game.spec.pointer != nil {
+            NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp]) { [weak self] e in
+                self?.mouse(e)
+                return e
+            }
+        }
         startAudio()
         menu()
         timer = Timer(timeInterval: 1.0 / 240.0, repeats: true) { [weak self] _ in self?.tick() }
@@ -289,6 +352,7 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
             case "--input": scriptText = a[i + 1]; i += 1
             case "--rom": romPath = a[i + 1]; i += 1
             case "--title": titleText = a[i + 1]; i += 1
+            case "--relift": reliftFlag = true
             default: break
             }
             i += 1
@@ -376,6 +440,26 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return (p1, p2)
     }
 
+    // the pointer on a touch screen: where the left button is, in the screen's pixels (the picture is fitted into
+    // the view keeping its shape), relative to the touch area; down only while it is held inside the area
+    var pointerAt: (Int64, Int64, Int64) = (0, 0, 0)
+    func mouse(_ e: NSEvent) {
+        guard let pt = game.spec.pointer, e.window == window else { return }
+        if e.type == .leftMouseUp { pointerAt.2 = 0; return }
+        let s = game.spec.screen
+        let b = view.bounds
+        let k = min(b.width / CGFloat(s.width), b.height / CGFloat(s.height))
+        let ox = (b.width - CGFloat(s.width) * k) / 2, oy = (b.height - CGFloat(s.height) * k) / 2
+        let p = view.convert(e.locationInWindow, from: nil)
+        let px = Int((p.x - ox) / k), py = Int((b.height - p.y - oy) / k)
+        let a = pt.area
+        if px >= a.x && px < a.x + a.width && py >= a.y && py < a.y + a.height {
+            pointerAt = (Int64(px - a.x), Int64(py - a.y), 1)
+        } else {
+            pointerAt.2 = 0
+        }
+    }
+
     func tick() {
         let now = CACurrentMediaTime()
         acc += now - last
@@ -386,6 +470,7 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
         while acc >= dt {
             acc -= dt
             let (p1, p2) = inputs()
+            if let t = game.touch { t.x.pointee = pointerAt.0; t.y.pointee = pointerAt.1; t.down.pointee = pointerAt.2 }
             if game.step(p1, p2) { NSApp.terminate(nil); return }
             game.drainAudio(into: ring)
             if game.fullscreen.pointee != 0 { game.fullscreen.pointee = 0; window.toggleFullScreen(nil) }

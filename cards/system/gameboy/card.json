@@ -29,6 +29,29 @@
       "version": "1.0.0"
     }
   ],
+  "check_cartridge": {
+    "about": "A cartridge the store check assembles from the instruction cards (cardmodel/machine/asm.py) when it needs one that is no one's game: a checkerboard of 4-pixel squares on screen and one byte written to battery RAM, so the installed player's picture and its save are both checked without any ROM.",
+    "at": {"0x0040": [["LDH A,(n)", "0x44"], ["RETI"]]},
+    "cart_type": "0x13",
+    "file": "Cardmodel Check (World).gb",
+    "isa": "lr35902",
+    "program": [
+      ["LD SP,nn", "0xFFFE"],
+      ["LD A,n", "0x0A"], ["LD (nn),A", "0x0000"], ["LD A,n", "0x5A"], ["LD (nn),A", "0xA010"],
+      ["LD A,n", "0x00"], ["LDH (n),A", "0x40"],
+      ["LD HL,nn", "0x8010"], ["LD DE,nn", "tile"], ["LD B,n", "0x10"],
+      ["label", "copy"], ["LD A,(DE)"], ["LD (HL+),A"], ["INC DE"], ["DEC B"], ["JR NZ,e", "copy"],
+      ["LD HL,nn", "0x9800"], ["LD BC,nn", "0x0400"],
+      ["label", "fill"], ["LD A,n", "0x01"], ["LD (HL+),A"], ["DEC BC"], ["LD A,B"], ["OR C"], ["JR NZ,e", "fill"],
+      ["LD A,n", "0xE4"], ["LDH (n),A", "0x47"], ["LD A,n", "0x01"], ["LDH (n),A", "0xFF"],
+      ["LD A,n", "0x91"], ["LDH (n),A", "0x40"], ["EI"],
+      ["label", "idle"], ["HALT"], ["JR e", "idle"],
+      ["label", "tile"], ["db", ["0xF0", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0xF0", "0x0F", "0xF0"]]
+    ],
+    "ram_size_code": 2,
+    "save": {"byte": "0x5A", "offset": "0x0010"},
+    "title": "CARDCHECK"
+  },
   "clock": "player_clock",
   "controls": "Arrows or W A S D: the pad. X or K: A. Z or J: B. Return: Start. Backspace or Tab: Select. F: full screen. Gamepads: stick or pad, A, B, Menu for Start, Y for Select.",
   "developer": "the card model",

@@ -85,6 +85,11 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **Your own cartridges in the launcher**: the Game Boy Player (the machine cards plus a card-language player,
   CM40) is installed like a game; every cartridge in the user's folders is a library entry, played where it is,
   with the survey's verdict and a title screen the machine draws; the DS is listed with its coverage.
+* 🔵 **A cartridge's code as cards, as its own app**: `arcade app ROM` packs the Game Boy Player with the cartridge's
+  lifted code (blocks plus every instruction on its own; HALT, STOP, EI and the code copied into RAM lifted too;
+  far calls and jump tables found by an abstract run of the machine's cards; conditional returns' fall-through
+  followed); Pokemon Crystal runs 100 % lifted on an unseen run, frame-identical to the interpreter; an app
+  relifts what it interpreted after you quit.
 * 🔵 **Work in progress in the launcher**: a Work tab with every session's branch and its programs; a program's
   version on a branch installs like a beta (built there with that branch's own code); Update falls back to the
   last good build when the cards in progress do not build; every title and datum on the pages opens something.
@@ -103,6 +108,34 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🔵 **The self-run** (CM38): `cardmodel self run|status|report|capabilities|auto|corpus|adopt`; background cycles
   on use (governed, every 6 h); learning into the self layer, quarantine, findings and a ranked plan
   (docs/AUTONOMY.md); docs/STORE.md lists everything in the store and what the model does for it.
+
+## Done (2026-10-22, the self-run's deep checks and the store end to end)
+
+* 🔵 **Deep checks as self-run steps**: `law_witnesses` runs every law card's witness test in a child process with
+  the cycle's seed (G_A10); `store` launches every catalogue item through the store's own protocol (checked
+  download, verify, a damaged file repaired, a native headless run; `cardmodel arcade check`, CM42, G_S1);
+  `tests` runs the whole suite weekly. Every step runs under a deadline, so a step that does not return is stopped
+  and reported instead of holding the cycle.
+* 🔵 Fixed on the way: observing the model's own code crashed (`in` inside a conditional expression); a partial
+  `verify` erased the sections it did not run from `last_verify.json`; the learning loop called the original source
+  before the step-bounded interpreter, so a function that never returns for some inputs (the arena framework's
+  `set_bits` on a negative number) hung it; an interrupted `resources.run` left its process group running; the
+  named-fraction goal (G_U3) could read an observation of `examples/` instead of the model's own code.
+* 🔵 The launcher installs against the main checkout when built from a worktree (`--home` to choose); headless
+  `arcade run --frames` never touches the player's save.
+* 🔵 **Goal floors**: `floor/goals` records the hardest target every goal has had (`cardmodel docs`), and the integrity
+  check fails on a goal made easier, re-aimed or removed without a written reason (docs/INTEGRATION.md 4a).
+
+## Done (2026-10-22, the Game Boy library in the store)
+
+* 🔵 **The Game Boy library in the launcher**: the store runs the user's Game Boy / Color cartridges through the
+  Game Boy Player (the machine cards plus `player.card`, built once like a game). Each cartridge in the user's
+  folders is a library entry read where it is, titled by its No-Intro name or its header, with the survey's
+  verdict and a title screen the machine draws; nothing derived from a cartridge leaves `state/`.
+* 🔵 **Every listed entry launches through the store**: `cardmodel arcade check` installs the player like a game,
+  plays it on the system card's check cartridge (assembled from the instruction cards), then starts every listed
+  cartridge in that installed player as the launcher does and compares its picture with the one its cards compute;
+  the self-run's `store` step counts the cartridges that do not launch (G_S1).
 
 ## Gödel model: next (GOALS.md "What the card model is")
 

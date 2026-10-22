@@ -1,0 +1,29 @@
+{
+  "category": "finding",
+  "cites": [
+    "Ph-2",
+    "Ph-3",
+    "Def-9",
+    "GM-8"
+  ],
+  "data": {
+    "lift1_bits": 2349852,
+    "lift2_bits": 40175911,
+    "sa_bits": 141771
+  },
+  "evidence": "tests/test_godel1931.py; cardmodel/engines/godel1931.py; formal/Godel1931",
+  "evidence_tier": "proof",
+  "limits": "the sizes are the exact formula Σ c_i·log2 p_i (W-3)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W1_code_growth",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "Gödel's codes explode exactly where Ph-2 and Ph-3 say: the set axiom has 141771 bits; lifted one type it has 2349852 and two types 40175911 (a type-5 variable's sign code is 17^5 = 1,419,857, in an exponent); a proof's own number, 2^Φ(f1)·3^Φ(f2)···, would have about Φ(f1) bits, astronomically many, so it is never built. Definition 41 is decided from the size formula with one comparison, never by factoring.",
+  "tier": 1,
+  "workstream": "W-1"
+}

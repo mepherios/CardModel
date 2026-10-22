@@ -1,0 +1,50 @@
+{
+  "agreement": {
+    "calls": 8,
+    "status": "pass"
+  },
+  "bound": "y ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "the token count",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:length",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.length",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    },
+    {
+      "entry": "cardmodel.engines.godel1931:literal.length",
+      "lang": "python",
+      "name": "literal",
+      "note": "the paper's bounded search itself, runnable on small numbers"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "94e2588cc1a0a29a6ff31da19e98d885e3ece5c2e76ef6b47f86fcf43697f333",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D07_length",
+  "notation": "length(x)",
+  "number": 7,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "how many entries x codes",
+  "tier": 1
+}
