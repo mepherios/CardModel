@@ -58,7 +58,7 @@ range to this table in the same commit.
 | CM45–CM46 | main (the research handover's phase 0) | content is a sparse vector; every claim carries its tier |
 | CM47 | world game (`claude/heuristic-ptolemy-2e6700`), reserved | written as CM45 on that branch; renumber before merging |
 | CM48 | universalization (`worktree-universal-domains`), reserved | "every domain is a Gödel set", written as CM45 on that branch; renumber before merging |
-| CM49 | unreal-distill (`claude/unreal-distill`) | a game engine's math is distilled (Unreal Engine as cards, docs/UNREAL.md); written as CM47 on the branch, renumbered before merging |
+| CM49 | unreal-distill (`claude/unreal-math`, merged daf4923) | a game engine's math is distilled (Unreal Engine as cards, docs/UNREAL.md); written as CM47 on the branch, renumbered before merging |
 | **CM50 onward** | free | take the next one |
 
 Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U12 (G_U10–U12: unreal-distill), G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
@@ -81,7 +81,7 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 
 | session | branch / worktree | area (files it owns) | on main |
 |---|---|---|---|
-| unreal-distill | `claude/unreal-math` (the work of `claude/unreal-distill` as one commit: that branch's history held engine-derived packs, rule 8) | `cardmodel/unreal`, `cardmodel/engines/realnorm.py`, the registries `unreal_math`, `unreal_use`, `unreal_cause` (their cards in the local layer `state/local/cards`, rule 8), the analysis and bits op cards, `tools/seed_unreal.py`, `examples/engine_math`, docs/UNREAL*.md, tests/test_unreal.py; verify section `unreal` | not yet (awaiting the user's yes) |
+| unreal-distill | `claude/unreal-math` (the work of `claude/unreal-distill` as one commit: that branch's history held engine-derived packs, rule 8) | `cardmodel/unreal`, `cardmodel/engines/realnorm.py`, the registries `unreal_math`, `unreal_use`, `unreal_cause` (their cards in the local layer `state/local/cards`, rule 8), the analysis and bits op cards, `tools/seed_unreal.py`, `examples/engine_math`, docs/UNREAL*.md, tests/test_unreal.py; verify section `unreal` | c18209b (merge daf4923, with the user's approval); the engine's cards stay in the local layer of the checkout that scanned it |
 | integrating session | `main`, the repository folder | kernel, engines, lang, emit, game, docs, the self-run (`engines/selfrun.py`, `capabilities.py`, `integrity.py`) | — |
 | cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 85909ec (merge c1bf07f) |
 | cardmodel-anyps5 | `claude/recursing-williams-ecc80a` | `cardmodel/anyps5`, `stdlib/ps5_*.card`, `cards/anyps5_*`, docs/ANYPS5*.md, tests/test_anyps.py, tools/seed_anyps5.py | up to 10c688f (merge 65a059c) |
@@ -197,6 +197,7 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | 593fe5c | `claude/sad-clarke-108d42` at ea14439 (the same approval): MBC7, HuC3, the Game Boy Camera, Wisdom Tree, Sachen as cards |
 | 2026-10-22 | 16ea9fc | 73e6220 from `claude/festive-margulis-43fde7` (the same approval; only that commit): a lifted STOP skips one byte |
 | 2026-10-22 | c1bf07f | `claude/sad-sanderson-482207` at 85909ec (the same approval): the Vector Duel project card's next steps |
+| 2026-10-22 | daf4923 | `claude/unreal-math` at c18209b (the user's "Merge claude/unreal-distill into main yourself in the main checkout, following docs/INTEGRATION.md rule 3."): Unreal Engine's math as cards (CM49, G_U10–U12), the store's local layer for UE-derived data (rule 8); the work of `claude/unreal-distill` as one commit, since that branch's history held engine-derived packs. 357 tests and every verify section passed on the identical tree before the merge; on main every section passes and `unreal` skips (no engine cards in this checkout). COVERAGE.md's G_A10 = 46 is the self-run's law-witness step of 14:29, which hit its 1800 s deadline under load before this merge |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
 sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21

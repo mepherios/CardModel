@@ -64,18 +64,19 @@
     "origin": "cardmodel",
     "tool": "hand-written (CM41)"
   },
-  "standing": "Unreal Engine 5.8.4's Core math is read (3938 functions, 3310 in the math universe), lifted (2852, 86%), distilled into definitions with canonical forms, Gödel content and uses, and witnessed against the engine's compiled code (2708, none refuted); every function is an atom of the Gödel set unreal.",
+  "standing": "Merged into main at daf4923 (2026-10-22). Unreal Engine 5.8.4's Core math: 3938 functions read, 3310 in the math universe, 2852 lifted, 2708 witnessed against the engine's compiled code, none refuted. The engine-derived cards live in the local layer (state/local/cards) of the checkout that scanned it; another checkout runs `cardmodel unreal scan --save` to have them.",
   "statement": "Unreal Engine's math as cards (law CM49).",
   "tier": 1,
   "title": "Unreal Engine's math as cards",
-  "updated": "2026-10-22T17:20:00+02:00",
+  "updated": "2026-10-22T17:55:00+02:00",
   "user_actions": [
     {
-      "action": "Decide whether the branch claude/unreal-distill is merged into main",
+      "action": "Accept the Xcode license (sudo xcodebuild -license accept), or select the Command Line Tools again (sudo xcode-select -s /Library/Developer/CommandLineTools)",
       "unblocks": [
-        "the engine's math in main's cards and verify"
+        "the engine witness and scan",
+        "verify capabilities (arcade, emulation, unreal_math) in every checkout"
       ],
-      "why": "only the integrating session merges, and only after your yes (docs/INTEGRATION.md rule 2)"
+      "why": "Xcode was installed at 17:12 on 2026-10-22 and xcode-select points at it; until its license is accepted, clang++ refuses to run, so the engine witness, the C language cards and the arcade checks fail in every session (DEVELOPER_DIR=/Library/Developer/CommandLineTools works around it per command)"
     }
   ]
 }
