@@ -2,18 +2,132 @@
   "category": "hardware",
   "name": "nds_3d",
   "machine": "nds",
-  "statement": "The DS 3D engine as a game's code sees it while nothing is drawn: the geometry command FIFO (GXFIFO 0x04000400 and the command ports 0x04000440-0x040005FF) takes every command at once, so GXSTAT (0x04000600) always reports the FIFO empty and the engine idle; the FIFO interrupt (GXSTAT bits 30-31) fires while its condition holds, and DMA in geometry-FIFO mode runs at once. No polygons are transformed or drawn yet.",
+  "statement": "The DS 3D engine: a geometry engine (commands packed into GXFIFO 0x04000400 or written to the command ports 0x04000440-0x040005FF; matrix modes and stacks, vertex formats, texture coordinates, normals with up to four lights, polygon attributes, triangle and quad lists and strips, culling, clipping to the view volume, the viewport, the box/position/vector tests) that fills one of two polygon RAMs, and a rendering engine that draws the list SWAP_BUFFERS completed into a 256x192 colour and depth buffer at the next V-blank: rear plane, depth test (less or equal, Z or W buffer), Gouraud shading, perspective-correct texturing from the VRAM texture and texture-palette slots in all seven formats (repeat, flip, clamp, transparent colour 0), modulation, decal and toon blending, translucency with alpha blending and the alpha test, and wireframe. 2D engine A shows the result as BG0.",
+  "commands": {
+    "0x00": {"name": "NOP", "params": 0},
+    "0x10": {"name": "MTX_MODE", "params": 1},
+    "0x11": {"name": "MTX_PUSH", "params": 0},
+    "0x12": {"name": "MTX_POP", "params": 1},
+    "0x13": {"name": "MTX_STORE", "params": 1},
+    "0x14": {"name": "MTX_RESTORE", "params": 1},
+    "0x15": {"name": "MTX_IDENTITY", "params": 0},
+    "0x16": {"name": "MTX_LOAD_4x4", "params": 16},
+    "0x17": {"name": "MTX_LOAD_4x3", "params": 12},
+    "0x18": {"name": "MTX_MULT_4x4", "params": 16},
+    "0x19": {"name": "MTX_MULT_4x3", "params": 12},
+    "0x1A": {"name": "MTX_MULT_3x3", "params": 9},
+    "0x1B": {"name": "MTX_SCALE", "params": 3},
+    "0x1C": {"name": "MTX_TRANS", "params": 3},
+    "0x20": {"name": "COLOR", "params": 1},
+    "0x21": {"name": "NORMAL", "params": 1},
+    "0x22": {"name": "TEXCOORD", "params": 1},
+    "0x23": {"name": "VTX_16", "params": 2},
+    "0x24": {"name": "VTX_10", "params": 1},
+    "0x25": {"name": "VTX_XY", "params": 1},
+    "0x26": {"name": "VTX_XZ", "params": 1},
+    "0x27": {"name": "VTX_YZ", "params": 1},
+    "0x28": {"name": "VTX_DIFF", "params": 1},
+    "0x29": {"name": "POLYGON_ATTR", "params": 1},
+    "0x2A": {"name": "TEXIMAGE_PARAM", "params": 1},
+    "0x2B": {"name": "PLTT_BASE", "params": 1},
+    "0x30": {"name": "DIF_AMB", "params": 1},
+    "0x31": {"name": "SPE_EMI", "params": 1},
+    "0x32": {"name": "LIGHT_VECTOR", "params": 1},
+    "0x33": {"name": "LIGHT_COLOR", "params": 1},
+    "0x34": {"name": "SHININESS", "params": 32},
+    "0x40": {"name": "BEGIN_VTXS", "params": 1},
+    "0x41": {"name": "END_VTXS", "params": 0},
+    "0x50": {"name": "SWAP_BUFFERS", "params": 1},
+    "0x60": {"name": "VIEWPORT", "params": 1},
+    "0x70": {"name": "BOX_TEST", "params": 3},
+    "0x71": {"name": "POS_TEST", "params": 2},
+    "0x72": {"name": "VEC_TEST", "params": 1}
+  },
+  "param_counts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 16, 12, 16, 12, 9, 3, 3, 0, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   "registers": [
-    {"address": "0x04000400", "name": "GXFIFO"},
-    {"address": "0x04000440-0x040005FF", "name": "geometry command ports"},
-    {"address": "0x04000600", "name": "GXSTAT", "bits": "0 test busy, 1 box test, 8-12 position/vector matrix stack level, 13 projection stack level, 14 matrix stack busy, 15 stack overflow, 16-24 FIFO entries, 25 less than half full, 26 empty, 27 busy, 30-31 FIFO interrupt (1 less than half full, 2 empty)"},
-    {"address": "0x04000604", "name": "RAM_COUNT (polygons, vertices)"}
+    {
+      "address": "0x04000060",
+      "name": "DISP3DCNT",
+      "bits": "0 texture mapping, 1 highlight shading, 2 alpha test, 3 alpha blending, 4 anti-aliasing, 5 edge marking, 7 fog, 12 colour buffer underflow, 13 polygon/vertex RAM overflow, 14 rear plane from a bitmap"
+    },
+    {
+      "address": "0x04000340",
+      "name": "ALPHA_TEST_REF"
+    },
+    {
+      "address": "0x04000350",
+      "name": "CLEAR_COLOR",
+      "bits": "0-14 colour, 15 fog, 16-20 alpha, 24-29 polygon ID"
+    },
+    {
+      "address": "0x04000354",
+      "name": "CLEAR_DEPTH",
+      "bits": "0-14 depth (x 0x200 + 0x1FF)"
+    },
+    {
+      "address": "0x04000380",
+      "name": "TOON_TABLE (32 colours)"
+    },
+    {
+      "address": "0x04000400",
+      "name": "GXFIFO (mirrored to 0x0400043F)"
+    },
+    {
+      "address": "0x04000440-0x040005FF",
+      "name": "geometry command ports (command 0x10 + (address - 0x04000440) / 4)"
+    },
+    {
+      "address": "0x04000600",
+      "name": "GXSTAT",
+      "bits": "1 box test result, 8-12 position matrix stack level, 13 projection stack level, 15 stack overflow (write 1 to clear), 25 less than half full, 26 empty, 27 busy, 30-31 FIFO interrupt (1 less than half full, 2 empty)"
+    },
+    {
+      "address": "0x04000604",
+      "name": "RAM_COUNT",
+      "bits": "0-11 polygons, 16-28 vertices in the polygon RAM being filled"
+    },
+    {
+      "address": "0x04000620",
+      "name": "POS_RESULT (4 words)"
+    },
+    {
+      "address": "0x04000630",
+      "name": "VEC_RESULT (3 halfwords)"
+    },
+    {
+      "address": "0x04000640",
+      "name": "CLIPMTX_RESULT (16 words)"
+    },
+    {
+      "address": "0x04000680",
+      "name": "VECMTX_RESULT (9 words)"
+    }
   ],
+  "fixed_point": {
+    "matrix": "20.12",
+    "vertex": "4.12 (VTX_10: 4.6; VTX_DIFF: signed 10-bit differences in 4.12 units, added to the last vertex)",
+    "normal and light vector": "1.0.9",
+    "texcoord": "12.4",
+    "colour": "5 bits widened to 6 (c * 2 + (c > 0))"
+  },
+  "capacity": {
+    "polygons": 2048,
+    "vertices": 20480,
+    "position_stack": 31
+  },
   "gxstat_idle": 100663296,
   "irq_gxfifo": 2097152,
-  "limits": "no geometry, no rasteriser: the 3D layer (BG0 in 3D mode) stays transparent, matrices and test results read as zero",
-  "sources": ["GBATEK (DS 3D: geometry commands, GXSTAT)"],
-  "logic": ["gx.card"],
-  "provenance": {"origin": "cardmodel"},
+  "front_face": "a polygon faces the viewer when (v0 - v1) x (v2 - v1) . v1 <= 0 over its clip-space (x, y, w): counter-clockwise on the screen",
+  "limits": "no edge marking, fog, anti-aliasing, shadow polygons or rear-plane bitmap; translucent polygons are drawn in submission order (no Y sorting); lighting follows GBATEK's formula with levels in 8 bits; polygons are filled between integer vertex positions (no sub-pixel coverage rules); one-line (flat) polygons are skipped; commands sent while SWAP_BUFFERS waits for V-blank are held and replayed after the swap",
+  "sources": [
+    "GBATEK (DS 3D: geometry commands, matrices, polygon attributes, textures, rendering)"
+  ],
+  "logic": [
+    "geometry.card",
+    "render.card"
+  ],
+  "provenance": {
+    "origin": "cardmodel"
+  },
   "tier": 1
 }

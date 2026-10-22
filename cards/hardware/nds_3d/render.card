@@ -1,0 +1,280 @@
+-- The DS rendering engine: draws a finished polygon list (one of geometry.card's two polygon RAMs) into a 256 x 192
+-- colour buffer (6 bits per channel and a 5-bit alpha: alpha << 18 | b << 12 | g << 6 | r, alpha 0 = nothing) and a
+-- 24-bit depth buffer, at the V-blank after SWAP_BUFFERS. The rear plane comes from CLEAR_COLOR and CLEAR_DEPTH;
+-- opaque polygons are drawn first, then translucent and wireframe ones in the order they were sent. A polygon is
+-- filled row by row: its edges (convex, integer vertex positions) are sampled at the pixel centres' height, x kept
+-- with 12 fractional bits, and a pixel is drawn when its centre is at or right of the left edge and left of the
+-- right one, so polygons sharing an edge meet without gaps. Depth is interpolated linearly on the screen (Z buffer)
+-- or is w from the interpolated 1/w (W buffer, SWAP_BUFFERS bit 1); colour and texture coordinates are
+-- perspective-correct (interpolated times 1/w, divided per pixel). A pixel passes the depth test (less, or equal
+-- within 0x200 with POLYGON_ATTR bit 14), takes
+-- its texel (DISP3DCNT bit 0; seven formats), combines it with the vertex colour (modulation, decal, toon or
+-- highlight), drops out at alpha 0 or under the alpha test (DISP3DCNT bit 2), and is written over or blended with
+-- what is there (DISP3DCNT bit 3); opaque pixels and, with POLYGON_ATTR bit 11, translucent ones update the depth.
+export array fb3d: Int[49152]
+array zb3d: Int[49152]
+-- the row's left (0..7) and right (8..15) edge: x (12 fractional bits), depth, 1/w, r/w, g/w, b/w, s/w, t/w
+array ed: Int[16]
+global r_disp: Int = 0
+global r_wbuf: Int = 0
+global r_alpha_ref: Int = 0
+
+fn tex8(off: Int) -> Int = vspace8(SEG_TEX, 63, off)
+fn tex16(off: Int) -> Int = vspace16(SEG_TEX, 63, off)
+-- a 15-bit colour from the texture palette slots (96 KiB: six 16 KiB slots)
+fn texpal(off: Int) -> Int {
+  let page = off >> 13
+  if page < 0 or page >= 12 {
+    return 0
+  }
+  let p = vmap[SEG_TEXPAL + page]
+  if p == 0 {
+    return 0
+  }
+  let i = p - 1 + (off & 0x1FFE)
+  return (vram[i] | (vram[i + 1] << 8)) & 0x7FFF
+}
+fn tex_wrap(u: Int, size: Int, rep: Int, flip: Int) -> Int {
+  if rep == 0 {
+    return max(0, min(size - 1, u))
+  }
+  if flip != 0 and (u & size) != 0 {
+    return size - 1 - (u & (size - 1))
+  }
+  return u & (size - 1)
+}
+fn mix5(a: Int, b: Int, wa: Int, wb: Int, d: Int) -> Int {
+  var out = 0
+  for k in 0 .. 3 {
+    let sh = k * 5
+    out = out | (((((a >> sh) & 31) * wa + ((b >> sh) & 31) * wb) // d) << sh)
+  }
+  return out
+}
+-- the texel at (s, t) (12.4 texels) as alpha << 15 | colour; alpha 0 = transparent
+fn tex_sample(tp: Int, pl: Int, s: Int, t: Int) -> Int {
+  let fmt = (tp >> 26) & 7
+  let ws = 8 << ((tp >> 20) & 7)
+  let hs = 8 << ((tp >> 23) & 7)
+  let u = tex_wrap(s >> 4, ws, (tp >> 16) & 1, (tp >> 18) & 1)
+  let v = tex_wrap(t >> 4, hs, (tp >> 17) & 1, (tp >> 19) & 1)
+  let base = (tp & 0xFFFF) << 3
+  let i = v * ws + u
+  let zero_clear = (tp & 0x20000000) != 0
+  if fmt == 1 {
+    let bt = tex8(base + i)
+    let a3 = bt >> 5
+    return (((a3 << 2) | (a3 >> 1)) << 15) | texpal((pl << 4) + ((bt & 31) << 1))
+  }
+  if fmt == 2 {
+    let ix = (tex8(base + (i >> 2)) >> ((u & 3) << 1)) & 3
+    if ix == 0 and zero_clear {
+      return 0
+    }
+    return (31 << 15) | texpal((pl << 3) + (ix << 1))
+  }
+  if fmt == 3 {
+    let bt = tex8(base + (i >> 1))
+    let ix = if (u & 1) != 0 then bt >> 4 else bt & 15
+    if ix == 0 and zero_clear {
+      return 0
+    }
+    return (31 << 15) | texpal((pl << 4) + (ix << 1))
+  }
+  if fmt == 4 {
+    let ix = tex8(base + i)
+    if ix == 0 and zero_clear {
+      return 0
+    }
+    return (31 << 15) | texpal((pl << 4) + (ix << 1))
+  }
+  if fmt == 5 {
+    -- 4x4 blocks: a word of 2-bit indices, and per block a 16-bit palette word in texture slot 1
+    let blk = (v >> 2) * (ws >> 2) + (u >> 2)
+    let wa = base + (blk << 2)
+    let word = tex8(wa) | (tex8(wa + 1) << 8) | (tex8(wa + 2) << 16) | (tex8(wa + 3) << 24)
+    let ix = (word >> ((((v & 3) << 2) + (u & 3)) << 1)) & 3
+    let info_at = (if base >= 0x40000 then 0x30000 else 0x20000) + ((base & 0x1FFFF) >> 1) + (blk << 1)
+    let info = tex16(info_at)
+    let po = (pl << 4) + ((info & 0x3FFF) << 2)
+    let mode = (info >> 14) & 3
+    if ix == 3 and mode < 2 {
+      return 0
+    }
+    if ix < 2 or mode == 2 {
+      return (31 << 15) | texpal(po + (ix << 1))
+    }
+    let c0 = texpal(po)
+    let c1 = texpal(po + 2)
+    if mode == 1 {
+      return (31 << 15) | mix5(c0, c1, 1, 1, 2)
+    }
+    if ix == 2 {
+      return (31 << 15) | mix5(c0, c1, 5, 3, 8)
+    }
+    return (31 << 15) | mix5(c0, c1, 3, 5, 8)
+  }
+  if fmt == 6 {
+    let bt = tex8(base + i)
+    return ((bt >> 3) << 15) | texpal((pl << 4) + ((bt & 7) << 1))
+  }
+  let c = tex16(base + (i << 1))
+  return (if (c & 0x8000) != 0 then 31 << 15 else 0) | (c & 0x7FFF)
+}
+fn edge_set(o: Int, a: Int, c: Int, t: Int, x: Int) {
+  ed[o] = x
+  for f in 1 .. 8 {
+    let va = v3d[a + f + 1]
+    ed[o + f] = va + (((v3d[c + f + 1] - va) * t) >> 12)
+  }
+}
+fn lerp_ed(f: Int, t: Int) -> Int = ed[f] + (((ed[8 + f] - ed[f]) * t) >> 12)
+-- one row of a polygon, between the edges in ed
+fn span(y: Int, attr: Int, tp: Int, pl: Int, kind: Int) {
+  let xl = ed[0]
+  let xr = ed[8]
+  let dx = max(1, xr - xl)
+  let alpha = if kind == K3_WIRE then 31 else (attr >> 16) & 31
+  let mode = (attr >> 4) & 3
+  let fmt = if (r_disp & 1) != 0 then (tp >> 26) & 7 else 0
+  let eq = (attr & 0x4000) != 0
+  let wdepth = kind == K3_OPAQUE or (attr & 0x800) != 0
+  let x0 = max(0, (xl + 2047) >> 12)
+  let x1 = min(256, (xr + 2047) >> 12)
+  for x in x0 .. x1 {
+    if kind != K3_WIRE or x == x0 or x == x1 - 1 {
+      let t = (((x << 12) + 2048 - xl) << 12) // dx
+      let iw = max(1, lerp_ed(2, t))
+      let depth = if r_wbuf != 0 then min(0xFFFFFF, (1 << 30) // iw) else lerp_ed(1, t)
+      let pix = y * 256 + x
+      let old = zb3d[pix]
+      let pass = if eq then (depth - old <= 0x200 and old - depth <= 0x200) else depth < old
+      if pass {
+        let vr = max(0, min(63, lerp_ed(3, t) // iw))
+        let vg = max(0, min(63, lerp_ed(4, t) // iw))
+        let vb = max(0, min(63, lerp_ed(5, t) // iw))
+        var r = vr
+        var g = vg
+        var b = vb
+        var a = alpha
+        if mode == 2 {
+          let tc = g16(0x380 + ((vr >> 1) << 1))
+          let tr = c6(tc & 31)
+          let tg = c6((tc >> 5) & 31)
+          let tb = c6((tc >> 10) & 31)
+          if (r_disp & 2) != 0 {
+            r = min(63, vr + tr)
+            g = min(63, vr + tg)
+            b = min(63, vr + tb)
+          } else {
+            r = tr
+            g = tg
+            b = tb
+          }
+        }
+        if fmt != 0 {
+          let tx = tex_sample(tp, pl, lerp_ed(6, t) // iw, lerp_ed(7, t) // iw)
+          let ta = tx >> 15
+          let xr6 = c6(tx & 31)
+          let xg6 = c6((tx >> 5) & 31)
+          let xb6 = c6((tx >> 10) & 31)
+          if mode == 1 {
+            if ta >= 31 {
+              r = xr6
+              g = xg6
+              b = xb6
+            } elif ta > 0 {
+              r = (xr6 * ta + vr * (31 - ta)) >> 5
+              g = (xg6 * ta + vg * (31 - ta)) >> 5
+              b = (xb6 * ta + vb * (31 - ta)) >> 5
+            }
+          } else {
+            r = ((xr6 + 1) * (r + 1) - 1) >> 6
+            g = ((xg6 + 1) * (g + 1) - 1) >> 6
+            b = ((xb6 + 1) * (b + 1) - 1) >> 6
+            a = ((ta + 1) * (alpha + 1) - 1) >> 5
+          }
+        }
+        if a > 0 and not ((r_disp & 4) != 0 and a <= r_alpha_ref) {
+          let dst = fb3d[pix]
+          let da = (dst >> 18) & 31
+          if a >= 31 or (r_disp & 8) == 0 or da == 0 {
+            fb3d[pix] = (a << 18) | (b << 12) | (g << 6) | r
+          } else {
+            let mr = (r * (a + 1) + (dst & 63) * (31 - a)) >> 5
+            let mg = (g * (a + 1) + ((dst >> 6) & 63) * (31 - a)) >> 5
+            let mb = (b * (a + 1) + ((dst >> 12) & 63) * (31 - a)) >> 5
+            fb3d[pix] = (max(a, da) << 18) | (mb << 12) | (mg << 6) | mr
+          }
+          if wdepth or a >= 31 {
+            zb3d[pix] = depth
+          }
+        }
+      }
+    }
+  }
+}
+-- polygon k of polygon RAM b, row by row
+fn raster(b: Int, k: Int) {
+  let pb = (b * GX_MAXP + k) * PF
+  let first = p3d[pb]
+  let n = p3d[pb + 1]
+  let attr = p3d[pb + 2]
+  let tp = p3d[pb + 3]
+  let pl = p3d[pb + 4]
+  let kind = p3d[pb + 5]
+  let vb = b * GX_MAXV + first
+  for y in max(0, p3d[pb + 6]) .. min(192, p3d[pb + 7]) {
+    var xl = 0x7FFFFFFFFF
+    var xr = -0x7FFFFFFFFF
+    for i in 0 .. n {
+      var a = (vb + i) * VF
+      var c = (vb + (if i + 1 == n then 0 else i + 1)) * VF
+      if v3d[a + 1] > v3d[c + 1] {
+        let sw = a
+        a = c
+        c = sw
+      }
+      let ya = v3d[a + 1]
+      let yc = v3d[c + 1]
+      if yc > ya and y >= ya and y < yc {
+        let t = ((((y - ya) << 1) + 1) << 11) // (yc - ya)
+        let x = (v3d[a] << 12) + (v3d[c] - v3d[a]) * t
+        if x < xl {
+          xl = x
+          edge_set(0, a, c, t, x)
+        }
+        if x > xr {
+          xr = x
+          edge_set(8, a, c, t, x)
+        }
+      }
+    }
+    if xr > xl {
+      span(y, attr, tp, pl, kind)
+    }
+  }
+}
+-- the whole list of polygon RAM b (mode: SWAP_BUFFERS' parameter for it)
+fn render3d(b: Int, mode: Int) {
+  r_disp = g16(0x60)
+  r_wbuf = (mode >> 1) & 1
+  r_alpha_ref = g8(0x340) & 31
+  let cc = g32(0x350)
+  let rear = (((cc >> 16) & 31) << 18) | (c6((cc >> 10) & 31) << 12) | (c6((cc >> 5) & 31) << 6) | c6(cc & 31)
+  let cd = g16(0x354) & 0x7FFF
+  let rd = cd * 0x200 + ((cd + 1) >> 15) * 0x1FF
+  for i in 0 .. 49152 {
+    fb3d[i] = rear
+    zb3d[i] = rd
+  }
+  let n = p3d_n[b]
+  for pass in 0 .. 2 {
+    for k in 0 .. n {
+      let kind = p3d[(b * GX_MAXP + k) * PF + 5]
+      if kind != K3_SHADOW and (kind == K3_OPAQUE) == (pass == 0) {
+        raster(b, k)
+      }
+    }
+  }
+}

@@ -25,6 +25,7 @@ array objm: Int[256]
 array objw: Int[256]
 array winm: Int[256]
 array lout: Int[256]
+array a3d: Int[256]                -- the 3D layer's alpha per pixel of the line (BG0 in 3D mode)
 array affx: Int[4]
 array affy: Int[4]
 array layer_kind: Int[4]
@@ -185,6 +186,26 @@ fn bg_text(e: Int, n: Int, y: Int, dc: Int) {
       }
     }
     bgl[o + x] = col
+  }
+}
+
+-- BG0 as the 3D layer: the rendering engine's colour buffer (nds_3d) at this line, scrolled by BG0HOFS; a pixel
+-- with alpha 0 is transparent, and its alpha is kept for blending with the layer under it
+fn bg_3d(y: Int) {
+  let hofs = g16(0x10) & 0x1FF
+  for x in 0 .. 256 {
+    let sx = (x + hofs) & 0x1FF
+    var col = -1
+    var al = 0
+    if sx < 256 {
+      let px = fb3d[y * 256 + sx]
+      al = (px >> 18) & 31
+      if al != 0 {
+        col = ((px & 63) >> 1) | ((((px >> 6) & 63) >> 1) << 5) | ((((px >> 12) & 63) >> 1) << 10)
+      }
+    }
+    bgl[x] = col
+    a3d[x] = al
   }
 }
 
@@ -447,6 +468,13 @@ fn blend(a: Int, c: Int, ea: Int, eb: Int) -> Int {
   let bl = min(31, (((a >> 10) & 31) * ea + ((c >> 10) & 31) * eb) >> 4)
   return r | (g << 5) | (bl << 10)
 }
+-- a 3D pixel over a 2D one by the 3D alpha: (c3 (a + 1) + c2 (31 - a)) / 32
+fn mix15(a: Int, c: Int, ea: Int, eb: Int) -> Int {
+  let r = ((a & 31) * ea + (c & 31) * eb) >> 5
+  let g = (((a >> 5) & 31) * ea + ((c >> 5) & 31) * eb) >> 5
+  let bl = (((a >> 10) & 31) * ea + ((c >> 10) & 31) * eb) >> 5
+  return r | (g << 5) | (bl << 10)
+}
 fn brighten(a: Int, ey: Int) -> Int {
   let r = a & 31
   let g = (a >> 5) & 31
@@ -528,7 +556,10 @@ fn compose(e: Int, dc: Int, anywin: Bool) {
     }
     var c = top
     let second_ok = ((bld >> (8 + sl)) & 1) != 0
-    if tl == 4 and objm[x] != 0 and second_ok {
+    if tl == 0 and layer_kind[0] == K_3D and a3d[x] < 31 and second_ok {
+      let al = a3d[x]
+      c = mix15(top, sec, al + 1, 31 - al)
+    } elif tl == 4 and objm[x] != 0 and second_ok {
       if (objm[x] & 2) != 0 {
         let a = (objm[x] >> 4) + 1
         c = blend(top, sec, a, 16 - a)
@@ -573,11 +604,10 @@ fn engine_line(e: Int, y: Int) {
       if ((dc >> (8 + n)) & 1) != 0 {
         kind = bg_kind(e, n, mode, dc)
       }
-      if kind == K_3D {
-        kind = K_OFF
-      }
       layer_kind[n] = kind
-      if kind == K_TEXT {
+      if kind == K_3D {
+        bg_3d(y)
+      } elif kind == K_TEXT {
         bg_text(e, n, y, dc)
       } elif kind != K_OFF {
         bg_affine(e, n, y, kind, dc)

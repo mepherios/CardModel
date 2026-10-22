@@ -5,7 +5,7 @@
   "components": ["nds_memory", "nds_io", "nds_bios", "nds_vram", "nds_2d", "nds_3d", "nds_spi", "nds_backup", "nds_rtc", "nds_sound"],
   "logic": ["nds.card"],
   "export_state": true,
-  "statement": "The Nintendo DS as a prototype: the ARM9 (ARMv5TE) and the ARM7 (ARMv4T) on one set of ARM/Thumb instruction cards, the memory maps, I/O (interrupts, IPC, timers, DMA, divider, cartridge bus), an HLE BIOS, VRAM banks and both 2D engines drawing two screens, the SPI devices (power management, firmware, touch screen), the save chip, the real-time clock, the sound channels' status and the geometry FIFO; direct boot from a ROM image. 3D drawing and sound output are not modelled yet: see the coverage report of `cardmodel machine nds ROM`.",
+  "statement": "The Nintendo DS as a prototype: the ARM9 (ARMv5TE) and the ARM7 (ARMv4T) on one set of ARM/Thumb instruction cards, the memory maps, I/O (interrupts, IPC, timers, DMA, divider, cartridge bus), an HLE BIOS, VRAM banks and both 2D engines drawing two screens, the SPI devices (power management, firmware, touch screen), the save chip, the real-time clock, the sound channels' status and the 3D engine (geometry and rendering); direct boot from a ROM image. Sound output is not modelled yet: see the coverage report of `cardmodel machine nds ROM`.",
   "clock": {"bus_hz": 33513982, "arm9_hz": 67027964, "arm7_hz": 33513982, "frame_hz": 59.8261},
   "screens": {"width": 256, "height": 192, "count": 2, "layout": "top then bottom, RGB888 (export array screen)"},
   "buttons": {"a": 1, "b": 2, "select": 4, "start": 8, "right": 16, "left": 32, "up": 64, "down": 128, "r": 256, "l": 512,

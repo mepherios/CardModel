@@ -15,8 +15,8 @@ run), which instruction cards the executed code used (decoded from memory after 
 overwritten later is counted apart), which BIOS calls were made and which of them are modelled, every I/O
 register the game touched that no card models (latched only), and what the screens show.
 
-Honest limits (L1): no 3D drawing, sound output or Wi-Fi; no wait states (a nominal instructions-per-line
-budget); nothing here decrypts anything: an image whose secure area is encrypted is refused.
+Honest limits (L1): no sound output or Wi-Fi; no wait states (a nominal instructions-per-line budget); nothing
+here decrypts anything: an image whose secure area is encrypted is refused.
 """
 from __future__ import annotations
 

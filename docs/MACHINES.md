@@ -194,15 +194,16 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   |---|---|
   | `nds_vram` | the nine VRAM banks in one array, placed by VRAMCNT into the LCDC window, engine A/B BG and OBJ, the extended palette, texture and texture palette slots or the ARM7's window; an 8 KiB page table rebuilt at every VRAMCNT write |
   | `nds_2d` | engines A and B, drawn line by line into two 256x192 screens: display modes, BG modes 0-6 (text, affine, extended map, 256-colour and direct-colour bitmaps, large bitmap), 4/8 bpp, extended palettes, 128 OBJs per engine (tiled 1D/2D, bitmap, affine, double size, semi-transparent, OBJ window), windows, blending, brightness, mosaic on text BGs, master brightness, POWCNT1's screen swap |
-  | `nds_3d` | the geometry FIFO as a game's code sees it while nothing is drawn: every command taken at once, GXSTAT idle, the FIFO interrupt and FIFO-mode DMA |
+  | `nds_3d` | the 3D engine: a geometry card (GXFIFO packed commands and the command ports, matrix modes and stacks, vertex formats, lighting, triangle/quad lists and strips, facing, clipping in homogeneous space, the viewport, box/position/vector tests, two polygon RAMs swapped at V-blank) and a rendering card (rear plane, Z or W depth test, Gouraud shading, perspective-correct texturing in all seven formats, modulation, decal and toon, translucency and the alpha test); engine A shows the picture as BG0 |
   | `nds_spi` | the ARM7's SPI bus: power management, a firmware flash made from the card's data (header, Wi-Fi block, user settings with CRC; no console's firmware), the touch screen controller through the firmware's calibration |
   | `nds_backup` | the save chip on the auxiliary SPI bus: serial flash commands; which chip a game has is data by game code |
   | `nds_rtc` | the real-time clock on three bit-banged wires: status, date and time in BCD, alarms stored; it runs on machine time from what the host sets |
   | `nds_sound` | the channels' busy bits: a one-shot channel stops when its samples would have played out, a capture when its buffer is full (no mixing) |
 
-  A frame is 263 lines: per line the line events, the 2D engines draw a visible line from the registers as they
-  are, the CPUs run the drawing part of the line, H-blank (flag, interrupt, H-blank DMA), the rest of the line,
-  then timers, sound and the geometry FIFO advance. The cartridge bus starts its DMAs again for every ready word,
+  A frame is 263 lines: per line the line events (at line 192 a waiting SWAP_BUFFERS hands the filled polygon RAM
+  to the rendering engine, which draws it for the next frame), the 2D engines draw a visible line from the registers
+  as they are, the CPUs run the drawing part of the line, H-blank (flag, interrupt, H-blank DMA), the rest of the
+  line, then timers, sound and the geometry FIFO interrupt advance. The cartridge bus starts its DMAs again for every ready word,
   so NitroSDK's 1-word repeating card DMA moves whole blocks. Direct boot as the firmware leaves it.
 * **The host** (`machine/nds.py`): `DS(ctx, rom, clock=..., save=...)` inserts an image (a save chip's bytes and a
   start time for the clock are inputs; the default clock is fixed so runs repeat), `screens()` returns both
@@ -210,9 +211,9 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   save chip, `machine=` reuses a loaded machine for another image.
 * **Headless** (`cardmodel machine nds ROM`): `--input` holds buttons from a frame on, `--png` saves both screens
   after the run, `--shots DIR --every K` every K frames; the report says when each screen first showed a
-  picture. Pokemon Diamond draws its copyright and ESRB screens after frame 51, plays the 2D parts of its intro
-  (the Game Freak logo, the Pokemon logo, the town and the trainer silhouette), shows its title screen and,
-  with START and A, starts a new game (Professor Rowan's introduction).
+  picture. Pokemon Diamond draws its copyright and ESRB screens after frame 51, plays its intro (the Game Freak
+  logo, the Pokemon logo, the 3D flight over Sinnoh's towns), shows its title screen with the 3D Dialga and,
+  with START and A, starts a new game (Professor Rowan's introduction); buttons and touch-screen taps reach it.
 * **Measured coverage**: per CPU the instructions run, distinct addresses, which instruction cards the code used,
   undefined instructions (counted as they run; code overwritten after it ran is reported apart), BIOS calls
   (modelled or not), every hardware register the game touched that no card models, and what the screens show.
@@ -225,8 +226,10 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   differential run compares both CPUs' registers and every RAM after each frame.
 * **Witnesses** (`tests/test_nds.py`): a synthetic image whose ARM9 code maps banks and draws on both screens;
   each 2D feature pixel by pixel through the bus; VRAM banks; the save chip, firmware, touch screen, power
-  management, clock, sound busy bits, geometry FIFO and the per-word cartridge DMA; and, when the image is on
-  the machine (`CARDMODEL_DS_ROM`), Pokemon Diamond's first screens.
+  management, clock, sound busy bits, the per-word cartridge DMA; the 3D engine through its command ports
+  (position, facing, depth, translation and the matrix stack, a direct-colour texture, packed FIFO commands, the
+  box test, BG0 as the 3D layer); and, when the image is on the machine (`CARDMODEL_DS_ROM`), Pokemon Diamond's
+  first screens.
 * **Nothing is decrypted**: an image whose secure area is encrypted is refused.
 
 ## 7. Adding things
@@ -253,8 +256,8 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   tested). The CGB's early line-144 STAT source is measured in single speed; in double speed it is the same 4
   dots, unverified.
 * Lifting: code in RAM, code right after EI and the HALT/STOP/illegal opcodes always run in the interpreter.
-* DS: no 3D drawing (the 3D layer is transparent: Pokemon Diamond's title Dialga and its 3D overworld are not
-  drawn), no sound mixing, display capture, main-memory display FIFO or Wi-Fi; no wait states (a nominal
+* DS: no sound mixing, display capture, main-memory display FIFO or Wi-Fi; 3D has no edge marking, fog,
+  anti-aliasing, shadow polygons, rear-plane bitmap or Y-sorting of translucent polygons; no wait states (a nominal
   instructions-per-line budget); a 2D line is drawn from the registers as they are when it starts; two VRAM
   banks on one page do not OR together; the save chip is serial flash only. ARM lifting covers ARM-state ARM9
   code only (Thumb and the ARM7 stay interpreted); its word guards read through the bus, so it saves the decode

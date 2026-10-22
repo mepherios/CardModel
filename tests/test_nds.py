@@ -301,6 +301,142 @@ class Engines(Base):
         self.assertEqual(self.px(0, 0, 0), rgb(BLACK))
 
 
+def fx(v: float) -> int:
+    """A 4.12 fixed-point number as the 16-bit field the vertex commands take."""
+    return int(round(v * 4096)) & 0xFFFF
+
+
+class Geometry3D(Base):
+    """The 3D engine through its command ports, as a game's stores reach it: identity matrices make the vertices
+    clip coordinates, so a vertex (x, y) lands at screen ((x + 1) * 128, (1 - y) * 96)."""
+
+    PORT = {"mode": 0x10, "push": 0x11, "pop": 0x12, "identity": 0x15, "trans": 0x1C, "color": 0x20,
+            "texcoord": 0x22, "vtx16": 0x23, "attr": 0x29, "teximage": 0x2A, "begin": 0x40, "end": 0x41,
+            "swap": 0x50, "viewport": 0x60, "box": 0x70}
+
+    def gx(self, name, *params):
+        port = 0x04000440 + (self.PORT[name] - 0x10) * 4
+        for v in params or (0,):
+            self.w(port, v & 0xFFFFFFFF)
+
+    def setUp(self):
+        super().setUp()
+        for mode in (0, 1, 3):
+            self.gx("mode", mode)
+            self.gx("identity")
+        self.gx("mode", 2)
+        self.gx("viewport", 0xBFFF0000)
+        self.w(0x04000060, 0x0001, 2)                      # DISP3DCNT: texture mapping
+        self.w(0x04000350, 0)                              # rear plane: transparent
+        self.w(0x04000354, 0x7FFF, 2)
+
+    def tri(self, pts, color, attr=0x001F00C0, z=0.0):
+        self.gx("attr", attr)
+        self.gx("begin", 0)
+        self.gx("color", color)
+        for x, y in pts:
+            self.gx("vtx16", fx(x) | (fx(y) << 16), fx(z))
+        self.gx("end")
+
+    def frame(self, swap=0):
+        self.gx("swap", swap)
+        self.ds.run(1)
+
+    def pix(self, x, y):
+        p = self.ds.m.array("fb3d")[y * 256 + x]
+        c = ((p & 63) >> 1) | (((p >> 6) & 63) >> 1) << 5 | (((p >> 12) & 63) >> 1) << 10
+        return (p >> 18) & 31, c
+
+    FRONT = [(-0.5, -0.5), (0.5, -0.5), (0.0, 0.5)]        # counter-clockwise on the screen: a front face
+
+    def test_triangle_lands_where_the_viewport_puts_it(self):
+        self.tri(self.FRONT, RED)
+        self.frame()
+        self.assertEqual(self.pix(128, 112), (31, RED))
+        self.assertEqual(self.pix(128, 40)[0], 0, "above the apex (screen y 48): nothing")
+        self.assertEqual(self.pix(60, 140)[0], 0, "left of the base corner (64, 144)")
+        self.assertEqual(self.ds.m.get("frames3d"), 1)
+
+    def test_back_faces_follow_polygon_attr(self):
+        back = list(reversed(self.FRONT))
+        self.tri(back, RED, attr=0x001F0080)               # front only: a clockwise polygon is its back
+        self.frame()
+        self.assertEqual(self.pix(128, 112)[0], 0)
+        self.tri(back, GREEN, attr=0x001F0040)             # back only
+        self.frame()
+        self.assertEqual(self.pix(128, 112), (31, GREEN))
+
+    def test_depth_test_keeps_the_nearer_polygon(self):
+        self.tri(self.FRONT, RED, z=-0.5)
+        self.tri(self.FRONT, GREEN, z=0.5)                    # farther, drawn later: hidden
+        self.tri([(-0.25, -0.25), (0.25, -0.25), (0.0, 0.25)], BLUE, z=-0.75)
+        self.frame()
+        self.assertEqual(self.pix(128, 112), (31, BLUE))
+        self.assertEqual(self.pix(128, 135), (31, RED))
+
+    def test_translation_and_the_matrix_stack(self):
+        self.gx("push")
+        self.gx("trans", 0x800, 0, 0)                      # +0.5 in x: 64 pixels to the right
+        self.tri(self.FRONT, RED)
+        self.gx("pop", 1)
+        self.tri([(-0.9, -0.9), (-0.7, -0.9), (-0.8, -0.7)], GREEN)
+        self.frame()
+        self.assertEqual(self.pix(192, 112), (31, RED))
+        self.assertEqual(self.pix(100, 112)[0], 0, "the translated triangle left x 100 empty")
+        self.assertEqual(self.pix(25, 178), (31, GREEN), "the pop restored the identity")
+
+    def test_direct_colour_texture(self):
+        self.w(0x04000240, 0x80, 1)                        # bank A to LCDC, write an 8x8 texture, then texture slot 0
+        for y in range(8):
+            for x in range(8):
+                self.w(0x06800000 + (y * 8 + x) * 2, 0x8000 | (BLUE if x < 4 else GREEN), 2)
+        self.w(0x04000240, 0x83, 1)
+        self.gx("teximage", (7 << 26) | 0)                 # direct colour, 8x8, at offset 0
+        self.gx("attr", 0x001F00C0)
+        self.gx("begin", 1)                                # a quad over the whole screen
+        self.gx("color", WHITE)
+        for (x, y), (s, t) in (((-1, 1), (0, 0)), ((1, 1), (8, 0)), ((1, -1), (8, 8)), ((-1, -1), (0, 8))):
+            self.gx("texcoord", ((s * 16) & 0xFFFF) | ((t * 16) << 16))
+            self.gx("vtx16", fx(x * 0.999) | (fx(y * 0.999) << 16), 0)
+        self.gx("end")
+        self.frame()
+        self.assertEqual(self.pix(20, 96), (31, BLUE))
+        self.assertEqual(self.pix(230, 96), (31, GREEN))
+
+    def test_packed_fifo_commands(self):
+        """GXFIFO words carry the command bytes, then the parameters: COLOR, BEGIN_VTXS and POLYGON_ATTR packed."""
+        fifo = 0x04000400
+        self.w(fifo, 0x00402920)                           # COLOR, POLYGON_ATTR, BEGIN_VTXS
+        self.w(fifo, RED)
+        self.w(fifo, 0x001F00C0)
+        self.w(fifo, 0)                                    # triangles
+        self.w(fifo, 0x00232323)                           # three VTX_16
+        for x, y in self.FRONT:
+            self.w(fifo, fx(x) | (fx(y) << 16))
+            self.w(fifo, 0)
+        self.w(fifo, 0x00000041)                           # END_VTXS
+        self.frame()
+        self.assertEqual(self.pix(128, 112), (31, RED))
+
+    def test_box_test(self):
+        self.gx("box", fx(-0.1) | (fx(-0.1) << 16), fx(-0.1) | (fx(0.2) << 16), fx(0.2) | (fx(0.2) << 16))
+        self.assertEqual((self.r(0x04000600) >> 1) & 1, 1, "inside the view volume")
+        self.gx("box", fx(2.0) | (fx(2.0) << 16), fx(0.0) | (fx(0.5) << 16), fx(0.5) | (fx(0.5) << 16))
+        self.assertEqual((self.r(0x04000600) >> 1) & 1, 0, "entirely right of it")
+
+    def test_3d_layer_is_bg0(self):
+        self.tri(self.FRONT, RED)
+        self.frame()
+        self.w(0x04000304, 0x820F, 2)
+        self.w(0x04000000, 0x00010108)                     # engine A: BG0 on, as 3D
+        self.draw(112)
+        self.assertEqual(self.px(0, 128, 112), rgb(RED))
+        self.assertEqual(self.px(0, 10, 112), rgb(BLACK), "transparent 3D pixels show the backdrop")
+        self.w(0x04000010, 64, 2)                          # BG0HOFS scrolls the 3D layer
+        self.draw(112)
+        self.assertEqual(self.px(0, 64, 112), rgb(RED))
+
+
 class Vram(Base):
     def test_a_bank_moves_between_windows(self):
         self.w(0x04000240, 0x80, 1)                        # bank A: LCDC
@@ -500,6 +636,18 @@ class PokemonDiamond(unittest.TestCase):
             self.assertEqual(cpu["undecodable_executed"], 0)
             self.assertEqual(cpu["swi_unmodelled"], [])
             self.assertFalse(cpu["stopped"])
+
+    def test_title_screen_dialga_in_3d(self):
+        """START skips the intro to the title screen, whose Dialga is a 3D model: hundreds of polygons reach the
+        rendering engine and cover a large part of its picture."""
+        ds = make_ds(nds.open_nds(DIAMOND))
+        ds.run(1800, script=nds.parse_input("1500:start,1506:-", ds.ctx.store))
+        m = ds.m
+        self.assertGreater(m.get("frames3d"), 100)
+        self.assertGreater(m.array("gx_polys")[4], 300)
+        fb = m.array("fb3d")
+        drawn = sum(1 for i in range(0, 49152, 4) if (fb[i] >> 18) & 31)
+        self.assertGreater(drawn, 2500, "Dialga covers about a fifth of the 3D picture")
 
 
 if __name__ == "__main__":
