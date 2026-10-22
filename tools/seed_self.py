@@ -208,9 +208,13 @@ CAPABILITIES = [
      "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."),
     ("godel_model", "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's "
      "content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded "
-     "exactly; maps between Gödel sets with their gaps.", L("CM43_primes_are_forever", "CM31_behaviour_is_numbered"),
+     "exactly; maps between Gödel sets with their gaps; content stored as sparse vectors with their basis version, "
+     "merges and deprecations as events.",
+     L("CM43_primes_are_forever", "CM31_behaviour_is_numbered", "CM45_content_is_a_sparse_vector"),
      ["tests/test_godel.py::test_ledger_is_append_only", "tests/test_godel.py::test_content_algebra_and_carry",
-      "tests/test_godel.py::test_structural_numbers_decode_exactly"],
+      "tests/test_godel.py::test_structural_numbers_decode_exactly",
+      "tests/test_godel.py::test_stored_records_follow_the_rules",
+      "tests/test_godel.py::test_merges_and_deprecations_never_relate_products"],
      ["GOALS.md", "docs/MATH_CORE.md"], ["cardmodel godel"], ["cardmodel/engines/godel.py"],
      "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."),
     ("distillation", "Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms "
@@ -231,6 +235,18 @@ CAPABILITIES = [
      L("CM44_everything_traces_to_truth"), ["tests/test_sources.py::test_every_artifact_traces_back"],
      ["docs/MATH_CORE.md"], ["cardmodel sources"], ["cardmodel/engines/sources.py"],
      "Every piece of code knows what it means, and every claim knows its evidence."),
+    ("witness_tiers", "Every claim carries its tier: a finite witness sized by the class both forms fall in "
+     "(a polynomial, a C-finite sequence of one counted loop, regions cut by guards) proves equality; everything "
+     "else is labelled a sample.", L("CM46_every_claim_carries_its_tier"),
+     ["tests/test_tiers.py::test_sized_witnesses_prove_and_refute", "tests/test_tiers.py::test_every_claim_carries_a_tier"],
+     ["docs/MATH_CORE.md"], ["cardmodel tiers"], ["cardmodel/engines/tiers.py"],
+     "A test that only samples says so, and where a theorem makes a few points enough, those points are a proof."),
+    ("formal_core", "The Gödel model's own mathematics proved in Lean (formal/GodelCore): the divisibility lattice, "
+     "carry-over and gcd, the append-only ledger, merging versus relating generators, transport of properties, "
+     "rewrite invariants.", L("CM43_primes_are_forever", "CM45_content_is_a_sparse_vector"),
+     ["tests/test_formal.py::test_the_core_builds_without_sorry"], ["docs/MATH_CORE.md"],
+     ["cardmodel verify --only formal"], ["cardmodel/engines/formal.py", "formal/GodelCore.lean"],
+     "The rules the model keeps its numbers by are theorems, checked by a kernel outside the model."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],

@@ -2,7 +2,8 @@
 
   definition      truth: what a function means. Its term (the reference form lifted into the semantic core), its
                   canonical form when distillation reaches one (an e-graph's cheapest term, or a recurrence's
-                  canonical form for one-integer functions), its Gödel content vector and number, its proof
+                  canonical form for one-integer functions), its identity (the hash of its structure), its Gödel
+                  content as a sparse vector with its basis version (CM45: never the content integer), its proof
                   obligations (every implementation equals it), its origin and the methods that made it.
   action          code that does what a definition says: an implementation in a language, linked to its truth by a
                   proof or a witness. Algorithm forms and function forms are actions.
@@ -44,22 +45,20 @@ def _single_return(fn: dict):
     return body[0]["value"] if len(body) == 1 and body[0].get("k") == "return" else None
 
 
-def _godel(ctx, card, idx, term) -> dict:
+def _godel(ctx, card, entries, term) -> dict:
     from . import godel as G
     content, why = G.card_content(ctx, card)
-    out = {"content": dict(content) if content else None, "read_from": why}
-    if content:
-        n, missing = G.number(content, idx)
-        out["number"] = str(n) if n is not None else None
-        if missing:
-            out["missing_atoms"] = missing
+    return G.stored(content, why, entries, ctx.ops, term)
+
+
+def identity(canon: dict, term, whole) -> dict:
+    """A definition's identity: the hash of its structure, the canonical term's when distillation reached one."""
+    from .egraph import semantic_hash
+    if canon.get("status") == "canonical":
+        return {"hash": canon["hash"], "of": "canonical term"}
     if term is not None:
-        try:
-            s, varnames = G.structural(term, ctx.ops, idx)
-            out["structural"], out["variables"] = str(s), varnames
-        except (KeyError, ValueError):
-            out["structural"] = None
-    return out
+        return {"hash": semantic_hash(term), "of": "lifted term"}
+    return {"hash": semantic_hash(whole), "of": "lifted function"}
 
 
 def _canonical(term, rules, costs) -> dict:
@@ -105,9 +104,10 @@ def build(ctx, seed: int | None = None) -> dict:
     from . import egraph as E
     from . import godel as G
     from . import search
+    from . import tiers as T
     from .frontend_python import lift_source
     seed = V.fresh_seed() if seed is None else seed
-    rules, costs, idx = E.rules_from_cards(ctx.store), search.op_costs(ctx.store), G.index_of(ctx.store)
+    rules, costs, entries = E.rules_from_cards(ctx.store), search.op_costs(ctx.store), G.ledger(ctx.store)
     forms_canon = {c.name[len("form__"):]: c for c in ctx.store.cards("functional_identity")
                    if c.get("kind") == "canonical_form"}
     lv = ctx.load_state("last_verify") or {}
@@ -131,22 +131,27 @@ def build(ctx, seed: int | None = None) -> dict:
             if ref is not None and f is ref:
                 link = {"kind": "source", "status": "source"}
             elif ref is not None and f.get("lang") == "python" and f.get("code"):
-                link = _witness_forms(ctx, card, ref, f, seed)
+                # a witness sized by the forms' class proves (tiers.py); otherwise seeded inputs sample
+                link = T.prove(ctx, card, ref, f) or {**_witness_forms(ctx, card, ref, f, seed), "tier": "sample"}
             else:
-                link = {"kind": "witness", "status": "pending", "reason": "no runnable Python form to compare"}
+                link = {"kind": "witness", "status": "pending", "reason": "no runnable Python form to compare",
+                        "tier": "sample"}
             acts.append({"name": aname, "category": "action", "truth": f"definition/{name}", "lang": f.get("lang"),
                          "code": f"algorithm/{card.name}#{f['name']}", "method": "method/human_written", "link": link,
                          "complexity": f.get("complexity")})
             actions.append(f"action/{aname}")
             if link["kind"] != "source":
                 obligations.append({"claim": f"form {f['name']} == the definition", "status": link["status"],
-                                    "evidence": {k: link[k] for k in ("seed", "checks", "at") if k in link}})
+                                    "tier": link["tier"],
+                                    "evidence": {k: link[k] for k in ("seed", "checks", "at", "points", "theorems",
+                                                                      "classes", "by") if k in link}})
         defs.append({"name": name, "category": "definition", "subject": f"algorithm/{card.name}",
                      "math": {"text": card.get("statement", ""), "type": _type(card.get("signature") or {}),
                               "term": term if term is not None else entry, "form": (ref or {}).get("name")},
                      "explanation": f"{card.get('statement', '')}. Its term is the {(ref or {}).get('name')} form "
                                     f"lifted into the core; every other form is an action checked against it.",
-                     "canonical": canon, "godel": _godel(ctx, card, idx, term), "proof_obligations": obligations,
+                     "canonical": canon, "identity": identity(canon, term, entry),
+                     "godel": _godel(ctx, card, entries, term), "proof_obligations": obligations,
                      "actions": actions, "transformations": [],
                      "origin": {"kind": "written", "from": (card.get("provenance") or {}).get("origin", "cardmodel")},
                      "methods": ["method/lift_python", canon.get("by", "method/saturate")]})
@@ -166,20 +171,22 @@ def build(ctx, seed: int | None = None) -> dict:
             else:
                 st = (res.get(f.get("lang")) or {}).get("status")
                 link = {"kind": "witness", "status": {"pass": "witnessed", "fail": "refuted"}.get(st, st or "pending"),
-                        "by": "verify --only functions"}
+                        "by": "verify --only functions", "tier": "sample"}
                 method = "method/emit"
             acts.append({"name": aname, "category": "action", "truth": f"definition/{name}", "lang": f.get("lang"),
                          "code": f"function/{card.name}#{f['name']}", "method": method, "link": link})
             actions.append(f"action/{aname}")
             if link["kind"] != "source":
-                obligations.append({"claim": f"the {f.get('lang')} form == the definition", "status": link["status"]})
+                obligations.append({"claim": f"the {f.get('lang')} form == the definition", "status": link["status"],
+                                    "tier": link["tier"]})
         prov = card.get("provenance") or {}
         defs.append({"name": name, "category": "definition", "subject": card.qualified,
                      "math": {"text": card.get("statement", ""), "type": _type(card.get("signature") or {}),
                               "term": term if term is not None else mod},
                      "explanation": f"{card.get('statement', '')}. Lifted from its source; every language form is "
                                     f"emitted from the term and witnessed against it.",
-                     "canonical": canon, "godel": _godel(ctx, card, idx, term), "proof_obligations": obligations,
+                     "canonical": canon, "identity": identity(canon, term, mod),
+                     "godel": _godel(ctx, card, entries, term), "proof_obligations": obligations,
                      "actions": actions, "transformations": [],
                      "origin": {"kind": "lifted", "from": prov.get("origin", "")},
                      "methods": ["method/lift_python", "method/emit", canon.get("by", "method/saturate")]})
@@ -192,7 +199,7 @@ def build(ctx, seed: int | None = None) -> dict:
                              "shared_operator") if c.get(k)]
         trans.append({"name": tname, "category": "transformation", "from": f"definition/{by_subject[c['f']]['name']}",
                       "to": f"definition/{by_subject[c['g']]['name']}", "kind": kinds, "statement": c.get("statement"),
-                      "evidence": {"kind": "witness", "by": "method/fit_recurrence",
+                      "evidence": {"kind": "witness", "by": "method/fit_recurrence", "tier": "sample",
                                    "from": f"functional_identity/{c.name}"}})
         for side in ("f", "g"):
             by_subject[c[side]]["transformations"].append(f"transformation/{tname}")
@@ -209,8 +216,10 @@ def write(ctx, built: dict, layer: str = "model") -> dict:
 
 def check(ctx) -> dict:
     from . import godel as G
+    from . import tiers as T
     st = ctx.store
-    atoms = set(G.index_of(st))
+    entries = G.ledger(st)
+    atoms = {e["atom"] for e in entries}
     problems = []
     defs = {c.qualified: c for c in st.cards("definition")}
     acts = {c.qualified: c for c in st.cards("action")}
@@ -218,13 +227,20 @@ def check(ctx) -> dict:
     for q, d in defs.items():
         if not (d.get("origin") or {}).get("kind"):
             problems.append(f"{q}: no origin")
+        for o in d.get("proof_obligations") or []:
+            if o.get("tier") not in T.TIERS:
+                problems.append(f"{q}: the claim '{o.get('claim')}' carries no tier (CM46)")
         if st.get(d.get("subject") or "") is None:
             problems.append(f"{q}: its subject {d.get('subject')} does not exist")
         content = (d.get("godel") or {}).get("content")
-        if content is None:                          # {} is content too: a move has no operations (number 1)
+        if content is None:                          # {} is content too: a move has no operations (the unit)
             problems.append(f"{q}: no Gödel content")
         elif set(content) - atoms:
             problems.append(f"{q}: atoms outside the ledger: {sorted(set(content) - atoms)[:3]}")
+        else:
+            problems += [f"{q}: {x}" for x in G.vector_problems(d.get("godel") or {}, entries)]
+        if not str((d.get("identity") or {}).get("hash", "")).startswith("sha256:"):
+            problems.append(f"{q}: no identity (the hash of its structure, CM45)")
         for a in d.get("actions") or []:
             if a not in acts:
                 problems.append(f"{q}: action {a} does not exist")
@@ -240,6 +256,8 @@ def check(ctx) -> dict:
         link = a.get("link") or {}
         if link.get("kind") not in ("proof", "witness", "source"):
             problems.append(f"{q}: no link to its truth (proof, witness or source)")
+        elif link.get("kind") != "source" and link.get("tier") not in T.TIERS:
+            problems.append(f"{q}: its link carries no tier (CM46)")
         if link.get("status") == "refuted":
             refuted.append(q)
             problems.append(f"{q}: its witness refutes it ({link.get('at')})")
@@ -263,6 +281,8 @@ def check(ctx) -> dict:
             "methods": len(methods), "refuted": refuted,
             "coverage": round(sum(1 for s in subjects if s in covered) / len(subjects), 4) if subjects else None,
             "canonical": round(canon / len(fdefs), 4) if fdefs else None, "symbolic_instructions": symbolic,
+            "proof_tier": sum(1 for d in defs.values() for o in d.get("proof_obligations") or []
+                              if o.get("tier") == "proof" and o.get("status") == "proved"),
             "actions_without_truth": sum(1 for a in acts.values() if a.get("truth") not in defs)}
 
 

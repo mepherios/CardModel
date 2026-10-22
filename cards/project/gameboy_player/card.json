@@ -5,7 +5,8 @@
   "branches": [
     "claude/festive-margulis-*",
     "claude/strange-dewdney-*",
-    "claude/frosty-lumiere-*"
+    "claude/frosty-lumiere-*",
+    "claude/sad-clarke-*"
   ],
   "category": "project",
   "docs": [
@@ -39,8 +40,8 @@
     "the DS playable: its 2D engines, VRAM banks, 3D, sound"
   ],
   "metadata": {
-    "previous_content_hash": "a138c56e7a132d293f037b24a11a2daeebed156f8b051d09f6a9c52420aa8a0a",
-    "version": "2.0.4",
+    "previous_content_hash": "0c6716a5e6a0a2f15bb9679b22beff36a6cf74417bf5337666f2b8dcd2337655",
+    "version": "2.0.5",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -92,7 +93,7 @@
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T01:46:06+02:00",
+  "updated": "2026-10-22T02:23:00+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/frosty-lumiere-98e2b7 into main",

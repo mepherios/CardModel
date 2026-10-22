@@ -52,12 +52,13 @@ range to this table in the same commit.
 | CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`) | the store runs what it lists (CM39 on that branch before the fold) |
 | CM43 | main (MATH_CORE phase 0) | primes are forever |
 | CM44 | main (MATH_CORE phase 1) | everything traces back to the four sources |
-| **CM45 onward** | free | take the next one |
+| CM45–CM46 | main (the research handover's phase 0) | content is a sparse vector; every claim carries its tier |
+| **CM47 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U7, G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
 (AnyPS5), G_M1–M6 (machines; G_M6 is MATH_CORE's), G_S1 (products: the store, `claude/jolly-liskov-2d97a8`).
 G_A10 is that branch's law-witness goal, written G_A9 there and renumbered where it met MATH_CORE's G_A9
-(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U8, G_C6, G_K7, G_M7,
+(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U10, G_C6, G_K7, G_M7,
 G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
@@ -67,7 +68,8 @@ G_A4–G_A6. That session was told to move to CM41+ and G_A8+.
 
 Verify sections (`engines/verify.py` SECTIONS; each is described in its docstring): kernel, integrity,
 capabilities, logic, lang, theorems, game (main); anyps5 (AnyPS5); machine (games); forms, vectors, rules,
-redefinitions, conformance, functions, proofs, selfcheck, portability (main).
+redefinitions, conformance, functions, proofs, selfcheck, portability (main); projects, godel, sources, tiers, formal
+(main).
 
 ## 3. Who works where
 
@@ -150,6 +152,11 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | 51a70b2 | main: MATH_CORE phase 0 F4: equality saturation (an e-graph) over the rule cards and discovered laws |
 | 2026-10-22 | bcdbdde | main: MATH_CORE phase 1: the four sources (definition, action, transformation, method); law CM44 |
 | 2026-10-22 | 8dbd200 | main: MATH_CORE phase 0 F5: the LR35902 instruction cards as symbolic terms (511 of 512 agree with the bench) |
+| 2026-10-22 | 4d9d755 | `claude/festive-margulis-43fde7` at 11e2560 (the user's "approved", in the OAM session): the Game Boy Player as cards, the cartridge library, every session's branch in the launcher; launcher reinstalled from main, 8770 restarted |
+| 2026-10-22 | a5ed2d5 | main: one store mechanism for work in progress: early access is the branch versions, the WORK tab is In progress's Every branch section |
+| 2026-10-22 | baa785a | main: the live_hub capability's witness follows the new test |
+| 2026-10-22 | 7d4da20 | main: MATH_CORE phase 0 by the research handover (the user's "Yes, send the research handover to the card-model session so its phase 0 work follows the agenda and the storage rules"): storage rules (CM45), witness tiers (CM46), the formal core in Lean (T1–T6), verify sections tiers and formal |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
-sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200.
+sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21
+of 21 sections after 4d9d755; 231 tests and 23 of 23 sections after the research handover's phase 0.

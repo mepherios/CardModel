@@ -1,0 +1,33 @@
+{
+  "category": "capability",
+  "check": "witness_tiers",
+  "commands": [
+    "cardmodel tiers"
+  ],
+  "core": true,
+  "docs": [
+    "docs/MATH_CORE.md"
+  ],
+  "laws": [
+    "law/CM46_every_claim_carries_its_tier"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/tiers.py"
+  ],
+  "name": "witness_tiers",
+  "order": 29,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Every claim carries its tier: a finite witness sized by the class both forms fall in (a polynomial, a C-finite sequence of one counted loop, regions cut by guards) proves equality; everything else is labelled a sample.",
+  "tests": [
+    "tests/test_tiers.py::test_sized_witnesses_prove_and_refute",
+    "tests/test_tiers.py::test_every_claim_carries_a_tier"
+  ],
+  "tier": 0,
+  "usefulness": "A test that only samples says so, and where a theorem makes a few points enough, those points are a proof."
+}

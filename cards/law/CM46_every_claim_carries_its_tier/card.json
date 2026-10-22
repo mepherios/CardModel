@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM46_every_claim_carries_its_tier",
+  "origins": [
+    "Card Model Research Handover, part 8 and its rules (2026-10-22)",
+    "Rice 1953"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "Every claim carries the tier of its evidence: proof (checked by Lean's kernel, or a finite witness sized by a theorem for the claim's class, the class read from the code and never assumed), probabilistic proof (with its bound), bounded check (exhaustive within stated bounds), or sample.",
+  "tier": 0,
+  "witness": "tests/test_tiers.py::test_every_claim_carries_a_tier"
+}

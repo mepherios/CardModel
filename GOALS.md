@@ -114,6 +114,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_U5_content_vectors` | understanding | fraction of op, function and algorithm cards whose content vector is computed (CM43) | ≥ 1.0 |
 | `G_U6_definitions` | understanding | fraction of algorithm and function cards with a definition card (truth, CM44) | ≥ 1.0 |
 | `G_U7_canonical_definitions` | understanding | fraction of definitions with a canonical form (e-graph or recurrence) | ≥ 0.9 |
+| `G_U8_formal_core` | understanding | problems in the formal core: a theorem card whose Lean theorem is missing or rests on more than the standard axioms, any sorry, a failed build (handover R1) | = 0 |
+| `G_U9_algorithm_forms_proved` | understanding | fraction of the algorithm cards' other Python forms proved equal to their definition (a sized witness or a kernel proof), not sampled (handover R3) | ≥ 0.5 |
 | `G_L1_learned_cards` | learning | cards promoted by the learning loop with cited evidence | ≥ 10 |
 | `G_O1_measured_forms` | optimization | forms with a host measurement (metric card) | ≥ 30 |
 | `G_A1_self_contained` | autonomy | source folders needed at runtime (sandbox check) | = 0 |
