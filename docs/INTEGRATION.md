@@ -183,6 +183,9 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | 9d68e93 | main: CM47 and CM48 reserved for the two branches that wrote CM45 |
 | 2026-10-22 | dd7840e | `claude/godel-w12-arithmetized`: the instruction terms as constraints over a prime field (W-12); formal.build stages its targets |
 | 2026-10-22 | dccedca | `claude/integrity-goal-floors`: no goal's target made easier without an amendment (asked for by the self-running-improvement session) |
+| 2026-10-22 | f25e82a | `claude/festive-margulis-43fde7` up to 11284a6 (the user's "Yes: merge claude/festive-margulis-43fde7 (e8def41 ...) into main" and "Yes: include 11284a6 ..."): per-cartridge apps, the lifter at 100 %, the static pass, relift, DS touch input |
+| 2026-10-22 | e72fa77 | `claude/jolly-liskov-2d97a8` at 984fc7a (the user's "Yes: approve merging claude/jolly-liskov-2d97a8 (head 984fc7a) into main"): law witnesses, observe_self, the store's end-to-end check (CM42, G_A10, G_S1); its goal floors (§4a) replace dccedca's |
+| 2026-10-22 | 32f5f58 | `claude/frosty-lumiere-98e2b7` at b15b527 (the user's "Yes: merge claude/frosty-lumiere-98e2b7 into main ..."): the Game Boy library's titles and check cartridge; `arcade check` launches every listed cartridge (its player check replaced main's test_cartridge) |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
 sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21
