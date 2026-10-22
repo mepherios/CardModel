@@ -1,0 +1,89 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/jolly-liskov-*",
+    "claude/compassionate-margulis-*",
+    "claude/elated-mestorf-*",
+    "worktree-universal-domains",
+    "claude/unreal-distill",
+    "claude/gracious-kirch-*",
+    "claude/heuristic-ptolemy-*"
+  ],
+  "category": "project",
+  "docs": [
+    "README.md",
+    "docs/AUTONOMY.md",
+    "docs/INTEGRATION.md"
+  ],
+  "done": [
+    "consolidation, knowledge layer, card language, Lean bridge; self-run, capabilities, one program",
+    "the live In progress page; law CM41; one store mechanism for work in progress (a5ed2d5)",
+    "MATH_CORE phases 0 and 1; the research handover's storage rules (CM45), witness tiers (CM46), the formal core T1-T6",
+    "Gödel method wave 1: difficulty census, code sizes and the GM-2 decision record, admissible numberings, Gödel's 46 definitions with a proof checker, arithmetized instruction terms",
+    "the self-running-improvement merge (984fc7a): law witnesses, the store's end-to-end check (CM42), goal floors on floor/goals"
+  ],
+  "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
+  "in_progress": [],
+  "kind": "program",
+  "left": [
+    "W-2 on Mathlib after the user's yes; wave 2 (W-4, W-10, W-11, W-13, W-16)",
+    "the ARM instruction cards as terms (G_M6)",
+    "canonical forms for more definitions (G_U7)"
+  ],
+  "metadata": {
+    "previous_content_hash": "361792e15e3e463f0f680f7ec2ecc5bbb2e2c632bfce7725d269809215ccfdff",
+    "version": "2.0.13",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "label": "last self-run",
+      "self": "status"
+    },
+    {
+      "label": "last verify",
+      "verify": "*"
+    },
+    {
+      "goal": "G_A4_capabilities_failing",
+      "label": "core capabilities failing"
+    },
+    {
+      "goal": "G_U9_algorithm_forms_proved",
+      "label": "algorithm forms proved, not sampled"
+    },
+    {
+      "goal": "G_U8_formal_core",
+      "label": "formal core problems"
+    }
+  ],
+  "name": "cardmodel",
+  "next_steps": [
+    "wave 2 of the Gödel method: W-4 (the Gödel record on every card) first",
+    "W-2 once Mathlib is allowed"
+  ],
+  "order": 6,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "On main: MATH_CORE phases 0 and 1 by the research handover, and Gödel method wave 1 (W-15, W-3, W-5, W-1, W-12 merged, each after a full verify; W-2 waits for the Mathlib download). 260 tests pass.",
+  "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
+  "tier": 1,
+  "title": "The card model",
+  "updated": "2026-10-22T04:50:55+02:00",
+  "user_actions": [
+    {
+      "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",
+      "unblocks": [
+        "wave 3's enforcement of the Gödel record"
+      ],
+      "why": "wave 1 produced the evidence; adopting a law is the user's decision"
+    }
+  ]
+}
