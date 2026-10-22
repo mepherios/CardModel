@@ -32,8 +32,7 @@
   },
   "name": "arcade_launcher",
   "next_steps": [
-    "merge claude/sad-sanderson-482207 into main",
-    "reinstall the launcher from main (the new copy takes over from the running one once it has saved) and update every program (the shell changed: controls)",
+    "update the Game Boy Player, the DS Player and Vector Duel in the launcher (the shell changed: controls, the cartridge check)",
     "per docs/MATH_CORE.md: the launcher stays a shell around cards; what it decides about a game (verdicts, controls) is data the cards and the survey give, checked by witnesses"
   ],
   "order": 15,
@@ -52,21 +51,19 @@
     "origin": "cardmodel",
     "session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b"
   },
-  "standing": "All 972 of your cartridges launch through the installed app (971 in the Game Boy Player, Pokemon Diamond in the DS Player). Controls per game, controller setup, the library's own verdicts, the page fixes and the fix for installs that stopped working are on claude/sad-sanderson-482207, not yet in the installed launcher.",
+  "standing": "All 972 of your cartridges launch through the installed app (971 in the Game Boy Player, Pokemon Diamond in the DS Player). In main since 34cd5cc and in the installed launcher, reinstalled from main: controls per game, controller setup, the library's own verdicts, the page fixes, installs that keep working, and a damaged cartridge refused instead of a crash. The installed programs keep the old shell until each is updated in the launcher.",
   "statement": "The Steam-like launcher: store, library, downloads and updates for everything the card model plays natively, with the player's own controls and any controller.",
   "tier": 1,
   "title": "Cardmodel Arcade",
-  "updated": "2026-10-22T18:29:59+02:00",
+  "updated": "2026-10-22T19:27:00+02:00",
   "user_actions": [
     {
-      "action": "Approve merging claude/sad-sanderson-482207 into main",
+      "action": "Update the Game Boy Player, the DS Player and Vector Duel in Cardmodel Arcade (Library: Update)",
       "unblocks": [
-        "configurable controls in the app",
-        "controller setup",
-        "cartridge verdicts",
-        "installs that keep working after the first"
+        "your controls in each game",
+        "a damaged cartridge refused instead of a crash"
       ],
-      "why": "it brings controls per game, controller setup, every cartridge's verdict, the page fixes and the install fix into your installed launcher"
+      "why": "the installed programs were built with the old shell; an update brings the new one"
     }
   ]
 }
