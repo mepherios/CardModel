@@ -192,6 +192,23 @@ class BossPhases(unittest.TestCase):
         self.assertEqual(g.m.get("round_state"), 1)
 
 
+class Pages(unittest.TestCase):
+    def test_the_pages_hash_changes_with_the_pages(self):
+        """/api/status carries a hash of the launcher's pages: an open page that sees it change loads the new ones
+        (a reinstalled launcher, a service restarted from another checkout)."""
+        import tempfile
+        from pathlib import Path
+        from cardmodel.arcade import server
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_ui_"))
+        (d / "index.html").write_text("<p>one</p>")
+        a = server.ui_hash(d)
+        (d / "app.js").write_text("// two")
+        b = server.ui_hash(d)
+        self.assertTrue(a and b and a != b)
+        self.assertEqual(server.ui_hash(d), b, "the same pages, the same hash")
+        self.assertEqual(server.ui_hash(None), "")
+
+
 @unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
 class Depot(unittest.TestCase):
     @classmethod

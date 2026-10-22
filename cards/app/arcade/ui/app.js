@@ -109,6 +109,11 @@ const shots = (v) => Object.keys((v && v.media) || {}).filter((k) => /^screensho
 
 // -- data ------------------------------------------------------------------------------------------------------------
 async function refresh() {
+  // pages served under a reinstalled launcher, or by a service restarted from another checkout: load those
+  try {
+    const st = await (await fetch("/api/status")).json();
+    if (st.ui) { if (S.ui && st.ui !== S.ui) { location.reload(); return; } S.ui = st.ui; }
+  } catch (e) { /* the catalog below says whether the service answers */ }
   try {
     const r = await fetch("/api/catalog");
     S.catalog = await r.json();
@@ -251,6 +256,15 @@ function go(view, arg, noHistory) {
   const at = toBranches && $("#branches");
   if (at) at.scrollIntoView(); else $("#view").scrollTop = 0;
 }
+// the page is replaced only when it changed: a page rebuilt under the pointer loses the click in progress, its hover
+// and its pictures, and refreshes, the app's state reports and the featured rotation come every few seconds
+function paint(v, html) {
+  const key = S.view + "|" + JSON.stringify(S.arg == null ? null : S.arg);
+  if (S.painted && S.painted.key === key && S.painted.html === html && v.firstChild) return false;
+  v.innerHTML = html;
+  S.painted = { key, html };
+  return true;
+}
 function render() {
   const tabFor = { app: "store", browse: "store" };
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("on", t.dataset.view === (tabFor[S.view] || S.view)));
@@ -261,23 +275,35 @@ function render() {
   const kept = S.view === "library" ? [...v.querySelectorAll(".side, .gamepage")].map((el) => el.scrollTop) : [];
   const focus = document.activeElement && document.activeElement.id;
   const caret = focus && document.activeElement.selectionStart;
-  if (S.view === "store") v.innerHTML = storeHome();
-  else if (S.view === "browse") v.innerHTML = browseView(S.arg || { mode: "all" });
+  let changed = false;
+  if (S.view === "store") changed = paint(v, storeHome());
+  else if (S.view === "browse") changed = paint(v, browseView(S.arg || { mode: "all" }));
   else if (S.view === "app") {
     const g = game(S.arg), wt = g ? wtOf(shown(g)) : "";
-    v.innerHTML = `<div class="store">${storePage(S.arg)}</div>`;
-    if (g) details(S.arg, wt).then((fresh) => { if (fresh && S.view === "app" && game(S.arg) && wtOf(shown(game(S.arg))) === wt) { v.innerHTML = `<div class="store">${storePage(S.arg)}</div>`; bind(); } }).catch(() => {});
+    changed = paint(v, `<div class="store">${storePage(S.arg)}</div>`);
+    if (g) details(S.arg, wt).then((fresh) => { if (fresh && S.view === "app" && game(S.arg) && wtOf(shown(game(S.arg))) === wt && paint(v, `<div class="store">${storePage(S.arg)}</div>`)) bind(); }).catch(() => {});
   }
-  else if (S.view === "library") v.innerHTML = libraryView();
-  else if (S.view === "downloads") v.innerHTML = downloadsView();
-  else if (S.view === "news") v.innerHTML = newsView();
-  else if (S.view === "dev") v.innerHTML = devView();          // dev.js: everything in progress, live
-  else if (S.view === "profile") v.innerHTML = profileView();
-  if (S.view === "library") v.querySelectorAll(".side, .gamepage").forEach((el, k) => { if (kept[k] != null) el.scrollTop = kept[k]; });
-  bind();
-  if (focus && (focus === "search" || focus === "libsearch")) { const n = $("#" + focus); if (n) { n.focus(); if (caret != null) n.setSelectionRange(caret, caret); } }
+  else if (S.view === "library") changed = paint(v, libraryView());
+  else if (S.view === "downloads") changed = paint(v, downloadsView());
+  else if (S.view === "news") changed = paint(v, newsView());
+  else if (S.view === "dev") changed = paint(v, devView());          // dev.js: everything in progress, live
+  else if (S.view === "profile") changed = paint(v, profileView());
+  if (changed) {
+    if (S.view === "library") v.querySelectorAll(".side, .gamepage").forEach((el, k) => { if (kept[k] != null) el.scrollTop = kept[k]; });
+    bind();
+    if (focus && (focus === "search" || focus === "libsearch")) { const n = $("#" + focus); if (n) { n.focus(); if (caret != null) n.setSelectionRange(caret, caret); } }
+  }
+  if (S.view === "store") featured();
   renderProgress();
   footer();
+}
+// the featured picture turns without rebuilding the page (its pictures are listed on it)
+function featured() {
+  const st = $(".featured .main");
+  if (!st) return;
+  const list = (st.dataset.shots || "").split("|").filter(Boolean);
+  if (list.length) st.style.backgroundImage = `url('${list[S.shot % list.length]}')`;
+  document.querySelectorAll(".featured .thumbs > div").forEach((d, k) => d.classList.toggle("on", !!list.length && k === S.shot % list.length));
 }
 function footer() {
   const el = $("#worklink");
@@ -308,7 +334,7 @@ function storeHome() {
   return `<div class="store">${storeBar()}
     <h2>Featured &amp; Recommended</h2>
     <div class="featured" data-open="${esc(f.id)}">
-      <div class="main" style="background-image:url('${fs[S.shot % Math.max(1, fs.length)] || art(f, "header_460x215")}')"></div>
+      <div class="main" data-shots="${esc(fs.join("|"))}" style="background-image:url('${fs[0] || art(f, "header_460x215")}')"></div>
       <div class="side"><h3>${esc(f.title)}</h3>
         <div class="thumbs">${fs.slice(0, 4).map((s, k) => `<div data-feat="${k}" style="background-image:url('${s}')"></div>`).join("")}</div>
         <div>${esc(f.short_description)}</div>
@@ -492,15 +518,16 @@ function libraryView() {
 function libraryHome() {
   const played = S.native.played || {};
   const recent = S.lib.roms.filter((r) => played[r.id]).sort((a, b) => played[b.id].lastPlayed - played[a.id].lastPlayed).slice(0, 12);
-  const tile = (r) => `<div class="cov" data-lib="${esc(r.id)}" title="${esc(r.title)}">
+  const tile = (r) => `<div class="cov" data-lib="${esc(r.id)}" title="${esc(r.title)} (double-click to play)">
       ${r.cover ? `<img loading="lazy" src="${esc(r.cover)}" alt="">` : `<div class="noart">${esc(r.title)}</div>`}
-      <div class="cap">${esc(r.title)}</div><span class="vb ${esc(r.verdict.level)}"></span></div>`;
+      ${romStatus(r).kind === "play" ? `<button class="qp" data-romact="${esc(r.id)}" title="Play">&#9654;</button>` : ""}
+      <div class="cap">${esc(r.title)}</div><span class="vb ${esc(r.verdict.level)}" title="${esc(verdictLabel(r.verdict))}"></span></div>`;
   const d = S.lib.drawing || {};
   let out = `<div class="libhome">`;
   const mine = S.catalog.filter((g) => S.native.library[g.id]);
   if (mine.length) out += `<h3>Your games</h3><div class="shelf wide">${mine.map((g) => `<div class="cov" data-lib="${esc(g.id)}" title="${esc(g.title)}">
       <img src="${art(g, "header_460x215")}" alt="" style="aspect-ratio:460/215"><div class="cap">${esc(g.title)} <span class="dim">${esc(status(g).label)}</span></div></div>`).join("")}</div>`;
-  if (d.busy) out += `<div class="card">Drawing title screens: ${d.drawn || 0} of ${d.of || "?"} (the machine runs each cartridge for ten seconds, headless).</div>`;
+  if (d.busy) out += `<div class="card">Looking at your cartridges: ${d.drawn || 0} of ${d.of || "?"}. The machine runs each one headless, for its title screen and to see whether it runs; the dots fill in as it goes.</div>`;
   if (recent.length) out += `<h3>Recent</h3><div class="shelf">${recent.map(tile).join("")}</div>`;
   for (const sy of S.lib.systems) {
     for (const sub of sy.systems || []) {
@@ -508,7 +535,8 @@ function libraryHome() {
       if (!list.length) continue;
       const key = "shelf:" + sub.label;
       const show = S.open[key] ? list : list.slice(0, 24);
-      out += `<h3 id="shelf-${esc(sub.label.replace(/\W+/g, "-"))}"><a data-toggle="${esc(key)}">${esc(sub.label)}</a> <small>${plural(list.length, "cartridge")}</small>
+      const runs = list.filter((r) => r.verdict.level === "verified").length;
+      out += `<h3 id="shelf-${esc(sub.label.replace(/\W+/g, "-"))}"><a data-toggle="${esc(key)}">${esc(sub.label)}</a> <small>${plural(list.length, "cartridge")}${runs ? ` &middot; ${runs} run` : ""}</small>
         ${list.length > 24 ? `<a class="more" data-toggle="${esc(key)}">${S.open[key] ? "show fewer" : "show all"}</a>` : ""}</h3><div class="shelf">${show.map(tile).join("")}</div>`;
     }
   }
@@ -517,6 +545,14 @@ function libraryHome() {
 }
 
 // a cartridge: its title screen, how far the card model gets with it, and the player's big button
+const verdictLabel = (v) => `${({ verified: "Runs", playable: "Playable", unsupported: "Does not run yet", unavailable: "Not playable yet", unknown: "Not checked yet" })[(v || {}).level] || (v || {}).level || ""}${v && v.text ? ": " + v.text : ""}`;
+// a double-click plays what was clicked (a cartridge, or a game: install, update or play, like its big button)
+function quickPlay(id) {
+  const r = rom(id);
+  if (r) { romAct(r); return; }
+  const g = game(id);
+  if (g) act(g);
+}
 function romStatus(r) {
   const sy = sysOf(r);
   if (!sy.playable) return { kind: "na", label: "Not playable yet" };
@@ -575,7 +611,8 @@ function romPage(r) {
     <div class="cols"><div>
         <div class="card" id="compat"><h4>Compatibility</h4><p class="verdict"><span class="vb ${esc(v.level)}"></span><b>${esc(vtext)}</b> &mdash; ${esc(v.text || "")}</p>
           ${v.reason ? `<p class="dim">Survey: ${esc(v.reason)}</p>` : ""}${ds}</div>
-        ${pl ? `<div class="card"><h4>Controls</h4><p>${esc(pl.controls || "")}</p></div>
+        ${pl ? `<div class="card"><h4>Controls</h4>${controlsSummary(r.id, pl)}
+            <div class="row"><button class="btn small ghost" data-controls="${esc(r.id)}" data-player="${esc(pl.id)}">Configure controls&hellip;</button></div></div>
           <div class="card link" data-lib="${esc(pl.id)}"><h4>Played by</h4><p>${esc(pl.title)} v${esc(pl.version)} &middot; ${esc(status(pl).label)}</p></div>` : ""}
       </div><div>
         <div class="card"><h4>Cartridge</h4><div class="factlist">${facts.map(([k, x]) => `<div><span>${esc(k)}</span>${esc(x || "—")}</div>`).join("")}</div></div>
@@ -613,6 +650,8 @@ function gamePage(g) {
         <div id="versions">${versionsCard(g)}</div>
         <div class="card news"><h4>What's new</h4>${newsEntries(g, v)}</div>
       </div><div>
+        ${g.input ? `<div class="card"><h4>Controls</h4>${controlsSummary(g.id, g)}
+          <div class="row"><button class="btn small ghost" data-controls="${esc(g.id)}">Configure controls&hellip;</button></div></div>` : ""}
         <div class="card" id="achievements"><h4>Achievements</h4>${achList(g, got)}</div>
         <div class="card"><h4>Info</h4><div class="factlist">
           <div><span>Version</span><a data-scroll="versions">${esc(inst ? inst.version : v.version)}</a></div>
@@ -829,6 +868,195 @@ function ask(title, text, yes, then) {
   $("#yes").onclick = () => { $("#modal").classList.add("hidden"); then(); };
 }
 
+// -- controls: each program's keys and controller buttons, kept by the app and handed to the game it starts ----------
+// key names are the game window's (GameShell.swift's keyCodes); a page key event's code is translated to them
+const KEYS = { Enter: "return", NumpadEnter: "keypadenter", Tab: "tab", Space: "space", Backspace: "backspace",
+  ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", Minus: "minus", Equal: "equal",
+  BracketLeft: "leftbracket", BracketRight: "rightbracket", Semicolon: "semicolon", Quote: "quote", Comma: "comma",
+  Period: "period", Slash: "slash", Backslash: "backslash", Backquote: "grave", NumpadAdd: "keypadplus",
+  NumpadSubtract: "keypadminus", NumpadMultiply: "keypadmultiply", NumpadDivide: "keypaddivide",
+  NumpadDecimal: "keypaddecimal", ShiftLeft: "shift", ShiftRight: "rshift", ControlLeft: "control",
+  ControlRight: "rcontrol", AltLeft: "option", AltRight: "roption" };
+function keyName(code) {
+  if (/^Key[A-Z]$/.test(code)) return code.slice(3).toLowerCase();
+  if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+  if (/^Numpad[0-9]$/.test(code)) return "keypad" + code.slice(6);
+  if (/^F([1-9]|1[0-2])$/.test(code)) return code.toLowerCase();
+  return KEYS[code] || null;
+}
+const SHOW = { return: "Return", keypadenter: "Keypad Enter", tab: "Tab", space: "Space", backspace: "Backspace", escape: "Esc",
+  left: "←", right: "→", up: "↑", down: "↓", minus: "-", equal: "=", leftbracket: "[", rightbracket: "]", semicolon: ";",
+  quote: "'", comma: ",", period: ".", slash: "/", backslash: "\\", grave: "`", shift: "Shift", rshift: "Right Shift",
+  control: "Control", rcontrol: "Right Control", option: "Option", roption: "Right Option" };
+const keyLabel = (k) => SHOW[k] || (k.startsWith("keypad") ? "Keypad " + k.slice(6) : k.length === 1 ? k.toUpperCase() : k.toUpperCase());
+// a standard-mapping controller button (the page's Gamepad API) and the name the game window binds
+const PAD = ["a", "b", "x", "y", "leftShoulder", "rightShoulder", "leftTrigger", "rightTrigger", "options", "menu",
+  "leftThumbstickButton", "rightThumbstickButton"];
+const PADSHOW = { a: "A", b: "B", x: "X", y: "Y", leftShoulder: "LB", rightShoulder: "RB", leftTrigger: "LT",
+  rightTrigger: "RT", options: "View", menu: "Menu", leftThumbstickButton: "L3", rightThumbstickButton: "R3" };
+const bitLabel = (b) => b.replace(/^[a-z]/, (c) => c.toUpperCase()).replace(/_/g, " ");
+// what a program plays with now: a cartridge's own controls, else its player's, else the game card's
+function controlsOf(id, prog) {
+  const own = (S.native.controls || {});
+  const base = (prog && prog.input) || {};
+  const mine = own[id] || (prog && own[prog.id]) || null;
+  const pick = (k) => JSON.parse(JSON.stringify((mine && mine[k]) || base[k] || {}));
+  return { keys: pick("keys"), keys2: pick("keys2"), gamepad: pick("gamepad"), custom: !!mine,
+    where: own[id] ? "this" : mine ? "player" : "" };
+}
+function controlsSummary(id, prog) {
+  const c = controlsOf(id, prog), bits = ((prog && prog.input) || {}).bits || [];
+  const row = (b) => `${esc(bitLabel(b))}: ${esc((c.keys[b] || []).map(keyLabel).join(" / ") || "—")}${c.gamepad[b] ? ` &middot; ${esc(PADSHOW[c.gamepad[b]] || c.gamepad[b])}` : ""}`;
+  const said = c.custom ? (c.where === "this" ? "Your controls for this cartridge." : c.where === "player" && id !== prog.id ? `Your controls for every cartridge on ${esc(prog.title)}.` : "Your controls.") : `${esc(prog.title)}'s own controls.`;
+  return `<p class="dim">${said} Keyboard, and any controller macOS knows (Xbox, PlayStation, MFi): player 1 uses the first, player 2 the second.</p>
+    <div class="ctlsum">${bits.map((b) => `<span>${row(b)}</span>`).join("")}</div>`;
+}
+function controlsDialog(id, playerId) {
+  const r = rom(id), prog = r ? game(playerId) || playerOf(r) : game(id);
+  if (!prog || !prog.input) { toast("This program has no controls to change."); return; }
+  const bits = prog.input.bits || [];
+  const c = controlsOf(id, prog);
+  let scope = r ? (c.where === "this" ? "this" : "player") : "program";
+  let wait = null;                      // [player, bit] waiting for a key, or ["pad", bit] for a button
+  const draw = () => {
+    const slot = (who, b) => {
+      const list = (who === 1 ? c.keys : c.keys2)[b] || [];
+      const waiting = wait && wait[0] === who && wait[1] === b;
+      return `${list.map((k) => `<span class="key">${esc(keyLabel(k))}<a data-unkey="${who}" data-bit="${esc(b)}" data-k="${esc(k)}" title="Remove">&times;</a></span>`).join("")}
+        <a class="key add ${waiting ? "wait" : ""}" data-addkey="${who}" data-bit="${esc(b)}">${waiting ? "press a key&hellip;" : "+"}</a>`;
+    };
+    const pad = (b) => {
+      const waiting = wait && wait[0] === "pad" && wait[1] === b;
+      const v = c.gamepad[b];
+      return `<a class="key pad ${waiting ? "wait" : ""}" data-padbit="${esc(b)}">${waiting ? "press a button&hellip;" : v ? esc(PADSHOW[v] || v) : "+"}</a>${v && !waiting ? `<a data-unpad="${esc(b)}" title="Remove">&times;</a>` : ""}`;
+    };
+    $("#modal").innerHTML = `<div class="dialog wide"><h3>CONTROLS &mdash; ${esc(r ? r.title : prog.title)}</h3><div class="body">
+      ${r ? `<div class="scope"><label><input type="radio" name="scope" value="player" ${scope === "player" ? "checked" : ""}> Every cartridge on ${esc(prog.title)}</label>
+        <label><input type="radio" name="scope" value="this" ${scope === "this" ? "checked" : ""}> This cartridge only</label></div>` : ""}
+      <table class="ctl"><tr><th></th><th>Keyboard, player 1</th><th>Keyboard, player 2</th><th>Controller</th></tr>
+      ${bits.map((b) => `<tr><td>${esc(bitLabel(b))}</td><td>${slot(1, b)}</td><td>${slot(2, b)}</td><td>${pad(b)}</td></tr>`).join("")}</table>
+      <p class="dim">Click + and press a key, or a button on a controller. The stick and the d-pad always move. The game gets these when the launcher starts it, so nothing in the game changes; a game built before this launcher ignores them until it is updated.</p>
+      </div><div class="foot"><button class="btn small ghost" id="ctl-reset">Use ${esc(prog.title)}'s own</button>
+      <span class="spacer"></span><button class="btn small ghost" id="no">Cancel</button> <button class="btn small install" id="yes">Save</button></div></div>`;
+    $("#modal").classList.remove("hidden");
+    document.querySelectorAll("#modal [name=scope]").forEach((el) => (el.onchange = () => { scope = el.value; }));
+    document.querySelectorAll("#modal [data-addkey]").forEach((el) => (el.onclick = () => { wait = [parseInt(el.dataset.addkey, 10), el.dataset.bit]; draw(); }));
+    document.querySelectorAll("#modal [data-unkey]").forEach((el) => (el.onclick = () => {
+      const m = el.dataset.unkey === "1" ? c.keys : c.keys2;
+      m[el.dataset.bit] = (m[el.dataset.bit] || []).filter((k) => k !== el.dataset.k); draw(); }));
+    document.querySelectorAll("#modal [data-padbit]").forEach((el) => (el.onclick = () => { wait = ["pad", el.dataset.padbit]; draw(); padWait(); }));
+    document.querySelectorAll("#modal [data-unpad]").forEach((el) => (el.onclick = () => { delete c.gamepad[el.dataset.unpad]; draw(); }));
+    $("#no").onclick = () => { stop(); $("#modal").classList.add("hidden"); };
+    $("#ctl-reset").onclick = () => { stop(); send("controls", { id: r ? (scope === "this" ? r.id : prog.id) : prog.id }); $("#modal").classList.add("hidden"); toast(`${prog.title}'s own controls again.`); };
+    $("#yes").onclick = () => {
+      stop();
+      const target = r ? (scope === "this" ? r.id : prog.id) : prog.id;
+      send("controls", { id: target, controls: { keys: c.keys, keys2: c.keys2, gamepad: c.gamepad } });
+      $("#modal").classList.add("hidden");
+      toast("Controls saved: the game gets them the next time it starts.");
+    };
+  };
+  // a key while one is wanted: it goes to that player's action, and from that player's others (no key does two
+  // things); Escape gives up
+  const onKey = (e) => {
+    if (!wait || wait[0] === "pad") return;
+    e.preventDefault(); e.stopPropagation();
+    if (e.code === "Escape") { wait = null; draw(); return; }
+    const k = keyName(e.code);
+    if (!k) { toast("That key can't be given to a game (Command keys stay with macOS)."); return; }
+    const m = wait[0] === 1 ? c.keys : c.keys2;
+    for (const b of Object.keys(m)) m[b] = (m[b] || []).filter((x) => x !== k);
+    m[wait[1]] = [...(m[wait[1]] || []), k];
+    wait = null; draw();
+  };
+  let poll = null;
+  const padWait = () => {
+    const held = new Set(pressedButtons());       // a button already down when asked does not count
+    clearInterval(poll);
+    poll = setInterval(() => {
+      if (!wait || wait[0] !== "pad") { clearInterval(poll); return; }
+      const now = pressedButtons().filter((k) => !held.has(k));
+      if (!now.length) return;
+      const name = PAD[now[0]];
+      if (!name) return;
+      for (const b of Object.keys(c.gamepad)) if (c.gamepad[b] === name) delete c.gamepad[b];
+      c.gamepad[wait[1]] = name;
+      wait = null; clearInterval(poll); draw();
+    }, 40);
+  };
+  const stop = () => { wait = null; clearInterval(poll); document.removeEventListener("keydown", onKey, true); };
+  document.addEventListener("keydown", onKey, true);
+  draw();
+}
+
+// -- controllers: what macOS reports (the Gamepad API), shown live, and the launcher driven with one -----------------
+const pads = () => Array.from((navigator.getGamepads && navigator.getGamepads()) || []).filter(Boolean);
+const pressedButtons = () => { const out = []; for (const p of pads()) p.buttons.forEach((b, k) => { if (b.pressed && k < 12) out.push(k); }); return out; };
+function padsDialog() {
+  const draw = () => {
+    const list = pads();
+    $("#modal").innerHTML = `<div class="dialog"><h3>CONTROLLERS</h3><div class="body">
+      ${list.length ? list.map((p, k) => `<div class="padcard"><b>Player ${k + 1}</b> <span class="dim">${esc(p.id)}</span>
+        <div class="padbtns">${PAD.map((n, i) => `<span class="${p.buttons[i] && p.buttons[i].pressed ? "on" : ""}">${esc(PADSHOW[n])}</span>`).join("")}
+        <span class="${(p.buttons[12] && p.buttons[12].pressed) || p.axes[1] < -0.5 ? "on" : ""}">↑</span><span class="${(p.buttons[13] && p.buttons[13].pressed) || p.axes[1] > 0.5 ? "on" : ""}">↓</span>
+        <span class="${(p.buttons[14] && p.buttons[14].pressed) || p.axes[0] < -0.5 ? "on" : ""}">←</span><span class="${(p.buttons[15] && p.buttons[15].pressed) || p.axes[0] > 0.5 ? "on" : ""}">→</span></div></div>`).join("")
+        : `<div class="empty">No controller yet. Connect one over USB or Bluetooth (System Settings &rsaquo; Bluetooth: hold an Xbox controller's pairing button, or a DualSense's Create + PS buttons), then press any button on it.</div>`}
+      <p class="dim">macOS needs no driver for Xbox, PlayStation and MFi controllers. In the games the first controller is player 1 and the second player 2; each game's Controls says which button does what. Here in the launcher: the stick or d-pad moves, A opens or plays, B goes back, Menu shows the library.</p>
+      </div><div class="foot"><button class="btn small install" id="ok">Done</button></div></div>`;
+    $("#modal").classList.remove("hidden");
+    $("#ok").onclick = () => { clearInterval(t); $("#modal").classList.add("hidden"); };
+  };
+  const t = setInterval(() => { if ($("#modal").classList.contains("hidden")) clearInterval(t); else draw(); }, 100);
+  draw();
+}
+// the launcher with a controller: the stick or d-pad moves a highlight between the things that can be clicked, the
+// one nearest in that direction; A clicks it (twice on a cover plays), B is Back, Menu is the library
+const NAVSEL = "#view [data-lib], #view [data-open], #view [data-act], #view [data-romact], #view [data-controls], #view .btn, .tab";
+let navEl = null, navLast = {}, navRepeat = 0;
+function navMove(dx, dy) {
+  const all = Array.from(document.querySelectorAll(NAVSEL)).filter((el) => el.offsetParent !== null);
+  if (!all.length) return;
+  if (!navEl || !document.contains(navEl)) { navEl = all[0]; } else {
+    const a = navEl.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    let best = null, bd = Infinity;
+    for (const el of all) {
+      if (el === navEl) continue;
+      const b = el.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2;
+      const along = dx ? (bx - ax) * dx : (by - ay) * dy, across = dx ? Math.abs(by - ay) : Math.abs(bx - ax);
+      if (along <= 4) continue;
+      const d = along + 2.5 * across;
+      if (d < bd) { bd = d; best = el; }
+    }
+    if (best) navEl = best;
+  }
+  document.querySelectorAll(".navon").forEach((el) => el.classList.remove("navon"));
+  navEl.classList.add("navon");
+  navEl.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+}
+function padTick() {
+  const list = pads();
+  const dot = $("#padbtn");
+  if (dot) { dot.classList.toggle("on", list.length > 0); dot.title = list.length ? `${plural(list.length, "controller")}: ${list.map((p) => p.id).join(", ")}` : "Controllers: none connected"; }
+  // only while the launcher is the window in front and nothing it started is running (the game has the controller)
+  const playing = Object.values(S.native.library || {}).some((x) => x.running) || Object.values(S.native.played || {}).some((x) => x.running);
+  if (list.length && $("#modal").classList.contains("hidden") && document.hasFocus() && !playing) {
+    const p = list[0], b = (i) => !!(p.buttons[i] && p.buttons[i].pressed);
+    const dir = b(12) || p.axes[1] < -0.6 ? [0, -1] : b(13) || p.axes[1] > 0.6 ? [0, 1] : b(14) || p.axes[0] < -0.6 ? [-1, 0] : b(15) || p.axes[0] > 0.6 ? [1, 0] : null;
+    const now = performance.now();
+    if (dir && (!navLast.dir || navLast.dir + "" !== dir + "" || now > navRepeat)) { navMove(dir[0], dir[1]); navRepeat = now + (navLast.dir ? 140 : 380); }
+    navLast.dir = dir;
+    const edge = (i) => b(i) && !navLast[i];
+    if (edge(0) && navEl && document.contains(navEl)) navEl.click();
+    if (edge(1)) $("#back").click();
+    if (edge(9)) { S.libSel = "home"; go("library", "home"); }
+    for (const i of [0, 1, 9]) navLast[i] = b(i);
+  }
+  requestAnimationFrame(padTick);
+}
+window.addEventListener("gamepadconnected", (e) => toast(`Controller connected: ${e.gamepad.id.split("(")[0].trim()}`));
+window.addEventListener("gamepaddisconnected", () => toast("Controller disconnected."));
+requestAnimationFrame(padTick);
+
 // -- progress, graph, toast ---------------------------------------------------------------------------------------
 function renderProgress() {
   const id = S.native.downloading || Object.keys(S.progress)[0];
@@ -910,7 +1138,13 @@ function bind() {
     $("#modal").classList.add("hidden"); go("app", el.dataset.open); });
   on("[data-act]", (el) => { const g = game(el.dataset.act); if (g) act(g); });
   on("[data-golib]", (el) => go("library", el.dataset.golib));
-  on("[data-lib]", (el) => { S.libSel = el.dataset.lib; S.gear = false; $("#modal").classList.add("hidden");
+  on("[data-lib]", (el) => {
+    // a second click on the same entry soon after is a double-click: play it (the first one already showed it, so
+    // the element under the pointer is a new one and the browser's own dblclick would not come)
+    const now = Date.now(), id = el.dataset.lib;
+    if (S.lastClick && S.lastClick.id === id && now - S.lastClick.t < 450 && id !== "home") { S.lastClick = null; quickPlay(id); return; }
+    S.lastClick = { id, t: now };
+    S.libSel = el.dataset.lib; S.gear = false; $("#modal").classList.add("hidden");
     if (S.view !== "library") go("library", el.dataset.lib); else { render(); $("#view").querySelector(".gamepage").scrollTop = 0; }
     if (el.dataset.scroll) setTimeout(() => scrollTo(el.dataset.scroll), 50); });
   on("[data-romact]", (el) => { const r = rom(el.dataset.romact); if (r) romAct(r); });
@@ -924,7 +1158,7 @@ function bind() {
     ss.onkeydown = (e) => { if (e.key === "Enter") go("browse", { mode: "search", value: ss.value }); if (e.key === "Escape") { S.storeQuery = ""; go("store"); } };
   }
   on("[data-shot]", (el) => { S.shot = parseInt(el.dataset.shot, 10); render(); });
-  on("[data-feat]", (el) => { S.shot = parseInt(el.dataset.feat, 10); render(); });
+  on("[data-feat]", (el) => { S.shot = parseInt(el.dataset.feat, 10); featured(); });
   on("[data-gear]", () => { S.gear = !S.gear; render(); });
   on("[data-verify]", (el) => { S.gear = false; send("verify", { id: el.dataset.verify }); render(); });
   on("[data-reveal]", (el) => { S.gear = false; send("reveal", { id: el.dataset.reveal }); render(); });
@@ -955,6 +1189,7 @@ function bind() {
     render();
   });
   on("[data-settings]", () => settingsDialog());
+  on("[data-controls]", (el) => controlsDialog(el.dataset.controls, el.dataset.player));
   on("[data-romcover]", (el, e) => { if (e.target.tagName === "IMG") { const r = rom(el.dataset.romcover); if (r) romAct(r); } });
   on("[data-reloadall]", () => { S.libLoaded = 0; refresh(); loadWork(true); });
   document.querySelectorAll("#modal [data-close]").forEach((el) => {
@@ -968,6 +1203,7 @@ function bind() {
 document.querySelectorAll(".tab").forEach((t) => (t.onclick = () => go(t.dataset.view, t.dataset.view === "library" ? S.libSel : null)));
 $("#dl-link").onclick = () => go("downloads");
 $("#settings-btn").onclick = settingsDialog;
+$("#padbtn").onclick = padsDialog;
 $("#username").onclick = () => go("profile");
 $("#service").onclick = serviceDialog;
 $("#worklink").onclick = () => go("work");
@@ -976,6 +1212,6 @@ $("#fwd").onclick = () => { const f = S.future.pop(); if (f) { S.history.push([S
 $("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").classList.add("hidden"); };
 document.addEventListener("click", () => { if (S.gear) { S.gear = false; render(); } });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#modal").classList.add("hidden"); });
-setInterval(() => { if (S.view === "store") { S.shot++; const st = $(".featured .main"); if (st && !document.activeElement.matches("input")) render(); } }, 6000);
+setInterval(() => { if (S.view === "store") { S.shot++; featured(); } }, 6000);
 setInterval(refresh, 15000);
 refresh();
