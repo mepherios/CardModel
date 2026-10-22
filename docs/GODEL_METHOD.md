@@ -27,7 +27,7 @@ memory on this machine, and a session started by another session's message canno
 |---|---|---|---|
 | W-15 | which of the product's questions are decidable? | `claude/godel-w15-difficulty` | done |
 | W-3 | which code should identify a card? | `claude/godel-w3-identity` | done |
-| W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | waiting |
+| W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | done |
 | W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | waiting |
 | W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | waiting |
 | W-2 | can the content algebra and carry-over be kernel-checked on Mathlib? | `claude/godel-w2-mathlib` | blocked: the Mathlib and Foundation downloads need the user's yes |
@@ -101,4 +101,30 @@ today's terms), never stored, and never nested inside another code. Pairing code
 anything. Today the definitions store the positional number as a decimal string up to 200 digits (CM45); GM-8 would
 drop that storage. Adopting GM-2 amends CM43, whose text calls the structural number the identity: that is the
 user's decision (finding `W3_gm2_decision`).
+
+### W-5: admissible numberings (GM-4, Rule-1 to Rule-6, Def-1, Def-4, Ph-6)
+
+A numbering is admissible here when it meets six conditions, drawn from Def-1, the design rules and the work of
+Feferman (1960, doi:10.4064/fm-49-1-35-92) and Grabmayr (2021, arXiv:1803.08392) on how Gödel's second theorem
+depends on the numbering (`engines/numbering.py`):
+
+| condition | statement | why it holds |
+|---|---|---|
+| injective (Rule-1) | distinct objects get distinct codes | unique factorization, and the tokens parse one way given the arities |
+| effective (Rule-2) | encoding and decoding are computable, and decode(encode(x)) = x | both are total programs |
+| decidable image (Rule-2) | whether a number codes an object is decidable | `is_code` divides out the consecutive primes, checks each token and parses: it stops on every input |
+| codes start at 1 (Rule-3) | every token code is at least 1 | 3k + 1, 3·zig(c) + 2 and 3j + 3 |
+| parts smaller (Rule-5) | a proper part has a smaller code, and its content divides the whole's | a part's tokens sit at later positions (larger primes, same exponents) beside other factors |
+| natural provability (Rule-6) | provability is ∃ of the decidable proof relation, with no further clause | Feferman's deviant predicates add a clause (a consistency check below the proof) and can make a theory "prove its own consistency"; the natural one keeps Rule-12's meaning |
+
+Every `godel_set` card now states its numbering (objects, code, content, identity, the conditions, provability as
+∃ of Lean's kernel check) and its witness test (`tests/test_numbering.py`, one per set: B0, computation, machines).
+All three pass on generated objects, corrupted codes and random integers.
+
+Two numberings were not admissible as stored (finding `W5_arity_gaps`): the computation set's atoms are not IR
+ops, so nothing stated their arities, and the machines set's effects had an optional guard. Codes over them could
+not be parsed back. Each set card now states its `arities` (read from the op cards' Python forms; stated for
+EC_ADD, EC_SCALAR_MUL and BIT_NOR), and an effect's guard slot holds `logic/true` when the effect always happens.
+The `godel` verify section reports every set's numbering; GM-4 as a law (verify fails on a set without an
+admissible numbering) is the user's decision.
 
