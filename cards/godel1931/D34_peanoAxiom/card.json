@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 7,
+    "status": "pass"
+  },
+  "bound": null,
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "law cards",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:peano_axiom",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.peanoAxiom",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "6caf552ed8b644bbd4f86ac0e00efbd039d43bb8f17fc2efab3de3bf280d110b",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D34_peanoAxiom",
+  "notation": "peanoAxiom(x)",
+  "number": 34,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x is one of the three Peano axioms",
+  "tier": 1
+}

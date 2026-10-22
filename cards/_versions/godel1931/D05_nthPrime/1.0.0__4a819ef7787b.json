@@ -1,0 +1,46 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "y ≤ nthPrime(n-1)! + 1 (Euclid's bound)",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "nth_prime",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:nth_prime",
+      "lang": "python"
+    },
+    {
+      "entry": "Godel1931.nthPrime",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean"
+    },
+    {
+      "entry": "cardmodel.engines.godel1931:literal.nth_prime",
+      "lang": "python",
+      "name": "literal",
+      "note": "the paper's bounded search itself, runnable on small numbers"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "D05_nthPrime",
+  "notation": "nthPrime(n)",
+  "number": 5,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "the n-th prime",
+  "tier": 1
+}

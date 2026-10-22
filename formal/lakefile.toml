@@ -1,5 +1,12 @@
 name = "GodelCore"
-defaultTargets = ["GodelCore"]
+defaultTargets = ["GodelCore", "Godel1931", "godel1931"]
 
 [[lean_lib]]
 name = "GodelCore"
+
+[[lean_lib]]
+name = "Godel1931"
+
+[[lean_exe]]
+name = "godel1931"
+root = "Godel1931.Main"

@@ -1,0 +1,45 @@
+{
+  "agreement": {
+    "calls": 2,
+    "status": "pass"
+  },
+  "bound": null,
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4",
+    "Def-4"
+  ],
+  "counterpart": "proof checking, which is decidable",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:proof_for",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.proofFor",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "31f44e339b0e07673e6b6a83868871d5bba849b0a142ea50a08e8a3c21720b4f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D45_proofFor",
+  "notation": "proofFor(x, y)",
+  "number": 45,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x is a proof of y",
+  "tier": 1
+}

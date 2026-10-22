@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_godel1931.py",
+  "description": "Gödel's 46 definitions (1931), each a card with its Python and Lean forms: system P's proof checking as arithmetic on codes (Gödel method W-1).",
+  "name": "godel1931",
+  "tier": 0
+}

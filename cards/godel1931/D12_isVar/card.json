@@ -1,0 +1,50 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "n ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "the variable token class",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:is_var",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.isVar",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    },
+    {
+      "entry": "cardmodel.engines.godel1931:literal.is_var",
+      "lang": "python",
+      "name": "literal",
+      "note": "the paper's bounded search itself, runnable on small numbers"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "1cb4c1157b3f76947208956da00e2093825fcf1a68415aa978863a8b49c2459f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D12_isVar",
+  "notation": "isVar(x)",
+  "number": 12,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x is a variable",
+  "tier": 1
+}

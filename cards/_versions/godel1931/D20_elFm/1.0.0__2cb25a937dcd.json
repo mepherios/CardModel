@@ -1,0 +1,40 @@
+{
+  "agreement": {
+    "calls": 8,
+    "status": "pass"
+  },
+  "bound": "y, z, n ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "atomic formulas",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:el_fm",
+      "lang": "python"
+    },
+    {
+      "entry": "Godel1931.elFm",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "D20_elFm",
+  "notation": "elFm(x)",
+  "number": 20,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x is an elementary formula a(b)",
+  "tier": 1
+}

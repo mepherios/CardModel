@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": null,
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "atoms logic/implies, and, iff, exists",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:imp",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.imp",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "82f488b1d90e3481fc54213e29893462cd071f42a97c3475bc4d528900ed7b91",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D32_connectives",
+  "notation": "imp, and, equiv, exists",
+  "number": 32,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "the defined connectives imp, and, equiv, exists",
+  "tier": 1
+}

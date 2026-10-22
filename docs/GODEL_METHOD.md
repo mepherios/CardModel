@@ -28,7 +28,7 @@ memory on this machine, and a session started by another session's message canno
 | W-15 | which of the product's questions are decidable? | `claude/godel-w15-difficulty` | done |
 | W-3 | which code should identify a card? | `claude/godel-w3-identity` | done |
 | W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | done |
-| W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | waiting |
+| W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | done |
 | W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | waiting |
 | W-2 | can the content algebra and carry-over be kernel-checked on Mathlib? | `claude/godel-w2-mathlib` | blocked: the Mathlib and Foundation downloads need the user's yes |
 
@@ -127,4 +127,33 @@ not be parsed back. Each set card now states its `arities` (read from the op car
 EC_ADD, EC_SCALAR_MUL and BIT_NOR), and an effect's guard slot holds `logic/true` when the effect always happens.
 The `godel` verify section reports every set's numbering; GM-4 as a law (verify fails on a set without an
 admissible numbering) is the user's decision.
+
+### W-1: Gödel's 46 definitions as cards (Def-2, Def-4, Def-9, Rule-4, Cap-1, Cap-10)
+
+Every definition of section 2 of Gödel's paper (in Martin Hirzel's translation) is a card in `cards/godel1931`, with
+a Python form (`engines/godel1931.py`) and a Lean form (`formal/Godel1931`). The 45 primitive recursive ones are
+functions on codes; definition 46, provable, is a Σ1 proposition in Lean and, in Python, a search that only
+confirms (Def-4).
+
+* **The forms agree.** On 237 seeded calls covering definitions 1 to 45 (numbers, generated
+  formulas of system P, corrupted codes, axioms and proofs), the Python and Lean forms give the same answers. Large
+  codes travel between them as their signs, and results come back as fingerprints (bit length and two residues),
+  because printing a million-bit number in decimal is quadratic.
+* **The codes round-trip**: generated formulas code, decode and parse back to themselves.
+* **The direct forms are Gödel's functions.** Definitions 1 to 7, 11 and 12 also exist as the paper's own bounded
+  searches (`literal`), and on every small input those searches can finish the two agree. Read literally, prFactor
+  does not stop at the last prime factor: past it, it gives 0 and then starts again from the smallest (finding
+  `W1_literal_searches`), and both forms keep that.
+* **The proof checker** (definitions 44 and 45) accepts a five-step proof of p ⇒ p from the propositional schemas
+  and modus ponens (p the elementary formula x2(x1)), and rejects every corruption tried: steps out of order, a
+  premise dropped, the conclusion changed, an axiom replaced. The Peano axioms and the set axiom are written with =
+  expanded as P defines it, ∀x2 (x2(x) ⇒ x2(y)).
+* **Gödel's own codes explode where Ph-2 and Ph-3 say.** The set axiom has 141,771 bits; lifted one type,
+  2,349,852; two types, 40,175,911 (a type-5 variable's sign code is 17^5, in an exponent). A
+  proof's own number, 2^Φ(f1)·3^Φ(f2)···, would need about Φ(f1) bits, so a proof is read as the sequence of its
+  formulas' codes, which is what item(n, x) gives. Definition 41 is decided from the size formula and one
+  comparison, never by factoring.
+
+The Lean forms are executable definitions compared on samples, not proofs that they equal the paper's (that would be
+Cap-10, proof by reflection: W-11 in wave 2).
 

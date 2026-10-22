@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "n ≤ length(x)",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "substitution bookkeeping",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:n_free_places",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.nFreePlaces",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "f52a0c65f791da526b19c66cec4caf71077c304c97f2eb864b3b9b0a31ec9465",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D29_nFreePlaces",
+  "notation": "nFreePlaces(v, x)",
+  "number": 29,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "how many places v is free in x",
+  "tier": 1
+}
