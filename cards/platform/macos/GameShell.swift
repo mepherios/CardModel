@@ -48,6 +48,7 @@ struct Spec: Decodable {
     struct Relift: Decodable { let counter: String; let argv: [String]; let log: String }
     let relift: Relift?            // at quit, when the counter (Int64) is not 0: start argv in the background, once
     let clock: String?             // an Int64 the shell keeps at the Unix time (a cartridge's real-time clock)
+    let clockOffset: String?       // an Int64 the shell keeps at the local time's offset from UTC, in seconds
     let flush: String?             // called before the shell quits (unsaved battery RAM)
 }
 
@@ -127,6 +128,7 @@ final class Game {
     let fullscreen: UnsafeMutablePointer<Int64>
     let saveURL: URL
     var clock: UnsafeMutablePointer<Int64>?
+    var clockOffset: UnsafeMutablePointer<Int64>?
     var flushFn: VoidFn?
     var kept: [(UnsafeMutablePointer<UInt8>, Spec.Keep)] = []
     var touch: (x: UnsafeMutablePointer<Int64>, y: UnsafeMutablePointer<Int64>, down: UnsafeMutablePointer<Int64>)?
@@ -172,6 +174,10 @@ final class Game {
             clock = sym(c).assumingMemoryBound(to: Int64.self)
             clock?.pointee = Int64(Date().timeIntervalSince1970)
         }
+        if let c = spec.clockOffset {
+            clockOffset = sym(c).assumingMemoryBound(to: Int64.self)
+            clockOffset?.pointee = Int64(TimeZone.current.secondsFromGMT())
+        }
         if let f = spec.flush { flushFn = unsafeBitCast(sym(f), to: VoidFn.self) }
         for (name, value) in spec.globals ?? [:] { sym(name).assumingMemoryBound(to: Int64.self).pointee = value }
         for k in spec.keep ?? [] { kept.append((sym(k.symbol).assumingMemoryBound(to: UInt8.self), k)) }
@@ -191,6 +197,7 @@ final class Game {
 
     func step(_ p1: Int64, _ p2: Int64) -> Bool {
         clock?.pointee = Int64(Date().timeIntervalSince1970)
+        clockOffset?.pointee = Int64(TimeZone.current.secondsFromGMT())
         let q = frameFn(p1, p2)
         if saveDirty.pointee != 0 { writeSave() }
         return q != 0

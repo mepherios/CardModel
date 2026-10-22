@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "((int64_t)__builtin_ctzll((uint64_t)({0})))",
+    "go": "UNSUPPORTED",
+    "java": "UNSUPPORTED",
+    "javascript": "UNSUPPORTED",
+    "lean": "UNSUPPORTED",
+    "lua": "UNSUPPORTED",
+    "python": "((({0}) & 0xFFFFFFFFFFFFFFFF) & -(({0}) & 0xFFFFFFFFFFFFFFFF)).bit_length() - 1",
+    "ruby": "UNSUPPORTED",
+    "rust": "UNSUPPORTED",
+    "swift": "UNSUPPORTED"
+  },
+  "godel_set": "bits",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            1,
+            4611686018427387904
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: ((a & 0xFFFFFFFFFFFFFFFF) & -(a & 0xFFFFFFFFFFFFFFFF)).bit_length() - 1",
+    "types": [
+      [
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CTZ64",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "trailing zero bits of a nonzero 64-bit integer",
+  "tier": 1
+}

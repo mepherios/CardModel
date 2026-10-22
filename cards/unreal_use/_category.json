@@ -1,0 +1,7 @@
+{
+  "card_type": "unreal_use",
+  "defined_by": "tools/seed_unreal.py",
+  "description": "What the engine's math is for: per use its members, and the logic they all share (the GCD of their Gödel content) and all need (the LCM).",
+  "name": "unreal_use",
+  "tier": 1
+}

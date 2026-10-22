@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "polynomial size (MAX_TERMS)",
+  "decides": "equality over the reals for the polynomial fragment with uninterpreted atoms: a canonical polynomial with exact rational coefficients, comparisons and conditions normalized, odd and even functions signed",
+  "limits": "identities between atoms beyond parity (sin² + cos² = 1, sqrt(x)² = x) are not used, so equal terms may keep different forms; expansion is bounded",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "normal_form",
+  "procedure": "cardmodel/engines/realnorm.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "equality over the reals for the polynomial fragment with uninterpreted atoms: a canonical polynomial with exact rational coefficients, comparisons and conditions normalized, odd and even functions signed",
+  "status": "built",
+  "tier": 0
+}

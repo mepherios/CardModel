@@ -283,6 +283,9 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "content_vector_coverage":
         gd = secs.get("godel")
         return gd.get("coverage") if gd else None
+    if name in ("unreal_lifted_fraction", "unreal_witnessed_fraction", "unreal_refuted"):
+        from ..unreal import metrics
+        return metrics.goal(st, name)
     if name == "project_card_problems":
         pr = secs.get("projects")
         return len(pr.get("problems", [])) if pr and "problems" in pr else None

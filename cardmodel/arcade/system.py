@@ -218,6 +218,7 @@ def spec(ctx, card, ir, lang: str) -> dict:
         "cartridge": {"symbol": sym(cart["array"]), "bytes": cart["bytes"], "load": sym(cart["load"]),
                       "extensions": cart.get("extensions", []), "zip": bool(cart.get("zip"))},
         "clock": sym(card["clock"]),
+        **({"clockOffset": sym(card["clock_offset"])} if card.get("clock_offset") else {}),
         "flush": sym("player_flush"),
         **({"pointer": {"x": sym(card["pointer"]["x"]), "y": sym(card["pointer"]["y"]),
                         "down": sym(card["pointer"]["down"]), "area": card["pointer"]["area"]}}

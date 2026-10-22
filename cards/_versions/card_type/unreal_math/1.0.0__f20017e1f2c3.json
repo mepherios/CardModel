@@ -1,0 +1,44 @@
+{
+  "applies_to": [
+    "unreal_math"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "unreal_math",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "schema": {
+    "properties": {
+      "file": {
+        "type": "string"
+      },
+      "qual": {
+        "type": "string"
+      },
+      "status": {
+        "enum": [
+          "lifted",
+          "gap",
+          "outside",
+          "refuted"
+        ]
+      },
+      "use": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "qual",
+      "file",
+      "status",
+      "use"
+    ],
+    "type": "object"
+  },
+  "statement": "A game engine's math as observed: one card per function of Unreal Engine's math (its file and line, type, use), lifted to a definition, outside the math universe, or a gap with its cause (cardmodel/unreal, law CM45).",
+  "tier": 0
+}

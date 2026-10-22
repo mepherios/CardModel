@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "unreal_refuted",
+  "name": "G_U12_engine_math_refuted",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "Engine functions whose lifted term the witness refutes (a lifter error, or a difference between the engine's scalar and shipped paths).",
+  "target": 0,
+  "tier": 0
+}

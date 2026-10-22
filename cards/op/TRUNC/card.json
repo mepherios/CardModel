@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 2.0,
+  "emit": {
+    "c": "trunc({0})",
+    "go": "math.Trunc({0})",
+    "java": "UNSUPPORTED",
+    "javascript": "Math.trunc({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "UNSUPPORTED",
+    "python": "float(math.trunc({0}))",
+    "ruby": "(({0}).truncate.to_f)",
+    "rust": "(({0}).trunc())",
+    "swift": "trunc({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: float(math.trunc(a))",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "TRUNC",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "x rounded toward zero, as a float",
+  "tier": 1
+}

@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 20.0,
+  "emit": {
+    "c": "cos({0})",
+    "go": "math.Cos({0})",
+    "java": "Math.cos({0})",
+    "javascript": "Math.cos({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.cos({0})",
+    "python": "math.cos({0})",
+    "ruby": "Math.cos({0})",
+    "rust": "(({0}).cos())",
+    "swift": "cos({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.cos(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "COS",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "cosine (radians)",
+  "tier": 1
+}

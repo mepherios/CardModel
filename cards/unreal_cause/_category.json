@@ -1,0 +1,7 @@
+{
+  "card_type": "unreal_cause",
+  "defined_by": "tools/seed_unreal.py",
+  "description": "Why an engine function is not lifted, and what would close it.",
+  "name": "unreal_cause",
+  "tier": 1
+}

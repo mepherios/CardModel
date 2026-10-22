@@ -39,6 +39,9 @@
   cardmodel difficulty                     the rank of what each method decides; the questions left open (W-15)
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
+  cardmodel unreal locate|scan|witness|show|uses|gcd|emit|cover   a game engine's math as cards (unreal/, CM49):
+                                           lifted through clang, canonical over the reals, Gödel-numbered,
+                                           witnessed against the engine, emitted through the language cards
 
   machines as cards (machine/cli.py):
   cardmodel emu ROM [--headless ...]     run a Game Boy / Color ROM: lifted card IR, native, with a web shell

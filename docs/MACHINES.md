@@ -211,9 +211,12 @@ interpreter does after every instruction, EI's delay counted down): a block whos
 right after EI or once the frame is done, and an entry into the middle of a block (where an interrupt returns)
 run these, one instruction per step; `run_block` switches over every instruction start, to the block it leads or
 to the instruction. HALT, STOP and EI are only lifted on their own. **Code in RAM** (the OAM DMA routine every
-game copies to HRAM, routines copied to work RAM) is lifted one instruction at a time from the bytes the profile
-saw it run with (`ram_seen`, `ram_code`); each lifted RAM instruction first checks that RAM still holds those
-bytes, and during OAM DMA that it is in HRAM, else the interpreter runs it (`run_ram`).
+game copies to HRAM, routines copied to work RAM) is lifted one instruction at a time, from every encoding the
+profiles saw an instruction start with at each address (`ram_ops`, `ram_cb`: 256 bits per address from C000,
+merged by OR like the ROM's bitmaps): one case per encoding, chosen by the opcode RAM holds when it runs, with the
+operands read from RAM then. So routines copied over each other at one address and code that patches its own
+operands run lifted (Pokemon Puzzle Challenge does both); during OAM DMA only HRAM's code runs lifted, and an
+encoding no profile saw there runs in the interpreter (`run_ram`).
 
 **Code found by reasoning** (`machine/absint.py`): recursive descent follows only jumps whose target is written in
 the instruction, so a far call (a bank and an address in registers, a trampoline that switches the bank and jumps
@@ -372,8 +375,8 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   the hand-over is in V-blank as in CGB mode (LY, STAT and LCDC after the boot depend on the header and are not
   tested). The CGB's early line-144 STAT source is measured in single speed; in double speed it is the same 4
   dots, unverified.
-* Lifting: code no profile, static successor or abstract run reached, RAM code whose bytes changed since it was
-  profiled, code in video or cartridge RAM, illegal opcodes and the instruction after a HALT bug run in the
+* Lifting: code no profile, static successor or abstract run reached, RAM code with an encoding no profile saw
+  at its address, code in video or cartridge RAM, illegal opcodes and the instruction after a HALT bug run in the
   interpreter (counted in `interpreted`). The abstract run knows only the constants its own path set (a value
   loaded from memory it did not write is unknown); a table's length is found by its entries, so a table that runs
   into another adds code that may never run (harmless); each run is bounded.

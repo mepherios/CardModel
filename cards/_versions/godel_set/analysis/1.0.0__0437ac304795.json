@@ -1,0 +1,14 @@
+{
+  "category": "godel_set",
+  "extends": "B0",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "analysis",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "Real analysis as the C library computes it: square roots, the trigonometric, exponential and logarithmic families, rounding to integers, fmod, and F32 (rounding to binary32). Atoms of every program that computes with floats; Unreal Engine's math reached them first.",
+  "tier": 0
+}

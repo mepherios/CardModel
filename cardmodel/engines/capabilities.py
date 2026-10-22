@@ -615,6 +615,49 @@ def godel_model(ctx: Ctx, seed: int) -> str:
             f"numbers decode exactly; a map leaves its gap")
 
 
+def unreal_math(ctx: Ctx, seed: int) -> str:
+    """The engine-math pipeline on its fixture (examples/engine_math, not engine code): clang's AST lifted, the
+    canonical forms identify two spellings of one function, the compiled header agrees bit for bit, a wrong term
+    is refuted."""
+    import copy
+
+    from ..kernel import paths
+    from ..unreal import distill as D
+    from ..unreal import engine as UE
+    from ..unreal import scan as US
+    from ..unreal import witness as UW
+    if UE.clang()[0] is None:
+        raise Unavailable("no clang++ on this host (the C++ frontend and the witness need it)")
+    src = paths.home() / "examples" / "engine_math" / "mini_math.h"
+    d = _tmp()
+    try:
+        flags = ["-std=c++20", "-ffp-contract=off", "-x", "c++", f"-I{src.parent}"]
+        fns = {f["qual"]: f for f in US.lift_source(src, flags, d)}
+        cross = fns.get("Mini::TVec<double>::Cross")
+        _need(cross and cross["status"] == "lifted", f"the cross product did not lift: {cross and cross.get('cause')}")
+        x = next(o["term"] for o in cross["outputs"] if o["name"] == "return.X")
+        _need(x == ["SUB", ["MUL", ["var", "A.Y"], ["var", "B.Z"]], ["MUL", ["var", "A.Z"], ["var", "B.Y"]]],
+              f"the cross product's X is {x}")
+        h = [D.distill_function(fns[q], {})["hash"] for q in ("Mini::TVec<double>::Dot",
+                                                               "Mini::TVec<double>::DotSwapped")]
+        _need(h[0] == h[1], "two spellings of the dot product got different canonical forms")
+        some = [fns[q] for q in ("Mini::TVec<double>::Cross", "Mini::MathLite::SmoothStep", "Mini::MathLite::Hash")]
+        target = UW.Target([f'#include "{src.name}"'], ["-std=c++20", "-ffp-contract=off", f"-I{src.parent}"], [], d)
+        v = UW.run(target, some, seed, log=lambda m: None, cases=8)
+        bad = {k: r for k, r in v.items() if r["status"] != "witnessed"}
+        _need(not bad, f"the compiled header disagrees with the terms: {bad}")
+        wrong = copy.deepcopy(cross)
+        o = next(o for o in wrong["outputs"] if o["name"] == "return.Y")
+        o["term"] = ["SUB", o["term"][2], o["term"][1]]
+        v2 = UW.run(target, [wrong], seed, log=lambda m: None, cases=8)
+        _need(v2[wrong["key"]]["status"] == "refuted", f"a wrong term was not refuted: {v2}")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    n = len(ctx.store.cards("unreal_math"))
+    return (f"a C++ header lifted through clang, two spellings of one function share a canonical form, the compiled "
+            f"code agrees bit for bit, a wrong term is refuted; {n} engine functions as cards")
+
+
 def anyps5(ctx: Ctx, seed: int) -> str:
     if not ctx.store.cards("anyps5_export"):
         raise Unavailable("no AnyPS5 scan in the store (cardmodel anyps5 scan PATH --save)")
@@ -653,8 +696,8 @@ CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_sel
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
                                   world, machines, symbolic_instructions, emulation, arcade, live_hub, godel_model,
-                                  distillation, four_sources, witness_tiers, formal_core, anyps5, self_run,
-                                  integration)}
+                                  distillation, four_sources, witness_tiers, formal_core, unreal_math, anyps5,
+                                  self_run, integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

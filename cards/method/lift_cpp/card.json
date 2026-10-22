@@ -1,0 +1,30 @@
+{
+  "category": "method",
+  "complexity": "loops without a constant bound",
+  "decides": "a C++ function's meaning as core terms, by symbolic execution of the typed AST clang builds (templates instantiated, macros expanded, overloads resolved): records as scalar slots, branches merged as IF_EXPR, calls inlined, the C library as atoms",
+  "limits": "linear in the unrolled function; loops whose condition depends on the inputs, pointer arithmetic, type punning, bitfields and recursion are gaps with their causes; signed overflow is assumed absent",
+  "metadata": {
+    "previous_content_hash": "ee350b59d57f11ad1b5e01e3cbd8d243560299b8bbd37f277b5bc3faedc5210b",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "lift_cpp",
+  "procedure": "cardmodel/unreal/lift.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "rank": {
+    "cites": [
+      "Ph-15"
+    ],
+    "decides": "decidable",
+    "general": "does the lifted term equal the compiled function on every input",
+    "general_rank": "Π1",
+    "question": "the core terms symbolic execution gives a C++ function within its budgets, or the cause that stops it",
+    "why": "the lift is a total procedure with step and size budgets; equality with the compiled code is a ∀ over the inputs, refuted by one counterexample (the witness), undecidable in general (Rice)"
+  },
+  "statement": "a C++ function's meaning as core terms, by symbolic execution of the typed AST clang builds (templates instantiated, macros expanded, overloads resolved): records as scalar slots, branches merged as IF_EXPR, calls inlined, the C library as atoms",
+  "status": "built",
+  "tier": 0
+}

@@ -247,9 +247,9 @@ def cmd_arcade(args) -> int:
             f"{lf.get('single_instructions', 0):,} instructions on their own, {lf['ram_instructions_lifted']} RAM "
             f"instructions; found by reasoning: {lf.get('static', {}).get('far', 0):,} far calls, "
             f"{lf.get('static', {}).get('tables', 0):,} jump-table entries",
-            f"  witness: {w['frames']:,} frames identical to the plain player; {100 * w['purity']:.2f} % of the "
-            f"{w['instructions']:,} instructions ran as lifted card IR ({w['interpreted']:,} interpreted, "
-            f"{w['interpreted_ram']:,} of them in RAM)",
+            f"  witness: {w['frames']:,} frames identical to the plain player (a walk with seed {w['seed']}, round "
+            f"{w['rounds']}); {100 * w['purity']:.2f} % of the {w['instructions']:,} instructions ran as lifted card "
+            f"IR ({w['interpreted']:,} interpreted, {w['interpreted_ram']:,} of them in RAM)",
             f"  saves: {info['saves']}  ({info['seconds']} s)"]))
         return 0
     if args.action == "serve":

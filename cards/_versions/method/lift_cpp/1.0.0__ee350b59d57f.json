@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "loops without a constant bound",
+  "decides": "a C++ function's meaning as core terms, by symbolic execution of the typed AST clang builds (templates instantiated, macros expanded, overloads resolved): records as scalar slots, branches merged as IF_EXPR, calls inlined, the C library as atoms",
+  "limits": "linear in the unrolled function; loops whose condition depends on the inputs, pointer arithmetic, type punning, bitfields and recursion are gaps with their causes; signed overflow is assumed absent",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "lift_cpp",
+  "procedure": "cardmodel/unreal/lift.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "a C++ function's meaning as core terms, by symbolic execution of the typed AST clang builds (templates instantiated, macros expanded, overloads resolved): records as scalar slots, branches merged as IF_EXPR, calls inlined, the C library as atoms",
+  "status": "built",
+  "tier": 0
+}

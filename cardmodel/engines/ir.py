@@ -103,7 +103,7 @@ def _floor_div(a, b):
 _EVAL_NS = {"__builtins__": {"abs": abs, "min": min, "max": max, "pow": pow, "float": float, "int": int,
                              "bool": bool, "round": round, "divmod": divmod, "ZeroDivisionError": ZeroDivisionError,
                              "ValueError": ValueError},
-            "math": __import__("math")}
+            "math": __import__("math"), "struct": __import__("struct")}   # struct: binary32 rounding, float bits
 
 
 def walk_expr(e):

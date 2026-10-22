@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 25.0,
+  "emit": {
+    "c": "asin({0})",
+    "go": "math.Asin({0})",
+    "java": "Math.asin({0})",
+    "javascript": "Math.asin({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.asin({0})",
+    "python": "math.asin({0})",
+    "ruby": "Math.asin({0})",
+    "rust": "(({0}).asin())",
+    "swift": "asin({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1.0,
+            1.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.asin(a) if -1.0 <= a <= 1.0 else float('nan')",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ASIN",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "arcsine (NaN outside [-1, 1])",
+  "tier": 1
+}

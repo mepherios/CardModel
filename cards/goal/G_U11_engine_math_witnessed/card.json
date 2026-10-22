@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "unreal_witnessed_fraction",
+  "name": "G_U11_engine_math_witnessed",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "Fraction of the engine's definitions witnessed against its compiled code (bit-exact or within a few ulps).",
+  "target": 0.9,
+  "tier": 0
+}

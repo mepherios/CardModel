@@ -46,11 +46,12 @@ from . import system as S
 SYSTEM = "gameboy"
 EXPLORE_FRAMES = 30000             # 8 1/3 minutes of the cartridge's time, a few seconds of the interpreter's
 WITNESS_FRAMES = 2400
+ROUNDS = 3                          # witnesses per build: what one interprets joins the profile for the next
 MIN_FREE_BYTES = 3 << 30            # a build compiles tens of MB of objects: refuse on a nearly full disk
 BUTTONS = (0x10, 0x10, 0x10, 0x80, 0x20, 0x04, 0x08, 0x02, 0x01, 0x04, 0x08, 0x10)   # A most often, START, B, moves
 # what the app keeps beside the save while it is played: (array, file, how a new session merges in)
 KEEP = (("seen", "profile-seen.bin", "or"), ("entries", "profile-entries.bin", "or"),
-        ("ram_seen", "profile-ram-seen.bin", "or"), ("ram_code", "profile-ram-code.bin", "copy"))
+        ("ram_ops", "profile-ram-ops.bin", "or"), ("ram_cb", "profile-ram-cb.bin", "or"))
 
 
 def explore(seed: int):
@@ -115,7 +116,7 @@ def lifted_player(ctx, rom: bytes, row: dict, say=lambda msg: None) -> tuple[dic
     n0 = len(cache)
     say("lifting the cartridge's code into card IR")
     blocks, ram, rep = lift.lift_blocks(ctx, rom, rom_size(rom) - 1, prof["seen"], prof["entries"], SYSTEM, cache,
-                                        prof["ram_seen"], prof["ram_code"])
+                                        prof["ram_ops"], prof["ram_cb"])
     if len(cache) != n0:
         tmp = bc.with_suffix(".tmp")
         tmp.write_text(json.dumps(cache), encoding="utf-8")
@@ -124,8 +125,7 @@ def lifted_player(ctx, rom: bytes, row: dict, say=lambda msg: None) -> tuple[dic
     player = S.module(ctx, SYSTEM)
     mod = lift.lifted_module(player, blocks, ram)
     h = hashlib.sha256()
-    for part in (player["hash"], machine_ir["hash"], row["sha1"], *[prof[k] for k in ("seen", "entries", "ram_seen",
-                                                                                        "ram_code")]):
+    for part in (player["hash"], machine_ir["hash"], row["sha1"], *[prof[k] for k in lift.PROFILE]):
         h.update(part if isinstance(part, bytes) else part.encode())
         h.update(b"\0")
     h.update(Path(lift.__file__).read_bytes())
@@ -133,15 +133,17 @@ def lifted_player(ctx, rom: bytes, row: dict, say=lambda msg: None) -> tuple[dic
     return mod, rep
 
 
-def witness(ctx, mod: dict, lib: Path, lang: str, rom: bytes, frames: int | None = None) -> dict:
-    """The lifted player against the plain one, frame by frame with the same buttons: pictures and sound equal;
-    and how much of the cartridge's code ran as lifted card IR."""
+def witness(ctx, mod: dict, lib: Path, lang: str, rom: bytes, frames: int | None = None, seed: int = 2) -> dict:
+    """The lifted player against the plain one, frame by frame with the same buttons (a seeded walk no profile
+    took): pictures and sound equal; how much of the cartridge's code ran as lifted card IR; and what the
+    interpreter ran instead, as a profile (``_profile``)."""
     frames = frames or WITNESS_FRAMES
     plain = S.Player(ctx, SYSTEM, rom, fresh=True)
     m = N.CABIMachine(ctx, mod, lang, lib_path=lib, fresh=True)
     lifted = S.Player(ctx, SYSTEM, rom, machine=m, ir=mod)
     m.set("lifted_on", 1)
-    press = explore(2)
+    m.set("profiling", 1)                         # as the app runs: the interpreter marks what it runs
+    press = explore(seed)
     first = None
     best = (0, None)
     for f in range(frames):
@@ -157,9 +159,11 @@ def witness(ctx, mod: dict, lib: Path, lang: str, rom: bytes, frames: int | None
             if colours * 2 >= best[0]:
                 best = (max(best[0], colours), a)
     total, interp = m.get("instructions"), m.get("interpreted")
+    n = rom_size(rom) // 8
+    ran = {"seen": m.read("seen", 0, n), "entries": m.read("entries", 0, n), **lift.ram_profile(m)}
     return {"identical": first is None, "first_difference": first, "frames": frames if first is None else first + 1,
-            "instructions": total, "interpreted": interp, "interpreted_ram": m.get("interpreted_ram"),
-            "purity": round(1 - interp / max(1, total), 5), "_picture": best[1] or lifted.rgba()}
+            "seed": seed, "instructions": total, "interpreted": interp, "interpreted_ram": m.get("interpreted_ram"),
+            "purity": round(1 - interp / max(1, total), 5), "_picture": best[1] or lifted.rgba(), "_profile": ran}
 
 
 def icon_rgba(frame: bytes, w: int, h: int) -> bytes:
@@ -191,15 +195,22 @@ def build(ctx, rom_path: Path, install: bool = False, progress=None) -> dict:
     free = shutil.disk_usage(out).free
     if free < MIN_FREE_BYTES:
         raise RuntimeError(f"only {free >> 20} MB free on the disk; an app build needs {MIN_FREE_BYTES >> 30} GB")
-    mod, rep = lifted_player(ctx, rom, row, say)
     plat = B.platform_card(ctx.store, card)
     lang = plat["library"]["language"]
-    say(f"compiling {rep['blocks']:,} blocks and {rep['ram_instructions_lifted']} RAM instructions natively")
-    lib = lift.build_parts(ctx, mod, lang, out, prune=True)     # this build's parts stay: a relift reuses them
-    say(f"witness: {WITNESS_FRAMES:,} frames next to the plain player")
-    wit = witness(ctx, mod, lib, lang, rom)
-    if not wit["identical"]:
-        raise RuntimeError(f"the lifted player differs from the plain one at frame {wit['first_difference']}")
+    for rnd in range(ROUNDS):
+        mod, rep = lifted_player(ctx, rom, row, say)
+        say(f"compiling {rep['blocks']:,} blocks and {rep['ram_instructions_lifted']} RAM instructions natively")
+        lib = lift.build_parts(ctx, mod, lang, out, prune=True)     # this build's parts stay: a relift reuses them
+        say(f"witness: {WITNESS_FRAMES:,} frames next to the plain player")
+        wit = witness(ctx, mod, lib, lang, rom, seed=2 + rnd)
+        if not wit["identical"]:
+            raise RuntimeError(f"the lifted player differs from the plain one at frame {wit['first_difference']}")
+        ran = wit.pop("_profile")
+        if wit["interpreted"] == 0 or rnd == ROUNDS - 1:
+            break
+        say(f"the interpreter ran {wit['interpreted']:,} instructions: lifting them too, then a walk with a new seed")
+        lift.add_profile(lift.cache_dir(ctx, row["sha1"], Bd.module(ctx, SYSTEM)["hash"]), ran)
+    wit["rounds"] = rnd + 1
     picture = wit.pop("_picture")
     say("packing the app")
     exe = B.shell_binary(ctx, plat)
@@ -209,7 +220,7 @@ def build(ctx, rom_path: Path, install: bool = False, progress=None) -> dict:
     sym = em.ident
     sp.update(id=row["id"], title=row["title"])
     sp["cartridge"]["path"] = str(path)
-    sizes = {"seen": rom_size(rom) // 8, "entries": rom_size(rom) // 8, "ram_seen": 0x1000, "ram_code": 0x8000}
+    sizes = {"seen": rom_size(rom) // 8, "entries": rom_size(rom) // 8, "ram_ops": 0x80000, "ram_cb": 0x80000}
     sp["keep"] = [{"symbol": sym(a), "bytes": sizes[a], "file": f, "mode": mode} for a, f, mode in KEEP]
     sp["globals"] = {sym("lifted_on"): 1, sym("profiling"): 1}
     argv = [str(paths.home() / "bin" / "cardmodel"), "arcade", "app", str(path)] + (["--install"] if install else [])
