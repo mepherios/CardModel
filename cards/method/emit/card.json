@@ -4,13 +4,26 @@
   "decides": "code in any language card from a core term",
   "limits": "a language card without a template for an op is a gap; correctness is witnessed by running, not proved",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "5f91f338efecee503d5738f8381b451fb5810a5c76af7f4065e45a2682bfe428",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "emit",
   "procedure": "cardmodel/engines/codegen.py",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Rule-17",
+      "Ph-15"
+    ],
+    "decides": "decidable",
+    "general": "does the emitted code equal its definition on every input",
+    "general_rank": "Π1",
+    "question": "the code a language card gives for a core term",
+    "why": "emission is a total translation; equality of two total programs is ∀ over inputs (Rice: undecidable in general)"
   },
   "statement": "code in any language card from a core term",
   "status": "built",

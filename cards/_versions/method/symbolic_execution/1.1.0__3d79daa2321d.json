@@ -1,0 +1,20 @@
+{
+  "category": "method",
+  "complexity": "linear in the semantics (both sides of every condition)",
+  "decides": "an instruction card's meaning as core terms over symbolic registers and the bytes it reads, with its bus effects and their conditions (MATH_CORE phase 0, F5)",
+  "limits": "checked against the executable semantics on seeded states, not yet exhaustively or by proof; no loops",
+  "metadata": {
+    "previous_content_hash": "b96e78089b1dde471ef5777e3039eaead0080b7181025477ba2e3914c88de6a6",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "symbolic_execution",
+  "procedure": "cardmodel/machine/symbolic.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "an instruction card's meaning as core terms over symbolic registers and the bytes it reads, with its bus effects and their conditions (MATH_CORE phase 0, F5)",
+  "status": "built",
+  "tier": 0
+}

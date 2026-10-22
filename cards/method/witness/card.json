@@ -4,13 +4,27 @@
   "decides": "agreement of two implementations on seeded inputs",
   "limits": "sampling: it can refute, never prove",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "3747cc90518b23f337e7ac937f80527f3025b5ebadf75e097bed1df2452f2901",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "witness",
   "procedure": "cardmodel/engines/witness.py",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Ph-15",
+      "GM-7",
+      "Rule-17"
+    ],
+    "decides": "decidable",
+    "general": "do they agree on every input",
+    "general_rank": "Π1",
+    "question": "whether two implementations agree on the seeded inputs, each run under a time limit",
+    "why": "finitely many runs under a time limit decide; agreement everywhere is a ∀, so a witness can refute it, never confirm it (tier sample)"
   },
   "statement": "agreement of two implementations on seeded inputs",
   "status": "built",

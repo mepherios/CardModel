@@ -3,7 +3,8 @@
   "branches": [
     "claude/jolly-liskov-*",
     "claude/compassionate-margulis-*",
-    "claude/elated-mestorf-*"
+    "claude/elated-mestorf-*",
+    "worktree-universal-domains"
   ],
   "category": "project",
   "docs": [
@@ -34,8 +35,8 @@
     "terminal-launch store entries for combat and world"
   ],
   "metadata": {
-    "previous_content_hash": "5945aaf8b14a63fd112983a33bacd1bb37186802d20f6c8afa537cd808c396a5",
-    "version": "2.0.8",
+    "previous_content_hash": "9f705f9ab24d56718414c2eab2bedfa9a70ffdcaf8a3ecdb9f89e307f004d791",
+    "version": "2.0.9",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -80,7 +81,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T02:16:39+02:00",
+  "updated": "2026-10-22T02:49:23+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",

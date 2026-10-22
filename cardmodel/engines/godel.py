@@ -441,7 +441,10 @@ def check(ctx) -> dict:
                 probs.append(f"{c.qualified}: atoms not in the ledger: {absent[:4]}")
     total = done + len(missing)
     sets = Counter(e["set"] for e in entries)
+    from . import numbering
+    nb = numbering.check(ctx)                      # GM-4 is a proposal: reported here, not yet a failure
     return {"status": "fail" if probs else ("pass" if entries else "vacuous"), "problems": probs,
+            "numberings": {s: v["status"] for s, v in nb["sets"].items()}, "numbering_problems": nb["problems"],
             "atoms": len(entries), "basis": basis_version(entries), "events": len(evs), "sets": dict(sets),
             "coverage": round(done / total, 4) if total else None, "missing": missing[:20]}
 

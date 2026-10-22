@@ -7,21 +7,28 @@
   "docs": [
     "docs/GODEL_METHOD.md"
   ],
-  "done": [],
+  "done": [
+    "engines/numbering.py: six conditions from Def-1, Rule-1 to Rule-6, Feferman and Grabmayr",
+    "every godel_set card states its numbering, arities and witness test",
+    "tests/test_numbering.py: one test per set, and deviant numberings that fail",
+    "findings W5_admissible_numberings, W5_arity_gaps"
+  ],
   "goal": "What makes a numbering admissible in each domain?",
   "in_progress": [],
   "kind": "research",
   "left": [
-    "admissibility conditions drawn from Feferman and Grabmayr",
-    "a test for each Gödel set"
+    "GM-4 as a law needs the user's yes",
+    "new Gödel sets (physics, chemistry, design on worktree-universal-domains) will need the same statement"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "c8c82ce255ea0e943764ac2816a2e684f7e180060164dfb043cfe1af8c474f0c",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [],
   "name": "godel_w5_numberings",
   "next_steps": [
-    "start on claude/godel-w5-*"
+    "merge after verify"
   ],
   "order": 43,
   "owner": {
@@ -37,10 +44,10 @@
     "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
     "tool": "tools/seed_godel_method.py"
   },
-  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "standing": "Done on claude/godel-w5-numberings: every Gödel set states its numbering and passes six admissibility conditions; two sets needed their arities stated first.",
   "statement": "Gödel method research program, wave 1: What makes a numbering admissible in each domain?",
   "tier": 1,
   "title": "W-5 Admissible numberings",
-  "updated": "2026-10-22T02:22:50+02:00",
+  "updated": "2026-10-22T02:53:52+02:00",
   "user_actions": []
 }

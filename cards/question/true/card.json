@@ -1,0 +1,20 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-13"
+  ],
+  "instead": "truth has no arithmetical definition inside the system (Tarski): truth cards are checked from outside, by Lean or by labelled samples",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "true",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "beyond",
+  "statement": "Is this arithmetic sentence true?",
+  "tier": 0
+}
