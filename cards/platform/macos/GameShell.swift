@@ -41,6 +41,9 @@ struct Spec: Decodable {
     let keep: [Keep]?              // arrays kept beside the save: bits ORed in ("or"), or bytes that are set copied
                                    // over ("copy"): what ran where, for the next build of an app for one cartridge
     let globals: [String: Int64]?  // Int64 globals set before the module starts (e.g. profiling on)
+    struct Area: Decodable { let x: Int; let y: Int; let width: Int; let height: Int }
+    struct Pointer: Decodable { let x: String; let y: String; let down: String; let area: Area }
+    let pointer: Pointer?          // a touch screen: the left button held inside area (screen pixels) sets down, x, y
     let clock: String?             // an Int64 the shell keeps at the Unix time (a cartridge's real-time clock)
     let flush: String?             // called before the shell quits (unsaved battery RAM)
 }
@@ -95,6 +98,7 @@ final class Game {
     var clock: UnsafeMutablePointer<Int64>?
     var flushFn: VoidFn?
     var kept: [(UnsafeMutablePointer<UInt8>, Spec.Keep)] = []
+    var touch: (x: UnsafeMutablePointer<Int64>, y: UnsafeMutablePointer<Int64>, down: UnsafeMutablePointer<Int64>)?
 
     init(bundle: Bundle, saveDir: URL?, romPath: String?) {
         let specURL = bundle.url(forResource: "game", withExtension: "json")!
@@ -133,6 +137,10 @@ final class Game {
         if let f = spec.flush { flushFn = unsafeBitCast(sym(f), to: VoidFn.self) }
         for (name, value) in spec.globals ?? [:] { sym(name).assumingMemoryBound(to: Int64.self).pointee = value }
         for k in spec.keep ?? [] { kept.append((sym(k.symbol).assumingMemoryBound(to: UInt8.self), k)) }
+        if let pt = spec.pointer {
+            touch = (sym(pt.x).assumingMemoryBound(to: Int64.self), sym(pt.y).assumingMemoryBound(to: Int64.self),
+                     sym(pt.down).assumingMemoryBound(to: Int64.self))
+        }
         if let data = try? Data(contentsOf: saveURL) {
             data.withUnsafeBytes { raw in
                 let n = min(raw.count, spec.save.bytes)
@@ -292,6 +300,12 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if e.modifierFlags.contains(.command) { return e }
             return nil
         }
+        if game.spec.pointer != nil {
+            NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp]) { [weak self] e in
+                self?.mouse(e)
+                return e
+            }
+        }
         startAudio()
         menu()
         timer = Timer(timeInterval: 1.0 / 240.0, repeats: true) { [weak self] _ in self?.tick() }
@@ -396,6 +410,26 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return (p1, p2)
     }
 
+    // the pointer on a touch screen: where the left button is, in the screen's pixels (the picture is fitted into
+    // the view keeping its shape), relative to the touch area; down only while it is held inside the area
+    var pointerAt: (Int64, Int64, Int64) = (0, 0, 0)
+    func mouse(_ e: NSEvent) {
+        guard let pt = game.spec.pointer, e.window == window else { return }
+        if e.type == .leftMouseUp { pointerAt.2 = 0; return }
+        let s = game.spec.screen
+        let b = view.bounds
+        let k = min(b.width / CGFloat(s.width), b.height / CGFloat(s.height))
+        let ox = (b.width - CGFloat(s.width) * k) / 2, oy = (b.height - CGFloat(s.height) * k) / 2
+        let p = view.convert(e.locationInWindow, from: nil)
+        let px = Int((p.x - ox) / k), py = Int((b.height - p.y - oy) / k)
+        let a = pt.area
+        if px >= a.x && px < a.x + a.width && py >= a.y && py < a.y + a.height {
+            pointerAt = (Int64(px - a.x), Int64(py - a.y), 1)
+        } else {
+            pointerAt.2 = 0
+        }
+    }
+
     func tick() {
         let now = CACurrentMediaTime()
         acc += now - last
@@ -406,6 +440,7 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
         while acc >= dt {
             acc -= dt
             let (p1, p2) = inputs()
+            if let t = game.touch { t.x.pointee = pointerAt.0; t.y.pointee = pointerAt.1; t.down.pointee = pointerAt.2 }
             if game.step(p1, p2) { NSApp.terminate(nil); return }
             game.drainAudio(into: ring)
             if game.fullscreen.pointee != 0 { game.fullscreen.pointee = 0; window.toggleFullScreen(nil) }

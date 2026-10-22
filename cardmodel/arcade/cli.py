@@ -208,7 +208,9 @@ def cmd_arcade(args) -> int:
         cli._out(args, info, "\n".join([
             f"{info['title']}: {info['installed'] or info['app']}",
             f"  lifted: {lf['blocks']:,} blocks ({lf['instructions_lifted']:,} instructions), "
-            f"{lf['ram_instructions_lifted']} RAM instructions",
+            f"{lf.get('single_instructions', 0):,} instructions on their own, {lf['ram_instructions_lifted']} RAM "
+            f"instructions; found by reasoning: {lf.get('static', {}).get('far', 0):,} far calls, "
+            f"{lf.get('static', {}).get('tables', 0):,} jump-table entries",
             f"  witness: {w['frames']:,} frames identical to the plain player; {100 * w['purity']:.2f} % of the "
             f"{w['instructions']:,} instructions ran as lifted card IR ({w['interpreted']:,} interpreted, "
             f"{w['interpreted_ram']:,} of them in RAM)",

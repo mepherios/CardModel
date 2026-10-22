@@ -86,8 +86,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   CM40) is installed like a game; every cartridge in the user's folders is a library entry, played where it is,
   with the survey's verdict and a title screen the machine draws; the DS is listed with its coverage.
 * 🔵 **A cartridge's code as cards, as its own app**: `arcade app ROM` packs the Game Boy Player with the cartridge's
-  lifted code (every instruction of a block an entry; HALT, STOP, EI and the code copied into RAM lifted too);
-  Pokemon Crystal runs 98.4 % lifted on an unseen run, frame-identical to the interpreter.
+  lifted code (blocks plus every instruction on its own; HALT, STOP, EI and the code copied into RAM lifted too;
+  far calls and jump tables found by an abstract run of the machine's cards); nine Pokemon cartridges run
+  98.4-99.6 % lifted on unseen runs, frame-identical to the interpreter.
 * 🔵 **Work in progress in the launcher**: a Work tab with every session's branch and its programs; a program's
   version on a branch installs like a beta (built there with that branch's own code); Update falls back to the
   last good build when the cards in progress do not build; every title and datum on the pages opens something.

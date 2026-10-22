@@ -389,9 +389,12 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
 * **A cartridge as its own app** (`arcade/cartapp.py`, `cardmodel arcade app ROM --install`): the Game Boy
   Player with the cartridge's code lifted into card IR, witnessed against the plain player, packed as
   `~/Applications/Cardmodel Games/<title>.app`. The lifter (`machine/lift.py`, docs/MACHINES.md section 4) now
-  makes every instruction of a block an entry, lifts HALT, STOP and EI, and lifts the code a cartridge copies into
-  RAM behind byte guards; the machine counts what still runs in the interpreter (`interpreted`). Pokemon Crystal:
-  98.4 % lifted on an unseen run; the app keeps what the interpreter ran while played, the next build lifts it.
+  lifts every instruction start on its own besides the blocks (near events, after EI, mid-block entries), lifts
+  HALT, STOP and EI, and lifts the code a cartridge copies into RAM behind byte guards; the machine counts what
+  still runs in the interpreter (`interpreted`). `machine/absint.py` finds more code by an abstract run of the
+  machine's cards (far calls through bank-switching trampolines, jump tables); `arcade app` runs it once per
+  cartridge. Pokemon Crystal: 98.4 % lifted on an unseen run; the app keeps what the interpreter ran while
+  played, and the next build lifts it.
 * Witnesses: `tests/test_arcade.py` (CM35), `tests/test_arcade_systems.py` (CM40), `tests/test_arcade_work.py`,
   `tests/test_cartapp.py`.
 * What is in the store and what the model does for each piece: docs/STORE.md. Install the launcher from this

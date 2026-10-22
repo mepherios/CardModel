@@ -48,7 +48,10 @@ def is_system(store, gid: str) -> bool:
 
 def tables(ctx, card) -> str:
     """The cartridge card's tables as card-language arrays (the language has no records): per type byte its
-    controller kind and features, the RAM size codes, the multicart signature, the player's sample rate."""
+    controller kind and features, the RAM size codes, the multicart signature, the player's sample rate. A system
+    card without ``tables`` (its player reads its cartridge's layout through card constants) gets the rate only."""
+    if not card.get("tables"):
+        return f"const PLAYER_RATE = {int(card['audio']['rate'])}\n"
     cc = ctx.store.get(card["tables"])
     kinds = cc.get("mbc_kind") or {}
     types = cc.get("types") or {}
@@ -173,6 +176,9 @@ def spec(ctx, card, ir, lang: str) -> dict:
                       "extensions": cart.get("extensions", []), "zip": bool(cart.get("zip"))},
         "clock": sym(card["clock"]),
         "flush": sym("player_flush"),
+        **({"pointer": {"x": sym(card["pointer"]["x"]), "y": sym(card["pointer"]["y"]),
+                        "down": sym(card["pointer"]["down"]), "area": card["pointer"]["area"]}}
+           if card.get("pointer") else {}),
     }
 
 

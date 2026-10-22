@@ -1,8 +1,9 @@
 """cartapp — one cartridge as an app of its own, its code lifted into cards (`cardmodel arcade app ROM`).
 
 The Game Boy Player (system/gameboy: the machine cards plus player.card) with the cartridge's own code lifted
-into card IR (machine/lift.py: every block the profile found, every instruction of a block an entry, the code
-the cartridge copies into RAM), compiled natively in parts and packed with the platform card's shell as
+into card IR (machine/lift.py: every block a profile found or the abstract run of the machine's cards found by
+reasoning, machine/absint.py: far calls and jump tables; every instruction also on its own; the code the
+cartridge copies into RAM), compiled natively in parts and packed with the platform card's shell as
 ``<title>.app``. The cartridge is read where it is when the app starts (never copied). Saves go where the
 arcade's library keeps that cartridge's (``~/Library/Application Support/Cardmodel Arcade/saves/<id>``), so the
 app and the library play the same save. The app keeps, beside the save, what the interpreter still had to run
@@ -29,6 +30,7 @@ import time
 from pathlib import Path
 
 from ..engines.codegen import Emitter
+from ..machine import absint
 from ..machine import build as Bd
 from ..machine import gb as G
 from ..machine import lift
@@ -92,6 +94,17 @@ def lifted_player(ctx, rom: bytes, row: dict, say=lambda msg: None) -> tuple[dic
     if played:
         say("adding what the app ran in the interpreter while it was played")
         lift.add_profile(d, played)
+    static = d / f"static-{absint.VERSION}.json"
+    if not static.is_file():
+        say("finding more of the code by reasoning: far calls and jump tables, through the machine's cards")
+        prof = lift.stored_profile(d)
+        leaders = lift.discover(ctx.store, rom, rom_size(rom) - 1, prof["seen"], prof["entries"])["leaders"]
+        r = absint.discover(ctx, rom, rom_size(rom) - 1, leaders)
+        ent = bytearray(rom_size(rom) // 8)
+        for k in r.pop("entries"):
+            ent[(k >> 1) >> 3] |= 1 << ((k >> 1) & 7)
+        lift.add_profile(d, {"entries": bytes(ent)})
+        static.write_text(json.dumps(r), encoding="utf-8")
     prof = lift.stored_profile(d)
     bc = d / "blocks.json"
     cache = json.loads(bc.read_text(encoding="utf-8")) if bc.is_file() else {}
@@ -103,6 +116,7 @@ def lifted_player(ctx, rom: bytes, row: dict, say=lambda msg: None) -> tuple[dic
         tmp = bc.with_suffix(".tmp")
         tmp.write_text(json.dumps(cache), encoding="utf-8")
         tmp.replace(bc)
+    rep["static"] = json.loads(static.read_text(encoding="utf-8"))
     player = S.module(ctx, SYSTEM)
     mod = lift.lifted_module(player, blocks, ram)
     h = hashlib.sha256()

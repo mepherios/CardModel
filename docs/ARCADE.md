@@ -167,7 +167,8 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   playable: the DS picture, sound and input hardware have no cards yet.
 * **One cartridge as its own app** (`arcade/cartapp.py`, `cardmodel arcade app ROM [--install]`): the Game Boy
   Player with the cartridge's own code lifted into card IR (docs/MACHINES.md section 4: every block a long
-  profile found, every instruction of a block an entry, the code the cartridge copies into RAM), compiled
+  profile found or an abstract run of the machine's cards found by reasoning, every instruction also on its own,
+  the code the cartridge copies into RAM), compiled
   natively and packed as `<title>.app` (with `--install`: in `~/Applications/Cardmodel Games`). The cartridge is
   read where it is when the app starts; the app shares its save folder with the library's entry for that
   cartridge. Before packing, the lifted player plays the cartridge headless next to the plain one with the same
