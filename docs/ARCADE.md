@@ -3,8 +3,9 @@
 **Vector Duel** is a complete game whose every rule, number, picture and sound is decided by cards: the move
 and fighter cards of the Vector Counter System (game/DESIGN.md), the combat kernel `stdlib/combat.card`, and the
 game's own card-language logic. It compiles through the C language card into native code and runs in a native
-macOS window. **Cardmodel Arcade** is the launcher: a store, a library and downloads, laid out like the big PC
-launchers, that installs builds of the game made by the card model and launches them (law CM35).
+macOS window, and on iPhone and iPad (section 6). **Cardmodel Arcade** is the launcher: a store, a library and
+downloads, laid out like the big PC launchers, that installs builds of the game made by the card model and
+launches them (law CM35).
 
 ```bash
 ./bin/cardmodel arcade launcher --install        # build Cardmodel Arcade.app into ~/Applications
@@ -38,6 +39,22 @@ launchers, that installs builds of the game made by the card model and launches 
 ./bin/cardmodel arcade check                     # every catalogue item launched through the store (CM42)
 ```
 
+```bash
+./bin/cardmodel arcade build vector_duel --platform ios   # the same game for the iOS Simulator (section 6)
+```
+
+```bash
+./bin/cardmodel arcade launcher --platform ios --install   # Cardmodel Arcade for iPhone and iPad, in a Simulator
+```
+
+```bash
+./bin/cardmodel arcade launcher --platform ios --check vector_duel   # the store in the Simulator, headless
+```
+
+```bash
+./bin/cardmodel arcade pair                      # a code that pairs an iPhone or iPad with this Mac's service
+```
+
 ## 1. What is a card here
 
 | card | holds |
@@ -47,7 +64,9 @@ launchers, that installs builds of the game made by the card model and launches 
 | `move/*`, `fighter/*`, `chain/*`, `payoff/default`, `stdlib/combat.card` | the rules (the same cards `cardmodel game check` proves laws about); a chain card is one link of a string |
 | `asset/font_5x7` | the font |
 | `platform/macos` | how a module becomes a macOS app: the library's language card, the effect shell (`GameShell.swift`) and its compile command, the bundle layout, the icon tool |
+| `platform/ios` | how a module becomes an iPhone and iPad app, for three targets (the iOS Simulator, a real device, this Mac as an iPad app through Mac Catalyst): each target's SDK, triple, environment and signature, the library's language card and the target's flags, the UIKit effect shell (`GameShell.swift`, `ShellMain.swift`), the bundle layouts and icons (section 6) |
 | `app/arcade` | the launcher: `Launcher.swift` (the native client) and `ui/` (its pages) |
+| `app/arcade_ios` | the launcher on iPhone and iPad: `Launcher.swift` (app/arcade's pages in a web view, with `ui/touch.css`; pairing; installs; play) and `Client.swift` (downloads and verification); it compiles the iOS shell in (section 6) |
 | `system/gameboy`, `system/nds` | consoles your own cartridges play on: the machine card, the card-language player (`player.card`), how the library lists them (section 5) |
 
 The card language has no strings or records, so `cardmodel/arcade/gen.py` turns the data cards into integer tables
@@ -173,7 +192,7 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   the installed player with `--rom` on the file and a save folder per cartridge.
 * **The DS** (`system/nds`) is listed with what the DS machine does so far (its coverage report) and is not
   playable: the DS picture, sound and input hardware have no cards yet.
-* **The store check** (`cardmodel arcade check`, CM42; section 6) installs the player through the store like a
+* **The store check** (`cardmodel arcade check`, CM42; section 7) installs the player through the store like a
   game, plays it on the system card's `check_cartridge` (a program assembled from the instruction cards, no one's
   game: a checkerboard and one byte of battery RAM), then starts every cartridge the library lists in that
   installed player, as the launcher starts it.
@@ -190,7 +209,144 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   build in the background (`relift` in game.json: at low priority, one at a time, `relift.log` beside the save),
   so the next launch runs that code as cards too.
 
-## 6. Witnesses
+## 6. iPhone and iPad
+
+Every game and console player also builds for iPhone and iPad, and Cardmodel Arcade has an iOS launcher that
+installs those builds from the arcade service on the Mac and plays them inside itself.
+
+**The platform card** (`platform/ios`) has three targets; a build names one by its key:
+
+| key | for | signed | needs |
+|---|---|---|---|
+| `ios-iphonesimulator` (`ios` alone means this one) | the iOS Simulator | ad hoc | Xcode with the iOS Simulator SDK |
+| `ios-iphoneos` | a real iPhone or iPad | with the user's identity (`CARDMODEL_IOS_IDENTITY`) | Xcode with the iOS SDK, and an Apple development identity |
+| `ios-maccatalyst` | this Mac, as an iPad app (Mac Catalyst) | ad hoc | the macOS SDK's iOS support (the Command Line Tools or Xcode) |
+
+A target says the values its commands name (the SDK, as `xcrun --sdk NAME --show-sdk-path` prints it; the triple:
+arm64, iOS 16 or later), the environment they run in (the Simulator and device targets point `DEVELOPER_DIR` at
+Xcode), and may override any section of the card. An iOS bundle is flat (`Frameworks/game.dylib`; `game.json`,
+`Info.plist` and the PNG icons at its root); a Mac Catalyst bundle keeps the macOS layout and an .icns icon. A value
+a target cannot have stops the build before the long steps, with what the target `needs`. The library is the
+module through the same C language card, compiled with the target's `-target` and `-isysroot`. The effect shell is
+UIKit: `GameShell.swift` (the picture, the controls, the sound, the save) and `ShellMain.swift`, which makes a
+game's bundle an app of its own (the game's Quit starts it again from the beginning: an iOS app does not quit
+itself).
+
+**Builds** (`build.py`, `system.py`): `cardmodel arcade build ID --platform KEY` builds any game or console player
+for any target of any platform card, in the same six steps. A program's own platform (macOS) keeps the depot
+pointer `latest`; every other key gets `latest@KEY` beside it, so the Mac's launcher never sees an iOS build. The
+store pictures are the same on every platform: drawn headless on this Mac once per module (kept by the module's
+hash) and shared. The library, then the app, are signed as the target says. The service answers with a platform's
+builds when a client asks for them: `?platform=KEY` on `/api/catalog`, `/api/game/ID` and `/api/build/ID`, or
+`CardmodelPlatform/KEY` in the User-Agent (the iOS launcher's pages). Each platform's build has its own progress
+and its own remembered error; branch versions are offered only for a program's own platform (a branch builds only
+that).
+
+**The launcher on iOS** (`app/arcade_ios`) shows the same pages as on the Mac (`cards/app/arcade/ui`, served by the
+Mac's service) in a web view, with `ui/touch.css` added: an iPad keeps the desktop layout with room for fingers, a
+phone gets one column.
+
+* **The client**: `Launcher.swift` answers the same commands as the Mac's launcher (install, update, pause, resume,
+  cancel, play, play a cartridge, stop, verify, uninstall, settings, controls); choosing cartridge folders and
+  showing files are answered with "on your Mac". `Client.swift` installs as the Mac's launcher does: a build asked
+  for when the cards changed, only the chunks not already installed fetched, every chunk's and every file's
+  SHA-256 checked, a staging folder swapped in; verify and repair. One install runs at a time; one asked for
+  meanwhile waits its turn instead of being dropped.
+* **Play**: inside the app, with the platform card's shell compiled in. Closing a game unloads its library, so the
+  next one (or the same one again) starts as a fresh process would.
+* **Cartridges stay on the Mac**: no build carries one. When one is played, the device asks the Mac's library for
+  its file (`GET /api/cartridge/ID`) and keeps it in its Caches folder; an unchanged file is not sent again (its
+  ETag).
+* **Without the Mac**: when the service cannot be reached, the launcher lists what is installed on the device (its
+  programs, and the cartridges played before, kept in Caches) and plays them; the store, updates and new
+  cartridges wait for the Mac.
+* **Which Mac**: `--service URL`, else the Mac the device paired with, else the one the app was built for
+  (127.0.0.1:8770 for the Simulator and Mac Catalyst, the Mac's address on the local network for a device). For
+  checks: `--check ID [--rom ROMID --frames N --shot PNG --input S]` installs ID through the service, verifies it,
+  plays it headless and prints one JSON line; `--open ID [--rom ROMID]` installs if needed and plays; `--mute`
+  plays without sound.
+
+**Why the launcher reaches the Mac instead of carrying the games.** The iOS launcher talks to the arcade service
+on the Mac over the network and bundles no games. That keeps one store, one build pipeline and one cartridge
+library, the Mac's: an update reaches the device the way it reaches the Mac (the cards change, the service builds,
+the launcher offers it), and no cartridge is packed into an app. The costs: the Mac must be on and reachable to
+browse and install (what is installed plays without it); a device on the
+local network must be paired, and the traffic there is plain HTTP; and a real device only loads code signed by
+the app's team, so the Mac must sign each game library it sends with the user's identity, which keeps this to
+personal use (App Store distribution forbids downloaded code). Bundling the games would work offline and has the
+App Store's shape, but it freezes the store into the app (every change a rebuild and a reinstall through Xcode),
+needs a second source for the pages' data, and copies cartridges into the app. The Simulator and Mac Catalyst
+share the Mac's network and reach the service at 127.0.0.1 without pairing.
+
+**Pairing** (`arcade/pairing.py`): `cardmodel arcade pair` asks the running service for a code (only this Mac may,
+and no web page of another origin) and prints it with the Mac's `.local` name and IP address: six digits, good
+for ten minutes and five tries. On the device, Cardmodel Arcade sends the code to the service at that address
+(`POST /api/pair`) and gets a token (32 random bytes), which it keeps in the keychain; the service keeps only the
+token's SHA-256, in `devices.json` beside `library.json` (every change to it under a lock the service and the CLI
+share). The code is read as typed: "123 456" as the Mac prints it, or digits of any script. The launcher sends the
+device's name with a suffix of its vendor id, so two iPhones are two devices (pairing the same name again replaces
+its token). While a code is out the service listens on the local network too (the same port, every address of the
+Mac); once a device has paired, the launcher's service (port 8770) listens there at each start, until the last
+device is forgotten or `cardmodel arcade pair --off`; a service on any other port stays on this Mac unless it is
+`cardmodel arcade serve --lan`. There, every request except `GET /api/status` and `POST /api/pair` needs a paired
+device's token (a header, or a cookie for the pages), and a token opens only what the launcher on a device needs:
+the store and its builds, the pages, the library and its cartridges. The work in progress (`/api/work`,
+`/api/dev`, `/api/events`), other branches' builds, the Mac's cartridge folders and pairing codes stay on the Mac,
+and the pages on a device leave the In progress tab out. A network client gets a minute per read or write, and a
+pairing request larger than 64 KiB or not a JSON object is an empty one. No web page of another origin may read a
+cartridge (no CORS header, and such a request is refused). `--list` shows the paired devices, `--forget NAME`
+removes one.
+
+**Controls** (`GameShell.swift`): the touch controls are drawn from the game card's input. The bits named up,
+down, left and right get a pad; every other bit gets a button where the card's gamepad mapping puts it on a
+controller (A, B, X and Y in their places, shoulders and triggers above the two clusters, the menu buttons between
+them), labelled with the first bit it carries. A button that carries two bits presses both, as the controller's
+does (Vector Duel's A is *attack* and *confirm*); a bit with no controller button gets a small button of its own;
+a finger can slide from button to button. On a screen taller than wide the picture sits at the top with the
+controls below; otherwise it is centred with the controls on either side. A touch on no control is the touch
+screen's pointer when game.json names one (the DS player's lower screen). Hardware keyboards (and the Mac's under
+Mac Catalyst) use the game card's `keys` and `keys2`, or the player's own Controls file from the launcher
+(`{keys, keys2, gamepad}`); the first game controller is player 1, a second one player 2. A mapped key or a
+controller in use hides the touch controls; a touch on the screen, or the last controller leaving, brings them
+back. Frames run at 60 a second from the display link, sound through AVAudioEngine at the game's rate; the save is
+written when the game marks it and flushed when the app leaves the screen (iOS may end an app there).
+
+**The Simulator** (`arcade/ios.py`): `cardmodel arcade launcher --platform ios` builds Cardmodel Arcade.app
+(`state/arcade/launcher/KEY-BUILD`, a fresh folder per build); `--install` installs it on a Simulator
+(`--device NAME`, else a booted one, else the first iPhone, booted on the way), brings the Simulator's window to
+the front and opens it there (`--mute`: its games play without sound); `--check GAME [--rom ROMID]` has the
+launcher on the Simulator install GAME through the service, verify it and play it headless (`--frames N`,
+`--shot PNG`, `--input S`), and prints its JSON line; `--port P` points it at another service on this Mac.
+
+**Measured** (2026-10-22, this Mac): Vector Duel built for `ios-iphonesimulator` in 44 s (9 files, ad hoc signed,
+`LC_BUILD_VERSION` platform 7: the iOS Simulator). Built for Mac Catalyst, the iOS shell played Vector Duel for 420
+scripted frames with a picture and a save byte-identical to the macOS build's, and the Game Boy Player played
+Oracle of Ages for 900 frames, identical to the macOS build. In the iOS 27.1 Simulator (an iPhone Duo),
+`launcher --platform ios --check vector_duel` installed Vector Duel through the service (9 files verified) and
+played 420 frames with a picture byte-identical to the Mac's, and `--check gameboy_player --rom ID` fetched Oracle
+of Ages from the Mac's library and played 900 frames identical to the Mac's. The store page renders in that
+Simulator in one column (`touch.css`).
+
+**Honest limits** of the iOS work:
+
+* No iPad yet: the iOS runtime installed here is the iPhone Duo-only build of iOS 27.1 (24A94425); an iPad
+  Simulator needs the general runtime (24A94232), whose download waits on the user's go-ahead. The iPad layout
+  has not been seen.
+* No real device yet: it needs the user's Apple ID and team in Xcode (a signing identity for
+  `CARDMODEL_IOS_IDENTITY`, a provisioning profile), which `ios.py` does not set up. `--install` and `--check` use
+  the Simulator only, and pairing has not been tried from a device on a network.
+* Personal use only: a device runs game libraries the Mac signs with the user's identity, and App Store
+  distribution forbids downloaded code.
+* Without the Mac the launcher shows only what is installed (a plain list, not the pages: they come from the
+  Mac's service), and a cartridge it has not played before cannot be had.
+* Plain HTTP on the local network: a paired token travels in the clear, like the files. macOS's firewall may ask
+  once whether Python may accept incoming connections. Where the app cannot use the keychain, the token is kept in
+  `launcher.json`.
+* arm64 only: the Simulator target is Apple silicon's; an Intel Mac's Simulator is not a target.
+* The shell handles the DS player's touch screen, but only Vector Duel and the Game Boy Player have run on iOS.
+* A branch's versions are not offered on iOS (a branch builds for its program's own platform only).
+
+## 7. Witnesses
 
 `tests/test_arcade.py`: the tables come from the cards (chains, one duel tree per fighter pair at the card's
 depth, the boss's phases); the module gives the same state in the native and the Python emission; a scripted
@@ -266,9 +422,11 @@ are served and name only API endpoints the service has; `--launcher` compiles th
 installation in ~/Library/Application Support is never touched. What goes into the store, and what the model
 contributes to each piece, is docs/STORE.md.
 
-## 7. Honest limits
+## 8. Honest limits
 
-* macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker.
+* Two platform cards: macOS (built for this Mac's architecture, signed only ad hoc by the linker) and iOS (arm64;
+  ad hoc for the Simulator and Mac Catalyst, the user's identity for a device, which has not been tried; the
+  limits of the iOS work are in section 6).
 * The launcher remembers a checkout's path to start the service: after moving the repository, run
   `cardmodel arcade launcher --install` again. Installed from a linked worktree, it points at the main checkout
   (`--home` chooses another).

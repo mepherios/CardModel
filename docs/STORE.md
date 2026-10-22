@@ -122,4 +122,5 @@ Then open `http://127.0.0.1:8770/ui/index.html` (or Cardmodel Arcade) and choose
 * The installed `~/Applications/Cardmodel Arcade.app` was installed from the games session's worktree and records
   that folder as its home: it breaks when the worktree is cleaned up. Once that branch is merged, run
   `cardmodel arcade launcher --install` from main. The self-run reports this (`app/arcade` finding) until it is fixed.
-* macOS only (one platform card), ad-hoc signed, this Mac's architecture (docs/ARCADE.md section 6).
+* Two platform cards: macOS (ad-hoc signed, this Mac's architecture) and iOS (the Simulator and Mac Catalyst ad hoc;
+  a real iPhone or iPad needs the user's signing identity), docs/ARCADE.md sections 6 and 8.

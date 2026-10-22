@@ -1,0 +1,313 @@
+{
+  "bundle": {
+    "executable_dir": "",
+    "frameworks_dir": "Frameworks",
+    "info_plist": {
+      "CFBundleDevelopmentRegion": "en",
+      "CFBundleDisplayName": "{title}",
+      "CFBundleExecutable": "{title}",
+      "CFBundleIcons": {
+        "CFBundlePrimaryIcon": {
+          "CFBundleIconFiles": [
+            "AppIcon60x60"
+          ]
+        }
+      },
+      "CFBundleIcons~ipad": {
+        "CFBundlePrimaryIcon": {
+          "CFBundleIconFiles": [
+            "AppIcon60x60",
+            "AppIcon76x76",
+            "AppIcon83.5x83.5"
+          ]
+        }
+      },
+      "CFBundleIdentifier": "org.cardmodel.arcade.{ident}",
+      "CFBundleInfoDictionaryVersion": "6.0",
+      "CFBundleName": "{title}",
+      "CFBundlePackageType": "APPL",
+      "CFBundleShortVersionString": "{version}",
+      "CFBundleSupportedPlatforms": [
+        "{platform_name}"
+      ],
+      "CFBundleVersion": "{build}",
+      "DTPlatformName": "{sdk_name}",
+      "GCSupportedGameControllers": [
+        {
+          "ProfileName": "ExtendedGamepad"
+        }
+      ],
+      "GCSupportsControllerUserInteraction": true,
+      "LSApplicationCategoryType": "public.app-category.games",
+      "LSRequiresIPhoneOS": true,
+      "MinimumOSVersion": "{min_os}",
+      "UIApplicationSceneManifest": {
+        "UIApplicationSupportsMultipleScenes": false
+      },
+      "UIApplicationSupportsIndirectInputEvents": true,
+      "UIDeviceFamily": [
+        1,
+        2
+      ],
+      "UILaunchScreen": {},
+      "UIRequiredDeviceCapabilities": [
+        "arm64"
+      ],
+      "UIRequiresFullScreen": true,
+      "UIStatusBarHidden": true,
+      "UISupportedInterfaceOrientations": [
+        "UIInterfaceOrientationPortrait",
+        "UIInterfaceOrientationLandscapeLeft",
+        "UIInterfaceOrientationLandscapeRight"
+      ],
+      "UISupportedInterfaceOrientations~ipad": [
+        "UIInterfaceOrientationPortrait",
+        "UIInterfaceOrientationPortraitUpsideDown",
+        "UIInterfaceOrientationLandscapeLeft",
+        "UIInterfaceOrientationLandscapeRight"
+      ]
+    },
+    "plist": "Info.plist",
+    "resources_dir": "",
+    "spec_file": "game.json",
+    "suffix": ".app"
+  },
+  "category": "platform",
+  "default_target": "iphonesimulator",
+  "effect_shell": {
+    "compile": [
+      "{exe}",
+      "--sdk",
+      "{sdk_name}",
+      "swiftc",
+      "-parse-as-library",
+      "-O",
+      "-swift-version",
+      "5",
+      "-target",
+      "{triple}",
+      "-sdk",
+      "{sdk}",
+      "{swift_flags}",
+      "-o",
+      "{out}",
+      "{srcs}"
+    ],
+    "shared": [
+      "GameShell.swift"
+    ],
+    "sources": [
+      "GameShell.swift",
+      "ShellMain.swift"
+    ]
+  },
+  "icon": {
+    "files": {
+      "AppIcon60x60@2x.png": 120,
+      "AppIcon60x60@3x.png": 180,
+      "AppIcon76x76@2x~ipad.png": 152,
+      "AppIcon83.5x83.5@2x~ipad.png": 167
+    }
+  },
+  "kind": "platform",
+  "library": {
+    "file": "game.dylib",
+    "flags": [
+      "-target",
+      "{triple}",
+      "-isysroot",
+      "{sdk}"
+    ],
+    "language": "c"
+  },
+  "name": "ios",
+  "probe": {
+    "kind": "executable",
+    "name": "xcrun",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "saves": "Library/Application Support/Cardmodel Arcade/saves/{id}",
+  "sign": {
+    "args": [
+      "{codesign}",
+      "--force",
+      "--sign",
+      "{identity}",
+      "--timestamp=none",
+      "{path}"
+    ],
+    "tool": "codesign"
+  },
+  "statement": "A native iPhone and iPad application. The game's card-IR module goes through the C language card, compiled for the target's SDK and architecture into Frameworks/game.dylib; this card's effect shell (GameShell.swift: the picture, touch controls drawn from the game card's input, game controllers and keyboards, sound, the save file; ShellMain.swift: the app around it) is compiled as the executable. The shell reads game.json, which the build writes from the game card, and knows nothing else about the game. The iOS launcher (app/arcade_ios) compiles the same shell in and plays a downloaded bundle inside itself. Targets: the iOS Simulator, a real iPhone or iPad (signed with the user's identity), and this Mac as an iPad app (Mac Catalyst).",
+  "targets": {
+    "iphoneos": {
+      "env": {
+        "DEVELOPER_DIR": {
+          "probe": {
+            "kind": "any",
+            "of": [
+              {
+                "is_dir": true,
+                "kind": "env",
+                "var": "DEVELOPER_DIR"
+              },
+              {
+                "kind": "path_exists",
+                "path": "/Applications/Xcode.app/Contents/Developer"
+              },
+              {
+                "kind": "path_exists",
+                "path": "/Applications/Xcode-beta.app/Contents/Developer"
+              }
+            ]
+          }
+        }
+      },
+      "label": "an iPhone or iPad",
+      "needs": "Xcode with the iOS SDK, and your Apple development identity in CARDMODEL_IOS_IDENTITY (iOS only runs code signed by the team that signed the app)",
+      "values": {
+        "identity": {
+          "probe": {
+            "kind": "env",
+            "var": "CARDMODEL_IOS_IDENTITY"
+          }
+        },
+        "min_os": "16.0",
+        "platform_name": "iPhoneOS",
+        "sdk": {
+          "run": [
+            "{exe}",
+            "--sdk",
+            "iphoneos",
+            "--show-sdk-path"
+          ]
+        },
+        "sdk_name": "iphoneos",
+        "swift_flags": [],
+        "triple": "arm64-apple-ios16.0"
+      }
+    },
+    "iphonesimulator": {
+      "env": {
+        "DEVELOPER_DIR": {
+          "probe": {
+            "kind": "any",
+            "of": [
+              {
+                "is_dir": true,
+                "kind": "env",
+                "var": "DEVELOPER_DIR"
+              },
+              {
+                "kind": "path_exists",
+                "path": "/Applications/Xcode.app/Contents/Developer"
+              },
+              {
+                "kind": "path_exists",
+                "path": "/Applications/Xcode-beta.app/Contents/Developer"
+              }
+            ]
+          }
+        }
+      },
+      "label": "the iOS Simulator (iPhone and iPad)",
+      "needs": "Xcode with the iOS Simulator SDK",
+      "values": {
+        "identity": "-",
+        "min_os": "16.0",
+        "platform_name": "iPhoneSimulator",
+        "sdk": {
+          "run": [
+            "{exe}",
+            "--sdk",
+            "iphonesimulator",
+            "--show-sdk-path"
+          ]
+        },
+        "sdk_name": "iphonesimulator",
+        "swift_flags": [],
+        "triple": "arm64-apple-ios16.0-simulator"
+      }
+    },
+    "maccatalyst": {
+      "bundle": {
+        "executable_dir": "Contents/MacOS",
+        "frameworks_dir": "Contents/Frameworks",
+        "icon_file": "AppIcon.icns",
+        "info_plist": {
+          "CFBundleIconFile": "AppIcon",
+          "CFBundleIcons": null,
+          "CFBundleIcons~ipad": null,
+          "LSMinimumSystemVersion": "13.0",
+          "LSRequiresIPhoneOS": null,
+          "MinimumOSVersion": null,
+          "UIDeviceFamily": [
+            2
+          ],
+          "UIRequiredDeviceCapabilities": null
+        },
+        "plist": "Contents/Info.plist",
+        "resources_dir": "Contents/Resources"
+      },
+      "icon": {
+        "compile": [
+          "{exe}",
+          "-c",
+          "icns",
+          "-o",
+          "{out}",
+          "{iconset}"
+        ],
+        "files": null,
+        "probe": {
+          "kind": "executable",
+          "name": "iconutil"
+        },
+        "sizes": [
+          16,
+          32,
+          128,
+          256,
+          512
+        ]
+      },
+      "label": "this Mac, as an iPad app (Mac Catalyst)",
+      "needs": "the macOS SDK with its iOS support (the Command Line Tools or Xcode)",
+      "values": {
+        "identity": "-",
+        "min_os": "16.0",
+        "platform_name": "MacOSX",
+        "sdk": {
+          "run": [
+            "{exe}",
+            "--sdk",
+            "macosx",
+            "--show-sdk-path"
+          ]
+        },
+        "sdk_name": "macosx",
+        "swift_flags": [
+          "-Fsystem",
+          "{sdk}/System/iOSSupport/System/Library/Frameworks",
+          "-I",
+          "{sdk}/System/iOSSupport/usr/lib/swift",
+          "-L",
+          "{sdk}/System/iOSSupport/usr/lib/swift"
+        ],
+        "triple": "arm64-apple-ios16.0-macabi"
+      }
+    }
+  },
+  "tier": 1,
+  "tools": {
+    "codesign": {
+      "kind": "executable",
+      "name": "codesign"
+    }
+  }
+}

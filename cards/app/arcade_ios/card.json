@@ -1,0 +1,55 @@
+{
+  "category": "app",
+  "compile": [
+    "{exe}",
+    "--sdk",
+    "{sdk_name}",
+    "swiftc",
+    "-parse-as-library",
+    "-O",
+    "-swift-version",
+    "5",
+    "-target",
+    "{triple}",
+    "-sdk",
+    "{sdk}",
+    "{swift_flags}",
+    "-o",
+    "{out}",
+    "{srcs}"
+  ],
+  "default_platform": "ios-iphonesimulator",
+  "identifier": "org.cardmodel.arcade.ios",
+  "info_plist": {
+    "CFBundleDisplayName": "Arcade",
+    "CFBundleIdentifier": "{identifier}",
+    "CardmodelService": "{service}",
+    "NSAppTransportSecurity": {
+      "NSAllowsArbitraryLoadsInWebContent": true,
+      "NSAllowsLocalNetworking": true
+    },
+    "NSLocalNetworkUsageDescription": "Cardmodel Arcade reaches the arcade service on your Mac: its store, the games it builds from cards, and your cartridges.",
+    "UIStatusBarHidden": false,
+    "UIStatusBarStyle": "UIStatusBarStyleLightContent",
+    "UISupportedInterfaceOrientations": [
+      "UIInterfaceOrientationPortrait",
+      "UIInterfaceOrientationLandscapeLeft",
+      "UIInterfaceOrientationLandscapeRight"
+    ]
+  },
+  "kind": "app",
+  "name": "arcade_ios",
+  "platform": "ios",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "shell_sources": "shared",
+  "sources": [
+    "Launcher.swift",
+    "Client.swift"
+  ],
+  "statement": "The launcher on iPhone and iPad: the same pages as app/arcade (its ui folder, served by the arcade service on the user's Mac) in a web view, and the native client those pages talk to (Launcher.swift: the same commands as the Mac's; Client.swift: downloads with every chunk's SHA-256 checked, delta updates, verification). It installs each program's build for this device (the service builds every game and console player for the ios platform card's target), plays it inside the app with the platform card's shell (GameShell.swift, compiled in), and fetches a cartridge from the Mac's library when it is played. The Simulator and Mac Catalyst reach the service at 127.0.0.1; a device pairs with the Mac once (cardmodel arcade pair).",
+  "tier": 1,
+  "title": "Cardmodel Arcade",
+  "version": "1.0.0"
+}

@@ -1,0 +1,68 @@
+/* The pages on a touch screen: the iOS launcher (cards/app/arcade_ios) adds this sheet and the class "ios" to <html>.
+   An iPad keeps the desktop layout with room made for fingers; a phone gets one column. */
+html.ios, html.ios body { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+html.ios #top { padding-left: 12px; }
+html.ios #top .drag { display: none; }
+html.ios .capsule:hover, html.ios .cov:hover { transform: none; }
+html.ios main { -webkit-overflow-scrolling: touch; }
+html.ios .side .item { padding-top: 9px; padding-bottom: 9px; }
+/* the work in progress stays on the Mac (pairing.py: a device gets the store and the library): no tab or links here */
+html.ios .nav .tab[data-view="dev"], html.ios .storebar a[data-goview="work"], html.ios #worklink { display: none; }
+
+@media (max-width: 1040px) {
+  html.ios .nav .tab { font-size: 18px; padding: 0 10px; }
+  html.ios .library { grid-template-columns: 230px 1fr; }
+  html.ios .cols { grid-template-columns: 1fr 260px; }
+  html.ios .storepage { grid-template-columns: minmax(0, 1fr) 280px; }
+  html.ios .stage { height: auto; aspect-ratio: 16 / 9; }
+}
+
+@media (max-width: 700px) {
+  html.ios #top { height: 50px; padding: 0 8px; }
+  html.ios .nav { overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+  html.ios .nav::-webkit-scrollbar { display: none; }
+  html.ios .nav .tab { font-size: 15px; padding: 0 8px; line-height: 50px; white-space: nowrap; }
+  html.ios .nav .tab.on { line-height: 47px; }
+  html.ios .arrow#fwd, html.ios #username { display: none; }
+  html.ios .arrow { font-size: 26px; width: 24px; }
+  html.ios .right { gap: 8px; margin-left: 6px; }
+  html.ios main { top: 50px; bottom: 44px; }
+  html.ios #bottom { height: 44px; padding: 0 12px; }
+  html.ios #bottom .friends { display: none; }
+
+  html.ios .store, html.ios .downloads, html.ios .profile { padding: 12px 10px 40px; }
+  html.ios .storebar { flex-wrap: wrap; }
+  html.ios .storebar input { width: 100%; margin-left: 0; }
+  html.ios .featured { grid-template-columns: 1fr; min-height: 0; }
+  html.ios .featured .main { height: 0; padding-top: 56%; }
+  html.ios .featured .side h3 { font-size: 20px; }
+  html.ios .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  html.ios .capsule .art { height: 80px; }
+  html.ios .page-title { font-size: 21px; }
+  html.ios .storepage, html.ios .about, html.ios .cols { grid-template-columns: 1fr; }
+  html.ios .cols { padding: 12px 10px 40px; gap: 0; }
+  html.ios .buybox .action { position: static; margin-top: 12px; justify-content: flex-end; }
+  html.ios .result { grid-template-columns: 110px 1fr; }
+  html.ios .result .right { grid-column: 1 / -1; text-align: left; }
+
+  html.ios .library { display: block; overflow-y: auto; }
+  html.ios .library > .side { max-height: 32vh; border-right: 0; border-bottom: 1px solid #0d0f13; }
+  html.ios .gamepage { overflow: visible; }
+  html.ios .hero { height: 190px; }
+  html.ios .hero .logo { font-size: 28px; left: 14px; bottom: 14px; right: 14px; }
+  html.ios .hero.rom .shot { height: 120px; right: 12px; top: 14px; }
+  html.ios .hero.rom .logo { font-size: 20px; right: 150px; }
+  html.ios .actionbar { flex-wrap: wrap; gap: 12px 18px; padding: 10px 12px; position: static; }
+  html.ios .actionbar .gear { margin-left: 0; }
+  html.ios .libhome { padding: 12px 10px 40px; }
+  html.ios .shelf, html.ios .shelf.wide { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+
+  html.ios .dlhead { flex-direction: column; }
+  html.ios .dlstats { width: auto; }
+  html.ios .dlitem { grid-template-columns: 1fr; }
+  html.ios .dialog, html.ios .dialog.wide { width: calc(100vw - 20px); }
+  html.ios #toast { left: 10px; right: 10px; min-width: 0; bottom: 52px; }
+  html.ios .profile .head { flex-direction: column; text-align: center; }
+  html.ios .early { grid-template-columns: 1fr; }
+  html.ios .eacard .art { width: 110px; }
+}

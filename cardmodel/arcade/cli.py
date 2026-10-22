@@ -13,6 +13,13 @@
                                                 through the store as the launcher does it (install, verify, repair,
                                                 play headless), then every cartridge the library lists
   cardmodel arcade app ROM [--install]          one cartridge as its own app, its code lifted into cards (cartapp.py)
+  cardmodel arcade build GAME --platform ios    the same program for another platform card (a key: ios,
+                                                ios-iphonesimulator, ios-iphoneos, ios-maccatalyst)
+  cardmodel arcade launcher --platform ios [--install] [--device NAME]   the iPhone and iPad launcher (ios.py),
+                                                installed and opened on a Simulator
+  cardmodel arcade launcher --platform ios --check GAME [--rom ROMID]    in the Simulator, through the service:
+                                                install, verify and play headless, as the device's store does
+  cardmodel arcade pair [--list] [--forget NAME] [--off]   an iPhone or iPad on the local network (pairing.py)
 
 Honest limits (L1): the launcher remembers a checkout's path (to start the service): after moving the
 repository, run `cardmodel arcade launcher --install` again. Installing from a linked git worktree points the
@@ -230,9 +237,11 @@ def cmd_arcade(args) -> int:
     if args.action == "build":
         system = S.is_system(ctx.store, args.target) or ctx.store.get(f"system/{args.target}") is not None
         builder = S.build if system else B.build
-        info = builder(ctx, args.target, progress=lambda s, n, m: print(f"[{s}/{n}] {m}", file=sys.stderr))
-        cli._out(args, info, f"{info['title']} {info['version']} build {info['build']}: {info['size']:,} bytes in "
-                             f"{info['chunks']} chunks, {len(info['media'])} store pictures, {info['seconds']} s")
+        info = builder(ctx, args.target, progress=lambda s, n, m: print(f"[{s}/{n}] {m}", file=sys.stderr),
+                       platform=args.platform)
+        cli._out(args, info, f"{info['title']} {info['version']} build {info['build']} for {info['platform']}: "
+                             f"{info['size']:,} bytes in {info['chunks']} chunks, {len(info['media'])} store pictures, "
+                             f"{info['seconds']} s")
         return 0
     if args.action == "app":
         from . import cartapp
@@ -256,9 +265,13 @@ def cmd_arcade(args) -> int:
         from . import server
         app = ctx.store.get("app/arcade")
         ui = (app.path / app["ui"]) if app else None
-        server.serve(ctx, port=args.port, ui_dir=ui,
+        server.serve(ctx, port=args.port, ui_dir=ui, lan=True if args.lan else None,
                      ready=lambda p: print(f"arcade service on http://127.0.0.1:{p}/", flush=True))
         return 0
+    if args.action == "pair":
+        return pair(ctx, args)
+    if args.action == "launcher" and (args.platform or "").startswith("ios"):
+        return ios_launcher(ctx, args)
     if args.action == "launcher":
         say = lambda m: print(m, file=sys.stderr)  # noqa: E731
         dest = build_launcher(ctx, args.install, say=say, home=launcher_home(args.install, args.home, say=say))
@@ -345,9 +358,72 @@ def cmd_arcade(args) -> int:
     return 2
 
 
+def pair(ctx, args) -> int:
+    """`cardmodel arcade pair`: a code from the running service for a device on the local network, with the
+    addresses it can reach the service at; --list, --forget NAME and --off look after the paired devices."""
+    import time
+    from . import pairing as P
+    cli = _cli()
+    if args.list or args.forget or args.off:
+        if args.forget:
+            print(f"{args.forget}: {'forgotten' if P.forget(ctx, args.forget) else 'not paired'}", file=sys.stderr)
+        if args.off:
+            P.set_lan(ctx, False)
+            print("the service stops listening on the local network when it next starts", file=sys.stderr)
+        d = P.load(ctx)
+        cli._out(args, {"lan": d["lan"], "devices": [{k: x[k] for k in ("name", "paired", "seen")} for x in d["devices"]]},
+                 "\n".join([f"local network: {'on' if d['lan'] else 'off'}"]
+                           + ([f"  {x['name']} (paired {time.strftime('%Y-%m-%d %H:%M', time.localtime(x['paired']))})"
+                               for x in d["devices"]] or ["  no devices paired"])))
+        return 0
+    import urllib.error
+    import urllib.request
+    req = urllib.request.Request(f"http://127.0.0.1:{args.port}/api/pair/code", data=b"{}", method="POST",
+                                 headers={"Content-Type": "application/json"})
+    try:
+        got = json.loads(urllib.request.urlopen(req, timeout=10).read())
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        print(f"error: no arcade service on port {args.port} to pair with ({exc}); open Cardmodel Arcade or run "
+              f"`cardmodel arcade serve`", file=sys.stderr)
+        return 2
+    code = got["code"]
+    cli._out(args, got, "\n".join([
+        "On your iPhone or iPad, in Cardmodel Arcade:",
+        f"  Mac address  {' or '.join(got['addresses']) or '(this Mac has no local network address)'}",
+        f"  Code         {code[:3]} {code[3:]}   (ten minutes, five tries)"]))
+    return 0
+
+
+def ios_launcher(ctx, args) -> int:
+    """`cardmodel arcade launcher --platform ios ...` (ios.py): build; --install on a Simulator; --check GAME."""
+    from . import ios
+    cli = _cli()
+    say = lambda m: print(m, file=sys.stderr)  # noqa: E731
+    app = ios.build(ctx, args.platform, say=say)
+    if not (args.install or args.check):
+        cli._out(args, {"app": str(app)}, str(app))
+        return 0
+    if not args.platform.endswith(("ios", "iphonesimulator")):
+        print("error: --install and --check use the iOS Simulator (--platform ios or ios-iphonesimulator)", file=sys.stderr)
+        return 2
+    dev = ios.device(args.device)
+    say(f"installing it on {dev['name']}")
+    ios.install(app, dev)
+    service = None if args.port == 8770 else f"http://127.0.0.1:{args.port}"     # another service of this Mac
+    if args.check:
+        rep = ios.check(ctx, args.check, dev, rom=args.rom, frames=args.frames or 120, shot=args.shot,
+                        inputs=args.input or "", service=service)
+        cli._out(args, rep, json.dumps(rep, indent=1))
+        return 0 if rep.get("ok") else 1
+    ios.show(dev)
+    ios.launch(dev, ["--mute"] if args.mute else [], service=service)
+    cli._out(args, {"app": str(app), "device": dev}, f"{app} is open on {dev['name']}")
+    return 0
+
+
 def register(sub) -> None:
     s = sub.add_parser("arcade", help="games built from cards: build them natively, serve them to the launcher")
-    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "library", "app", "check"])
+    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "library", "app", "check", "pair"])
     s.add_argument("target", nargs="?")
     s.add_argument("--port", type=int, default=8770)
     s.add_argument("--install", action="store_true")
@@ -355,7 +431,8 @@ def register(sub) -> None:
     s.add_argument("--frames", type=int, default=0)
     s.add_argument("--shot")
     s.add_argument("--input")
-    s.add_argument("--rom", help="run: a cartridge for a console player")
+    s.add_argument("--rom", help="run: a cartridge file for a console player; launcher --platform ios --check: a "
+                                 "cartridge's id in the Mac's library")
     s.add_argument("--save-dir", dest="save_dir", help="run: where the save lives (headless runs: a temporary one)")
     s.add_argument("--draw", action="store_true", help="library: draw every missing title screen")
     s.add_argument("--add", help="library: a folder to look for cartridges in")
@@ -364,7 +441,16 @@ def register(sub) -> None:
     s.add_argument("--launcher", action="store_true", help="check: also compile the launcher")
     s.add_argument("--no-build", action="store_true", help="check: fail instead of building when cards changed")
     s.add_argument("--cartridges", type=int, help="check: launch only the first N listed cartridges (0: none)")
+    s.add_argument("--platform", help="build, launcher: a platform card's key (ios, ios-iphonesimulator, ...)")
+    s.add_argument("--device", help="launcher --platform ios: the Simulator device (name or udid)")
+    s.add_argument("--check", help="launcher --platform ios: install, verify and play this program in the Simulator")
+    s.add_argument("--lan", action="store_true", help="serve: also on the local network (paired devices only)")
+    s.add_argument("--mute", action="store_true", help="launcher --platform ios --install: games play without sound")
+    s.add_argument("--list", action="store_true", help="pair: the paired devices")
+    s.add_argument("--forget", help="pair: forget this device")
+    s.add_argument("--off", action="store_true", help="pair: stop listening on the local network")
     s.set_defaults(fn=cmd_arcade)
 
 
-__all__ = ["build_launcher", "cmd_arcade", "launcher_home", "launcher_icon", "primary_checkout", "register"]
+__all__ = ["build_launcher", "cmd_arcade", "ios_launcher", "launcher_home", "launcher_icon", "pair", "primary_checkout",
+           "register"]

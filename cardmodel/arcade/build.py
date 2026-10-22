@@ -10,8 +10,16 @@ Nothing here knows a language or a platform: the language card says how to compi
 card how to compile its shell and lay out the package. A build is identified by the hash of what went into
 it, so a new card version (or any change) is a new build the launcher sees as an update.
 
-Honest limits (L1): one platform card so far (macOS); packages carry only the linker's ad-hoc signature; the
-store pictures are fixed moments of a scripted run, not chosen shots.
+Every game builds for any platform card. A platform card may have targets (platform/ios: the iOS Simulator, a
+real iPhone or iPad, Mac Catalyst); a build names one by its key, ``ios-iphonesimulator`` (a card without
+targets is its own key, ``macos``). The target says the values its commands name ({sdk}, {triple}: literals,
+what a command prints, what a probe finds), the environment they run in, and may override any of the card's
+sections (bundle, icon, ...). A game's own platform (its card's ``platform``, macOS) keeps the depot pointer
+``latest``; every other key has ``latest@KEY`` beside it. The store pictures are the same on every platform.
+
+Honest limits (L1): macOS packages carry only the linker's ad-hoc signature (iOS ones are signed as their
+target says: ad hoc for the Simulator and Mac Catalyst, with the user's identity for a device); the store
+pictures are fixed moments of a scripted run, not chosen shots.
 """
 from __future__ import annotations
 
@@ -19,6 +27,7 @@ import hashlib
 import json
 import os
 import plistlib
+import re
 import shutil
 import struct
 import subprocess
@@ -48,16 +57,127 @@ def arcade_root(ctx) -> Path:
     return ROOT_OVERRIDE if ROOT_OVERRIDE is not None else ctx.state_root / "arcade"
 
 
-def platform_card(store, game):
-    p = store.get(f"platform/{game.get('platform', 'macos')}")
+def platform_card(store, game, platform: str | None = None):
+    """The platform card a build is for: the one ``platform`` (a key, ``ios-iphonesimulator``) names, else the game's."""
+    name = (platform or "").split("-", 1)[0] or game.get("platform", "macos")
+    p = store.get(f"platform/{name}")
     if p is None:
-        raise BuildError(f"no platform card platform/{game.get('platform', 'macos')}")
+        raise BuildError(f"no platform card platform/{name}")
     return p
 
 
-def _run(args: list[str], cwd: Path) -> None:
+def resolve_platform(store, game, platform: str | None = None) -> tuple:
+    """(platform card, target name or None, key) for a build of game; no target named: the card's default one."""
+    plat = platform_card(store, game, platform)
+    names = list(plat.get("targets") or {})
+    target = platform.split("-", 1)[1] if platform and "-" in platform else None
+    if names:
+        target = target or plat.get("default_target") or names[0]
+        if target not in names:
+            raise BuildError(f"platform/{plat.name} has no target {target} (it has {', '.join(names)})")
+    elif target:
+        raise BuildError(f"platform/{plat.name} has no targets")
+    return plat, target, f"{plat.name}-{target}" if target else plat.name
+
+
+def home_key(store, game) -> str:
+    """The key of the game's own platform: its builds keep the depot pointer ``latest``."""
+    return resolve_platform(store, game)[2]
+
+
+def platform_arg(store, game, platform: str | None) -> str | None:
+    """A requested platform as builds and depots name it: None for the game's own (``latest``), else its key."""
+    if not platform:
+        return None
+    key = resolve_platform(store, game, platform)[2]
+    return None if key == home_key(store, game) else key
+
+
+def _merge(base, over):
+    if not isinstance(base, dict) or not isinstance(over, dict):
+        return over
+    out = dict(base)
+    for k, v in over.items():
+        if v is None:
+            out.pop(k, None)
+        else:
+            out[k] = _merge(base.get(k), v)
+    return out
+
+
+def section(plat, target: str | None, key: str):
+    """A platform card's section as one of its targets has it (a target may override any part; null drops a key)."""
+    t = ((plat.get("targets") or {}).get(target) or {}) if target else {}
+    return _merge(plat.get(key), t[key]) if key in t else plat.get(key)
+
+
+_RESOLVED: dict = {}
+
+
+def target_values(plat, target: str | None) -> tuple[dict, dict]:
+    """The values a platform card's commands name for one of its targets, and the environment they run in.
+    ``{exe}`` is the card's probe, each of its ``tools`` is its own name; a target's value is a string or a list
+    (placeholders filled from the others), {"run": command} (what it prints) or {"probe": probe} (what it finds).
+    A value that cannot be had stops the build with what the target ``needs``."""
+    key = (plat.name, target, json.dumps(dict(plat), sort_keys=True, default=str))
+    if key in _RESOLVED:
+        return _RESOLVED[key]
+    t = ((plat.get("targets") or {}).get(target) or {}) if target else {}
+    need = t.get("needs") or f"what platform/{plat.name} names"
+    values: dict = {"exe": _tool(plat["probe"])}
+    for name, probe in (plat.get("tools") or {}).items():
+        values[name] = _tool(probe)
+    env = dict(os.environ)
+
+    def got(v):
+        if "probe" in v:
+            ok, detail = probes.probe(v["probe"])
+            if not ok:
+                raise BuildError(f"{plat.name} {target}: needs {need} ({detail})")
+            return detail
+        args = [a.format(**values) for a in v["run"]]
+        try:
+            p = resources.run(args, timeout=120, heavy=False, env=env, stdin=subprocess.DEVNULL)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise BuildError(f"{plat.name} {target}: needs {need} ({exc})") from exc
+        if p.returncode != 0:
+            raise BuildError(f"{plat.name} {target}: needs {need} ({' '.join(args)}: {(p.stderr or p.stdout).strip()[-400:]})")
+        return p.stdout.strip()
+
+    for k, v in (t.get("env") or {}).items():
+        env[k] = got(v) if isinstance(v, dict) else str(v)
+    later = {}
+    for k, v in (t.get("values") or {}).items():
+        if isinstance(v, dict):
+            values[k] = got(v)
+        else:
+            later[k] = v
+    for k, v in later.items():
+        values[k] = _fill(v, values)
+    _RESOLVED[key] = (values, env)
+    return values, env
+
+
+def _args(template: list, values: dict) -> list[str]:
+    """A command from a card: each "{name}" filled in; an argument that is only "{name}" of a list is the list."""
+    out = []
+    for a in template:
+        m = re.fullmatch(r"\{(\w+)\}", a)
+        if m and isinstance(values.get(m.group(1)), list):
+            out += [str(x) for x in values[m.group(1)]]
+        else:
+            out.append(a.format(**values))
+    return out
+
+
+def ident(gid: str) -> str:
+    """An arcade id as a bundle identifier may spell it (letters, digits, hyphens and dots)."""
+    return re.sub(r"[^A-Za-z0-9.-]", "-", gid)
+
+
+def _run(args: list[str], cwd: Path, env: dict | None = None) -> None:
     try:
-        p = resources.run(args, cwd=cwd, timeout=TIMEOUT_S, stdin=subprocess.DEVNULL)
+        p = resources.run(args, cwd=cwd, timeout=TIMEOUT_S, stdin=subprocess.DEVNULL, env=env)
     except subprocess.TimeoutExpired as exc:
         raise BuildError(f"timed out: {args[0]}") from exc
     if p.returncode != 0:
@@ -194,26 +314,22 @@ def _scenes(ctx, name: str) -> dict[str, bytes]:
 
 
 # -- the shell and the bundle ---------------------------------------------------------------------------------------
-def shell_binary(ctx, plat) -> Path:
-    sh = plat["effect_shell"]
+def shell_binary(ctx, plat, target: str | None = None) -> Path:
+    sh = section(plat, target, "effect_shell")
     srcs = [plat.path / s for s in sh["sources"]]
+    values, env = target_values(plat, target)
     h = hashlib.sha256(json.dumps(sh, sort_keys=True).encode())
+    if target:
+        h.update(json.dumps(values, sort_keys=True, default=str).encode())
     for s in srcs:
         h.update(s.read_bytes())
-    d = ctx.state_root / "arcade" / "shells" / f"{plat.name}-{h.hexdigest()[:16]}"
+    d = ctx.state_root / "arcade" / "shells" / f"{plat.name}{'-' + target if target else ''}-{h.hexdigest()[:16]}"
     out = d / "effect-shell"
     if out.is_file():
         return out
     d.mkdir(parents=True, exist_ok=True)
-    exe = _tool(plat["probe"])
     tmp = d / f".building-{os.getpid()}"
-    args = []
-    for a in sh["compile"]:
-        if a == "{srcs}":
-            args += [str(s) for s in srcs]
-        else:
-            args.append(a.format(exe=exe, out=str(tmp)))
-    _run(args, d)
+    _run(_args(sh["compile"], {**values, "out": str(tmp), "srcs": [str(s) for s in srcs]}), d, env)
     tmp.replace(out)
     return out
 
@@ -240,8 +356,8 @@ def spec(ctx, card, ir, lang: str) -> dict:
     }
 
 
-def icns(ctx, plat, icon_rgba: bytes, d: Path) -> Path:
-    ic = plat["icon"]
+def icns(ctx, plat, icon_rgba: bytes, d: Path, target: str | None = None) -> Path:
+    ic = section(plat, target, "icon")
     iconset = d / "AppIcon.iconset"
     iconset.mkdir(parents=True, exist_ok=True)
     for s in ic["sizes"]:
@@ -254,10 +370,54 @@ def icns(ctx, plat, icon_rgba: bytes, d: Path) -> Path:
     return out
 
 
+def icon(ctx, plat, target: str | None, icon_rgba: bytes, work: Path, app: Path, bundle: dict) -> None:
+    """The app's icon as the platform card says: an icon file its tool compiles (``compile``), or PNG files of the
+    sizes it names (``files``), in the bundle's resources folder."""
+    ic = section(plat, target, "icon") or {}
+    res = app / bundle["resources_dir"]
+    if ic.get("compile"):
+        shutil.copy(icns(ctx, plat, icon_rgba, work, target), res / bundle["icon_file"])
+    for fname, n in (ic.get("files") or {}).items():
+        (res / fname).write_bytes(png_rgba(scale(icon_rgba, 128, 128, n, n), n, n))
+
+
 def _fill(v, values: dict):
     if isinstance(v, str):
         return v.format(**values)
+    if isinstance(v, list):
+        return [_fill(x, values) for x in v]
+    if isinstance(v, dict):
+        return {k: _fill(x, values) for k, x in v.items()}
     return v
+
+
+def sign(plat, target: str | None, paths: list[Path]) -> None:
+    """Sign as the platform card's ``sign`` says (inner code first): nothing for a card without one."""
+    s = section(plat, target, "sign")
+    if not s:
+        return
+    values, env = target_values(plat, target)
+    for p in paths:
+        _run(_args(s["args"], {**values, "path": str(p)}), p.parent, env)
+
+
+def media_for(ctx, name: str, ir: dict, render, card=None) -> dict[str, bytes]:
+    """The store's pictures: the same on every platform (the module draws them headless on this machine), so they
+    are kept by the hash of what draws them (the module, the card, the arcade code that frames them) and drawn once."""
+    h = hashlib.sha256(json.dumps(ir, sort_keys=True, default=str).encode())
+    h.update(json.dumps(dict(card) if card is not None else {}, sort_keys=True, default=str).encode())
+    for fname in ("build.py", "system.py"):
+        h.update((Path(__file__).parent / fname).read_bytes())
+    key = h.hexdigest()[:20]
+    d = ctx.state_root / "arcade" / "media" / f"{name}-{key}"
+    if (d / ".done").is_file():
+        return {p.name: p.read_bytes() for p in sorted(d.iterdir()) if p.name != ".done"}
+    media = render()
+    d.mkdir(parents=True, exist_ok=True)
+    for fname, data in media.items():
+        (d / fname).write_bytes(data)
+    (d / ".done").write_text("", encoding="utf-8")
+    return media
 
 
 # -- depots -----------------------------------------------------------------------------------------------------------
@@ -281,15 +441,22 @@ def manifest(content: Path, chunks: Path) -> dict:
     return {"files": files, "size": total, "chunks": sum(len(f["chunks"]) for f in files)}
 
 
-def source_hash(ctx, card) -> str:
+def platform_hash(h, store, card, platform: str | None) -> None:
+    """What a build takes from its platform card: the card and its shell's sources (and the target it builds for)."""
+    plat, target, key = resolve_platform(store, card, platform)
+    h.update(json.dumps(dict(plat), sort_keys=True, default=str).encode())
+    if platform_arg(store, card, platform):
+        h.update(key.encode())
+    for s in section(plat, target, "effect_shell")["sources"]:
+        h.update((plat.path / s).read_bytes())
+
+
+def source_hash(ctx, card, platform: str | None = None) -> str:
     """What a build of this game is made of (cheap: files, not a compile)."""
     h = hashlib.sha256(json.dumps(dict(card), sort_keys=True, default=str).encode())
     for rel in card.get("logic") or []:
         h.update((card.path / rel).read_bytes())
-    plat = platform_card(ctx.store, card)
-    h.update(json.dumps(dict(plat), sort_keys=True, default=str).encode())
-    for s in plat["effect_shell"]["sources"]:
-        h.update((plat.path / s).read_bytes())
+    platform_hash(h, ctx.store, card, platform)
     here = Path(__file__).parent
     for name in ("gen.py", "game.py", "build.py"):
         h.update((here / name).read_bytes())
@@ -301,46 +468,52 @@ def source_hash(ctx, card) -> str:
     return h.hexdigest()[:16]
 
 
-def build(ctx, name: str, progress=None) -> dict:
-    say = progress or (lambda step, n, msg: None)
-    steps = 6
-    t0 = time.time()
-    card = G.game_card(ctx.store, name)
-    plat = platform_card(ctx.store, card)
-    say(1, steps, "compiling the cards")
-    ir = G.module(ctx, name)
-    lang = plat["library"]["language"]
+def native_parts(ctx, card, ir, platform: str | None, say, steps: int = 6) -> tuple:
+    """Steps 2 and 3 of a build: the module through the platform's language card (with its target's flags), and the
+    platform's effect shell. Returns (library, shell, language)."""
+    plat, target, _ = resolve_platform(ctx.store, card, platform)
+    values, env = target_values(plat, target)
+    lib_spec = section(plat, target, "library")
     say(2, steps, "emitting native code and compiling it")
-    lib, _ = N.build_library(ctx, ir, lang)
+    lib, _ = N.build_library(ctx, ir, lib_spec["language"], flags=_args(lib_spec.get("flags") or [], values) or None,
+                             env=env if target else None)
     say(3, steps, "building the effect shell")
-    exe = shell_binary(ctx, plat)
-    say(4, steps, "rendering the store media")
-    media = render_media(ctx, name)
-    sp = spec(ctx, card, ir, lang)
+    return lib, shell_binary(ctx, plat, target), lib_spec["language"]
+
+
+def pack(ctx, gid: str, card, platform: str | None, lib: Path, exe: Path, sp: dict, media: dict, say, t0: float,
+         source: str, save: dict, extra: dict | None = None) -> dict:
+    """Steps 5 and 6 of a build (a game's or a console player's): the package in the platform card's layout, signed
+    as it says, then the depot (its files split into chunks named by their SHA-256) and the pointer to it."""
+    steps = 6
+    plat, target, key = resolve_platform(ctx.store, card, platform)
+    media = dict(media)
     h = hashlib.sha256(lib.read_bytes() + exe.read_bytes() + json.dumps(sp, sort_keys=True).encode()
                        + card["version"].encode())
     build_id = h.hexdigest()[:12]
     say(5, steps, "packing the bundle")
-    root = arcade_root(ctx) / "depots" / card.name / f"{card['version']}+{build_id}"
+    root = arcade_root(ctx) / "depots" / gid / f"{card['version']}+{build_id}"
     if root.exists():
         shutil.rmtree(root)
     work = root / "work"
     work.mkdir(parents=True)
-    bundle = plat["bundle"]
+    bundle = section(plat, target, "bundle")
     app_name = card["title"] + bundle.get("suffix", "")
     content = root / "content"
     app = content / app_name
-    for key in ("executable_dir", "frameworks_dir", "resources_dir"):
-        (app / bundle[key]).mkdir(parents=True, exist_ok=True)
-    values = {"title": card["title"], "id": card.name, "version": card["version"], "build": build_id}
+    for k in ("executable_dir", "frameworks_dir", "resources_dir"):
+        (app / bundle[k]).mkdir(parents=True, exist_ok=True)
+    values = {**(target_values(plat, target)[0] if target else {}), "title": card["title"], "id": gid,
+              "ident": ident(gid), "version": card["version"], "build": build_id}
     shutil.copy(exe, app / bundle["executable_dir"] / card["title"])
     os.chmod(app / bundle["executable_dir"] / card["title"], 0o755)
-    shutil.copy(lib, app / bundle["frameworks_dir"] / plat["library"]["file"])
+    lib_file = app / bundle["frameworks_dir"] / section(plat, target, "library")["file"]
+    shutil.copy(lib, lib_file)
     (app / bundle["resources_dir"] / bundle["spec_file"]).write_text(json.dumps(sp, indent=1), encoding="utf-8")
-    shutil.copy(icns(ctx, plat, media.pop("_icon_rgba"), work), app / bundle["resources_dir"] / bundle["icon_file"])
-    plist = {k: _fill(v, values) for k, v in bundle["info_plist"].items()}
-    (app / "Contents" / "Info.plist").write_bytes(plistlib.dumps(plist))
+    icon(ctx, plat, target, media.pop("_icon_rgba"), work, app, bundle)
+    (app / bundle.get("plist", "Contents/Info.plist")).write_bytes(plistlib.dumps(_fill(bundle["info_plist"], values)))
     shutil.rmtree(work)
+    sign(plat, target, [lib_file, app])
     say(6, steps, "writing the depot")
     chunks = arcade_root(ctx) / "chunks"
     chunks.mkdir(parents=True, exist_ok=True)
@@ -349,23 +522,46 @@ def build(ctx, name: str, progress=None) -> dict:
     mdir.mkdir()
     for fname, data in media.items():
         (mdir / fname).write_bytes(data)
-    info = {"id": card.name, "title": card["title"], "version": card["version"], "build": build_id,
-            "source": source_hash(ctx, card),
-            "app": app_name, "executable": f"{app_name}/{bundle['executable_dir']}/{card['title']}",
+    info = {"id": gid, "title": card["title"], "version": card["version"], "build": build_id, "source": source,
+            **(extra or {}), "platform": key,
+            "app": app_name, "executable": "/".join(p for p in (app_name, bundle["executable_dir"], card["title"]) if p),
             "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "seconds": round(time.time() - t0, 1),
-            "media": sorted(media), "save": {"dir": plat.get("saves", "").format(id=card.name),
-                                              "file": "save.bin", "achievements_offset": 32}, **man}
+            "media": sorted(media), "save": {"dir": (section(plat, target, "saves") or "").format(id=gid), **save}, **man}
     (root / "manifest.json").write_text(json.dumps(info, indent=1), encoding="utf-8")
-    (arcade_root(ctx) / "depots" / card.name / "latest").write_text(root.name, encoding="utf-8")
+    pointer(ctx, gid, platform_arg(ctx.store, card, platform)).write_text(root.name, encoding="utf-8")
     return info
 
 
-def latest(ctx, name: str) -> Path | None:
-    p = arcade_root(ctx) / "depots" / name / "latest"
+def build(ctx, name: str, progress=None, platform: str | None = None) -> dict:
+    """The game for its own platform, or for the one ``platform`` names (a key: ``ios``, ``ios-iphonesimulator``)."""
+    say = progress or (lambda step, n, msg: None)
+    steps = 6
+    t0 = time.time()
+    card = G.game_card(ctx.store, name)
+    plat, target, _ = resolve_platform(ctx.store, card, platform)
+    target_values(plat, target)                     # what the target needs, before the long steps
+    say(1, steps, "compiling the cards")
+    ir = G.module(ctx, name)
+    lib, exe, lang = native_parts(ctx, card, ir, platform, say, steps)
+    say(4, steps, "rendering the store media")
+    media = media_for(ctx, card.name, ir, lambda: render_media(ctx, name), card)
+    sp = spec(ctx, card, ir, lang)
+    return pack(ctx, card.name, card, platform, lib, exe, sp, media, say, t0, source=source_hash(ctx, card, platform),
+                save={"file": "save.bin", "achievements_offset": 32})
+
+
+def pointer(ctx, name: str, platform: str | None = None) -> Path:
+    """The file naming a program's latest build: ``latest`` for its own platform, ``latest@KEY`` for another."""
+    return arcade_root(ctx) / "depots" / name / ("latest" if not platform else f"latest@{platform}")
+
+
+def latest(ctx, name: str, platform: str | None = None) -> Path | None:
+    p = pointer(ctx, name, platform)
     if not p.is_file():
         return None
     root = p.parent / p.read_text(encoding="utf-8").strip()
     return root if (root / "manifest.json").is_file() else None
 
 
-__all__ = ["BuildError", "arcade_root", "build", "latest", "manifest", "render_media", "source_hash"]
+__all__ = ["BuildError", "arcade_root", "build", "home_key", "latest", "manifest", "media_for", "native_parts", "pack",
+           "platform_arg", "pointer", "render_media", "resolve_platform", "section", "source_hash", "target_values"]
