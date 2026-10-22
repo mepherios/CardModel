@@ -29,7 +29,7 @@ memory on this machine, and a session started by another session's message canno
 | W-3 | which code should identify a card? | `claude/godel-w3-identity` | done |
 | W-5 | what makes a numbering admissible in each domain? | `claude/godel-w5-numberings` | done |
 | W-1 | can every 1931 definition run as a card? | `claude/godel-w1-definitions` | done |
-| W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | waiting |
+| W-12 | can instruction terms become polynomial constraints over a prime field? | `claude/godel-w12-arithmetized` | done |
 | W-2 | can the content algebra and carry-over be kernel-checked on Mathlib? | `claude/godel-w2-mathlib` | blocked: the Mathlib and Foundation downloads need the user's yes |
 
 The parts of W-2 that need no download are already on main: `formal/GodelCore` proves Rule-19, Rule-20 and the
@@ -156,4 +156,28 @@ confirms (Def-4).
 
 The Lean forms are executable definitions compared on samples, not proofs that they equal the paper's (that would be
 Cap-10, proof by reflection: W-11 in wave 2).
+
+### W-12: arithmetized execution (Cap-11, Ph-11)
+
+`machine/arith.py` compiles every LR35902 symbolic term (F5) to gates over the Goldilocks field
+p = 2^64 - 2^32 + 1, each gate one constraint of degree at most 2 (AND z = xy, XOR z = x + y - 2xy,
+OR z = x + y - xy, NOT z = 1 - x, MUX z = b + t(a - b)); on bits each polynomial is its Boolean gate. Words are
+40-bit two's complement: ripple-carry addition, subtraction, shifts, comparisons by sign, IF_EXPR as a MUX.
+
+* **The constraints agree with the terms on every input.** All 1,075 outputs (register updates, bus
+  arguments, guards; 20,608 gates): z3 proves each equal to its term at word level (unsat for all, in
+  1.7 s), and exhaustive bit-sliced evaluation confirms the 948 outputs whose
+  inputs have at most 16 bits (33,912,934 inputs, 345.9 s). The other
+  127 read 16-bit registers too and are covered by z3 alone.
+* **Schwartz-Zippel over F_p.** For 3 instructions the whole input space becomes one trace: every wire a
+  column interpolated on the N-th roots of unity, the gate constraints combined at random; all rows hold exactly when
+  X^N - 1 divides the composition, checked at one random point with error at most 2N/p. Honest traces pass; one
+  flipped gate output in one row fails (`W12_schwartz_zippel_trace`).
+* **Over Z/2^w the bound fails.** The random-point test accepted the nonzero polynomial 2^7·x in
+  1991 of 4000 trials over Z/2^8 and in 0 over F_p.
+* **The three methods** (`W12_methods_compared`): exhaustive evaluation is a proof over a finite domain but stops at
+  about 16 input bits in Python; SMT is a proof by a decision procedure and the fastest here; the trace identity is a
+  probabilistic proof with a stated bound, one check for a whole instruction, and the basis of succinct proofs that
+  code ran correctly. The trace check here evaluates the polynomials itself: there are no commitments and no
+  low-degree test yet.
 

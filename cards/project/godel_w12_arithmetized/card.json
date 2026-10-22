@@ -7,22 +7,27 @@
   "docs": [
     "docs/GODEL_METHOD.md"
   ],
-  "done": [],
+  "done": [
+    "machine/arith.py: the compiler, bit-sliced exhaustive checks, SMT queries, the NTT trace identity",
+    "findings W12_constraints_agree, W12_schwartz_zippel_trace, W12_mod_2w_fails, W12_methods_compared",
+    "tests/test_arith.py"
+  ],
   "goal": "Can instruction terms become polynomial constraints over a prime field?",
   "in_progress": [],
   "kind": "research",
   "left": [
-    "the LR35902 instruction terms compiled to constraints over a prime field",
-    "equality checked by Schwartz-Zippel",
-    "a comparison with SMT and exhaustive checking"
+    "commitments and a low-degree test (FRI) for a succinct proof",
+    "the ARM instruction terms once they exist (G_M6)"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "d6e8bfe70bd773af4bb1a857d40063a6f9b34370c979c45d6bace9d1186f5992",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [],
   "name": "godel_w12_arithmetized",
   "next_steps": [
-    "start on claude/godel-w12-*"
+    "merge after verify"
   ],
   "order": 44,
   "owner": {
@@ -38,10 +43,10 @@
     "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
     "tool": "tools/seed_godel_method.py"
   },
-  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "standing": "Done on claude/godel-w12-arithmetized: every LR35902 output term is a degree-2 constraint system over the Goldilocks field that agrees with the term on every input (z3 for all, exhaustive where the inputs allow), and a Schwartz-Zippel trace identity decides whole instructions with a stated error.",
   "statement": "Gödel method research program, wave 1: Can instruction terms become polynomial constraints over a prime field?",
   "tier": 1,
   "title": "W-12 Arithmetized execution",
-  "updated": "2026-10-22T02:22:50+02:00",
+  "updated": "2026-10-22T04:30:47+02:00",
   "user_actions": []
 }
