@@ -2,19 +2,67 @@
   "category": "hardware",
   "name": "nds_sound",
   "machine": "nds",
-  "statement": "The ARM7's sixteen sound channels (0x04000400 + 16 n: SOUNDxCNT, SOUNDxSAD, SOUNDxTMR, SOUNDxPNT, SOUNDxLEN), SOUNDCNT, SOUNDBIAS and the two capture units, as far as a game can see them: a channel's busy bit (SOUNDxCNT bit 31) stays set while it plays, a one-shot channel stops when its samples would have played out, a looping, manual, PSG or noise channel plays until it is stopped, and a one-shot capture stops when its buffer would be full. No samples are mixed yet: there is no audio output.",
+  "statement": "The ARM7's sixteen sound channels (0x04000400 + 16 n: SOUNDxCNT, SOUNDxSAD, SOUNDxTMR, SOUNDxPNT, SOUNDxLEN) mixed into stereo samples: PCM8, PCM16 and IMA-ADPCM from memory, PSG square waves (channels 8-13) and noise (14-15), each at its own timer rate, with volume, divider and panning, through SOUNDCNT's master volume and enable. A one-shot channel stops (its busy bit clears) when its samples run out, a looping one goes back to its loop start (ADPCM with the state it had there), and a one-shot capture stops when its buffer would be full.",
   "registers": [
-    {"offset": "0x00 + 16 n", "name": "SOUNDxCNT", "bits": "0-6 volume, 8-9 divider, 15 hold, 16-22 panning, 24-26 PSG duty, 27-28 repeat (0 manual, 1 loop, 2 one-shot), 29-30 format (0 PCM8, 1 PCM16, 2 IMA-ADPCM, 3 PSG/noise), 31 start/busy"},
-    {"offset": "0x04 + 16 n", "name": "SOUNDxSAD"}, {"offset": "0x08 + 16 n", "name": "SOUNDxTMR (sample period: 0x10000 - TMR ticks of 16.756991 MHz)"},
-    {"offset": "0x0A + 16 n", "name": "SOUNDxPNT (loop start, words)"}, {"offset": "0x0C + 16 n", "name": "SOUNDxLEN (length, words)"},
-    {"offset": "0x100", "name": "SOUNDCNT"}, {"offset": "0x104", "name": "SOUNDBIAS"},
-    {"offset": "0x108", "name": "SNDCAP0CNT, SNDCAP1CNT (bit 2 one-shot, bit 3 PCM8, bit 7 start/busy)"},
-    {"offset": "0x110", "name": "SNDCAP0DAD, SNDCAP0LEN, SNDCAP1DAD, SNDCAP1LEN"}
+    {
+      "offset": "0x00 + 16 n",
+      "name": "SOUNDxCNT",
+      "bits": "0-6 volume, 8-9 divider (1, 2, 4, 16), 15 hold, 16-22 panning (0 left, 64 centre, 127 right), 24-26 PSG duty, 27-28 repeat (0 manual, 1 loop, 2 one-shot), 29-30 format (0 PCM8, 1 PCM16, 2 IMA-ADPCM, 3 PSG/noise), 31 start/busy"
+    },
+    {
+      "offset": "0x04 + 16 n",
+      "name": "SOUNDxSAD"
+    },
+    {
+      "offset": "0x08 + 16 n",
+      "name": "SOUNDxTMR (sample period: 0x10000 - TMR ticks of 16.756991 MHz)"
+    },
+    {
+      "offset": "0x0A + 16 n",
+      "name": "SOUNDxPNT (loop start, words)"
+    },
+    {
+      "offset": "0x0C + 16 n",
+      "name": "SOUNDxLEN (length after the loop start, words)"
+    },
+    {
+      "offset": "0x100",
+      "name": "SOUNDCNT",
+      "bits": "0-6 master volume, 15 enable"
+    },
+    {
+      "offset": "0x104",
+      "name": "SOUNDBIAS"
+    },
+    {
+      "offset": "0x108",
+      "name": "SNDCAP0CNT, SNDCAP1CNT (bit 2 one-shot, bit 3 PCM8, bit 7 start/busy)"
+    },
+    {
+      "offset": "0x110",
+      "name": "SNDCAP0DAD, SNDCAP0LEN, SNDCAP1DAD, SNDCAP1LEN"
+    }
   ],
   "cycles_per_sample_tick": 2,
-  "limits": "no mixing and no audio output; the busy bits follow from the sample counts and rates (a channel's hold bit and the capture's addition modes change nothing)",
-  "sources": ["GBATEK (DS sound)"],
-  "logic": ["sound.card"],
-  "provenance": {"origin": "cardmodel"},
+  "bus_hz": 33513982,
+  "sample_rate": 32768,
+  "adpcm": {
+    "step_table": [7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767],
+    "index_table": [-1, -1, -1, -1, 2, 4, 6, 8],
+    "header": "the first word: bits 0-15 the initial sample, bits 16-22 the initial step index",
+    "nibble": "diff = step/8 + step/4 (bit 0) + step/2 (bit 1) + step (bit 2); bit 3 subtracts; the index moves by index_table[n & 7] within 0..88; low nibble first"
+  },
+  "psg": "8 steps per period, high for duty + 1 of them (duty 7: always low)",
+  "noise": "a 15-bit LFSR from 0x7FFF: when bit 0 is set, x = (x >> 1) ^ 0x6000 and the output is low, else x = x >> 1 and high",
+  "limits": "nearest-sample playback (no interpolation), mixed in 16 bits with a quarter headroom; the capture units do not write memory (their busy bits only), the hold bit and SOUNDBIAS change nothing",
+  "sources": [
+    "GBATEK (DS sound: channels, formats, ADPCM, PSG and noise, mixer)"
+  ],
+  "logic": [
+    "sound.card"
+  ],
+  "provenance": {
+    "origin": "cardmodel"
+  },
   "tier": 1
 }

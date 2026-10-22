@@ -15,8 +15,8 @@ run), which instruction cards the executed code used (decoded from memory after 
 overwritten later is counted apart), which BIOS calls were made and which of them are modelled, every I/O
 register the game touched that no card models (latched only), and what the screens show.
 
-Honest limits (L1): no sound output or Wi-Fi; no wait states (a nominal instructions-per-line budget); nothing
-here decrypts anything: an image whose secure area is encrypted is refused.
+Honest limits (L1): no Wi-Fi; no wait states (a nominal instructions-per-line budget); nothing here decrypts
+anything: an image whose secure area is encrypted is refused.
 """
 from __future__ import annotations
 
@@ -219,21 +219,32 @@ class DS:
         """Both screens, RGB888: the top screen's 256x192 pixels, then the bottom screen's."""
         return self.m.read("screen")
 
+    def drain_audio(self) -> bytes:
+        """The sound mixed since the last call: signed 16-bit stereo at ``snd_rate``."""
+        n = self.m.get("audio_n")
+        data = self.m.read("audio", 0, n) if n else b""
+        self.m.set("audio_n", 0)
+        return data
+
     def save_bytes(self) -> bytes:
         """The save chip's contents."""
         return self.m.read("backup", 0, min(self.m.get("backup_size"), 0x100000))
 
     def run(self, frames: int, progress=None, script: dict | None = None, every: int = 0, shot=None,
-            watch: bool = False) -> float:
+            watch: bool = False, pcm: bytearray | None = None) -> float:
         """Run frames; ``script`` {frame: buttons} holds buttons from that frame on; ``shot(frame, screens)`` is
         called after every ``every``-th frame; ``watch`` records in ``first_drawn`` the first frame after which
-        each screen was not one flat colour."""
+        each screen was not one flat colour; ``pcm`` collects the sound."""
         t0 = time.perf_counter()
         start = self.m.get("frames")
         for f in range(frames):
             if script and f in script:
                 self.set_buttons(script[f])
             self.m.call("run_frame")
+            if pcm is not None:
+                pcm += self.drain_audio()
+            else:
+                self.m.set("audio_n", 0)
             if watch and len(self.first_drawn) < 2:
                 rgb = self.screens()
                 for name, k in (("top", 0), ("bottom", 1)):

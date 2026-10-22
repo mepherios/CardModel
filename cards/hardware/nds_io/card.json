@@ -1,6 +1,6 @@
 {
   "category": "hardware",
-  "limits": "sound is not mixed, Wi-Fi, the GBA slot, display capture, the main-memory display FIFO, EXMEMCNT's slot ownership and wait states are not modelled; cartridge encryption is not involved (the image is the plaintext the bus delivers)",
+  "limits": "Wi-Fi, the GBA slot, display capture, the main-memory display FIFO, EXMEMCNT's slot ownership and wait states are not modelled; cartridge encryption is not involved (the image is the plaintext the bus delivers)",
   "logic": [
     "io.card"
   ],
@@ -41,7 +41,7 @@
     "0x340 ALPHA_TEST_REF (ARM9)",
     "0x350-0x357 CLEAR_COLOR, CLEAR_DEPTH (ARM9)",
     "0x380-0x3BF TOON_TABLE (ARM9)",
-    "0x400-0x51F sound channel and capture status (ARM7)",
+    "0x400-0x51F sound channels, mixer and capture status (ARM7)",
     "0x400-0x5FF geometry FIFO and command ports (ARM9)",
     "0x600-0x6A3 GXSTAT, RAM_COUNT, test and matrix results (ARM9)",
     "0x1000-0x1003 DISPCNT B (ARM9)",

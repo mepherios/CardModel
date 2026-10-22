@@ -10,11 +10,12 @@
   cardmodel machine diff ROM [--frames N] [--model M]   lifted vs interpreter, frame by frame (state hashes)
   cardmodel machine info ROM                    the cartridge header, decoded with the cartridge card
   cardmodel machine testroms DIR                run test ROMs, read their verdicts (serial / screen / registers)
-  cardmodel machine nds ROM [--frames N] [--lift] [--input SCRIPT] [--png F] [--shots DIR --every K] [--scale S]
-                                                the DS prototype: direct boot, both CPUs and both screens, measured
-                                                coverage; --png saves both screens (top above bottom) after the
-                                                run, --shots every K frames; --lift also lifts the ARM9's ARM code
-                                                and runs a differential
+  cardmodel machine nds ROM [--frames N] [--lift] [--input SCRIPT] [--png F] [--wav F] [--shots DIR --every K]
+                                                [--scale S]   the DS prototype: direct boot, both CPUs, both
+                                                screens and the sound, measured coverage; --png saves both
+                                                screens (top above bottom) after the run, --shots every K frames,
+                                                --wav the sound; --lift also lifts the ARM9's ARM code and runs a
+                                                differential
 """
 from __future__ import annotations
 
@@ -167,8 +168,9 @@ def cmd_machine(args) -> int:
             f.write_bytes(nds.png_screens(rgb, scale=args.scale, gap=4 * args.scale))
             saved.append(str(f))
 
+        pcm = bytearray() if args.wav else None
         secs = ds.run(args.frames, script=script, every=args.every if shots else 0, shot=shot if shots else None,
-                      watch=True)
+                      watch=True, pcm=pcm)
         cov = nds.coverage(ds)
         cov["seconds"] = round(secs, 2)
         cov["first_drawn"] = dict(ds.first_drawn)
@@ -178,6 +180,12 @@ def cmd_machine(args) -> int:
             cov["png"] = str(Path(args.png).expanduser())
         if saved:
             cov["shots"] = saved
+        if pcm is not None:
+            Path(args.wav).expanduser().write_bytes(G.wav(bytes(pcm), ds.m.get("snd_rate")))
+            peak = max((abs(int.from_bytes(pcm[i:i + 2], "little", signed=True)) for i in range(0, len(pcm), 2)),
+                       default=0)
+            cov["sound"] = {"wav": str(Path(args.wav).expanduser()), "seconds": round(len(pcm) / 4 / ds.m.get("snd_rate"), 2),
+                            "peak": peak}
         if args.lift:
             from . import lift_arm
             cov["lifted_differential"] = lift_arm.differential(ctx, rom, args.frames, args.frames)
@@ -198,6 +206,9 @@ def cmd_machine(args) -> int:
                          + (f"first picture after frame {first}" if first else "never drawn"))
         if cov.get("png"):
             lines.append(f"  screens saved to {cov['png']}")
+        if cov.get("sound"):
+            snd = cov["sound"]
+            lines.append(f"  sound: {snd['seconds']} s saved to {snd['wav']} (peak {snd['peak']} of 32767)")
         if saved:
             lines.append(f"  {len(saved)} screenshots in {shots}")
         if "lifted_differential" in cov:
@@ -246,6 +257,7 @@ def register(sub) -> None:
     s.add_argument("--input", help="nds: input script, e.g. '1500:start,1506:-' (buttons a b x y l r start select "
                                    "and the d-pad)")
     s.add_argument("--png", help="nds: save both screens (top above bottom) after the run")
+    s.add_argument("--wav", help="nds: save the sound of the run")
     s.add_argument("--every", type=int, default=60, help="nds: with --shots, a screenshot every N frames")
     s.add_argument("--scale", type=int, default=1, help="nds: pixel scale of the PNGs")
     s.add_argument("--model", default="auto", choices=["auto", "dmg", "cgb"],

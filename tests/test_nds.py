@@ -578,6 +578,61 @@ class Clock(Base):
 
 
 class Sound(Base):
+    """The channels through their registers, as the ARM7 sets them; the mixer's samples drained from `audio`."""
+
+    def channel(self, ch, cnt, sad=0x02200000, tmr=0x10000 - 511, pnt=0, length=4):
+        base = 0x04000400 + ch * 16
+        self.w(base + 4, sad, cpu=1)
+        self.w(base + 8, tmr, 2, cpu=1)
+        self.w(base + 10, pnt, 2, cpu=1)
+        self.w(base + 12, length, cpu=1)
+        self.w(0x04000500, 0x807F, 2, cpu=1)               # SOUNDCNT: enabled, master volume 127
+        self.ds.drain_audio()
+        self.w(base, cnt, cpu=1)
+
+    def samples(self, frames=1):
+        pcm = bytearray()
+        self.ds.run(frames, pcm=pcm)
+        vals = struct.unpack(f"<{len(pcm) // 2}h", bytes(pcm))
+        return vals[0::2], vals[1::2]
+
+    def test_pcm8_is_mixed_with_volume_and_panning(self):
+        self.ds.m.write("mram", bytes([0x40, 0xC0] * 8), start=0x200000)   # +64, -64, ...
+        self.channel(0, 0x80000000 | (1 << 27) | (64 << 16) | 127)       # loop, PCM8, centre, volume 127
+        left, right = self.samples()
+        self.assertEqual(max(left), (((64 << 8) * 127 >> 7) * 63 >> 7) * 127 >> 9)
+        self.assertEqual(min(left), (((-64 << 8) * 127 >> 7) * 63 >> 7) * 127 >> 9)
+        self.assertEqual(max(right), (((64 << 8) * 127 >> 7) * 64 >> 7) * 127 >> 9)
+        self.w(0x04000500, 0x007F, 2, cpu=1)               # master enable off: silence
+        left, right = self.samples()
+        self.assertEqual(set(left) | set(right), {0})
+
+    def test_psg_duty_and_noise(self):
+        self.channel(8, 0x80000000 | (3 << 29) | (3 << 24) | (64 << 16) | 127, tmr=0x10000 - 4096)
+        left, _ = self.samples(2)                          # a step every 8 output samples: the wave is resolved
+        high = sum(1 for v in left if v > 0)
+        self.assertAlmostEqual(high / len(left), 0.5, delta=0.05, msg="duty 3: high 4 of 8 steps")
+        self.w(0x04000480, 0, cpu=1)
+        self.channel(14, 0x80000000 | (3 << 29) | (64 << 16) | 127, tmr=0x10000 - 4096)
+        left, _ = self.samples()
+        self.assertTrue(any(v > 0 for v in left) and any(v < 0 for v in left))
+
+    def test_adpcm_decodes_nibbles_after_its_header(self):
+        """A header word (sample 0x0100, index 3), then 24 nibbles alternating 7 and 0xF: the one-shot ends with the
+        decoder where the card's step and index tables put it, and its busy bit clears."""
+        self.ds.m.write("mram", bytes([0x00, 0x01, 3, 0]) + bytes([0xF7] * 12), start=0x200000)
+        self.channel(0, 0x80000000 | (2 << 29) | (2 << 27) | (64 << 16) | 127, pnt=1, length=3, tmr=0x10000 - 255)
+        adpcm = self.ctx.store.get("hardware/nds_sound")["adpcm"]
+        v, i = 0x100, 3
+        for n in [0x7, 0xF] * 12:
+            st = adpcm["step_table"][i]
+            d = (st >> 3) + (st >> 2) + (st >> 1) + st
+            v = max(-0x7FFF, v - d) if n & 8 else min(0x7FFF, v + d)
+            i = max(0, min(88, i + adpcm["index_table"][n & 7]))
+        self.ds.run(1)
+        self.assertEqual((self.ds.m.array("ch_adv")[0], self.ds.m.array("ch_adi")[0]), (v, i))
+        self.assertEqual(self.r(0x04000403, 1, cpu=1) & 0x80, 0)
+
     def test_one_shot_channel_stops_and_a_loop_keeps_playing(self):
         self.w(0x04000408, 0xFE00, 2, cpu=1)               # 512 ticks per sample
         self.w(0x0400040C, 16, cpu=1)                      # 16 words = 64 PCM8 samples
@@ -639,9 +694,14 @@ class PokemonDiamond(unittest.TestCase):
 
     def test_title_screen_dialga_in_3d(self):
         """START skips the intro to the title screen, whose Dialga is a 3D model: hundreds of polygons reach the
-        rendering engine and cover a large part of its picture."""
+        rendering engine and cover a large part of its picture; the intro's music comes out of the mixer."""
         ds = make_ds(nds.open_nds(DIAMOND))
-        ds.run(1800, script=nds.parse_input("1500:start,1506:-", ds.ctx.store))
+        pcm = bytearray()
+        ds.run(1800, script=nds.parse_input("1500:start,1506:-", ds.ctx.store), pcm=pcm)
+        left = struct.unpack(f"<{len(pcm) // 2}h", bytes(pcm))[0::2]
+        self.assertGreater(len(left), 32768 * 25, "about 30 s of sound")
+        self.assertGreater(max(left), 4000)
+        self.assertGreater(len(set(left[-32768:])), 500, "the last second is not a constant or a few levels")
         m = ds.m
         self.assertGreater(m.get("frames3d"), 100)
         self.assertGreater(m.array("gx_polys")[4], 300)

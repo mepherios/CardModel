@@ -198,7 +198,7 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   | `nds_spi` | the ARM7's SPI bus: power management, a firmware flash made from the card's data (header, Wi-Fi block, user settings with CRC; no console's firmware), the touch screen controller through the firmware's calibration |
   | `nds_backup` | the save chip on the auxiliary SPI bus: serial flash commands; which chip a game has is data by game code |
   | `nds_rtc` | the real-time clock on three bit-banged wires: status, date and time in BCD, alarms stored; it runs on machine time from what the host sets |
-  | `nds_sound` | the channels' busy bits: a one-shot channel stops when its samples would have played out, a capture when its buffer is full (no mixing) |
+  | `nds_sound` | the sixteen channels mixed into stereo samples: PCM8, PCM16 and IMA-ADPCM from memory, PSG square waves and noise, each at its timer's rate, with volume, divider, panning and the master volume; one-shot channels stop and clear their busy bits when their samples run out, looping ones return to their loop start |
 
   A frame is 263 lines: per line the line events (at line 192 a waiting SWAP_BUFFERS hands the filled polygon RAM
   to the rendering engine, which draws it for the next frame), the 2D engines draw a visible line from the registers
@@ -207,11 +207,12 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   so NitroSDK's 1-word repeating card DMA moves whole blocks. Direct boot as the firmware leaves it.
 * **The host** (`machine/nds.py`): `DS(ctx, rom, clock=..., save=...)` inserts an image (a save chip's bytes and a
   start time for the clock are inputs; the default clock is fixed so runs repeat), `screens()` returns both
-  screens, `png_screens` stacks them as on the console, `set_buttons` / `touch` are the inputs, `save_bytes()` the
-  save chip, `machine=` reuses a loaded machine for another image.
+  screens, `png_screens` stacks them as on the console, `drain_audio()` the sound mixed since the last call,
+  `set_buttons` / `touch` are the inputs, `save_bytes()` the save chip, `machine=` reuses a loaded machine for
+  another image.
 * **Headless** (`cardmodel machine nds ROM`): `--input` holds buttons from a frame on, `--png` saves both screens
-  after the run, `--shots DIR --every K` every K frames; the report says when each screen first showed a
-  picture. Pokemon Diamond draws its copyright and ESRB screens after frame 51, plays its intro (the Game Freak
+  after the run, `--shots DIR --every K` every K frames, `--wav` the sound; the report says when each screen first
+  showed a picture. Pokemon Diamond draws its copyright and ESRB screens after frame 51, plays its intro (the Game Freak
   logo, the Pokemon logo, the 3D flight over Sinnoh's towns), shows its title screen with the 3D Dialga and,
   with START and A, starts a new game (Professor Rowan's introduction); buttons and touch-screen taps reach it.
 * **Measured coverage**: per CPU the instructions run, distinct addresses, which instruction cards the code used,
@@ -256,7 +257,8 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   tested). The CGB's early line-144 STAT source is measured in single speed; in double speed it is the same 4
   dots, unverified.
 * Lifting: code in RAM, code right after EI and the HALT/STOP/illegal opcodes always run in the interpreter.
-* DS: no sound mixing, display capture, main-memory display FIFO or Wi-Fi; 3D has no edge marking, fog,
+* DS: no display capture, main-memory display FIFO or Wi-Fi; sound is mixed without interpolation and the capture
+  units write no memory; 3D has no edge marking, fog,
   anti-aliasing, shadow polygons, rear-plane bitmap or Y-sorting of translucent polygons; no wait states (a nominal
   instructions-per-line budget); a 2D line is drawn from the registers as they are when it starts; two VRAM
   banks on one page do not OR together; the save chip is serial flash only. ARM lifting covers ARM-state ARM9
