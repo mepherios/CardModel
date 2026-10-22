@@ -36,6 +36,11 @@ quick verify and every self-run) checks the mechanical part.
    `~/Documents/rea-main`, `~/Programmering/ting`, `~/Programmering/rea-cards`, `~/Documents/AnyPS5-main`, the
    ROM folders). ROM bytes, firmware and keys are never copied into the repository.
 
+**Goal floors.** A goal's target is never quietly made easier: `cards/goal_floor/floors` records the hardest target
+each goal has been held to, and `cardmodel verify --only integrity` fails on a goal whose target asks less, unless
+the goal card carries an `amendment` {from, to, reason}. `python3 -B tools/goal_floors.py` records floors for new
+goals and raises them when a target gets stricter; it never lowers one except to record an amendment.
+
 ## 2. Number registry
 
 A law's number is its identity (LAWS.md is generated from the cards). Take the next free number here, and add the

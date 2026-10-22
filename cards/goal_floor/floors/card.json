@@ -1,0 +1,246 @@
+{
+  "category": "goal_floor",
+  "floors": {
+    "G_A1_self_contained": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_A2_runs_on_every_python": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_A3_memory_bounded": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 1024
+    },
+    "G_A4_capabilities_failing": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_A5_integrity_problems": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_A6_laws_carried": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_A7_self_run_fresh": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 24
+    },
+    "G_A8_project_cards_current": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_A9_actions_without_truth": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_C1_languages_verified": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 10
+    },
+    "G_C2_op_conformance": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 1.0
+    },
+    "G_C3_forms_witnessed": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 1.0
+    },
+    "G_C4_redefinitions_verified": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 111
+    },
+    "G_C5_functions_translated": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 20
+    },
+    "G_D1_design_laws": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_D2_equilibrium_support": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 8
+    },
+    "G_K1_theorems_proved": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 150
+    },
+    "G_K2_lean_imported": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 300
+    },
+    "G_K3_lean_mismatches": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_K4_self_violations": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_K5_programs_pass": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 6
+    },
+    "G_K6_functional_identities": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 5
+    },
+    "G_L1_learned_cards": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 10
+    },
+    "G_M1_isa_conformance": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_M2_roms_boot": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0.95
+    },
+    "G_M3_lifted_identical": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_M4_test_roms": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 1.0
+    },
+    "G_M5_ds_decoded": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_M6_symbolic_instructions": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 679
+    },
+    "G_O1_measured_forms": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 30
+    },
+    "G_O2_arena_sound": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_O3_arena_recall": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0.9
+    },
+    "G_O4_arena_speedup": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 10
+    },
+    "G_P1_anyps5_badge_reproduced": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_P2_anyps5_gaps_unclassified": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_P3_anyps5_closable_open": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_P4_anyps5_complete_fraction": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 1.0
+    },
+    "G_P5_anyps5_witness_disagreements": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_U1_closure": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_U2_rules_witnessed": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 12
+    },
+    "G_U3_named_fraction": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0.6
+    },
+    "G_U4_valid_cards": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_U5_content_vectors": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 1.0
+    },
+    "G_U6_definitions": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 1.0
+    },
+    "G_U7_canonical_definitions": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0.9
+    },
+    "G_U8_formal_core": {
+      "direction": "lower",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0
+    },
+    "G_U9_algorithm_forms_proved": {
+      "direction": "higher",
+      "since": "2026-10-22T04:36:17+02:00",
+      "target": 0.5
+    }
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "floors",
+  "statement": "Each goal's floor: the hardest target accepted.",
+  "tier": 0
+}
