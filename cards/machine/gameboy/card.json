@@ -15,7 +15,7 @@
   "audio": {"array": "audio", "count": "audio_n", "format": "s16le stereo", "rate": "sample_rate"},
   "input": {"global": "buttons", "setter": "set_buttons", "bits": ["right", "left", "up", "down", "a", "b", "select", "start"]},
   "save": {"array": "cram", "dirty": "cram_dirty", "rtc": ["rtc_s", "rtc_m", "rtc_h", "rtc_dl", "rtc_dh", "rtc_ls", "rtc_lm", "rtc_lh", "rtc_ldl", "rtc_ldh"]},
-  "statement": "The Game Boy and Game Boy Color as one card-IR module: the LR35902 instruction cards, the hardware cards (memory map, interrupts, timer, serial, joypad, cartridge with MBC1/2/3/5, PPU, DMA/HDMA, CGB registers, APU) and this card's main loop. The boot ROM is not used; power_on sets the documented post-boot state: DMG, CGB mode, or DMG compatibility mode for a DMG cartridge on the CGB (KEY0, OPRI, the default compatibility palette from the gb_cgb card, the CGB-mode registers locked).",
+  "statement": "The Game Boy and Game Boy Color as one card-IR module: the LR35902 instruction cards, the hardware cards (memory map, interrupts, timer, serial, joypad, cartridge with MBC1/2/3/5/7, HuC3, the Game Boy Camera and the Wisdom Tree and Sachen boards, PPU, DMA/HDMA, CGB registers, APU) and this card's main loop. The boot ROM is not used; power_on sets the documented post-boot state: DMG, CGB mode, or DMG compatibility mode for a DMG cartridge on the CGB (KEY0, OPRI, the default compatibility palette from the gb_cgb card, the CGB-mode registers locked).",
   "provenance": {"origin": "cardmodel"},
   "tier": 1
 }

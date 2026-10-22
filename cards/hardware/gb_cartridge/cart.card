@@ -1,12 +1,22 @@
 -- The cartridge: ROM (up to 8 MiB), external RAM (up to 128 KiB) and the memory bank controller that maps them
--- (none, MBC1, MBC2, MBC3 with its real-time clock, MBC5). The shell reads the header with this card's `types`
--- table and sets mbc_kind, rom_mask, ram_mask and has_rtc; everything after that is here.
+-- (none, MBC1, MBC2, MBC3 with its real-time clock, MBC5; MBC7, HuC3 and the Game Boy Camera in their own files;
+-- two unlicensed boards: Wisdom Tree's 32 KiB banks and Sachen's scrambled header). The shell reads the header
+-- with this card's `types` table and sets mbc_kind, rom_mask, ram_mask and has_rtc; power_on calls
+-- cart_power_on, which recognises the unlicensed boards the header does not name; everything after that is here.
 const MBC_NONE = 0
 const MBC1 = 1
 const MBC2 = 2
 const MBC3 = 3
 const MBC5 = 5
+const MBC7 = 7
+const HUC3 = 8
+const CAMERA = 9
+const WISDOM_TREE = 10
+const SACHEN = 11
 const DOTS_PER_SECOND = 4194304
+const LOGO_AT = card.hardware.gb_cartridge.unlicensed.logo_at
+const LOGO_END = card.hardware.gb_cartridge.unlicensed.logo_end
+const LOGO_CRC32 = card.hardware.gb_cartridge.unlicensed.logo_crc32
 export array rom: Byte[0x800000]
 export array cram: Byte[0x20000]
 export global mbc_kind: Int = 0
@@ -23,6 +33,8 @@ global bank_lo: Int = 1
 global bank_hi: Int = 0
 global mbc_mode: Int = 0
 global rtc_sel: Int = 0
+global sachen_base: Int = 0
+global sachen_mask: Int = 0
 export global rtc_s: Int = 0
 export global rtc_m: Int = 0
 export global rtc_h: Int = 0
@@ -39,9 +51,53 @@ global rtc_latch: Int = 1
 
 fn rom_read(a: Int) -> Int {
   if a < 0x4000 {
+    if (a & 0xFF00) == 0x0100 and mbc_kind == SACHEN {
+      return rom[(rom_off0 | sachen_lines(a)) & rom_mask]
+    }
     return rom[(rom_off0 | a) & rom_mask]
   }
   return rom[(rom_off1 | (a & 0x3FFF)) & rom_mask]
+}
+-- Sachen boards swap address lines A0/A6 and A1/A4 in the header page (0x0100-0x01FF): the chip holds that page
+-- scrambled, and the CPU reads it in order
+fn sachen_lines(a: Int) -> Int = (a & 0xFFAC) | ((a >> 6) & 0x01) | ((a >> 3) & 0x02) | ((a << 3) & 0x10) | ((a << 6) & 0x40)
+-- the CRC-32 of the 48 logo bytes the boot ROM checks, read plainly or through a locked Sachen board (A7 high,
+-- lines swapped); the logo's own CRC is card data
+fn logo_crc(sachen_locked: Int) -> Int {
+  var crc = 0xFFFFFFFF
+  for a in LOGO_AT .. LOGO_END {
+    let b = if sachen_locked != 0 then rom[sachen_lines(a | 0x80) & rom_mask] else rom[a & rom_mask]
+    crc = crc ^ b
+    for k in 0 .. 8 {
+      crc = if (crc & 1) != 0 then (crc >> 1) ^ 0xEDB88320 else crc >> 1
+    }
+  }
+  return crc ^ 0xFFFFFFFF
+}
+-- the board as the boot ROM leaves it (power_on calls this first, so the boot's header reads see the board);
+-- boards the header does not name are recognised here, for every host
+fn cart_power_on() {
+  if logo_crc(0) != LOGO_CRC32 and logo_crc(1) == LOGO_CRC32 {
+    mbc_kind = SACHEN
+    ram_mask = -1
+    has_rtc = 0
+  } elif mbc_kind == MBC_NONE and rom_mask > 0x7FFF and logo_crc(0) == LOGO_CRC32 {
+    mbc_kind = WISDOM_TREE
+  }
+  ram_on = 0
+  rom_off0 = 0
+  ram_off = 0
+  bank_lo = if mbc_kind == WISDOM_TREE then 0 else 1
+  bank_hi = 0
+  mbc_mode = 0
+  rtc_sel = 0
+  rtc_last = 0
+  sachen_base = 0
+  sachen_mask = 0
+  mbc7_power_on()
+  huc3_power_on()
+  camera_power_on()
+  mbc_map()
 }
 fn mbc_map() {
   if mbc_kind == MBC1 {
@@ -77,6 +133,20 @@ fn mbc_map() {
   } elif mbc_kind == MBC5 {
     rom_off1 = (((bank_hi & 1) << 8) | (bank_lo & 0xFF)) << 14
     ram_off = (rtc_sel & 0x0F) << 13
+  } elif mbc_kind == MBC7 {
+    rom_off1 = (bank_lo & 0x7F) << 14
+  } elif mbc_kind == HUC3 {
+    rom_off1 = (bank_lo & 0x7F) << 14
+    ram_off = (rtc_sel & 3) << 13
+  } elif mbc_kind == CAMERA {
+    rom_off1 = (bank_lo & 0x3F) << 14
+    ram_off = (rtc_sel & 0x0F) << 13
+  } elif mbc_kind == WISDOM_TREE {
+    rom_off0 = (bank_lo & 0xFF) << 15
+    rom_off1 = rom_off0 | 0x4000
+  } elif mbc_kind == SACHEN {
+    rom_off0 = (sachen_base & sachen_mask) << 14
+    rom_off1 = ((bank_lo & (0xFF ^ sachen_mask)) | (sachen_base & sachen_mask)) << 14
   }
 }
 fn mbc_write(a: Int, v: Int) {
@@ -89,6 +159,28 @@ fn mbc_write(a: Int, v: Int) {
         ram_on = if (v & 0x0F) == 0x0A then 1 else 0
       } else {
         bank_lo = v & 0x0F
+      }
+    }
+  } elif mbc_kind == MBC7 {
+    mbc7_control(a, v)
+  } elif mbc_kind == HUC3 {
+    huc3_control(a, v)
+  } elif mbc_kind == CAMERA {
+    camera_control(a, v)
+  } elif mbc_kind == WISDOM_TREE {
+    if a < 0x4000 {
+      bank_lo = a & 0xFF
+    }
+  } elif mbc_kind == SACHEN {
+    if a < 0x2000 {
+      if (bank_lo & 0x30) == 0x30 {
+        sachen_base = v
+      }
+    } elif a < 0x4000 {
+      bank_lo = if v == 0 then 1 else v
+    } elif a < 0x6000 {
+      if (bank_lo & 0x30) == 0x30 {
+        sachen_mask = v
       }
     }
   } elif a < 0x2000 {
@@ -127,6 +219,15 @@ fn mbc_write(a: Int, v: Int) {
   mbc_map()
 }
 fn cart_ram_read(a: Int) -> Int {
+  if mbc_kind == MBC7 {
+    return mbc7_read(a)
+  }
+  if mbc_kind == HUC3 {
+    return huc3_read(a)
+  }
+  if mbc_kind == CAMERA {
+    return camera_read(a)
+  }
   if ram_on == 0 {
     return 0xFF
   }
@@ -145,6 +246,18 @@ fn cart_ram_read(a: Int) -> Int {
   return cram[(ram_off | (a & 0x1FFF)) & ram_mask]
 }
 fn cart_ram_write(a: Int, v: Int) {
+  if mbc_kind == MBC7 {
+    mbc7_write(a, v)
+    return
+  }
+  if mbc_kind == HUC3 {
+    huc3_write(a, v)
+    return
+  }
+  if mbc_kind == CAMERA {
+    camera_write(a, v)
+    return
+  }
   if ram_on == 0 {
     return
   }
@@ -165,7 +278,9 @@ fn cart_ram_write(a: Int, v: Int) {
   cram_dirty = 1
 }
 
--- MBC3 real-time clock: 32768 Hz crystal, counted here in dots (4194304 per second, independent of CPU speed)
+-- The real-time clock: a 32768 Hz crystal, counted here in dots (4194304 per second, independent of CPU speed).
+-- MBC3's registers are seconds, minutes, hours, a 9-bit day counter, halt and carry; HuC3 keeps its minutes of
+-- the day and 12-bit day counter in the same registers (huc3.card), so saves and catch-up are shared.
 fn rtc_tick_second() {
   rtc_s = (rtc_s + 1) & 0x3F
   if rtc_s == 60 {
@@ -176,22 +291,29 @@ fn rtc_tick_second() {
       rtc_h = (rtc_h + 1) & 0x1F
       if rtc_h == 24 {
         rtc_h = 0
-        let d = (((rtc_dh & 1) << 8) | rtc_dl) + 1
-        rtc_dl = d & 0xFF
-        rtc_dh = (rtc_dh & 0xFE) | ((d >> 8) & 1)
-        if d > 0x1FF {
-          rtc_dh = rtc_dh | 0x80
+        if mbc_kind == HUC3 {
+          let n = ((((rtc_dh & 0x0F) << 8) | rtc_dl) + 1) & 0xFFF
+          rtc_dl = n & 0xFF
+          rtc_dh = n >> 8
+        } else {
+          let d = (((rtc_dh & 1) << 8) | rtc_dl) + 1
+          rtc_dl = d & 0xFF
+          rtc_dh = (rtc_dh & 0xFE) | ((d >> 8) & 1)
+          if d > 0x1FF {
+            rtc_dh = rtc_dh | 0x80
+          }
         }
       }
     }
   }
 }
+fn rtc_halted() -> Bool = mbc_kind != HUC3 and (rtc_dh & 0x40) != 0
 fn rtc_sync() {
   if has_rtc == 0 {
     rtc_last = now
     return
   }
-  if (rtc_dh & 0x40) != 0 {
+  if rtc_halted() {
     rtc_last = now
     return
   }
@@ -204,7 +326,7 @@ fn rtc_sync() {
 }
 -- the shell adds the wall-clock time that passed while the game was not running
 export fn rtc_add_seconds(n: Int) {
-  if (rtc_dh & 0x40) != 0 {
+  if rtc_halted() {
     return
   }
   var k = n

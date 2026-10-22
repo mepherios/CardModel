@@ -71,19 +71,31 @@ def scan(where: Path | None = None) -> list[str]:
     return out
 
 
+TARGETS = ("GodelCore", "Godel1931", "godel1931")
+BUILD_MB = 2560
+
+
 def build(where: Path | None = None, timeout: float = 900) -> tuple[bool, str]:
+    """lake build, one target at a time with two threads each: a fresh checkout compiles every module and the
+    executable, and in parallel that passed the resource governor's memory cap."""
     where = where or root()
     tc = toolchain(where)
     if tc is None:
         return False, "no Lean toolchain for formal/lean-toolchain"
-    env = {**os.environ, "PATH": f"{tc}:{os.environ.get('PATH', '')}"}
-    try:
-        p = resources.run([str(tc / "lake"), "build"], cwd=where, timeout=timeout, stdin=subprocess.DEVNULL, env=env)
-    except subprocess.TimeoutExpired:
-        return False, f"lake build ran past {timeout:.0f} s"
-    text = (p.stdout or "") + (p.stderr or "")
-    errors = [ln for ln in text.splitlines() if "error:" in ln]
-    return p.returncode == 0 and not errors, "\n".join(errors[-12:]) or text[-1500:]
+    env = {**os.environ, "PATH": f"{tc}:{os.environ.get('PATH', '')}", "LEAN_NUM_THREADS": "2"}
+    logs = []
+    for target in TARGETS:
+        try:
+            p = resources.run([str(tc / "lake"), "build", target], cwd=where, timeout=timeout,
+                              stdin=subprocess.DEVNULL, env=env, mem_cap_mb=BUILD_MB)
+        except subprocess.TimeoutExpired:
+            return False, f"lake build {target} ran past {timeout:.0f} s"
+        text = (p.stdout or "") + (p.stderr or "")
+        errors = [ln for ln in text.splitlines() if "error:" in ln or "killed:" in ln]
+        if p.returncode != 0 or errors:
+            return False, "\n".join(errors[-12:]) or text[-1500:]
+        logs.append(text[-200:])
+    return True, "\n".join(logs)
 
 
 def axioms(names: list[str], where: Path | None = None, timeout: float = 300) -> dict[str, list[str] | None]:

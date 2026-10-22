@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_godel_method.py",
+  "description": "Research results of the Gödel method program: each finding cites the handover ids it tests or builds and states its tier (proof, probabilistic, bounded, sample).",
+  "name": "finding",
+  "tier": 1
+}

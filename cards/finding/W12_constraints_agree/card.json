@@ -1,0 +1,40 @@
+{
+  "category": "finding",
+  "cites": [
+    "Cap-11",
+    "Ph-11",
+    "Rule-2"
+  ],
+  "data": {
+    "exhaustive": {
+      "pass": 948,
+      "too_wide": 127
+    },
+    "failures": [],
+    "gates": 20608,
+    "inputs_checked": 33912934,
+    "outputs": 1075,
+    "seconds": {
+      "exhaustive": 345.9,
+      "smt": 1.7
+    },
+    "smt": {
+      "unsat": 1075
+    }
+  },
+  "evidence": "tests/test_arith.py; cardmodel/machine/arith.py",
+  "evidence_tier": "proof",
+  "limits": "z3 is a decision procedure for bit-vectors, trusted as such; exhaustive evaluation covers every input of the narrower outputs; values stay inside a 40-bit two's-complement window",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W12_constraints_agree",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-12",
+    "tool": "tools/seed_arith.py"
+  },
+  "statement": "Every LR35902 output term (1075: register updates, bus-effect arguments and guards) compiles to gates of degree at most 2 over the Goldilocks field (20608 gates in all), and the constraints agree with the terms on every input: z3 proves it for all of them ({'unsat': 1075}), and exhaustive evaluation confirms it wherever the inputs have at most 16 bits ({'pass': 948, 'too_wide': 127}; 33,912,934 inputs).",
+  "tier": 1,
+  "workstream": "W-12"
+}

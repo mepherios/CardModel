@@ -25,10 +25,11 @@
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"
   },
-  "statement": "One program: unique law and goal numbers, every law carried by a capability, every command, section and doc described, generated docs in sync.",
+  "statement": "One program: unique law and goal numbers, every law carried by a capability, every command, section and doc described, generated docs in sync, no goal easier than its floor.",
   "tests": [
     "tests/test_laws.py::test_laws_md_in_sync",
-    "tests/test_self.py::test_one_program_integrity"
+    "tests/test_self.py::test_one_program_integrity",
+    "tests/test_self_steps.py::test_a_goal_target_never_drops_silently"
   ],
   "tier": 0,
   "usefulness": "Parallel work lands as one working program, never as pieces."

@@ -1,0 +1,204 @@
+-- MBC7 (Kirby Tilt 'n' Tumble, Command Master): ROM banking, a two-axis accelerometer and a 93LC56 serial EEPROM
+-- (128 words of 16 bits, kept high byte first in cram[0..255], so the save carries it). Its registers answer at
+-- A000-AFFF only while both enables are on (0x0A at 0000-1FFF, 0x40 at 4000-5FFF).
+--
+-- The accelerometer: 0x55 at Ax0x erases the latch (X and Y read 0x8000), then 0xAA at Ax1x latches the tilt,
+-- centred on 0x81D0 with 1 g = 0x70. There is no tilt sensor on a computer: the d-pad tilts the cartridge by 1 g
+-- (a shell's stick drives the d-pad), and a shell with a real source can add its own in tilt_x / tilt_y. The pad
+-- rolls things the way it points: right lowers X, up raises Y (checked on Kirby Tilt 'n' Tumble's levels).
+--
+-- The EEPROM (Microchip 93LC56 data sheet): pins at Ax8x (bit 7 CS, bit 6 CLK, bit 1 DI; DO reads in bit 0).
+-- With CS high, a rising clock edge shifts DI in: a start bit, a 2-bit opcode and 8 address bits (7 used),
+-- then READ answers a dummy 0 and 16 data bits, MSB first, one per rising edge (DO holds between edges, and
+-- goes on to the next word while CS stays high); WRITE takes 16 more bits; ERASE, EWEN/EWDS (write enable),
+-- ERAL and WRAL (all words). Writes finish at once, so DO reads 1 (ready, or the pull-up) otherwise.
+const MBC7_CENTER = card.hardware.gb_cartridge.mbc7.accel_center
+const MBC7_G = card.hardware.gb_cartridge.mbc7.accel_one_g
+const MBC7_ERASED = card.hardware.gb_cartridge.mbc7.accel_erased
+const EE_IDLE = 0
+const EE_COMMAND = 1
+const EE_OUT = 2
+const EE_WRITE = 3
+const EE_WRITE_ALL = 4
+global mbc7_on1: Int = 0
+global mbc7_on2: Int = 0
+global mbc7_x: Int = 0x8000
+global mbc7_y: Int = 0x8000
+global mbc7_armed: Int = 0
+export global tilt_x: Int = 0          -- a shell's own tilt, added to the d-pad's (0x70 = 1 g)
+export global tilt_y: Int = 0
+global ee_pins: Int = 0
+global ee_do: Int = 1
+global ee_state: Int = 0
+global ee_sr: Int = 0
+global ee_bits: Int = 0
+global ee_addr: Int = 0
+global ee_we: Int = 0
+
+fn mbc7_power_on() {
+  mbc7_on1 = 0
+  mbc7_on2 = 0
+  mbc7_x = MBC7_ERASED
+  mbc7_y = MBC7_ERASED
+  mbc7_armed = 0
+  ee_pins = 0
+  ee_do = 1
+  ee_state = EE_IDLE
+  ee_we = 0
+}
+fn mbc7_control(a: Int, v: Int) {
+  if a < 0x2000 {
+    mbc7_on1 = if v == 0x0A then 1 else 0
+  } elif a < 0x4000 {
+    bank_lo = v
+  } elif a < 0x6000 {
+    mbc7_on2 = if v == 0x40 then 1 else 0
+  }
+}
+fn mbc7_open(a: Int) -> Bool = mbc7_on1 != 0 and mbc7_on2 != 0 and a < 0xB000
+-- the tilt the pad and the shell give: right pressed lowers X, up pressed raises Y
+fn mbc7_tilt_x() -> Int = tilt_x + (if (buttons & 0x02) != 0 then MBC7_G else 0) - (if (buttons & 0x01) != 0 then MBC7_G else 0)
+fn mbc7_tilt_y() -> Int = tilt_y + (if (buttons & 0x04) != 0 then MBC7_G else 0) - (if (buttons & 0x08) != 0 then MBC7_G else 0)
+fn mbc7_read(a: Int) -> Int {
+  if not mbc7_open(a) {
+    return 0xFF
+  }
+  let r = (a >> 4) & 0x0F
+  if r == 2 {
+    return mbc7_x & 0xFF
+  }
+  if r == 3 {
+    return (mbc7_x >> 8) & 0xFF
+  }
+  if r == 4 {
+    return mbc7_y & 0xFF
+  }
+  if r == 5 {
+    return (mbc7_y >> 8) & 0xFF
+  }
+  if r == 6 {
+    return 0x00
+  }
+  if r == 8 {
+    return (ee_pins & 0xC2) | ee_do
+  }
+  return 0xFF
+}
+fn mbc7_write(a: Int, v: Int) {
+  if not mbc7_open(a) {
+    return
+  }
+  let r = (a >> 4) & 0x0F
+  if r == 0 {
+    if v == 0x55 {
+      mbc7_x = MBC7_ERASED
+      mbc7_y = MBC7_ERASED
+      mbc7_armed = 1
+    }
+  } elif r == 1 {
+    if v == 0xAA and mbc7_armed != 0 {
+      mbc7_x = (MBC7_CENTER + mbc7_tilt_x()) & 0xFFFF
+      mbc7_y = (MBC7_CENTER + mbc7_tilt_y()) & 0xFFFF
+      mbc7_armed = 0
+    }
+  } elif r == 8 {
+    eeprom_pins(v)
+  }
+}
+
+fn ee_word(i: Int) -> Int = (cram[(i & 0x7F) * 2] << 8) | cram[(i & 0x7F) * 2 + 1]
+fn ee_set(i: Int, w: Int) {
+  cram[(i & 0x7F) * 2] = (w >> 8) & 0xFF
+  cram[(i & 0x7F) * 2 + 1] = w & 0xFF
+  cram_dirty = 1
+}
+fn eeprom_pins(v: Int) {
+  let cs = (v >> 7) & 1
+  let clk = (v >> 6) & 1
+  let di = (v >> 1) & 1
+  let rising = ((ee_pins >> 6) & 1) == 0 and clk != 0
+  if cs == 0 {
+    ee_state = EE_IDLE
+    ee_do = 1
+  } elif rising {
+    eeprom_clock(di)
+  }
+  ee_pins = v
+}
+fn eeprom_clock(di: Int) {
+  if ee_state == EE_IDLE {
+    ee_do = 1
+    if di != 0 {
+      ee_state = EE_COMMAND
+      ee_sr = 0
+      ee_bits = 0
+    }
+  } elif ee_state == EE_COMMAND {
+    ee_sr = (ee_sr << 1) | di
+    ee_bits += 1
+    if ee_bits == 10 {
+      eeprom_command()
+    }
+  } elif ee_state == EE_OUT {
+    ee_do = (ee_sr >> 15) & 1
+    ee_sr = (ee_sr << 1) & 0xFFFF
+    ee_bits += 1
+    if ee_bits == 16 {
+      ee_addr = (ee_addr + 1) & 0x7F
+      ee_sr = ee_word(ee_addr)
+      ee_bits = 0
+    }
+  } else {
+    ee_sr = ((ee_sr << 1) | di) & 0xFFFF
+    ee_bits += 1
+    if ee_bits == 16 {
+      if ee_we != 0 {
+        if ee_state == EE_WRITE {
+          ee_set(ee_addr, ee_sr)
+        } else {
+          for i in 0 .. 128 {
+            ee_set(i, ee_sr)
+          }
+        }
+      }
+      ee_state = EE_IDLE
+      ee_do = 1
+    }
+  }
+}
+-- a start bit, then opcode (2 bits) and address (8 bits; the 128 words use 7)
+fn eeprom_command() {
+  let op = (ee_sr >> 8) & 3
+  ee_addr = ee_sr & 0x7F
+  ee_bits = 0
+  if op == 2 {
+    ee_sr = ee_word(ee_addr)
+    ee_state = EE_OUT
+    ee_do = 0
+  } elif op == 1 {
+    ee_sr = 0
+    ee_state = EE_WRITE
+  } elif op == 3 {
+    if ee_we != 0 {
+      ee_set(ee_addr, 0xFFFF)
+    }
+    ee_state = EE_IDLE
+  } else {
+    let sub = (ee_sr >> 6) & 3
+    ee_state = EE_IDLE
+    if sub == 0 {
+      ee_we = 0
+    } elif sub == 3 {
+      ee_we = 1
+    } elif sub == 2 {
+      if ee_we != 0 {
+        for i in 0 .. 128 {
+          ee_set(i, 0xFFFF)
+        }
+      }
+    } else {
+      ee_sr = 0
+      ee_state = EE_WRITE_ALL
+    }
+  }
+}

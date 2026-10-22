@@ -34,7 +34,10 @@ quick verify and every self-run) checks the mechanical part.
    another checkout.
 8. **Sessions only read** the user's source folders (`~/Documents/Claude_Hub`, `~/Documents/Pheros_Studio`,
    `~/Documents/rea-main`, `~/Programmering/ting`, `~/Programmering/rea-cards`, `~/Documents/AnyPS5-main`, the
-   ROM folders). ROM bytes, firmware and keys are never copied into the repository.
+   ROM folders). ROM bytes, firmware and keys are never copied into the repository. Terms lifted from Unreal
+   Engine's source (UE-derived data) stay in untracked local storage (`state/`), never in tracked packs or in a
+   merged branch's history: the user, 2026-10-22, "Keep UE-derived data local: lifted Unreal terms go to untracked
+   local storage, not tracked packs." Names, paths and line numbers may be tracked.
 
 ## 2. Number registry
 
@@ -49,14 +52,19 @@ range to this table in the same commit.
 | CM37–CM39 | main (self-run) | the core is never lost; the model runs itself; one program |
 | CM40 | cartridges (`claude/festive-margulis-43fde7`) | players are cards (written as CM36 on that branch, renumbered CM40 when it caught up with main) |
 | CM41 | main | projects keep their cards current |
-| CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`), announced | the store runs what it lists |
+| CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`) | the store runs what it lists (CM39 on that branch before the fold) |
 | CM43 | main (MATH_CORE phase 0) | primes are forever |
 | CM44 | main (MATH_CORE phase 1) | everything traces back to the four sources |
 | CM45–CM46 | main (the research handover's phase 0) | content is a sparse vector; every claim carries its tier |
-| **CM47 onward** | free | take the next one |
+| CM47 | world game (`claude/heuristic-ptolemy-2e6700`), reserved | written as CM45 on that branch; renumber before merging |
+| CM48 | universalization (`worktree-universal-domains`), reserved | "every domain is a Gödel set", written as CM45 on that branch; renumber before merging |
+| **CM49 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A9, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M5 (machines); reserved: G_M6 (main, MATH_CORE), G_S1 (self-running-improvement). The next free one is the axis's next number (G_A10, G_U10, G_C6, G_K7, G_M7, G_P6 ...).
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
+(AnyPS5), G_M1–M6 (machines; G_M6 is MATH_CORE's), G_S1 (products: the store, `claude/jolly-liskov-2d97a8`).
+G_A10 is that branch's law-witness goal, written G_A9 there and renumbered where it met MATH_CORE's G_A9
+(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U10, G_C6, G_K7, G_M7,
+G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened
@@ -73,11 +81,14 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 | session | branch / worktree | area (files it owns) | on main |
 |---|---|---|---|
 | integrating session | `main`, the repository folder | kernel, engines, lang, emit, game, docs, the self-run (`engines/selfrun.py`, `capabilities.py`, `integrity.py`) | — |
-| cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 032dc88 (merge ab76427); still active (a Game Boy Player store entry) |
+| cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 85909ec (merge c1bf07f) |
 | cardmodel-anyps5 | `claude/recursing-williams-ecc80a` | `cardmodel/anyps5`, `stdlib/ps5_*.card`, `cards/anyps5_*`, docs/ANYPS5*.md, tests/test_anyps.py, tools/seed_anyps5.py | up to 10c688f (merge 65a059c) |
-| model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | d4fb3c9 (merge 9469e58); 538f29c goes to main through the games branch |
+| model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | up to 11284a6 (merge f25e82a): cartridges, players, per-cartridge apps, the lifter, the static pass, DS touch input |
 | game-boy-cgb-dmg-compati | `claude/strange-dewdney-f8f39d` | the CGB's DMG compatibility mode | 05178e1 (merge 7e4323a) |
-| self-running-improvement | `claude/jolly-liskov-2d97a8` | the same request as main's self-run, built in parallel (`cardmodel/cycle`, store inventory and launch checks); asked to build on `cardmodel self` | nothing yet (uncommitted when main's self-run landed) |
+| self-running-improvement | `claude/jolly-liskov-2d97a8` | folded into `cardmodel self`: the `law_witnesses`, `observe_self`, `store` and `tests` steps (`engines/selfrun.py`, `engines/witness_runner.py`), step deadlines (`kernel/resources.deadline`), the store's end-to-end check (`arcade/client.py`, `arcade check`, CM42, G_A10, G_S1), goal floors in the integrity check (§4a), fixes in translate, exprs, coverage and verify | up to 984fc7a (merged 2026-10-22 with the user's approval); its goal floors replaced main's dccedca |
+| game-boy-library | `claude/frosty-lumiere-98e2b7` | the Game Boy library (header titles, the system card's check cartridge, a player reused cartridge after cartridge) and the store check over every listed cartridge (`arcade/client.py` check_cartridges and Reference, `arcade check --cartridges N`) | up to b15b527 (merged 2026-10-22 with the user's approval); its console-player check replaced main's test_cartridge |
+| ds-a-first-picture-of-po | `claude/blissful-easley-814fa6` | the DS: VRAM, the 2D and 3D engines, sound, Wi-Fi as hardware cards, the DS player and its check cartridge (`system/nds`, docs/MACHINES.md DS) | up to 0fcb468 (merge 9269eee) |
+| game-boy-the-10-cartridg | `claude/sad-clarke-108d42` | the last bank controllers as cards (MBC7, HuC3, Game Boy Camera, Wisdom Tree, Sachen) | up to ea14439 (merge 593fe5c) |
 | fix-flaky-arena-test-dec | `claude/sharp-goldwasser-8b0d81` | the arena's triangular decoy | d9e2ba3 (merge 05c54ea) |
 | fix-flaky-numeric-check | `claude/brave-montalcini-19f1b8` | float rounding in the redefinition witness | 60e72ca (merge cf775f2) |
 
@@ -90,6 +101,20 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 * **Generated** (regenerate, never merge by hand): LAWS.md (`cardmodel docs`), COVERAGE.md
   (`cardmodel cover --write COVERAGE.md`), docs/ANYPS5_COVERAGE.md (`cardmodel anyps5 cover --write docs/ANYPS5_COVERAGE.md`),
   stdlib/algebra.card (`cardmodel algebra scan --write`), the `_pack_*.jsonl` card packs (their tools).
+
+## 4a. Goal floors
+
+A goal's target is a promise: lowering it quietly is a way to lose part of the core. `floor/goals` records the floor
+of every goal (the hardest target it has had, its metric and its direction). `cardmodel docs` writes it: a new goal
+or a harder target raises the floor; nothing else does. The integrity check (every quick verify and self-run) fails
+when a goal is easier than its floor, has another metric or direction, or has gone, unless the reason is written
+down:
+
+* to make a goal easier or change what it measures, give its card
+  `"amended": {"from": <the goal's entry in floor/goals>, "reason": "why"}`, then run `cardmodel docs`: the floor
+  moves to the new target and `floor/goals` keeps the change in its `history` (from, to, reason, date);
+* to retire a goal, add `{"goal": "G_...", "reason": "why", "date": "..."}` to `retired` in `floor/goals` before
+  removing its card; `cardmodel docs` then drops its floor.
 
 ## 4b. Project cards (law CM41)
 
@@ -153,7 +178,25 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | a5ed2d5 | main: one store mechanism for work in progress: early access is the branch versions, the WORK tab is In progress's Every branch section |
 | 2026-10-22 | baa785a | main: the live_hub capability's witness follows the new test |
 | 2026-10-22 | 7d4da20 | main: MATH_CORE phase 0 by the research handover (the user's "Yes, send the research handover to the card-model session so its phase 0 work follows the agenda and the storage rules"): storage rules (CM45), witness tiers (CM46), the formal core in Lean (T1–T6), verify sections tiers and formal |
+| 2026-10-22 | ccad4bc | main: witness tiers: linear recursions with constant coefficients are C-finite (8 of 25 algorithm forms proved) |
+| 2026-10-22 | e549b1d | main: the Gödel method research program, wave 1 (the user's "Yes, send the Gödel method handover to the card-model session and have it start the wave-1 workstreams (W-1, W-2, W-3, W-5, W-12, W-15) under its coordination rules"): a project card per workstream, the finding registry |
+| 2026-10-22 | 3b7798b | `claude/godel-w15-difficulty`: the difficulty census (W-15): a rank on every method, 18 question cards |
+| 2026-10-22 | 48d496a | `claude/godel-w3-identity`: identity and size of codes (W-3): six codes measured, the size model, the GM-2 decision record |
+| 2026-10-22 | 7c588e6 | `claude/godel-w5-numberings`: admissible numberings (W-5): six conditions, every Gödel set passes, arities stated |
+| 2026-10-22 | 1c6f08a | main: tests no longer depend on other sessions' branches (CM41's check honours CARDMODEL_BRANCHES=0) |
+| 2026-10-22 | 8be8819 | `claude/godel-w1-definitions`: Gödel's 46 definitions as cards with Python and Lean forms (W-1), the proof checker |
+| 2026-10-22 | 9d68e93 | main: CM47 and CM48 reserved for the two branches that wrote CM45 |
+| 2026-10-22 | dd7840e | `claude/godel-w12-arithmetized`: the instruction terms as constraints over a prime field (W-12); formal.build stages its targets |
+| 2026-10-22 | dccedca | `claude/integrity-goal-floors`: no goal's target made easier without an amendment (asked for by the self-running-improvement session) |
+| 2026-10-22 | f25e82a | `claude/festive-margulis-43fde7` up to 11284a6 (the user's "Yes: merge claude/festive-margulis-43fde7 (e8def41 ...) into main" and "Yes: include 11284a6 ..."): per-cartridge apps, the lifter at 100 %, the static pass, relift, DS touch input |
+| 2026-10-22 | e72fa77 | `claude/jolly-liskov-2d97a8` at 984fc7a (the user's "Yes: approve merging claude/jolly-liskov-2d97a8 (head 984fc7a) into main"): law witnesses, observe_self, the store's end-to-end check (CM42, G_A10, G_S1); its goal floors (§4a) replace dccedca's |
+| 2026-10-22 | 32f5f58 | `claude/frosty-lumiere-98e2b7` at b15b527 (the user's "Yes: merge claude/frosty-lumiere-98e2b7 into main ..."): the Game Boy library's titles and check cartridge; `arcade check` launches every listed cartridge (its player check replaced main's test_cartridge) |
+| 2026-10-22 | 9269eee | `claude/blissful-easley-814fa6` at 0fcb468 (the user's "Yes: merge claude/blissful-easley-814fa6 (the DS player), ea14439 (the 10 cartridges), the STOP fix 73e6220 and 85909ec into main"): the DS player, the Wi-Fi card, the DS check cartridge |
+| 2026-10-22 | 593fe5c | `claude/sad-clarke-108d42` at ea14439 (the same approval): MBC7, HuC3, the Game Boy Camera, Wisdom Tree, Sachen as cards |
+| 2026-10-22 | 16ea9fc | 73e6220 from `claude/festive-margulis-43fde7` (the same approval; only that commit): a lifted STOP skips one byte |
+| 2026-10-22 | c1bf07f | `claude/sad-sanderson-482207` at 85909ec (the same approval): the Vector Duel project card's next steps |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
 sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21
-of 21 sections after 4d9d755; 231 tests and 23 of 23 sections after the research handover's phase 0.
+of 21 sections after 4d9d755; 231 tests and 23 of 23 sections after the research handover's phase 0; 260 tests after
+Gödel method wave 1 (dd7840e), and every workstream branch passed a full verify before it merged.

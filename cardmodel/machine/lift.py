@@ -33,9 +33,10 @@ then), and otherwise leaves it to the interpreter.
 
 Honest limits (L1): code no profile or static successor reached, RAM code whose bytes changed since it was
 seen, code in video or cartridge RAM, illegal opcodes and the instruction after a HALT bug run in the
-interpreter (the machine counts them: ``interpreted``, ``interpreted_ram``); a key is (ROM offset, which half of
-the address space), so a bank mapped at an unusual place gets its own blocks; MBC1 multicart remapping is
-treated like any bank.
+interpreter (the machine counts them: ``interpreted``, ``interpreted_ram``), and so does a Sachen board's
+scrambled header page (0x0100-0x01FF: the bytes there are not what the CPU reads); a key is (ROM offset, which
+half of the address space), so a bank mapped at an unusual place gets its own blocks; MBC1 multicart remapping
+and Wisdom Tree's 32 KiB banks are treated like any bank.
 """
 from __future__ import annotations
 
@@ -132,8 +133,13 @@ def _loop_free(fn) -> bool:
 
 # -- decoding the ROM -------------------------------------------------------------------------------------
 class Decoder:
-    def __init__(self, store, isa: str = "lr35902"):
+    """Instruction cards by the bytes at a ROM offset. ``avoid``: a CPU address range in bank 0's half whose bytes
+    the board does not show the CPU as they are stored (a Sachen board's scrambled header page); no block covers
+    it, so that code runs in the interpreter, which reads through the board."""
+
+    def __init__(self, store, isa: str = "lr35902", avoid: tuple | None = None):
         self.table = I.decode_table(store, isa)
+        self.avoid = avoid
 
     def at(self, rom: bytes, phys: int, mask: int):
         op = rom[phys & mask]
@@ -160,6 +166,8 @@ def block_extent(dec: Decoder, rom: bytes, key: int, mask: int) -> list:
     out = []
     region_end = 0x8000 if pc >= 0x4000 else 0x4000
     while len(out) < MAX_INSTRUCTIONS:
+        if dec.avoid and pc < 0x4000 and dec.avoid[0] < pc + 3 and pc < dec.avoid[1]:
+            break                                       # the instruction may reach into the scrambled page
         card, n, imm = dec.at(rom, phys, mask)
         if card.get("illegal") or pc + n > region_end:
             break
@@ -202,10 +210,12 @@ def successors(card, pc: int, n: int, imm: list) -> list[int]:
     return out
 
 
-def discover(store, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None) -> dict:
+def discover(store, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
+             avoid: tuple | None = None) -> dict:
     """Block leaders: recursive descent through bank 0 from the vectors, plus the profile's entry points (any
-    bank), plus static successors of everything the profile saw. Returns {key: [pc list]}."""
-    dec = Decoder(store)
+    bank), plus static successors of everything the profile saw. Returns {key: [pc list]}. ``avoid``: the
+    scrambled page (``scrambled_page``), found from the ROM when not given."""
+    dec = Decoder(store, avoid=avoid if avoid is not None else scrambled_page(store, rom))
     leaders: set = set()
     todo = [0x100] + list(range(0x00, 0x40, 8)) + list(range(0x40, 0x68, 8))
     work = [(_key(a, a)) for a in todo]
@@ -613,6 +623,8 @@ class Lifter:
         """``ins_K``: the instruction at key on its own, exactly what the interpreter does for it (with EI's delay
         counted down after it), specialised to its bytes."""
         phys, pc = key >> 1, _pc_of(key)
+        if dec.avoid and pc < 0x4000 and dec.avoid[0] < pc + 3 and pc < dec.avoid[1]:
+            return None                                  # it may read from the scrambled page
         card, n, imm = dec.at(rom, phys, mask)
         if card.get("illegal") or pc + n > (0x8000 if pc >= 0x4000 else 0x4000):
             return None
@@ -843,6 +855,17 @@ def merge_profile(d: Path, name: str, data: bytes) -> bytes:
     return merged
 
 
+def scrambled_page(store, rom: bytes) -> tuple | None:
+    """The CPU address range whose bytes the cartridge's board scrambles (Sachen: the header page), from the
+    cartridge card; None for every other board. ``store``: a card store, or a context holding one."""
+    from . import gb as G
+    card = getattr(store, "store", store).get("hardware/gb_cartridge")
+    if G.unlicensed(rom, card, None) != "sachen":
+        return None
+    lo, hi = ((card.get("unlicensed") or {}).get("sachen") or {}).get("header_page") or (0x100, 0x200)
+    return int(lo), int(hi)
+
+
 def ram_image(ram_seen: bytes | None, ram_code: bytes | None) -> tuple[bytes, list[int]]:
     """The 64 KB address space with the RAM code the profile saw, and the addresses instructions started at."""
     image = bytearray(0x10000)
@@ -860,9 +883,10 @@ def lift_blocks(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: 
     report). ``cache`` maps block keys to blocks lifted before (for the same ROM and machine) and receives the new
     ones."""
     ir = Bd.module(ctx, machine)
-    found = discover(ctx.store, rom, mask, seen, entries)
+    avoid = scrambled_page(ctx.store, rom)
+    found = discover(ctx.store, rom, mask, seen, entries, avoid)
     lifter = Lifter(ctx, ir)
-    dec = Decoder(ctx.store)
+    dec = Decoder(ctx.store, avoid=avoid)
     blocks = []
     singles: dict = {}
     instrs = 0

@@ -1,0 +1,61 @@
+{
+  "blockers": [
+    "Mathlib and Foundation are not installed: downloading them needs the user's yes"
+  ],
+  "branches": [
+    "claude/godel-w2-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [
+    "formal/GodelCore: T1-T6 in plain Lean 4.35 (the content algebra, carry-over and gcd, the append-only ledger, merging versus relating generators, transport, rewrite invariants)"
+  ],
+  "goal": "Can the content algebra and the carry-over laws be kernel-checked?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "Rule-19 and Rule-20 over Finsupp and Multiset",
+    "the freeness argument behind GM-3",
+    "Foundation's incompleteness and GL results imported as truth cards"
+  ],
+  "metadata": {
+    "previous_content_hash": "9a4b6dccc4a8fd1fdf2344c1f716c0c1c07d7a1139219a9423b74a5931dcb4e3",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [],
+  "name": "godel_w2_formal_core",
+  "next_steps": [
+    "after the user's yes: a lake project on Mathlib's Finsupp and Multiset, then Foundation's incompleteness and GL results as truth cards"
+  ],
+  "order": 41,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "formal/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Blocked: W-2 needs Mathlib (with its prebuilt cache) and FormalizedFormalLogic/Foundation, multi-gigabyte downloads that need the user's yes. The plain-Lean formal core on main (formal/GodelCore) already proves Rule-19, Rule-20 and the freeness behind GM-3 without them.",
+  "statement": "Gödel method research program, wave 1: Can the content algebra and the carry-over laws be kernel-checked?",
+  "tier": 1,
+  "title": "W-2 Formal core in Lean, on Mathlib",
+  "updated": "2026-10-22T04:42:39+02:00",
+  "user_actions": [
+    {
+      "action": "Allow downloading Mathlib (with its prebuilt cache) and FormalizedFormalLogic/Foundation for the formal core",
+      "unblocks": [
+        "W-2",
+        "W-10 and W-11 in wave 2"
+      ],
+      "why": "W-2 proves the content algebra over Finsupp and imports Foundation's incompleteness and GL results; both are multi-gigabyte downloads"
+    }
+  ]
+}

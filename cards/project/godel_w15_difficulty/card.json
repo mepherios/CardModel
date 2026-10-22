@@ -1,0 +1,52 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/godel-w15-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [
+    "a rank on all 10 method cards (9 decidable, human_written decides nothing)",
+    "18 question cards: 7 decidable, 3 Σ1, 4 Π1, 3 Π2, 1 beyond",
+    "finding W15_difficulty_census (cites Cap-18, Ph-15, GM-7)",
+    "cardmodel difficulty; the tiers section reports the ranks"
+  ],
+  "goal": "Which of the product's questions are decidable?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "GM-7 as a law (a method or claim without its rank fails verify) waits for the user's yes"
+  ],
+  "metadata": {
+    "previous_content_hash": "00e2309a7bc8898210016de387a502086dcc329b490fe4449e1e7ca0e0a1ed91",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [],
+  "name": "godel_w15_difficulty",
+  "next_steps": [
+    "merge after verify; rank each new method as it is written"
+  ],
+  "order": 45,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cards/method/*",
+    "cards/question/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Done on claude/godel-w15-difficulty: every method card carries the rank of what it decides and of the question it serves; 18 question cards rank what the product asks, 7 decidable and promised, 11 left open with what the product does instead.",
+  "statement": "Gödel method research program, wave 1: Which of the product's questions are decidable?",
+  "tier": 1,
+  "title": "W-15 Difficulty census",
+  "updated": "2026-10-22T02:26:01+02:00",
+  "user_actions": []
+}

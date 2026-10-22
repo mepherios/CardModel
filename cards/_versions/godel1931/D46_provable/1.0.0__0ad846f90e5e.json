@@ -1,0 +1,41 @@
+{
+  "agreement": {
+    "calls": 0,
+    "status": "not computable (Σ1)"
+  },
+  "bound": "none: an unbounded search",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4",
+    "Def-4"
+  ],
+  "counterpart": "proof search: semi-decidable, the one definition that is not primitive recursive",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:provable",
+      "lang": "python"
+    },
+    {
+      "entry": "Godel1931.provable",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "D46_provable",
+  "notation": "provable(x)",
+  "number": 46,
+  "primitive_recursive": false,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "some y is a proof of x",
+  "tier": 1
+}

@@ -87,6 +87,21 @@ class Content(unittest.TestCase):
 
 
 class Structure(unittest.TestCase):
+    def test_a_term_with_a_huge_constant_has_no_structural_number(self):
+        """A constant's token is an exponent: 1103515245 (an LCG's multiplier, as in a learned function card) would
+        make a number of about 10^11 bits, and computing it ran verify for 40 minutes where a learned card met
+        four_sources. structural gives no number for it, at once; a small constant still numbers."""
+        import time
+        ctx = model_ctx()
+        idx = G.index_of(ctx.store)
+        t0 = time.perf_counter()
+        n, _, digits = G.structural(["ADD", ["MUL", ["var", "x"], ["int", 1103515245]], ["int", 12345]], ctx.ops, idx)
+        self.assertIsNone(n)
+        self.assertGreater(digits, 10 ** 9)
+        self.assertLess(time.perf_counter() - t0, 5.0)
+        n, _, _ = G.structural(["ADD", ["var", "x"], ["int", 3]], ctx.ops, idx)
+        self.assertIsNotNone(n)
+
     def test_structural_numbers_decode_exactly(self):
         ctx = model_ctx()
         idx, entries = G.index_of(ctx.store), G.ledger(ctx.store)

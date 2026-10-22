@@ -1,0 +1,40 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "y ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "schema instances",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:prop1_axiom",
+      "lang": "python"
+    },
+    {
+      "entry": "Godel1931.prop1Axiom",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "D35_prop1Axiom",
+  "notation": "prop1Axiom(x) to prop4Axiom(x)",
+  "number": 35,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x instantiates propositional schema 1 (2, 3 or 4)",
+  "tier": 1
+}

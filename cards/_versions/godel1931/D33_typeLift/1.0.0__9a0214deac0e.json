@@ -1,0 +1,40 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "y ≤ x^(x^n)",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "reuse of one statement at higher types",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:type_lift",
+      "lang": "python"
+    },
+    {
+      "entry": "Godel1931.typeLift",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "D33_typeLift",
+  "notation": "typeLift(n, x)",
+  "number": 33,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "every variable's type raised by n",
+  "tier": 1
+}

@@ -1,0 +1,23 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-11",
+    "Ph-15"
+  ],
+  "instead": "for every sentence a proof of it or of its negation exists: ∀∃, and Gödel's first theorem already answers no for any consistent basis that contains Q, so the model keeps expanding and marks undecided questions open, never false",
+  "metadata": {
+    "previous_content_hash": "c01e9698e2806509be6395b7348bd15371289deb05e3d66bff0ee877cc80958f",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "name": "basis_complete",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Π2",
+  "statement": "Does the basis settle every question about its own codes?",
+  "tier": 0
+}

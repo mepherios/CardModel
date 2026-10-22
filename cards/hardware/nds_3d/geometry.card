@@ -1,0 +1,857 @@
+-- The DS geometry engine. A GXFIFO word carries up to four command bytes (the lowest first), then their parameter
+-- words follow in order; a command port (0x04000440 + 4 n for command 0x10 + n) takes one command's parameters
+-- directly. Matrices are 4x4, 20.12 fixed point, row-major, applied to row vectors (v' = v x M) and multiplied from
+-- the left (C = M x C); the clip matrix is position x projection. MTX_MODE picks what the matrix commands change:
+-- 0 projection, 1 position, 2 position and vector (a scale leaves the vector matrix alone), 3 texture.
+-- Each vertex is transformed by the clip matrix and assembled into triangles, quads or strips. A polygon is
+-- culled by its facing (the sign of (v0 - v1) x (v2 - v1) . v1 over clip-space x, y, w: front when <= 0, which is
+-- counter-clockwise on the screen), dropped
+-- when it crosses the far plane unless POLYGON_ATTR bit 12 says to clip it, clipped against the view volume in
+-- homogeneous space (Sutherland-Hodgman, every attribute interpolated in clip space), mapped through the viewport
+-- (whose y counts from the bottom line) to integer screen coordinates, and stored with its perspective weights
+-- (1/w scaled by 2^30, and colour and texture coordinates times it) in the polygon RAM being filled.
+-- SWAP_BUFFERS waits for V-blank: commands sent meanwhile are held and replayed after it; then the filled RAM is
+-- handed to the rendering engine (render.card) and the other one is filled.
+const MX_PROJ = 0
+const MX_POS = 16
+const MX_VEC = 32
+const MX_TEX = 48
+const MX_CLIP = 64
+const MX_TMP = 80
+const MX_ARG = 96
+const MX_SPROJ = 112
+const MX_STEX = 128
+const MX_SPOS = 144               -- 31 position matrices
+const MX_SVEC = 640               -- 31 vector matrices
+const GX_MAXP = card.hardware.nds_3d.capacity.polygons
+const GX_MAXV = card.hardware.nds_3d.capacity.vertices
+const GX_STACK = card.hardware.nds_3d.capacity.position_stack
+const VF = 10                     -- a stored vertex: sx, sy, z depth, 1/w, r/w, g/w, b/w, s/w, t/w, w
+const PF = 8                      -- a stored polygon: first vertex, count, attr, teximage, palette, kind, ymin, ymax
+const CF = 10                     -- a vertex before projection: x, y, z, w (clip), r, g, b, s, t
+const K3_OPAQUE = 0
+const K3_TRANSLUCENT = 1
+const K3_WIRE = 2
+const K3_SHADOW = 3
+const GX_DEFER = 131072
+const GXSTAT_IDLE = card.hardware.nds_3d.gxstat_idle
+const IRQ_GXFIFO = card.hardware.nds_3d.irq_gxfifo
+array gx_nparams: Int[128] = card.hardware.nds_3d.param_counts
+array mx: Int[1136]
+global mtx_mode: Int = 0
+global stk_pos_ptr: Int = 0
+global stk_proj_ptr: Int = 0
+global stk_err: Int = 0
+-- command decoding: FIFO commands collect parameters at gx_par[0..], port commands at gx_par[32..]
+global gx_packed: Int = 0
+global gx_cmd: Int = -1
+global gx_need: Int = 0
+global gx_have: Int = 0
+global gx_pcmd: Int = -1
+global gx_phave: Int = 0
+array gx_par: Int[64]
+export global gx_commands: Int = 0
+global gx_defer_n: Int = 0
+array gx_defer: Int[131072]       -- held while a swap waits: (port command or 0 for GXFIFO, word) pairs
+-- vertex and polygon state
+global vtx_r: Int = 63
+global vtx_g: Int = 63
+global vtx_b: Int = 63
+global tex_s: Int = 0
+global tex_t: Int = 0
+global last_x: Int = 0
+global last_y: Int = 0
+global last_z: Int = 0
+global poly_attr_next: Int = 0
+global poly_attr: Int = 0
+global tex_param: Int = 0
+global pltt_base: Int = 0
+global prim_type: Int = 0
+global prim_n: Int = 0
+global strip_odd: Int = 0
+array prim_v: Int[40]
+array cb: Int[400]                -- clipping: two lists of up to 20 vertices (CF fields each)
+global mat_dif: Int = 0
+global mat_amb: Int = 0
+global mat_spe: Int = 0
+global mat_emi: Int = 0
+global shine_on: Int = 0
+array light_vec: Int[12]
+array light_col: Int[4]
+array shine_tab: Int[128]
+global vp_x1: Int = 0
+global vp_y1: Int = 0
+global vp_x2: Int = 255
+global vp_y2: Int = 191
+-- the two polygon RAMs: gbuf is being filled, the other was handed to the rendering engine
+global gbuf: Int = 0
+array p3d_n: Int[2]
+array v3d_n: Int[2]
+array p3d: Int[32768]
+array v3d: Int[409600]
+global swap_pending: Int = 0
+global swap_mode: Int = 0
+global ram_overflow: Int = 0
+export global frames3d: Int = 0
+export array gx_polys: Int[5]     -- polygons sent, culled by facing, dropped at the far plane, clipped away, stored
+global box_result: Int = 0
+global gxstat_irq: Int = 0
+array pos_result: Int[4]
+array vec_result: Int[3]
+
+fn sx10(v: Int) -> Int = if (v & 0x200) != 0 then v - 0x400 else v
+fn sx16(v: Int) -> Int = if (v & 0x8000) != 0 then (v & 0xFFFF) - 0x10000 else v & 0xFFFF
+fn c6(c5: Int) -> Int = if c5 != 0 then (c5 << 1) + 1 else 0
+fn fx32(v: Int) -> Int = s32((v >> 12) & MASK32)
+
+-- matrices
+fn mx_identity(o: Int) {
+  for i in 0 .. 16 {
+    mx[o + i] = if i == 0 or i == 5 or i == 10 or i == 15 then 0x1000 else 0
+  }
+}
+fn mx_copy(d: Int, s: Int) {
+  for i in 0 .. 16 {
+    mx[d + i] = mx[s + i]
+  }
+}
+fn mx_mul(d: Int, a: Int, b: Int) {
+  for r in 0 .. 4 {
+    for c in 0 .. 4 {
+      mx[MX_TMP + r * 4 + c] = fx32(mx[a + r * 4] * mx[b + c] + mx[a + r * 4 + 1] * mx[b + 4 + c] +
+                                    mx[a + r * 4 + 2] * mx[b + 8 + c] + mx[a + r * 4 + 3] * mx[b + 12 + c])
+    }
+  }
+  mx_copy(d, MX_TMP)
+}
+fn mx_clip_update() {
+  mx_mul(MX_CLIP, MX_POS, MX_PROJ)
+}
+fn mx_cur() -> Int = if mtx_mode == 0 then MX_PROJ else (if mtx_mode == 3 then MX_TEX else MX_POS)
+-- C = ARG x C for the current mode (both position and vector in mode 2 unless scale_only_pos)
+fn mx_apply(scale: Bool) {
+  if mtx_mode == 2 {
+    mx_mul(MX_POS, MX_ARG, MX_POS)
+    if not scale {
+      mx_mul(MX_VEC, MX_ARG, MX_VEC)
+    }
+  } else {
+    let c = mx_cur()
+    mx_mul(c, MX_ARG, c)
+  }
+  if mtx_mode != 3 {
+    mx_clip_update()
+  }
+}
+fn mx_load_arg() {
+  if mtx_mode == 2 {
+    mx_copy(MX_POS, MX_ARG)
+    mx_copy(MX_VEC, MX_ARG)
+  } else {
+    mx_copy(mx_cur(), MX_ARG)
+  }
+  if mtx_mode != 3 {
+    mx_clip_update()
+  }
+}
+-- the parameters at gx_par[pb..] as a 4x4, 4x3 or 3x3 matrix in MX_ARG (the rest of the identity around it)
+fn mx_arg(pb: Int, rows: Int, cols: Int) {
+  mx_identity(MX_ARG)
+  for r in 0 .. rows {
+    for c in 0 .. cols {
+      mx[MX_ARG + r * 4 + c] = s32(gx_par[pb + r * cols + c] & MASK32)
+    }
+  }
+}
+fn mtx_push() {
+  if mtx_mode == 0 {
+    if stk_proj_ptr >= 1 {
+      stk_err = 1
+    }
+    mx_copy(MX_SPROJ, MX_PROJ)
+    stk_proj_ptr = 1
+  } elif mtx_mode == 3 {
+    mx_copy(MX_STEX, MX_TEX)
+  } else {
+    if stk_pos_ptr >= GX_STACK {
+      stk_err = 1
+    } else {
+      mx_copy(MX_SPOS + stk_pos_ptr * 16, MX_POS)
+      mx_copy(MX_SVEC + stk_pos_ptr * 16, MX_VEC)
+      stk_pos_ptr += 1
+    }
+  }
+}
+fn mtx_pop(p: Int) {
+  if mtx_mode == 0 {
+    if stk_proj_ptr <= 0 {
+      stk_err = 1
+    }
+    stk_proj_ptr = 0
+    mx_copy(MX_PROJ, MX_SPROJ)
+    mx_clip_update()
+  } elif mtx_mode == 3 {
+    mx_copy(MX_TEX, MX_STEX)
+  } else {
+    var n = p & 0x3F
+    if n >= 32 {
+      n -= 64
+    }
+    var k = stk_pos_ptr - n
+    if k < 0 or k >= GX_STACK {
+      stk_err = 1
+      k = max(0, min(GX_STACK - 1, k))
+    }
+    stk_pos_ptr = k
+    mx_copy(MX_POS, MX_SPOS + k * 16)
+    mx_copy(MX_VEC, MX_SVEC + k * 16)
+    mx_clip_update()
+  }
+}
+fn mtx_store(p: Int) {
+  if mtx_mode == 0 {
+    mx_copy(MX_SPROJ, MX_PROJ)
+  } elif mtx_mode == 3 {
+    mx_copy(MX_STEX, MX_TEX)
+  } else {
+    let k = p & 31
+    if k >= GX_STACK {
+      stk_err = 1
+    } else {
+      mx_copy(MX_SPOS + k * 16, MX_POS)
+      mx_copy(MX_SVEC + k * 16, MX_VEC)
+    }
+  }
+}
+fn mtx_restore(p: Int) {
+  if mtx_mode == 0 {
+    mx_copy(MX_PROJ, MX_SPROJ)
+    mx_clip_update()
+  } elif mtx_mode == 3 {
+    mx_copy(MX_TEX, MX_STEX)
+  } else {
+    let k = p & 31
+    if k >= GX_STACK {
+      stk_err = 1
+    } else {
+      mx_copy(MX_POS, MX_SPOS + k * 16)
+      mx_copy(MX_VEC, MX_SVEC + k * 16)
+      mx_clip_update()
+    }
+  }
+}
+
+-- lighting (NORMAL): the normal through the vector matrix, then GBATEK's sum over the enabled lights, with the
+-- diffuse and shininess levels in 1.0.9 (512 = 1.0) and colours in 5 bits
+fn gx_normal(p: Int) {
+  let nx = sx10(p & 0x3FF)
+  let ny = sx10((p >> 10) & 0x3FF)
+  let nz = sx10((p >> 20) & 0x3FF)
+  if ((tex_param >> 30) & 3) == 2 {
+    tex_s = sx16(((nx * mx[MX_TEX] + ny * mx[MX_TEX + 4] + nz * mx[MX_TEX + 8]) >> 21) + tex_s)
+    tex_t = sx16(((nx * mx[MX_TEX + 1] + ny * mx[MX_TEX + 5] + nz * mx[MX_TEX + 9]) >> 21) + tex_t)
+  }
+  let lights = poly_attr & 15
+  if lights == 0 {
+    return
+  }
+  let tx = (nx * mx[MX_VEC] + ny * mx[MX_VEC + 4] + nz * mx[MX_VEC + 8]) >> 12
+  let ty = (nx * mx[MX_VEC + 1] + ny * mx[MX_VEC + 5] + nz * mx[MX_VEC + 9]) >> 12
+  let tz = (nx * mx[MX_VEC + 2] + ny * mx[MX_VEC + 6] + nz * mx[MX_VEC + 10]) >> 12
+  var r = mat_emi & 31
+  var g = (mat_emi >> 5) & 31
+  var b = (mat_emi >> 10) & 31
+  for i in 0 .. 4 {
+    if ((lights >> i) & 1) != 0 {
+      let lx = light_vec[i * 3]
+      let ly = light_vec[i * 3 + 1]
+      let lz = light_vec[i * 3 + 2]
+      let dl = max(0, min(512, -(lx * tx + ly * ty + lz * tz) >> 9))
+      let hx = lx >> 1
+      let hy = ly >> 1
+      let hz = (lz - 512) >> 1
+      var sl = max(0, min(512, -(hx * tx + hy * ty + hz * tz) >> 9))
+      sl = (sl * sl) >> 9
+      if shine_on != 0 {
+        sl = shine_tab[min(127, sl >> 2)] << 1
+      }
+      let lc = light_col[i]
+      for k in 0 .. 3 {
+        let sh = k * 5
+        let v = (((((mat_spe >> sh) & 31) * ((lc >> sh) & 31) * sl) >> 14) +
+                 ((((mat_dif >> sh) & 31) * ((lc >> sh) & 31) * dl) >> 14) +
+                 ((((mat_amb >> sh) & 31) * ((lc >> sh) & 31)) >> 5))
+        if k == 0 {
+          r += v
+        } elif k == 1 {
+          g += v
+        } else {
+          b += v
+        }
+      }
+    }
+  }
+  vtx_r = c6(min(31, r))
+  vtx_g = c6(min(31, g))
+  vtx_b = c6(min(31, b))
+}
+fn gx_texcoord(p: Int) {
+  let s = sx16(p & 0xFFFF)
+  let t = sx16((p >> 16) & 0xFFFF)
+  if ((tex_param >> 30) & 3) == 1 {
+    tex_s = sx16((s * mx[MX_TEX] + t * mx[MX_TEX + 4] + 16 * mx[MX_TEX + 8] + 16 * mx[MX_TEX + 12]) >> 12)
+    tex_t = sx16((s * mx[MX_TEX + 1] + t * mx[MX_TEX + 5] + 16 * mx[MX_TEX + 9] + 16 * mx[MX_TEX + 13]) >> 12)
+  } else {
+    tex_s = s
+    tex_t = t
+  }
+}
+
+-- a vertex (4.12 model coordinates): transformed by the clip matrix, then assembled into the primitive
+fn gx_vertex(x: Int, y: Int, z: Int) {
+  last_x = x
+  last_y = y
+  last_z = z
+  var s = tex_s
+  var t = tex_t
+  if ((tex_param >> 30) & 3) == 3 {
+    s = sx16(((x * mx[MX_TEX] + y * mx[MX_TEX + 4] + z * mx[MX_TEX + 8]) >> 24) + tex_s)
+    t = sx16(((x * mx[MX_TEX + 1] + y * mx[MX_TEX + 5] + z * mx[MX_TEX + 9]) >> 24) + tex_t)
+  }
+  let o = prim_n * CF
+  for c in 0 .. 4 {
+    prim_v[o + c] = s32(((x * mx[MX_CLIP + c] + y * mx[MX_CLIP + 4 + c] + z * mx[MX_CLIP + 8 + c] +
+                          0x1000 * mx[MX_CLIP + 12 + c]) >> 12) & MASK32)
+  }
+  prim_v[o + 4] = vtx_r
+  prim_v[o + 5] = vtx_g
+  prim_v[o + 6] = vtx_b
+  prim_v[o + 7] = s
+  prim_v[o + 8] = t
+  prim_n += 1
+  if prim_type == 0 {
+    if prim_n == 3 {
+      gx_emit(0, 1, 2, -1)
+      prim_n = 0
+    }
+  } elif prim_type == 1 {
+    if prim_n == 4 {
+      gx_emit(0, 1, 2, 3)
+      prim_n = 0
+    }
+  } elif prim_type == 2 {
+    if prim_n == 3 {
+      if strip_odd == 0 {
+        gx_emit(0, 1, 2, -1)
+      } else {
+        gx_emit(1, 0, 2, -1)
+      }
+      strip_odd = 1 - strip_odd
+      prim_shift(1, 0)
+      prim_shift(2, 1)
+      prim_n = 2
+    }
+  } elif prim_n == 4 {
+    gx_emit(0, 1, 3, 2)
+    prim_shift(2, 0)
+    prim_shift(3, 1)
+    prim_n = 2
+  }
+}
+fn prim_shift(from: Int, to: Int) {
+  for c in 0 .. CF {
+    prim_v[to * CF + c] = prim_v[from * CF + c]
+  }
+}
+fn cb_dist(o: Int, plane: Int) -> Int {
+  let w = cb[o + 3]
+  if plane == 0 {
+    return w - cb[o]
+  }
+  if plane == 1 {
+    return w + cb[o]
+  }
+  if plane == 2 {
+    return w - cb[o + 1]
+  }
+  if plane == 3 {
+    return w + cb[o + 1]
+  }
+  if plane == 4 {
+    return w - cb[o + 2]
+  }
+  return w + cb[o + 2]
+}
+-- Sutherland-Hodgman over the six planes of the view volume; the polygon ends in cb[0..]; returns its vertex count
+fn gx_clip(n0: Int) -> Int {
+  var n = n0
+  var src = 0
+  for plane in 0 .. 6 {
+    let dst = 200 - src
+    var m = 0
+    for i in 0 .. n {
+      let j = if i + 1 == n then 0 else i + 1
+      let a = src + i * CF
+      let b = src + j * CF
+      let da = cb_dist(a, plane)
+      let db = cb_dist(b, plane)
+      if da >= 0 and m < 20 {
+        for f in 0 .. 9 {
+          cb[dst + m * CF + f] = cb[a + f]
+        }
+        m += 1
+      }
+      if (da >= 0) != (db >= 0) and m < 20 {
+        let t = (da << 16) // (da - db)
+        for f in 0 .. 9 {
+          cb[dst + m * CF + f] = cb[a + f] + (((cb[b + f] - cb[a + f]) * t) >> 16)
+        }
+        m += 1
+      }
+    }
+    n = m
+    src = dst
+    if n < 3 {
+      return 0
+    }
+  }
+  if src != 0 {
+    for i in 0 .. n * CF {
+      cb[i] = cb[src + i]
+    }
+  }
+  return n
+}
+-- a finished polygon from primitive vertices i0..i3 (i3 < 0: a triangle)
+fn gx_emit(i0: Int, i1: Int, i2: Int, i3: Int) {
+  let n0 = if i3 >= 0 then 4 else 3
+  for c in 0 .. CF {
+    cb[c] = prim_v[i0 * CF + c]
+    cb[CF + c] = prim_v[i1 * CF + c]
+    cb[2 * CF + c] = prim_v[i2 * CF + c]
+    if i3 >= 0 {
+      cb[3 * CF + c] = prim_v[i3 * CF + c]
+    }
+  }
+  -- facing, from the first three vertices (coordinates scaled down so the triple product fits 64 bits)
+  let ax = (cb[0] - cb[CF]) >> 4
+  let ay = (cb[1] - cb[CF + 1]) >> 4
+  let aw = (cb[3] - cb[CF + 3]) >> 4
+  let qx = (cb[2 * CF] - cb[CF]) >> 4
+  let qy = (cb[2 * CF + 1] - cb[CF + 1]) >> 4
+  let qw = (cb[2 * CF + 3] - cb[CF + 3]) >> 4
+  let nx = ay * qw - aw * qy
+  let ny = aw * qx - ax * qw
+  let nw = ax * qy - ay * qx
+  let dot = (cb[CF] >> 4) * nx + (cb[CF + 1] >> 4) * ny + (cb[CF + 3] >> 4) * nw
+  let front = dot <= 0
+  gx_polys[0] += 1
+  if (front and (poly_attr & 0x80) == 0) or (not front and (poly_attr & 0x40) == 0) {
+    gx_polys[1] += 1
+    return
+  }
+  if (poly_attr & 0x1000) == 0 {
+    for k in 0 .. n0 {
+      if cb[k * CF + 2] > cb[k * CF + 3] {
+        gx_polys[2] += 1
+        return
+      }
+    }
+  }
+  let n = gx_clip(n0)
+  if n >= 3 {
+    gx_store(n)
+    gx_polys[4] += 1
+  } else {
+    gx_polys[3] += 1
+  }
+}
+-- the clipped polygon in cb[0..] through the viewport into the polygon RAM being filled
+fn gx_store(n: Int) {
+  let b = gbuf
+  if p3d_n[b] >= GX_MAXP or v3d_n[b] + n > GX_MAXV {
+    ram_overflow = 1
+    return
+  }
+  let first = v3d_n[b]
+  let vw = vp_x2 - vp_x1 + 1
+  let vh = vp_y2 - vp_y1 + 1
+  var ymin = 1000
+  var ymax = -1000
+  for k in 0 .. n {
+    let c = k * CF
+    let w = max(1, cb[c + 3])
+    let sx = vp_x1 + ((cb[c] + w) * vw) // (2 * w)
+    let sy = (191 - vp_y2) + ((w - cb[c + 1]) * vh) // (2 * w)
+    let depth = max(0, min(0xFFFFFF, ((cb[c + 2] * 0x4000) // w + 0x3FFF) * 0x200))
+    let iw = (1 << 30) // w
+    let o = ((b * GX_MAXV) + first + k) * VF
+    v3d[o] = sx
+    v3d[o + 1] = sy
+    v3d[o + 2] = depth
+    v3d[o + 3] = iw
+    v3d[o + 4] = cb[c + 4] * iw
+    v3d[o + 5] = cb[c + 5] * iw
+    v3d[o + 6] = cb[c + 6] * iw
+    v3d[o + 7] = cb[c + 7] * iw
+    v3d[o + 8] = cb[c + 8] * iw
+    v3d[o + 9] = w
+    ymin = min(ymin, sy)
+    ymax = max(ymax, sy)
+  }
+  let alpha = (poly_attr >> 16) & 31
+  let fmt = (tex_param >> 26) & 7
+  var kind = K3_OPAQUE
+  if ((poly_attr >> 4) & 3) == 3 {
+    kind = K3_SHADOW
+  } elif alpha == 0 {
+    kind = K3_WIRE
+  } elif alpha < 31 or fmt == 1 or fmt == 6 {
+    kind = K3_TRANSLUCENT
+  }
+  let p = (b * GX_MAXP + p3d_n[b]) * PF
+  p3d[p] = first
+  p3d[p + 1] = n
+  p3d[p + 2] = poly_attr
+  p3d[p + 3] = tex_param
+  p3d[p + 4] = pltt_base
+  p3d[p + 5] = kind
+  p3d[p + 6] = ymin
+  p3d[p + 7] = ymax
+  p3d_n[b] += 1
+  v3d_n[b] += n
+}
+
+-- the box test: inside unless all eight corners are outside one plane of the view volume
+fn gx_box(pb: Int) {
+  let x = sx16(gx_par[pb] & 0xFFFF)
+  let y = sx16((gx_par[pb] >> 16) & 0xFFFF)
+  let z = sx16(gx_par[pb + 1] & 0xFFFF)
+  let w = sx16((gx_par[pb + 1] >> 16) & 0xFFFF)
+  let h = sx16(gx_par[pb + 2] & 0xFFFF)
+  let d = sx16((gx_par[pb + 2] >> 16) & 0xFFFF)
+  var all = 63
+  for k in 0 .. 8 {
+    let px = x + (if (k & 1) != 0 then w else 0)
+    let py = y + (if (k & 2) != 0 then h else 0)
+    let pz = z + (if (k & 4) != 0 then d else 0)
+    let cx = (px * mx[MX_CLIP] + py * mx[MX_CLIP + 4] + pz * mx[MX_CLIP + 8] + 0x1000 * mx[MX_CLIP + 12]) >> 12
+    let cy = (px * mx[MX_CLIP + 1] + py * mx[MX_CLIP + 5] + pz * mx[MX_CLIP + 9] + 0x1000 * mx[MX_CLIP + 13]) >> 12
+    let cz = (px * mx[MX_CLIP + 2] + py * mx[MX_CLIP + 6] + pz * mx[MX_CLIP + 10] + 0x1000 * mx[MX_CLIP + 14]) >> 12
+    let cw = (px * mx[MX_CLIP + 3] + py * mx[MX_CLIP + 7] + pz * mx[MX_CLIP + 11] + 0x1000 * mx[MX_CLIP + 15]) >> 12
+    var code = 0
+    if cx > cw {
+      code = code | 1
+    }
+    if cx < -cw {
+      code = code | 2
+    }
+    if cy > cw {
+      code = code | 4
+    }
+    if cy < -cw {
+      code = code | 8
+    }
+    if cz > cw {
+      code = code | 16
+    }
+    if cz < -cw {
+      code = code | 32
+    }
+    all = all & code
+  }
+  box_result = if all == 0 then 1 else 0
+}
+
+-- one geometry command with its parameters at gx_par[pb..]
+fn gx_exec(c: Int, pb: Int) {
+  gx_commands += 1
+  let p = gx_par[pb]
+  if c == 0x10 {
+    mtx_mode = p & 3
+  } elif c == 0x11 {
+    mtx_push()
+  } elif c == 0x12 {
+    mtx_pop(p)
+  } elif c == 0x13 {
+    mtx_store(p)
+  } elif c == 0x14 {
+    mtx_restore(p)
+  } elif c == 0x15 {
+    mx_identity(MX_ARG)
+    mx_load_arg()
+  } elif c == 0x16 {
+    mx_arg(pb, 4, 4)
+    mx_load_arg()
+  } elif c == 0x17 {
+    mx_arg(pb, 4, 3)
+    mx_load_arg()
+  } elif c == 0x18 {
+    mx_arg(pb, 4, 4)
+    mx_apply(false)
+  } elif c == 0x19 {
+    mx_arg(pb, 4, 3)
+    mx_apply(false)
+  } elif c == 0x1A {
+    mx_arg(pb, 3, 3)
+    mx_apply(false)
+  } elif c == 0x1B {
+    mx_identity(MX_ARG)
+    mx[MX_ARG] = s32(gx_par[pb] & MASK32)
+    mx[MX_ARG + 5] = s32(gx_par[pb + 1] & MASK32)
+    mx[MX_ARG + 10] = s32(gx_par[pb + 2] & MASK32)
+    mx_apply(true)
+  } elif c == 0x1C {
+    mx_identity(MX_ARG)
+    mx[MX_ARG + 12] = s32(gx_par[pb] & MASK32)
+    mx[MX_ARG + 13] = s32(gx_par[pb + 1] & MASK32)
+    mx[MX_ARG + 14] = s32(gx_par[pb + 2] & MASK32)
+    mx_apply(false)
+  } elif c == 0x20 {
+    vtx_r = c6(p & 31)
+    vtx_g = c6((p >> 5) & 31)
+    vtx_b = c6((p >> 10) & 31)
+  } elif c == 0x21 {
+    gx_normal(p)
+  } elif c == 0x22 {
+    gx_texcoord(p)
+  } elif c == 0x23 {
+    gx_vertex(sx16(p & 0xFFFF), sx16((p >> 16) & 0xFFFF), sx16(gx_par[pb + 1] & 0xFFFF))
+  } elif c == 0x24 {
+    gx_vertex(sx10(p & 0x3FF) << 6, sx10((p >> 10) & 0x3FF) << 6, sx10((p >> 20) & 0x3FF) << 6)
+  } elif c == 0x25 {
+    gx_vertex(sx16(p & 0xFFFF), sx16((p >> 16) & 0xFFFF), last_z)
+  } elif c == 0x26 {
+    gx_vertex(sx16(p & 0xFFFF), last_y, sx16((p >> 16) & 0xFFFF))
+  } elif c == 0x27 {
+    gx_vertex(last_x, sx16(p & 0xFFFF), sx16((p >> 16) & 0xFFFF))
+  } elif c == 0x28 {
+    gx_vertex(sx16(last_x + sx10(p & 0x3FF)), sx16(last_y + sx10((p >> 10) & 0x3FF)),
+              sx16(last_z + sx10((p >> 20) & 0x3FF)))
+  } elif c == 0x29 {
+    poly_attr_next = p & MASK32
+  } elif c == 0x2A {
+    tex_param = p & MASK32
+  } elif c == 0x2B {
+    pltt_base = p & 0x1FFF
+  } elif c == 0x30 {
+    mat_dif = p & 0x7FFF
+    mat_amb = (p >> 16) & 0x7FFF
+    if (p & 0x8000) != 0 {
+      vtx_r = c6(p & 31)
+      vtx_g = c6((p >> 5) & 31)
+      vtx_b = c6((p >> 10) & 31)
+    }
+  } elif c == 0x31 {
+    mat_spe = p & 0x7FFF
+    shine_on = (p >> 15) & 1
+    mat_emi = (p >> 16) & 0x7FFF
+  } elif c == 0x32 {
+    let i = (p >> 30) & 3
+    let lx = sx10(p & 0x3FF)
+    let ly = sx10((p >> 10) & 0x3FF)
+    let lz = sx10((p >> 20) & 0x3FF)
+    light_vec[i * 3] = (lx * mx[MX_VEC] + ly * mx[MX_VEC + 4] + lz * mx[MX_VEC + 8]) >> 12
+    light_vec[i * 3 + 1] = (lx * mx[MX_VEC + 1] + ly * mx[MX_VEC + 5] + lz * mx[MX_VEC + 9]) >> 12
+    light_vec[i * 3 + 2] = (lx * mx[MX_VEC + 2] + ly * mx[MX_VEC + 6] + lz * mx[MX_VEC + 10]) >> 12
+  } elif c == 0x33 {
+    light_col[(p >> 30) & 3] = p & 0x7FFF
+  } elif c == 0x34 {
+    for k in 0 .. 32 {
+      let wv = gx_par[pb + k]
+      for j in 0 .. 4 {
+        shine_tab[k * 4 + j] = (wv >> (8 * j)) & 0xFF
+      }
+    }
+  } elif c == 0x40 {
+    prim_type = p & 3
+    prim_n = 0
+    strip_odd = 0
+    poly_attr = poly_attr_next
+  } elif c == 0x41 {
+    prim_n = 0
+  } elif c == 0x50 {
+    swap_pending = 1
+    swap_mode = p & 3
+  } elif c == 0x60 {
+    vp_x1 = p & 0xFF
+    vp_y1 = (p >> 8) & 0xFF
+    vp_x2 = (p >> 16) & 0xFF
+    vp_y2 = (p >> 24) & 0xFF
+  } elif c == 0x70 {
+    gx_box(pb)
+  } elif c == 0x71 {
+    let x = sx16(p & 0xFFFF)
+    let y = sx16((p >> 16) & 0xFFFF)
+    let z = sx16(gx_par[pb + 1] & 0xFFFF)
+    last_x = x
+    last_y = y
+    last_z = z
+    for k in 0 .. 4 {
+      pos_result[k] = s32(((x * mx[MX_CLIP + k] + y * mx[MX_CLIP + 4 + k] + z * mx[MX_CLIP + 8 + k] +
+                            0x1000 * mx[MX_CLIP + 12 + k]) >> 12) & MASK32)
+    }
+  } elif c == 0x72 {
+    let nx = sx10(p & 0x3FF)
+    let ny = sx10((p >> 10) & 0x3FF)
+    let nz = sx10((p >> 20) & 0x3FF)
+    for k in 0 .. 3 {
+      vec_result[k] = sx16(((nx * mx[MX_VEC + k] + ny * mx[MX_VEC + 4 + k] + nz * mx[MX_VEC + 8 + k]) >> 9) & 0xFFFF)
+    }
+  }
+}
+-- the packed word's commands that need no parameters run at once; the first that needs some waits for them
+fn gx_unpack() {
+  while gx_packed != 0 and gx_cmd < 0 {
+    let c = gx_packed & 0xFF
+    gx_packed = gx_packed >> 8
+    if c != 0 {
+      let n = if c < 128 then gx_nparams[c] else 0
+      if n == 0 {
+        gx_exec(c, 0)
+      } else {
+        gx_cmd = c
+        gx_need = n
+        gx_have = 0
+      }
+    }
+  }
+}
+fn gx_fifo(v: Int) {
+  if gx_cmd >= 0 {
+    gx_par[gx_have] = v
+    gx_have += 1
+    if gx_have >= gx_need {
+      let c = gx_cmd
+      gx_cmd = -1
+      gx_exec(c, 0)
+      gx_unpack()
+    }
+  } else {
+    gx_packed = v & MASK32
+    gx_unpack()
+  }
+}
+fn gx_port(c: Int, v: Int) {
+  let n = gx_nparams[c]
+  if n == 0 {
+    gx_exec(c, 32)
+    return
+  }
+  if gx_pcmd != c {
+    gx_pcmd = c
+    gx_phave = 0
+  }
+  gx_par[32 + gx_phave] = v
+  gx_phave += 1
+  if gx_phave >= n {
+    gx_pcmd = -1
+    gx_phave = 0
+    gx_exec(c, 32)
+  }
+}
+fn gx_dispatch(port: Int, v: Int) {
+  if port == 0 {
+    gx_fifo(v)
+  } else {
+    gx_port(port, v)
+  }
+}
+-- a 32-bit store to 0x04000400-0x040005FF (the ARM9's I/O dispatch sends them here)
+fn gx_write32(o: Int, v: Int) {
+  let port = if o < 0x440 then 0 else 0x10 + ((o - 0x440) >> 2)
+  if swap_pending != 0 {
+    if gx_defer_n + 2 <= GX_DEFER {
+      gx_defer[gx_defer_n] = port
+      gx_defer[gx_defer_n + 1] = v
+      gx_defer_n += 2
+    }
+    return
+  }
+  gx_dispatch(port, v)
+}
+-- after a swap: the commands held meanwhile, until the next swap among them
+fn gx_replay() {
+  var i = 0
+  while i < gx_defer_n and swap_pending == 0 {
+    gx_dispatch(gx_defer[i], gx_defer[i + 1])
+    i += 2
+  }
+  let rest = gx_defer_n - i
+  for k in 0 .. rest {
+    gx_defer[k] = gx_defer[i + k]
+  }
+  gx_defer_n = rest
+}
+-- V-blank: a waiting swap hands the filled polygon RAM to the rendering engine
+fn gx_vblank() {
+  if swap_pending != 0 {
+    swap_pending = 0
+    let done = gbuf
+    gbuf = 1 - gbuf
+    p3d_n[gbuf] = 0
+    v3d_n[gbuf] = 0
+    render3d(done, swap_mode)
+    frames3d += 1
+    gx_replay()
+  }
+}
+fn gx_word_out(o: Int) -> Int {
+  if o == 0x600 {
+    return (GXSTAT_IDLE | (gxstat_irq << 30) | (stk_err << 15) | (stk_proj_ptr << 13) | ((stk_pos_ptr & 31) << 8) |
+            (box_result << 1))
+  }
+  if o == 0x604 {
+    return p3d_n[gbuf] | (v3d_n[gbuf] << 16)
+  }
+  if o >= 0x620 and o < 0x630 {
+    return pos_result[(o - 0x620) >> 2] & MASK32
+  }
+  if o >= 0x630 and o < 0x636 {
+    let k = (o - 0x630) >> 1
+    let lo = vec_result[k] & 0xFFFF
+    return if k < 2 then lo | ((vec_result[k + 1] & 0xFFFF) << 16) else lo
+  }
+  if o >= 0x640 and o < 0x680 {
+    return mx[MX_CLIP + ((o - 0x640) >> 2)] & MASK32
+  }
+  if o >= 0x680 and o < 0x6A4 {
+    let k = (o - 0x680) >> 2
+    return mx[MX_VEC + (k // 3) * 4 + (k % 3)] & MASK32
+  }
+  return 0
+}
+fn gx_read8(o: Int) -> Int {
+  let base = if o >= 0x630 and o < 0x636 then o & 0xFFFE else o & 0xFFFC
+  let sh = (o - base) * 8
+  return (gx_word_out(base) >> sh) & 0xFF
+}
+fn gx_written(o: Int, v: Int) {
+  if o == 0x603 {
+    gxstat_irq = (v >> 6) & 3
+  } elif o == 0x601 and (v & 0x80) != 0 {
+    stk_err = 0
+  }
+}
+fn gx_line() {
+  if gxstat_irq != 0 {
+    request(0, IRQ_GXFIFO)
+  }
+}
+fn gx_power_on() {
+  mx_identity(MX_PROJ)
+  mx_identity(MX_POS)
+  mx_identity(MX_VEC)
+  mx_identity(MX_TEX)
+  mx_identity(MX_CLIP)
+  mtx_mode = 0
+  vp_x1 = 0
+  vp_y1 = 0
+  vp_x2 = 255
+  vp_y2 = 191
+  vtx_r = 63
+  vtx_g = 63
+  vtx_b = 63
+  gx_cmd = -1
+  gx_pcmd = -1
+}

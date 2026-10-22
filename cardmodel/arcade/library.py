@@ -11,7 +11,9 @@ Which folders: the user's choice, kept in library.json in the arcade's own folde
 platform card places), so any checkout's service sees the same library and no card carries a user's path.
 
 A system card with a ``machine`` and ``logic`` is playable (its player is an arcade build, ``system.py``); one
-without (the DS) is listed with what the card model can do with it so far.
+without (the DS) is listed with what the card model can do with it so far. A cartridge's title is its No-Intro
+file name when it has one (region tags in parentheses), else the title in its cartridge header (``entry_title``).
+`cardmodel arcade check` launches every listed cartridge through the store (arcade/client.py).
 
 Honest limits (L1): the picture is a frame of the first ten seconds picked by colour, not a chosen shot; the first scan of a
 big folder takes a minute to draw every picture (the service draws in the background and the page fills in).
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import threading
 import time
@@ -60,9 +63,12 @@ SETTINGS_OVERRIDE: Path | None = None       # tests point it at a temporary file
 
 
 def settings_file(ctx) -> Path:
-    """library.json in the arcade's folder: the parent of the saves folder the platform card names."""
+    """library.json in the arcade's folder: the parent of the saves folder the platform card names
+    (CARDMODEL_LIBRARY names another file: the tests' own, so no test reads the user's cartridges)."""
     if SETTINGS_OVERRIDE is not None:
         return SETTINGS_OVERRIDE
+    if os.environ.get("CARDMODEL_LIBRARY"):
+        return Path(os.environ["CARDMODEL_LIBRARY"]).expanduser()
     plat = ctx.store.get("platform/macos")
     saves = Path(str((plat or {}).get("saves", "") or "~/Library/Application Support/Cardmodel Arcade/saves/{id}"))
     return Path(str(saves).replace("{id}", "")).expanduser().parent / "library.json"
@@ -143,7 +149,7 @@ def scan(ctx, force: bool = False) -> dict:
     with _lock:
         if _state["scan"] is not None and not force:
             return _state["scan"]
-    cache_path = ctx.state_root / "arcade" / "library-cache.json"
+    cache_path = state_dir(ctx) / "library-cache.json"
     try:
         cache = json.loads(cache_path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -175,6 +181,8 @@ def scan(ctx, force: bool = False) -> dict:
                     continue
                 row = dict(row)
                 row["path"] = str(p)
+                head = (row.get("header") or {}).get("title", "")
+                row["title"], row["tags"], row["title_from"] = entry_title(p.stem, head)
                 v = survey.get(row.get("sha1"))
                 if card.name == "nds":
                     row["verdict"] = ({"level": "playable", "text": f"Plays in the {card['title']} (not surveyed yet)"}
@@ -187,7 +195,9 @@ def scan(ctx, force: bool = False) -> dict:
                     row["verdict"] = {"level": level, "text": text, "reason": v.get("reason")}
                 else:
                     row["verdict"] = {"level": "unknown", "text": "Not surveyed yet (cardmodel machine survey)"}
-                row["cover"] = f"/api/cover/{row['id']}.png" if cover_path(ctx, row["id"]).is_file() else None
+                cp = cover_path(ctx, row["id"])
+                row["cover_drawn"] = cp.is_file()                   # an empty file: the screen stayed blank
+                row["cover"] = f"/api/cover/{row['id']}.png" if row["cover_drawn"] and cp.stat().st_size else None
                 roms.append(row)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text(json.dumps(fresh_cache), encoding="utf-8")
@@ -198,15 +208,26 @@ def scan(ctx, force: bool = False) -> dict:
     return result
 
 
+def entry_title(stem: str, header_title: str) -> tuple[str, str, str]:
+    """(title, tags, where the title came from): a No-Intro file name (its region tags show it is one) names the
+    game better than the 11 to 16 capitals of the header ('Pokemon - Crystal Version' for PM_CRYSTAL); any other
+    file is titled by its cartridge header, and a header without a readable title leaves the file's name."""
+    title, tags = display_title(stem)
+    if tags:
+        return title, tags, "file name"
+    head = " ".join(header_title.replace("�", " ").split())
+    if head and sum(ch.isalnum() for ch in head) >= 2:
+        return head, "", "header"
+    return title, tags, "file name"
+
+
 def describe(ctx, card, path: Path, exts) -> dict | None:
     try:
         data = read_cartridge(path, exts)
     except (OSError, ValueError, zipfile.BadZipFile, KeyError):
         return None
     sha = hashlib.sha1(data).hexdigest()
-    title, tags = display_title(path.stem)
-    row = {"id": f"rom-{sha[:16]}", "sha1": sha, "file": path.name, "title": title, "tags": tags,
-           "size": len(data), "system_card": card.name}
+    row = {"id": f"rom-{sha[:16]}", "sha1": sha, "file": path.name, "size": len(data), "system_card": card.name}
     if card.name == "gameboy":
         try:
             h = G.header(data, ctx.store)
@@ -221,11 +242,18 @@ def describe(ctx, card, path: Path, exts) -> dict | None:
         row["system"] = card.name
         row["header"] = {"title": data[0:12].split(b"\0")[0].decode("ascii", "replace").strip(),
                          "code": data[12:16].decode("ascii", "replace")}
+    row["title"], row["tags"], row["title_from"] = entry_title(path.stem, row["header"]["title"])
     return row
 
 
+def state_dir(ctx) -> Path:
+    """Where the library's cache and pictures go: the checkout's state/arcade, or beside a test's own library."""
+    own = SETTINGS_OVERRIDE is not None or bool(os.environ.get("CARDMODEL_LIBRARY"))
+    return settings_file(ctx).parent if own else ctx.state_root / "arcade"
+
+
 def cover_path(ctx, rom_id: str) -> Path:
-    return ctx.state_root / "arcade" / "covers" / f"{rom_id}.png"
+    return state_dir(ctx) / "covers" / f"{rom_id}.png"
 
 
 def cover(ctx, rom_id: str) -> bytes | None:
@@ -316,7 +344,7 @@ def route(handler, method: str, parts: list[str]) -> bool:
         return False
     if parts == ["api", "library"]:
         lib = scan(ctx)
-        if any(r.get("cover") is None for r in lib["roms"] if r.get("system_card") == "gameboy"):
+        if any(not r.get("cover_drawn") for r in lib["roms"] if r.get("system_card") == "gameboy"):
             start_drawing(ctx)
         lib = dict(lib, drawing={"busy": _state["drawing"], "drawn": _state["drawn"], "of": _state["to_draw"]})
         handler._json(lib)
@@ -336,4 +364,5 @@ def route(handler, method: str, parts: list[str]) -> bool:
     return False
 
 
-__all__ = ["cover", "display_title", "draw_covers", "read_cartridge", "route", "scan", "start_drawing", "systems"]
+__all__ = ["cover", "display_title", "draw_covers", "entry_title", "read_cartridge", "route", "scan", "start_drawing",
+           "systems"]

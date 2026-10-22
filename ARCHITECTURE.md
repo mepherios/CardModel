@@ -261,6 +261,11 @@ Design decisions:
   `cardmodel self run --auto`).
 * **Capabilities carry laws.** A law is kept alive by a check that runs, not by its text: the integrity check and
   the self theory both fail on a law that no capability carries.
+* **Deep checks are steps.** A capability's smoke check takes seconds; what takes minutes runs as a self-run step
+  on its own schedule: every law's witness test in a child process (`law_witnesses`, through
+  `engines/witness_runner.py`), every catalogue item launched through the store's own protocol (`store`,
+  `arcade/client.py`, CM42), the whole suite (`tests`, weekly). Each step runs under a deadline, so a step that
+  does not return is stopped and reported instead of holding the cycle.
 
 ## What was not carried over
 

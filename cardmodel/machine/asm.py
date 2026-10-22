@@ -9,8 +9,13 @@ signed 8-bit displacement (relative to the next instruction). A program is a lis
 image with a valid header (title, type, sizes, header checksum) and ``NOP; JP 0x0150`` at the entry point.
 Tests use it to build their own ROMs, so no game is ever needed in the repository.
 
+``arm_word`` reads the ARM instruction cards the same way: a word is the card's fixed bits (the match half of its
+``encoding``), each named field put where the card's ``fields`` says, and the condition where the ISA card's
+decode says (0xE, always, unless given).
+
 Honest limits (L1): no expressions, macros or sections; a label used before its definition must be in the
-same assembly; ``e`` targets must be within -128..127 of the next instruction.
+same assembly; ``e`` targets must be within -128..127 of the next instruction. ``arm_word`` places only the
+fields a card names (a branch's offset, which its card leaves unnamed, cannot be given).
 """
 from __future__ import annotations
 
@@ -103,4 +108,28 @@ def rom(store, code_items: list, title: str = "CARDMODEL", cart_type: int = 0x00
     return bytes(img)
 
 
-__all__ = ["assemble", "rom", "table"]
+_ARM: dict = {}
+
+
+def arm_word(store, name: str, cond: int = 0xE, **fields) -> int:
+    """One ARM-state instruction word from the instruction card ``name`` (e.g. ``ARM_LDR_imm``)."""
+    key = (id(store), name)
+    if key not in _ARM:
+        _ARM[key] = next((c for c in I.instructions(store, "armv5te") if c.name == name), None)
+    card = _ARM[key]
+    if card is None:
+        raise ValueError(f"no ARM instruction card {name!r}")
+    word = int(card["encoding"].split("/")[0], 16)
+    for field, value in fields.items():
+        if field not in card["fields"]:
+            raise ValueError(f"{name} has no field {field!r} (it names {sorted(card['fields'])})")
+        hi, lo = card["fields"][field]
+        if not 0 <= value < 1 << (hi - lo + 1):
+            raise ValueError(f"{name}.{field} = {value} does not fit bits {hi}..{lo}")
+        word |= value << lo
+    hi, lo = store.get("isa/armv5te")["decode"]["sets"]["arm"]["condition"]
+    width = (1 << (hi - lo + 1)) - 1
+    return (word & ~(width << lo) & 0xFFFFFFFF) | (cond << lo)
+
+
+__all__ = ["arm_word", "assemble", "rom", "table"]

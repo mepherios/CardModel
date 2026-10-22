@@ -185,9 +185,12 @@ CAPABILITIES = [
      ["cardmodel/machine/lift.py", "cardmodel/machine/shell.py", "cardmodel/machine/gb.py"],
      "Your Game Boy / Color games run through the model, natively."),
     ("arcade", "Games are cards: a game's tables, rules and logic compile into a native module that the store builds, "
-     "serves and launches; a console player is the machine cards plus a card-language player, built the same way.",
-     L("CM35_games_are_cards", "CM40_players_are_cards"),
+     "serves and launches; a console player is the machine cards plus a card-language player, built the same way; "
+     "every program and cartridge the store lists installs, verifies, repairs and runs through the store's own "
+     "protocol (the self-run's store step).",
+     L("CM35_games_are_cards", "CM40_players_are_cards", "CM42_the_store_runs_what_it_lists"),
      ["tests/test_arcade.py::test_a_timed_guard_redirects",
+      "tests/test_arcade.py::test_every_catalogue_item_launches_from_the_store",
       "tests/test_arcade_systems.py::test_the_player_configures_a_cartridge_like_the_host",
       "tests/test_arcade_work.py::test_a_branch_version_is_listed_served_and_asked"],
      ["docs/ARCADE.md", "docs/STORE.md"], ["cardmodel arcade"], ["cardmodel/arcade"],
@@ -255,8 +258,10 @@ CAPABILITIES = [
      ["docs/AUTONOMY.md"], ["cardmodel self"], ["cardmodel/engines/selfrun.py", "cardmodel/engines/capabilities.py"],
      "Every use makes the model check and improve itself, and tell you where it falls short."),
     ("integration", "One program: unique law and goal numbers, every law carried by a capability, every command, "
-     "section and doc described, generated docs in sync.", L("CM20_laws_are_cards", "CM39_one_program"),
-     ["tests/test_laws.py::test_laws_md_in_sync", "tests/test_self.py::test_one_program_integrity"],
+     "section and doc described, generated docs in sync, no goal easier than its floor.",
+     L("CM20_laws_are_cards", "CM39_one_program"),
+     ["tests/test_laws.py::test_laws_md_in_sync", "tests/test_self.py::test_one_program_integrity",
+      "tests/test_self_steps.py::test_a_goal_target_never_drops_silently"],
      ["docs/INTEGRATION.md"], ["cardmodel verify --only integrity", "cardmodel docs"],
      ["cardmodel/engines/integrity.py"], "Parallel work lands as one working program, never as pieces."),
 ]
@@ -276,7 +281,14 @@ STEPS = [
      "functional_identities"),
     ("arena", 80, 24, [], True, "a small arena run: soundness, recall and speed of the optimizer",
      "arena_unsound_runs, arena_recall, arena_geomean_speedup"),
+    ("law_witnesses", 45, 24, [], True, "every law card's witness test, in a child process with the cycle's seed "
+     "(CM20)", "law_witnesses_failing"),
+    ("observe_self", 55, 0, [], True, "the model observes its own code (cardmodel/): the named fraction of what it is "
+     "made of", "named_fraction"),
+    ("store", 85, 0, [], True, "every catalogue item launched through the store as the launcher does it: a checked "
+     "download, verify, a repair, a native run (CM42)", "store_items_failing"),
     ("optimize", 90, 168, [], True, "measure the op cards' forms on this host (metric cards)", "measured_forms"),
+    ("tests", 95, 168, [], True, "the whole unit suite, test by test, in a child process", "the suite"),
     ("goals", 100, 0, [], True, "every goal from the latest result of each verify section; trend", "all goals"),
 ]
 
@@ -316,6 +328,8 @@ GOALS = [
      "laws_uncarried", 0, "lower"),
     ("G_A7_self_run_fresh", "autonomy", "Hours since the last self-run cycle finished.", "self_run_age_hours", 24,
      "lower"),
+    ("G_A10_law_witnesses_pass", "autonomy", "Law cards whose witness test fails, errs or is missing in the self-run's "
+     "latest law_witnesses step (CM20, CM38).", "law_witnesses_failing", 0, "lower"),
 ]
 
 

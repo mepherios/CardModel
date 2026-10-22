@@ -2,9 +2,42 @@
   "category": "godel_set",
   "extends": null,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "21aae7d9202d8c05312d220561f9f93c192cf273d0c644b88b6dd41af3dbb473",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "B0",
+  "numbering": {
+    "cites": [
+      "GM-4",
+      "Rule-1",
+      "Rule-2",
+      "Rule-3",
+      "Rule-5",
+      "Rule-6",
+      "Def-1",
+      "Def-4",
+      "Ph-6"
+    ],
+    "code": "Gödel's positional code of the prefix tokens (Def-9, Def-27): atom k -> 3k + 1, integer c -> 3·zig(c) + 2, the j-th variable by first appearance -> 3j + 3; variables are named by that order",
+    "conditions": [
+      "injective",
+      "effective",
+      "decidable_image",
+      "codes_start_at_1",
+      "parts_smaller",
+      "natural_provability"
+    ],
+    "content": "the sparse vector ledger index -> exponent (Def-10, CM45)",
+    "identity": "sha256 of the canonical term (Def-16)",
+    "objects": "core terms over the set's op atoms and those of the sets it extends, integer constants and variables",
+    "provability": {
+      "form": "exists_proof",
+      "relation": "method/lean_kernel",
+      "statement": "Prov(x) = ∃y Proof(y, x), Proof the kernel's check of a proof term (Def-4); no further clause"
+    },
+    "witness": "tests/test_numbering.py::Sets::test_B0"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_godel.py"

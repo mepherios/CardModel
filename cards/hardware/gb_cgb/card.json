@@ -92,7 +92,9 @@
       "address": 65384,
       "name": "BCPS",
       "post_boot_dmg_compat": 200,
-      "read_or": 64
+      "read_or": 64,
+      "post_boot_cgb": 192,
+      "post_boot_note": "a CGB game: the boot ROM's last BG palette load (64 bytes from index 0 with auto-increment, SameBoy's open-source boot ROM) wraps the index to 0, so BCPS is 0x80 (reads 0xC0); Jurassic Boy 2 writes its BG palettes without setting it"
     },
     {
       "access": "rw",
@@ -107,7 +109,8 @@
       "address": 65386,
       "name": "OCPS",
       "post_boot_dmg_compat": 208,
-      "read_or": 64
+      "read_or": 64,
+      "post_boot_note": "a CGB game: the boot ROM does not write OCPS"
     },
     {
       "access": "rw",

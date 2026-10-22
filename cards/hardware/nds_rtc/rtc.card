@@ -1,0 +1,245 @@
+-- The real-time clock on RTC (0x04000138, ARM7). Raising chip select starts a transfer; every write made with
+-- chip select high and the clock low moves one bit: in from bit 0 when bit 4 says the CPU drives the data line,
+-- out to bit 0 otherwise. Bytes go least significant bit first. The first byte is the command: fixed code 0110
+-- in its high nibble, register number in bits 1-3, bit 0 set to read (a command sent most significant bit first
+-- arrives mirrored, with the code in the low nibble, and is mirrored back). Reads shift out the register's
+-- bytes; writes store them as they arrive. The date and time are kept in binary (rtc_*) and shown in BCD; one
+-- second passes per bus_hz bus cycles of machine time (rtc_advance).
+const RTC_BUS_HZ = card.hardware.nds_rtc.bus_hz
+const RTC_STATUS1_BOOT = card.hardware.nds_rtc.status1_after_boot
+global rtc_io: Int = 0
+global rtc_bitn: Int = 0
+global rtc_byte: Int = 0
+global rtc_pos: Int = 0
+global rtc_cmd: Int = 0
+global rtc_rd: Int = 0
+global rtc_outn: Int = 0
+array rtc_out: Int[8]
+export global rtc_year: Int = 0
+export global rtc_month: Int = 1
+export global rtc_day: Int = 1
+export global rtc_wday: Int = 0
+export global rtc_hour: Int = 0
+export global rtc_min: Int = 0
+export global rtc_sec: Int = 0
+global rtc_stat1: Int = 2
+global rtc_stat2: Int = 0
+array rtc_alarm: Int[6]
+global rtc_adjust: Int = 0
+global rtc_free: Int = 0
+global rtc_cycles: Int = 0
+
+fn bcd(v: Int) -> Int = ((v // 10) << 4) | (v % 10)
+fn unbcd(v: Int) -> Int = ((v >> 4) & 15) * 10 + (v & 15)
+fn rtc_mirror(v: Int) -> Int {
+  var r = 0
+  for i in 0 .. 8 {
+    r = r | (((v >> i) & 1) << (7 - i))
+  }
+  return r
+}
+fn days_in_month(m: Int, y: Int) -> Int {
+  if m == 2 {
+    return if (y % 4) == 0 then 29 else 28
+  }
+  if m == 4 or m == 6 or m == 9 or m == 11 {
+    return 30
+  }
+  return 31
+}
+fn rtc_hour_reg() -> Int {
+  if (rtc_stat1 & 2) != 0 {
+    return bcd(rtc_hour) | (if rtc_hour >= 12 then 0x40 else 0)
+  }
+  return bcd(rtc_hour % 12) | (if rtc_hour >= 12 then 0x40 else 0)
+}
+fn rtc_set_hour(v: Int) {
+  let h = unbcd(v & 0x3F)
+  if (rtc_stat1 & 2) != 0 {
+    rtc_hour = h % 24
+  } else {
+    rtc_hour = (h % 12) + (if (v & 0x40) != 0 then 12 else 0)
+  }
+}
+fn rtc_reset() {
+  rtc_year = 0
+  rtc_month = 1
+  rtc_day = 1
+  rtc_wday = 0
+  rtc_hour = 0
+  rtc_min = 0
+  rtc_sec = 0
+  rtc_stat1 = 0
+  rtc_stat2 = 0
+}
+-- the bytes a read command shifts out
+fn rtc_prepare(cmd: Int) {
+  rtc_outn = 0
+  for i in 0 .. 8 {
+    rtc_out[i] = 0
+  }
+  if cmd == 0 {
+    rtc_out[0] = rtc_stat1
+    rtc_stat1 = rtc_stat1 & 0x0F
+  } elif cmd == 1 {
+    rtc_out[0] = rtc_stat2
+  } elif cmd == 2 {
+    rtc_out[0] = bcd(rtc_year)
+    rtc_out[1] = bcd(rtc_month)
+    rtc_out[2] = bcd(rtc_day)
+    rtc_out[3] = rtc_wday
+    rtc_out[4] = rtc_hour_reg()
+    rtc_out[5] = bcd(rtc_min)
+    rtc_out[6] = bcd(rtc_sec)
+  } elif cmd == 3 {
+    rtc_out[0] = rtc_hour_reg()
+    rtc_out[1] = bcd(rtc_min)
+    rtc_out[2] = bcd(rtc_sec)
+  } elif cmd == 4 or cmd == 5 {
+    let k = (cmd - 4) * 3
+    rtc_out[0] = rtc_alarm[k]
+    rtc_out[1] = rtc_alarm[k + 1]
+    rtc_out[2] = rtc_alarm[k + 2]
+  } elif cmd == 6 {
+    rtc_out[0] = rtc_adjust
+  } else {
+    rtc_out[0] = rtc_free
+  }
+}
+-- byte i (from 0) of a write command's data
+fn rtc_store(cmd: Int, i: Int, v: Int) {
+  if cmd == 0 and i == 0 {
+    if (v & 1) != 0 {
+      rtc_reset()
+    }
+    rtc_stat1 = (rtc_stat1 & 0xF0) | (v & 0x0E)
+  } elif cmd == 1 and i == 0 {
+    rtc_stat2 = v
+  } elif cmd == 2 or cmd == 3 {
+    let j = if cmd == 3 then i + 4 else i
+    if j == 0 {
+      rtc_year = unbcd(v) % 100
+    } elif j == 1 {
+      rtc_month = max(1, min(12, unbcd(v & 0x1F)))
+    } elif j == 2 {
+      rtc_day = max(1, min(31, unbcd(v & 0x3F)))
+    } elif j == 3 {
+      rtc_wday = v & 7
+    } elif j == 4 {
+      rtc_set_hour(v)
+    } elif j == 5 {
+      rtc_min = unbcd(v & 0x7F) % 60
+    } elif j == 6 {
+      rtc_sec = unbcd(v & 0x7F) % 60
+    }
+  } elif (cmd == 4 or cmd == 5) and i < 3 {
+    rtc_alarm[(cmd - 4) * 3 + i] = v
+  } elif cmd == 6 and i == 0 {
+    rtc_adjust = v
+  } elif cmd == 7 and i == 0 {
+    rtc_free = v
+  }
+}
+fn rtc_byte_in(v: Int) {
+  if rtc_pos == 0 {
+    var c = v
+    if (c & 0xF0) != 0x60 and (c & 0x0F) == 0x06 {
+      c = rtc_mirror(c)
+    }
+    rtc_cmd = (c >> 1) & 7
+    rtc_rd = c & 1
+    if rtc_rd != 0 {
+      rtc_prepare(rtc_cmd)
+    }
+  } elif rtc_rd == 0 {
+    rtc_store(rtc_cmd, rtc_pos - 1, v)
+  }
+  rtc_pos += 1
+}
+fn rtc_write(v: Int) {
+  let was = rtc_io
+  if (v & 4) != 0 {
+    if (was & 4) == 0 {
+      rtc_bitn = 0
+      rtc_byte = 0
+      rtc_pos = 0
+      rtc_outn = 0
+    } elif (v & 2) == 0 {
+      if (v & 0x10) != 0 {
+        rtc_byte = rtc_byte | ((v & 1) << rtc_bitn)
+        rtc_bitn += 1
+        if rtc_bitn == 8 {
+          rtc_byte_in(rtc_byte)
+          rtc_bitn = 0
+          rtc_byte = 0
+        }
+      } else {
+        let k = rtc_outn >> 3
+        let bit = if k < 8 then (rtc_out[k] >> (rtc_outn & 7)) & 1 else 0
+        rtc_outn += 1
+        rtc_io = (rtc_io & 0xFFFE) | bit
+      }
+    }
+  }
+  if (v & 0x10) != 0 {
+    rtc_io = v & 0xFFFF
+  } else {
+    rtc_io = (rtc_io & 1) | (v & 0xFFFE)
+  }
+}
+fn rtc_read8(o: Int) -> Int = if o == 0x138 then rtc_io & 0xFF else (rtc_io >> 8) & 0xFF
+fn rtc_tick() {
+  rtc_sec += 1
+  if rtc_sec >= 60 {
+    rtc_sec = 0
+    rtc_min += 1
+    if rtc_min >= 60 {
+      rtc_min = 0
+      rtc_hour += 1
+      if rtc_hour >= 24 {
+        rtc_hour = 0
+        rtc_wday = (rtc_wday + 1) % 7
+        rtc_day += 1
+        if rtc_day > days_in_month(rtc_month, rtc_year) {
+          rtc_day = 1
+          rtc_month += 1
+          if rtc_month > 12 {
+            rtc_month = 1
+            rtc_year = (rtc_year + 1) % 100
+          }
+        }
+      }
+    }
+  }
+}
+fn rtc_advance(cycles: Int) {
+  rtc_cycles += cycles
+  while rtc_cycles >= RTC_BUS_HZ {
+    rtc_cycles -= RTC_BUS_HZ
+    rtc_tick()
+  }
+}
+-- the clock set from a count of seconds since 1970-01-01 00:00 (the shell's time plus the local offset): days to a
+-- civil date by the proleptic Gregorian calendar, 1970-01-01 a Thursday (weekday 4, Sunday 0)
+export fn rtc_set_unix(t: Int) {
+  let days = t // 86400
+  let secs = t - days * 86400
+  rtc_hour = secs // 3600
+  rtc_min = (secs // 60) % 60
+  rtc_sec = secs % 60
+  rtc_wday = (days + 4) % 7
+  let z = days + 719468
+  let era = z // 146097
+  let doe = z - era * 146097
+  let yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+  let doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+  let mp = (5 * doy + 2) // 153
+  rtc_day = doy - (153 * mp + 2) // 5 + 1
+  rtc_month = if mp < 10 then mp + 3 else mp - 9
+  rtc_year = (yoe + era * 400 + (if rtc_month <= 2 then 1 else 0)) % 100
+}
+fn rtc_power_on() {
+  rtc_stat1 = RTC_STATUS1_BOOT
+  rtc_io = 0
+  rtc_pos = 0
+}

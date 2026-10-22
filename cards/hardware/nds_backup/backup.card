@@ -1,0 +1,101 @@
+-- The cartridge's save chip on the auxiliary SPI bus. A command starts with the first byte after the chip was
+-- deselected; the chip is deselected after a transfer made while AUXSPICNT bit 6 is clear (or when the slot
+-- leaves serial mode). Serial flash: addresses are 3 bytes, most significant first; writes need WREN first and
+-- clear it when the command ends. The contents live in `backup` (the host loads and saves them; backup_dirty
+-- says they changed). backup_kind 0 = no chip (reads 0xFF), 2 = serial flash of backup_size bytes.
+export array backup: Byte[0x100000]
+export global backup_kind: Int = 2
+export global backup_size: Int = 0x80000
+export global backup_id: Int = 0x204013
+export global backup_dirty: Int = 0
+global bk_sel: Int = 0
+global bk_cmd: Int = 0
+global bk_n: Int = 0
+global bk_addr: Int = 0
+global bk_status: Int = 0
+global aux_data: Int = 0xFF
+
+fn bk_erase(a: Int, n: Int) {
+  let base = a & (backup_size - 1) & (0xFFFFFF ^ (n - 1))
+  for i in 0 .. n {
+    backup[base + i] = 0xFF
+  }
+  backup_dirty = 1
+}
+fn backup_transfer(v: Int) -> Int {
+  if backup_kind == 0 {
+    return 0xFF
+  }
+  if bk_sel == 0 {
+    bk_sel = 1
+    bk_cmd = v
+    bk_n = 0
+    bk_addr = 0
+    if v == 0x06 {
+      bk_status = bk_status | 2
+    } elif v == 0x04 {
+      bk_status = bk_status & 0xFD
+    }
+    return 0xFF
+  }
+  let n = bk_n
+  bk_n += 1
+  let c = bk_cmd
+  if c == 0x05 {
+    return bk_status
+  }
+  if c == 0x9F {
+    if n < 3 {
+      return (backup_id >> (16 - 8 * n)) & 0xFF
+    }
+    return 0xFF
+  }
+  if c == 0x03 or c == 0x0B or c == 0x0A or c == 0x02 or c == 0xDB or c == 0xD8 {
+    if n < 3 {
+      bk_addr = ((bk_addr << 8) | v) & 0xFFFFFF
+      return 0xFF
+    }
+    if c == 0x0B and n == 3 {
+      return 0xFF
+    }
+    if c == 0x03 or c == 0x0B {
+      let r = backup[bk_addr & (backup_size - 1)]
+      bk_addr = (bk_addr + 1) & 0xFFFFFF
+      return r
+    }
+    if (c == 0x0A or c == 0x02) and (bk_status & 2) != 0 {
+      let a = bk_addr & (backup_size - 1)
+      backup[a] = if c == 0x0A then v else backup[a] & v
+      backup_dirty = 1
+      bk_addr = (bk_addr & 0xFFFF00) | ((bk_addr + 1) & 0xFF)
+    }
+  }
+  return 0xFF
+}
+fn backup_deselect() {
+  if bk_sel != 0 {
+    let c = bk_cmd
+    if (c == 0xDB or c == 0xD8) and bk_n >= 3 and (bk_status & 2) != 0 {
+      bk_erase(bk_addr, if c == 0xDB then 0x100 else 0x10000)
+    }
+    if c == 0x0A or c == 0x02 or c == 0xDB or c == 0xD8 {
+      bk_status = bk_status & 0xFD
+    }
+  }
+  bk_sel = 0
+}
+-- AUXSPIDATA written: one transfer in serial mode, then deselect unless chip select is held
+fn auxspi_write(v: Int) {
+  if (aux_cnt & 0x2000) == 0 {
+    return
+  }
+  aux_data = backup_transfer(v & 0xFF)
+  if (aux_cnt & 0x40) == 0 {
+    backup_deselect()
+  }
+}
+fn auxspicnt_written() {
+  if (aux_cnt & 0xA000) != 0xA000 {
+    backup_deselect()
+  }
+}

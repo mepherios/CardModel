@@ -1,0 +1,169 @@
+-- The Game Boy Camera's controller (MAC-GBD) and sensor (Mitsubishi M64282FP): ROM banks (6 bits, bank 0 can be
+-- mapped), 16 RAM banks of 8 KiB (always readable, written after 0x0A at 0000-1FFF), and the sensor's registers
+-- at A000-A07F (mirrored to BFFF) while bit 4 of the RAM bank register is set.
+--
+-- A000 bit 0 starts a capture and reads 1 until it is done: 32446 M-cycles, 512 more without N (A001 bit 7),
+-- and 16 per unit of exposure time C (A002-A003). Then the picture is in RAM bank 0 at 0x100: 16 x 14 tiles of
+-- 2 bits a pixel, 128 x 112 pixels. The other registers are write-only and read 0x00.
+--
+-- There is no sensor on a computer, so the light is a synthetic scene (cam_scene: a face that sways a little
+-- from one capture to the next) shaped by what the game writes, the way the sensor shapes light: brighter with
+-- the exposure time and the gain (G, A001 bits 0-4), sharpened by edge enhancement (VH, A001 bits 5-6, at the
+-- ratio E, A004 bits 4-6), inverted by I (A004 bit 3), and cut into four shades by the 4 x 4 matrix of three
+-- thresholds a pixel at A006-A035, which the game uses for contrast and dithering. The voltage and offset
+-- registers (V, Z, O) are not modelled.
+const CAM_W = 128
+const CAM_H = 112
+const CAM_IMAGE_AT = card.hardware.gb_cartridge.camera.image_at
+const CAM_MCYCLES = card.hardware.gb_cartridge.camera.busy_mcycles
+const CAM_MCYCLES_NO_N = card.hardware.gb_cartridge.camera.busy_mcycles_no_n
+const CAM_MCYCLES_PER_C = card.hardware.gb_cartridge.camera.busy_mcycles_per_c
+array cam_reg: Byte[0x80]
+array cam_edge_x4: Int[8] = card.hardware.gb_cartridge.camera.edge_ratio_x4
+global cam_busy: Int = 0
+global cam_done_at: Int = 0
+export global cam_shots: Int = 0       -- pictures taken since power-on (the scene moves with them)
+
+fn camera_power_on() {
+  cam_busy = 0
+  cam_done_at = 0
+  cam_shots = 0
+}
+fn camera_control(a: Int, v: Int) {
+  if a < 0x2000 {
+    ram_on = if (v & 0x0F) == 0x0A then 1 else 0
+  } elif a < 0x4000 {
+    bank_lo = v
+  } elif a < 0x6000 {
+    rtc_sel = v & 0x1F
+  }
+}
+fn cam_registers() -> Bool = (rtc_sel & 0x10) != 0
+-- a capture that has had its time is finished the first time anyone looks
+fn cam_sync() {
+  if cam_busy != 0 and now >= cam_done_at {
+    cam_busy = 0
+    cam_reg[0] = cam_reg[0] & 0x06
+    cam_capture()
+  }
+}
+fn camera_read(a: Int) -> Int {
+  cam_sync()
+  if cam_registers() {
+    if (a & 0x7F) == 0 {
+      return cam_reg[0] & 0x07
+    }
+    return 0x00
+  }
+  if ram_mask < 0 {
+    return 0xFF
+  }
+  return cram[(ram_off | (a & 0x1FFF)) & ram_mask]
+}
+fn camera_write(a: Int, v: Int) {
+  cam_sync()
+  if cam_registers() {
+    let r = a & 0x7F
+    if r == 0 {
+      if (v & 1) != 0 and cam_busy == 0 {
+        let c = (cam_reg[2] << 8) | cam_reg[3]
+        let extra = if (cam_reg[1] & 0x80) != 0 then 0 else CAM_MCYCLES_NO_N
+        cam_busy = 1
+        cam_done_at = now + md * (CAM_MCYCLES + extra + CAM_MCYCLES_PER_C * c)
+      } elif (v & 1) == 0 {
+        cam_busy = 0
+      }
+      cam_reg[0] = (v & 0x06) | cam_busy
+    } else {
+      cam_reg[r] = v
+    }
+    return
+  }
+  if ram_on == 0 or ram_mask < 0 {
+    return
+  }
+  cram[(ram_off | (a & 0x1FFF)) & ram_mask] = v
+  cram_dirty = 1
+}
+
+-- the light on the sensor, 0 (dark) to 255: a soft background, a face with eyes and a smile, swaying by a few
+-- pixels from one picture to the next
+fn cam_scene(x: Int, y: Int) -> Int {
+  let step = cam_shots % 24
+  let sway = (if step < 12 then step else 24 - step) - 6
+  let dx = x - 64 - sway
+  let dy = y - 58
+  var v = 96 + y // 3 - (if (x // 16 + y // 16) % 2 == 0 then 12 else 0)
+  if dx * dx * 1764 + dy * dy * 1156 <= 2039184 {
+    v = 228 - (dx * dx + dy * dy) // 28
+    let ex = if dx < 0 then dx + 13 else dx - 13
+    let ey = dy + 10
+    if ex * ex + ey * ey <= 25 {
+      v = 24
+    }
+    let r2 = dx * dx + (dy + 2) * (dy + 2)
+    if dy > 6 and r2 >= 256 and r2 <= 400 {
+      v = 40
+    }
+    if dy < -30 {
+      v = 60
+    }
+  }
+  return v
+}
+-- the sensor's output for one pixel: the light times the exposure time and the gain
+fn cam_light(x: Int, y: Int) -> Int {
+  let xx = max(0, min(CAM_W - 1, x))
+  let yy = max(0, min(CAM_H - 1, y))
+  let c = (cam_reg[2] << 8) | cam_reg[3]
+  let gain = 225 + (cam_reg[1] & 0x1F) * 7
+  return cam_scene(xx, yy) * gain * c // (256 * 4096)
+}
+fn cam_pixel(x: Int, y: Int) -> Int {
+  var v = cam_light(x, y)
+  let vh = (cam_reg[1] >> 5) & 3
+  if vh != 0 {
+    let k = cam_edge_x4[(cam_reg[4] >> 4) & 7]
+    var edge = 0
+    if (vh & 1) != 0 {
+      edge += 2 * v - cam_light(x - 1, y) - cam_light(x + 1, y)
+    }
+    if (vh & 2) != 0 {
+      edge += 2 * v - cam_light(x, y - 1) - cam_light(x, y + 1)
+    }
+    v += edge * k // 4
+  }
+  if (cam_reg[4] & 0x08) != 0 {
+    v = 255 - v
+  }
+  return v
+}
+-- the picture into RAM bank 0 at 0x100: each pixel against its matrix entry's three thresholds (darkest first)
+fn cam_capture() {
+  for y in 0 .. CAM_H {
+    for tx in 0 .. 16 {
+      var lo = 0
+      var hi = 0
+      for i in 0 .. 8 {
+        let x = tx * 8 + i
+        let v = cam_pixel(x, y)
+        let m = 6 + ((y & 3) * 4 + (x & 3)) * 3
+        var shade = 0
+        if v < cam_reg[m] {
+          shade = 3
+        } elif v < cam_reg[m + 1] {
+          shade = 2
+        } elif v < cam_reg[m + 2] {
+          shade = 1
+        }
+        lo = (lo << 1) | (shade & 1)
+        hi = (hi << 1) | (shade >> 1)
+      }
+      let at = CAM_IMAGE_AT + ((y >> 3) * 16 + tx) * 16 + (y & 7) * 2
+      cram[at] = lo
+      cram[at + 1] = hi
+    }
+  }
+  cam_shots += 1
+  cram_dirty = 1
+}

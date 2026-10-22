@@ -1,0 +1,22 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-1",
+    "Rule-2",
+    "Def-1"
+  ],
+  "instead": "decode n, then encode the result and compare (the round trip of Rule-2)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "valid_code",
+  "promise": "answered",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "decidable",
+  "statement": "Is n the structural code of a well-formed term?",
+  "tier": 0
+}

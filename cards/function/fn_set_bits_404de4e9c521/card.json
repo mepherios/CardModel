@@ -1,0 +1,421 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/BIT_AND",
+    "op/CMP_NE",
+    "op/SHIFT_RIGHT"
+  ],
+  "emit_gaps": {
+    "lean": "lean: op BIT_AND on (int, int) has no template"
+  },
+  "forms": [
+    {
+      "code": "import math\n\ndef set_bits(flags: int) -> int:\n    c = 0\n    while flags != 0:\n        c += flags & 1\n        flags >>= 1\n    return c",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t set_bits(int64_t flags) {\n    int64_t c = 0;\n    c = INT64_C(0);\n    while ((flags != INT64_C(0))) {\n        c = (c + (flags & INT64_C(1)));\n        flags = (flags >> INT64_C(1));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc set_bits(flags int64) int64 {\n\tvar c int64 = 0\n\t_ = c\n\tc = int64(0)\n\tfor (flags != int64(0)) {\n\t\tc = (c + (flags & int64(1)))\n\t\tflags = (flags >> int64(1))\n\t}\n\treturn c\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function set_bits(flags) {\n    let c = 0n;\n    c = (0n);\n    while ((flags !== (0n))) {\n        c = (c + (flags & (1n)));\n        flags = (flags >> (1n));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def set_bits(flags: int) -> int:\n    c = 0\n    while (flags != 0):\n        c = (c + (flags & 1))\n        flags = (flags >> 1)\n    return c\n\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn set_bits(flags: i64) -> i64 {\n    let mut flags: i64 = flags;\n    let mut c: i64 = 0;\n    c = (0i64);\n    while (flags != (0i64)) {\n        c = (c + (flags & (1i64)));\n        flags = (flags >> (1i64));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t set_bits(int64_t flags) {\n    int64_t c = 0;\n    c = INT64_C(0);\n    while ((flags != INT64_C(0))) {\n        c = (c + (flags & INT64_C(1)));\n        flags = (flags >> INT64_C(1));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long set_bits(long flags) {\n    long c = 0L;\n    c = (0L);\n    while ((flags != (0L))) {\n        c = (c + (flags & (1L)));\n        flags = (flags >> (1L));\n    }\n    return c;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "function set_bits(flags)\n  local c = 0\n  c = (0)\n  while (flags ~= (0)) do\n    c = (c + (flags & (1)))\n    flags = (flags // (1 << (1)))\n    ::cm_continue_1::\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def set_bits(flags)\n  c = 0\n  c = (0)\n  while (flags != (0))\n    c = (c + (flags & (1)))\n    flags = (flags >> (1))\n  end\n  return c\nend\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc set_bits(_ flags: Int) -> Int {\n    var flags: Int = flags\n    var c: Int = 0\n    c = (0)\n    while (flags != (0)) {\n        c = (c + (flags & (1)))\n        flags = (flags >> (1))\n    }\n    return c\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function set_bits(flags: bigint): bigint {\n    let c: bigint = 0n;\n    c = (0n);\n    while ((flags !== (0n))) {\n        c = (c + (flags & (1n)));\n        flags = (flags >> (1n));\n    }\n    return c;\n}\n",
+      "cost": 1.0,
+      "entry": "set_bits",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -12,
+        12
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "set_bits",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "c",
+            "value": [
+              "int",
+              0
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "c",
+                "value": [
+                  "ADD",
+                  [
+                    "var",
+                    "c"
+                  ],
+                  [
+                    "BIT_AND",
+                    [
+                      "var",
+                      "flags"
+                    ],
+                    [
+                      "int",
+                      1
+                    ]
+                  ]
+                ]
+              },
+              {
+                "k": "assign",
+                "target": "flags",
+                "value": [
+                  "SHIFT_RIGHT",
+                  [
+                    "var",
+                    "flags"
+                  ],
+                  [
+                    "int",
+                    1
+                  ]
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_NE",
+              [
+                "var",
+                "flags"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "c"
+            ]
+          }
+        ],
+        "locals": {
+          "c": "int"
+        },
+        "name": "set_bits",
+        "params": [
+          {
+            "name": "flags",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 20,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_set_bits_404de4e9c521",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3132429613,
+    "source_sha256_12": "404de4e9c521"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "flags",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "set_bits(flags: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        12
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        7
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        9
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        2
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        6
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        5
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        10
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        4
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        3
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        8
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        11
+      ],
+      "out": 3
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 20,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 13,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 20,
+      "lift_mismatches": 0,
+      "seed": 3132429613
+    }
+  }
+}

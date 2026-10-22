@@ -12,7 +12,8 @@ Sections (all on by default; ``only`` selects):
                 witness or as its source, none refuted; transformations name two truths; methods state limits (CM44);
                 every definition stores a sparse vector with its basis version and an identity hash (CM45)
   tiers         the tier of every claim (proof, probabilistic, bounded, sample): theorems, rewrite rules,
-                redefinitions, the four sources; a definition's claim without a tier fails (CM46)
+                redefinitions, the four sources; a definition's claim without a tier fails (CM46); beside it, the
+                arithmetical rank of every method and question (engines/difficulty.py, Gödel method W-15)
   formal        the formal core (formal/GodelCore, Lean) builds with no sorry, and every formal_theorem card names
                 Lean theorems that rest only on Lean's standard axioms (the handover's R1)
   forms         op / call / re_operation forms vs their reference (witness.verify_forms)
@@ -36,7 +37,10 @@ Sections (all on by default; ``only`` selects):
                 cycle and flag data checked (CM32)
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
-it). ``record=True`` also writes each card's verdict into the card
+it). A run of some sections keeps the other sections of the saved report,
+each marked ``carried`` with the seed and start of the run that produced it,
+so a partial run (``--only rules``, ``--quick``) never erases evidence it did
+not replace. ``record=True`` also writes each card's verdict into the card
 (``verification`` field, versioned save). Hub-claim refutations are
 informational: they document an overstated original claim, while the
 card's declared domain is what must pass.
@@ -79,6 +83,7 @@ def _kernel(ctx: Ctx) -> dict:
             "schema_error_cards": len(schema_errors), "warnings": sum(len(v["warnings"]) for v in findings.values()),
             "unresolved_references": unresolved, "registry_errors": reg_errors,
             "cards": len(ctx.store.ALL), "registries": len(ctx.store.views)}
+
 
 
 def _forms(ctx: Ctx, seed: int, samples: int) -> dict:
@@ -298,10 +303,13 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
             from . import sources
             res = sources.check(ctx)
         elif sec == "tiers":
-            from . import tiers
+            from . import difficulty, tiers
             c = tiers.census(ctx)
+            dk = difficulty.check(ctx)
             res = {"status": "fail" if c["untiered_count"] else ("pass" if c["claims"] else "vacuous"),
-                   "problems": [f"{q}: no tier (CM46)" for q in c["untiered"]], **c}
+                   "problems": [f"{q}: no tier (CM46)" for q in c["untiered"]], **c,
+                   "ranks": {"methods": dk["methods_by_rank"], "questions": dk["questions_by_rank"],
+                             "problems": dk["problems"]}}
         elif sec == "formal":
             from . import formal
             res = formal.check(ctx)
@@ -345,10 +353,31 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
     report["peak_memory_mb"] = round(resources.peak_mb(), 1)
     report["status"] = "fail" if any(r.get("status") == "fail" for r in report["sections"].values()) else "pass"
     if save:
-        ctx.save_state("last_verify", report)
+        save_report(ctx, report)
     if record:
         record_results(ctx, report)
     return report
+
+
+def save_report(ctx: Ctx, report: dict) -> dict:
+    """Save ``report`` as last_verify.json, keeping the saved sections it did not run (marked ``carried``)."""
+    saved = dict(report)
+    missing = [s for s in SECTIONS if s not in report["sections"]]
+    if missing:
+        try:
+            old = ctx.load_state("last_verify") or {}
+        except ValueError:
+            old = {}
+        secs = dict(report["sections"])
+        for sec in missing:
+            r = (old.get("sections") or {}).get(sec)
+            if r is not None:
+                secs[sec] = dict(r, carried=r.get("carried") or {"seed": old.get("seed"), "started": old.get("started")})
+        saved["sections"] = secs
+        saved["timings_s"] = {**{k: v for k, v in (old.get("timings_s") or {}).items() if k in missing},
+                              **report.get("timings_s", {})}
+    ctx.save_state("last_verify", saved)
+    return saved
 
 
 def record_results(ctx: Ctx, report: dict) -> int:

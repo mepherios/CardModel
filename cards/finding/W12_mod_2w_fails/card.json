@@ -1,0 +1,27 @@
+{
+  "category": "finding",
+  "cites": [
+    "Cap-11"
+  ],
+  "data": {
+    "accepted_mod_2w": 1991,
+    "accepted_mod_p": 0,
+    "trials": 4000,
+    "w": 8
+  },
+  "evidence": "tests/test_arith.py; cardmodel/machine/arith.py",
+  "evidence_tier": "sample",
+  "limits": "a demonstration of the counterexample the handover names",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W12_mod_2w_fails",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-12",
+    "tool": "tools/seed_arith.py"
+  },
+  "statement": "Schwartz-Zippel's bound needs an integral domain: over Z/2^8 the random-point test accepted the nonzero polynomial 2^7·x in 1991 of 4000 trials (every even x), and over F_p in 0.",
+  "tier": 1,
+  "workstream": "W-12"
+}

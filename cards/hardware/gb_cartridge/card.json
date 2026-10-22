@@ -22,6 +22,32 @@
       "ram_enable": "0000-1FFF (0x0A)",
       "rom_bank_bit8": "3000-3FFF",
       "rom_bank_low8": "2000-2FFF"
+    },
+    "mbc7": {
+      "ram_enable_1": "0000-1FFF (0x0A)",
+      "rom_bank": "2000-3FFF (7 bits, 0 is bank 0)",
+      "ram_enable_2": "4000-5FFF (0x40)",
+      "registers": "A000-AFFF while both enables are on, selected by address bits 4-7: Ax0x 0x55 erases the accelerometer latch (X and Y read 0x8000), Ax1x 0xAA then latches the tilt, Ax2x/Ax3x X low/high, Ax4x/Ax5x Y low/high, Ax6x reads 0x00, Ax8x the EEPROM's pins (bit 7 CS, bit 6 CLK, bit 1 DI; bit 0 reads DO); the rest of A000-BFFF reads 0xFF"
+    },
+    "huc3": {
+      "mode": "0000-1FFF (low nibble): 0x0 RAM read-only, 0xA RAM read/write, 0xB clock command write, 0xC clock response read, 0xD clock semaphore, 0xE infrared",
+      "rom_bank": "2000-3FFF (7 bits, 0 is bank 0)",
+      "ram_bank": "4000-5FFF (2 bits)"
+    },
+    "camera": {
+      "ram_enable": "0000-1FFF (0x0A enables writes; RAM is always readable)",
+      "rom_bank": "2000-3FFF (6 bits, 0 is bank 0)",
+      "ram_bank_or_registers": "4000-5FFF: bits 0-3 the RAM bank, bit 4 maps the sensor's registers at A000-BFFF instead",
+      "registers": "A000 bit 0 starts a capture and reads 1 while it runs (bits 1-2 kept); A001-A035 write-only, read 0x00 (A000-A07F mirrored)"
+    },
+    "wisdom_tree": {
+      "bank": "a write to 0000-3FFF selects the 32 KiB bank in the low 8 bits of its ADDRESS (the value is ignored); 0000-7FFF is that bank"
+    },
+    "sachen": {
+      "base": "0000-1FFF: the base bank, written only while the ROM bank register has bits 4-5 set",
+      "rom_bank": "2000-3FFF (8 bits, 0 -> 1)",
+      "mask": "4000-5FFF: which bank bits come from the base bank, written only while the ROM bank register has bits 4-5 set",
+      "mapping": "0000-3FFF is bank (base AND mask); 4000-7FFF is (bank AND NOT mask) OR (base AND mask); CPU reads of 0100-01FF have address lines A0/A6 and A1/A4 swapped"
     }
   },
   "header": {
@@ -40,22 +66,39 @@
     "type": 327
   },
   "logic": [
-    "cart.card"
+    "cart.card",
+    "mbc7.card",
+    "huc3.card",
+    "camera.card"
   ],
   "machine": "gameboy",
   "mbc_kind": {
+    "none": 0,
     "mbc1": 1,
     "mbc2": 2,
     "mbc3": 3,
     "mbc5": 5,
-    "none": 0
+    "mbc7": 7,
+    "huc3": 8,
+    "camera": 9,
+    "wisdom_tree": 10,
+    "sachen": 11
   },
   "name": "gb_cartridge",
   "provenance": {
     "origin": "cardmodel",
     "read_for": "this card's data and logic, written here"
   },
-  "mbc1_multicart": {"rom_bytes": 1048576, "logo": [260, 308], "second_logo_at": 262404, "wiring": "bank2 drives ROM bits 4-5 and the low register uses 4 bits (bank 0 -> 1 still looks at 5)", "note": "MBC1M boards (collections) are not marked in the header: the Nintendo logo repeated at bank 0x10's header gives them away"},
+  "mbc1_multicart": {
+    "rom_bytes": 1048576,
+    "logo": [
+      260,
+      308
+    ],
+    "second_logo_at": 262404,
+    "wiring": "bank2 drives ROM bits 4-5 and the low register uses 4 bits (bank 0 -> 1 still looks at 5)",
+    "note": "MBC1M boards (collections) are not marked in the header: the Nintendo logo repeated at bank 0x10's header gives them away"
+  },
   "ram_unsized_bytes": 8192,
   "ram_unsized_note": "a cartridge type with RAM whose RAM-size byte says none (Blargg's test cartridges) has the smallest RAM chip",
   "ram_size_bytes": {
@@ -68,10 +111,13 @@
   },
   "rom_size_bytes": "32768 << value",
   "sources": [
-    "Pan Docs (hardware reference)",
-    "Gekkio, Game Boy: Complete Technical Reference"
+    "Pan Docs (hardware reference: MBCs, MBC7, HuC-3, Game Boy Camera)",
+    "Gekkio, Game Boy: Complete Technical Reference",
+    "Microchip 93LC56 data sheet (the MBC7's EEPROM protocol)",
+    "Antonio Nino Diaz, Game Boy Camera technical information (capture time, registers)",
+    "gbdev wiki: Wisdom Tree and Sachen mappers"
   ],
-  "statement": "Cartridge ROM (up to 8 MiB) and RAM (up to 128 KiB) behind a memory bank controller. The header at 0x100-0x14F describes it; `types` maps the cartridge type byte (0x147) to a controller and its features.",
+  "statement": "Cartridge ROM (up to 8 MiB) and RAM (up to 128 KiB) behind a memory bank controller. The header at 0x100-0x14F describes it; `types` maps the cartridge type byte (0x147) to a controller and its features. Two unlicensed boards the header does not name are recognised by where the Nintendo logo is (`unlicensed`).",
   "tier": 1,
   "timing": {
     "rtc_dots_per_second": 4194304,
@@ -179,11 +225,16 @@
     },
     "0x22": {
       "mbc": "mbc7",
-      "unsupported": true
+      "ram": true,
+      "battery": true,
+      "eeprom_bytes": 256,
+      "accelerometer": true
     },
     "0xFC": {
       "mbc": "camera",
-      "unsupported": true
+      "ram": true,
+      "battery": true,
+      "sensor": true
     },
     "0xFD": {
       "mbc": "tama5",
@@ -191,11 +242,82 @@
     },
     "0xFE": {
       "mbc": "huc3",
-      "unsupported": true
+      "ram": true,
+      "battery": true,
+      "rtc": true,
+      "infrared": true
     },
     "0xFF": {
       "mbc": "huc1",
       "unsupported": true
     }
+  },
+  "unlicensed": {
+    "logo_at": 260,
+    "logo_end": 308,
+    "logo_crc32": 1176065047,
+    "logo_note": "the CRC-32 of the 48-byte Nintendo logo the boot ROM checks at 0x104 (a fingerprint: the logo itself is not stored)",
+    "rule": "boards the header does not name, recognised when power_on runs (cart_power_on): a Sachen board when the logo is not at 0x104 but is where the boot ROM reads it through the board's scrambled, locked header page; otherwise a Wisdom Tree board when the type byte says ROM only, the logo is at 0x104 and the dump is larger than 32 KiB",
+    "sachen": {
+      "header_page": [
+        256,
+        512
+      ],
+      "swapped_lines": [
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "locked_line": 7,
+      "note": "the chip holds the header page scrambled; until the boot ROM's logo reads are done the board also forces A7 high (the 'locked' view), so the real logo sits at 0x184-0x1B3 scrambled. The board is unlocked when the boot ROM hands over, which is where the machine starts."
+    },
+    "wisdom_tree": {
+      "bank_bytes": 32768
+    }
+  },
+  "mbc7": {
+    "accel_center": 33232,
+    "accel_one_g": 112,
+    "accel_erased": 32768,
+    "eeprom": "93LC56: 128 words of 16 bits, high byte first in cram[0..255]; the save is the unsized RAM every host gives a RAM cartridge (ram_unsized_bytes), so it carries the EEPROM",
+    "tilt_note": "the d-pad tilts the cartridge by 1 g the way it points (right lowers X, up raises Y: things roll that way, checked on Kirby Tilt 'n' Tumble); a shell's stick drives the d-pad, and a shell with a real tilt source can add it in tilt_x / tilt_y"
+  },
+  "huc3": {
+    "clock": "minutes of the day (12 bits) and a day counter (12 bits), kept in the cartridge's clock registers (rtc_s, rtc_m, rtc_h, rtc_dl, rtc_dh) so saves and catch-up are the MBC3's",
+    "commands": {
+      "1": "read the nibble at the address, then address + 1",
+      "3": "write the argument at the address, then address + 1",
+      "4": "address bits 0-3",
+      "5": "address bits 4-7",
+      "6": "extended: 0 copies the clock to nibbles 00-05 (minutes, days), 1 sets the clock from them, 2 answers 1"
+    },
+    "semaphore": "mode 0xD reads bit 0 = 1 (ready); writing 0xFE there runs the command (the clock answers at once)",
+    "infrared": "mode 0xE reads 0xC0 (no light seen); bit 0 of a write is the LED"
+  },
+  "camera": {
+    "image": [
+      128,
+      112
+    ],
+    "image_at": 256,
+    "busy_mcycles": 32446,
+    "busy_mcycles_no_n": 512,
+    "busy_mcycles_per_c": 16,
+    "edge_ratio_x4": [
+      2,
+      3,
+      4,
+      5,
+      8,
+      12,
+      16,
+      20
+    ],
+    "sensor_note": "no sensor here: the picture is a synthetic scene (camera.card) shaped by what the game writes: exposure time (C, A002-A003) and gain (G, A001 bits 0-4) scale it, edge enhancement (VH A001 bits 5-6, ratio E A004 bits 4-6) sharpens it, I (A004 bit 3) inverts it, and the 4x4 matrix of 3 thresholds (A006-A035) turns it into 2-bit tiles in RAM bank 0 at 0x100; the voltage and offset registers (V, Z, O) are not modelled"
   }
 }

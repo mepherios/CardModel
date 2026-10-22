@@ -78,6 +78,10 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel arcade check
+```
+
+```bash
 ./bin/cardmodel self run
 ```
 
@@ -109,7 +113,9 @@ card model builds (install it from this checkout, not a worktree). Its first gam
 logic on the combat cards, compiled to native code; docs/STORE.md lists everything in the store and what the
 model does for each piece. `arcade library --add DIR` puts your own Game Boy / Color cartridges in its library,
 played natively by the Game Boy Player (the machine cards as an arcade program). Its Work tab shows every
-session's branch with the programs on it, each installable like a beta.
+session's branch with the programs on it, each installable like a beta. `arcade check` launches every
+program in the catalogue through the store exactly as the launcher does (a download with every chunk checked,
+verify, a damaged file repaired, a native run).
 `self run` runs one cycle of the model on itself: the core capability checks, the integrity check, verify,
 learning, law and identity rediscovery, the arena and measurements when due, and every goal; `self report` shows
 what it found (flaws, weaknesses, strengths) and the ranked plan of what to improve next. Any other command starts
@@ -141,3 +147,4 @@ command runs the test suite.
 | [docs/AUTONOMY.md](docs/AUTONOMY.md) | the model runs itself: the self-run cycle, the core capabilities, the self layer, findings and the plan |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | how parallel sessions land as one program: rules, the number registry, who works where, the log |
 | [docs/MATH_CORE.md](docs/MATH_CORE.md) | approved 2026-10-22: the four sources around the Gödel model, an audit of understand vs imitate, the semantic core, the migration plan and its progress (phases 0 and 1, the research handover's storage rules, witness tiers and the Lean formal core in `formal/`) |
+| [docs/GODEL_METHOD.md](docs/GODEL_METHOD.md) | the Gödel method research program: its coordination rules, wave 1's workstreams and their results, citing the handover's ids |

@@ -1,0 +1,556 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/MUL"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef int_power(base: int, exp: int) -> int:\n    r = 1\n    for _ in range(exp):\n        r *= base\n    return r",
+      "cost": 1.0,
+      "entry": "int_power",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t int_power(int64_t base, int64_t exp_cm) {\n    int64_t r = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    r = INT64_C(1);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = exp_cm;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        r = (r * base);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc int_power(base int64, exp int64) int64 {\n\tvar r int64 = 0\n\t_ = r\n\tvar cm_u int64 = 0\n\t_ = cm_u\n\tvar cm_it1 int64 = 0\n\t_ = cm_it1\n\tvar cm_stop2 int64 = 0\n\t_ = cm_stop2\n\tr = int64(1)\n\tcm_it1 = int64(0)\n\tcm_stop2 = exp\n\tfor (cm_it1 < cm_stop2) {\n\t\tcm_u = cm_it1\n\t\tcm_it1 = (cm_it1 + int64(1))\n\t\tr = (r * base)\n\t}\n\treturn r\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function int_power(base, exp) {\n    let r = 0n;\n    let cm_u = 0n;\n    let cm_it1 = 0n;\n    let cm_stop2 = 0n;\n    r = (1n);\n    cm_it1 = (0n);\n    cm_stop2 = exp;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        r = (r * base);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def int_power(base: int, exp: int) -> int:\n    r = 1\n    for _ in range(0, exp, 1):\n        r = (r * base)\n    return r\n\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn int_power(base: i64, exp: i64) -> i64 {\n    let mut r: i64 = 0;\n    let mut cm_u: i64 = 0;\n    let mut cm_it1: i64 = 0;\n    let mut cm_stop2: i64 = 0;\n    r = (1i64);\n    cm_it1 = (0i64);\n    cm_stop2 = exp;\n    while (cm_it1 < cm_stop2) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1i64));\n        r = (r * base);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t int_power(int64_t base, int64_t exp) {\n    int64_t r = 0;\n    int64_t cm_u = 0;\n    int64_t cm_it1 = 0;\n    int64_t cm_stop2 = 0;\n    r = INT64_C(1);\n    cm_it1 = INT64_C(0);\n    cm_stop2 = exp;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + INT64_C(1));\n        r = (r * base);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long int_power(long base, long exp) {\n    long r = 0L;\n    long cm_u = 0L;\n    long cm_it1 = 0L;\n    long cm_stop2 = 0L;\n    r = (1L);\n    cm_it1 = (0L);\n    cm_stop2 = exp;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1L));\n        r = (r * base);\n    }\n    return r;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def int_power (base : Int) (exp : Int) : Int := Id.run do\n  let mut r : Int := 0\n  let mut cm_u : Int := 0\n  let mut cm_it1 : Int := 0\n  let mut cm_stop2 : Int := 0\n  r := (1 : Int)\n  cm_it1 := (0 : Int)\n  cm_stop2 := exp\n  while (decide (cm_it1 < cm_stop2)) do\n    cm_u := cm_it1\n    cm_it1 := (cm_it1 + (1 : Int))\n    r := (r * base)\n  return r\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function int_power(base, exp)\n  local r = 0\n  local _ = 0\n  local cm_it1 = 0\n  local cm_stop2 = 0\n  r = (1)\n  cm_it1 = (0)\n  cm_stop2 = exp\n  while (cm_it1 < cm_stop2) do\n    _ = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    r = (r * base)\n    ::cm_continue_1::\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def int_power(base, exp)\n  r = 0\n  cm_u = 0\n  cm_it1 = 0\n  cm_stop2 = 0\n  r = (1)\n  cm_it1 = (0)\n  cm_stop2 = exp\n  while (cm_it1 < cm_stop2)\n    cm_u = cm_it1\n    cm_it1 = (cm_it1 + (1))\n    r = (r * base)\n  end\n  return r\nend\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc int_power(_ base: Int, _ exp: Int) -> Int {\n    var r: Int = 0\n    var cm_u: Int = 0\n    var cm_it1: Int = 0\n    var cm_stop2: Int = 0\n    r = (1)\n    cm_it1 = (0)\n    cm_stop2 = exp\n    while (cm_it1 < cm_stop2) {\n        cm_u = cm_it1\n        cm_it1 = (cm_it1 + (1))\n        r = (r * base)\n    }\n    return r\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function int_power(base: bigint, exp: bigint): bigint {\n    let r: bigint = 0n;\n    let cm_u: bigint = 0n;\n    let cm_it1: bigint = 0n;\n    let cm_stop2: bigint = 0n;\n    r = (1n);\n    cm_it1 = (0n);\n    cm_stop2 = exp;\n    while ((cm_it1 < cm_stop2)) {\n        cm_u = cm_it1;\n        cm_it1 = (cm_it1 + (1n));\n        r = (r * base);\n    }\n    return r;\n}\n",
+      "cost": 1.0,
+      "entry": "int_power",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        0,
+        30
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "int_power",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "r",
+            "value": [
+              "int",
+              1
+            ]
+          },
+          {
+            "body": [
+              {
+                "k": "assign",
+                "target": "r",
+                "value": [
+                  "MUL",
+                  [
+                    "var",
+                    "r"
+                  ],
+                  [
+                    "var",
+                    "base"
+                  ]
+                ]
+              }
+            ],
+            "counter": "cm_it1",
+            "k": "for_range",
+            "start": [
+              "int",
+              0
+            ],
+            "step": [
+              "int",
+              1
+            ],
+            "stop": [
+              "var",
+              "exp"
+            ],
+            "stop_var": "cm_stop2",
+            "var": "_"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "r"
+            ]
+          }
+        ],
+        "locals": {
+          "_": "int",
+          "cm_it1": "int",
+          "cm_stop2": "int",
+          "r": "int"
+        },
+        "name": "int_power",
+        "params": [
+          {
+            "name": "base",
+            "type": "int"
+          },
+          {
+            "name": "exp",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 34,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_int_power_3af2afe0cc30",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3132429613,
+    "source_sha256_12": "3af2afe0cc30"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "base",
+        "type": "int"
+      },
+      {
+        "name": "exp",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "int_power(base: int, exp: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -50,
+        30
+      ],
+      "out": 931322574615478515625000000000000000000000000000000
+    },
+    {
+      "args": [
+        50,
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -28,
+        19
+      ],
+      "out": -3133304450029408431470804992
+    },
+    {
+      "args": [
+        -43,
+        21
+      ],
+      "out": -20083415214428110320965436874242043
+    },
+    {
+      "args": [
+        26,
+        1
+      ],
+      "out": 26
+    },
+    {
+      "args": [
+        -19,
+        5
+      ],
+      "out": -2476099
+    },
+    {
+      "args": [
+        -19,
+        7
+      ],
+      "out": -893871739
+    },
+    {
+      "args": [
+        7,
+        1
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        2,
+        6
+      ],
+      "out": 64
+    },
+    {
+      "args": [
+        23,
+        1
+      ],
+      "out": 23
+    },
+    {
+      "args": [
+        27,
+        8
+      ],
+      "out": 282429536481
+    },
+    {
+      "args": [
+        23,
+        17
+      ],
+      "out": 141050039560662968926103
+    },
+    {
+      "args": [
+        -29,
+        24
+      ],
+      "out": 125184900814733057351483732809459681
+    },
+    {
+      "args": [
+        -34,
+        25
+      ],
+      "out": -193630125104980427932766033374162714624
+    },
+    {
+      "args": [
+        -4,
+        9
+      ],
+      "out": -262144
+    },
+    {
+      "args": [
+        -42,
+        5
+      ],
+      "out": -130691232
+    },
+    {
+      "args": [
+        -21,
+        11
+      ],
+      "out": -350277500542221
+    },
+    {
+      "args": [
+        -11,
+        17
+      ],
+      "out": -505447028499293771
+    },
+    {
+      "args": [
+        -11,
+        3
+      ],
+      "out": -1331
+    },
+    {
+      "args": [
+        26,
+        0
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        24
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -3,
+        7
+      ],
+      "out": -2187
+    },
+    {
+      "args": [
+        39,
+        9
+      ],
+      "out": 208728361158759
+    },
+    {
+      "args": [
+        -17,
+        11
+      ],
+      "out": -34271896307633
+    },
+    {
+      "args": [
+        4,
+        30
+      ],
+      "out": 1152921504606846976
+    },
+    {
+      "args": [
+        9,
+        6
+      ],
+      "out": 531441
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 34,
+        "out_of_width": 11,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 34,
+        "out_of_width": 11,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 34,
+        "out_of_width": 11,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 34,
+        "out_of_width": 11,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 34,
+        "out_of_width": 11,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 34,
+        "out_of_width": 11,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 34,
+        "out_of_width": 11,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3132429613
+    }
+  }
+}

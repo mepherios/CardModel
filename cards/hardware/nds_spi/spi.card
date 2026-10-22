@@ -1,0 +1,212 @@
+-- The ARM7's SPI bus: SPICNT picks a device (0 power management, 1 firmware, 2 touch screen); the first byte
+-- after a device is selected starts its command; a transfer made while bit 11 is clear deselects it after.
+-- Power management: byte 1 = register (bit 7 set: read), byte 2 = the value. Firmware flash: the serial flash
+-- commands (3-byte addresses). Touch screen (TSC2046): a byte with bit 7 set starts a conversion of channel
+-- bits 4-6; its 12 bits shift out over the next two bytes (the first after one busy clock), so a new command
+-- can ride on the second. Pen position comes from the host (touch_down, touch_x, touch_y in pixels) and turns
+-- into the converter's numbers through the calibration in the firmware's user settings (card data).
+const TC_ADC_X1 = card.hardware.nds_spi.touch_calibration.adc_x1
+const TC_ADC_Y1 = card.hardware.nds_spi.touch_calibration.adc_y1
+const TC_SCR_X1 = card.hardware.nds_spi.touch_calibration.scr_x1
+const TC_SCR_Y1 = card.hardware.nds_spi.touch_calibration.scr_y1
+const TC_ADC_X2 = card.hardware.nds_spi.touch_calibration.adc_x2
+const TC_ADC_Y2 = card.hardware.nds_spi.touch_calibration.adc_y2
+const TC_SCR_X2 = card.hardware.nds_spi.touch_calibration.scr_x2
+const TC_SCR_Y2 = card.hardware.nds_spi.touch_calibration.scr_y2
+const TS_TEMP0 = card.hardware.nds_spi.touch_idle.temperature0
+const TS_TEMP1 = card.hardware.nds_spi.touch_idle.temperature1
+const TS_MIC = card.hardware.nds_spi.touch_idle.microphone
+const PM_CONTROL_BOOT = card.hardware.nds_spi.power_management.control_after_boot
+global spi_cnt: Int = 0
+global spi_data: Int = 0
+global spi_sel: Int = 0
+global spi_dev: Int = 0
+global spi_cmd: Int = 0
+global spi_n: Int = 0
+array pm_regs: Int[8]
+export array firmware: Byte[0x40000]
+export global fw_dirty: Int = 0
+global fw_addr: Int = 0
+global fw_status: Int = 0
+export global fw_id: Int = 0x204012
+export global touch_down: Int = 0
+export global touch_x: Int = 0
+export global touch_y: Int = 0
+global tsc_out: Int = 0                   -- bits still to shift out, MSB first, in a 16-bit window
+
+fn pm_reset() {
+  for i in 0 .. 8 {
+    pm_regs[i] = 0
+  }
+  pm_regs[0] = PM_CONTROL_BOOT
+}
+fn pm_transfer(v: Int, n: Int) -> Int {
+  if n == 0 {
+    spi_cmd = v
+    return 0
+  }
+  let r = spi_cmd & 7
+  if n == 1 {
+    if (spi_cmd & 0x80) != 0 {
+      return pm_regs[r]
+    }
+    pm_regs[r] = v
+  }
+  return 0
+}
+fn fw_transfer(v: Int, n: Int) -> Int {
+  if n == 0 {
+    spi_cmd = v
+    fw_addr = 0
+    if v == 0x06 {
+      fw_status = fw_status | 2
+    } elif v == 0x04 {
+      fw_status = fw_status & 0xFD
+    }
+    return 0xFF
+  }
+  let c = spi_cmd
+  if c == 0x05 {
+    return fw_status
+  }
+  if c == 0x9F {
+    if n <= 3 {
+      return (fw_id >> (24 - 8 * n)) & 0xFF
+    }
+    return 0xFF
+  }
+  if c == 0x03 or c == 0x0B or c == 0x0A or c == 0x02 {
+    if n <= 3 {
+      fw_addr = ((fw_addr << 8) | v) & 0xFFFFFF
+      return 0xFF
+    }
+    if c == 0x0B and n == 4 {
+      return 0xFF
+    }
+    if c == 0x03 or c == 0x0B {
+      let r = firmware[fw_addr & 0x3FFFF]
+      fw_addr = (fw_addr + 1) & 0xFFFFFF
+      return r
+    }
+    if (fw_status & 2) != 0 {
+      let a = fw_addr & 0x3FFFF
+      firmware[a] = if c == 0x0A then v else firmware[a] & v
+      fw_dirty = 1
+      fw_addr = (fw_addr & 0xFFFF00) | ((fw_addr + 1) & 0xFF)
+    }
+  }
+  return 0xFF
+}
+fn fw_deselect() {
+  if spi_cmd == 0x0A or spi_cmd == 0x02 or spi_cmd == 0xDB {
+    if spi_cmd == 0xDB and (fw_status & 2) != 0 {
+      let base = fw_addr & 0x3FF00
+      for i in 0 .. 0x100 {
+        firmware[base + i] = 0xFF
+      }
+      fw_dirty = 1
+    }
+    fw_status = fw_status & 0xFD
+  }
+}
+-- the touch screen controller's 12-bit result for a channel
+fn tsc_value(ch: Int) -> Int {
+  if ch == 5 {
+    if touch_down == 0 {
+      return 0
+    }
+    return TC_ADC_X1 + ((touch_x + 1 - TC_SCR_X1) * (TC_ADC_X2 - TC_ADC_X1)) // (TC_SCR_X2 - TC_SCR_X1)
+  }
+  if ch == 1 {
+    if touch_down == 0 {
+      return 0xFFF
+    }
+    return TC_ADC_Y1 + ((touch_y + 1 - TC_SCR_Y1) * (TC_ADC_Y2 - TC_ADC_Y1)) // (TC_SCR_Y2 - TC_SCR_Y1)
+  }
+  if ch == 3 {
+    return if touch_down != 0 then 0x200 else 0
+  }
+  if ch == 4 {
+    return if touch_down != 0 then 0xE00 else 0xFFF
+  }
+  if ch == 0 {
+    return TS_TEMP0
+  }
+  if ch == 7 {
+    return TS_TEMP1
+  }
+  if ch == 6 {
+    return TS_MIC
+  }
+  return 0
+}
+fn tsc_transfer(v: Int) -> Int {
+  let r = (tsc_out >> 8) & 0xFF
+  tsc_out = (tsc_out << 8) & 0xFFFF
+  if (v & 0x80) != 0 {
+    var val = tsc_value((v >> 4) & 7) & 0xFFF
+    if (v & 8) != 0 {
+      val = (val >> 4) << 4
+    }
+    tsc_out = val << 3
+  }
+  return r
+}
+fn spi_transfer(v: Int) -> Int {
+  let n = spi_n
+  spi_n += 1
+  if spi_dev == 0 {
+    return pm_transfer(v, n)
+  }
+  if spi_dev == 1 {
+    return fw_transfer(v, n)
+  }
+  if spi_dev == 2 {
+    return tsc_transfer(v)
+  }
+  return 0
+}
+fn spi_deselect() {
+  if spi_sel != 0 and spi_dev == 1 {
+    fw_deselect()
+  }
+  spi_sel = 0
+  spi_n = 0
+}
+fn spidata_write(v: Int) {
+  if (spi_cnt & 0x8000) == 0 {
+    return
+  }
+  let dev = (spi_cnt >> 8) & 3
+  if spi_sel == 0 or dev != spi_dev {
+    spi_sel = 1
+    spi_dev = dev
+    spi_n = 0
+  }
+  spi_data = spi_transfer(v & 0xFF)
+  if (spi_cnt & 0x800) == 0 {
+    spi_deselect()
+  }
+  if (spi_cnt & 0x4000) != 0 {
+    request(1, 0x800000)
+  }
+}
+fn spicnt_write(o: Int, v: Int) {
+  let s = (o & 1) * 8
+  spi_cnt = (spi_cnt & (0xFFFF ^ (0xFF << s))) | ((v & 0xFF) << s)
+  if (spi_cnt & 0x8000) == 0 {
+    spi_deselect()
+  }
+}
+fn spi_read8(o: Int) -> Int {
+  if o == 0x1C0 {
+    return spi_cnt & 0x7F
+  }
+  if o == 0x1C1 {
+    return (spi_cnt >> 8) & 0xFF
+  }
+  if o == 0x1C2 {
+    return spi_data
+  }
+  return 0
+}

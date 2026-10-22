@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_difficulty.py",
+  "description": "The questions the product asks, each with its arithmetical rank and whether the product may promise an answer (only decidable ones: Ph-15); the open ones name what is done instead.",
+  "name": "question",
+  "tier": 0
+}

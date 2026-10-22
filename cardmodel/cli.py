@@ -31,10 +31,12 @@
   cardmodel repl                         interactive card language
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel godel ledger|vector|gcd|lcm CARD...   the expanding Gödel model: primes, sparse content vectors (CM43, CM45)
+  cardmodel godel sizes [--limit N]         each code's size for every card with a term (Gödel method W-3)
   cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
   cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics
   cardmodel tiers census|prove ALGORITHM    each claim's tier; prove an algorithm's forms by sized witnesses (CM46)
+  cardmodel difficulty                     the rank of what each method decides; the questions left open (W-15)
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
 
@@ -45,6 +47,7 @@
 
   games and the store (arcade/cli.py, docs/ARCADE.md, docs/STORE.md):
   cardmodel arcade list|build|serve|launcher|run [GAME]   native games from cards, the Cardmodel Arcade launcher
+  cardmodel arcade check|inventory       every catalogue item launched through the store; what goes into the store
 
 Global: --json (machine output), --project PATH, --no-project, --cards PATH (extra read-only card tree).
 Exit status: 0 ok, 1 a check failed, 2 bad input.
@@ -586,16 +589,26 @@ def cmd_new(args) -> int:
 
 
 def cmd_docs(args) -> int:
+    from datetime import date
+    from .engines import integrity
     from .engines.docs import laws_md
     ctx = _ctx(args)
     text = laws_md(ctx.store)
     target = paths.home() / "LAWS.md"
+    floor = ctx.store.get(integrity.FLOORS)
+    card, changes = integrity.raised_floors(integrity.goal_rows(ctx.store), dict(floor) if floor is not None else None,
+                                            date.today().isoformat())
     if args.check:
         same = target.exists() and target.read_text(encoding="utf-8") == text
         print("LAWS.md in sync" if same else "LAWS.md is stale: run `cardmodel docs`")
-        return 0 if same else 1
+        print("goal floors in sync" if not changes else f"goal floors would change: {'; '.join(changes)}")
+        return 0 if same and not changes else 1
     target.write_text(text, encoding="utf-8")
     print(f"wrote {target}")
+    if changes:
+        ctx.store.save({**(dict(floor) if floor is not None else {}), **card}, layer="model", category="floor")
+        print(f"goal floors ({integrity.FLOORS}): {'; '.join(changes[:12])}"
+              + (f" and {len(changes) - 12} more" if len(changes) > 12 else ""))
     return 0
 
 

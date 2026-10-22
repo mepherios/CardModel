@@ -6,6 +6,9 @@ Checks, each cheap and read-only:
   documented    every command the CLI registers is in its help, every verify section is in verify's docstring,
                 every docs/*.md file is linked from README.md
   generated     LAWS.md is what the law cards generate; GOALS.md has a row for every goal card
+  floors        no goal is easier than its floor (``floor/goals``: the hardest target each goal has had, recorded by
+                ``cardmodel docs``): a lowered target, a changed metric or direction, or a removed goal needs its
+                reason written down (an ``amended`` field on the goal card, a ``retired`` entry on the floor card)
   source        every module of the program parses (no leftover merge markers in code, docs or card sources)
   boundaries    no publishing calls (pushes to a remote, package or gist uploads) anywhere in the program (CM19)
 
@@ -26,6 +29,10 @@ MARKERS = re.compile(r"^(<{7}|={7}|>{7})( |$)", re.M)
 # the same pattern as tests/test_laws.py::test_no_publishing_calls, spelled so that this line does not match itself
 PUBLISHING = re.compile(r"git\"?,?\s*\"?pu[s]h|\bgh\s+(pr|repo|gist)|twin[e] upload|np[m] publish")
 LAW_ID = re.compile(r"^(CM\d{2})_[a-z0-9_]+$")
+FLOORS = "floor/goals"
+FLOORS_STATEMENT = ("The floor of every goal: the hardest target it has had, its metric and direction. A goal may get "
+                    "harder or be added freely; easier, changed or removed only with a reason (CM37: the core is "
+                    "never lost; `cardmodel docs` records the floors, the integrity check holds them).")
 GOAL_ID = re.compile(r"^(G_[A-Z]+\d+)_[a-z0-9_]+$")
 
 
@@ -51,6 +58,84 @@ def cli_commands() -> tuple[list[str], str]:
     parser = cli.build_parser()
     sub = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction))
     return sorted(sub.choices), cli.__doc__ or ""
+
+
+def _easier(direction: str, floor, target) -> bool:
+    try:
+        return target < floor if direction == "higher" else target > floor
+    except TypeError:
+        return True
+
+
+def goal_rows(st) -> dict:
+    return {g.name: {"metric": g.get("metric"), "direction": g.get("direction"), "target": g.get("target"),
+                     "amended": g.get("amended")} for g in st.cards("goal")}
+
+
+def _amended(g: dict, f: dict) -> bool:
+    a = g.get("amended") or {}
+    return a.get("from") == f and bool(str(a.get("reason") or "").strip())
+
+
+def floor_problems(goals: dict, floor: dict | None) -> list[str]:
+    """What the floors refuse: a goal easier than its floor, with another metric or direction, or gone, without a
+    written reason; a goal with no floor yet (run ``cardmodel docs``)."""
+    if floor is None:
+        return [f"no goal floors ({FLOORS}): run `cardmodel docs` to record them"]
+    floors = floor.get("floors") or {}
+    retired = {r.get("goal") for r in floor.get("retired") or [] if str(r.get("reason") or "").strip()}
+    out = []
+    for name, f in sorted(floors.items()):
+        g = goals.get(name)
+        if g is None:
+            if name not in retired:
+                out.append(f"goal {name} was removed: a goal leaves only with a reason ({FLOORS} retired list)")
+            continue
+        same = (g.get("metric"), g.get("direction")) == (f.get("metric"), f.get("direction"))
+        if (same and not _easier(f["direction"], f["target"], g.get("target"))) or _amended(g, f):
+            continue
+        what = (f"its target moved from {f['target']} to {g.get('target')} ({f['direction']} is better)" if same else
+                f"its metric or direction changed ({f.get('metric')}, {f.get('direction')} -> {g.get('metric')}, "
+                f"{g.get('direction')})")
+        out.append(f"goal {name}: {what} without a reason: give its card \"amended\": {{\"from\": <its floor>, "
+                   f"\"reason\": ...}} (docs/INTEGRATION.md, goal floors)")
+    for name in sorted(set(goals) - set(floors)):
+        out.append(f"goal {name} has no floor yet: run `cardmodel docs`")
+    return out
+
+
+def raised_floors(goals: dict, floor: dict | None, today: str) -> tuple[dict, list[str]]:
+    """The floor card ``cardmodel docs`` writes: new goals and harder targets raise their floor, an amended goal
+    moves it (the history keeps from, to and the reason), a retired goal leaves it; nothing else lowers a floor."""
+    old = dict(floor or {})
+    floors = {k: dict(v) for k, v in (old.get("floors") or {}).items()}
+    history = list(old.get("history") or [])
+    retired = list(old.get("retired") or [])
+    gone = {r.get("goal") for r in retired if str(r.get("reason") or "").strip()}
+    changes = []
+    for name, g in sorted(goals.items()):
+        cur = {"metric": g.get("metric"), "direction": g.get("direction"), "target": g.get("target")}
+        f = floors.get(name)
+        if f is None:
+            floors[name] = cur
+            changes.append(f"{name}: floor {cur['target']} ({cur['direction']} is better)")
+        elif cur != f and _amended(g, f):
+            floors[name] = cur
+            history.append({"goal": name, "from": f, "to": cur, "reason": str(g["amended"]["reason"]).strip(),
+                            "date": today})
+            changes.append(f"{name}: moved by its amendment")
+        elif cur != f and (cur["metric"], cur["direction"]) == (f["metric"], f["direction"]) and \
+                not _easier(f["direction"], f["target"], cur["target"]):
+            floors[name] = cur
+            changes.append(f"{name}: raised {f['target']} -> {cur['target']}")
+    for name in sorted(set(floors) - set(goals)):
+        if name in gone:
+            del floors[name]
+            changes.append(f"{name}: retired")
+    card = {"name": "goals", "category": "floor", "tier": 0, "statement": FLOORS_STATEMENT,
+            "floors": dict(sorted(floors.items())), "history": history, "retired": retired,
+            "provenance": {"origin": "cardmodel docs", "check": "engines/integrity.py floor_problems"}}
+    return card, changes
 
 
 def check(ctx) -> dict:
@@ -119,6 +204,8 @@ def check(ctx) -> dict:
     for g in goals:
         if f"`{g.name}`" not in goals_md:
             problems.append(f"GOALS.md has no row for {g.name}")
+    floor = st.get(FLOORS)
+    problems += floor_problems(goal_rows(st), dict(floor) if floor is not None else None)
 
     for f in program_files(home):
         if f.suffix == ".py":
@@ -139,4 +226,5 @@ def check(ctx) -> dict:
             "docs": len(docs)}
 
 
-__all__ = ["check", "cli_commands", "program_files", "publishing_calls"]
+__all__ = ["FLOORS", "check", "cli_commands", "floor_problems", "goal_rows", "program_files", "publishing_calls",
+           "raised_floors"]

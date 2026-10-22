@@ -1,0 +1,27 @@
+{
+  "category": "hardware",
+  "name": "nds_spi",
+  "machine": "nds",
+  "statement": "The ARM7's SPI bus and its three devices: the power management chip (registers: control with backlights, sound amplifier and power off; battery status; microphone amplifier and gain), the firmware flash (256 KiB serial flash: header, Wi-Fi settings, user settings; the image is made here from this card's data, no console's firmware is used), and the touch screen controller (12-bit conversions of X, Y, pressure, temperature and the microphone input). SPICNT (0x040001C0) bits 8-9 select the device, bit 11 keeps it selected after a transfer, bit 14 asks for an interrupt, bit 15 enables the bus; each byte written to SPIDATA (0x040001C2) is one transfer and the device's answer reads there.",
+  "registers": [
+    {"address": "0x040001C0", "name": "SPICNT", "bits": "0-1 baud rate, 7 busy (never shown: transfers finish at once), 8-9 device (0 power management, 1 firmware, 2 touch screen), 10 16-bit transfers, 11 hold chip select, 14 interrupt request, 15 enable"},
+    {"address": "0x040001C2", "name": "SPIDATA"}
+  ],
+  "power_management": {"registers": {"0": "control: bit 0 sound amplifier, 2 lower backlight, 3 upper backlight, 4 power LED blink, 6 power off", "1": "battery: bit 0 low", "2": "microphone amplifier", "3": "microphone gain"}, "control_after_boot": 13},
+  "firmware": {
+    "bytes": 262144, "id": 2113554, "console_type": 255,
+    "user_settings_offsets": [261632, 261888],
+    "user_settings": {"version": 5, "favorite_color": 11, "birth_month": 1, "birth_day": 1, "nickname": "CARD", "language": 1, "update_counter": 1,
+                      "nickname_utf16": [67, 65, 82, 68, 0, 0, 0, 0, 0, 0], "nickname_length": 4},
+    "wifi_config_offset": 42, "mac_address": [0, 9, 191, 0, 0, 1],
+    "wifi": {"rf_chip_type": 2, "rf_bits_per_entry": 24, "rf_entries": 12, "byte_43": 1}
+  },
+  "touch_calibration": {"adc_x1": 735, "adc_y1": 812, "scr_x1": 32, "scr_y1": 32, "adc_x2": 3387, "adc_y2": 3303, "scr_x2": 224, "scr_y2": 160},
+  "touch_channels": {"0": "temperature 0", "1": "Y", "2": "battery (not connected)", "3": "pressure Z1", "4": "pressure Z2", "5": "X", "6": "microphone (AUX)", "7": "temperature 1"},
+  "touch_idle": {"temperature0": 800, "temperature1": 928, "microphone": 2048},
+  "limits": "transfers finish at once; 16-bit transfers act as 8-bit ones; the firmware's Wi-Fi block names the RF chip and its table's shape, but its calibration values are zeros and its access point settings blank; the microphone always reads silence; the touch screen reports one exact point (no noise or pressure curve)",
+  "sources": ["GBATEK (DS serial peripheral interface bus, power management, firmware, touch screen)"],
+  "logic": ["spi.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

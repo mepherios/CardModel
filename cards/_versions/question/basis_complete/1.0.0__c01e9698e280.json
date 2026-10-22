@@ -1,0 +1,20 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-11"
+  ],
+  "instead": "no consistent, effectively axiomatized basis does (first incompleteness): keep expanding, and mark undecided questions open, never false",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "basis_complete",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "beyond",
+  "statement": "Does the basis settle every question about its own codes?",
+  "tier": 0
+}
