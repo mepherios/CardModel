@@ -91,7 +91,10 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   two-CPU DS image, so no game is ever needed in the repository.
 * **The ROM survey** (`machine/survey.py`): boot every ROM in a folder headless with a scripted input and
   classify: `runs` (drawn and changing), `static`, `blank`, `locked` (illegal opcode), and whether the bank
-  controller is modelled. "Runs" is evidence of booting, not of correctness.
+  controller is modelled. A `static` or `blank` ROM gets a second run with no input and counts as running when
+  that one animates (`input: none` in its row): START pauses some games, and the scripted taps can keep one
+  paused. A ROM without the Nintendo logo that no board explains is reported as a pass-through device. "Runs" is
+  evidence of booting, not of correctness.
 * **Differential runs** (`machine/diff.py`): lifted engine vs interpreter on the same input, state hash (registers,
   time, frame, WRAM, HRAM) compared after every frame (CM33).
 * **Test ROMs** (`machine/testroms.py`): the freely licensed suites, read where they are (the user downloaded
@@ -115,12 +118,46 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   independent of how often components sync (tested by forcing extra syncs).
 * **CPU**: the LR35902 cards; interrupt dispatch in 5 M-cycles with the vector chosen after the high push;
   HALT, the HALT bug (and its meeting with a dispatch after EI), EI's delay, STOP and the CGB speed switch.
-* **Hardware**: memory map, MBC1/2/3 (+RTC)/5, timer (falling edges, the 4-cycle reload, DIV/TAC quirks), PPU
+* **Hardware**: memory map, MBC1/2/3 (+RTC)/5/7, HuC3, the Game Boy Camera, two unlicensed boards (below), timer (falling edges, the 4-cycle reload, DIV/TAC quirks), PPU
   (modes, STAT edge, LY=LYC, a scanline renderer with window, 10 sprites a line, DMG and CGB priority, CGB
   palettes and VRAM bank), OAM DMA and HDMA, joypad, serial (logged), APU (4 channels, frame sequencer, mixer,
   output capacitor).
-* **Boot**: no boot ROM (it is not ours to ship); the documented post-boot state, DMG or CGB per the header; the
-  CGB hands over in V-blank (games touch VRAM at once), the DMG at the start of line 0.
+* **Cartridge boards** (`hardware/gb_cartridge`: `cart.card`, `mbc7.card`, `huc3.card`, `camera.card`; tests in
+  `tests/test_gb_mappers.py`, each on a cartridge the assembler builds):
+  * **MBC7** (Kirby Tilt 'n' Tumble): banks, the accelerometer latch (0x55 erases to 0x8000, then 0xAA latches,
+    centred on 0x81D0, 1 g = 0x70) and the 93LC56 EEPROM by its data sheet (start bit, opcode, 8 address bits; a
+    dummy 0 then 16 bits MSB first; EWEN/EWDS, WRITE, ERASE, ERAL, WRAL). The EEPROM is the first 256 bytes of the
+    cartridge RAM image (high byte first), so the save every host keeps for a RAM cartridge whose header gives no
+    size (8 KiB, the player's too) carries it. There is no tilt sensor, so the d-pad tilts the cartridge by 1 g
+    the way it points (right lowers X, up raises Y; measured on Kirby's levels: Kirby rolls the way the pad
+    points); a stick on the shell's page drives the d-pad, and a shell with a real tilt source can add it in
+    `tilt_x` / `tilt_y`.
+  * **HuC3** (Robopon): banks, RAM read-only (mode 0) and read/write (mode 0xA), the clock chip's commands the
+    way Robopon sends them (command in mode 0xB, 0xFE to the semaphore in mode 0xD, the answer's low nibble in
+    mode 0xC: read/write a nibble and move on, set the address, copy the clock to nibbles 00-05 and back), and
+    the infrared port (sees no light: 0xC0). The clock keeps its minutes of the day and 12-bit day count in the
+    MBC3 clock's registers, so it runs in machine time, is saved in the same 48-byte trailer and catches up the
+    same way, in every host.
+  * **Game Boy Camera**: 6-bit ROM banks, 16 RAM banks (always readable), the sensor's registers at A000 when bit
+    4 of the RAM bank register is set; a capture takes 32446 M-cycles, 512 more without N, 16 per unit of the
+    exposure time, then the picture is in RAM bank 0 at 0x100 (16 x 14 tiles). No sensor: the light is a
+    synthetic scene (a face that sways a little from one capture to the next) that the exposure time and gain
+    scale, edge enhancement sharpens, I inverts and the game's 4 x 4 threshold matrix cuts into four shades. The
+    camera boots to its menus and takes and saves pictures of that scene (its battery RAM keeps them).
+  * **Wisdom Tree** (Spiritual Warfare, Exodus, Joshua, the Bibles): a write to 0000-3FFF selects the 32 KiB bank
+    in the low byte of its address. **Sachen** (Jurassic Boy II + Thunder Blast Man, Jurassic Boy 2, 4 in 1 + 8 in
+    1): base, ROM bank and mask registers, and the header page (0x0100-0x01FF) stored scrambled (A0/A6 and A1/A4
+    swapped), so the CPU reads it in order. The header names neither: `cart_power_on` recognises them by where the
+    Nintendo logo is, through the logo's CRC-32 (card data; the logo itself is not stored): Sachen when the logo is
+    only where a locked board shows it (A7 forced high, lines swapped), Wisdom Tree for a ROM-only type with the
+    logo in place and more than 32 KiB. Lifted code never covers a Sachen board's scrambled page (the interpreter
+    reads it through the board). Every new board's lifted code is frame-identical to the interpreter (`machine
+    diff`, 1500 frames each).
+* **Boot**: no boot ROM (it is not ours to ship); the documented post-boot state, DMG or CGB per the header (read
+  through the cartridge's board, which powers on first); the CGB hands over in V-blank (games touch VRAM at once),
+  the DMG at the start of line 0. A CGB game gets BCPS at 0x80, auto-increment from index 0, where the boot ROM's
+  last 64-byte BG palette load leaves it (SameBoy's open-source boot ROM): Jurassic Boy 2 writes its BG palettes
+  without setting BCPS and showed no background before.
 * **DMG compatibility mode**: a DMG cartridge (header byte 0x143 without bit 7) on the CGB model
   (`--model cgb`) runs as the CGB's boot ROM leaves it. KEY0 = 0x04 and OPRI = 1 (objects by X coordinate);
   the default compatibility palette is card data (`hardware/gb_cgb`, `dmg_compat.palettes`: BG 7FFF 1BEF 6180
@@ -294,14 +331,39 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   decode), a `<isa>_bench` machine; the bench and `verify` pick it up.
 * **A hardware component**: `cards/hardware/<name>/card.json` (registers, timing as data) + its `.card` logic;
   list it in a machine card's `components`.
-* **A bank controller**: a case in `gb_cartridge/cart.card` and an entry in the card's `types` table.
+* **A bank controller**: a case in `gb_cartridge/cart.card` (or its own logic file, listed in the card's `logic`),
+  an entry in the card's `types` and `mbc_kind` tables, and a test in `tests/test_gb_mappers.py`. A board the
+  header does not name is recognised in `cart_power_on` (and the same rule in `machine/gb.py`'s `unlicensed`).
 
 ## 8. Honest limits
 
 * PPU: a scanline renderer (mid-mode-3 changes apply to the whole line); the window's exact mode-3 cost, the
   LY=153 quirk and the blank first frame after LCD enable are not modelled.
 * APU: point sampled (no band limiting); the noise channel's LFSR only steps while samples are made.
-* No MMM01, MBC6, MBC7, HuC1/HuC3, TAMA5, camera, or unlicensed multicart mappers.
+* No MMM01, MBC6, HuC1 or TAMA5 (none is in the surveyed collection). The camera's picture is synthetic, and its
+  sensor's voltage and offset registers (V, Z, O) are not modelled. MBC7's tilt is the d-pad's, 1 g at a time.
+  HuC3's infrared port never sees light (so infrared trading needs a second machine, which there is not), and its
+  alarm and tone generator are not modelled. The Sachen multicart's second game (Thunder Blaster, its upper 256
+  KiB) would be mapped by the base and mask registers (tested on an assembled cartridge), but what makes the
+  cartridge select it was not found: it boots into Jurassic Boy II, which plays.
+* **Two cheat devices do not run, and cannot from these files** (the survey still lists them, with the reason):
+  * *GameShark (USA)*: the file is not the whole device. Datel's cartridge switches its own ROM banks with a
+    register at 0x7FE1 (inferred from its firmware and the GameShark Online's) and has RAM at 6000-7FFF (the file's
+    6000-7FFF is power-on garbage repeating every 4 KiB); whoever dumped it switched banks MBC1's way, which the
+    device ignores, so the file is bank 0 plus one 16 KiB view repeated seven times. The firmware selects bank 2 at boot (`LD A,2 / LD (7FE1),A`), calls into it (0x5947 lands mid-
+    function in the dumped bank) and copies its font from 0x50A0 there, which in the file is code: its menu has no
+    font to draw.
+  * *GameShark Online* (Action Replay V4.01): the file is whole (ten 8 KiB banks), but Datel's hardware is not
+    documented anywhere we could find. Inferred from the firmware: banks of 8 KiB at 4000-5FFF selected by 0x7FE1
+    (2, 3, 8, 9), RAM at 6000-7FFF holding its stack (SP = 0x7FC0), registers at 0x7FE0-0x7FEF, and a status bit
+    (0x7FEE bit 0) that decides between its menu and "Manual Upgrade" (waiting for a PC). With only that modelled
+    it shows its logo and loops back to it; the rest depends on registers whose behaviour is unknown.
+  * Both are pass-through devices: the boot ROM reads the Nintendo logo of the game in their slot (neither file
+    has one), and their purpose, patching a running game, needs that game. A model of them would plug a second
+    cartridge from the library into the first; that is not built.
+* Jeopardy! Platinum Edition and Teen Tournament run (the menu, the name entry); START pauses them even on the
+  publisher's screen and the unpause waits about 1.5 s, which the survey's taps every 1.5 s kept re-pausing, so they
+  count as running from their run without input.
 * DMG compatibility mode gives every cartridge the boot ROM's default palette: the per-title palettes the boot
   ROM picks for Nintendo's own games (by title checksum) and the hand-picked ones (a d-pad combination during
   the logo) are not modelled. `--model auto` runs a DMG cartridge on the DMG.

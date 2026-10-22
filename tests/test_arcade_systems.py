@@ -52,14 +52,15 @@ class GameBoyPlayer(unittest.TestCase):
         kinds = [int(x) for x in src.split("array cart_kind: Int[256] = [")[1].split("]")[0].split(", ")]
         self.assertEqual(kinds[0x13], int(cc["mbc_kind"]["mbc3"]))
         self.assertEqual(kinds[0x1B], int(cc["mbc_kind"]["mbc5"]))
-        self.assertEqual(kinds[0x22], 0, "an unsupported controller (MBC7) runs as ROM only, as the Python host does")
+        self.assertEqual(kinds[0x22], int(cc["mbc_kind"]["mbc7"]))
+        self.assertEqual(kinds[0xFF], 0, "an unsupported controller (HuC1) runs as ROM only, as the Python host does")
         self.assertIn(f"const CART_RAM_UNSIZED = {cc['ram_unsized_bytes']}", src)
 
     def test_the_player_configures_a_cartridge_like_the_host(self):
         m = N.load(self.ctx, S.module(self.ctx, "gameboy"), "native", fresh=True)
         names = ("mbc_kind", "rom_mask", "ram_mask", "has_rtc", "mbc1m", "cgb")
         boards = [(0x00, 0, 0x00, 0), (0x03, 2, 0x80, 2), (0x13, 3, 0xC0, 1), (0x10, 2, 0x00, 0), (0x06, 0, 0x00, 1),
-                  (0x02, 0, 0x00, 0), (0x1B, 4, 0x80, 3), (0x22, 0, 0x00, 0)]
+                  (0x02, 0, 0x00, 0), (0x1B, 4, 0x80, 3), (0x22, 0, 0x00, 0), (0xFE, 3, 0x80, 5), (0xFC, 4, 0x00, 5)]
         for t, ram, cgb, rom_code in boards:
             rom = cart(self.ctx, t, ram, cgb, rom_code)
             m.call("reset_all")

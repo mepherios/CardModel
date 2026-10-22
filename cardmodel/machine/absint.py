@@ -92,7 +92,7 @@ class Abstract:
         self.eff = lift.effects(self.ir)
         self.ops = ctx.ops
         self.lifter = lift.Lifter(ctx, self.ir)
-        self.dec = lift.Decoder(ctx.store)
+        self.dec = lift.Decoder(ctx.store, avoid=lift.scrambled_page(ctx.store, rom))    # no scrambled page
         self.rom, self.mask = rom, mask
         self.gl = {g["name"] for g in self.ir.get("globals") or []}
         stored = {s["array"] for f in self.ir["functions"] for s in lift._stmts(f["body"]) if s["k"] == "store"}

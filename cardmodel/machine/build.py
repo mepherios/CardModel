@@ -66,6 +66,9 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
         h.update(label.encode() + b"\0" + text.encode() + b"\0")
     h.update(json.dumps(externs, sort_keys=True).encode())
     h.update(json.dumps({k: mc.get(k) for k in ("export_state", "entry")}, sort_keys=True).encode())
+    for comp in [*(mc.get("components") or []), f"machine/{name}"]:       # their data: `card.` constants
+        h.update(json.dumps(ctx.store.get(comp if "/" in comp else f"hardware/{comp}"), sort_keys=True,
+                            default=str).encode())
     h.update(Path(__file__).read_bytes())                  # the builder itself (generated functions, exports)
     key = h.hexdigest()[:20]
     cache = ctx.state_root / "machine" / f"{name}-{key}.json"

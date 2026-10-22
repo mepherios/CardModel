@@ -29,7 +29,7 @@ fn cgb_boot_mode(want_cgb: Int) {
   key0 = 0
   cgb_mode = 0
   if want_cgb != 0 {
-    let flag = rom[0x143]
+    let flag = rom_read(0x143)
     key0 = if (flag & 0x80) != 0 then flag else KEY0_DMG_COMPAT
     cgb_mode = if (key0 & KEY0_DMG_COMPAT) == 0 then 1 else 0
   }
@@ -38,13 +38,13 @@ fn cgb_boot_mode(want_cgb: Int) {
 -- 0x01, or 0x33 with new licensee "01"), else 0. It picks the compatibility palette (only the default one, for
 -- the titles it does not know, is modelled) and is left in B.
 fn title_checksum() -> Int {
-  let old = rom[0x14B]
-  if old != 0x01 and not (old == 0x33 and rom[0x144] == 0x30 and rom[0x145] == 0x31) {
+  let old = rom_read(0x14B)
+  if old != 0x01 and not (old == 0x33 and rom_read(0x144) == 0x30 and rom_read(0x145) == 0x31) {
     return 0
   }
   var total = 0
   for i in 0x134 .. 0x144 {
-    total += rom[i]
+    total += rom_read(i)
   }
   return total & 0xFF
 }
@@ -63,6 +63,15 @@ fn boot_dmg_compat() {
   }
   ocps = 0x80 | 16
   bcps = 0x80 | 8
+}
+-- a CGB game: the boot ROM's last BG palette load (every colour white through BCPD, 64 bytes from index 0 with
+-- auto-increment) leaves BCPS at 0x80, index 0 (SameBoy's boot ROM); OCPS is not written. Jurassic Boy 2 writes
+-- its BG palettes without setting BCPS.
+fn boot_cgb_palettes() {
+  for i in 0 .. 64 {
+    bgpal[i] = 0xFF
+  }
+  bcps = 0x80
 }
 fn cgb_read(r: Int) -> Int {
   if cgb == 0 {

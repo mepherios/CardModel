@@ -1,7 +1,9 @@
 """gb — the Game Boy machine card driven from the host: ROM in, frames/audio/saves out.
 
 ``open_rom(path)`` reads a .gb/.gbc file or the first such member of a .zip (in memory; nothing is extracted or
-copied). ``header(rom, store)`` decodes the cartridge header with the ``hardware/gb_cartridge`` card's tables.
+copied). ``header(rom, store)`` decodes the cartridge header with the ``hardware/gb_cartridge`` card's tables, and
+recognises the unlicensed boards the header does not name by the card's rule (``unlicensed``: Sachen, whose header
+it reads through the board's scrambled lines, and Wisdom Tree), as the card's ``cart_power_on`` does.
 ``GameBoy(ctx, rom, engine)`` builds (or reuses) the machine module, loads it in an engine, configures the
 cartridge from the header and powers on as a DMG or a CGB (``model``: auto = CGB when the header asks for it).
 A DMG cartridge on the CGB runs in DMG compatibility mode, as the CGB's boot ROM leaves it (``compat``).
@@ -9,8 +11,8 @@ A DMG cartridge on the CGB runs in DMG compatibility mode, as the CGB's boot ROM
 Everything here is plumbing between the host and the pure machine: bytes into ``rom``, header fields into four
 globals, ``run_frame`` per frame, ``frame``/``audio``/``cram`` out. The behaviour is the cards'.
 
-Honest limits (L1): MMM01, MBC6, MBC7, HuC1/HuC3, TAMA5 and the camera are reported as unsupported (the
-game runs as ROM-only and will likely misbehave); no boot ROM (the documented post-boot state is used). In DMG
+Honest limits (L1): MMM01, MBC6, HuC1 and TAMA5 are reported as unsupported (the game runs as ROM-only and will
+likely misbehave); no boot ROM (the documented post-boot state is used). In DMG
 compatibility mode every cartridge gets the boot ROM's default palette: the per-title palettes it picks for
 Nintendo's own games are not modelled.
 """
@@ -40,12 +42,45 @@ def open_rom(path) -> tuple[bytes, str]:
     return p.read_bytes(), p.stem
 
 
+def sachen_lines(a: int) -> int:
+    """A Sachen board's header page: address lines A0/A6 and A1/A4 swapped (as ``sachen_lines`` in the card)."""
+    return (a & 0xFFAC) | ((a >> 6) & 0x01) | ((a >> 3) & 0x02) | ((a << 3) & 0x10) | ((a << 6) & 0x40)
+
+
+def unlicensed(rom: bytes, card, mbc: str | None) -> str | None:
+    """The unlicensed board a header does not name, by the cartridge card's rule (``cart_power_on`` there): Sachen
+    when the Nintendo logo is not at 0x104 but is where a locked Sachen board shows it; Wisdom Tree for a ROM-only
+    type with the logo in place and more than 32 KiB of ROM."""
+    u = card.get("unlicensed") or {}
+    lo, hi, crc = u.get("logo_at"), u.get("logo_end"), u.get("logo_crc32")
+    if not (lo and hi and crc is not None) or len(rom) < 0x200:
+        return None
+    plain = zlib.crc32(rom[lo:hi]) == crc
+    if not plain and zlib.crc32(bytes(rom[sachen_lines(a | 0x80)] for a in range(lo, hi))) == crc:
+        return "sachen"
+    declared = 32768 << rom[0x148] if rom[0x148] < 9 else len(rom)
+    if plain and mbc == "none" and _pow2(max(len(rom), declared if declared <= 0x800000 else len(rom))) > 0x8000:
+        return "wisdom_tree"
+    return None
+
+
 def header(rom: bytes, store) -> dict:
     card = store.get("hardware/gb_cartridge")
     if len(rom) < 0x150:
         raise ValueError("not a Game Boy ROM (shorter than its header)")
+    sha1 = hashlib.sha1(rom).hexdigest()
+    u = card.get("unlicensed") or {}
+    logo = zlib.crc32(rom[u.get("logo_at", 0x104):u.get("logo_end", 0x134)]) == u.get("logo_crc32")
     t = rom[0x147]
     info = dict((card.get("types") or {}).get(f"0x{t:02X}") or {"mbc": "unknown", "unsupported": True})
+    board = unlicensed(rom, card, info.get("mbc"))
+    if board == "sachen":
+        # the header as the CPU reads it through the board; it names no controller of its own
+        rom = rom[:0x100] + bytes(rom[sachen_lines(a)] for a in range(0x100, 0x200)) + rom[0x200:]
+        t = rom[0x147]
+        info = {"mbc": "sachen", "unlicensed": True}
+    elif board:
+        info = {"mbc": board, "unlicensed": True}
     title_end = 0x143 if rom[0x143] in (0x80, 0xC0) else 0x144
     title = rom[0x134:title_end].split(b"\0")[0].decode("ascii", "replace").strip()
     ram_size = int((card.get("ram_size_bytes") or {}).get(str(rom[0x149]), 0))
@@ -69,7 +104,7 @@ def header(rom: bytes, store) -> dict:
             "sgb": rom[0x146] == 0x03, "rom_size": 32768 << rom[0x148] if rom[0x148] < 9 else len(rom),
             "ram_size": ram_size, "header_checksum_ok": chk == rom[0x14D],
             "mbc_kind": int((card.get("mbc_kind") or {}).get(info.get("mbc"), 0)),
-            "sha1": hashlib.sha1(rom).hexdigest()}
+            "unlicensed": bool(info.get("unlicensed")), "logo": logo, "sha1": sha1}
 
 
 def _pow2(n: int) -> int:
