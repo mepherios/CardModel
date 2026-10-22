@@ -291,9 +291,11 @@ class PlayerPackage(unittest.TestCase):
 class CartridgesThroughTheStore(unittest.TestCase):
     """Every cartridge the store's library lists launches through the store as Launcher.playRom launches it: the
     Game Boy Player installed from its depot, the cartridge where it is (a plain file, a zip), its title, a save
-    folder per cartridge; it runs headless and shows the picture the player's cards compute for those bytes. A DS
-    cartridge is listed but has no player; a cartridge moved after the listing does not launch (the launcher's own
+    folder per cartridge; it runs headless and shows the picture the player's cards compute for those bytes. The DS
+    cartridge here is no real image (its secure area is missing): the DS Player refuses it and shows the black
+    screen its cards compute for it. A cartridge moved after the listing does not launch (the launcher's own
     guard). The library is a temporary one with synthetic cartridges (the card assembler)."""
+    PLAYERS = ["gameboy_player", "nds_player"]
 
     @classmethod
     def setUpClass(cls):
@@ -326,13 +328,15 @@ class CartridgesThroughTheStore(unittest.TestCase):
 
     def test_every_listed_cartridge_launches_through_the_store(self):
         L.scan(self.ctx, force=True)
-        rep = self.client.check_catalog(self.ctx, frames=90, only=["gameboy_player"])
+        rep = self.client.check_catalog(self.ctx, frames=90, only=self.PLAYERS)
         self.assertEqual(rep["status"], "pass", json.dumps(rep, default=str)[:3000])
-        self.assertEqual(sorted(rep["items"]), ["gameboy_player"])
+        self.assertEqual(sorted(rep["items"]), self.PLAYERS)
         ct = rep["cartridges"]
-        self.assertEqual((ct["listed"], ct["checked"], ct["launched"], ct["failed"]), (4, 3, 3, 0), ct)
-        self.assertEqual(ct["unplayable"], {"nds": 1})
+        self.assertEqual((ct["listed"], ct["checked"], ct["launched"], ct["failed"]), (4, 4, 4, 0), ct)
+        self.assertEqual(ct["unplayable"], {})
         self.assertEqual(ct["players"]["gameboy_player"]["launched"], 3)
+        self.assertEqual((ct["players"]["nds_player"]["launched"], ct["players"]["nds_player"]["colourful"]), (1, 0),
+                         "the refused image: launched, black")
         self.assertGreaterEqual(ct["players"]["gameboy_player"]["colourful"], 1)
         self.assertEqual(ct["saves_written"], 1, "the battery cartridge's save is in its own folder")
         self.assertTrue(rep["items"]["gameboy_player"]["verify_after_cartridges"]["ok"])
@@ -345,12 +349,12 @@ class CartridgesThroughTheStore(unittest.TestCase):
         away = self.gb.parent / "elsewhere.gb"
         moved.rename(away)
         try:
-            rep = self.client.check_catalog(self.ctx, frames=30, only=["gameboy_player"])
+            rep = self.client.check_catalog(self.ctx, frames=30, only=self.PLAYERS)
         finally:
             away.rename(moved)
         ct = rep["cartridges"]
         self.assertEqual(rep["status"], "fail")
-        self.assertEqual((ct["launched"], ct["failed"]), (2, 1), ct)
+        self.assertEqual((ct["launched"], ct["failed"]), (3, 1), ct)
         self.assertIn("is not at", ct["failing"][0]["error"])
         self.assertEqual(ct["failing"][0]["title"], "Checker Board")
 
@@ -360,23 +364,23 @@ class CartridgesThroughTheStore(unittest.TestCase):
         those launches fail; a player whose own check fails launches no cartridge."""
         from unittest import mock
         real = self.client.Reference.picture
-        check = S.check_cartridge(self.ctx, "gameboy")["bytes"]
+        checks = {S.check_cartridge(self.ctx, name)["bytes"] for name in ("gameboy", "nds")}
 
         def altered(also_check):
             def picture(ref, rom, frames):
                 w, h, rgb = real(ref, rom, frames)
-                return (w, h, bytes([rgb[0] ^ 0xFF]) + rgb[1:]) if also_check or rom != check else (w, h, rgb)
+                return (w, h, bytes([rgb[0] ^ 0xFF]) + rgb[1:]) if also_check or rom not in checks else (w, h, rgb)
             return picture
         L.scan(self.ctx, force=True)
         with mock.patch.object(self.client.Reference, "picture", altered(False)):
-            rep = self.client.check_catalog(self.ctx, frames=30, only=["gameboy_player"])
+            rep = self.client.check_catalog(self.ctx, frames=30, only=self.PLAYERS)
         ct = rep["cartridges"]
         self.assertEqual(rep["status"], "fail")
-        self.assertTrue(rep["items"]["gameboy_player"]["ok"])
-        self.assertEqual((ct["launched"], ct["failed"]), (0, 3))
+        self.assertTrue(rep["items"]["gameboy_player"]["ok"] and rep["items"]["nds_player"]["ok"])
+        self.assertEqual((ct["launched"], ct["failed"]), (0, 4))
         self.assertTrue(all("picture its cards do not compute" in f["error"] for f in ct["failing"]), ct["failing"])
         with mock.patch.object(self.client.Reference, "picture", altered(True)):
-            rep = self.client.check_catalog(self.ctx, frames=30, only=["gameboy_player"])
+            rep = self.client.check_catalog(self.ctx, frames=30, only=self.PLAYERS)
         self.assertFalse(rep["items"]["gameboy_player"]["play"]["same_as_cards"])
         self.assertEqual(rep["cartridges"]["launched"], 0)
         self.assertTrue(all("did not pass the store's own check" in f["error"] for f in rep["cartridges"]["failing"]))
@@ -392,7 +396,7 @@ class CartridgesThroughTheStore(unittest.TestCase):
         finally:
             stop()
             shutil.rmtree(work, ignore_errors=True)
-        self.assertEqual((ct["launched"], ct["failed"]), (0, 3))
+        self.assertEqual((ct["launched"], ct["failed"]), (0, 4))
         self.assertTrue(all("did not pass the store's own check" in f["error"] for f in ct["failing"]))
 
 
