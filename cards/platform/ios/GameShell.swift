@@ -51,6 +51,7 @@ struct Spec: Decodable {
     struct Pointer: Decodable { let x: String; let y: String; let down: String; let area: Area }
     let pointer: Pointer?          // a touch screen: a finger inside area (screen pixels) sets down, x, y
     let clock: String?             // an Int64 the shell keeps at the Unix time (a cartridge's real-time clock)
+    let clockOffset: String?       // an Int64 the shell keeps at the local time's offset from UTC, in seconds
     let flush: String?             // called before the shell stops (unsaved battery RAM)
 }
 
@@ -159,6 +160,7 @@ final class Game {
     let fullscreen: UnsafeMutablePointer<Int64>
     let saveURL: URL
     var clock: UnsafeMutablePointer<Int64>?
+    var clockOffset: UnsafeMutablePointer<Int64>?
     var flushFn: VoidFn?
     var kept: [(UnsafeMutablePointer<UInt8>, Spec.Keep)] = []
     var touch: (x: UnsafeMutablePointer<Int64>, y: UnsafeMutablePointer<Int64>, down: UnsafeMutablePointer<Int64>)?
@@ -197,6 +199,7 @@ final class Game {
         let reset = sym(spec.entry.reset), initFn = sym(spec.entry.initFn)
         let cart = spec.cartridge.map { (sym($0.symbol), sym($0.load)) }
         if let c = spec.clock { clock = sym(c).assumingMemoryBound(to: Int64.self) }
+        if let c = spec.clockOffset { clockOffset = sym(c).assumingMemoryBound(to: Int64.self) }
         if let f = spec.flush { flushFn = unsafeBitCast(sym(f), to: VoidFn.self) }
         let globals = (spec.globals ?? [:]).map { (sym($0.key), $0.value) }
         for k in spec.keep ?? [] { kept.append((sym(k.symbol).assumingMemoryBound(to: UInt8.self), k)) }
@@ -221,6 +224,7 @@ final class Game {
             unsafeBitCast(load, to: LoadFn.self)(Int64(n))
         }
         clock?.pointee = Int64(Date().timeIntervalSince1970)
+        clockOffset?.pointee = Int64(TimeZone.current.secondsFromGMT())
         for (p, value) in globals { p.assumingMemoryBound(to: Int64.self).pointee = value }
         if let data = try? Data(contentsOf: saveURL) {
             data.withUnsafeBytes { raw in
@@ -233,6 +237,7 @@ final class Game {
 
     func step(_ p1: Int64, _ p2: Int64) -> Bool {
         clock?.pointee = Int64(Date().timeIntervalSince1970)
+        clockOffset?.pointee = Int64(TimeZone.current.secondsFromGMT())
         let q = frameFn(p1, p2)
         if saveDirty.pointee != 0 { writeSave() }
         return q != 0

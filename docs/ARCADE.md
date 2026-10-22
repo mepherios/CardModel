@@ -347,7 +347,8 @@ controller in use hides the touch controls (a touch then still reaches the touch
 that finger lifts or the last controller leaves. Frames run at 60 a second from the display link (time within
 2 ms of a frame counts as a frame, at most four frames a tick), sound through AVAudioEngine at the game's rate,
 started again after an interruption (a call, Siri) or a change of audio route; the save is written when the game
-marks it and flushed when the app leaves the screen (iOS may end an app there). A cartridge is read with every
+marks it and flushed when the app leaves the screen (iOS may end an app there); a cartridge's clock follows the
+device's time and time zone (game.json's `clock` and `clockOffset`, as on the Mac). A cartridge is read with every
 length in its zip checked against the file and the cartridge's size: a damaged or half-copied file is refused,
 never a crash of the launcher it plays in. Ids from the pages and paths from a manifest are checked before they
 name a file (letters, digits, dot, dash and underscore; no absolute path and no `..`).
