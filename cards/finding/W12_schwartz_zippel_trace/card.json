@@ -1,0 +1,54 @@
+{
+  "category": "finding",
+  "cites": [
+    "Cap-11",
+    "Ph-11"
+  ],
+  "data": {
+    "demo": [
+      {
+        "error_bound": "2N/p = 2^9/p ≈ 2^-55",
+        "gates": 16,
+        "honest": true,
+        "instruction": "LR35902_CB_07",
+        "output": "F",
+        "rows": 256,
+        "tampered_rejected": true
+      },
+      {
+        "error_bound": "2N/p = 2^17/p ≈ 2^-47",
+        "gates": 16,
+        "honest": true,
+        "instruction": "LR35902_CB_17",
+        "output": "F",
+        "rows": 65536,
+        "tampered_rejected": true
+      },
+      {
+        "error_bound": "2N/p = 2^9/p ≈ 2^-55",
+        "gates": 16,
+        "honest": true,
+        "instruction": "LR35902_CB_37",
+        "output": "F",
+        "rows": 256,
+        "tampered_rejected": true
+      }
+    ],
+    "seconds": 60.1
+  },
+  "evidence": "tests/test_arith.py; cardmodel/machine/arith.py",
+  "evidence_tier": "probabilistic",
+  "limits": "the verifier evaluates the polynomials itself: the identity and its bound, not a succinct proof",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W12_schwartz_zippel_trace",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-12",
+    "tool": "tools/seed_arith.py"
+  },
+  "statement": "Over F_p the trace identity decides a whole instruction at once: on 3 instructions, all rows of the honest trace satisfy the constraints exactly when X^N - 1 divides the composition polynomial, checked at one random point (3 accepted); one flipped gate output in one row breaks divisibility and is rejected (3 of 3). Error bound 2N/p.",
+  "tier": 1,
+  "workstream": "W-12"
+}
