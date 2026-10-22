@@ -1,0 +1,19 @@
+{
+  "category": "method",
+  "complexity": "points: the product of (degree + 1) per input times the sum of the recurrence orders",
+  "decides": "equality of two integer functions on their domain, when both forms fall in a class with a finite-witness theorem",
+  "limits": "only straight-line polynomials and single counted loops with constant-coefficient affine updates; the lifter's faithfulness is assumed; machine integers are not covered",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sized_witness",
+  "procedure": "Read both forms' classes from their lifted IR (polynomial, C-finite in one counted loop, regions cut by leading guards), size the witness by the theorems for those classes, and run both forms on it with exact integers.",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "equality of two integer functions on their domain, when both forms fall in a class with a finite-witness theorem",
+  "status": "built",
+  "tier": 0
+}

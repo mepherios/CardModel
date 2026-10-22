@@ -1,0 +1,20 @@
+{
+  "category": "question",
+  "cites": [
+    "Ph-15"
+  ],
+  "instead": "bounded saturation with a budget; termination proofs for the rules that have them",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rewriting_terminates",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Π2",
+  "statement": "Does the rewrite system terminate on every term?",
+  "tier": 0
+}

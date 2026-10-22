@@ -1,0 +1,40 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "v, y, z, n ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "quantifier rules",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:quantor1_axiom",
+      "lang": "python"
+    },
+    {
+      "entry": "Godel1931.quantor1Axiom",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "D38_quantor1Axiom",
+  "notation": "quantor1Axiom(x)",
+  "number": 38,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x instantiates ∀v.a ⇒ a[v := z] under that condition",
+  "tier": 1
+}

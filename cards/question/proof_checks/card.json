@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "Def-4",
+    "Cap-10"
+  ],
+  "instead": "Lean's kernel (Def-4's Proof relation)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "proof_checks",
+  "promise": "answered",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "decidable",
+  "statement": "Does a given proof check?",
+  "tier": 0
+}

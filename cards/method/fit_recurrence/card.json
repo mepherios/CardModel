@@ -4,13 +4,26 @@
   "decides": "the shortest linear recurrence of a one-integer function, its canonical form and Gödel number",
   "limits": "fitted from values and checked on unused terms, not proved; no form when the behaviour is not a linear recurrence",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "c366eacbe616665f01962b13289911936ca155bc0c58d27ef8f1b0e1ab7a7262",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "fit_recurrence",
   "procedure": "cardmodel/engines/funcalg.py",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Rule-21",
+      "Ph-15"
+    ],
+    "decides": "decidable",
+    "general": "does the function satisfy that recurrence for every n",
+    "general_rank": "Π1",
+    "question": "the shortest linear recurrence of the first N terms (Berlekamp-Massey)",
+    "why": "the fit is a finite computation; 'for every n' is a ∀, refuted by one term and proved only when the form's class is read from its code (sized_witness)"
   },
   "statement": "the shortest linear recurrence of a one-integer function, its canonical form and Gödel number",
   "status": "built",

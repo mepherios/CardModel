@@ -1,0 +1,46 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/godel-w5-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [],
+  "goal": "What makes a numbering admissible in each domain?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "admissibility conditions drawn from Feferman and Grabmayr",
+    "a test for each Gödel set"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [],
+  "name": "godel_w5_numberings",
+  "next_steps": [
+    "start on claude/godel-w5-*"
+  ],
+  "order": 43,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cards/godel_set/*",
+    "cardmodel/engines/numbering.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "statement": "Gödel method research program, wave 1: What makes a numbering admissible in each domain?",
+  "tier": 1,
+  "title": "W-5 Admissible numberings",
+  "updated": "2026-10-22T02:22:50+02:00",
+  "user_actions": []
+}

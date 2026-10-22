@@ -149,6 +149,8 @@ def check(ctx, now: float | None = None) -> dict:
     if (root / ".git").exists():
         main, head, branches = active_branches(root)
         must = branches if head == main else [b for b in branches if b == head]
+        if os.environ.get("CARDMODEL_BRANCHES") == "0":     # the tests: other sessions' branches are not this run's
+            must = [b for b in must if b == head]
         pats = [p for c in cards for p in (detail(c).get("branches") or [])]
         for b in must:
             if not any(fnmatch.fnmatch(b, p) for p in pats):

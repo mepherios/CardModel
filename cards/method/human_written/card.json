@@ -4,13 +4,25 @@
   "decides": "nothing by itself: what a person wrote is checked by the other methods",
   "limits": "everything a person writes is witnessed or proved before it counts",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "8156f30b5e52c7a617a57a6b5f816d079af2c1ea6213643a2a030be096753825",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "human_written",
   "procedure": "a person",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Ph-15"
+    ],
+    "decides": "none",
+    "general": "is what a person wrote right",
+    "general_rank": "Π1",
+    "question": "nothing by itself",
+    "why": "a person's code is checked by the other methods; its correctness is the same ∀ over inputs"
   },
   "statement": "nothing by itself: what a person wrote is checked by the other methods",
   "status": "built",

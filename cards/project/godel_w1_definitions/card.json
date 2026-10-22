@@ -1,0 +1,54 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/godel-w1-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [
+    "engines/godel1931.py and formal/Godel1931: definitions 1 to 46",
+    "46 godel1931 cards",
+    "forms agree on seeded calls; codes round-trip; the direct forms equal the paper's searches on small inputs",
+    "the proof checker of definitions 44 and 45",
+    "findings W1_definitions_run, W1_proof_checker, W1_literal_searches, W1_code_growth"
+  ],
+  "goal": "Can every 1931 definition run as a card?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "proofs that the Lean forms equal the paper's definitions (Cap-10, W-11 in wave 2)"
+  ],
+  "metadata": {
+    "previous_content_hash": "92d08170dbe22e6f9512a0d1d65144bc98e3117be912babbc641c3f9628a8a3c",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [],
+  "name": "godel_w1_definitions",
+  "next_steps": [
+    "merge after verify"
+  ],
+  "order": 40,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cards/godel1931/*",
+    "cardmodel/engines/godel1931.py",
+    "formal/Godel1931/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Done on claude/godel-w1-definitions: Gödel's 46 definitions are cards with Python and Lean forms that agree on generated codes, and the proof checker accepts a known proof of p ⇒ p and rejects every corruption tried.",
+  "statement": "Gödel method research program, wave 1: Can every 1931 definition run as a card?",
+  "tier": 1,
+  "title": "W-1 Gödel's 46 definitions as cards",
+  "updated": "2026-10-22T04:12:49+02:00",
+  "user_actions": []
+}

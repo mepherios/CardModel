@@ -4,8 +4,8 @@
   "decides": "an instruction card's meaning as core terms over symbolic registers and the bytes it reads, with its bus effects and their conditions (MATH_CORE phase 0, F5)",
   "limits": "checked against the executable semantics on seeded states, not yet exhaustively or by proof; no loops",
   "metadata": {
-    "previous_content_hash": "b96e78089b1dde471ef5777e3039eaead0080b7181025477ba2e3914c88de6a6",
-    "version": "1.1.0",
+    "previous_content_hash": "3d79daa2321d38cd392b5e5e0cfeb7af0520805d3c77eec5a39fa0bb0241ed0a",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "symbolic_execution",
@@ -13,6 +13,17 @@
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Ph-15",
+      "Cap-11"
+    ],
+    "decides": "decidable",
+    "general": "do the terms equal the semantics on every 8-bit input",
+    "general_rank": "decidable",
+    "question": "the terms of a loop-free instruction over symbolic registers, and their agreement with the executable semantics on given inputs",
+    "why": "loop-free fixed-width code has a finite input space, so even the general question is a finite check (exhaustive, SMT or arithmetized: W-12)"
   },
   "statement": "an instruction card's meaning as core terms over symbolic registers and the bytes it reads, with its bus effects and their conditions (MATH_CORE phase 0, F5)",
   "status": "built",

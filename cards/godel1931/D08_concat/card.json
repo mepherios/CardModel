@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "z ≤ nthPrime(length(x) + length(y))^(x + y)",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "composing structure; for content, the product",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:concat",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.concat",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "4041acd6059400bf29219e0ee6e975e18a7375571f19aa2fe1e61f07e77b1ccf",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D08_concat",
+  "notation": "x ∘ y",
+  "number": 8,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "concatenation of two sequences",
+  "tier": 1
+}

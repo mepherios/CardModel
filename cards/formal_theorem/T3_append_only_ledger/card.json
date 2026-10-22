@@ -1,0 +1,27 @@
+{
+  "category": "formal_theorem",
+  "evidence_tier": "proof",
+  "file": "formal/GodelCore/T3Ledger.lean",
+  "handover": "T3",
+  "lean": [
+    "GodelCore.pos_append",
+    "GodelCore.enc_append",
+    "GodelCore.enc_mul",
+    "GodelCore.enc_gcd",
+    "GodelCore.enc_lcm",
+    "GodelCore.enc_dvd_iff",
+    "GodelCore.enc_injective",
+    "GodelCore.enc_chain"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "T3_append_only_ledger",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "Appending to the ledger never moves an atom; reading a content through the ledger is an injective homomorphism of products, gcd, lcm and divisibility; the reading does not change as the ledger grows, and agrees along any chain of versions (the directed union).",
+  "tier": 0
+}

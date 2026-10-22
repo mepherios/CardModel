@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM45_content_is_a_sparse_vector",
+  "origins": [
+    "Card Model Research Handover, storage rules (2026-10-22)",
+    "formal/GodelCore T3, T4"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "A model's content is stored as the sparse map from ledger index to exponent, with the basis version it was read against, never as the content integer (the product of primes), and its identity is the hash of its structure; Gödel's positional number is kept for small terms only. The factor layer holds no relations: two indices that name one concept are merged and a concept found to be a product is deprecated into it, both as appended events; an equation between products is a transformation with a proof.",
+  "tier": 0,
+  "witness": "tests/test_godel.py::test_stored_records_follow_the_rules"
+}

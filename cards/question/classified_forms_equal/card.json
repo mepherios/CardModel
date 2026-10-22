@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "GM-7",
+    "Ph-15"
+  ],
+  "instead": "sized_witness: the class theorem names finitely many points (engines/tiers.py)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "classified_forms_equal",
+  "promise": "answered",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "decidable",
+  "statement": "Are two forms of one function equal, when both fall in a recognized class?",
+  "tier": 0
+}

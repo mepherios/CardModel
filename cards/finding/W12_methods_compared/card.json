@@ -1,0 +1,30 @@
+{
+  "category": "finding",
+  "cites": [
+    "Cap-11",
+    "GM-7",
+    "Ph-15"
+  ],
+  "data": {
+    "seconds": {
+      "exhaustive": 345.9,
+      "smt": 1.7
+    },
+    "trace_seconds": 60.1
+  },
+  "evidence": "tests/test_arith.py; cardmodel/machine/arith.py",
+  "evidence_tier": "bounded",
+  "limits": "times on this machine for this run",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W12_methods_compared",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-12",
+    "tool": "tools/seed_arith.py"
+  },
+  "statement": "Three ways to decide that the constraints equal the terms: exhaustive evaluation (proof over a finite domain; 345.9 s for the outputs with at most 16 input bits, and it cannot reach wider ones), SMT (proof by a decision procedure; 1.7 s for all 1075), and the Schwartz-Zippel trace identity (probabilistic proof with error 2N/p, one check per instruction, the basis of succinct proofs that code ran correctly).",
+  "tier": 1,
+  "workstream": "W-12"
+}

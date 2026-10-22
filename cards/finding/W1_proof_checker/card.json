@@ -1,0 +1,32 @@
+{
+  "category": "finding",
+  "cites": [
+    "Def-4",
+    "Cap-10",
+    "Rule-4"
+  ],
+  "data": {
+    "accepted": true,
+    "rejected": {
+      "an axiom replaced by a non-axiom": true,
+      "f2 and f4 swapped": true,
+      "f2 dropped": true,
+      "the last formula changed": true
+    }
+  },
+  "evidence": "tests/test_godel1931.py; cardmodel/engines/godel1931.py; formal/Godel1931",
+  "evidence_tier": "bounded",
+  "limits": "one known proof and four corruptions; a proof is read as the sequence of its formulas' codes, never as its own Gödel number",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W1_proof_checker",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "The checker of definitions 44 and 45 accepts a five-step proof of p ⇒ p in system P (p the elementary formula x2(x1), from the propositional schemas and modus ponens): accepted; and it rejects all 4 of 4 corruptions (f2 and f4 swapped, f2 dropped, the last formula changed, an axiom replaced by a non-axiom). The Peano axioms and the set axiom are the formulas with = expanded as in P.",
+  "tier": 1,
+  "workstream": "W-1"
+}

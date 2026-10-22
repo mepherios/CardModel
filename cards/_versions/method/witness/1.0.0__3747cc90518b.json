@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "one run per input",
+  "decides": "agreement of two implementations on seeded inputs",
+  "limits": "sampling: it can refute, never prove",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "witness",
+  "procedure": "cardmodel/engines/witness.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "agreement of two implementations on seeded inputs",
+  "status": "built",
+  "tier": 0
+}

@@ -1,0 +1,45 @@
+{
+  "agreement": {
+    "calls": 2,
+    "status": "pass"
+  },
+  "bound": null,
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4",
+    "Def-4"
+  ],
+  "counterpart": "a certificate: a checked rewrite chain",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:is_proof_figure",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.isProofFigure",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "8af713a4a81455db17ee07034563e4b88e8ea11703db2d9d9798a42e5eb769be",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D44_isProofFigure",
+  "notation": "isProofFigure(x)",
+  "number": 44,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x is a list of formulas, each an axiom or an immediate consequence of earlier ones",
+  "tier": 1
+}

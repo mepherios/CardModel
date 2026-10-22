@@ -1,0 +1,23 @@
+{
+  "category": "question",
+  "cites": [
+    "GM-6",
+    "Ph-9"
+  ],
+  "instead": "Kolmogorov complexity is uncomputable: minting by description length only ever improves (GM-6)",
+  "metadata": {
+    "previous_content_hash": "1e442104c077891fbf56f5c7f6477a5d2570d2e0fb0ca3eaf7db5be223218d20",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "definition_minimal",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Π1",
+  "statement": "Is there no shorter description of this term (its Kolmogorov complexity)?",
+  "tier": 0
+}
