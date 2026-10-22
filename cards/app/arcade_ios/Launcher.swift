@@ -61,6 +61,7 @@ struct LauncherState: Codable {
     var played: [String: Played]? = [:]       // cartridges, by id
     var service: String? = nil                // the paired Mac's service (nil: 127.0.0.1)
     var token: String? = nil                  // its token, where the keychain cannot keep it
+    var deviceTag: String? = nil              // this device's name tag when iOS gives no identifierForVendor
 }
 
 struct LaunchOptions {
@@ -120,6 +121,7 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
     var client: Client?
     var download: Task<Void, Never>?
     var downloadId: String?
+    var downloading: Client?                  // the running download's client (pause, cancel): a reconnect replaces `client`
     var queue: [String] = []
     var running: (id: String, started: Double, cartridge: Bool)?
     let options = LaunchOptions(arguments: CommandLine.arguments)
@@ -323,12 +325,12 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
             offline.addArrangedSubview(b)
         }
         for (id, g) in state.library.sorted(by: { $0.key < $1.key }) {
-            let man = (try? Data(contentsOf: installDir(id).appendingPathComponent(".manifest.json")))
+            let man = installDir(id).flatMap { try? Data(contentsOf: $0.appendingPathComponent(".manifest.json")) }
                 .flatMap { try? JSONDecoder().decode(Manifest.self, from: $0) }
             button("\u{25B6}  " + (man?.title ?? g.app)) { [weak self] in self?.play(id) }
         }
         for (romId, p) in (state.played ?? [:]).sorted(by: { $0.value.lastPlayed > $1.value.lastPlayed }) {
-            guard let player = p.player, state.library[player] != nil,
+            guard let player = p.player, state.library[player] != nil, safeId(romId),
                   let file = (try? FileManager.default.contentsOfDirectory(at: cartridgeCache.appendingPathComponent(romId),
                                                                             includingPropertiesForKeys: nil))?
                     .first(where: { !$0.lastPathComponent.hasPrefix(".") }) else { continue }
@@ -354,8 +356,9 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
         if url.port == nil, let u = URL(string: "\(url.scheme ?? "http")://\(url.host!):8770") { url = u }
         let code = String((codeField.text ?? "").filter(\.isNumber).prefix(6))     // "123 456" as the Mac prints it
         pairStatus.text = "Pairing…"
+        let name = deviceName()
         Task {
-            let body = try? JSONSerialization.data(withJSONObject: ["code": code, "name": UIDevice.current.name])
+            let body = try? JSONSerialization.data(withJSONObject: ["code": code, "name": name])
             do {
                 let o = try await Service(base: url, token: nil).json("api/pair", method: "POST", body: body)
                 guard let t = o["token"] as? String else { throw ArcadeError.message("no token") }
@@ -371,6 +374,17 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
         }
     }
 
+    // the name the Mac keeps this device by: iOS 16 names every phone "iPhone", so a tag of this device's own follows
+    // (its identifierForVendor, else one made up once and kept)
+    func deviceName() -> String {
+        var tag = UIDevice.current.identifierForVendor.map { String($0.uuidString.prefix(6)) }
+        if tag == nil {
+            if state.deviceTag == nil { state.deviceTag = String(format: "%06X", UInt32.random(in: 0..<0x1000000)); save() }
+            tag = state.deviceTag
+        }
+        return UIDevice.current.name + " " + (tag ?? "")
+    }
+
     // -- state -------------------------------------------------------------------------------------------------------
     func load() {
         if let d = try? Data(contentsOf: stateFile), let s = try? JSONDecoder().decode(LauncherState.self, from: d) { state = s }
@@ -378,12 +392,13 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
     func save() {
         if let d = try? JSONEncoder().encode(state) { try? d.write(to: stateFile, options: .atomic) }
     }
-    func installDir(_ id: String) -> URL { libraryDir.appendingPathComponent(id, isDirectory: true) }
-    func controlsFile(_ id: String) -> URL { controlsDir.appendingPathComponent(id + ".json") }
+    // a program's folder and controls file: none for an id that is not a plain name (safeId)
+    func installDir(_ id: String) -> URL? { safeId(id) ? libraryDir.appendingPathComponent(id, isDirectory: true) : nil }
+    func controlsFile(_ id: String) -> URL? { safeId(id) ? controlsDir.appendingPathComponent(id + ".json") : nil }
 
     func achievements(_ id: String) -> [Int] {
         let f = savesDir.appendingPathComponent(id).appendingPathComponent("save.bin")
-        guard let d = try? Data(contentsOf: f), d.count > 48 else { return [] }
+        guard safeId(id), let d = try? Data(contentsOf: f), d.count > 48 else { return [] }
         return (32..<48).map { Int(d[$0]) }
     }
 
@@ -412,7 +427,7 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
         }
         return ["library": lib, "played": carts, "controls": controls,
                 "settings": ["bandwidth": state.settings.bandwidth, "user": UIDevice.current.name],
-                "downloading": downloadId as Any, "paused": client?.paused ?? false, "native": true,
+                "downloading": downloadId as Any, "queued": queue, "paused": downloading?.paused ?? false, "native": true,
                 "libraryPath": libraryDir.path, "platform": platformKey,
                 "device": UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone",
                 "service": service.base.absoluteString]
@@ -422,29 +437,32 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
     func userContentController(_ c: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let cmd = body["cmd"] as? String else { return }
         let id = body["id"] as? String ?? ""
+        // an id names folders and files here (a program's, a cartridge's): one that is not a plain name is refused
+        guard id.isEmpty || safeId(id) else { emit(["type": "error", "id": id, "message": "not a program or cartridge id"]); return }
         switch cmd {
         case "state": emitState()
         case "reconnect": Task { await self.connect() }
         case "install", "update": startDownload(id)
-        case "pause": client?.paused = true; emitState()
-        case "resume": client?.paused = false; emitState()
-        case "cancel": client?.cancelled = true; client?.paused = false; queue.removeAll()
+        case "pause": downloading?.paused = true; emitState()
+        case "resume": downloading?.paused = false; emitState()
+        case "cancel": downloading?.cancelled = true; downloading?.paused = false   // the next in the queue starts
+        case "dequeue": queue.removeAll { $0 == id }; emitState()
         case "play": play(id)
         case "play_rom": playRom(id, player: body["player"] as? String ?? "", title: body["title"] as? String ?? "")
         case "stop": (presentedViewController as? GameViewController)?.close()
         case "verify": verify(id)
         case "uninstall": uninstall(id)
         case "settings":
-            if let b = body["bandwidth"] as? Int { state.settings.bandwidth = b; client?.bandwidth = b }
+            if let b = body["bandwidth"] as? Int { state.settings.bandwidth = b; client?.bandwidth = b; downloading?.bandwidth = b }
             save()
             emitState()
         case "controls":
             // {id, controls: {keys, keys2, gamepad}} keeps them; {id} without controls goes back to the game's own
-            if let ctl = body["controls"] as? [String: Any], !id.isEmpty,
+            if let f = controlsFile(id), let ctl = body["controls"] as? [String: Any],
                let d = try? JSONSerialization.data(withJSONObject: ctl, options: [.sortedKeys]) {
-                try? d.write(to: controlsFile(id), options: .atomic)
-            } else if !id.isEmpty {
-                try? FileManager.default.removeItem(at: controlsFile(id))
+                try? d.write(to: f, options: .atomic)
+            } else if let f = controlsFile(id) {
+                try? FileManager.default.removeItem(at: f)
             }
             emitState()
         case "pick_folder", "reveal_rom", "reveal_path", "reveal":
@@ -479,6 +497,7 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
             return
         }
         downloadId = id
+        downloading = c
         c.paused = false
         c.cancelled = false
         emitState()
@@ -497,13 +516,14 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
             }
             download = nil
             downloadId = nil
+            downloading = nil
             emitState()
             if !queue.isEmpty { startDownload(queue.removeFirst()) }
         }
     }
 
     func verify(_ id: String) {
-        guard let c = client else { return }
+        guard let c = client, safeId(id) else { return }
         Task {
             let (bad, files) = await Task.detached { c.verify(id) { ph, d, t, r, l in Task { @MainActor in self.progress(id, ph, d, t, r, l) } } }.value
             emit(["type": "verified", "id": id, "ok": bad == 0, "bad": bad, "files": files])
@@ -515,8 +535,9 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
     }
 
     func uninstall(_ id: String) {
+        guard let dir = installDir(id) else { return }
         if running?.id == id { (presentedViewController as? GameViewController)?.close() }
-        try? FileManager.default.removeItem(at: installDir(id))
+        try? FileManager.default.removeItem(at: dir)
         state.library[id] = nil
         save()
         emitState()
@@ -526,15 +547,15 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
     // a program, or a cartridge (rom) in its player: the shell inside this app, its save in the program's (or the
     // cartridge's) own folder, the player's own controls when the Controls page kept some
     func play(_ id: String, rom: URL? = nil, saveId: String? = nil, title: String? = nil) {
-        guard running == nil, let g = state.library[id] else { return }
         let sid = saveId ?? id
+        guard running == nil, let g = state.library[id], let dir = installDir(id), safeId(sid) else { return }
         var o = GameOptions()
         o.saveDir = savesDir.appendingPathComponent(sid, isDirectory: true)
         o.rom = rom?.path
         o.title = title
         o.mute = options.mute
-        o.controls = [sid, id].map { controlsFile($0) }.first { FileManager.default.fileExists(atPath: $0.path) }?.path
-        let vc = GameViewController(bundle: installDir(id).appendingPathComponent(g.app), options: o)
+        o.controls = [sid, id].compactMap { controlsFile($0) }.first { FileManager.default.fileExists(atPath: $0.path) }?.path
+        let vc = GameViewController(bundle: dir.appendingPathComponent(g.app), options: o)
         let started = Date().timeIntervalSince1970
         vc.onExit = { [weak self, weak vc] err in
             guard let self = self else { return }
@@ -566,6 +587,7 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
 
     func playRom(_ romId: String, player: String, title: String) {
         guard running == nil, let c = client else { return }
+        guard safeId(romId) else { emit(["type": "error", "id": romId, "message": "not a cartridge id"]); return }
         guard state.library[player] != nil else {
             emit(["type": "error", "id": romId, "message": "install the player first"]); return
         }
@@ -600,6 +622,7 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
         guard let c = client else { return }
         var out: [String: Any] = ["program": id, "platform": platformKey, "service": service.base.absoluteString]
         do {
+            guard let dir = installDir(id) else { throw ArcadeError.message("not a program id") }
             let t0 = Date()
             let inst = try await c.install(id, previous: state.library[id], progress: { _, _, _, _, _ in }, notice: { _ in })
             state.library[id] = inst
@@ -618,7 +641,7 @@ final class ArcadeController: UIViewController, WKScriptMessageHandler, WKNaviga
                 o.rom = file.path
                 out["cartridge"] = file.lastPathComponent
             }
-            let g = try Game(bundle: installDir(id).appendingPathComponent(inst.app), saveDir: o.saveDir, romPath: o.rom)
+            let g = try Game(bundle: dir.appendingPathComponent(inst.app), saveDir: o.saveDir, romPath: o.rom)
             out["play"] = g.headless(o)
             g.close()
             out["ok"] = v.bad == 0

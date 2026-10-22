@@ -338,14 +338,19 @@ controls below; otherwise it is centred with the controls on either side. A touc
 screen's pointer when game.json names one (the DS player's lower screen). Hardware keyboards (and the Mac's under
 Mac Catalyst) use the game card's `keys` and `keys2`, or the player's own Controls file from the launcher
 (`{keys, keys2, gamepad}`); the first game controller is player 1, a second one player 2. A mapped key or a
-controller in use hides the touch controls; a touch on the screen, or the last controller leaving, brings them
-back. Frames run at 60 a second from the display link, sound through AVAudioEngine at the game's rate; the save is
-written when the game marks it and flushed when the app leaves the screen (iOS may end an app there).
+controller in use hides the touch controls (a touch then still reaches the touch screen), and they come back when
+that finger lifts or the last controller leaves. Frames run at 60 a second from the display link (time within
+2 ms of a frame counts as a frame, at most four frames a tick), sound through AVAudioEngine at the game's rate,
+started again after an interruption (a call, Siri) or a change of audio route; the save is written when the game
+marks it and flushed when the app leaves the screen (iOS may end an app there). A cartridge is read with every
+length in its zip checked against the file and the cartridge's size: a damaged or half-copied file is refused,
+never a crash of the launcher it plays in. Ids from the pages and paths from a manifest are checked before they
+name a file (letters, digits, dot, dash and underscore; no absolute path and no `..`).
 
 **The Simulator** (`arcade/ios.py`): `cardmodel arcade launcher --platform ios` builds Cardmodel Arcade.app
 (`state/arcade/launcher/KEY-BUILD`, a fresh folder per build); `--install` installs it on a Simulator
 (`--device NAME`, else a booted one, else the first iPhone, booted on the way), brings the Simulator's window to
-the front and opens it there (`--mute`: its games play without sound); `--check GAME [--rom ROMID]` has the
+the front (Xcode 27 calls the Simulator app DeviceHub) and opens it there (`--mute`: its games play without sound); `--check GAME [--rom ROMID]` has the
 launcher on the Simulator install GAME through the service, verify it and play it headless (`--frames N`,
 `--shot PNG`, `--input S`), and prints its JSON line; `--port P` points it at another service on this Mac.
 
@@ -356,16 +361,21 @@ Oracle of Ages for 900 frames, identical to the macOS build. In the iOS 27.1 Sim
 `launcher --platform ios --check vector_duel` installed Vector Duel through the service (9 files verified) and
 played 420 frames with a picture byte-identical to the Mac's, and `--check gameboy_player --rom ID` fetched Oracle
 of Ages from the Mac's library and played 900 frames identical to the Mac's. The store page renders in that
-Simulator in one column (`touch.css`).
+Simulator in one column (`touch.css`). With the final build, the same two checks in the iOS 27.0 Simulator on an
+iPhone 18 Pro Max and an iPad Pro 13-inch (M5): all four installed through the service, verified and drew pictures
+byte-identical to the Mac's. On the iPad, through the pages: the store in its full layout, the library, Play on
+Vector Duel (the touch *attack* confirmed the title menu, the pad walked the Warden into a duel), the × back to
+the library with the play time kept, then Play on Oracle of Ages from the Mac's library. On the iPhone, pairing
+through its own screen over the local network (the Mac's address 192.168.0.183, a code from
+`cardmodel arcade pair`), after which the store loaded; with no Mac reachable, the list of installed programs
+played Vector Duel.
 
 **Honest limits** of the iOS work:
 
-* No iPad yet: the iOS runtime installed here is the iPhone Duo-only build of iOS 27.1 (24A94425); an iPad
-  Simulator needs the general runtime (24A94232), whose download waits on the user's go-ahead. The iPad layout
-  has not been seen.
 * No real device yet: it needs the user's Apple ID and team in Xcode (a signing identity for
-  `CARDMODEL_IOS_IDENTITY`, a provisioning profile), which `ios.py` does not set up. `--install` and `--check` use
-  the Simulator only, and pairing has not been tried from a device on a network.
+  `CARDMODEL_IOS_IDENTITY`, a provisioning profile, Developer Mode on the device), which `ios.py` does not set up.
+  `--install` and `--check` use the Simulator only; pairing over the network was tried from a Simulator on this
+  Mac, not from another device.
 * Personal use only: a device runs game libraries the Mac signs with the user's identity, and App Store
   distribution forbids downloaded code.
 * Without the Mac the launcher shows only what is installed (a plain list, not the pages: they come from the

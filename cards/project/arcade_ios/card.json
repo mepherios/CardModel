@@ -1,7 +1,6 @@
 {
   "blockers": [
-    "a real iPhone or iPad needs the user's Apple ID and development team in Xcode (a signing identity and a provisioning profile)",
-    "an iPad Simulator needs the general iOS 27.1 runtime (24A94232), whose download waits on the user's go-ahead"
+    "a real iPhone or iPad needs the user's Apple ID and development team in Xcode (a signing identity, a provisioning profile, Developer Mode on the device)"
   ],
   "branches": [
     "claude/epic-bun-008aca*"
@@ -20,27 +19,26 @@
     "cardmodel arcade launcher --platform ios [--install] [--check GAME [--rom ROMID]]: the launcher built, installed and opened in a Simulator, or run there headless",
     "measured 2026-10-22: Vector Duel built for the Simulator in 44 s (9 files, ad hoc signed); as Mac Catalyst the iOS shell played Vector Duel 420 frames with a picture and save byte-identical to the macOS build, and the Game Boy Player played Oracle of Ages 900 frames identical to macOS",
     "measured 2026-10-22 in the iOS 27.1 Simulator (iPhone Duo): --check vector_duel installed through the service (9 files verified) and played 420 frames byte-identical to the Mac's; --check gameboy_player fetched Oracle of Ages from the Mac's library and played 900 frames identical to the Mac's; the store page renders in one column",
-    "the decision written down with its trade-off (docs/ARCADE.md section 6): the iOS launcher reaches the Mac's arcade service over the network and bundles no games"
+    "the decision written down with its trade-off (docs/ARCADE.md section 6): the iOS launcher reaches the Mac's arcade service over the network and bundles no games",
+    "checked in the iOS 27.0 Simulator on an iPhone 18 Pro Max and an iPad Pro 13-inch (M5): Vector Duel and Oracle of Ages installed through the service, verified and drawn byte-identical to the Mac's; on the iPad, the store, the library, Play, touch play and closing back to the library through the pages",
+    "pairing through the iPhone Simulator's own screen over the local network; a paired token opens only the store, its builds, the pages, the library and its cartridges",
+    "a list of installed programs that plays them without the Mac",
+    "the review's findings fixed: devices.json under a lock, codes typed as shown or in any script's digits, malformed requests answered, bounded request bodies and network timeouts, no CORS on cartridges, damaged zips refused, ids and manifest paths checked, unique device names, touch on the touch screen while a controller is in use, sound back after interruptions, steadier frame pacing",
+    "tests/test_arcade_ios.py: 28 tests"
   ],
   "goal": "Cardmodel Arcade on iPhone and iPad: every game and console player built from its cards for iOS, installed through the Mac's store and played on the device with touch, a keyboard or a controller.",
-  "in_progress": [
-    "the witnesses (tests/test_arcade_ios.py)"
-  ],
+  "in_progress": [],
   "kind": "program",
   "left": [
-    "the launcher on an iPad Simulator (the general iOS 27.1 runtime)",
     "a real iPhone or iPad: builds signed with the user's identity and a provisioning profile, installed on the device, paired with the Mac over the local network",
-    "playing installed programs while the Mac is away (the pages come from the Mac's service; a list of installed programs in the app is not written)",
     "the DS player on iOS (its touch screen is wired in the shell, not yet run)",
     "branch versions for iOS (a branch builds for its program's own platform only)"
   ],
   "name": "arcade_ios",
   "next_steps": [
-    "after the user's go-ahead: install the general iOS 27.1 runtime and run launcher --platform ios --check on an iPad Simulator (vector_duel, gameboy_player)",
     "with the user's team in Xcode: build for ios-iphoneos, install on the device, pair it (cardmodel arcade pair) and run the same checks over the local network",
-    "a list of installed programs inside the app that plays them without the Mac",
-    "launcher --platform ios --check nds_player with a cartridge from the library",
-    "commit on claude/epic-bun-008aca, verify, and ask for the merge"
+    "launcher --platform ios --check nds_player with a DS cartridge from the library",
+    "ask the integrating session for the merge (with the games branch it already contains: f93cd36, c9f9034)"
   ],
   "order": 31,
   "owner": {
@@ -59,20 +57,12 @@
     "origin": "cardmodel",
     "tool": "hand-written (CM41)"
   },
-  "standing": "On claude/epic-bun-008aca, not merged: every program builds for iOS, and the iOS launcher installs and plays them through the Mac's service, checked in the iPhone Simulator and as Mac Catalyst (pictures identical to the Mac's); not yet on an iPad Simulator or a real device.",
+  "standing": "On claude/epic-bun-008aca, not merged: every program builds for iOS, and the iOS launcher installs and plays them through the Mac's service; checked on an iPhone and an iPad Simulator (iOS 27.0) with pictures byte-identical to the Mac's, and paired over the local network from the iPhone Simulator; not yet on a real device.",
   "statement": "Cardmodel Arcade on iPhone and iPad: the iOS platform card (the Simulator, a device, Mac Catalyst), every game and console player built for it from the cards, and an iOS launcher that installs those builds from the Mac's arcade service and plays them inside itself.",
   "tier": 1,
   "title": "Cardmodel Arcade on iPhone and iPad",
-  "updated": "2026-10-22T17:56:32+02:00",
+  "updated": "2026-10-22T18:32:35+02:00",
   "user_actions": [
-    {
-      "action": "Approve downloading the general iOS 27.1 Simulator runtime (24A94232)",
-      "unblocks": [
-        "Cardmodel Arcade checked on an iPad Simulator",
-        "the iPad layout and touch controls seen on an iPad"
-      ],
-      "why": "the runtime installed now (24A94425) is the iPhone Duo-only build of iOS 27.1; iPad Simulators need the general one"
-    },
     {
       "action": "Add your Apple ID to Xcode (Xcode -> Settings -> Accounts) and choose the development team the iPhone and iPad builds are signed with",
       "unblocks": [

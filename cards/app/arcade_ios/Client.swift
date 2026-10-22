@@ -46,6 +46,12 @@ enum ArcadeError: Error, CustomStringConvertible {
 
 func sha256(_ d: Data) -> String { SHA256.hash(data: d).map { String(format: "%02x", $0) }.joined() }
 
+// an id from the network that becomes a folder or file name here (a program, a cartridge): 1 to 100 of A-Z a-z 0-9
+// . _ -, and not "." or ".."
+func safeId(_ s: String) -> Bool {
+    s != "." && s != ".." && s.range(of: #"\A[A-Za-z0-9._-]{1,100}\z"#, options: .regularExpression) != nil
+}
+
 // the arcade service this device talks to: its address and, for a paired device, its token
 struct Service {
     var base: URL
@@ -101,11 +107,12 @@ final class Client {
         self.library = library
     }
 
-    func installDir(_ id: String) -> URL { library.appendingPathComponent(id, isDirectory: true) }
+    func installDir(_ id: String) -> URL? { safeId(id) ? library.appendingPathComponent(id, isDirectory: true) : nil }
 
     // build on the service if the cards changed since its last build for this platform, then download what is not
     // here yet; returns the installation (play time kept from the one it replaces)
     func install(_ id: String, previous: Installed?, progress: Progress, notice: (String) -> Void) async throws -> Installed {
+        guard let dest = installDir(id) else { throw ArcadeError.message("not a program id") }
         let q = "?platform=" + platform
         progress("preparing", 0, 1, 0, "asking the arcade service")
         var entry = try await service.json("api/game/\(id)\(q)")
@@ -137,7 +144,11 @@ final class Client {
         let (md, mcode, _) = try await service.data(mpath)
         guard mcode == 200 else { throw ArcadeError.message("the build's manifest is not there") }
         let man = try JSONDecoder().decode(Manifest.self, from: md)
-        let dest = installDir(id)
+        // every file stays inside the staging folder: a relative path with no ".." in it (checked by its parts: a
+        // standardized URL drops /private only from paths that exist, so comparing prefixes is not reliable)
+        if let f = man.files.first(where: { $0.path.isEmpty || $0.path.hasPrefix("/") || $0.path.split(separator: "/").contains("..") }) {
+            throw ArcadeError.message("the build's manifest puts \(f.path) outside the program")
+        }
         let staging = library.appendingPathComponent("\(id).staging", isDirectory: true)
         let fm = FileManager.default
         try? fm.removeItem(at: staging)
@@ -205,8 +216,7 @@ final class Client {
 
     // every installed file against the manifest: how many fail, of how many (-1: no manifest)
     func verify(_ id: String, progress: Progress) -> (bad: Int, files: Int) {
-        let dest = installDir(id)
-        guard let d = try? Data(contentsOf: dest.appendingPathComponent(".manifest.json")),
+        guard let dest = installDir(id), let d = try? Data(contentsOf: dest.appendingPathComponent(".manifest.json")),
               let man = try? JSONDecoder().decode(Manifest.self, from: d) else { return (-1, 0) }
         var bad = 0
         for (k, f) in man.files.enumerated() {
@@ -219,6 +229,7 @@ final class Client {
 
     // a cartridge the Mac's library lists: its file, kept in caches (asked again only when the Mac's copy changed)
     func cartridge(_ romId: String, cache: URL) async throws -> URL {
+        guard safeId(romId) else { throw ArcadeError.message("not a cartridge id") }
         let fm = FileManager.default
         let dir = cache.appendingPathComponent(romId, isDirectory: true)
         let tagFile = dir.appendingPathComponent(".etag")
@@ -229,10 +240,12 @@ final class Client {
         let h = r as? HTTPURLResponse
         if h?.statusCode == 304, let o = old { return o }
         guard h?.statusCode == 200 else { throw ArcadeError.message("the Mac did not send the cartridge (\(h?.statusCode ?? 0))") }
-        let name = (h?.value(forHTTPHeaderField: "X-Cartridge-File")?.removingPercentEncoding) ?? "\(romId).bin"
+        // the Mac's file name, as one plain name in the cartridge's folder (not "/", ".", "..", hidden or empty)
+        let sent = ((h?.value(forHTTPHeaderField: "X-Cartridge-File")?.removingPercentEncoding ?? "") as NSString).lastPathComponent
+        let name = sent.isEmpty || sent.hasPrefix(".") || sent.contains("/") ? "\(romId).bin" : sent
         try? fm.removeItem(at: dir)
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let out = dir.appendingPathComponent((name as NSString).lastPathComponent)
+        let out = dir.appendingPathComponent(name)
         try d.write(to: out)
         if let tag = h?.value(forHTTPHeaderField: "ETag") { try? tag.write(to: tagFile, atomically: true, encoding: .utf8) }
         return out

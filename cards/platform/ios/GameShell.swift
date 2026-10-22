@@ -101,9 +101,10 @@ typealias VoidFn = @convention(c) () -> Void
 typealias FrameFn = @convention(c) (Int64, Int64) -> Int64
 typealias LoadFn = @convention(c) (Int64) -> Void
 
-// a cartridge file's bytes: the file itself, or the first member of a .zip with one of the extensions
-func readCartridge(_ path: String, _ exts: [String]) -> Data? {
-    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { return nil }
+// a cartridge file's bytes: the file itself, or the first member of a .zip with one of the extensions that fits the
+// cartridge array (limit bytes unpacked); every offset the .zip gives is checked against the file
+func readCartridge(_ path: String, _ exts: [String], limit: Int) -> Data? {
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)), !data.isEmpty else { return nil }
     if !path.lowercased().hasSuffix(".zip") { return data }
     let b = [UInt8](data)
     func u16(_ o: Int) -> Int { Int(b[o]) | Int(b[o + 1]) << 8 }
@@ -117,18 +118,20 @@ func readCartridge(_ path: String, _ exts: [String]) -> Data? {
         guard o + 46 <= b.count, u32(o) == 0x02014b50 else { return nil }
         let method = u16(o + 10), csize = u32(o + 20), usize = u32(o + 24)
         let nlen = u16(o + 28), elen = u16(o + 30), clen = u16(o + 32), local = u32(o + 42)
+        guard o + 46 + nlen <= b.count else { return nil }
         let name = String(decoding: b[(o + 46)..<(o + 46 + nlen)], as: UTF8.self).lowercased()
         o += 46 + nlen + elen + clen
-        guard exts.contains(where: { name.hasSuffix($0) }), local + 30 <= b.count else { continue }
+        guard exts.contains(where: { name.hasSuffix($0) }), local + 30 <= b.count, u32(local) == 0x04034b50,
+              usize > 0, usize <= limit else { continue }
         let start = local + 30 + u16(local + 26) + u16(local + 28)
         guard start + csize <= b.count else { return nil }
         if method == 0 { return Data(b[start..<(start + csize)]) }
         guard method == 8 else { return nil }
-        var out = [UInt8](repeating: 0, count: max(usize, 1))
+        var out = [UInt8](repeating: 0, count: usize)
         let n = b.withUnsafeBufferPointer { src in
-            compression_decode_buffer(&out, usize, src.baseAddress! + start, csize, nil, COMPRESSION_ZLIB)
+            src.baseAddress.map { compression_decode_buffer(&out, usize, $0 + start, csize, nil, COMPRESSION_ZLIB) } ?? 0
         }
-        return n == usize ? Data(out[0..<n]) : nil
+        return n == usize ? Data(out) : nil
     }
     return nil
 }
@@ -209,11 +212,12 @@ final class Game {
         unsafeBitCast(reset, to: VoidFn.self)()
         if let c = spec.cartridge, let (array, load) = cart {
             guard let path = romPath ?? c.path else { dlclose(h); throw ShellError.message("\(spec.title) plays a cartridge: start it with one") }
-            guard let data = readCartridge(path, c.extensions) else { dlclose(h); throw ShellError.message("cannot read a cartridge from \(path)") }
+            guard let data = readCartridge(path, c.extensions, limit: c.bytes) else { dlclose(h); throw ShellError.message("cannot read a cartridge from \(path)") }
             let dst = array.assumingMemoryBound(to: UInt8.self)
             let n = min(data.count, c.bytes)
+            guard n > 0 else { dlclose(h); throw ShellError.message("an empty cartridge: \(path)") }
             memset(dst, 0, c.bytes)            // the whole array: reset_all leaves it to the host
-            data.withUnsafeBytes { raw in _ = memcpy(dst, raw.baseAddress!, n) }
+            data.withUnsafeBytes { raw in if let p = raw.baseAddress { _ = memcpy(dst, p, n) } }
             unsafeBitCast(load, to: LoadFn.self)(Int64(n))
         }
         clock?.pointee = Int64(Date().timeIntervalSince1970)
@@ -397,6 +401,11 @@ final class TouchControls: UIView {
     var others: [(String, Int64)] = []                 // controller button name (or the bit's own) -> bits
     var free: UITouch?                                 // a touch on no control (the touch screen's pointer)
     var onFree: ((UITouch?) -> Void)?
+    // put away while a controller or keyboard plays: no buttons drawn or pressed, so every touch is a free one (the
+    // touch screen still plays), and lifting it asks for the buttons back (onWake)
+    var shown = true { didSet { if !shown { held.removeAll() }; setNeedsDisplay() } }
+    var onWake: (() -> Void)?
+    var touching: Bool { free != nil || !held.isEmpty }
 
     init(spec: Spec, gamepad: [String: String]) {
         super.init(frame: .zero)
@@ -461,6 +470,7 @@ final class TouchControls: UIView {
     }
 
     func hit(_ p: CGPoint) -> Int64? {
+        guard shown else { return nil }
         if let pd = pad {
             let dx = p.x - pd.center.x, dy = p.y - pd.center.y
             let dist = (dx * dx + dy * dy).squareRoot()
@@ -506,11 +516,13 @@ final class TouchControls: UIView {
             held[ObjectIdentifier(t)] = nil
             if t === free { free = nil; onFree?(nil) }
         }
+        if !shown && free == nil { onWake?() }     // on lifting: the picture moves when they come back
         setNeedsDisplay()
     }
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { touchesEnded(touches, with: event) }
 
     override func draw(_ rect: CGRect) {
+        guard shown else { return }
         let now = bits
         let line = UIColor(white: 1, alpha: 0.42), fill = UIColor(white: 1, alpha: 0.10), on = UIColor(white: 1, alpha: 0.38)
         if let pd = pad {
@@ -614,6 +626,7 @@ final class GameViewController: UIViewController {
         for (name, keys) in own?.keys2 ?? s.keys2 { let b = game!.bit(name); for k in keys { if let c = keyUsages[k] { map2[c, default: 0] |= b } } }
         let t = TouchControls(spec: s, gamepad: gamepadMap)
         t.onFree = { [weak self] touch in self?.pointer(touch) }
+        t.onWake = { [weak self] in self?.showTouch(true) }
         view.addSubview(t)
         touch = t
         if closable {
@@ -628,7 +641,11 @@ final class GameViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(controllersChanged), name: .GCControllerDidDisconnect, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(pause), name: UIApplication.willResignActiveNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(resume), name: UIApplication.didBecomeActiveNotification, object: nil)
-        if !options.mute { startAudio() }
+        if !options.mute {
+            startAudio()
+            NotificationCenter.default.addObserver(self, selector: #selector(audioInterrupted(_:)), name: AVAudioSession.interruptionNotification, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(audioRouteChanged), name: .AVAudioEngineConfigurationChange, object: engine)
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -650,7 +667,7 @@ final class GameViewController: UIViewController {
         guard let s = game?.spec else { return }
         let safe = view.bounds.inset(by: view.safeAreaInsets)
         let aspect = CGFloat(s.screen.width) / CGFloat(s.screen.height)
-        let pads = touch.map { !$0.isHidden } ?? false
+        let pads = touch?.shown ?? false
         var pic: CGRect
         if safe.height > safe.width && pads {
             let room = max(safe.height * 0.34, 230)
@@ -679,15 +696,15 @@ final class GameViewController: UIViewController {
     }
 
     // the touch controls give way to a controller once it is used (one only connected may sit unused), and come
-    // back when the last one goes or the screen is touched
+    // back when the last one goes or the screen is touched; they never go while a finger is down (it would lose its
+    // button, and the picture would move under it)
     @objc func controllersChanged() {
         if !GCController.controllers().contains(where: { $0.extendedGamepad != nil }) { showTouch(true) }
     }
 
     func showTouch(_ on: Bool) {
-        guard let t = touch, t.isHidden == on else { return }
-        t.isHidden = !on
-        if !on { t.held.removeAll() }
+        guard let t = touch, t.shown != on, on || !t.touching else { return }
+        t.shown = on
         view.setNeedsLayout()
     }
 
@@ -720,8 +737,6 @@ final class GameViewController: UIViewController {
         super.pressesCancelled(presses, with: event)
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) { showTouch(true) }
-
     func padBits(_ pad: GCExtendedGamepad) -> Int64 {
         guard let g = game else { return 0 }
         var b: Int64 = 0
@@ -746,7 +761,7 @@ final class GameViewController: UIViewController {
         if b1 | b2 != 0 { showTouch(false) }
         p1 |= b1
         p2 |= b2
-        if let t = touch, !t.isHidden { p1 |= t.bits }
+        if let t = touch, t.shown { p1 |= t.bits }
         return (p1, p2)
     }
 
@@ -757,17 +772,19 @@ final class GameViewController: UIViewController {
         last = now
         let dt = 1.0 / 60.0
         if acc > 0.25 { acc = dt }
-        var ran = false
-        while acc >= dt {
+        // the display's ticks wander around 1/60 s: within 2 ms of a frame is a frame (not one dropped, then two),
+        // and at most four a tick (a stall is caught up over the next ticks)
+        var ran = 0
+        while acc >= dt - 0.002 && ran < 4 {
             acc -= dt
             let (p1, p2) = inputs()
             if let t = g.touch { t.x.pointee = pointerAt.0; t.y.pointee = pointerAt.1; t.down.pointee = pointerAt.2 }
             if g.step(p1, p2) { close(); return }
             g.drainAudio(into: ring)
             g.fullscreen.pointee = 0               // always the whole screen here
-            ran = true
+            ran += 1
         }
-        if ran {
+        if ran > 0 {
             CATransaction.begin()
             CATransaction.setDisableActions(true)
             screen.layer.contents = g.image()
@@ -789,6 +806,7 @@ final class GameViewController: UIViewController {
         l.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 60, preferred: 60)
         l.add(to: .main, forMode: .common)
         link = l
+        restartAudio()
     }
 
     func startAudio() {
@@ -806,6 +824,20 @@ final class GameViewController: UIViewController {
         }
         engine.attach(src)
         engine.connect(src, to: engine.mainMixerNode, format: fmt)
+        try? engine.start()
+    }
+
+    // the engine stops for a call, an alarm or Siri (an interruption) and for a new route (headphones, AirPlay): it
+    // starts again when that is over, or when the game comes back to the screen (these arrive on any thread)
+    @objc nonisolated func audioInterrupted(_ n: Notification) {
+        guard (n.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt) == AVAudioSession.InterruptionType.ended.rawValue else { return }
+        DispatchQueue.main.async { [weak self] in self?.restartAudio() }
+    }
+    @objc nonisolated func audioRouteChanged() { DispatchQueue.main.async { [weak self] in self?.restartAudio() } }
+
+    func restartAudio() {
+        guard game != nil, link != nil, !options.mute, !engine.isRunning else { return }
+        try? AVAudioSession.sharedInstance().setActive(true)
         try? engine.start()
     }
 
