@@ -1,0 +1,44 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": null,
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "substitution in steps",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:subst_k",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.substK",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "f17adba2307f2ed66993c38b5710d4cc13e36d1c880d6069b3fdeb48ebddca30",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D30_substK",
+  "notation": "subst′(k, x, v, y)",
+  "number": 30,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "y substituted at the first k free places of v",
+  "tier": 1
+}

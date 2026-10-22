@@ -1,0 +1,50 @@
+{
+  "agreement": {
+    "calls": 4,
+    "status": "pass"
+  },
+  "bound": "z ≤ x",
+  "category": "godel1931",
+  "cites": [
+    "Def-2",
+    "Def-9",
+    "Rule-4"
+  ],
+  "counterpart": "the ledger's primes",
+  "evidence_tier": "sample",
+  "forms": [
+    {
+      "entry": "cardmodel.engines.godel1931:is_prime",
+      "lang": "python",
+      "name": "python"
+    },
+    {
+      "entry": "Godel1931.isPrime",
+      "file": "formal/Godel1931/Defs.lean",
+      "lang": "lean",
+      "name": "lean"
+    },
+    {
+      "entry": "cardmodel.engines.godel1931:literal.is_prime",
+      "lang": "python",
+      "name": "literal",
+      "note": "the paper's bounded search itself, runnable on small numbers"
+    }
+  ],
+  "metadata": {
+    "previous_content_hash": "888e7c072e7e00efb8e09b7004c2f1d74d7d238279bd8fb4e9ef5771cbad737c",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "D02_isPrime",
+  "notation": "isPrime(x)",
+  "number": 2,
+  "primitive_recursive": true,
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Gödel 1931, section 2, in Martin Hirzel's translation; The Gödel Method handover, W-1",
+    "tool": "tools/seed_godel1931.py"
+  },
+  "statement": "x is a prime",
+  "tier": 1
+}
