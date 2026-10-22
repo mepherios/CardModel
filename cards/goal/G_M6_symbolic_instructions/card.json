@@ -1,0 +1,17 @@
+{
+  "axis": "machines",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "symbolic_instructions",
+  "name": "G_M6_symbolic_instructions",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "Instruction cards whose symbolic terms agree with their executable semantics (MATH_CORE phase 0, F5; LR35902 and ARM).",
+  "target": 679,
+  "tier": 0
+}

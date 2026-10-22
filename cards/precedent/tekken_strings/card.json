@@ -1,0 +1,17 @@
+{
+  "category": "precedent",
+  "game": "Tekken",
+  "generalised_by": "Anti-pattern this design forbids: every link leaves time to raise a guard after a clean hit (GL10).",
+  "limit": "Some strings are natural combos: once the first hit lands the rest cannot be answered.",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "tekken_strings",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Strings: button sequences whose later hits are mixups.",
+  "tier": 1,
+  "year": 1994
+}

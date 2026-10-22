@@ -1,0 +1,14 @@
+{
+  "category": "godel_set",
+  "extends": "B0",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "computation",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "The op cards beyond the IR's basis (squares, modular inverses, elliptic-curve operations, ...): atoms of the computing domain, each to be defined over B0 where it can.",
+  "tier": 0
+}

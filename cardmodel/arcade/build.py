@@ -139,8 +139,57 @@ def render_media(ctx, name: str) -> dict[str, bytes]:
     out["header_460x215.png"] = png_rgba(scale(crop(title, W, 10, 6, 460, 215), 460, 215, 460, 215), 460, 215)
     out["hero_1920x620.png"] = png_rgba(scale(crop(title, W, 0, 20, 480, 155), 480, 155, 1920, 620), 1920, 620)
     out["capsule_231x87.png"] = png_rgba(scale(crop(title, W, 0, 20, 480, 181), 480, 181, 231, 87), 231, 87)
-    for k, key in enumerate(["duel_1", "duel_2", "select", "duel_3", "duel_4"]):
+    shots.update(_scenes(ctx, name))
+    keys = ["duel_1", "string", "stage_tree", "boss_phase", "duel_4"]
+    for k, key in enumerate(key for key in keys if key in shots):
         out[f"screenshot_{k + 1}.png"] = png_rgba(scale(shots[key], W, H, W * 2, H * 2), W * 2, H * 2)
+    return out
+
+
+def _scenes(ctx, name: str) -> dict[str, bytes]:
+    """Scripted moments of the newer features: a two-hit string in versus, the arcade's duel-tree stage, and the
+    boss's second phase starting (its health is set just above the phase's share, then a slash crosses it)."""
+    out: dict[str, bytes] = {}
+    g = G.Game(ctx, name, "native", fresh=True)
+    b = lambda *n: G.bits(g.card, n)  # noqa: E731
+    p1 = {200: b("down"), 204: b("down"), 210: b("confirm"), 226: b("confirm")}      # title -> versus -> fight
+    p2 = {218: b("left")}
+    for f in range(240):
+        g.frame(p1.get(f, 0), p2.get(f, 0))
+    for f in range(170):
+        g.frame(b("right") if 110 <= f < 150 else 0, b("left") if 110 <= f < 150 else 0)
+    for k in range(48):                              # slash_left hits; attack + up links the overhead
+        g.frame(b("attack", "left") if k == 0 else (b("attack", "up") if k == 14 else 0), 0)
+        g.drain_audio()
+    out["string"] = g.screen()
+    ladder = g.card.get("ladder") or []
+    stages = {s.get("ai"): k for k, s in enumerate(ladder)}
+    for key, ai in (("stage_tree", "tree"), ("boss_phase", "boss")):
+        if ai not in stages:
+            continue
+        g = G.Game(ctx, name, "native", fresh=True)
+        for f in range(240):                         # title -> arcade -> fighter -> the ladder
+            g.frame({200: b("confirm"), 216: b("confirm")}.get(f, 0), 0)
+        g.m.set("stage", stages[ai])
+        for f in range(4):
+            g.frame(b("confirm") if f == 1 else 0, 0)
+        for f in range(170):
+            g.frame(b("right") if 110 <= f < 140 else 0, 0)
+            g.drain_audio()
+        if ai == "boss":
+            phases = (g.card.get("boss") or {}).get("phases") or []
+            if len(phases) < 2:
+                continue
+            g.m.array("f_hp")[1] = g.m.array("f_hpmax")[1] * phases[1]["at"] // 100 + 1
+            g.m.array("f_stance")[1] = 3
+            g.m.array("f_stun")[1] = 72
+            for f in range(200):
+                g.frame(b("right") if f < 30 and g.m.get("round_state") != 3 else
+                        (b("attack", "left") if f % 6 == 0 and g.m.get("round_state") != 3 else 0), 0)
+                g.drain_audio()
+                if g.m.get("round_state") == 3 and g.m.get("round_t") >= 44:
+                    break
+        out[key] = g.screen()
     return out
 
 

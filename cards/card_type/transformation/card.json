@@ -1,0 +1,25 @@
+{
+  "applies_to": [
+    "transformation"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "transformation",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "schema": {
+    "properties": {},
+    "required": [
+      "from",
+      "to",
+      "evidence"
+    ],
+    "type": "object"
+  },
+  "statement": "A transformation: two definitions shown equal, with the evidence.",
+  "tier": 0
+}

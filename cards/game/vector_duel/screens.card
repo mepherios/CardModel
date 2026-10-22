@@ -24,8 +24,8 @@ fn start_duel() {
   training = if mode == MODE_TRAINING then 1 else 0
   versus = if mode == MODE_VERSUS then 1 else 0
   if mode == MODE_ARCADE {
+    ai_level[1] = lad_level[stage]          -- (a boss's phases set its own, in round_setup)
     duel_setup(player_ft, AI_HUMAN, lad_fighter[stage], lad_ai[stage])
-    ai_level[1] = lad_level[stage]
   } elif mode == MODE_TRAINING {
     duel_setup(player_ft, AI_HUMAN, FT_WARDEN, AI_DUMMY)
     ai_level[1] = 3
@@ -34,7 +34,9 @@ fn start_duel() {
   }
   hp_trail[0] = f_hp[0]
   hp_trail[1] = f_hp[1]
-  music(if mode == MODE_ARCADE and lad_ai[stage] == AI_BOSS then 2 else 1)
+  if boss_of() < 0 {
+    music(1)                -- the boss's phases choose its music (round_setup)
+  }
   go(SCR_DUEL)
 }
 
@@ -249,31 +251,34 @@ fn ladder_draw() {
   draw_arena(frame_no)
   rect_blend(0, 0, SW, SH, 0x0B0A12, 150)
   draw_str_c(S_ARCADE, SW // 2, 14, 2, 0xF4EEE0)
+  let rows = max(1, N_STAGES)
+  let pitch = min(29, 172 // rows)
   for s in 0 .. N_STAGES {
-    let y = 40 + s * 29
+    let y = 36 + s * pitch
     let done = s < stage
     let now = s == stage
     let c = if now then 0xFFFFFF else (if done then 0x6A6080 else 0x9A90B8)
-    rect(70, y, 340, 26, if now then 0x2A2444 else 0x17141F)
+    rect(70, y, 340, pitch - 2, if now then 0x2A2444 else 0x17141F)
     if now {
-      frame_rect(70, y, 340, 26, C_P2)
+      frame_rect(70, y, 340, pitch - 2, if lad_ai[s] == AI_BOSS then ph_aura[0] else C_P2)
     }
-    draw_str_sh(S_STAGE, 80, y + 5, 1, c)
-    draw_num(s + 1, 80 + str_width(S_STAGE, 1) + 6, y + 5, 1, c)
-    draw_str_sh(fighter_name(lad_fighter[s]), 160, y + 5, 1, c)
-    draw_str_sh(lad_name[s], 240, y + 5, 1, if now then 0xFFE070 else c)
-    draw_str_sh(ar_name[lad_arena[s]], 240, y + 15, 1, mix(c, C_INK, 90))
+    draw_str_sh(S_STAGE, 80, y + 4, 1, c)
+    draw_num(s + 1, 80 + str_width(S_STAGE, 1) + 6, y + 4, 1, c)
+    draw_str_sh(fighter_name(lad_fighter[s]), 160, y + 4, 1, c)
+    draw_str_sh(lad_name[s], 240, y + 4, 1, if now then 0xFFE070 else c)
+    draw_str_sh(ar_name[lad_arena[s]], 240, y + 13, 1, mix(c, C_INK, 90))
   }
   if stage > 0 and lad_intro[stage] >= 0 {
-    draw_str_c(lad_intro[stage], SW // 2, 226, 1, 0xC8B8E8)
+    draw_str_c(lad_intro[stage], SW // 2, 222, 1, 0xC8B8E8)
   }
   if stage == 0 {
     -- how to duel, before the first one
-    rect(60, 218, 360, 36, 0x17141F)
-    frame_rect(60, 218, 360, 36, 0xFFE070)
-    draw_str_sh(S_HOW, 70, 222, 1, 0xFFE070)
-    draw_str_sh(S_HOW1, 70, 232, 1, 0xC8B8E8)
-    draw_str_sh(S_HOW3, 70, 242, 1, 0xC8B8E8)
+    rect(50, 212, 380, 44, 0x17141F)
+    frame_rect(50, 212, 380, 44, 0xFFE070)
+    draw_str_sh(S_HOW, 60, 216, 1, 0xFFE070)
+    draw_str_sh(S_HOW1, 60, 226, 1, 0xC8B8E8)
+    draw_str_sh(S_HOW3, 60, 236, 1, 0xC8B8E8)
+    draw_str_sh(S_HOW5, 60, 246, 1, 0xC8B8E8)
   }
   draw_str_c(S_PRESS, SW // 2, SH - 12, 1, if (frame_no // 30) % 2 == 0 then 0xFFFFFF else 0x9A90B8)
 }
@@ -286,13 +291,14 @@ fn pause_item(k: Int) -> Int {
   }
   return if k == 0 then S_RESUME else if k == 1 then S_RESTART else if k == 2 then S_OPTIONS else S_TO_TITLE
 }
-fn dummy_name() -> Int = if dummy_mode == 0 then S_D_IDLE else if dummy_mode == 1 then S_D_GUARD else if dummy_mode == 2 then S_D_ATTACK else S_D_READER
+const N_DUMMY = 5
+fn dummy_name() -> Int = if dummy_mode == 0 then S_D_IDLE else if dummy_mode == 1 then S_D_GUARD else if dummy_mode == 2 then S_D_ATTACK else if dummy_mode == 3 then S_D_STRINGS else S_D_READER
 fn duel_screen_update() {
   if paused != 0 {
     pause_sel = menu_step(pause_sel, pause_items())
     let item = pause_item(pause_sel)
     if item == S_DUMMY_IS and (either_pressed(B_LEFT) or either_pressed(B_RIGHT) or confirm_pressed()) {
-      dummy_mode = (dummy_mode + (if either_pressed(B_LEFT) then 3 else 1)) % 4
+      dummy_mode = (dummy_mode + (if either_pressed(B_LEFT) then N_DUMMY - 1 else 1)) % N_DUMMY
       sfx(SFX_MOVE)
       return
     }
@@ -325,7 +331,7 @@ fn duel_screen_update() {
   if training != 0 {
     -- left / right in training with the feint and catch held together: the dummy's behaviour
     if (held1 & B_CATCH) != 0 and (press1 & B_FEINT) != 0 {
-      dummy_mode = (dummy_mode + 1) % 4
+      dummy_mode = (dummy_mode + 1) % N_DUMMY
       sfx(SFX_MOVE)
     }
   }
@@ -363,10 +369,11 @@ fn pause_draw() {
       draw_char(62, SW // 2 - 76, y, 1, C_P1)
     }
   }
-  draw_str_c(S_K_DIR, SW // 2, 200, 1, 0x9A90B8)
-  draw_str_c(S_K_ATK, SW // 2, 212, 1, 0x9A90B8)
-  draw_str_c(S_K_DEF, SW // 2, 224, 1, 0x9A90B8)
-  draw_str_c(S_K_TIP, SW // 2, 244, 1, 0xFFE8A0)
+  draw_str_c(S_K_DIR, SW // 2, 196, 1, 0x9A90B8)
+  draw_str_c(S_K_ATK, SW // 2, 208, 1, 0x9A90B8)
+  draw_str_c(S_K_DEF, SW // 2, 220, 1, 0x9A90B8)
+  draw_str_c(S_K_STR, SW // 2, 232, 1, 0x9A90B8)
+  draw_str_c(S_K_TIP, SW // 2, 250, 1, 0xFFE8A0)
 }
 
 -- results ---------------------------------------------------------------------------------------------------------------

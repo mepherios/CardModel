@@ -1,0 +1,14 @@
+{
+  "category": "godel_set",
+  "extends": "B0",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "machines",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "The effects a machine's instructions have on the world outside the CPU: bus reads and writes, internal cycles, halt, stop, a locked CPU, a prefix dispatch.",
+  "tier": 0
+}

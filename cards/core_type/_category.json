@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_godel.py",
+  "description": "The semantic core's types (docs/MATH_CORE.md section 4): what a term's values are.",
+  "name": "core_type",
+  "tier": 0
+}

@@ -1,0 +1,224 @@
+-- The Game Boy as an arcade player (system/gameboy). The platform's effect shell copies a cartridge into `rom`
+-- and calls player_load with its size, copies the save file into player_save, writes the Unix time into
+-- player_clock and calls player_init; then player_frame once per 1/60 s with the pressed buttons, and
+-- player_flush before it quits. The header is decoded with the cartridge card's tables (cart_kind, cart_ram,
+-- cart_battery, cart_rtc, cart_ram_size and the CART_ constants, generated from hardware/gb_cartridge at build
+-- time) by the same rules the Python host follows (machine/gb.py), so a cartridge configures the same machine
+-- either way. Each frame runs 1/60 s of machine time, so the sound comes out at exactly the shell's rate, and
+-- the picture shown is the last one the PPU finished.
+export global player_quit: Int = 0
+export global player_fullscreen: Int = 0
+export global player_clock: Int = 0          -- Unix seconds, set by the shell
+export global player_save_dirty: Int = 0
+export global player_ram: Int = 0            -- the cartridge's RAM in bytes (0: none)
+export global player_battery: Int = 0
+global player_dots: Int = 0                  -- dots owed to the machine, x 60 (1/60 s is not a whole number)
+global player_save_wait: Int = 0             -- frames before changed battery RAM goes into the save
+export array player_fb: Byte[92160]          -- 160 x 144 RGBA
+export array player_save: Byte[131124]       -- battery RAM, the RTC trailer at PLAYER_TRAILER, CMSV at PLAYER_MAGIC
+const PLAYER_TRAILER = 0x20000
+const PLAYER_MAGIC = 0x20030
+const PLAYER_SAVE_FRAMES = 60
+const PLAYER_MAX_ROM = 0x800000
+const PLAYER_RTC_CATCH_UP = 315360000        -- at most ten years of clock catch-up
+
+fn player_pow2(n: Int) -> Int {
+  var p = 0x8000
+  while p < n {
+    p = p << 1
+  }
+  return p
+}
+export fn player_load(n: Int) {
+  let size = if n > PLAYER_MAX_ROM then PLAYER_MAX_ROM else n
+  let t = rom[0x147]
+  mbc_kind = cart_kind[t]
+  let code = rom[0x149]
+  var ram = if code < 8 then cart_ram_size[code] else 0
+  if mbc_kind == MBC2 {
+    ram = 512
+  }
+  if cart_ram[t] == 0 and mbc_kind != MBC2 {
+    ram = 0
+  } elif cart_ram[t] != 0 and ram == 0 {
+    ram = CART_RAM_UNSIZED
+  }
+  player_ram = ram
+  ram_mask = if ram > 0 then ram - 1 else -1
+  has_rtc = cart_rtc[t]
+  player_battery = cart_battery[t]
+  let declared = if rom[0x148] < 9 then 32768 << rom[0x148] else size
+  let total = player_pow2(if declared <= PLAYER_MAX_ROM and declared > size then declared else size)
+  -- a short dump is mirrored, so every bank number maps somewhere defined
+  if size > 0 {
+    for off in size .. total {
+      rom[off] = rom[off - size]
+    }
+  }
+  rom_mask = total - 1
+  mbc1m = 0
+  if mbc_kind == MBC1 and size == CART_MULTI_BYTES {
+    var same = 1
+    for i in CART_LOGO_LO .. CART_LOGO_HI {
+      if rom[CART_LOGO2 + i - CART_LOGO_LO] != rom[i] {
+        same = 0
+      }
+    }
+    mbc1m = same
+  }
+  sample_rate = PLAYER_RATE
+  power_on(if rom[0x143] == 0x80 or rom[0x143] == 0xC0 then 1 else 0)
+}
+fn player_get32(at: Int) -> Int = player_save[at] | (player_save[at + 1] << 8) | (player_save[at + 2] << 16) | (player_save[at + 3] << 24)
+fn player_put32(at: Int, v: Int) {
+  player_save[at] = v & 0xFF
+  player_save[at + 1] = (v >> 8) & 0xFF
+  player_save[at + 2] = (v >> 16) & 0xFF
+  player_save[at + 3] = (v >> 24) & 0xFF
+}
+fn player_saved() -> Bool = player_save[PLAYER_MAGIC] == 0x43 and player_save[PLAYER_MAGIC + 1] == 0x4D and player_save[PLAYER_MAGIC + 2] == 0x53 and player_save[PLAYER_MAGIC + 3] == 0x56
+-- the save, unpacked: battery RAM, then the clock moved on by the time the game was closed
+export fn player_init() {
+  if player_saved() {
+    for i in 0 .. player_ram {
+      cram[i] = player_save[i]
+    }
+    if has_rtc != 0 {
+      rtc_s = player_get32(PLAYER_TRAILER) & 0xFF
+      rtc_m = player_get32(PLAYER_TRAILER + 4) & 0xFF
+      rtc_h = player_get32(PLAYER_TRAILER + 8) & 0xFF
+      rtc_dl = player_get32(PLAYER_TRAILER + 12) & 0xFF
+      rtc_dh = player_get32(PLAYER_TRAILER + 16) & 0xFF
+      rtc_ls = player_get32(PLAYER_TRAILER + 20) & 0xFF
+      rtc_lm = player_get32(PLAYER_TRAILER + 24) & 0xFF
+      rtc_lh = player_get32(PLAYER_TRAILER + 28) & 0xFF
+      rtc_ldl = player_get32(PLAYER_TRAILER + 32) & 0xFF
+      rtc_ldh = player_get32(PLAYER_TRAILER + 36) & 0xFF
+      let stamp = player_get32(PLAYER_TRAILER + 40) | (player_get32(PLAYER_TRAILER + 44) << 32)
+      let gone = player_clock - stamp
+      if stamp > 0 and gone > 0 {
+        rtc_add_seconds(if gone > PLAYER_RTC_CATCH_UP then PLAYER_RTC_CATCH_UP else gone)
+      }
+    }
+  }
+  cram_dirty = 0
+}
+-- battery RAM and the clock into the save, for the shell to write
+fn player_pack() {
+  for i in 0 .. player_ram {
+    player_save[i] = cram[i]
+  }
+  if has_rtc != 0 {
+    rtc_sync()
+    player_put32(PLAYER_TRAILER, rtc_s)
+    player_put32(PLAYER_TRAILER + 4, rtc_m)
+    player_put32(PLAYER_TRAILER + 8, rtc_h)
+    player_put32(PLAYER_TRAILER + 12, rtc_dl)
+    player_put32(PLAYER_TRAILER + 16, rtc_dh)
+    player_put32(PLAYER_TRAILER + 20, rtc_ls)
+    player_put32(PLAYER_TRAILER + 24, rtc_lm)
+    player_put32(PLAYER_TRAILER + 28, rtc_lh)
+    player_put32(PLAYER_TRAILER + 32, rtc_ldl)
+    player_put32(PLAYER_TRAILER + 36, rtc_ldh)
+    player_put32(PLAYER_TRAILER + 40, player_clock & 0xFFFFFFFF)
+    player_put32(PLAYER_TRAILER + 44, (player_clock >> 32) & 0xFFFFFFFF)
+  }
+  player_save[PLAYER_MAGIC] = 0x43
+  player_save[PLAYER_MAGIC + 1] = 0x4D
+  player_save[PLAYER_MAGIC + 2] = 0x53
+  player_save[PLAYER_MAGIC + 3] = 0x56
+  cram_dirty = 0
+  player_save_dirty = 1
+}
+fn player_present() {
+  for i in 0 .. SCREEN_W * SCREEN_H {
+    player_fb[i * 4] = frame[i * 3]
+    player_fb[i * 4 + 1] = frame[i * 3 + 1]
+    player_fb[i * 4 + 2] = frame[i * 3 + 2]
+    player_fb[i * 4 + 3] = 255
+  }
+}
+-- 1/60 s of the machine; changed battery RAM is packed a second after the last change
+export fn player_frame(p1: Int, p2: Int) -> Int {
+  set_buttons(p1 & 0xFF)
+  player_dots += CPU_HZ
+  let n = player_dots // 60
+  player_dots -= n * 60
+  let target = now + n
+  frame_deadline = target
+  next_event = now
+  while now < target and locked == 0 {
+    step()
+    if frame_done != 0 {
+      frame_done = 0
+      player_present()
+    }
+  }
+  full_sync()
+  if frame_done != 0 {
+    frame_done = 0
+    player_present()
+  }
+  if cram_dirty != 0 and player_battery != 0 {
+    player_save_wait = PLAYER_SAVE_FRAMES
+    cram_dirty = 0
+  }
+  if player_save_wait > 0 {
+    player_save_wait -= 1
+    if player_save_wait == 0 {
+      player_pack()
+    }
+  }
+  return player_quit
+}
+-- the shell is closing: anything not saved yet is saved now
+export fn player_flush() {
+  if player_save_wait > 0 or (has_rtc != 0 and player_battery != 0) {
+    player_save_wait = 0
+    if player_battery != 0 {
+      player_pack()
+    }
+  }
+}
+
+-- the player's own picture (store and icon), in the frame buffer: a handheld on a dark ground
+fn player_rect(x0: Int, y0: Int, w: Int, h: Int, r: Int, g: Int, b: Int) {
+  for y in y0 .. y0 + h {
+    for x in x0 .. x0 + w {
+      if x >= 0 and x < SCREEN_W and y >= 0 and y < SCREEN_H {
+        player_fb[(y * SCREEN_W + x) * 4] = r
+        player_fb[(y * SCREEN_W + x) * 4 + 1] = g
+        player_fb[(y * SCREEN_W + x) * 4 + 2] = b
+        player_fb[(y * SCREEN_W + x) * 4 + 3] = 255
+      }
+    }
+  }
+}
+fn player_disc(cx: Int, cy: Int, rad: Int, r: Int, g: Int, b: Int) {
+  for y in cy - rad .. cy + rad + 1 {
+    for x in cx - rad .. cx + rad + 1 {
+      if (x - cx) * (x - cx) + (y - cy) * (y - cy) <= rad * rad {
+        player_rect(x, y, 1, 1, r, g, b)
+      }
+    }
+  }
+}
+export fn player_draw_art() {
+  player_rect(0, 0, SCREEN_W, SCREEN_H, 0x1B, 0x28, 0x38)
+  player_rect(44, 6, 72, 132, 0xC8, 0xC4, 0xBE)
+  player_rect(46, 8, 68, 128, 0xD8, 0xD4, 0xCE)
+  player_rect(52, 14, 56, 46, 0x5A, 0x5E, 0x6A)
+  player_rect(58, 19, 44, 36, 0x8B, 0xAC, 0x0F)
+  player_rect(62, 24, 12, 12, 0x30, 0x62, 0x30)
+  player_rect(76, 30, 20, 6, 0x30, 0x62, 0x30)
+  player_rect(66, 40, 26, 6, 0x0F, 0x38, 0x0F)
+  player_rect(56, 80, 18, 6, 0x22, 0x22, 0x26)
+  player_rect(62, 74, 6, 18, 0x22, 0x22, 0x26)
+  player_disc(100, 80, 5, 0x9A, 0x2A, 0x5A)
+  player_disc(89, 86, 5, 0x9A, 0x2A, 0x5A)
+  player_rect(68, 104, 9, 3, 0x7A, 0x78, 0x80)
+  player_rect(82, 104, 9, 3, 0x7A, 0x78, 0x80)
+  for k in 0 .. 5 {
+    player_rect(92 + k * 4, 116 + k * 2, 2, 10, 0xA8, 0xA4, 0xA0)
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "category": "core_type",
+  "laws": [
+    "ADD and MUL are commutative but not associative"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "Float",
+  "operations": [
+    "op/ADD",
+    "op/SUB",
+    "op/MUL",
+    "op/DIV",
+    "op/TO_FLOAT",
+    "op/TRUNC_INT"
+  ],
+  "params": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "IEEE 754 binary64: the IR's float semantics; not a field (rounding), so laws hold only as witnessed within tolerances.",
+  "tier": 0
+}

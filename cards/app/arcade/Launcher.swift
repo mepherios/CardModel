@@ -5,6 +5,10 @@
 //
 // Everything lives in ~/Library/Application Support/Cardmodel Arcade: library/ (installed games),
 // saves/ (each game's save, written by the game), launcher.json (what is installed, play time, settings).
+// The user's own cartridges are played by an installed console player (a system build): it is started with
+// --rom on the cartridge where it is, and a save folder per cartridge. A program can also be installed from
+// another branch of the repository (a session's work in progress, like a beta): the service builds it there and
+// the installation remembers that branch, so its updates come from it.
 
 import AppKit
 import CryptoKit
@@ -28,6 +32,7 @@ struct Installed: Codable {
     var app: String
     var executable: String
     var manifest: String
+    var source: String? = nil               // the worktree it was installed from (nil: the service's own checkout)
 }
 
 struct Settings: Codable {
@@ -35,9 +40,15 @@ struct Settings: Codable {
     var user: String = NSFullUserName()
 }
 
+struct Played: Codable {
+    var playSeconds: Double
+    var lastPlayed: Double
+}
+
 struct LauncherState: Codable {
     var library: [String: Installed] = [:]
     var settings = Settings()
+    var played: [String: Played]? = [:]     // cartridges, by id
 }
 
 struct FileEntry: Codable {
@@ -210,9 +221,17 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
             lib[id] = ["version": g.version, "build": g.build, "size": g.size, "installedAt": g.installedAt,
                        "playSeconds": g.playSeconds + (running[id].map { Date().timeIntervalSince1970 - $0.1 } ?? 0),
                        "lastPlayed": g.lastPlayed, "running": running[id] != nil,
-                       "achievements": achievements(id)]
+                       "achievements": achievements(id), "source": g.source ?? ""]
         }
-        return ["library": lib, "settings": ["bandwidth": state.settings.bandwidth, "user": state.settings.user],
+        var carts: [String: Any] = [:]
+        for (id, c) in state.played ?? [:] {
+            carts[id] = ["playSeconds": c.playSeconds + (running[id].map { Date().timeIntervalSince1970 - $0.1 } ?? 0),
+                         "lastPlayed": c.lastPlayed, "running": running[id] != nil]
+        }
+        for id in running.keys where state.library[id] == nil && carts[id] == nil {
+            carts[id] = ["playSeconds": 0, "lastPlayed": Date().timeIntervalSince1970, "running": true]
+        }
+        return ["library": lib, "played": carts, "settings": ["bandwidth": state.settings.bandwidth, "user": state.settings.user],
                 "downloading": downloadId as Any, "paused": paused, "native": true,
                 "libraryPath": libraryDir.path]
     }
@@ -229,11 +248,28 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         let id = body["id"] as? String ?? ""
         switch cmd {
         case "state": emit(["type": "state", "state": snapshot()])
-        case "install", "update": startDownload(id)
+        case "reconnect": Task { await self.connect() }      // the page lost the service: start it again
+        case "install", "update": startDownload(id, branch: body["branch"] as? String ?? "")
         case "pause": paused = true; emit(["type": "state", "state": snapshot()])
         case "resume": paused = false; emit(["type": "state", "state": snapshot()])
         case "cancel": cancelled = true; paused = false
         case "play": play(id)
+        case "play_rom":
+            playRom(id, player: body["player"] as? String ?? "", path: body["path"] as? String ?? "",
+                    title: body["title"] as? String ?? "")
+        case "pick_folder":
+            let panel = NSOpenPanel()
+            panel.canChooseDirectories = true
+            panel.canChooseFiles = false
+            panel.allowsMultipleSelection = false
+            panel.prompt = "Use This Folder"
+            panel.message = "A folder with cartridges (they are played where they are, never copied)"
+            panel.beginSheetModal(for: window) { [weak self] r in
+                guard r == .OK, let url = panel.url else { return }
+                self?.emit(["type": "folder", "system": body["system"] as? String ?? "", "path": url.path])
+            }
+        case "reveal_rom", "reveal_path":
+            if let path = body["path"] as? String { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
         case "stop": running[id]?.0.terminate()
         case "verify": verify(id)
         case "uninstall": uninstall(id)
@@ -257,13 +293,18 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
     }
 
     // -- downloads ---------------------------------------------------------------------------------------------------
+    // a service path with its query (appendingPathComponent would escape the "?")
+    func url(_ path: String) -> URL {
+        URL(string: path.hasPrefix("/") ? String(path.dropFirst()) : path, relativeTo: base)!.absoluteURL
+    }
+
     func fetchJSON(_ path: String) async throws -> Any {
-        let (d, r) = try await URLSession.shared.data(from: base.appendingPathComponent(path))
+        let (d, r) = try await URLSession.shared.data(from: url(path))
         guard (r as? HTTPURLResponse)?.statusCode == 200 else { throw ArcadeError.message("\(path): \((r as? HTTPURLResponse)?.statusCode ?? 0)") }
         return try JSONSerialization.jsonObject(with: d)
     }
 
-    func startDownload(_ id: String) {
+    func startDownload(_ id: String, branch: String) {
         if download != nil { return }
         downloadId = id
         paused = false
@@ -271,7 +312,7 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         emit(["type": "state", "state": snapshot()])
         download = Task {
             do {
-                try await self.install(id)
+                try await self.install(id, branch: branch)
                 self.emit(["type": "done", "id": id])
             } catch {
                 self.emit(["type": "error", "id": id, "message": "\(error)"])
@@ -282,30 +323,45 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         }
     }
 
-    // build on the service if the cards changed since its last build, then download what is not here yet
-    func install(_ id: String) async throws {
+    // build on the service if the cards changed since its last build, then download what is not here yet; with a
+    // branch, the program as that worktree has it (built there with its own cards)
+    func install(_ id: String, branch: String) async throws {
+        let q = branch.isEmpty ? "" : "?branch=" + (branch.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? branch)
+        let from = branch.isEmpty ? "" : " on \(branch)"
         progress(id, "preparing", 0, 1, 0, "asking the arcade service")
-        guard var entry = try await fetchJSON("api/game/\(id)") as? [String: Any] else { throw ArcadeError.message("no game") }
+        guard var entry = try await fetchJSON("api/game/\(id)\(q)") as? [String: Any] else { throw ArcadeError.message("no game") }
         if (entry["build_due"] as? Bool) == true {
             let req = { () -> URLRequest in
-                var r = URLRequest(url: base.appendingPathComponent("api/build/\(id)")); r.httpMethod = "POST"; return r }()
+                var r = URLRequest(url: self.url("api/build/\(id)\(q)")); r.httpMethod = "POST"; return r }()
             _ = try await URLSession.shared.data(for: req)
             while true {
                 try await Task.sleep(nanoseconds: 250_000_000)
-                guard let st = try await fetchJSON("api/build/\(id)") as? [String: Any] else { continue }
+                guard let st = try await fetchJSON("api/build/\(id)\(q)") as? [String: Any] else { continue }
                 let s = st["state"] as? String ?? ""
                 progress(id, "building", st["step"] as? Int ?? 0, st["of"] as? Int ?? 6, 0,
                          st["label"] as? String ?? "")
                 if s == "done" { break }
-                if s == "error" { throw ArcadeError.message(st["error"] as? String ?? "build failed") }
+                if s == "error" {
+                    // the cards in progress do not build: the last good build is still there to install
+                    let why = st["error"] as? String ?? "build failed"
+                    let good = (entry["build"] as? [String: Any])?["build"] as? String
+                    let same = good == state.library[id]?.build && (state.library[id]?.source ?? "") == branch
+                    if good == nil || same {
+                        throw ArcadeError.message("The cards in progress\(from) don't build yet (\(why)). "
+                                                  + (good == nil ? "There is no earlier build." : "You have the last good build."))
+                    }
+                    emit(["type": "notice", "id": id, "message": "The cards in progress\(from) don't build yet: installing the last good build instead."])
+                    break
+                }
                 if cancelled { throw ArcadeError.message("cancelled") }
             }
-            entry = try await fetchJSON("api/game/\(id)") as? [String: Any] ?? entry
+            entry = try await fetchJSON("api/game/\(id)\(q)") as? [String: Any] ?? entry
         }
         guard let build = entry["build"] as? [String: Any], let mpath = build["manifest"] as? String else {
             throw ArcadeError.message("no build to download")
         }
-        let (md, _) = try await URLSession.shared.data(from: base.appendingPathComponent(String(mpath.dropFirst())))
+        let (md, mr) = try await URLSession.shared.data(from: url(mpath))
+        guard (mr as? HTTPURLResponse)?.statusCode == 200 else { throw ArcadeError.message("the build's manifest is not there\(from)") }
         let man = try JSONDecoder().decode(Manifest.self, from: md)
         let dest = installDir(id)
         let staging = libraryDir.appendingPathComponent("\(id).staging", isDirectory: true)
@@ -339,7 +395,7 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
                     if sha256(d) == c.sha256 { part = d }
                 }
                 if part == nil {
-                    var comps = URLComponents(url: base.appendingPathComponent("chunk/\(c.sha256)"), resolvingAgainstBaseURL: false)!
+                    var comps = URLComponents(url: url("chunk/\(c.sha256)"), resolvingAgainstBaseURL: false)!
                     if state.settings.bandwidth > 0 { comps.queryItems = [URLQueryItem(name: "rate", value: "\(state.settings.bandwidth)")] }
                     let (d, r) = try await URLSession.shared.data(from: comps.url!)
                     guard (r as? HTTPURLResponse)?.statusCode == 200, sha256(d) == c.sha256 else {
@@ -370,7 +426,8 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         state.library[id] = Installed(version: man.version, build: man.build, size: man.size,
                                       installedAt: prev?.installedAt ?? Date().timeIntervalSince1970,
                                       playSeconds: prev?.playSeconds ?? 0, lastPlayed: prev?.lastPlayed ?? 0,
-                                      app: man.app, executable: man.executable, manifest: mpath)
+                                      app: man.app, executable: man.executable, manifest: mpath,
+                                      source: branch.isEmpty ? nil : branch)
         save()
     }
 
@@ -390,7 +447,7 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
             emit(["type": "verified", "id": id, "ok": bad == 0, "bad": bad, "files": man.files.count])
             if bad > 0 {
                 state.library[id]?.build = "repair"
-                startDownload(id)
+                startDownload(id, branch: state.library[id]?.source ?? "")
             }
         }
     }
@@ -427,6 +484,51 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
             try p.run()
             running[id] = (p, started)
             state.library[id]?.lastPlayed = started
+            save()
+            emit(["type": "running", "id": id])
+            emit(["type": "state", "state": snapshot()])
+        } catch {
+            emit(["type": "error", "id": id, "message": "could not start: \(error)"])
+        }
+    }
+}
+
+extension Arcade {
+    // a cartridge: the installed console player, started on the file where it is
+    func playRom(_ id: String, player: String, path: String, title: String) {
+        guard running[id] == nil else { return }
+        guard let g = state.library[player] else {
+            emit(["type": "error", "id": id, "message": "install the player first"]); return
+        }
+        guard FileManager.default.fileExists(atPath: path) else {
+            emit(["type": "error", "id": id, "message": "the cartridge is not at \(path) any more"]); return
+        }
+        let p = Process()
+        p.executableURL = installDir(player).appendingPathComponent(g.executable)
+        p.arguments = ["--rom", path, "--title", title, "--save-dir", savesDir.appendingPathComponent(id).path]
+        let started = Date().timeIntervalSince1970
+        p.terminationHandler = { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                let now = Date().timeIntervalSince1970
+                self.running[id] = nil
+                var c = self.state.played?[id] ?? Played(playSeconds: 0, lastPlayed: now)
+                c.playSeconds += now - started
+                c.lastPlayed = now
+                if self.state.played == nil { self.state.played = [:] }
+                self.state.played?[id] = c
+                self.save()
+                self.emit(["type": "stopped", "id": id])
+                self.emit(["type": "state", "state": self.snapshot()])
+            }
+        }
+        do {
+            try p.run()
+            running[id] = (p, started)
+            if state.played == nil { state.played = [:] }
+            var c = state.played?[id] ?? Played(playSeconds: 0, lastPlayed: started)
+            c.lastPlayed = started
+            state.played?[id] = c
             save()
             emit(["type": "running", "id": id])
             emit(["type": "state", "state": snapshot()])

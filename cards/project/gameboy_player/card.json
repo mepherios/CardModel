@@ -1,38 +1,42 @@
 {
-  "blockers": [
-    "the branch's store work is uncommitted",
-    "the merge needs the user's go-ahead"
-  ],
+  "blockers": [],
   "branches": [
     "claude/festive-margulis-*",
-    "claude/strange-dewdney-*"
+    "claude/strange-dewdney-*",
+    "claude/frosty-lumiere-*"
   ],
   "category": "project",
   "docs": [
     "docs/MACHINES.md"
   ],
   "done": [
-    "960 of 971 surveyed ROMs boot",
-    "every runnable hardware test ROM passes (OAM bug, CGB DMG mode)",
-    "on the branch: library.json cartridge folders, headers, covers, the Game Boy Player build"
+    "960 of 971 surveyed ROMs boot; every runnable hardware test ROM passes (153 of 153: the DMG OAM bug, the CGB's DMG mode)",
+    "the Game Boy Player (system/gameboy: the gameboy machine card plus player.card, law CM40) builds, installs and plays like a game; battery saves and the MBC3 clock survive closing",
+    "the library: every cartridge in the user's folders read where it is (a zip in memory), with its header, the survey's verdict and a title screen the machine draws headless; the folders live in library.json",
+    "the DS listed with its coverage, not playable",
+    "the launcher's Update installs the last good build when the cards in progress do not build, remembers the error across restarts, and the pages restart a stopped service",
+    "a WORK tab (every branch's commits, uncommitted changes, areas, programs) and a Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its own cardmodel",
+    "every title and datum on the launcher's pages opens something (230 clicks over 11 views, no errors)"
   ],
   "games": [
     "gameboy_player"
   ],
   "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
   "in_progress": [
-    "the launcher's library UI and update fallback (uncommitted on the branch)"
+    "a runnable app per cartridge, first the user's Pokémon games, built from the player and the cartridge's own code lifted into card IR",
+    "a second session (claude/frosty-lumiere-98e2b7) builds the Game Boy library on this branch's library"
   ],
   "kind": "game",
   "left": [
-    "commit the store work",
-    "merge it into main",
-    "one store entry per cartridge on main"
+    "merge the branch into main and reinstall Cardmodel Arcade from main",
+    "fold the WORK tab into main's IN PROGRESS tab, and branch versions into early access (one mechanism)",
+    "one store page per cartridge (today cartridges are library entries played by the player)",
+    "the DS playable: its 2D engines, VRAM banks, 3D, sound"
   ],
   "metadata": {
-    "previous_content_hash": "8c56a5daf6b79697e8fa227ef3911632006e1e3a8604e065f057eae8fa6a4a3e",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "a138c56e7a132d293f037b24a11a2daeebed156f8b051d09f6a9c52420aa8a0a",
+    "version": "2.0.4",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -51,9 +55,10 @@
   ],
   "name": "gameboy_player",
   "next_steps": [
-    "commit the work in progress",
-    "renumber CM36_players_are_cards to CM40",
-    "merge into main"
+    "the main session merges claude/festive-margulis-43fde7 into main and reinstalls Cardmodel Arcade from main",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted; measure what still falls back to the instruction-at-a-time interpreter (code in RAM, after EI and HALT, jump targets no profile saw) and close each gap by distillation from the instruction cards",
+    "MATH_CORE (approved): new behaviour is card-language or IR semantics (hardware and mapper cards), never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method",
+    "MATH_CORE phase 1: trace the player, the library and the lifted code to the definition, transformation, action and method registries once main has them"
   ],
   "order": 2,
   "owner": {
@@ -69,28 +74,19 @@
     "cards/hardware",
     "cards/machine/gameboy",
     "cards/isa/lr35902",
-    "cards/game/gameboy_player",
-    "cards/player",
-    "cards/cartridge"
+    "cards/system",
+    "cardmodel/arcade/system.py",
+    "cardmodel/arcade/library.py",
+    "cardmodel/arcade/work.py"
   ],
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "The cartridge library, the system player and a WORK tab are on claude/festive-margulis-43fde7; its store work is still uncommitted there.",
+  "standing": "Committed on claude/festive-margulis-43fde7 and caught up with main (e0eca75, with Vector Duel 0.4.0 as the release); the user approved merging it into main, which the main session does next, then reinstalls Cardmodel Arcade from main.",
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T00:55:00+02:00",
-  "user_actions": [
-    {
-      "action": "Approve merging claude/festive-margulis-43fde7 into main once its store work is committed",
-      "unblocks": [
-        "Game Boy / Color cartridges as store entries",
-        "the DS listed as unplayable",
-        "one In progress tab instead of two"
-      ],
-      "why": "it brings every cartridge into the store as an entry, the DS shown as unplayable, and the system players"
-    }
-  ]
+  "updated": "2026-10-22T01:29:00+02:00",
+  "user_actions": []
 }

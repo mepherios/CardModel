@@ -8,9 +8,9 @@
   "kind": "program",
   "left": [],
   "metadata": {
-    "previous_content_hash": "c66fa5ca0dc148484c78df20d3a9be53af5045a062cca7622bc6dee261c5f956",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "de862e4cd5150d0d8c12d7f87b4175ba0d2294ce356d53bf24dace78725be27d",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -41,6 +41,6 @@
   "statement": "rea's reconstruction tooling as cards (~/Programmering/rea-cards), read here only.",
   "tier": 1,
   "title": "rea as cards",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T00:30:00+02:00",
   "user_actions": []
 }

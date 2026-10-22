@@ -1,0 +1,7 @@
+{
+  "card_type": "definition",
+  "defined_by": "tools/seed_sources.py",
+  "description": "Truth: what a function means, as a term of the semantic core, with its canonical form, its Gödel content and number, its proof obligations and its origin (docs/MATH_CORE.md).",
+  "name": "definition",
+  "tier": 0
+}

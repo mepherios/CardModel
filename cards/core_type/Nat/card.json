@@ -1,0 +1,27 @@
+{
+  "category": "core_type",
+  "laws": [
+    "a commutative semiring"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "Nat",
+  "operations": [
+    "op/ADD",
+    "op/MUL",
+    "op/FLOORDIV",
+    "op/MOD",
+    "op/MIN",
+    "op/MAX",
+    "op/POW",
+    "op/GCD"
+  ],
+  "params": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "Natural numbers: Int restricted to n >= 0, with Lean's truncated subtraction where it is imported.",
+  "tier": 0
+}

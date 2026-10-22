@@ -1,7 +1,5 @@
 {
-  "blockers": [
-    "the restructuring waits on MATH_CORE.md's approval"
-  ],
+  "blockers": [],
   "branches": [],
   "category": "project",
   "docs": [
@@ -10,23 +8,23 @@
   "done": [
     "canonical forms from behaviour",
     "exact Gödel encode/decode",
-    "GCD of functions, cofactor identities"
+    "GCD of functions, cofactor identities",
+    "the append-only prime ledger and content vectors (MATH_CORE phase 0)"
   ],
   "goal": "Functions as algebra: canonical forms with Gödel numbers, and the common factors that carry logic.",
   "in_progress": [
-    "the expanding Gödel model's definition (GOALS.md)"
+    "MATH_CORE phase 1: definitions carry content vectors and structural numbers"
   ],
   "kind": "research",
   "left": [
-    "the prime ledger",
-    "Gödel vectors on every card",
-    "homomorphism cards",
-    "the physics set"
+    "homomorphism cards between sets",
+    "the physics set (units, dimensional analysis)",
+    "content from canonical terms instead of reference forms"
   ],
   "metadata": {
-    "previous_content_hash": "e9369e149c39ec8cc5e881ca23242401dd9105860f7e41b8c46faec4db32066d",
-    "version": "2.0.0",
-    "version_bump_reason": "major"
+    "previous_content_hash": "abcf2249332bb26ed9f340e3ff56d15756f4c3b2205dd7bb663d742388ce1dd8",
+    "version": "2.0.2",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -40,7 +38,7 @@
   ],
   "name": "godel_functions",
   "next_steps": [
-    "the prime ledger (append-only)"
+    "definition cards with their Gödel numbers (phase 1)"
   ],
   "order": 12,
   "owner": {
@@ -50,16 +48,22 @@
   "paths": [
     "cardmodel/engines/funcalg.py",
     "stdlib/algebra.card",
-    "cards/functional_identity"
+    "cards/functional_identity",
+    "cardmodel/engines/godel.py",
+    "cards/godel",
+    "cards/godel_set",
+    "cards/core_type",
+    "tools/seed_godel.py",
+    "tests/test_godel.py"
   ],
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "Canonical forms, exact Gödel numbering, the GCD of functions and their identities are built; the expanding Gödel model (GOALS.md) is the next layer.",
+  "standing": "The prime ledger (61 atoms, B0 and computation), content vectors for every op, function and algorithm card, exact structural numbers and maps with gaps are on main (law CM43).",
   "statement": "Functions as algebra: canonical forms, Gödel numbers, the GCD of functions and the identities that carry between them.",
   "tier": 1,
   "title": "Gödel-numbered functions",
-  "updated": "2026-10-22T00:55:00+02:00",
+  "updated": "2026-10-22T01:02:10+02:00",
   "user_actions": []
 }

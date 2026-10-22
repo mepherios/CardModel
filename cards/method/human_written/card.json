@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "n/a",
+  "decides": "nothing by itself: what a person wrote is checked by the other methods",
+  "limits": "everything a person writes is witnessed or proved before it counts",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "human_written",
+  "procedure": "a person",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "nothing by itself: what a person wrote is checked by the other methods",
+  "status": "built",
+  "tier": 0
+}

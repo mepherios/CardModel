@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "linear in the term",
+  "decides": "code in any language card from a core term",
+  "limits": "a language card without a template for an op is a gap; correctness is witnessed by running, not proved",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "emit",
+  "procedure": "cardmodel/engines/codegen.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "code in any language card from a core term",
+  "status": "built",
+  "tier": 0
+}

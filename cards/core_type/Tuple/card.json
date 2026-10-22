@@ -1,0 +1,20 @@
+{
+  "category": "core_type",
+  "laws": [
+    "projections of a pair recover its parts"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "Tuple",
+  "operations": [],
+  "params": [
+    "types"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "Finite products of types: a machine state is a tuple of registers, flags and memory.",
+  "tier": 0
+}

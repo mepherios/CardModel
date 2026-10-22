@@ -7,8 +7,11 @@
                 height, tags), with decay; predicts the opponent's next move from those features, best-responds
                 to the prediction, and mixes in the equilibrium (epsilon) so it cannot be farmed. It is focused
                 on the specific vector that moves the opponent's play, not on move names.
+* tree          the duel tree (``tree.Tree``): the equilibrium of the abstract state it is in, solved by
+                backward induction several exchanges deep
 
-Honest limits (L1): one-exchange lookahead (no search over the duel tree); seeded, so a run is reproducible.
+Honest limits (L1): the other agents look one exchange ahead; the tree looks further but over abstract states
+(``tree``'s limits); seeded, so a run is reproducible.
 """
 from __future__ import annotations
 
@@ -145,8 +148,35 @@ class HabitAgent(Agent):
         return rng.choice(opts)
 
 
+class TreeAgent(Agent):
+    """Plays the duel tree: the equilibrium mix of the abstract state it is in, several exchanges deep."""
+    name = "tree"
+    _solved: dict = {}                                  # solving takes about a second per pair: shared
+
+    def __init__(self, depth: int = 6, discount: float = 0.75):
+        self.depth, self.discount = depth, discount
+
+    def tree(self, game: Combat):
+        from .tree import Tree
+        key = (id(game.ctx), game.names, self.depth, self.discount)
+        if key not in TreeAgent._solved:
+            t = Tree(game.ctx, *game.names)
+            t.solve(self.depth, self.discount)
+            TreeAgent._solved[key] = t
+        return TreeAgent._solved[key]
+
+    def choose(self, game, state, side, rng):
+        t = self.tree(game)
+        mix = t.policy(t.abstract(state), side)
+        opts = game.options(state, side)
+        names = [m for m in mix if m in opts]
+        if not names:
+            return rng.choice(opts)
+        return rng.choices(names, weights=[mix[m] for m in names])[0]
+
+
 AGENTS = {"random": RandomAgent, "greedy": GreedyAgent, "equilibrium": EquilibriumAgent, "reader": ReaderAgent,
-          "habit": HabitAgent}
+          "habit": HabitAgent, "tree": TreeAgent}
 
 
 def duel(game: Combat, agent_a: Agent, agent_b: Agent, seed: int, max_exchanges: int = 80,
@@ -193,5 +223,5 @@ def tournament(game: Combat, names: list[str], duels: int = 6, seed: int = 0) ->
             "seed": seed}
 
 
-__all__ = ["AGENTS", "Agent", "EquilibriumAgent", "GreedyAgent", "HabitAgent", "RandomAgent", "ReaderAgent", "duel",
-           "side_matrix", "tournament"]
+__all__ = ["AGENTS", "Agent", "EquilibriumAgent", "GreedyAgent", "HabitAgent", "RandomAgent", "ReaderAgent",
+           "TreeAgent", "duel", "side_matrix", "tournament"]

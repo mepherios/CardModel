@@ -1,0 +1,91 @@
+{
+  "blockers": [
+    "MATH_CORE.md needs the user's yes before anything existing is restructured"
+  ],
+  "branches": [
+    "claude/jolly-liskov-*",
+    "claude/compassionate-margulis-*"
+  ],
+  "category": "project",
+  "docs": [
+    "README.md",
+    "docs/AUTONOMY.md",
+    "docs/INTEGRATION.md"
+  ],
+  "done": [
+    "consolidation, knowledge layer, card language, Lean bridge",
+    "resource governor, function algebra",
+    "every session branch merged as of 7e4323a",
+    "self-run (CM38), capabilities (CM37), one program (CM39)",
+    "the live In progress page with early access (bb480fb)"
+  ],
+  "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
+  "in_progress": [
+    "law CM41: detailed project cards",
+    "docs/MATH_CORE.md"
+  ],
+  "kind": "program",
+  "left": [
+    "the semantic core migration, after the user's yes",
+    "one In progress tab after the cartridge merge",
+    "the prime ledger and Gödel vectors"
+  ],
+  "metadata": {
+    "previous_content_hash": "4ab952a99a8188d88d7744eed88ec9cb290e868e6b66c4b8ee2f6fd7482e78a2",
+    "version": "2.0.0",
+    "version_bump_reason": "major"
+  },
+  "metrics": [
+    {
+      "label": "last self-run",
+      "self": "status"
+    },
+    {
+      "label": "last verify",
+      "verify": "*"
+    },
+    {
+      "goal": "G_A4_capabilities_failing",
+      "label": "core capabilities failing"
+    }
+  ],
+  "name": "cardmodel",
+  "next_steps": [
+    "finish CM41",
+    "write MATH_CORE.md and its summary",
+    "merge the waiting branches"
+  ],
+  "order": 6,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "On main: 40 laws carried by 27 capabilities, verify passes, the self-run on every use, the live store page; docs/MATH_CORE.md is being written for the user's approval.",
+  "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
+  "tier": 1,
+  "title": "The card model",
+  "updated": "2026-10-22T00:55:00+02:00",
+  "user_actions": [
+    {
+      "action": "Read the MATH_CORE summary and say yes, or what to change",
+      "unblocks": [
+        "the semantic core migration",
+        "definition cards for every function",
+        "sessions stop adding imitation-only paths"
+      ],
+      "why": "moving from imitation (emulation, tests) to understanding (one semantic core, definitions, Gödel factors) changes how everything is built"
+    },
+    {
+      "action": "Decide what happens to claude/jolly-liskov-2d97a8",
+      "unblocks": [
+        "merging or retiring that branch"
+      ],
+      "why": "a second self-run built in parallel; its laws CM37-CM39 collide with main's"
+    }
+  ]
+}

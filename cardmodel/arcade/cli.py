@@ -5,6 +5,10 @@
   cardmodel arcade serve [--port 8770]          the content service the launcher talks to
   cardmodel arcade launcher [--install]         build Cardmodel Arcade.app (and put it in ~/Applications)
   cardmodel arcade run GAME [--frames N --shot PNG --input SCRIPT]   the latest build, natively
+  cardmodel arcade build gameboy                a console's player (system card): your cartridges play in it
+  cardmodel arcade run gameboy_player --rom PATH   a cartridge in the latest player build
+  cardmodel arcade library [--draw]             the cartridges the system cards find (--draw: their title screens)
+  cardmodel arcade library --add DIR --system gameboy   look for cartridges in DIR (--remove DIR to stop)
 
 Honest limits (L1): the launcher remembers this checkout's path (to start the service): after moving the
 repository, run `cardmodel arcade launcher --install` again.
@@ -138,9 +142,45 @@ def cmd_arcade(args) -> int:
     ctx = cli._ctx(args)
     from . import build as B
     from . import game as G
+    from . import system as S
+    if args.action == "library":
+        from . import library as L
+        if args.add or args.remove:
+            got = L.set_folder(ctx, args.system or "gameboy", args.add, args.remove)
+            print(f"{args.system or 'gameboy'} folders: {', '.join(got) or 'none'}", file=sys.stderr)
+        lib = L.scan(ctx, force=True)
+        if args.draw:
+            L.draw_covers(ctx, progress=lambda k, n, r: print(f"[{k}/{n}] {r['title']}", file=sys.stderr)
+                          if k % 50 == 0 or k == n else None)
+            lib = L.scan(ctx, force=True)
+        counts: dict = {}
+        for r in lib["roms"]:
+            key = (r["system_card"], r["system"])
+            c = counts.setdefault(key, {})
+            c[r["verdict"]["level"]] = c.get(r["verdict"]["level"], 0) + 1
+        lines = []
+        for sy in lib["systems"]:
+            lines.append(f"{sy['title']}: {'player ' + sy['player'] if sy['player'] else 'no player yet'}; "
+                         f"folders {', '.join(sy['folders'])}")
+            for sub in sy["systems"]:
+                c = counts.get((sy["id"], sub["id"]), {})
+                if c:
+                    n = sum(c.values())
+                    lines.append(f"  {sub['label']}: {n} cartridge{'' if n == 1 else 's'} "
+                                 f"({', '.join(f'{k} {v}' for k, v in sorted(c.items()))})")
+        cli._out(args, {"systems": lib["systems"], "counts": {f"{a}/{b}": v for (a, b), v in counts.items()}},
+                 "\n".join(lines))
+        return 0
     if args.action == "list":
         rows = []
-        for c in ctx.store.cards("game"):
+        for c in [*ctx.store.cards("game"), *[x for x in ctx.store.cards("system") if x.get("machine")]]:
+            if c.category == "system":
+                info = B.latest(ctx, S.arcade_id(c))
+                m = json.loads((info / "manifest.json").read_text()) if info else None
+                rows.append({"id": S.arcade_id(c), "title": c["title"], "version": c["version"],
+                             "built": None if not m else f"{m['version']}+{m['build']}",
+                             "build_due": (m or {}).get("source") != S.source_hash(ctx, c)})
+                continue
             info = B.latest(ctx, c.name)
             m = json.loads((info / "manifest.json").read_text()) if info else None
             due = (m or {}).get("source") != B.source_hash(ctx, c)
@@ -151,7 +191,9 @@ def cmd_arcade(args) -> int:
                                        for r in rows))
         return 0
     if args.action == "build":
-        info = B.build(ctx, args.target, progress=lambda s, n, m: print(f"[{s}/{n}] {m}", file=sys.stderr))
+        system = S.is_system(ctx.store, args.target) or ctx.store.get(f"system/{args.target}") is not None
+        builder = S.build if system else B.build
+        info = builder(ctx, args.target, progress=lambda s, n, m: print(f"[{s}/{n}] {m}", file=sys.stderr))
         cli._out(args, info, f"{info['title']} {info['version']} build {info['build']}: {info['size']:,} bytes in "
                              f"{info['chunks']} chunks, {len(info['media'])} store pictures, {info['seconds']} s")
         return 0
@@ -167,7 +209,10 @@ def cmd_arcade(args) -> int:
         cli._out(args, {"app": str(dest)}, str(dest))
         return 0
     if args.action == "run":
-        root = B.latest(ctx, args.target)
+        target = args.target
+        if ctx.store.get(f"system/{target}") is not None and ctx.store.get(f"game/{target}") is None:
+            target = target + S.ID_SUFFIX
+        root = B.latest(ctx, target)
         if root is None:
             print(f"error: {args.target} has no build yet (cardmodel arcade build {args.target})", file=sys.stderr)
             return 2
@@ -180,6 +225,10 @@ def cmd_arcade(args) -> int:
             cmd += ["--shot", args.shot]
         if args.input:
             cmd += ["--input", args.input]
+        if args.rom:
+            cmd += ["--rom", str(Path(args.rom).expanduser())]
+        if args.save_dir:
+            cmd += ["--save-dir", args.save_dir]
         from ..kernel import resources
         p = resources.run(cmd, timeout=24 * 3600, heavy=False)
         sys.stdout.write(p.stdout or "")
@@ -190,13 +239,19 @@ def cmd_arcade(args) -> int:
 
 def register(sub) -> None:
     s = sub.add_parser("arcade", help="games built from cards: build them natively, serve them to the launcher")
-    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run"])
+    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "library"])
     s.add_argument("target", nargs="?")
     s.add_argument("--port", type=int, default=8770)
     s.add_argument("--install", action="store_true")
     s.add_argument("--frames", type=int, default=0)
     s.add_argument("--shot")
     s.add_argument("--input")
+    s.add_argument("--rom", help="run: a cartridge for a console player")
+    s.add_argument("--save-dir", dest="save_dir", help="run: where the save lives")
+    s.add_argument("--draw", action="store_true", help="library: draw every missing title screen")
+    s.add_argument("--add", help="library: a folder to look for cartridges in")
+    s.add_argument("--remove", help="library: a folder to stop looking in")
+    s.add_argument("--system", help="library: which system card the folder is for (default gameboy)")
     s.set_defaults(fn=cmd_arcade)
 
 

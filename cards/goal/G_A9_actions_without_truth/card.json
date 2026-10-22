@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "actions_without_truth",
+  "name": "G_A9_actions_without_truth",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "Actions (implementations) that name no definition (CM44).",
+  "target": 0,
+  "tier": 0
+}

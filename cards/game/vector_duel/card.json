@@ -1,7 +1,7 @@
 {
   "about": [
     "Every attack comes from a direction. Every guard faces one. Meet a slash with the right guard just before it lands and you redirect it: its momentum turns against the attacker.",
-    "Six opponents, each built from the same move cards and the same rules. The last ones read you: they track what you lean on and answer it, and they tell you what they think you do.",
+    "Seven opponents, each built from the same move cards and the same rules. The readers track what you lean on and tell you; the Oracle plays a duel tree the model solved six exchanges deep; the Architect fights in three phases.",
     "Every number in the game is a card. The equilibria the AIs play are computed exactly by the card model, and the whole game is card-language logic compiled to native code."
   ],
   "achievements": [
@@ -54,6 +54,21 @@
       "description": "Clear the arcade ladder on hard.",
       "id": "hard_clear",
       "name": "No Mercy"
+    },
+    {
+      "description": "Land a three-hit string.",
+      "id": "string_artist",
+      "name": "Three Vectors"
+    },
+    {
+      "description": "Redirect a link of a string.",
+      "id": "string_breaker",
+      "name": "Broken String"
+    },
+    {
+      "description": "Defeat The Oracle.",
+      "id": "oracle",
+      "name": "Beyond the Tree"
     }
   ],
   "arenas": {
@@ -113,6 +128,25 @@
         "0x4A1C5A"
       ],
       "weather": "cards"
+    },
+    "orrery": {
+      "floor": [
+        "0x1C2440",
+        "0x090C16"
+      ],
+      "lines": "0x2C3C60",
+      "name": "THE ORRERY",
+      "orb": "moon",
+      "orb_col": "0xCFE4FF",
+      "ridge": [
+        "0x0E1A36",
+        "0x08101F"
+      ],
+      "sky": [
+        "0x02040E",
+        "0x16305A"
+      ],
+      "weather": "tree"
     },
     "snow": {
       "floor": [
@@ -178,6 +212,55 @@
     "format": "s16le stereo",
     "rate": 48000
   },
+  "boss": {
+    "phases": [
+      {
+        "ai": "reader",
+        "at": 100,
+        "aura": "0xC77DFF",
+        "level": 6,
+        "links": 1,
+        "music": "boss",
+        "strings": 35,
+        "subtitle": "S_PH1_SUB",
+        "tempo": 100,
+        "title": "S_PH1"
+      },
+      {
+        "ai": "tree",
+        "at": 66,
+        "aura": "0x7CFF9E",
+        "level": 7,
+        "links": 1,
+        "music": "boss",
+        "sky": [
+          "0x03140E",
+          "0x1E5A48"
+        ],
+        "strings": 65,
+        "subtitle": "S_PH2_SUB",
+        "tempo": 112,
+        "title": "S_PH2"
+      },
+      {
+        "ai": "tree",
+        "at": 33,
+        "aura": "0xFFC860",
+        "level": 9,
+        "links": 2,
+        "music": "rewrite",
+        "sky": [
+          "0x1E0408",
+          "0xB8502A"
+        ],
+        "strings": 95,
+        "subtitle": "S_PH3_SUB",
+        "tempo": 100,
+        "title": "S_PH3",
+        "weather": "embers"
+      }
+    ]
+  },
   "category": "game",
   "changelog": [
     {
@@ -209,9 +292,30 @@
       ],
       "title": "Six arenas and The Architect",
       "version": "0.3.0"
+    },
+    {
+      "notes": [
+        "Strings: when a cut connects, hit or blocked, attack again from a new side to cancel its recovery into the next link. Each link is a chain card; every string ends within three hits and every link can still be guarded (design laws GL9 and GL10).",
+        "The Oracle, a new stage in its own arena: it plays the duel tree, solved by backward induction six exchanges deep for every distance, frame advantage and posture, and the strings the model says are worth it.",
+        "The Architect now fights in three phases written on the game card: it reads you, then plays the tree, then turns every cut into a string, each with its own sky, music and colour.",
+        "Redirect a link to break the string. Three new achievements. Training: a dummy that attacks in strings, and the cancel window of your last move in the frame data."
+      ],
+      "title": "Strings, the Oracle and the Architect's phases",
+      "version": "0.4.0"
     }
   ],
   "developer": "the card model",
+  "duel_tree": {
+    "advantage": [
+      -14,
+      -7,
+      0,
+      7,
+      14
+    ],
+    "depth": 6,
+    "discount": 0.75
+  },
   "entry": {
     "frame": "game_frame",
     "fullscreen": "fullscreen_req",
@@ -385,11 +489,19 @@
       "name": "S_AI_EQUILIBRIUM"
     },
     {
+      "ai": "tree",
+      "arena": "orrery",
+      "fighter": "duelist",
+      "intro": "S_IN_6",
+      "level": 6,
+      "name": "S_AI_TREE"
+    },
+    {
       "ai": "boss",
       "arena": "hall",
       "fighter": "warden",
-      "intro": "S_IN_6",
-      "level": 6,
+      "intro": "S_IN_7",
+      "level": 8,
       "name": "S_AI_BOSS"
     }
   ],
@@ -431,6 +543,13 @@
       "drums": "k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h . k . h . s . h h",
       "lead": "C5 . E5 . G5 . E5 . C5 . G4 . A4 . B4 . F5 . E5 . D5 . C5 . D5 . . . G4 . . . A4 . C5 . E5 . C5 . F5 . E5 . D5 . C5 . D5 . . . G5 . . . C5 . . . . . . .",
       "name": "credits"
+    },
+    {
+      "bass": "D2 D2 D3 D2 D2 D2 C3 D2 D2 D2 D3 D2 D2 D2 C3 D2 Bb1 Bb1 Bb2 Bb1 Bb1 Bb1 A1 Bb1 Bb1 Bb1 Bb2 Bb1 Bb1 Bb1 A1 Bb1 G1 G1 G2 G1 G1 G1 F1 G1 G1 G1 G2 G1 G1 G1 F1 G1 A1 A1 A2 A1 A1 A1 C#2 A1 A1 A1 A2 A1 A1 A1 C#2 A1",
+      "bpm": 156,
+      "drums": "k h s h k k s h k h s h k k s s k h s h k k s h k h s h k k s s k h s h k k s h k h s h k k s s k h s h k k s h k s k s s s s s",
+      "lead": "D5 . D5 Eb5 . D5 C5 . A4 . . . Bb4 . C5 . D5 . D5 Eb5 . F5 Eb5 . D5 . . . C5 . Bb4 . A4 . A4 Bb4 . C5 Bb4 . A4 . G4 . A4 . . . D5 . F5 . A5 . G5 . F5 . Eb5 . D5 . C#5 .",
+      "name": "rewrite"
     }
   ],
   "name": "vector_duel",
@@ -450,17 +569,18 @@
     "scale": 3,
     "width": 480
   },
-  "short_description": "Read the vector, not the button. A sword duel decided by directions, timing and reads, where an AI learns what you lean on.",
+  "short_description": "Read the vector, not the button. A sword duel decided by directions, timing, strings and reads, against AIs the card model computed.",
   "statement": "A one-on-one sword duel where every attack is a vector and every answer is a vector too: read the direction, guard it, redirect it. The rules are the Vector Counter System's cards (moves, fighters, the combat kernel); the game itself is card-language logic compiled to native code.",
   "strings": {
     "S_ACH": "ACHIEVEMENT UNLOCKED",
     "S_ACTIVE": "ACTIVE",
-    "S_ADAPTS": "THE ARCHITECT ADAPTS",
+    "S_AHEAD": "EXCHANGES AHEAD",
     "S_AI_BOSS": "THE ARCHITECT",
     "S_AI_EQUILIBRIUM": "THE BALANCE",
     "S_AI_GREEDY": "OPPORTUNIST",
     "S_AI_HABIT": "CREATURE OF HABIT",
     "S_AI_READER": "THE READER",
+    "S_AI_TREE": "THE ORACLE",
     "S_ARCADE": "ARCADE",
     "S_BACK": "BACK",
     "S_BEST": "BEST",
@@ -473,6 +593,7 @@
     "S_C3": "EVERY MOVE, FIGHTER AND RULE IS A CARD",
     "S_C4": "EQUILIBRIA COMPUTED EXACTLY BY THE MODEL",
     "S_C5": "COMPILED TO NATIVE CODE THROUGH THE C CARD",
+    "S_CANCEL": "CANCEL",
     "S_CAUGHT": "CAUGHT!",
     "S_CHOOSE": "CHOOSE YOUR FIGHTER",
     "S_CLEAR": "ARCADE CLEAR",
@@ -501,6 +622,7 @@
     "S_D_READER": "READS YOU",
     "S_D_RIGHT": "RIGHT",
     "S_D_RISING": "RISING",
+    "S_D_STRINGS": "STRINGS",
     "S_D_THRUST": "THRUST",
     "S_EASY": "EASY",
     "S_EVADED": "EVADED",
@@ -511,26 +633,31 @@
     "S_GRABBED": "GRABBED",
     "S_HARD": "HARD",
     "S_HIT": "HIT",
+    "S_HITS": "HITS",
     "S_HOW": "HOW TO DUEL",
     "S_HOW1": "A RED ARC SHOWS WHERE THE CUT COMES FROM",
     "S_HOW2": "HOLD L AND PRESS THAT DIRECTION TO GUARD IT",
     "S_HOW3": "GUARD AS THE ARC FLASHES WHITE: REDIRECT!",
     "S_HOW4": "J + DIRECTION ATTACKS. K HEAVY, U FEINT, SPACE EVADES",
+    "S_HOW5": "AS A CUT CONNECTS, ATTACK AGAIN FROM A NEW SIDE: A STRING",
     "S_HP": "HP",
     "S_IN_1": "THE BRUTE SWINGS FROM ABOVE. GUARD HIGH, CUT FROM THE SIDE.",
     "S_IN_2": "THE OPPORTUNIST PUNISHES EVERY MISS. WAIT, THEN ANSWER.",
     "S_IN_3": "THE READER COUNTS WHAT YOU DO. VARY IT.",
     "S_IN_4": "A READER WITH A HEAVY HAND. ITS OVERHEAD HAS ARMOUR.",
     "S_IN_5": "THE BALANCE PLAYS THE EQUILIBRIUM: THERE IS NOTHING TO READ.",
-    "S_IN_6": "THE ARCHITECT WROTE THE CARDS. IT ADAPTS WHEN IT LOSES.",
+    "S_IN_6": "THE ORACLE SOLVED THE DUEL {TREE_DEPTH} EXCHANGES DEEP. SURPRISE IT.",
+    "S_IN_7": "THE ARCHITECT WROTE THE CARDS. IT FIGHTS IN THREE PHASES.",
     "S_KO": "K.O.",
     "S_K_ATK": "J: ATTACK  K: HEAVY  U: FEINT",
     "S_K_DEF": "L: GUARD (HOLD)  SPACE: EVADE  I: CATCH",
     "S_K_DIR": "W A S D / ARROWS: VECTOR AND WALK",
+    "S_K_STR": "STRINGS: J + A NEW DIRECTION AS YOUR CUT CONNECTS",
     "S_K_SYS": "ESC: PAUSE  F: FULL SCREEN",
     "S_K_TIP": "GUARD THE SIDE THE RED VECTOR SHOWS. JUST BEFORE IT LANDS: REDIRECT.",
     "S_LAST": "LAST MOVE",
     "S_LEARNED": "IT LEARNED: YOU ATTACK",
+    "S_LINK": "LINK",
     "S_MADE": "MADE WITH THE CARD MODEL",
     "S_MOVES": "MOVE LIST",
     "S_MUSIC": "MUSIC",
@@ -554,6 +681,12 @@
     "S_P2_KEYS": "P2: ARROWS + 1 2 3 0 (NUMPAD)",
     "S_PAUSED": "PAUSED",
     "S_PERFECT": "PERFECT",
+    "S_PH1": "THE ARCHITECT",
+    "S_PH1_SUB": "IT READS WHAT YOU DO",
+    "S_PH2": "PHASE II: THE TREE",
+    "S_PH2_SUB": "IT THINKS {TREE_DEPTH} EXCHANGES AHEAD",
+    "S_PH3": "PHASE III: THE REWRITE",
+    "S_PH3_SUB": "EVERY CUT BECOMES A STRING",
     "S_PIERCE": "PIERCED",
     "S_POSTURE": "POSTURE",
     "S_PRESS": "PRESS J OR ENTER",
@@ -571,8 +704,10 @@
     "S_STAMINA": "STAMINA",
     "S_STARTUP": "STARTUP",
     "S_STATS": "REDIRECTS   DEFLECTS   HITS",
+    "S_STRING_BROKEN": "STRING BROKEN!",
     "S_TAGLINE": "READ THE VECTOR, NOT THE BUTTON",
     "S_THANKS": "THANK YOU FOR PLAYING",
+    "S_THINKS": "IT THINKS",
     "S_TIME": "TIME",
     "S_TITLE": "VECTOR DUEL",
     "S_TO_TITLE": "TITLE SCREEN",
@@ -596,5 +731,5 @@
   ],
   "tier": 1,
   "title": "Vector Duel",
-  "version": "0.3.0"
+  "version": "0.4.0"
 }
