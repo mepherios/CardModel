@@ -286,6 +286,33 @@ class PlayerPackage(unittest.TestCase):
         self.assertEqual((w, h), (160, 144))
         self.assertEqual(rgb, ref.rgb(), "the native package shows what the module computes")
 
+    def test_the_launchers_controls_reach_the_player(self):
+        """The launcher passes a program's controls (its Controls page) as --controls FILE; the player's window then
+        maps those keys and controller buttons instead of the system card's, and keeps the card's without one."""
+        from cardmodel.kernel import resources
+        root = B.latest(self.ctx, "gameboy_player")
+        man = json.loads((root / "manifest.json").read_text())
+        exe = str(root / "content" / man["executable"])
+        bits = S.system_card(self.ctx.store, "gameboy")["input"]["bits"]
+        bit = lambda name: 1 << bits.index(name)  # noqa: E731
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_controls_"))
+        (d / "test.gb").write_bytes(cart(self.ctx))           # a player starts on a cartridge
+
+        def dump(*extra):
+            p = resources.run([exe, "--rom", str(d / "test.gb"), "--save-dir", str(d / "save"), "--dump-controls",
+                               *extra], timeout=60, heavy=False)
+            self.assertEqual(p.returncode, 0, p.stderr)
+            return json.loads(p.stdout.strip().splitlines()[-1])
+        own = dump()
+        self.assertEqual(own["keys"]["x"], bit("a"), "the card's own: X is the A button")
+        self.assertEqual(own["gamepad"]["start"], "menu")
+        (d / "c.json").write_text(json.dumps({"keys": {"a": ["space"], "start": ["shift", "1"]},
+                                              "gamepad": {"a": "rightTrigger"}}))
+        mine = dump("--controls", str(d / "c.json"))
+        self.assertEqual(mine["keys"], {"space": bit("a"), "shift": bit("start"), "1": bit("start")})
+        self.assertEqual(mine["gamepad"], {"a": "rightTrigger"})
+        self.assertEqual(mine["keys2"], own["keys2"], "a section the file leaves out stays the card's")
+
 
 
 @unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
@@ -326,6 +353,24 @@ class CartridgesThroughTheStore(unittest.TestCase):
         shutil.rmtree(B.ROOT_OVERRIDE, ignore_errors=True)
         B.ROOT_OVERRIDE, L.SETTINGS_OVERRIDE = cls.old
         L.scan(cls.ctx, force=True)
+
+    def test_the_service_looks_at_every_cartridge_itself(self):
+        """The service's background look (draw_covers) surveyed every Game Boy cartridge the way `cardmodel machine
+        survey` does and kept each verdict by SHA-1 beside the library, so none is left "not checked yet"."""
+        from cardmodel.machine import survey as SV
+        own = L.own_verdicts(self.ctx)
+        rows = [r for r in L.scan(self.ctx, force=True)["roms"] if r["system_card"] == "gameboy"]
+        self.assertEqual(len(rows), 3)
+        for r in rows:
+            self.assertIn(r["sha1"], own)
+            self.assertNotEqual(r["verdict"]["level"], "unknown", r)
+        m = N.load(self.ctx, S.Bd.module(self.ctx, "gameboy"), "native", fresh=True)
+        r = next(x for x in rows if x["title"] == "Checker Board")
+        want = SV.boot_one(self.ctx, m, Path(r["path"]), L.VERDICT_FRAMES)
+        self.assertEqual(own[r["sha1"]]["status"], want["status"])
+        self.assertFalse(any(L.needs_look(self.ctx, x, L.verdict_rows(self.ctx)[0]) for x in rows))
+        self.assertEqual({own[x["sha1"]]["machine"] for x in rows}, {L.machine_mark(self.ctx)},
+                         "each verdict names the machine that made it: a better machine looks again")
 
     def test_every_listed_cartridge_launches_through_the_store(self):
         L.scan(self.ctx, force=True)

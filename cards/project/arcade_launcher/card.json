@@ -1,0 +1,68 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/sad-sanderson-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/ARCADE.md",
+    "docs/STORE.md"
+  ],
+  "done": [
+    "store, library, downloads, verify, versions and branches, In progress",
+    "every cartridge in your folders listed and launched through the store (972 of 972, no failures)",
+    "the service surveys each cartridge itself; pages rebuilt only on change and reloaded after an update",
+    "controls per program or cartridge (keyboard and controller), passed to the game as --controls",
+    "controller setup with a live test, and the launcher driven with a controller"
+  ],
+  "goal": "Every game the card model runs installs, updates and plays from one launcher, with your own keys and any controller, on every device you have.",
+  "in_progress": [
+    "the iPhone and iPad launcher (its own session: Cardmodel Arcade on iPhone and iPad)"
+  ],
+  "kind": "program",
+  "left": [
+    "controller navigation tried with a real controller",
+    "player profiles (controls per person)"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "arcade_launcher",
+  "next_steps": [
+    "merge claude/sad-sanderson-482207 into main",
+    "reinstall the launcher from main and update every program (the shell changed: controls)",
+    "per docs/MATH_CORE.md: the launcher stays a shell around cards; what it decides about a game (verdicts, controls) is data the cards and the survey give, checked by witnesses"
+  ],
+  "order": 15,
+  "owner": {
+    "name": "cardmodel-games",
+    "session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b"
+  },
+  "paths": [
+    "cards/app/arcade",
+    "cardmodel/arcade/server.py",
+    "cardmodel/arcade/client.py",
+    "cardmodel/arcade/library.py",
+    "cards/platform/macos/GameShell.swift"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b"
+  },
+  "standing": "All 972 of your cartridges launch through the installed app (971 in the Game Boy Player, Pokemon Diamond in the DS Player). Controls per game, controller setup, the library's own verdicts and the page fixes are on claude/sad-sanderson-482207, not yet in the installed launcher.",
+  "statement": "The Steam-like launcher: store, library, downloads and updates for everything the card model plays natively, with the player's own controls and any controller.",
+  "tier": 1,
+  "title": "Cardmodel Arcade",
+  "updated": "2026-10-22T17:06:01+02:00",
+  "user_actions": [
+    {
+      "action": "Approve merging claude/sad-sanderson-482207 into main",
+      "unblocks": [
+        "configurable controls in the app",
+        "controller setup",
+        "cartridge verdicts"
+      ],
+      "why": "it brings controls per game, controller setup, every cartridge's verdict and the page fixes into your installed launcher"
+    }
+  ]
+}

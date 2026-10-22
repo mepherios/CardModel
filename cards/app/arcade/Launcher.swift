@@ -20,6 +20,9 @@ let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .u
     .appendingPathComponent("Cardmodel Arcade", isDirectory: true)
 let libraryDir = support.appendingPathComponent("library", isDirectory: true)
 let savesDir = support.appendingPathComponent("saves", isDirectory: true)
+// the player's own controls per program (or per cartridge): what the Controls page writes, passed to the game
+let controlsDir = support.appendingPathComponent("controls", isDirectory: true)
+func controlsFile(_ id: String) -> URL { controlsDir.appendingPathComponent(id + ".json") }
 let stateFile = support.appendingPathComponent("launcher.json")
 
 struct Installed: Codable {
@@ -231,7 +234,15 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         for id in running.keys where state.library[id] == nil && carts[id] == nil {
             carts[id] = ["playSeconds": 0, "lastPlayed": Date().timeIntervalSince1970, "running": true]
         }
-        return ["library": lib, "played": carts, "settings": ["bandwidth": state.settings.bandwidth, "user": state.settings.user],
+        var controls: [String: Any] = [:]
+        for f in (try? FileManager.default.contentsOfDirectory(at: controlsDir, includingPropertiesForKeys: nil)) ?? []
+            where f.pathExtension == "json" {
+            if let d = try? Data(contentsOf: f), let o = try? JSONSerialization.jsonObject(with: d) {
+                controls[f.deletingPathExtension().lastPathComponent] = o
+            }
+        }
+        return ["library": lib, "played": carts, "controls": controls,
+                "settings": ["bandwidth": state.settings.bandwidth, "user": state.settings.user],
                 "downloading": downloadId as Any, "paused": paused, "native": true,
                 "libraryPath": libraryDir.path]
     }
@@ -275,6 +286,16 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         case "uninstall": uninstall(id)
         case "reveal":
             NSWorkspace.shared.activateFileViewerSelecting([installDir(id)])
+        case "controls":
+            // {id, controls: {keys, keys2, gamepad}} keeps them; {id} without controls goes back to the game's own
+            try? FileManager.default.createDirectory(at: controlsDir, withIntermediateDirectories: true)
+            if let c = body["controls"] as? [String: Any], !id.isEmpty,
+               let d = try? JSONSerialization.data(withJSONObject: c, options: [.sortedKeys]) {
+                try? d.write(to: controlsFile(id), options: .atomic)
+            } else if !id.isEmpty {
+                try? FileManager.default.removeItem(at: controlsFile(id))
+            }
+            emit(["type": "state", "state": snapshot()])
         case "settings":
             if let b = body["bandwidth"] as? Int { state.settings.bandwidth = b }
             save()
@@ -466,7 +487,7 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         let exe = installDir(id).appendingPathComponent(g.executable)
         let p = Process()
         p.executableURL = exe
-        p.arguments = ["--save-dir", savesDir.appendingPathComponent(id).path]
+        p.arguments = ["--save-dir", savesDir.appendingPathComponent(id).path] + controlsArgs([id])
         let started = Date().timeIntervalSince1970
         p.terminationHandler = { [weak self] _ in
             DispatchQueue.main.async {
@@ -493,6 +514,14 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
     }
 }
 
+// the first of these programs (a cartridge, then its player) with its own controls: the shell reads that file
+func controlsArgs(_ ids: [String]) -> [String] {
+    for id in ids where FileManager.default.fileExists(atPath: controlsFile(id).path) {
+        return ["--controls", controlsFile(id).path]
+    }
+    return []
+}
+
 extension Arcade {
     // a cartridge: the installed console player, started on the file where it is
     func playRom(_ id: String, player: String, path: String, title: String) {
@@ -506,6 +535,7 @@ extension Arcade {
         let p = Process()
         p.executableURL = installDir(player).appendingPathComponent(g.executable)
         p.arguments = ["--rom", path, "--title", title, "--save-dir", savesDir.appendingPathComponent(id).path]
+            + controlsArgs([id, player])
         let started = Date().timeIntervalSince1970
         p.terminationHandler = { [weak self] _ in
             DispatchQueue.main.async {

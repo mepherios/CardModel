@@ -2,6 +2,11 @@
 is (a .zip in memory, nothing copied), with its header, the ROM survey's verdict and a title-screen picture the
 machine draws headless (cached under state/arcade/covers/). The launcher starts the system's player on the file.
 
+The service looks at every cartridge itself, in the background: the title-screen picture, and the survey's verdict
+for it (``machine/survey.boot_one``: the same frames, scripted taps and classification as `cardmodel machine
+survey`), kept by SHA-1 in state/arcade/verdicts.json. So a cartridge added to a folder gets a verdict without
+anyone running the survey; a full survey of the checkout fills in what the service has not looked at yet.
+
     GET  /api/library              systems and cartridges (title, system, header, verdict, cover, path)
     POST /api/library/scan         look through the folders again
     GET  /api/cover/ID.png         a cartridge's picture, once drawn
@@ -15,8 +20,9 @@ without (the DS) is listed with what the card model can do with it so far. A car
 file name when it has one (region tags in parentheses), else the title in its cartridge header (``entry_title``).
 `cardmodel arcade check` launches every listed cartridge through the store (arcade/client.py).
 
-Honest limits (L1): the picture is a frame of the first ten seconds picked by colour, not a chosen shot; the first scan of a
-big folder takes a minute to draw every picture (the service draws in the background and the page fills in).
+Honest limits (L1): the picture is a frame of the first ten seconds picked by colour, not a chosen shot; the first
+look at a big folder takes a few minutes (pictures and verdicts come in while the page shows them); "runs" means
+the survey saw it boot and animate under scripted taps, not that the game can be finished.
 """
 from __future__ import annotations
 
@@ -34,6 +40,8 @@ from . import system as S
 
 COVER_FRAMES = 600                     # ten seconds, no buttons: intros and title screens
 COVER_EVERY = 30
+VERDICT_FRAMES = 1200                  # the survey's own run (twenty seconds with its scripted taps)
+VERDICT_KEEP = ("status", "reason", "mbc", "model", "distinct_frames", "input", "unsupported_mapper", "frames")
 VERDICTS = {
     "runs": ("verified", "Boots and runs: the ROM survey saw it draw and animate"),
     "static": ("playable", "Boots to a still title screen under the survey's scripted input"),
@@ -128,9 +136,44 @@ def read_cartridge(path: Path, exts) -> bytes:
     return path.read_bytes()
 
 
-def survey_rows(ctx) -> dict:
+def verdicts_path(ctx) -> Path:
+    return state_dir(ctx) / "verdicts.json"
+
+
+def own_verdicts(ctx) -> dict:
+    """The verdicts the service found itself, by SHA-1 (see the module's docstring)."""
+    try:
+        return json.loads(verdicts_path(ctx).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def machine_mark(ctx) -> str:
+    """Which Game Boy machine a verdict came from: the hash of its module (its cards, the hardware and mapper cards
+    included), so a better machine looks at every cartridge again."""
+    from ..machine import build as Bd
+    try:
+        return str(Bd.module(ctx, "gameboy").get("hash") or "")
+    except (KeyError, OSError, ValueError):
+        return ""
+
+
+def verdict_rows(ctx) -> tuple[dict, dict]:
+    """(current, shown) survey rows by SHA-1: the verdicts of the machine that runs now (the service's own look,
+    and a full survey of this checkout made with the same machine), and what the library shows meanwhile (any
+    verdict at all, the current ones first)."""
+    mark = machine_mark(ctx)
     sv = ctx.load_state("emu_survey") or {}
-    return {r.get("sha1"): r for r in sv.get("rows", []) if r.get("sha1")}
+    survey = {r.get("sha1"): r for r in sv.get("rows", []) if r.get("sha1")}
+    own = own_verdicts(ctx)
+    current = dict(survey) if mark and sv.get("machine") == mark else {}
+    current.update({k: v for k, v in own.items() if mark and v.get("machine") == mark})
+    return current, {**survey, **own, **current}
+
+
+def survey_rows(ctx) -> dict:
+    """What the library shows for each cartridge (verdict_rows)."""
+    return verdict_rows(ctx)[1]
 
 
 def nds_status(ctx) -> dict:
@@ -283,28 +326,57 @@ def draw_cover(ctx, machine, path: Path) -> bytes | None:
     return G.png([f for n, f in seen if 2 * n >= top][-1])
 
 
+def needs_look(ctx, r: dict, known: dict) -> bool:
+    """A Game Boy cartridge the service has not looked at yet: no picture, or no verdict of the machine that runs
+    now (``known``: verdict_rows' current)."""
+    return r.get("system_card") == "gameboy" and (not cover_path(ctx, r["id"]).is_file() or r.get("sha1") not in known)
+
+
+def _write_verdicts(ctx, own: dict) -> None:
+    p = verdicts_path(ctx)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_name(f".{p.name}.tmp")
+    tmp.write_text(json.dumps(own, sort_keys=True), encoding="utf-8")
+    tmp.replace(p)
+
+
 def draw_covers(ctx, progress=None) -> int:
-    """Draw every missing picture (one machine, reset per cartridge). Returns how many were drawn."""
+    """Look at every cartridge not looked at yet (one machine, reset per cartridge): draw its picture, and survey it
+    when no survey has. Returns how many were looked at. The page sees the verdicts as they come (every 25)."""
     from ..kernel import resources
     from ..machine import build as Bd
     from ..machine import native as N
+    from ..machine import survey as SV
     lib = scan(ctx)
-    todo = [r for r in lib["roms"] if r.get("system_card") == "gameboy" and not cover_path(ctx, r["id"]).is_file()]
+    known = verdict_rows(ctx)[0]
+    own = own_verdicts(ctx)
+    mark = machine_mark(ctx)
+    todo = [r for r in lib["roms"] if needs_look(ctx, r, known)]
     _state.update(drawing=True, drawn=0, to_draw=len(todo))
     machine = N.load(ctx, Bd.module(ctx, "gameboy"), "native")
     n = 0
     try:
         for r in todo:
             resources.guard("covers")
-            png = draw_cover(ctx, machine, Path(r["path"]))
             p = cover_path(ctx, r["id"])
-            p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_bytes(png if png is not None else b"")
+            if not p.is_file():
+                png = draw_cover(ctx, machine, Path(r["path"]))
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(png if png is not None else b"")
+            if r.get("sha1") not in known:
+                row = SV.boot_one(ctx, machine, Path(r["path"]), VERDICT_FRAMES)
+                own[r["sha1"]] = {"sha1": r["sha1"], "looked": round(time.time()), "machine": mark,
+                                  **{k: row.get(k) for k in VERDICT_KEEP if k in row}}
             n += 1
             _state["drawn"] = n
+            if n % 25 == 0:
+                _write_verdicts(ctx, own)
+                with _lock:
+                    _state["scan"] = None              # the next listing shows what came in
             if progress:
                 progress(n, len(todo), r)
     finally:
+        _write_verdicts(ctx, own)
         _state["drawing"] = False
         with _lock:
             _state["scan"] = None
@@ -342,7 +414,8 @@ def route(handler, method: str, parts: list[str]) -> bool:
         return False
     if parts == ["api", "library"]:
         lib = scan(ctx)
-        if any(not r.get("cover_drawn") for r in lib["roms"] if r.get("system_card") == "gameboy"):
+        known = verdict_rows(ctx)[0]
+        if any(needs_look(ctx, r, known) for r in lib["roms"]):
             start_drawing(ctx)
         lib = dict(lib, drawing={"busy": _state["drawing"], "drawn": _state["drawn"], "of": _state["to_draw"]})
         handler._json(lib)
@@ -362,5 +435,5 @@ def route(handler, method: str, parts: list[str]) -> bool:
     return False
 
 
-__all__ = ["cover", "display_title", "draw_covers", "entry_title", "read_cartridge", "route", "scan", "start_drawing",
-           "systems"]
+__all__ = ["cover", "display_title", "draw_covers", "entry_title", "machine_mark", "needs_look", "own_verdicts",
+           "read_cartridge", "route", "scan", "start_drawing", "survey_rows", "systems", "verdict_rows"]

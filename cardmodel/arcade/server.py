@@ -8,6 +8,7 @@
     GET  /chunk/SHA256[?rate=B]          one chunk (content-addressed), at most B bytes a second when asked
     GET  /media/ID/BUILD/FILE            store and library pictures (drawn by the game)
     GET  /ui/...                         the launcher's pages (the app card's ui folder)
+    GET  /api/status                     alive, and ``ui``: a hash of those pages (a page that sees it change reloads)
     GET  /api/library, /api/cover/ID.png, POST /api/library/scan   the user's cartridges (library.py)
     GET  /api/work, /api/work/NAME/commit/HASH                     every session's branch (work.py)
     GET  /api/dev                        everything in progress: projects, activity, branch versions (hub.py)
@@ -35,6 +36,7 @@ restart of the service.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import mimetypes
 import re
@@ -56,6 +58,19 @@ _lock = threading.Lock()
 _elock = threading.Lock()
 _seen = {"mark": None}
 WATCH = ("game", "system", "platform", "app", "asset", "move", "fighter", "payoff", "machine", "hardware", "isa")
+
+
+def ui_hash(ui_dir: Path | None) -> str:
+    """A hash of the launcher's pages as served now: an open page compares it with the one it loaded under, so a
+    reinstalled launcher or a service restarted from another checkout never leaves old pages on screen."""
+    if ui_dir is None or not ui_dir.is_dir():
+        return ""
+    h = hashlib.sha256()
+    for f in sorted(ui_dir.rglob("*")):
+        if f.is_file():
+            st = f.stat()
+            h.update(f"{f.relative_to(ui_dir)}|{st.st_size}|{st.st_mtime_ns}".encode())
+    return h.hexdigest()[:16]
 
 
 def fresh(ctx) -> None:
@@ -117,6 +132,8 @@ def _entry(gid: str, kind: str, system: str | None, card, info: dict | None, wt:
         media = {m.rsplit(".", 1)[0]: f"/media/{gid}/{build_dir}/{m}{q}" for m in info.get("media", [])}
     out = {
         "id": gid, "kind": kind, "system": system, "controls": card.get("controls"),
+        "input": {k: (card.get("input") or {}).get(k) for k in ("bits", "keys", "keys2", "gamepad")}
+                 if card.get("input") else None,
         "title": card.get("title", gid), "version": card.get("version", "0"), "developer": card.get("developer"),
         "genre": card.get("genre", []), "tags": card.get("tags", []),
         "short_description": card.get("short_description", ""),
@@ -449,7 +466,8 @@ class Handler(BaseHTTPRequestHandler):
                 fresh(ctx)
         try:
             if parts == ["api", "status"]:
-                return self._json({"ok": True, "service": self.server_version, "time": time.time()})
+                return self._json({"ok": True, "service": self.server_version, "time": time.time(),
+                                   "ui": ui_hash(self.ui_dir)})
             if parts == ["api", "pair"]:                  # who is asking: a paired device's name, or this Mac
                 return self._json({"device": P.device(ctx, P.token_of(self.headers)) or "this Mac"})
             branch = (q.get("branch") or [""])[0]
