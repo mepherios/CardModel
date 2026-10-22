@@ -442,7 +442,8 @@ class Handler(BaseHTTPRequestHandler):
                 if branch:
                     return self._json(start_branch_build(self.ctx, parts[2], branch))
                 card_for(self.ctx, parts[2])
-                return self._json(start_build(self.ctx, parts[2], requested_platform(self, q)))
+                pf = requested_platform(self, q)          # another platform's build; else the program's own
+                return self._json(start_build(self.ctx, parts[2], pf) if pf else start_build(self.ctx, parts[2]))
             except KeyError:
                 return self._json({"error": "no such game"}, 404)
             except B.BuildError as exc:
