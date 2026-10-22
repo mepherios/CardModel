@@ -11,8 +11,12 @@ REACTION frames (the tell is readable), timing its guard or evade to the shown a
 be deflected or redirected by the right *vector*, fast ones only blocked or evaded raw, and feints exploit
 the reaction by changing direction and timing after the tell.
 
-Honest limits (L1): distance is three bands; movement inside an exchange is one band per step; there are
-no multi-hit strings or projectiles yet; values are integers (deterministic, replayable).
+Strings are chain cards (one link each: an attack that connected cancels its recovery into the next); the
+exchange keeps one move per side, and ``analysis`` plays a link as the next exchange, started early by the
+recovery it cancels.
+
+Honest limits (L1): distance is three bands; movement inside an exchange is one band per step; no
+projectiles; values are integers (deterministic, replayable).
 """
 from __future__ import annotations
 
@@ -72,6 +76,7 @@ class Combat:
         self.k = load_kernel(ctx)
         self.moves = {c.name: dict(c) for c in ctx.store.cards("move")}
         self.fighters = {c.name: dict(c) for c in ctx.store.cards("fighter")}
+        self.chains = {c.name: dict(c) for c in ctx.store.cards("chain")}
         pay = ctx.store.get("payoff/default")
         self.w = dict(pay) if pay else {}
         self.reaction = int(self.w.get("reaction", 12))
@@ -340,6 +345,19 @@ class Combat:
         v += w.get("bank", 0.5) * ((me_a.bank - me_b.bank) - (op_a.bank - op_b.bank))
         v += w.get("stamina", 0.05) * ((me_a.stamina - me_b.stamina) - (op_a.stamina - op_b.stamina))
         for f, sign in ((op_a, 1), (me_a, -1)):
+            if f.stance == "broken":
+                v += sign * w.get("broken", 25.0)
+            if f.stance == "recoil":
+                v += sign * w.get("recoil", 4.0)
+        return round(v, 6)
+
+    def position(self, after: State, side: str = "a") -> float:
+        """The part of ``value`` that is where the exchange left the fighters (frame advantage, forced stances),
+        not what it changed: the leaf estimate a deeper search replaces with what follows."""
+        w = self.w
+        me, op = (after.a, after.b) if side == "a" else (after.b, after.a)
+        v = w.get("advantage", 0.6) * (after.advantage if side == "a" else -after.advantage)
+        for f, sign in ((op, 1), (me, -1)):
             if f.stance == "broken":
                 v += sign * w.get("broken", 25.0)
             if f.stance == "recoil":

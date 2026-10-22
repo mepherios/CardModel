@@ -82,6 +82,10 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   kernel), compiled through the C card; arcade ladder, training, versus, options, saves, achievements (CM35).
 * 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
   and the arcade service that builds games from their cards into depots of checked chunks.
+* 🔵 **Vector Duel 0.4.0** (shipped as a launcher update): multi-hit strings as chain cards with two design laws
+  (GL9 strings end, GL10 every link is answerable), the duel-tree AI (`game/tree.py`: backward induction six
+  exchanges deep over abstract states, string sub-games after every connect) as a new stage, the Oracle, and a
+  boss whose three phases are written on the game card. Impacts are now judged after both fighters move.
 
 ## Done (2026-10-21, fifth build: the model runs itself)
 
@@ -97,7 +101,7 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 ## Done (2026-10-22, the self-run's deep checks and the store end to end)
 
 * 🔵 **Deep checks as self-run steps**: `law_witnesses` runs every law card's witness test in a child process with
-  the cycle's seed (G_A9); `store` launches every catalogue item through the store's own protocol (checked
+  the cycle's seed (G_A10); `store` launches every catalogue item through the store's own protocol (checked
   download, verify, a damaged file repaired, a native headless run; `cardmodel arcade check`, CM42, G_S1);
   `tests` runs the whole suite weekly. Every step runs under a deadline, so a step that does not return is stopped
   and reported instead of holding the cycle.
@@ -131,8 +135,8 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 ## Arcade: next
 
-* 🟢 **More of the game**: duel-tree AI (several exchanges deep), multi-hit strings, bosses with phase stances,
-  the systemic world as a campaign map.
+* 🟢 **More of the game**: weapons as move sets, strings inside the exchange model itself, the systemic world as a
+  campaign map.
 * 🟢 **The Game Boy library in the launcher**: the same native shell runs a machine module (same interface), so
   each ROM in the collection can be a library entry built from the machine cards.
 * 🟢 **Other platforms**: a platform card per OS (a shell and a bundle layout each).
@@ -190,9 +194,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **Crypto atoms without third-party code.** Pure-Python XChaCha20-Poly1305 (HChaCha20 + ChaCha20-Poly1305) and
   AES-GCM, so each of Ting's atoms has two runnable stdlib forms.
 
-* 🟢 **Game, next design steps.** Multi-hit strings (cancel windows as move-card edges), weapon move sets,
-  bosses as fighter cards with phase stances, a duel-tree AI (several exchanges deep), the Unreal module around
-  `game kernel --lang cpp`, and the story on the world's factions, memory and standing.
+* 🟢 **Game, next design steps.** Weapon move sets, the Unreal module around `game kernel --lang cpp`, and the
+  story on the world's factions, memory and standing. (Strings, the duel tree and boss phases shipped in Vector
+  Duel 0.4.0.)
 * 🟢 **Lean fragment.** `∃`, `Int.gcd`/`emod` lemmas with casts, Bool lemmas; Mathlib projects when present
   (probe a lakefile), which would turn many "witnessed" laws into "proved".
 * 🟢 **Logic.** Function symbols (lists, trees as terms) with a depth budget; magic-set rewriting for

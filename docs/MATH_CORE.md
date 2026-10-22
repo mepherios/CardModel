@@ -1,8 +1,13 @@
 # MATH_CORE: the card model as mathematics
 
-**Status: a proposal waiting for the user's yes.** Nothing that exists is restructured until then. The
-foundation work in section 6 (phase 0) adds new pieces beside the old ones and changes nothing, so it may start
-now. The center of the design is already in GOALS.md ("What the card model is").
+**Status: approved by the user on 2026-10-22** ("Yes to MATH_CORE.md: start phase 0 and phase 1, and tell the
+sessions to stop adding imitation-only paths"). The center of the design is in GOALS.md ("What the card model
+is"). Progress:
+* phase 0: F1 and F2, the prime ledger and content vectors (`engines/godel.py`, CM43). F3, the core types
+  (`cards/core_type`). F4, the e-graph (`engines/egraph.py`, `cardmodel distill`). F5, symbolic instruction
+  terms, is next.
+* phase 1: the four source registries, with definitions for every algorithm and function card, actions,
+  transformations and methods (`engines/sources.py`, `cardmodel sources`, CM44).
 
 ## 0. The goal, in the user's words
 

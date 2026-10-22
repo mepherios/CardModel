@@ -19,21 +19,23 @@
     "self-run (CM38), capabilities (CM37), one program (CM39)",
     "the live In progress page with early access (bb480fb)",
     "law CM41: detailed, current project cards (c8aeb4c)",
-    "docs/MATH_CORE.md proposal (de22b52)"
+    "docs/MATH_CORE.md proposal (de22b52)",
+    "MATH_CORE phase 0: prime ledger, content vectors (03b1c6e); e-graph distillation",
+    "MATH_CORE phase 1: the four sources, definitions for every algorithm and function"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
-    "waiting for the user's yes on MATH_CORE.md"
+    "MATH_CORE phase 0 and phase 1"
   ],
   "kind": "program",
   "left": [
-    "phase 0 of MATH_CORE: the prime ledger, content vectors, core types, an e-graph, symbolic LR35902",
-    "the semantic core migration, after the yes",
+    "MATH_CORE phase 0 F5: symbolic LR35902 instruction terms",
+    "canonical forms for more definitions (G_U7 is 0.3 of 0.9)",
     "one In progress tab after the cartridge merge"
   ],
   "metadata": {
-    "previous_content_hash": "f5114263df38e1819a3a9509941e6e7cfcd6c888afbe1486f2959daf9075b97f",
-    "version": "2.0.1",
+    "previous_content_hash": "81ea9ed38424aef21ecf94f0075e897b456cd03db496c8496556c58fe8f6f000",
+    "version": "2.0.4",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -65,21 +67,12 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main: 41 laws carried by 27 capabilities, verify passes, the self-run on every use, the live store page with Waiting on you, project cards under CM41; MATH_CORE.md is written and waits for the user's yes.",
+  "standing": "MATH_CORE phases 0 and 1 are under way on main: the prime ledger and content vectors (CM43), an e-graph over 241 equalities, and the four sources (CM44): 40 definitions, 314 actions, 6 transformations, 9 methods. Symbolic instruction terms are next.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T00:57:20+02:00",
+  "updated": "2026-10-22T01:12:38+02:00",
   "user_actions": [
-    {
-      "action": "Read the MATH_CORE summary and say yes, or what to change",
-      "unblocks": [
-        "the semantic core migration",
-        "definition cards for every function",
-        "sessions stop adding imitation-only paths"
-      ],
-      "why": "moving from imitation (emulation, tests) to understanding (one semantic core, definitions, Gödel factors) changes how everything is built"
-    },
     {
       "action": "Say whether to merge claude/jolly-liskov-2d97a8 into main",
       "unblocks": [
@@ -87,7 +80,7 @@
         "law witnesses run by the model itself",
         "a learning step that cannot hang"
       ],
-      "why": "it is now folded into `cardmodel self`: four new self-run steps (every law's witness test, the model observing its own code, every store item launched through the store, the whole suite weekly), a deadline on every step, law CM42 (the store runs what it lists) with goals G_A9 and G_S1, and fixes the self-run needs (learning hung on the arena framework's set_bits; observing cardmodel/ crashed; G_U3 could read the examples' observation; a partial verify erased other sections)"
+      "why": "it is folded into `cardmodel self`: four new self-run steps (every law's witness test, the model observing its own code, every store item launched through the store, the whole suite weekly), a deadline on every step, law CM42 (the store runs what it lists) with goals G_A10 and G_S1, and fixes the self-run needs (learning hung on the arena framework's set_bits; observing cardmodel/ crashed; G_U3 could read the examples' observation; a partial verify erased other sections)"
     }
   ]
 }

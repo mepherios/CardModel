@@ -18,6 +18,9 @@ REGISTRIES = {
     "design_law": ("Computable design laws: each names an analysis the engine runs (cardmodel game check) and the "
                    "threshold that must hold.", 0),
     "payoff": ("How an exchange is scored for analysis and AI (weights per carried quantity).", 0),
+    "chain": ("Strings as cards: one link each. A chain card lets an attack that connected (hit, block or pierce) "
+              "cancel its recovery into the next attack inside a window of frames, at a damage proration; the "
+              "links form an acyclic graph (GL9) and every link stays answerable (GL10).", 1),
 }
 
 ATT_FROM = ["neutral", "flow"]
@@ -151,6 +154,27 @@ DESIGN_LAWS = [
      "(symmetric fighters: neither side wins by construction).", "equilibrium_support", 6),
     ("GL8_counters_are_reads", "No answer is safe by itself: every defensive option loses to at least one attack.",
      "answer_risk", 1),
+    ("GL9_strings_end", "Strings end: the chain cards form an acyclic graph between attacks, and no string is longer "
+     "than 3 hits.", "strings_end", 3),
+    ("GL10_links_answerable", "Every link of a string can be answered: its tell is readable (its chained startup is "
+     "at least the reaction frames) and, after a clean hit, the defender's hit-stun ends early enough to raise a "
+     "guard at least 2 frames before the link lands.", "links_answerable", 2),
+]
+
+# Strings: (from, to, cancel window [first, last] frame of the from-move's recovery, damage % of the link, statement).
+# Each link changes the vector, starts no faster than the reaction frames, and leaves the struck defender time to
+# raise a guard (GL10); attacks rank by commitment, and links only climb, so strings end (GL9).
+CHAINS = [
+    ("jab", "slash_left", [2, 8], 85, "A jab opens a cut from the left: the poke buys the time for a real swing."),
+    ("jab", "slash_right", [2, 8], 85, "A jab opens a cut from the right."),
+    ("slash_left", "overhead", [0, 10], 80, "Left, then over the top: a high guard that followed the first cut "
+     "is a step behind."),
+    ("slash_left", "rising", [1, 10], 80, "Left, then up from below: the second vector comes from the other "
+     "height."),
+    ("slash_right", "overhead", [0, 10], 80, "Right, then over the top."),
+    ("slash_right", "diagonal", [3, 11], 80, "Right, then the upper-right diagonal: flow makes it quick, the "
+     "later window keeps it answerable."),
+    ("sweep", "overhead", [0, 12], 80, "Low, then high: the brute's string."),
 ]
 
 PRECEDENTS = [
@@ -222,6 +246,12 @@ PRECEDENTS = [
      "causes.", "Every derived event carries its proof tree: the game can explain why the gate burned."),
     ("arkham_freeflow", "Batman: Arkham Asylum", 2009, "One-button counters in freeflow combat.", "Counters "
      "need no read: trivial once learned.", "Anti-pattern this design forbids (GL4, GL8)."),
+    ("for_honor_chains", "For Honor", 2017, "Chains: light and heavy attacks string together, each link from a "
+     "side the defender must read.", "Chains are fixed per hero.", "A chain card is one link between two move "
+     "cards: any fighter with both moves has it, and the links are checked as a graph (GL9, GL10)."),
+    ("tekken_strings", "Tekken", 1994, "Strings: button sequences whose later hits are mixups.", "Some strings are "
+     "natural combos: once the first hit lands the rest cannot be answered.", "Anti-pattern this design forbids: "
+     "every link leaves time to raise a guard after a clean hit (GL10)."),
     ("assassins_creed_counter", "Assassin's Creed", 2007, "Counter-kill on a timed block.", "Same.",
      "Anti-pattern this design forbids."),
 ]
@@ -229,7 +259,7 @@ PRECEDENTS = [
 
 def cards() -> dict[str, list[dict]]:
     prov = {"origin": "cardmodel game design (game/DESIGN.md)", "tool": "tools/seed_game.py"}
-    out = {"move": [], "stance": [], "fighter": [], "precedent": [], "design_law": [], "payoff": []}
+    out = {"move": [], "stance": [], "fighter": [], "precedent": [], "design_law": [], "payoff": [], "chain": []}
     for m in MOVES:
         out["move"].append({**m, "category": "move", "tier": 1, "provenance": prov,
                             "depends_on": [f"precedent/{p}" for p in m.get("precedent", [])]})
@@ -245,4 +275,10 @@ def cards() -> dict[str, list[dict]]:
         out["design_law"].append({"name": name, "category": "design_law", "tier": 0, "statement": statement,
                                   "check": check, "threshold": threshold, "provenance": prov})
     out["payoff"].append({**PAYOFF, "category": "payoff", "tier": 0, "provenance": prov})
+    for frm, to, window, pct, statement in CHAINS:
+        out["chain"].append({"name": f"{frm}_to_{to}", "category": "chain", "tier": 1, "from": frm, "to": to,
+                             "on": ["hit", "block", "pierce"], "window": window, "damage_pct": pct,
+                             "statement": statement, "precedent": ["for_honor_chains", "tekken_strings"],
+                             "depends_on": [f"move/{frm}", f"move/{to}", "precedent/for_honor_chains",
+                                            "precedent/tekken_strings"], "provenance": prov})
     return out

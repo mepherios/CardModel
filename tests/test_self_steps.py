@@ -137,6 +137,20 @@ class Fixes(unittest.TestCase):
                                   [[5], [-3], [0], [1 << 40]])
         self.assertEqual([r["args"][0] for r in rows], [5, 0, 1 << 40])
 
+    def test_a_huge_constant_has_no_structural_number(self):
+        """A learned card with an LCG's constants (1103515245, 2^31) made the four-sources build raise a prime to the
+        power of ~10^10: a hang heading for gigabytes. Such a term now has no structural number, at once."""
+        from cardmodel.engines import godel as G
+        ctx = model_ctx()
+        idx = G.index_of(ctx.store)
+        term = ["MOD", ["ADD", ["MUL", ["var", "seed"], ["int", 1103515245]], ["int", 12345]], ["int", 2147483648]]
+        t0 = time.perf_counter()
+        with self.assertRaises(ValueError):
+            G.structural(term, ctx.ops, idx)
+        self.assertLess(time.perf_counter() - t0, 5)
+        n, _ = G.structural(["ADD", ["var", "x"], ["int", 1]], ctx.ops, idx)
+        self.assertGreater(n, 1)
+
     def test_the_model_can_observe_its_own_code(self):
         from cardmodel.engines.exprs import ParseError, parse
         from cardmodel.engines.observe import observe

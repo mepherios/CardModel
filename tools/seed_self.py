@@ -200,6 +200,25 @@ CAPABILITIES = [
       "tests/test_projects.py::test_missing_or_stale_project_cards_fail"],
      ["docs/STORE.md"], ["cardmodel arcade serve (the In progress page)"], ["cardmodel/arcade/hub.py"],
      "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."),
+    ("godel_model", "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's "
+     "content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded "
+     "exactly; maps between Gödel sets with their gaps.", L("CM43_primes_are_forever", "CM31_behaviour_is_numbered"),
+     ["tests/test_godel.py::test_ledger_is_append_only", "tests/test_godel.py::test_content_algebra_and_carry",
+      "tests/test_godel.py::test_structural_numbers_decode_exactly"],
+     ["GOALS.md", "docs/MATH_CORE.md"], ["cardmodel godel"], ["cardmodel/engines/godel.py"],
+     "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."),
+    ("distillation", "Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms "
+     "land in one class, the cheapest term is the canonical one and its hash names it (MATH_CORE phase 0).",
+     L("CM25_laws_carry_into_optimization"),
+     ["tests/test_egraph.py::test_saturation_proves_and_canonicalizes", "tests/test_egraph.py::test_congruence"],
+     ["docs/MATH_CORE.md"], ["cardmodel distill"], ["cardmodel/engines/egraph.py"],
+     "Two pieces of code that mean the same thing are recognised as one, and the cheapest is chosen."),
+    ("four_sources", "The four sources: every algorithm and function has a definition (truth) with its term, "
+     "canonical form, Gödel numbers and proof obligations; every implementation is an action linked to it by a "
+     "witness or proof; identities are transformations; procedures are methods with their limits.",
+     L("CM44_everything_traces_to_truth"), ["tests/test_sources.py::test_every_artifact_traces_back"],
+     ["docs/MATH_CORE.md"], ["cardmodel sources"], ["cardmodel/engines/sources.py"],
+     "Every piece of code knows what it means, and every claim knows its evidence."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],
@@ -279,7 +298,7 @@ GOALS = [
      "laws_uncarried", 0, "lower"),
     ("G_A7_self_run_fresh", "autonomy", "Hours since the last self-run cycle finished.", "self_run_age_hours", 24,
      "lower"),
-    ("G_A9_law_witnesses_pass", "autonomy", "Law cards whose witness test fails, errs or is missing in the self-run's "
+    ("G_A10_law_witnesses_pass", "autonomy", "Law cards whose witness test fails, errs or is missing in the self-run's "
      "latest law_witnesses step (CM20, CM38).", "law_witnesses_failing", 0, "lower"),
 ]
 

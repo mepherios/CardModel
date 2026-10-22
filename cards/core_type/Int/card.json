@@ -1,0 +1,32 @@
+{
+  "category": "core_type",
+  "laws": [
+    "a ring: ADD and MUL associative and commutative, MUL distributes over ADD",
+    "(a // b) * b + a % b == a for b != 0"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "Int",
+  "operations": [
+    "op/ADD",
+    "op/SUB",
+    "op/MUL",
+    "op/NEG",
+    "op/ABS",
+    "op/FLOORDIV",
+    "op/MOD",
+    "op/MIN",
+    "op/MAX",
+    "op/POW",
+    "op/GCD",
+    "op/POW_MOD"
+  ],
+  "params": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "Unbounded integers: the IR's integer semantics (floor division, the sign of a modulus follows the divisor).",
+  "tier": 0
+}

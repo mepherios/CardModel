@@ -1,0 +1,7 @@
+{
+  "card_type": "transformation",
+  "defined_by": "tools/seed_sources.py",
+  "description": "Transformation: an equivalence between two definitions with its evidence (rewrite rules, redefinitions and laws are transformations of terms in their own registries).",
+  "name": "transformation",
+  "tier": 0
+}

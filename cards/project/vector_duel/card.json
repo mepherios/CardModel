@@ -1,7 +1,5 @@
 {
-  "blockers": [
-    "the merge needs the user's go-ahead"
-  ],
+  "blockers": [],
   "branches": [
     "claude/sad-sanderson-*"
   ],
@@ -13,23 +11,22 @@
   "done": [
     "the combat kernel, moves and fighters as cards, compiled natively",
     "arcade ladder, training, versus, options, saves, achievements",
-    "0.4.0 (strings as chain cards, the duel-tree AI, the Architect's phases) committed as e096446"
+    "0.4.0 (strings as chain cards, the duel-tree AI, the Architect's phases) committed as e096446",
+    "the user approved 0.4.0 as the release (2026-10-22); this branch has main merged in, verified",
+    "0.4.0 merged into main (e0eca75) and released"
   ],
   "games": [
     "vector_duel"
   ],
   "goal": "A complete native fighting game whose every rule, number, picture and sound is a card, shipped through the store.",
-  "in_progress": [
-    "0.4.0 waits to be merged into main"
-  ],
+  "in_progress": [],
   "kind": "game",
   "left": [
-    "make 0.4.0 the release",
     "more of the game (ROADMAP: Arcade next)"
   ],
   "metadata": {
-    "previous_content_hash": "dea9f6e2ae2030a53ff9e16b8daee0ed6de6d63529af38fef5e1d43a4c191d9d",
-    "version": "2.0.1",
+    "previous_content_hash": "e8e4fc73907d27d0463cddcd2a6629469e628fa02713bac45e170650eb8135a2",
+    "version": "2.0.2",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -41,8 +38,7 @@
   ],
   "name": "vector_duel",
   "next_steps": [
-    "merge claude/sad-sanderson-482207 into main",
-    "rebuild the release from main's cards"
+    "the next version, on a branch"
   ],
   "order": 1,
   "owner": {
@@ -59,19 +55,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "0.3.0 is the release on main; 0.4.0 is built on the games branch and offered as early access.",
+  "standing": "0.4.0 is the release, built from main's cards (build 86fc69b211cf); the launcher offers it as the update.",
   "statement": "The native fighting game made of cards. Its next version is built on the games branch and offered as early access beside the release.",
   "tier": 1,
   "title": "Vector Duel",
-  "updated": "2026-10-22T00:30:00+02:00",
-  "user_actions": [
-    {
-      "action": "Approve merging claude/sad-sanderson-482207 into main",
-      "unblocks": [
-        "Vector Duel 0.4.0 as the release",
-        "the launcher's Update to 0.4.0"
-      ],
-      "why": "it makes Vector Duel 0.4.0 the release instead of early access"
-    }
-  ]
+  "updated": "2026-10-22T00:51:47+02:00",
+  "user_actions": []
 }

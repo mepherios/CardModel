@@ -496,6 +496,69 @@ def live_hub(ctx: Ctx, seed: int) -> str:
             "revised before the project's last change is stale")
 
 
+def four_sources(ctx: Ctx, seed: int) -> str:
+    from . import sources as SO
+    r = SO.check(ctx)
+    _need(r["definitions"] and r["actions"] and r["methods"], "the four source registries are empty (CM44)")
+    _need(not r["problems"], f"an artifact does not trace back: {r['problems'][:3]} (CM44)")
+    alg = ctx.store.get("algorithm/triangular")
+    built = SO.build(ctx, seed=seed)
+    d = next((x for x in built["definitions"] if x["subject"] == alg.qualified), None)
+    _need(d is not None and d["actions"] and d["godel"]["content"], "a definition was not derived for an algorithm")
+    links = [a["link"]["status"] for a in built["actions"] if a["truth"] == f"definition/{d['name']}"]
+    _need("refuted" not in links and "witnessed" in links, f"its forms are not witnessed against it: {links}")
+    return (f"{r['definitions']} definitions, {r['actions']} actions, {r['transformations']} transformations, "
+            f"{r['methods']} methods trace back; triangular's forms are witnessed against its definition")
+
+
+def distillation(ctx: Ctx, seed: int) -> str:
+    from . import egraph as E
+    from . import search
+    from .exprs import parse
+    rules, costs = E.rules_from_cards(ctx.store), search.op_costs(ctx.store)
+    _need(rules, "no equalities to saturate with")
+    r = E.equal(parse("max(a, b) + min(b, a)"), parse("a + b"), rules)
+    _need(r["equal"], "max(a, b) + min(b, a) == a + b is no longer proved by saturation")
+    c1 = E.canonical(parse("b * a + c"), rules, costs)
+    c2 = E.canonical(parse("c + a * b"), rules, costs)
+    _need(c1["hash"] == c2["hash"], "two equal terms got different canonical forms")
+    w = E.witness(parse("max(a, b) + min(b, a)"), parse("a + b"), seed)
+    _need(w["status"] == "witnessed", f"the witness disagrees: {w}")
+    return (f"{len(rules)} equalities saturate; a law-level identity is proved; equal terms share one canonical term "
+            f"({c1['hash'][:19]})")
+
+
+def godel_model(ctx: Ctx, seed: int) -> str:
+    from collections import Counter
+
+    from ..kernel.store import Store
+    from . import godel as G
+    entries = G.ledger(ctx.store)
+    _need(entries and not G.problems(entries), f"the prime ledger is empty or malformed: {G.problems(entries)[:3]}")
+    d = _tmp()
+    try:
+        st = Store([("model", d)])
+        G.sync(st, ["s/a", "s/b"], "S")
+        before = (d / "godel" / "_pack_ledger.jsonl").read_text(encoding="utf-8")
+        G.sync(st, ["s/c"], "S")
+        _need((d / "godel" / "_pack_ledger.jsonl").read_text(encoding="utf-8").startswith(before),
+              "appending to the ledger rewrote a line (CM43)")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    a, _ = G.card_content(ctx, ctx.store.get("algorithm/sum_of_squares"))
+    b, _ = G.card_content(ctx, ctx.store.get("algorithm/triangular"))
+    common = G.gcd(a, b)
+    _need(common and G.divides(common, a) and G.divides(common, b), f"no common factor: {a} {b}")
+    idx = G.index_of(ctx.store)
+    t = ["ADD", ["MUL", ["var", "n"], ["int", 3]], ["int", -2]]
+    n, vs = G.structural(t, ctx.ops, idx)
+    _need(G.decode(n, ctx.ops, entries, vs) == t, "a structural number did not decode to its term")
+    image, gap = G.carry(Counter({"x": 1, "y": 2}), {"x": Counter({"X": 1})})
+    _need(gap == Counter({"y": 2}), "a map's gap is wrong")
+    return (f"{len(entries)} atoms with their primes; gcd(sum_of_squares, triangular) = {dict(common)}; structural "
+            f"numbers decode exactly; a map leaves its gap")
+
+
 def anyps5(ctx: Ctx, seed: int) -> str:
     if not ctx.store.cards("anyps5_export"):
         raise Unavailable("no AnyPS5 scan in the store (cardmodel anyps5 scan PATH --save)")
@@ -533,7 +596,8 @@ def integration(ctx: Ctx, seed: int) -> str:
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
-                                  world, machines, emulation, arcade, live_hub, anyps5, self_run, integration)}
+                                  world, machines, emulation, arcade, live_hub, godel_model, distillation,
+                                  four_sources, anyps5, self_run, integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

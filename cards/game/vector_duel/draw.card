@@ -4,7 +4,6 @@
 -- direction d (0..7) sits at angle 32 * d, the thrust (8) in the middle.
 const C_P1 = 0x58C8FF
 const C_P2 = 0xFF6A58
-const C_BOSS = 0xC77DFF
 const C_INK = 0x0D0F18
 const RING_R = 12
 const RING_Y = 96
@@ -36,7 +35,7 @@ fn no_shake() {
 }
 fn team_col(i: Int) -> Int {
   if f_ctl[i] == AI_BOSS {
-    return C_BOSS
+    return ph_aura[boss_phase]
   }
   return if i == 0 then C_P1 else C_P2
 }
@@ -44,10 +43,55 @@ fn team_col(i: Int) -> Int {
 -- the arena: the current stage's palette and weather (the game card's arenas); the title uses the first
 global arena: Int = 0
 
+-- in the boss's duel its phase can repaint the sky and change the weather
+fn boss_scene() -> Int = if (scr == SCR_DUEL or scr == SCR_RESULT) and boss_of() >= 0 then boss_phase else -1
+fn sky_col(p: Int, k: Int) -> Int {
+  if p >= 0 and ph_sky0[p] >= 0 {
+    return if k == 0 then ph_sky0[p] else ph_sky1[p]
+  }
+  return if k == 0 then ar_sky0[arena] else ar_sky1[arena]
+}
+fn weather_now() -> Int {
+  let p = boss_scene()
+  if p >= 0 and ph_weather[p] >= 0 {
+    return ph_weather[p]
+  }
+  return ar_weather[arena]
+}
+-- the Oracle's sky: the duel tree, every branch an exchange; one path lights up, then another
+fn draw_tree_sky(t: Int) {
+  let path = ((t // 90) * 37 + 11) % 64
+  let base = sky_col(-1, 1)
+  for lv in 1 .. 7 {
+    let n = 1 << lv
+    for k in 0 .. n {
+      let x1 = SW // 2 + (2 * k + 1 - n) * 200 // n
+      let y1 = 128 - lv * 16
+      let x0 = SW // 2 + (2 * (k // 2) + 1 - n // 2) * 200 // (n // 2)
+      let y0 = y1 + 16
+      let lit = (path >> (6 - lv)) == k
+      line(x0, y0, x1, y1, if lit then mix(base, 0xBFE8FF, 210) else mix(base, 0x6A88C0, 80))
+      if lit {
+        disc(x1, y1, 1, 0xFFFFFF)
+      }
+    }
+  }
+}
 fn draw_sky(t: Int) {
   let a = arena
-  vgrad(0, 0, SW, 150, ar_sky0[a], ar_sky1[a])
-  if ar_weather[a] == 1 {
+  let bp = boss_scene()
+  var s0 = sky_col(bp, 0)
+  var s1 = sky_col(bp, 1)
+  if bp > 0 and round_state == 3 and round_t < 64 {
+    s0 = mix(sky_col(bp - 1, 0), s0, round_t * 4)
+    s1 = mix(sky_col(bp - 1, 1), s1, round_t * 4)
+  }
+  vgrad(0, 0, SW, 150, s0, s1)
+  let w = weather_now()
+  if w == 6 {
+    draw_tree_sky(t)
+  }
+  if w == 1 or w == 6 {
     for k in 0 .. 70 {
       let sx = (k * 97 + 13) % SW
       let sy = (k * 53 + 7) % 110
@@ -88,7 +132,7 @@ fn draw_floor(t: Int) {
   }
 }
 fn draw_weather(t: Int) {
-  let w = ar_weather[arena]
+  let w = weather_now()
   if w == 2 {
     for k in 0 .. 90 {
       let x = (k * 73 + t * (1 + k % 3) // 2 + (sin256(t * 2 + k * 29) * 6) // 256) % SW
@@ -486,18 +530,77 @@ fn draw_hud() {
         draw_str_sh(cn, 14, 41, 1, team_col(i))
       }
     }
+    if f_ctl[i] == AI_BOSS and N_PHASES > 1 {
+      -- its phases: one pip each (lit when reached), and where each starts on its health bar
+      for p in 0 .. N_PHASES {
+        let qx = if right then SW - 14 - str_width(cn, 1) - 10 - (N_PHASES - 1 - p) * 9 else 14 + str_width(cn, 1) + 8 + p * 9
+        disc(qx, 44, 3, C_INK)
+        if p <= boss_phase {
+          disc(qx, 44, 2, ph_aura[p])
+        }
+      }
+      for p in 1 .. N_PHASES {
+        let tx = if right then x + 190 - ph_at[p] * 190 // 100 else x + ph_at[p] * 190 // 100
+        rect(tx, 8, 1, 13, if p <= boss_phase then 0x6A6080 else 0xFFFFFF)
+      }
+    }
   }
   if training == 0 {
     rect(SW // 2 - 16, 7, 32, 20, C_INK)
     draw_num_c(seconds_left(), SW // 2, 10, 2, if seconds_left() <= 10 then 0xFF6050 else 0xFFFFFF)
   }
-  -- what the reader thinks you lean on
+  -- what the reader thinks you lean on; how far the tree looks
   let j = 1
-  if (f_ctl[j] == AI_READER or f_ctl[j] == AI_BOSS) and read_top(j) != NO_DIR {
+  let kj = if f_ctl[j] == AI_HUMAN then AI_HUMAN else ai_kind(j)
+  if kj == AI_READER and read_top(j) != NO_DIR {
     draw_str_c(S_READS, SW // 2 - 30, 34, 1, 0xC8B8E8)
     draw_str_sh(dir_name(read_top(j)), SW // 2 + 2, 34, 1, 0xFFE8A0)
     draw_num(read_share(j), SW // 2 + 2 + str_width(dir_name(read_top(j)), 1) + 6, 34, 1, 0xFFE8A0)
     draw_char(37, SW // 2 + 2 + str_width(dir_name(read_top(j)), 1) + 6 + num_width(read_share(j), 1) + 2, 34, 1, 0xFFE8A0)
+  } elif kj == AI_TREE {
+    let w1 = str_width(S_THINKS, 1) + 6
+    let w2 = num_width(TREE_DEPTH, 1) + 6
+    let x0 = SW // 2 - (w1 + w2 + str_width(S_AHEAD, 1)) // 2
+    draw_str_sh(S_THINKS, x0, 34, 1, 0xC8B8E8)
+    draw_num(TREE_DEPTH, x0 + w1, 34, 1, 0xFFE8A0)
+    draw_str_sh(S_AHEAD, x0 + w1 + w2, 34, 1, 0xC8B8E8)
+  }
+}
+-- the string counter, on the attacker's side
+fn draw_combo() {
+  if combo_t >= 70 or combo_n < 2 {
+    return
+  }
+  let c = if combo_t < 50 then 0xFFE070 else mix(0xFFE070, C_INK, (combo_t - 50) * 12)
+  let w = num_width(combo_n, 3) + 6 + str_width(S_HITS, 2)
+  let x = if combo_side == 0 then 16 else (if training != 0 then SW - 180 - w else SW - 16 - w)
+  let y = if combo_t < 4 then 54 else 56
+  draw_num(combo_n, x, y, 3, c)
+  draw_str_sh(S_HITS, x + num_width(combo_n, 3) + 6, y + 6, 2, c)
+}
+-- a phase change: the boss's aura swells, cards fly out of it, its new name
+fn draw_phase() {
+  let p = boss_phase
+  let b = boss_of()
+  let t = round_t
+  let c = ph_aura[p]
+  if b >= 0 {
+    disc_blend(xpx(b), GROUND - 44, min(64, t * 2), c, max(0, 110 - t))
+    for k in 0 .. 18 {
+      let a = k * 14 + t
+      let d = t * (2 + k % 3)
+      let cx = xpx(b) + cos256(a) * d // 256
+      let cy = GROUND - 44 - sin256(a) * d // 256
+      rect_blend(cx - 4, cy - 6, 9, 13, 0xF4EEE0, 90)
+      frame_rect(cx - 4, cy - 6, 9, 13, c)
+    }
+  }
+  rect_blend(0, 98, SW, 60, C_INK, min(170, t * 5))
+  if t > 8 and ph_title[p] >= 0 {
+    draw_str_c(ph_title[p], SW // 2, 108, 3, c)
+  }
+  if t > 28 and ph_sub[p] >= 0 {
+    draw_str_c(ph_sub[p], SW // 2, 140, 1, 0xF4EEE0)
   }
 }
 fn dir_name(d: Int) -> Int {
@@ -543,6 +646,9 @@ fn ai_name(kind: Int) -> Int {
   if kind == AI_BOSS {
     return S_AI_BOSS
   }
+  if kind == AI_TREE {
+    return S_AI_TREE
+  }
   return S_DUMMY
 }
 fn ctl_name(i: Int) -> Int {
@@ -568,6 +674,10 @@ fn draw_event() {
 fn draw_duel() {
   apply_shake()
   draw_arena(frame_no)
+  let b = boss_of()
+  if b >= 0 and boss_phase > 0 {
+    disc_blend(xpx(b), GROUND - 40, 34, ph_aura[boss_phase], 26)
+  }
   for i in 0 .. 2 {
     draw_fighter(i)
   }
@@ -586,11 +696,16 @@ fn draw_duel() {
   if training != 0 {
     draw_frame_data()
   }
+  draw_combo()
+  if round_state == 3 {
+    draw_phase()
+  }
   draw_event()
   -- the first duel teaches its rules at the bottom of the screen
   if paused == 0 and (training != 0 or (versus == 0 and stage == 0 and round_no == 1 and duel_t < 900 and round_state == 1)) {
     rect_blend(0, SH - 24, SW, 24, C_INK, 170)
-    let tip = if (duel_t // 220) % 4 == 0 then S_HOW1 else if (duel_t // 220) % 4 == 1 then S_HOW2 else if (duel_t // 220) % 4 == 2 then S_HOW3 else S_HOW4
+    let k = (duel_t // 220) % 5
+    let tip = if k == 0 then S_HOW1 else if k == 1 then S_HOW2 else if k == 2 then S_HOW3 else if k == 3 then S_HOW4 else S_HOW5
     draw_str_c(tip, SW // 2, SH - 16, 1, 0xFFE8A0)
   }
   if round_state == 0 {
@@ -629,12 +744,33 @@ fn outcome_name(k: Int) -> Int {
   return S_NONE
 }
 -- training: the last move P1 started and the last impact's outcome
+fn first_link(m: Int) -> Int {
+  for c in 0 .. N_CHAINS {
+    if ch_from[c] == m {
+      return c
+    }
+  }
+  return -1
+}
 fn draw_frame_data() {
   let m = p1_last
-  rect_blend(SW - 170, 52, 160, 52, C_INK, 170)
+  rect_blend(SW - 170, 52, 160, 64, C_INK, 170)
   draw_str_sh(S_LAST, SW - 164, 56, 1, 0x9A90B8)
   if m >= 0 {
     draw_str_sh(mv_str[m], SW - 164 + 60, 56, 1, 0xFFFFFF)
+    if p1_last_link > 0 {
+      draw_str_sh(S_LINK, SW - 44, 66, 1, 0xFFE070)
+      draw_num(p1_last_link, SW - 44 + str_width(S_LINK, 1) + 4, 66, 1, 0xFFE070)
+    }
+    let c = first_link(m)
+    draw_str_sh(S_CANCEL, SW - 164, 96, 1, 0x9A90B8)
+    if c >= 0 {
+      draw_num(mv_active[m] + ch_lo[c], SW - 164 + 60, 96, 1, 0xFFE070)
+      draw_char(45, SW - 164 + 60 + num_width(mv_active[m] + ch_lo[c], 1) + 1, 96, 1, 0xFFE070)
+      draw_num(mv_active[m] + ch_hi[c], SW - 164 + 60 + num_width(mv_active[m] + ch_lo[c], 1) + 8, 96, 1, 0xFFE070)
+    } else {
+      draw_str_sh(S_NONE, SW - 164 + 60, 96, 1, 0x6A6080)
+    }
     draw_str_sh(S_STARTUP, SW - 164, 66, 1, 0x9A90B8)
     draw_num(p1_last_start, SW - 164 + 60, 66, 1, 0xFFE070)
     draw_str_sh(S_ACTIVE, SW - 164, 76, 1, 0x9A90B8)
@@ -642,6 +778,6 @@ fn draw_frame_data() {
     draw_str_sh(S_RECOVERY, SW - 164, 86, 1, 0x9A90B8)
     draw_num(mv_recovery[m], SW - 164 + 60, 86, 1, 0xFFE070)
   }
-  draw_str_sh(S_OUTCOME, SW - 164, 96, 1, 0x9A90B8)
-  draw_str_sh(outcome_name(f_last_outcome[1]), SW - 164 + 60, 96, 1, 0x60F0FF)
+  draw_str_sh(S_OUTCOME, SW - 164, 106, 1, 0x9A90B8)
+  draw_str_sh(outcome_name(f_last_outcome[1]), SW - 164 + 60, 106, 1, 0x60F0FF)
 }

@@ -1,0 +1,15 @@
+{
+  "category": "design_law",
+  "check": "strings_end",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GL9_strings_end",
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Strings end: the chain cards form an acyclic graph between attacks, and no string is longer than 3 hits.",
+  "threshold": 3,
+  "tier": 0
+}
