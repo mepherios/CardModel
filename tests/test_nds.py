@@ -780,6 +780,22 @@ class Wifi(Base):
         self.assertEqual(self.r(0x04804200, 2, cpu=0), 0, "the ARM9 has no wireless hardware")
 
 
+class CheckCartridge(Base):
+    def test_the_store_check_cartridge_draws_and_saves(self):
+        """system/nds's check cartridge (no one's game, its ARM9 words from the instruction cards): both screens
+        show a picture of more than one colour and the save chip holds the card's byte."""
+        from cardmodel.arcade import system as S
+        cc = S.check_cartridge(self.ctx, "nds")
+        self.assertTrue(cc["file"].endswith(".nds"))
+        ds = make_ds(cc["bytes"])
+        ds.run(3)
+        st = nds.screen_stats(ds.screens())
+        self.assertGreater(min(st["top"]["colours"], st["bottom"]["colours"]), 1, st)
+        self.assertEqual(ds.m.array("backup")[cc["save"]["offset"]], cc["save"]["byte"])
+        cov = nds.coverage(ds)
+        self.assertEqual(cov["cpus"]["arm9"]["undecodable_executed"], 0)
+
+
 class Cartridge(Base):
     def test_one_word_repeating_dma_moves_a_whole_block(self):
         """NitroSDK reads the card with a 1-word DMA in cartridge mode that the bus starts again for every ready

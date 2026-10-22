@@ -57,6 +57,47 @@ def header(rom: bytes, store) -> dict:
     return out
 
 
+def check_image(store, stores: list, title: str = "CARDCHECK", code: str = "CMCK") -> bytes:
+    """A DS image no one owns (the store's check of the DS player): a header that says where the binaries are, the
+    decrypted secure-area marker, ARM9 code that does ``stores`` ([(address, value, width)], in order) and then
+    idles, and an ARM7 that idles. Every word comes from the instruction cards (asm.arm_word): per store
+    LDR r0,[pc,#..], LDR r1,[pc,#..] and STR, STRH or STRB r1,[r0]; then SUB pc,pc,#8; then the literal pool.
+    Where each header field goes, the marker and where it sits are the ``hardware/nds_cartridge`` card's."""
+    from . import asm as A
+    cc = store.get("hardware/nds_cartridge")
+    h = cc["header"]
+    at9, ram9, ram7, at7 = int(cc["secure_area"]["offset"]), 0x02000000, 0x02380000, 0x8000
+    base = ram9 + 8                                         # the first instruction, after the 8-byte marker
+    n = 3 * len(stores) + 1
+    words: list = []
+    lits: list = []
+    for addr, value, width in stores:
+        for reg, v in ((0, addr), (1, value)):
+            if v not in lits:
+                lits.append(v)
+            off = base + 4 * (n + lits.index(v)) - (base + 4 * len(words) + 8)
+            words.append(A.arm_word(store, "ARM_LDR_imm", Rd=reg, Rn=15, P=1, U=1, offset=off))
+        form = {4: "ARM_STR_imm", 2: "ARM_STRH_imm", 1: "ARM_STRB_imm"}[width]
+        words.append(A.arm_word(store, form, Rd=1, Rn=0, P=1, U=1))
+    idle = A.arm_word(store, "ARM_SUB_imm", Rd=15, Rn=15, operand2=8)
+    words.append(idle)
+    marker = int(cc["secure_area"]["decrypted_word"])
+    body = [marker, marker] + words + [v & 0xFFFFFFFF for v in lits]
+    img = bytearray(0x10000)
+    t = title.encode("ascii")[:12]
+    img[h["title"]["offset"]:h["title"]["offset"] + len(t)] = t
+    img[h["game_code"]["offset"]:h["game_code"]["offset"] + 4] = code.encode("ascii")[:4].ljust(4, b"\0")
+    for field, value in (("arm9_rom_offset", at9), ("arm9_entry", base), ("arm9_ram_address", ram9),
+                         ("arm9_size", 4 * len(body)), ("arm7_rom_offset", at7), ("arm7_entry", ram7),
+                         ("arm7_ram_address", ram7), ("arm7_size", 4)):
+        o = h[field]["offset"]
+        img[o:o + 4] = value.to_bytes(4, "little")
+    for i, w in enumerate(body):
+        img[at9 + 4 * i:at9 + 4 * i + 4] = w.to_bytes(4, "little")
+    img[at7:at7 + 4] = idle.to_bytes(4, "little")
+    return bytes(img)
+
+
 def png_screens(rgb: bytes, scale: int = 1, gap: int = 0) -> bytes:
     """Both screens (top above bottom, ``gap`` black lines between) as one PNG."""
     from .gb import png
@@ -300,4 +341,5 @@ def coverage(ds: DS) -> dict:
     return out
 
 
-__all__ = ["DS", "buttons", "coverage", "header", "open_nds", "parse_input", "png_screens", "screen_stats"]
+__all__ = ["DS", "buttons", "check_image", "coverage", "header", "open_nds", "parse_input", "png_screens",
+           "screen_stats"]

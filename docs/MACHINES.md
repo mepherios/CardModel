@@ -262,8 +262,9 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   from a new game (the touch-screen tutorial, naming, the TV report) into its 3D world: walking, the menu, and an
   in-game save that lands in the player's save file; a later boot continues it (the main menu first starts the
   wireless driver, which tests the Wi-Fi registers, powers the radio up and scans three channels: `nds_wifi`). The
-  card names no cartridge tables card and has a `pointer`: it needs the arcade's system.py and shell that take
-  both.
+  card names no cartridge tables card and has a `pointer`. Its `check_cartridge` (for `arcade check`) is a DS
+  image `nds.check_image` builds, its ARM9 words read off the instruction cards (`asm.arm_word`): it draws on
+  both screens and writes one byte to the save chip.
 * **Measured coverage**: per CPU the instructions run, distinct addresses, which instruction cards the code used,
   undefined instructions (counted as they run; code overwritten after it ran is reported apart), BIOS calls
   (modelled or not), every hardware register the game touched that no card models, and what the screens show.
