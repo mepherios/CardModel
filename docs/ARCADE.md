@@ -187,8 +187,10 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   natively and packed as `<title>.app` (with `--install`: in `~/Applications/Cardmodel Games`). The cartridge is
   read where it is when the app starts; the app shares its save folder with the library's entry for that
   cartridge. Before packing, the lifted player plays the cartridge headless next to the plain one with the same
-  buttons (pictures and sound must be equal) and reports its purity: the share of instructions that ran as lifted
-  card IR. The app keeps what the interpreter still ran while it was played (`profile-*.bin` beside the save; the
+  buttons, a seeded walk no profile took (pictures and sound must be equal), and reports its purity: the share of
+  instructions that ran as lifted card IR. What that walk still ran in the interpreter joins the profile and the
+  cartridge is lifted again, then walked with a new seed (up to three rounds), so the reported purity is always on
+  a walk the profile did not see. The app keeps what the interpreter still ran while it was played (`profile-*.bin` beside the save; the
   shell's new `keep` and `globals` fields in game.json), and when anything did, quitting starts the app's own next
   build in the background (`relift` in game.json: at low priority, one at a time, `relift.log` beside the save),
   so the next launch runs that code as cards too.

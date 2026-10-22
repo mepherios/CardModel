@@ -21,7 +21,7 @@ from cardmodel.machine import asm, gb as G
 ROUTINE = bytes([0x3E, 0x28, 0x3D, 0x20, 0xFD, 0xC9])    # LD A,40; .w: DEC A; JR NZ,.w; RET (an OAM-DMA-like wait)
 
 
-def hram_cart(ctx) -> bytes:
+def hram_cart(ctx, title: str = "HRAMCODE") -> bytes:
     """A checkerboard and a V-blank loop that copies ROUTINE to FF80 first and calls it after every HALT."""
     tile = bytes([0xAA, 0x55] * 8)
     prog = [("LD SP,nn", 0xFFFE),
@@ -38,7 +38,7 @@ def hram_cart(ctx) -> bytes:
             ("label", "idle"), ("HALT",), ("CALL nn", 0xFF80), ("JR e", "idle"),
             ("label", "routine"), ("db", ROUTINE), ("label", "tile"), ("db", tile)]
     vblank = asm.assemble(ctx.store, [("LDH A,(n)", 0x44), ("RETI",)], org=0x40)
-    return asm.rom(ctx.store, prog, title="HRAMCODE", cart_type=0x00, extra={0x40: vblank})
+    return asm.rom(ctx.store, prog, title=title, cart_type=0x00, extra={0x40: vblank})
 
 
 @unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
@@ -68,6 +68,26 @@ class CartridgeApp(unittest.TestCase):
         self.assertEqual(w["interpreted_ram"], 0, "the routine in HRAM runs as lifted card IR")
         self.assertEqual(w["interpreted"], 0, "every instruction ran as lifted card IR (HALT, EI, the loop)")
         self.assertGreater(w["instructions"], 10000)
+
+    def test_what_a_witness_interprets_is_lifted_for_the_next_round(self):
+        """With no profile at all, the first witness runs the HRAM routine in the interpreter; what it ran joins
+        the profile, and the next round's witness (another seed) runs everything as lifted card IR."""
+        import hashlib
+        from cardmodel.machine import build as Bd, lift
+        rom = hram_cart(self.ctx, title="NOPROFILE")
+        shutil.rmtree(lift.cache_dir(self.ctx, hashlib.sha1(rom).hexdigest(), Bd.module(self.ctx, "gameboy")["hash"]))
+        old = lift.profile
+        lift.profile = lambda *a, **k: {}                     # profile nothing: only the static passes find code
+        try:
+            path = self.tmp / "No Profile (World).gb"
+            path.write_bytes(rom)
+            info = C.build(self.ctx, path)
+        finally:
+            lift.profile = old
+        w = info["witness"]
+        self.assertTrue(w["identical"], w)
+        self.assertEqual((w["rounds"], w["seed"]), (2, 3), "the first round interpreted the routine")
+        self.assertEqual((w["interpreted"], w["interpreted_ram"]), (0, 0))
 
     def test_the_app_plays_the_cartridge_where_it_is_and_keeps_what_ran(self):
         from cardmodel.kernel import resources

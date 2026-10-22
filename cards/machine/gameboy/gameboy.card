@@ -15,8 +15,10 @@ export global profiling: Int = 0
 global fall_pc: Int = -1
 export array seen: Byte[0x100000]        -- 1 bit per ROM byte: an instruction started there
 export array entries: Byte[0x100000]     -- 1 bit per ROM byte: reached other than by falling through
-export array ram_seen: Byte[0x1000]      -- 1 bit per address 8000-FFFF: an instruction started there (code in RAM)
-export array ram_code: Byte[0x8000]      -- each RAM instruction's bytes as it last ran (what the lifter reads)
+-- code in RAM (work RAM, its echo, HRAM: C000-FFFF), 256 bits per address: the opcodes instructions there started
+-- with, and a CB-prefixed one's second byte (the lifter lifts each, guarded by its bytes)
+export array ram_ops: Byte[0x80000]
+export array ram_cb: Byte[0x80000]
 
 fn full_sync() {
   sync_components(now)
@@ -113,14 +115,19 @@ export fn code_byte(a: Int) -> Int {
   return peek8(a)
 }
 fn ram_mark() {
-  let r = PC - 0x8000
-  ram_seen[r >> 3] = ram_seen[r >> 3] | (1 << (r & 7))
-  let n = op_bytes[code_byte(PC)]
-  for j in 0 .. n {
-    ram_code[(r + j) & 0x7FFF] = code_byte((PC + j) & 0xFFFF)
+  if PC < 0xC000 {
+    return
+  }
+  let op = code_byte(PC)
+  let i = ((PC - 0xC000) << 5) | (op >> 3)
+  ram_ops[i] = ram_ops[i] | (1 << (op & 7))
+  if op == 0xCB {
+    let cb = code_byte((PC + 1) & 0xFFFF)
+    let j = ((PC - 0xC000) << 5) | (cb >> 3)
+    ram_cb[j] = ram_cb[j] | (1 << (cb & 7))
   }
 }
--- run the lifted instruction at RAM address pc when RAM still holds the bytes it was lifted from; 0 otherwise
+-- run the lifted instruction at RAM address pc when RAM holds one of the encodings lifted there; 0 otherwise
 fn run_ram(pc: Int, single: Int) -> Int {
   return 0
 }

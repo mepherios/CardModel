@@ -507,6 +507,24 @@ def speed_rom(ctx):
     return asm.rom(ctx.store, prog, title="SPEEDTEST", cgb=0xC0)
 
 
+def overlay_rom(ctx):
+    """Code in RAM as games run it: two routines copied over each other at C100 (another opcode at the same address)
+    and one at C200 whose operand the program patches before every call; the main loop calls all three."""
+    ra = asm.assemble(ctx.store, [("LD A,n", 0x11), ("LD (nn),A", 0xC000), ("RET",)], org=0xC100)
+    rb = asm.assemble(ctx.store, [("LD A,(nn)", 0xC000), ("INC A",), ("LD (nn),A", 0xC001), ("RET",)], org=0xC100)
+    rc = asm.assemble(ctx.store, [("LD A,n", 0x00), ("RET",)], org=0xC200)
+    prog = [("LD SP,nn", 0xFFFE),
+            ("LD HL,nn", 0xC200), ("LD DE,nn", "rc"), ("LD B,n", len(rc)), ("CALL nn", "copy"),
+            ("label", "main"),
+            ("LD HL,nn", 0xC100), ("LD DE,nn", "ra"), ("LD B,n", len(ra)), ("CALL nn", "copy"), ("CALL nn", 0xC100),
+            ("LD HL,nn", 0xC100), ("LD DE,nn", "rb"), ("LD B,n", len(rb)), ("CALL nn", "copy"), ("CALL nn", 0xC100),
+            ("LD A,(nn)", 0xC002), ("INC A",), ("LD (nn),A", 0xC002), ("LD (nn),A", 0xC201), ("CALL nn", 0xC200),
+            ("LD (nn),A", 0xC003), ("JR e", "main"),
+            ("label", "copy"), ("LD A,(DE)",), ("LD (HL+),A",), ("INC DE",), ("DEC B",), ("JR NZ,e", "copy"), ("RET",),
+            ("label", "ra"), ("db", ra), ("label", "rb"), ("db", rb), ("label", "rc"), ("db", rc)]
+    return asm.rom(ctx.store, prog, title="OVERLAYS")
+
+
 class Lifting(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -550,6 +568,21 @@ class Lifting(unittest.TestCase):
         m, ref = self.last_pair
         self.assertTrue(ref.read("wram")[1] & 0x80, "the cartridge runs at double speed")
         self.assertEqual(m.get("interpreted"), 0, "STOP and everything after it ran as lifted card IR")
+
+    def test_routines_copied_over_each_other_and_patched_operands_run_lifted(self):
+        from cardmodel.machine import lift
+        rom = overlay_rom(self.ctx)
+        p = lift.profile(self.ctx, rom, 5)
+        mod, rep = lift.lift_rom(self.ctx, rom, 0x7FFF, p["seen"], p["entries"], ram_ops=p["ram_ops"],
+                                 ram_cb=p["ram_cb"])
+        self.assertEqual(sorted(e[0] for e in lift.ram_encodings(p["ram_ops"], p["ram_cb"])[0xC100]), [0x3E, 0xFA],
+                         "both routines' first instructions at C100")
+        diverged, _ = self._run_pair(mod, frames=10, rom=rom)
+        self.assertIsNone(diverged, f"lifted run diverged at frame {diverged}")
+        m, ref = self.last_pair
+        self.assertGreater(ref.read("wram")[2], 0, "the patched operand counts up")
+        self.assertEqual(m.get("interpreted_ram"), 0, "every RAM instruction ran as lifted card IR")
+        self.assertEqual(m.get("interpreted"), 0)
 
     def test_planted_lifter_bug_is_caught(self):
         """CM07: change the loop bound (CP 0xC4 -> 0xC3) in every lifted block; the differential run must see it."""
