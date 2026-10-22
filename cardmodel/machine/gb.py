@@ -86,9 +86,7 @@ def header(rom: bytes, store) -> dict:
     ram_size = int((card.get("ram_size_bytes") or {}).get(str(rom[0x149]), 0))
     if info.get("mbc") == "mbc2":
         ram_size = 512
-    if info.get("eeprom_bytes"):
-        ram_size = int(info["eeprom_bytes"])
-    elif not info.get("ram") and info.get("mbc") != "mbc2":
+    if not info.get("ram") and info.get("mbc") != "mbc2":
         ram_size = 0
     elif info.get("ram") and not ram_size:
         ram_size = int(card.get("ram_unsized_bytes") or 0)

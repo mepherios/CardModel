@@ -141,7 +141,8 @@ class MBC7(unittest.TestCase):
         self.assertEqual(ee_word(r, 20), 0x0000, "a write after EWDS changes nothing")
         self.assertEqual(g.m.read("cram", 10, 2), b"\xbe\xef", "word 5, high byte first")
         save = g.save_bytes()
-        self.assertEqual(len(save), 256, "the save is the EEPROM")
+        self.assertEqual((len(save), save[10:12]), (8192, b"\xbe\xef"),
+                         "the save is the unsized RAM every host gives (the player too), the EEPROM its first 256 bytes")
         reader = cart(self.ctx, [*st(0x0000, 0x0A), *st(0x4000, 0x40), *ee_read(5, 0)], 0x22)
         h = gb.GameBoy(self.ctx, reader, "native", sample_rate=0, fresh=True)
         h.load_save(save)

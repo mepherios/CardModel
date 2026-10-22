@@ -122,10 +122,12 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   `tests/test_gb_mappers.py`, each on a cartridge the assembler builds):
   * **MBC7** (Kirby Tilt 'n' Tumble): banks, the accelerometer latch (0x55 erases to 0x8000, then 0xAA latches,
     centred on 0x81D0, 1 g = 0x70) and the 93LC56 EEPROM by its data sheet (start bit, opcode, 8 address bits; a
-    dummy 0 then 16 bits MSB first; EWEN/EWDS, WRITE, ERASE, ERAL, WRAL). The EEPROM is the save (256 bytes, high
-    byte first). There is no tilt sensor, so the d-pad tilts the cartridge by 1 g the way it points (right lowers
-    X, up raises Y; measured on Kirby's levels: Kirby rolls the way the pad points); a stick on the shell's page
-    drives the d-pad, and a shell with a real tilt source can add it in `tilt_x` / `tilt_y`.
+    dummy 0 then 16 bits MSB first; EWEN/EWDS, WRITE, ERASE, ERAL, WRAL). The EEPROM is the first 256 bytes of the
+    cartridge RAM image (high byte first), so the save every host keeps for a RAM cartridge whose header gives no
+    size (8 KiB, the player's too) carries it. There is no tilt sensor, so the d-pad tilts the cartridge by 1 g
+    the way it points (right lowers X, up raises Y; measured on Kirby's levels: Kirby rolls the way the pad
+    points); a stick on the shell's page drives the d-pad, and a shell with a real tilt source can add it in
+    `tilt_x` / `tilt_y`.
   * **HuC3** (Robopon): banks, RAM read-only (mode 0) and read/write (mode 0xA), the clock chip's commands the
     way Robopon sends them (command in mode 0xB, 0xFE to the semaphore in mode 0xD, the answer's low nibble in
     mode 0xC: read/write a nibble and move on, set the address, copy the clock to nibbles 00-05 and back), and

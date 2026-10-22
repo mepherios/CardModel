@@ -284,7 +284,7 @@
     "accel_center": 33232,
     "accel_one_g": 112,
     "accel_erased": 32768,
-    "eeprom": "93LC56: 128 words of 16 bits, high byte first in cram[0..255]",
+    "eeprom": "93LC56: 128 words of 16 bits, high byte first in cram[0..255]; the save is the unsized RAM every host gives a RAM cartridge (ram_unsized_bytes), so it carries the EEPROM",
     "tilt_note": "the d-pad tilts the cartridge by 1 g the way it points (right lowers X, up raises Y: things roll that way, checked on Kirby Tilt 'n' Tumble); a shell's stick drives the d-pad, and a shell with a real tilt source can add it in tilt_x / tilt_y"
   },
   "huc3": {

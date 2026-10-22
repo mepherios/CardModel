@@ -1,5 +1,5 @@
 -- MBC7 (Kirby Tilt 'n' Tumble, Command Master): ROM banking, a two-axis accelerometer and a 93LC56 serial EEPROM
--- (128 words of 16 bits, kept high byte first in cram[0..255], so a save is the EEPROM). Its registers answer at
+-- (128 words of 16 bits, kept high byte first in cram[0..255], so the save carries it). Its registers answer at
 -- A000-AFFF only while both enables are on (0x0A at 0000-1FFF, 0x40 at 4000-5FFF).
 --
 -- The accelerometer: 0x55 at Ax0x erases the latch (X and Y read 0x8000), then 0xAA at Ax1x latches the tilt,
