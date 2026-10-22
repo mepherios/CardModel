@@ -5,7 +5,9 @@
     "claude/compassionate-margulis-*",
     "claude/elated-mestorf-*",
     "worktree-universal-domains",
-    "claude/unreal-distill"
+    "claude/unreal-distill",
+    "claude/gracious-kirch-*",
+    "claude/heuristic-ptolemy-*"
   ],
   "category": "project",
   "docs": [
@@ -36,8 +38,8 @@
     "terminal-launch store entries for combat and world"
   ],
   "metadata": {
-    "previous_content_hash": "df2ff690734cf076281d0050ce9c6a9c11cb44bc80aa38527a7d6fc7b91ce761",
-    "version": "2.0.10",
+    "previous_content_hash": "b08da6add9c2da62e5336a43c6ddb472d9bacdcfef2d9ed54f5a4235a2cd951d",
+    "version": "2.0.11",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -82,7 +84,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T03:09:37+02:00",
+  "updated": "2026-10-22T04:18:08+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",
