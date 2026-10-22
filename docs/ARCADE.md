@@ -88,7 +88,10 @@ change on disk; code changes need a restart.
   in a staging folder and swaps it in. When the cards in progress do not build, the last good build installs
   instead (a notice says so) and the pages show the build's error with *Try the build again*; a failed build is
   remembered with what it was built from (`state/arcade/build-errors.json`), so Update only comes back when the
-  cards change again.
+  cards change again. The wait for a build always ends: a build the service refuses ends it with the service's
+  reason, and one it no longer knows (it restarted) is asked for again after 2 s and ends the wait 10 s later
+  (`client.wait_build` is the same steps). Downloads go one at a time, like a store's queue: an Install or Update
+  asked for while one runs waits its turn (*Queued*; Downloads lists it under *Up next* with *Remove*).
 * **Versions and branches** (`arcade/work.py`): every git worktree of the repository is a branch, a session's work
   in progress. A program's version on a branch is listed on its store and library pages and installs like a
   beta: the service builds it in that worktree with the worktree's own `bin/cardmodel` (its code, its cards) and
@@ -113,8 +116,15 @@ change on disk; code changes need a restart.
   the nearest thing in that direction, A clicks it (twice on a cover plays), B is Back and Menu is the library
   (the pages' Gamepad API, only while the launcher is in front and nothing it started is running).
 * **Play**: starts the game's executable, keeps play time and last played; **achievements** come from the game's
-  save (one byte each from offset 32, the layout `save.card` documents).
+  save (one byte each from offset 32, the layout `save.card` documents). A console player's button is *Your
+  cartridges* (its shelf in the library): started on its own it has nothing to play.
 * Everything lives in `~/Library/Application Support/Cardmodel Arcade/` (`library/`, `saves/`, `launcher.json`).
+  The library folder is the truth of what is installed: at start the launcher checks `launcher.json` against it
+  (an installation the record lost comes back from its own manifest, keeping its play time; a record whose folder
+  is gone goes; `--check-library` prints the result without a window, in the folder `CARDMODEL_ARCADE_SUPPORT`
+  names). One launcher runs at a time: opening the app again only brings it forward, so a second one is a
+  reinstall or another copy, and it takes over once the first has saved and quit (two used to save their own
+  records over each other's, losing installs).
 
 The pages (`cards/app/arcade/ui/`) are Store (featured, New & Noteworthy, categories, search over games, branch
 versions and cartridges, store pages with screenshots, about, requirements, achievements, patch notes, versions
