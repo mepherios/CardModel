@@ -206,7 +206,9 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
 
 * **The shell** gained three optional fields in game.json: `cartridge` (the array the cartridge's bytes go into and
   the function that decodes them; `--rom PATH` names the file, a .zip is read in memory), `clock` (an Int64 the
-  shell keeps at the Unix time) and `flush` (called before quitting). A game without them runs as before.
+  shell keeps at the Unix time), `clockOffset` (an Int64 it keeps at the local time's offset from UTC, in seconds:
+  a system card's `clock_offset`, for a console whose clock shows the local time) and `flush` (called before
+  quitting). A game without them runs as before.
 * **The library** (`arcade/library.py`): every file in a system's folders, read where it is, nothing copied, with
   its header, the ROM survey's verdict as a compatibility badge (verified, playable, unsupported) and a title
   screen the machine draws headless (ten seconds, no buttons; cached in `state/arcade/covers/`; a screen that stays
@@ -221,8 +223,9 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
 * **The launcher**: Library has a group per console with search, a home of title-screen shelves, and a page per
   cartridge (Play, or Install Game Boy Player first; play time; the verdict; the header; the file). Play starts
   the installed player with `--rom` on the file and a save folder per cartridge.
-* **The DS** (`system/nds`) is listed with what the DS machine does so far (its coverage report) and is not
-  playable: the DS picture, sound and input hardware have no cards yet.
+* **The DS** (`system/nds`) is listed with what the DS machine does so far (its coverage report). A system card
+  with a machine and a player (`machine`, `logic`; the DS card has both) makes its cartridges playable; without
+  them they are listed as not playable, with the card's `playable_note`.
 * **The store check** (`cardmodel arcade check`, CM42; section 7) installs the player through the store like a
   game, plays it on the system card's `check_cartridge` (a program assembled from the instruction cards, no one's
   game: a checkerboard and one byte of battery RAM), then starts every cartridge the library lists in that
@@ -234,8 +237,10 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   natively and packed as `<title>.app` (with `--install`: in `~/Applications/Cardmodel Games`). The cartridge is
   read where it is when the app starts; the app shares its save folder with the library's entry for that
   cartridge. Before packing, the lifted player plays the cartridge headless next to the plain one with the same
-  buttons (pictures and sound must be equal) and reports its purity: the share of instructions that ran as lifted
-  card IR. The app keeps what the interpreter still ran while it was played (`profile-*.bin` beside the save; the
+  buttons, a seeded walk no profile took (pictures and sound must be equal), and reports its purity: the share of
+  instructions that ran as lifted card IR. What that walk still ran in the interpreter joins the profile and the
+  cartridge is lifted again, then walked with a new seed (up to three rounds), so the reported purity is always on
+  a walk the profile did not see. The app keeps what the interpreter still ran while it was played (`profile-*.bin` beside the save; the
   shell's new `keep` and `globals` fields in game.json), and when anything did, quitting starts the app's own next
   build in the background (`relift` in game.json: at low priority, one at a time, `relift.log` beside the save),
   so the next launch runs that code as cards too.

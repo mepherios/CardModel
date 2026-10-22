@@ -310,6 +310,10 @@ class Unlicensed(unittest.TestCase):
                          ("sachen", "SACHEN TEST", True, True), "the header as the CPU reads it")
         g = run(gb.GameBoy(self.ctx, rom, "native", sample_rate=0))
         self.assertEqual(g.model, "cgb", "the CGB flag through the board")
+        from cardmodel.arcade import system as S
+        p = S.Player(self.ctx, "gameboy", rom, "native", fresh=True)
+        self.assertEqual((p.m.get("cgb"), p.m.get("mbc_kind")), (1, info["mbc_kind"]),
+                         "the arcade player reads the flag through the board too")
         self.assertEqual(list(results(g, 6)), [1, 5, 1, 0x40, 5, 0x44], "banks, 0 -> 1, base and mask")
         self.assertEqual(self.kind_after_power_on(rom), info["mbc_kind"])
         self.assertEqual(lift.scrambled_page(self.ctx, rom), (0x100, 0x200))
