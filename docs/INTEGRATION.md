@@ -34,7 +34,10 @@ quick verify and every self-run) checks the mechanical part.
    another checkout.
 8. **Sessions only read** the user's source folders (`~/Documents/Claude_Hub`, `~/Documents/Pheros_Studio`,
    `~/Documents/rea-main`, `~/Programmering/ting`, `~/Programmering/rea-cards`, `~/Documents/AnyPS5-main`, the
-   ROM folders). ROM bytes, firmware and keys are never copied into the repository.
+   ROM folders). ROM bytes, firmware and keys are never copied into the repository. Terms lifted from Unreal
+   Engine's source (UE-derived data) stay in untracked local storage (`state/`), never in tracked packs or in a
+   merged branch's history: the user, 2026-10-22, "Keep UE-derived data local: lifted Unreal terms go to untracked
+   local storage, not tracked packs." Names, paths and line numbers may be tracked.
 
 ## 2. Number registry
 
@@ -78,12 +81,14 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 | session | branch / worktree | area (files it owns) | on main |
 |---|---|---|---|
 | integrating session | `main`, the repository folder | kernel, engines, lang, emit, game, docs, the self-run (`engines/selfrun.py`, `capabilities.py`, `integrity.py`) | — |
-| cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 032dc88 (merge ab76427); still active (a Game Boy Player store entry) |
+| cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 85909ec (merge c1bf07f) |
 | cardmodel-anyps5 | `claude/recursing-williams-ecc80a` | `cardmodel/anyps5`, `stdlib/ps5_*.card`, `cards/anyps5_*`, docs/ANYPS5*.md, tests/test_anyps.py, tools/seed_anyps5.py | up to 10c688f (merge 65a059c) |
 | model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | up to 11284a6 (merge f25e82a): cartridges, players, per-cartridge apps, the lifter, the static pass, DS touch input |
 | game-boy-cgb-dmg-compati | `claude/strange-dewdney-f8f39d` | the CGB's DMG compatibility mode | 05178e1 (merge 7e4323a) |
 | self-running-improvement | `claude/jolly-liskov-2d97a8` | folded into `cardmodel self`: the `law_witnesses`, `observe_self`, `store` and `tests` steps (`engines/selfrun.py`, `engines/witness_runner.py`), step deadlines (`kernel/resources.deadline`), the store's end-to-end check (`arcade/client.py`, `arcade check`, CM42, G_A10, G_S1), goal floors in the integrity check (§4a), fixes in translate, exprs, coverage and verify | up to 984fc7a (merged 2026-10-22 with the user's approval); its goal floors replaced main's dccedca |
 | game-boy-library | `claude/frosty-lumiere-98e2b7` | the Game Boy library (header titles, the system card's check cartridge, a player reused cartridge after cartridge) and the store check over every listed cartridge (`arcade/client.py` check_cartridges and Reference, `arcade check --cartridges N`) | up to b15b527 (merged 2026-10-22 with the user's approval); its console-player check replaced main's test_cartridge |
+| ds-a-first-picture-of-po | `claude/blissful-easley-814fa6` | the DS: VRAM, the 2D and 3D engines, sound, Wi-Fi as hardware cards, the DS player and its check cartridge (`system/nds`, docs/MACHINES.md DS) | up to 0fcb468 (merge 9269eee) |
+| game-boy-the-10-cartridg | `claude/sad-clarke-108d42` | the last bank controllers as cards (MBC7, HuC3, Game Boy Camera, Wisdom Tree, Sachen) | up to ea14439 (merge 593fe5c) |
 | fix-flaky-arena-test-dec | `claude/sharp-goldwasser-8b0d81` | the arena's triangular decoy | d9e2ba3 (merge 05c54ea) |
 | fix-flaky-numeric-check | `claude/brave-montalcini-19f1b8` | float rounding in the redefinition witness | 60e72ca (merge cf775f2) |
 
@@ -186,6 +191,10 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | f25e82a | `claude/festive-margulis-43fde7` up to 11284a6 (the user's "Yes: merge claude/festive-margulis-43fde7 (e8def41 ...) into main" and "Yes: include 11284a6 ..."): per-cartridge apps, the lifter at 100 %, the static pass, relift, DS touch input |
 | 2026-10-22 | e72fa77 | `claude/jolly-liskov-2d97a8` at 984fc7a (the user's "Yes: approve merging claude/jolly-liskov-2d97a8 (head 984fc7a) into main"): law witnesses, observe_self, the store's end-to-end check (CM42, G_A10, G_S1); its goal floors (§4a) replace dccedca's |
 | 2026-10-22 | 32f5f58 | `claude/frosty-lumiere-98e2b7` at b15b527 (the user's "Yes: merge claude/frosty-lumiere-98e2b7 into main ..."): the Game Boy library's titles and check cartridge; `arcade check` launches every listed cartridge (its player check replaced main's test_cartridge) |
+| 2026-10-22 | 9269eee | `claude/blissful-easley-814fa6` at 0fcb468 (the user's "Yes: merge claude/blissful-easley-814fa6 (the DS player), ea14439 (the 10 cartridges), the STOP fix 73e6220 and 85909ec into main"): the DS player, the Wi-Fi card, the DS check cartridge |
+| 2026-10-22 | 593fe5c | `claude/sad-clarke-108d42` at ea14439 (the same approval): MBC7, HuC3, the Game Boy Camera, Wisdom Tree, Sachen as cards |
+| 2026-10-22 | 16ea9fc | 73e6220 from `claude/festive-margulis-43fde7` (the same approval; only that commit): a lifted STOP skips one byte |
+| 2026-10-22 | c1bf07f | `claude/sad-sanderson-482207` at 85909ec (the same approval): the Vector Duel project card's next steps |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
 sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21

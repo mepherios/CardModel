@@ -33,8 +33,8 @@
     "the RTC in local time: the shell's offset from UTC (player_clock_offset)"
   ],
   "metadata": {
-    "previous_content_hash": "2f6e3d18bcb409e793b45f71a8e46020ba22917fb30b293bd51eeb8fe9339886",
-    "version": "2.5.1",
+    "previous_content_hash": "85f6e01face50aa65f075ea1c045f175af82a6e595bb8bf86f1cd4352478130a",
+    "version": "2.5.2",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -58,8 +58,7 @@
     "MATH_CORE (approved 2026-10-22): the DS is its hardware cards, card-language semantics the semantic core can reason about and symbolically execute (2D and 3D engines, VRAM banks, SPI, RTC, IPC, sound), never host-language emulation code; emulation, screenshots, test ROMs and differential runs are witnesses, never the method",
     "the arcade side for the DS player (the OAM session): its d80128a (the shell keeps player_clock_offset at the local UTC offset; the library lists DS cartridges as playable) on its way to main; the arcade branch's tables-optional system.py and pointer input are on main",
     "symbolic terms for the ARM/Thumb instruction cards (MATH_CORE F5, after main's LR35902 terms), and the ARM lifter keeping its terms as cards (phase 2)",
-    "the DS hardware cards traced to the four sources (CM44): definitions for their behaviour, the methods that run and witness them",
-    "merge claude/blissful-easley-814fa6 into main (the arcade branch it needs is on main)"
+    "the DS hardware cards traced to the four sources (CM44): definitions for their behaviour, the methods that run and witness them"
   ],
   "order": 3,
   "owner": {
@@ -92,19 +91,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "Pokemon Diamond plays in the DS player (system/nds): a new game through the touch-screen tutorial and naming into its 3D world (walking, the menu, an in-game save kept in the player's save file), and a later boot continues that save (its main menu's wireless scan runs on the Wi-Fi card); headless 190-375 frames per second. The player needs the arcade branch's system.py and shell (a card without tables, pointer input) and is not yet installed in the arcade.",
+  "standing": "Pokemon Diamond plays in the DS player (system/nds): a new game through the touch-screen tutorial and naming into its 3D world (walking, the menu, an in-game save kept in the player's save file), and a later boot continues that save (its main menu's wireless scan runs on the Wi-Fi card); headless 190-375 frames per second. On main since 9269eee (merged 2026-10-22 with the user's approval): the store lists the DS player and plays it on its check cartridge.",
   "statement": "Both DS CPUs direct-booted on the ARM instruction cards with VRAM, both 2D engines, the 3D engine, the sound mixer, the save chip, SPI devices, the clock and the Wi-Fi hardware as cards, and booted by a card: Pokemon Diamond plays in the DS player (system/nds) for Cardmodel Arcade, new game and continue.",
   "tier": 1,
   "title": "Nintendo DS prototype",
-  "updated": "2026-10-22T15:56:31+02:00",
-  "user_actions": [
-    {
-      "action": "Approve merging claude/blissful-easley-814fa6 into main",
-      "unblocks": [
-        "Pokemon Diamond playable in Cardmodel Arcade",
-        "the 3D engine and sound work on main"
-      ],
-      "why": "it brings the DS's hardware cards, its card-language boot and the DS player"
-    }
-  ]
+  "updated": "2026-10-22T16:39:44+02:00",
+  "user_actions": []
 }

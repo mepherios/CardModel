@@ -1,0 +1,117 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/festive-margulis-*",
+    "claude/frosty-lumiere-*",
+    "claude/sad-clarke-*",
+    "claude/strange-dewdney-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "done": [
+    "960 of 971 surveyed ROMs boot on main, 969 of 971 on claude/sad-clarke-108d42; every runnable hardware test ROM passes (153 of 153 on main, 159 of 159 on that branch: the DMG OAM bug, the CGB's DMG mode)",
+    "the Game Boy Player (system/gameboy: the gameboy machine card plus player.card, law CM40) builds, installs and plays like a game; battery saves and the MBC3 clock survive closing",
+    "the library: every cartridge in the user's folders read where it is (a zip in memory), with its header, the survey's verdict and a title screen the machine draws headless; the folders live in library.json",
+    "the DS listed with its coverage, not playable",
+    "the launcher's Update installs the last good build when the cards in progress do not build, remembers the error across restarts, and the pages restart a stopped service",
+    "a WORK tab (every branch's commits, uncommitted changes, areas, programs) and a Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its own cardmodel",
+    "every title and datum on the launcher's pages opens something (230 clicks over 11 views, no errors)",
+    "a cartridge as its own app (cardmodel arcade app ROM --install): the player with the cartridge's code lifted into card IR, witnessed frame by frame against the plain player; Pokemon Crystal installed in ~/Applications/Cardmodel Games",
+    "the lifter: blocks plus every instruction start lifted on its own (near events, after EI, mid-block entries), HALT, STOP and EI lifted, RAM code lifted behind byte guards; compile units split by size; the machine counts what the interpreter still runs (Pokemon Crystal 98.4 % lifted on an unseen run, none of it RAM)",
+    "code found by reasoning (machine/absint.py): an abstract run of the machine's cards through far calls and jump tables (Pokemon Crystal: 1,163 more leaders); arcade app runs it once per cartridge",
+    "the WORK tab and branch versions, folded into main's IN PROGRESS by the main session (a5ed2d5)",
+    "100 % of a cartridge's code as cards: recursive descent follows the fall-through of conditional returns (the last gap); Pokemon Crystal ran every instruction of an unseen run as lifted card IR (0 interpreted), frame-identical to the interpreter",
+    "an app that ever interprets code keeps it beside its save and rebuilds itself in the background when you quit (relift), so the next launch runs it as cards",
+    "a cartridge without a No-Intro file name is titled by its header; a blank title screen gets no picture instead of a broken link",
+    "the system card carries a check cartridge assembled from the instruction cards: the player is checked on no one's game (its picture and its save)",
+    "`arcade check` (CM42) launches every listed cartridge in the store-installed player as the launcher does and compares its picture with the cards': 971 of 971 on the user's library (224 s); the self-run's store step counts the ones that fail (G_S1)",
+    "tests use synthetic cartridges and a library of their own; no tracked file is or zips a cartridge",
+    "on claude/sad-clarke-108d42: MBC7 (Kirby Tilt 'n' Tumble: the d-pad tilts, the EEPROM is in the save), HuC3 (Robopon: the clock chip, infrared), the Game Boy Camera (registers, capture time, a synthetic scene), Wisdom Tree and Sachen boards, all card language (gb_cartridge: cart.card, mbc7.card, huc3.card, camera.card), each tested on an assembled cartridge, lifted code identical to the interpreter",
+    "on claude/sad-clarke-108d42: a CGB game gets BCPS as the boot ROM leaves it (Jurassic Boy 2's background); the survey runs a static ROM again without input (Jeopardy! pauses on START) and names pass-through devices"
+  ],
+  "games": [
+    "gameboy_player"
+  ],
+  "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
+  "in_progress": [
+    "rebuilding the nine Pokémon apps with the fall-through fix"
+  ],
+  "kind": "game",
+  "left": [
+    "player.card: decide colour from the board's view of the header (cart_power_on, rom_read(0x143)) once main has the new cartridge boards (claude/sad-clarke)",
+    "the DS playable (the DS session has it; the shell's touch input and tables are ready)",
+    "the GameSharks: a pass-through model (a cartridge from the library in their slot) and Datel's registers, which are not documented; the GameShark (USA) file also lacks its font bank"
+  ],
+  "metadata": {
+    "previous_content_hash": "2cb5e4161dcebf1181734f6d01e84e9fbcf2edf6aff114a548fb9bba2dcad9f3",
+    "version": "2.1.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "goal": "G_M2_roms_boot",
+      "label": "surveyed ROMs that boot"
+    },
+    {
+      "goal": "G_M4_test_roms",
+      "label": "hardware test ROMs passing"
+    },
+    {
+      "format": "{passed}/{total}",
+      "label": "test ROMs (count)",
+      "state": "emu_testroms"
+    }
+  ],
+  "name": "gameboy_player",
+  "next_steps": [
+    "merge claude/sad-clarke-108d42 (the last bank controllers as cards) into main",
+    "rebuild the per-cartridge apps from main (they record the checkout they were built from)",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted: widen the abstract run (values loaded from ROM tables, returns through pushed addresses), rebuild apps after play",
+    "MATH_CORE (approved): new behaviour is card-language or IR semantics, never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method"
+  ],
+  "order": 2,
+  "owner": {
+    "name": "model-the-dmg-oam-corrup",
+    "session": "local_978e773c-d0b7-4c45-9824-80cad4f52163"
+  },
+  "paths": [
+    "cardmodel/arcade/cartapp.py",
+    "cardmodel/arcade/library.py",
+    "cardmodel/arcade/system.py",
+    "cardmodel/arcade/work.py",
+    "cardmodel/machine/gb.py",
+    "cardmodel/machine/lift.py",
+    "cardmodel/machine/shell.py",
+    "cardmodel/machine/survey.py",
+    "cardmodel/machine/testroms.py",
+    "cards/hardware",
+    "cards/isa/lr35902",
+    "cards/machine/gameboy",
+    "cards/platform/macos/GameShell.swift",
+    "cards/system",
+    "cardmodel/machine/build.py",
+    "tests/test_gb_mappers.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "On main: the player and the library; per-cartridge apps whose code is lifted card IR (Pokemon Crystal 100 % on an unseen run), the static pass, relift and DS touch input (claude/festive-margulis-43fde7); and the store launching every cartridge the library lists (`arcade check`: 971 of the user's 971; claude/frosty-lumiere-98e2b7). Both merged 2026-10-22 with the user's approval. On claude/sad-clarke-108d42 every bank controller in the user's folders is a card (MBC7, HuC3, the Game Boy Camera, the Wisdom Tree and Sachen boards): the survey boots 969 of 971; the two GameShark cheat devices cannot run from their files (docs/MACHINES.md says why). That branch waits for the user's go-ahead to merge.",
+  "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; the store installs the player and launches every cartridge it lists.",
+  "tier": 1,
+  "title": "Game Boy Player",
+  "updated": "2026-10-22T12:22:12+02:00",
+  "user_actions": [
+    {
+      "action": "Approve merging claude/sad-clarke-108d42 into main",
+      "unblocks": [
+        "Kirby Tilt 'n' Tumble, Robopon Sun and both Game Boy Cameras playable",
+        "Spiritual Warfare, Exodus, Joshua and the Bible cartridges with their banks",
+        "the Sachen cartridges, in colour"
+      ],
+      "why": "it makes the last bank controllers in your folders cards: Kirby Tilt 'n' Tumble, Robopon, the Game Boy Camera, the Wisdom Tree and Sachen cartridges"
+    }
+  ]
+}
