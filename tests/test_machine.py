@@ -498,6 +498,15 @@ def busy_rom(ctx):
     return bytes(img)
 
 
+def speed_rom(ctx):
+    """A CGB cartridge that switches to double speed with STOP (two bytes; the CPU skips the second) and then
+    counts in WRAM: what follows STOP runs from the byte after both."""
+    prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 0x01), ("LDH (n),A", 0x4D), ("db", bytes([0x10, 0x00])),
+            ("label", "main"), ("LD HL,nn", 0xC000), ("INC (HL)",), ("LDH A,(n)", 0x4D), ("LD (nn),A", 0xC001),
+            ("JR e", "main")]
+    return asm.rom(ctx.store, prog, title="SPEEDTEST", cgb=0xC0)
+
+
 class Lifting(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -507,15 +516,17 @@ class Lifting(unittest.TestCase):
         seen, entries = lift.profile_rom(cls.ctx, cls.rom, frames=30)
         cls.mod, cls.rep = lift.lift_rom(cls.ctx, cls.rom, 0xFFFF, seen, entries)
 
-    def _run_pair(self, mod, frames=60):
+    def _run_pair(self, mod, frames=60, rom=None):
         import tempfile
         from pathlib import Path
         from cardmodel.machine import lift
+        rom = rom or self.rom
         lib = lift.build_parts(self.ctx, mod, "c", Path(tempfile.mkdtemp(prefix="cardmodel_lift_")))
         m = native.CABIMachine(self.ctx, mod, "c", lib_path=lib)
-        lifted = gb.GameBoy(self.ctx, self.rom, machine=m, sample_rate=0)
+        lifted = gb.GameBoy(self.ctx, rom, machine=m, sample_rate=0)
         m.set("lifted_on", 1)
-        ref = gb.GameBoy(self.ctx, self.rom, "native", sample_rate=0, fresh=True)
+        ref = gb.GameBoy(self.ctx, rom, "native", sample_rate=0, fresh=True)
+        self.last_pair = (m, ref.m)
         for f in range(frames):
             lifted.run_frame()
             ref.run_frame()
@@ -528,6 +539,17 @@ class Lifting(unittest.TestCase):
         diverged, runs = self._run_pair(self.mod)
         self.assertIsNone(diverged, f"lifted run diverged at frame {diverged}")
         self.assertGreater(runs, 100, "blocks must actually run")
+
+    def test_lifted_stop_switches_speed_and_skips_its_second_byte(self):
+        from cardmodel.machine import lift
+        rom = speed_rom(self.ctx)
+        seen, entries = lift.profile_rom(self.ctx, rom, frames=5)
+        mod, _ = lift.lift_rom(self.ctx, rom, 0x7FFF, seen, entries)
+        diverged, _ = self._run_pair(mod, frames=10, rom=rom)
+        self.assertIsNone(diverged, f"lifted run diverged at frame {diverged}")
+        m, ref = self.last_pair
+        self.assertTrue(ref.read("wram")[1] & 0x80, "the cartridge runs at double speed")
+        self.assertEqual(m.get("interpreted"), 0, "STOP and everything after it ran as lifted card IR")
 
     def test_planted_lifter_bug_is_caught(self):
         """CM07: change the loop bound (CP 0xC4 -> 0xC3) in every lifted block; the differential run must see it."""

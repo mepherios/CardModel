@@ -57,7 +57,7 @@ REGS = ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC")
 ENDS = ("jump", "call", "ret")                 # groups that end a block
 EXCLUDED = {0x76, 0x10, 0xFB}                  # HALT, STOP, EI: each a block of its own (one instruction)
 STOP = 0x10                                    # one opcode byte, and it skips the next byte (PC + 2)
-LIFTER = 4                                     # the lifted blocks' shape (in the cache key)
+LIFTER = 5                                     # the lifted blocks' shape (in the cache key)
 PART_STATEMENTS = 120000                       # at most this many IR statements in one compile unit
 RAM_LIFTED = ((0xC000, 0xFE00), (0xFF80, 0xFFFF))   # work RAM and its echo, HRAM (not video or cartridge RAM)
 MAX_INSTRUCTIONS = 48
@@ -588,15 +588,20 @@ class Lifter:
         return {x[1] for x in _iter(e) if x[0] == "var"}
 
     # ---- a whole block ----
+    def entered(self, card, imm: list, pc: int, locals_: dict) -> tuple[int, list]:
+        """PC as the card's IR finds it (past the opcode, a prefix and the operands its fetches take: STOP's IR skips
+        its second byte itself) and that IR with the bytes in."""
+        body = self.instance(card, imm, locals_)
+        npc = (pc + 1 + (card.get("prefix") is not None) + self.taken) & 0xFFFF
+        return npc, [{"k": "assign", "target": "PC", "value": ["int", npc]}] + body
+
     def step_ir(self, card, imm: list, pc: int, locals_: dict) -> list:
         """One instruction's statements: its fetch time, PC past it, its card's IR with the bytes in, specialised."""
-        n = 1 + len(imm)
-        npc = (pc + n) & 0xFFFF
         ins: list = [{"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]}]
         if card.get("prefix") is not None:
             ins.append({"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]})
-        ins.append({"k": "assign", "target": "PC", "value": ["int", npc]})
-        ins += self.instance(card, imm, locals_)
+        npc, body = self.entered(card, imm, pc, locals_)
+        ins += body
         consts = {"PC": ["int", npc]}
         ins = self.fold_block(ins, dict(consts), locals_)
         ins = self.inline_stmts(ins, locals_, consts)
@@ -670,16 +675,7 @@ class Lifter:
         if card.get("illegal") or not all(any(lo <= a < hi for lo, hi in RAM_LIFTED) for a in range(addr, addr + n)):
             return None
         locals_: dict = {}
-        npc = (addr + n) & 0xFFFF
-        ins: list = [{"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]}]
-        if card.get("prefix") is not None:
-            ins.append({"k": "assign", "target": "now", "value": ["ADD", ["var", "now"], ["var", "md"]]})
-        ins.append({"k": "assign", "target": "PC", "value": ["int", npc]})
-        ins += self.instance(card, imm, locals_)
-        consts = {"PC": ["int", npc]}
-        ins = self.fold_block(ins, dict(consts), locals_)
-        ins = self.inline_stmts(ins, locals_, consts)
-        ins = self.fold_block(ins, dict(consts), locals_)
+        ins = self.step_ir(card, imm, addr, locals_)
         # the guard reads each byte with a statement of its own (so the read is specialised to its memory)
         guard: list = []
         same = ["CMP_EQ", ["var", "dma_active"], ["int", 0]] if addr < 0xFF80 else ["bool", True]
@@ -743,6 +739,7 @@ class Lifter:
                    for x in _exprs(st)):
                 raise ValueError(f"{card.name}: a fetch the lifter cannot place ({s})")
             out.append(s)
+        self.taken = pos[0]
         return out
 
     def _moves_event(self, body) -> bool:
@@ -841,7 +838,9 @@ def lifted_module(machine_ir: dict, blocks: list, ram: list = ()) -> dict:
 
 
 def cache_dir(ctx, rom_sha: str, machine_hash: str) -> Path:
-    d = ctx.state_root / "emu" / f"{rom_sha[:16]}-{machine_hash[:10]}-l{LIFTER}"
+    """The ROM's folder for a machine: its profile (what the interpreter saw, which no lifter changes) and what
+    lifters made from it, in files whose names carry LIFTER."""
+    d = ctx.state_root / "emu" / f"{rom_sha[:16]}-{machine_hash[:10]}"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -939,8 +938,9 @@ def lift_rom(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: byt
 
 
 # -- building the library in parts ---------------------------------------------------------------------
-def build_parts(ctx, mod: dict, lang: str, out_dir: Path, per_part: int = 1500) -> Path:
-    """Emit the lifted module as several compile units, compile them (cached), link one library."""
+def build_parts(ctx, mod: dict, lang: str, out_dir: Path, per_part: int = 1500, prune: bool = False) -> Path:
+    """Emit the lifted module as several compile units, compile them (cached), link one library. prune: the
+    folder holds one library's parts, so parts and libraries of earlier builds go."""
     card = ctx.language(lang)
     emb = card["embed"]
     if "compile_object" not in emb or "link" not in emb:
@@ -1003,6 +1003,10 @@ def build_parts(ctx, mod: dict, lang: str, out_dir: Path, per_part: int = 1500) 
         if p.returncode != 0:
             raise N.EngineError(f"{lang}: linking failed: {(p.stderr or p.stdout)[-2000:]}")
         tmp.replace(lib)
+    if prune:
+        for old in [*out_dir.glob("part-*.o"), *out_dir.glob(f"lifted-*{N._lib_suffix()}")]:
+            if old not in objs and old != lib:
+                old.unlink(missing_ok=True)
     return lib
 
 
@@ -1083,8 +1087,8 @@ def lifted_machine(ctx, rom: bytes, lang: str = "native", machine: str = "gamebo
     seen, entries = prof["seen"], prof["entries"]
     bits = sum(bin(x).count("1") for x in entries) + sum(bin(x).count("1") for x in prof["ram_seen"])
     pkey = hashlib.sha256(seen + b"\0" + entries + b"\0" + prof["ram_seen"] + prof["ram_code"]).hexdigest()[:16]
-    meta_p = d / f"lifted-{pkey}-{lang}.json"
-    latest = d / f"latest-{lang}.json"
+    meta_p = d / f"lifted-{pkey}-{lang}-l{LIFTER}.json"
+    latest = d / f"latest-{lang}-l{LIFTER}.json"
     if not meta_p.is_file() and latest.is_file() and not relift:
         last = json.loads(latest.read_text(encoding="utf-8"))
         if bits - last.get("entries", 0) < max(64, bits // 50):      # little new code seen: keep the last build
@@ -1101,7 +1105,7 @@ def lifted_machine(ctx, rom: bytes, lang: str = "native", machine: str = "gamebo
     while size < len(rom):
         size <<= 1
     say("lifting the ROM's code into card IR")
-    bc = d / "blocks.json"
+    bc = d / f"blocks-l{LIFTER}.json"
     cache = json.loads(bc.read_text(encoding="utf-8")) if bc.is_file() else {}
     n0 = len(cache)
     mod, rep = lift_rom(ctx, rom, size - 1, seen, entries, machine, cache=cache, ram_seen=prof["ram_seen"],

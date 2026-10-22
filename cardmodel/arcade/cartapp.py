@@ -46,6 +46,7 @@ from . import system as S
 SYSTEM = "gameboy"
 EXPLORE_FRAMES = 30000             # 8 1/3 minutes of the cartridge's time, a few seconds of the interpreter's
 WITNESS_FRAMES = 2400
+MIN_FREE_BYTES = 3 << 30            # a build compiles tens of MB of objects: refuse on a nearly full disk
 BUTTONS = (0x10, 0x10, 0x10, 0x80, 0x20, 0x04, 0x08, 0x02, 0x01, 0x04, 0x08, 0x10)   # A most often, START, B, moves
 # what the app keeps beside the save while it is played: (array, file, how a new session merges in)
 KEEP = (("seen", "profile-seen.bin", "or"), ("entries", "profile-entries.bin", "or"),
@@ -109,7 +110,7 @@ def lifted_player(ctx, rom: bytes, row: dict, say=lambda msg: None) -> tuple[dic
         lift.add_profile(d, {"entries": bytes(ent)})
         static.write_text(json.dumps(r), encoding="utf-8")
     prof = lift.stored_profile(d)
-    bc = d / "blocks.json"
+    bc = d / f"blocks-l{lift.LIFTER}.json"
     cache = json.loads(bc.read_text(encoding="utf-8")) if bc.is_file() else {}
     n0 = len(cache)
     say("lifting the cartridge's code into card IR")
@@ -185,13 +186,16 @@ def build(ctx, rom_path: Path, install: bool = False, progress=None) -> dict:
     if row is None:
         raise ValueError(f"{path} is not a cartridge the {card['title']} can read")
     rom = L.read_cartridge(path, exts)
+    out = B.arcade_root(ctx) / "cartapps" / row["id"]
+    out.mkdir(parents=True, exist_ok=True)
+    free = shutil.disk_usage(out).free
+    if free < MIN_FREE_BYTES:
+        raise RuntimeError(f"only {free >> 20} MB free on the disk; an app build needs {MIN_FREE_BYTES >> 30} GB")
     mod, rep = lifted_player(ctx, rom, row, say)
     plat = B.platform_card(ctx.store, card)
     lang = plat["library"]["language"]
-    out = B.arcade_root(ctx) / "cartapps" / row["id"]
-    out.mkdir(parents=True, exist_ok=True)
     say(f"compiling {rep['blocks']:,} blocks and {rep['ram_instructions_lifted']} RAM instructions natively")
-    lib = lift.build_parts(ctx, mod, lang, out)
+    lib = lift.build_parts(ctx, mod, lang, out, prune=True)     # this build's parts stay: a relift reuses them
     say(f"witness: {WITNESS_FRAMES:,} frames next to the plain player")
     wit = witness(ctx, mod, lib, lang, rom)
     if not wit["identical"]:
@@ -231,6 +235,7 @@ def build(ctx, rom_path: Path, install: bool = False, progress=None) -> dict:
     values = {"title": name, "id": row["id"], "version": card["version"], "build": build_id}
     plist = {k: B._fill(v, values) for k, v in bundle["info_plist"].items()}
     (app / "Contents" / "Info.plist").write_bytes(plistlib.dumps(plist))
+    lib.unlink()                                  # the app holds its own copy of the library
     installed = None
     if install:
         dest = apps_dir() / app.name
