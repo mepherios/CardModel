@@ -53,7 +53,9 @@ range to this table in the same commit.
 | CM43 | main (MATH_CORE phase 0) | primes are forever |
 | CM44 | main (MATH_CORE phase 1) | everything traces back to the four sources |
 | CM45–CM46 | main (the research handover's phase 0) | content is a sparse vector; every claim carries its tier |
-| **CM47 onward** | free | take the next one |
+| CM47 | world game (`claude/heuristic-ptolemy-2e6700`), reserved | written as CM45 on that branch; renumber before merging |
+| CM48 | universalization (`worktree-universal-domains`), reserved | "every domain is a Gödel set", written as CM45 on that branch; renumber before merging |
+| **CM49 onward** | free | take the next one |
 
 Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A9, G_K1–K6, G_D1–D2, G_P1–P5
 (AnyPS5), G_M1–M5 (machines); reserved: G_M6 (main, MATH_CORE), G_S1 (self-running-improvement). The next free one is the axis's next number (G_A10, G_U10, G_C6, G_K7, G_M7, G_P6 ...).
