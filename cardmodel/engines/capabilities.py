@@ -528,9 +528,11 @@ def four_sources(ctx: Ctx, seed: int) -> str:
     d = next((x for x in built["definitions"] if x["subject"] == alg.qualified), None)
     _need(d is not None and d["actions"] and d["godel"]["content"], "a definition was not derived for an algorithm")
     links = [a["link"]["status"] for a in built["actions"] if a["truth"] == f"definition/{d['name']}"]
-    _need("refuted" not in links and "witnessed" in links, f"its forms are not witnessed against it: {links}")
+    _need("refuted" not in links and {"witnessed", "proved"} & set(links),
+          f"its forms are not linked to it by a witness or a proof: {links}")
     return (f"{r['definitions']} definitions, {r['actions']} actions, {r['transformations']} transformations, "
-            f"{r['methods']} methods trace back; triangular's forms are witnessed against its definition")
+            f"{r['methods']} methods trace back; triangular's forms are {', '.join(sorted(set(links)))} against "
+            f"its definition")
 
 
 def witness_tiers(ctx: Ctx, seed: int) -> str:

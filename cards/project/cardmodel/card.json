@@ -34,8 +34,8 @@
     "terminal-launch store entries for combat and world"
   ],
   "metadata": {
-    "previous_content_hash": "5b8cfe724fff24f223acefc3d7e701f5b0eb65fddb446c64e87e8e3e467ebc4e",
-    "version": "2.0.7",
+    "previous_content_hash": "5945aaf8b14a63fd112983a33bacd1bb37186802d20f6c8afa537cd808c396a5",
+    "version": "2.0.8",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -62,7 +62,7 @@
   ],
   "name": "cardmodel",
   "next_steps": [
-    "size witnesses for recursive and Boolean forms (G_U9: 6 of 25 algorithm forms proved)",
+    "size witnesses for more classes: Boolean inputs, P-recursive sequences, while loops with a counted bound (G_U9: 8 of 25 algorithm forms proved)",
     "exhaustive 8-bit checks of the LR35902 terms (bounded tier)",
     "the semantic-hash library and instant lookup (phase 2)"
   ],
@@ -80,7 +80,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T02:05:08+02:00",
+  "updated": "2026-10-22T02:16:39+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",

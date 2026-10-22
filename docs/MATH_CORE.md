@@ -20,10 +20,11 @@ is"). Progress:
     and an equation between products is refused (`engines/godel.py`: `stored`, `merge`, `deprecate`, `resolve`);
   * R1, the formal core: `formal/GodelCore` proves T1 to T6 in plain Lean 4 (v4.35.0, no Mathlib, no sorry,
     standard axioms only), one `formal_theorem` card per theorem (`engines/formal.py`, `verify --only formal`);
-  * R3, witness tiers (CM46): every claim carries one (`engines/tiers.py`, `cardmodel tiers`). Polynomial and
-    C-finite forms are recognised from the lifted IR and their witnesses sized by the theorems, so six algorithm
-    claims are proved, not sampled (sums of 1..n, squares and cubes, triangular numbers, the arithmetic series,
-    cubic evaluation). The census: 2,667 claims, 1,626 at tier proof.
+  * R3, witness tiers (CM46): every claim carries one (`engines/tiers.py`, `cardmodel tiers`). Polynomial forms,
+    C-finite counted loops and linear recursions with constant coefficients are recognised from the lifted IR and
+    their witnesses sized by the theorems, so eight algorithm claims are proved, not sampled (sums of 1..n, squares
+    and cubes, triangular numbers by closed form and by recursion, the arithmetic series, cubic evaluation,
+    Fibonacci's naive recursion). The census: 2,667 claims, 1,628 at tier proof.
   * Not yet: the Mathlib (Finsupp) version of the core, which needs a Mathlib download; T7 (the finite-witness
     theorems) and T8 in Lean; R4's cost-vector extraction and e-class-to-vector map; R5-R10.
 

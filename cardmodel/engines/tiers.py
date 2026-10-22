@@ -14,6 +14,9 @@
                         (Cayley-Hamilton), and a polynomial in each other input of bounded degree. Two C-finite
                         sequences of orders D1 and D2 that agree on D1 + D2 consecutive terms agree from there on
                         (their difference satisfies a recurrence of order D1 + D2).
+               recurse  after the guards, a result that calls the function itself on n - k (k >= 1, the other
+                        inputs unchanged) linearly with constant coefficients, plus a polynomial P: from the first n
+                        the guards leave, a C-finite sequence of order max k + deg P + 1, with the guards' values below.
                guards   a leading ``if n <= c: return P`` (or <, >=, >) splits n's line into regions, each decided
                         on its own: a bounded region by every point, a left-unbounded one by a polynomial's degree.
   witness    ``prove`` runs both forms on the points the classes need, with Python's exact integers. All agree:
@@ -263,13 +266,75 @@ def shape(fn: dict) -> dict:
         elif k == "return":
             v = expr(st["value"], env)
             if v is None:
-                return {"ok": False, "why": "the result is not a polynomial"}
+                rec = _recursive(st["value"], env, fn.get("name"), params, n, region)
+                if not rec["ok"]:
+                    return {"ok": False, "why": rec.get("why") or "the result is not a polynomial"}
+                segments.append(rec["segment"])
+                return {"ok": True, "n": rec["n"], "segments": segments}
             segments.append({"lo": region[0], "hi": region[1], "kind": "poly", "poly": v})
             return {"ok": True, "n": n, "segments": segments}
         else:
             return {"ok": False, "why": f"a {k} statement"}
         i += 1
     return {"ok": False, "why": "no return"}
+
+
+def _calls_to_vars(e, fname: str, params: list[str], env: dict, seen: set):
+    """The IR expression with each call of the function itself on (p - k, the other inputs unchanged) replaced by the
+    variable φ:k; ValueError for any other call."""
+    if isinstance(e, list) and e and e[0] == "CALL":
+        if e[1] != fname or len(e) - 2 != len(params):
+            raise ValueError("a call to another function")
+        args = [expr(a, env) for a in e[2:]]
+        if None in args:
+            raise ValueError("a call whose arguments are not polynomials")
+        moved = [j for j, a in enumerate(args) if (a - env[params[j]]).t]
+        if len(moved) != 1 or any((args[j] - env[params[j]]).t for j in range(len(params)) if j not in moved):
+            raise ValueError("a call that changes more than one input")
+        j = moved[0]
+        d = env[params[j]] - args[j]
+        if env[params[j]].t != Poly.var(params[j]).t or not d.is_const() or d.value().denominator != 1 \
+                or d.value() < 1:
+            raise ValueError("a call that does not step one input down by a constant")
+        seen.add(params[j])
+        return ["var", f"φ:{int(d.value())}"]
+    if isinstance(e, list):
+        return [_calls_to_vars(x, fname, params, env, seen) if isinstance(x, list) else x for x in e]
+    return e
+
+
+def _recursive(e, env: dict, fname: str | None, params: list[str], n0, region) -> dict:
+    """A result that is linear, with constant coefficients, in calls of the function itself on n - k, plus a
+    polynomial: C-finite in n from the first n the guards leave."""
+    seen: set = set()
+    try:
+        e2 = _calls_to_vars(e, fname or "", params, env, seen)
+    except ValueError as exc:
+        return {"ok": False, "why": str(exc)}
+    if len(seen) != 1:
+        return {"ok": False, "why": "the result is not a polynomial"}
+    n = seen.pop()
+    if (n0 is not None and n0 != n) or region[0] is None:
+        return {"ok": False, "why": "a recursion with no base case below it"}
+    calls = sorted({x[1] for x in _vars_in(e2) if x[1].startswith("φ:")})
+    v = expr(e2, {**{k: p for k, p in env.items() if isinstance(p, Poly)}, **{c: Poly.var(c) for c in calls}})
+    split = v.affine_in(set(calls)) if v is not None else None
+    if split is None:
+        return {"ok": False, "why": "calls of itself that are not combined linearly with constant coefficients"}
+    coef, rest = split
+    K = max(int(c.split(":")[1]) for c in coef) if coef else 0
+    if K == 0:
+        return {"ok": False, "why": "the result is not a polynomial"}
+    order = K + (rest.degree(n) + 1 if rest.t else 0)
+    degrees = {q: rest.degree(q) for q in rest.vars() if q != n}
+    return {"ok": True, "n": n, "segment": {"lo": region[0], "hi": region[1], "kind": "cfinite", "order": order,
+                                            "start": region[0] - K, "degrees": degrees}}
+
+
+def _vars_in(e) -> list:
+    if isinstance(e, list) and e and e[0] == "var":
+        return [e]
+    return [v for x in e if isinstance(x, list) for v in _vars_in(x)] if isinstance(e, list) else []
 
 
 def _loop(st: dict, after: list, env: dict, pset: set[str], n0) -> dict:

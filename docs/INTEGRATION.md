@@ -152,6 +152,7 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | 4d9d755 | `claude/festive-margulis-43fde7` at 11e2560 (the user's "approved", in the OAM session): the Game Boy Player as cards, the cartridge library, every session's branch in the launcher; launcher reinstalled from main, 8770 restarted |
 | 2026-10-22 | a5ed2d5 | main: one store mechanism for work in progress: early access is the branch versions, the WORK tab is In progress's Every branch section |
 | 2026-10-22 | baa785a | main: the live_hub capability's witness follows the new test |
+| 2026-10-22 | 7d4da20 | main: MATH_CORE phase 0 by the research handover (the user's "Yes, send the research handover to the card-model session so its phase 0 work follows the agenda and the storage rules"): storage rules (CM45), witness tiers (CM46), the formal core in Lean (T1–T6), verify sections tiers and formal |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
 sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21

@@ -42,6 +42,17 @@ class Classes(unittest.TestCase):
                      "def f(n: int) -> int:\n    i = 0\n    while i < n:\n        i += 1\n    return i\n"):
             self.assertFalse(T.shape(fn(self.ctx, code))["ok"], code)
 
+    def test_linear_recursions_are_c_finite(self):
+        sh = T.shape(fn(self.ctx, "def f(n: int) -> int:\n    if n < 2:\n        return n\n"
+                                  "    return f(n - 1) + f(n - 2)\n"))
+        self.assertTrue(sh["ok"], sh)
+        cf = [s for s in sh["segments"] if s["kind"] == "cfinite"]
+        self.assertEqual([(s["lo"], s["start"], s["order"]) for s in cf], [(2, 0, 2)])
+        for code in ("def f(n: int) -> int:\n    if n <= 0:\n        return 1\n    return n * f(n - 1)\n",
+                     "def f(n: int) -> int:\n    return f(n - 1) + 1\n",
+                     "def f(n: int) -> int:\n    if n <= 0:\n        return 0\n    return f(n - 1) * f(n - 1)\n"):
+            self.assertFalse(T.shape(fn(self.ctx, code))["ok"], code)
+
     def test_parameters_changed_before_or_in_a_loop(self):
         # a parameter reassigned before the loop and one updated in it are read as they are, not as the input
         sh = T.shape(fn(self.ctx, "def f(a: int, n: int) -> int:\n    a = a + 1\n    s = 0\n    for _ in range(n):\n"
@@ -86,6 +97,16 @@ class SizedWitnesses(unittest.TestCase):
         self.assertEqual(r["status"], "proved")
         off = dict(cf["powers"], code=cf["powers"]["code"].replace("+ d", "+ d + a * b * c * d * (x - 1) * (x - 2) * x"))
         self.assertEqual(T.prove(self.ctx, cubic, cf["horner"], off)["status"], "refuted")
+
+    def test_a_recursion_wrong_from_n_7_is_refuted(self):
+        card = self.ctx.store.get("algorithm/fibonacci")
+        forms = {f["name"]: f for f in card.get("forms") or []}
+        bad = form("bad", "def fib_bad(n: int) -> int:\n    if n < 2:\n        return n\n    return fib_bad(n - 1) + "
+                          "fib_bad(n - 2) + (n - 2) * (n - 3) * (n - 4) * (n - 5) * (n - 6)\n", "fib_bad")
+        r = T.prove(self.ctx, card, forms["iterative"], bad)
+        self.assertEqual((r["status"], r["at"]), ("refuted", [7]))
+        r = T.prove(self.ctx, card, forms["iterative"], forms["naive_recursive"])
+        self.assertEqual(r["status"], "proved")
 
     def test_domains(self):
         self.assertEqual(T.domain_bounds("b >= 0 and m >= 1", ["b", "e", "m"]), {"b": [0, None], "e": [None, None],
