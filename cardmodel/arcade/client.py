@@ -147,22 +147,22 @@ def verify(library: Path, gid: str) -> dict:
 
 
 def picture(png: bytes) -> dict:
-    """How much a PNG shows: its size and how many distinct colours a grid of samples finds."""
+    """How much a PNG shows: its size and how many distinct colours its pixels have (every pixel of a small
+    picture; every 7th of a large one: an odd stride, so a one-pixel stripe pattern cannot alias to one colour)."""
     from ..machine.gb import png_read
     w, h, rgb = png_read(png)
-    seen = set()
-    for y in range(0, h, max(1, h // 48)):
-        for x in range(0, w, max(1, w // 64)):
-            i = (y * w + x) * 3
-            seen.add(rgb[i:i + 3])
+    step = 3 if w * h <= 300_000 else 21
+    seen = {rgb[i:i + 3] for i in range(0, len(rgb) - 2, step)}
     return {"width": w, "height": h, "colours_sampled": len(seen)}
 
 
 def play(library: Path, gid: str, frames: int, save_dir: Path, shot: Path | None = None, script: str | None = None,
-         timeout: float = 300) -> dict:
+         timeout: float = 300, rom: Path | None = None) -> dict:
     man = json.loads((library / gid / ".manifest.json").read_text(encoding="utf-8"))
     exe = library / gid / man["executable"]
     cmd = [str(exe), "--frames", str(frames), "--save-dir", str(save_dir)]
+    if rom:
+        cmd += ["--rom", str(rom)]
     if shot:
         cmd += ["--shot", str(shot)]
     if script:
@@ -190,19 +190,22 @@ def achievements(save_dir: Path, info: dict | None) -> list[int]:
 
 
 def pages(base: str) -> dict:
-    """The launcher's pages are served, and every API path the page script names exists on the service."""
+    """The launcher's pages are served, and every API route their scripts name is one the service documents."""
     html = _get(base, "/ui/index.html").decode("utf-8", "replace")
     assets = re.findall(r'(?:src|href)="([^"/][^"]*\.(?:js|css))"', html)
-    missing = []
+    missing, script = [], ""
     for a in assets:
         try:
-            _get(base, f"/ui/{a}")
+            body = _get(base, f"/ui/{a}")
         except OSError:
             missing.append(a)
-    script = _get(base, "/ui/app.js").decode("utf-8", "replace") if "app.js" in assets else ""
-    named = sorted(set(re.findall(r'"(/api/[a-z]+)/?', script)))
-    from .server import ENDPOINTS
-    unknown = [n for n in named if n not in ENDPOINTS]
+            continue
+        if a.endswith(".js"):
+            script += body.decode("utf-8", "replace")
+    named = sorted(set(re.findall(r'"(/api/[a-z_]+)/?', script)))
+    from . import server
+    documented = set(re.findall(r"(/api/[a-z_]+)", server.__doc__ or ""))   # the service lists every route it serves
+    unknown = [n for n in named if n not in documented]
     return {"ok": not missing and not unknown, "assets": assets, "missing": missing, "api": named,
             "unknown_endpoints": unknown}
 
@@ -222,18 +225,43 @@ def serve_here(ctx, ui_dir: Path | None):
     return f"http://127.0.0.1:{httpd.server_address[1]}", stop
 
 
+def test_cartridge(ctx, system: str, folder: Path) -> Path | None:
+    """A cartridge for a console player, assembled from the instruction cards (a checkerboard, then V-blank HALTs):
+    the store check never needs one of the user's ROMs. None when this system has no assembler card here."""
+    import zipfile
+    if system != "gameboy":
+        return None
+    from ..machine import asm
+    tile = bytes([0xAA, 0x55] * 8)
+    prog = [("LD SP,nn", 0xFFFE), ("LD A,n", 0), ("LDH (n),A", 0x40), ("LD HL,nn", 0x8010), ("LD DE,nn", "tile"),
+            ("LD B,n", 16), ("label", "copy"), ("LD A,(DE)",), ("LD (HL+),A",), ("INC DE",), ("DEC B",),
+            ("JR NZ,e", "copy"), ("LD HL,nn", 0x9800), ("LD BC,nn", 0x0400), ("label", "fill"), ("LD A,n", 1),
+            ("LD (HL+),A",), ("DEC BC",), ("LD A,B",), ("OR C",), ("JR NZ,e", "fill"), ("LD A,n", 0xE4),
+            ("LDH (n),A", 0x47), ("LD A,n", 0x01), ("LDH (n),A", 0xFF), ("LD A,n", 0x91), ("LDH (n),A", 0x40),
+            ("EI",), ("label", "idle"), ("HALT",), ("JR e", "idle"), ("label", "tile"), ("db", tile)]
+    vblank = asm.assemble(ctx.store, [("LDH A,(n)", 0x44), ("RETI",)], org=0x40)
+    rom = asm.rom(ctx.store, prog, title="STORETEST", extra={0x40: vblank})
+    folder.mkdir(parents=True, exist_ok=True)
+    out = folder / "storetest.zip"
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("storetest.gb", rom)
+    return out
+
+
 def check_catalog(ctx, frames: int = 120, only: list[str] | None = None, build: bool = True,
                   progress=None) -> dict:
-    """Every catalogue item, launched through the store as the launcher would (a temporary library and saves:
-    the player's own installation is never touched)."""
+    """Every item of the store's release catalogue (games and console players; not other worktrees' branch
+    versions), launched through the store as the launcher would, in a temporary library with temporary saves: the
+    player's own installation is never touched. A game card the catalogue does not list fails too."""
     from . import build as B
     say = progress or (lambda m: None)
     app = ctx.store.get("app/arcade")
     ui = (app.path / app["ui"]) if app is not None and app.get("ui") else None
     games = [c for c in ctx.store.cards("game") if not only or c.name in only]
-    if not games:
-        return {"status": "vacuous", "reason": "no game cards in the catalogue", "items": {}}
-    probe = B.platform_card(ctx.store, games[0]).get("probe")
+    plat = ctx.store.get("platform/macos") if not games else B.platform_card(ctx.store, games[0])
+    if plat is None:
+        return {"status": "vacuous", "reason": "no platform card to build the catalogue with", "items": {}}
+    probe = plat.get("probe")
     from ..engines import probes
     ok, why = probes.probe(probe) if probe else (True, "")
     if not ok:
@@ -243,12 +271,16 @@ def check_catalog(ctx, frames: int = 120, only: list[str] | None = None, build: 
     items, catalog = {}, []
     page: dict = {"ok": False, "reason": "not reached"}
     try:
-        catalog = _json(base, "/api/catalog")
+        catalog = [g for g in _json(base, "/api/catalog") if not g.get("worktree")]     # the release channel
         page = pages(base) if ui is not None else {"ok": False, "reason": "no launcher pages (app/arcade)"}
-        listed = {g["id"]: g for g in catalog}
-        for card in games:
-            gid = card.name
-            row: dict = {"title": card.get("title"), "version": card.get("version"), "listed": gid in listed}
+        listed = {g["id"]: g for g in catalog if not only or g["id"] in only}
+        wanted = list(listed) + [c.name for c in games if c.name not in listed]
+        if not wanted:
+            return {"status": "vacuous", "reason": "the catalogue lists nothing", "items": {}, "pages": page}
+        for gid in wanted:
+            e = listed.get(gid) or {}
+            row: dict = {"title": e.get("title"), "version": e.get("version"), "kind": e.get("kind", "game"),
+                         "listed": gid in listed}
             items[gid] = row
             t0 = time.perf_counter()
             try:
@@ -270,8 +302,12 @@ def check_catalog(ctx, frames: int = 120, only: list[str] | None = None, build: 
                 row["repair"] = {"file": victim["path"], "seen": victim["path"] in broken["bad"],
                                  "fetched": fixed["fetched"], "reused": fixed["reused"], "ok": verify(lib, gid)["ok"]}
                 saves = work / "saves" / gid
-                say(f"{gid}: playing {frames} frames headless")
-                row["play"] = play(lib, gid, frames, saves, shot=work / f"{gid}.png")
+                rom = test_cartridge(ctx, e.get("system"), work / "cartridges") if e.get("kind") == "system" else None
+                if e.get("kind") == "system" and rom is None:
+                    raise StoreError(f"no test cartridge for the {e.get('system')} player")
+                say(f"{gid}: playing {frames} frames headless" + (" with a cartridge assembled from the cards"
+                                                                  if rom else ""))
+                row["play"] = play(lib, gid, frames, saves, shot=work / f"{gid}.png", rom=rom)
                 row["achievements_readable"] = isinstance(achievements(saves, inst), list)
                 row["ok"] = bool(row["verify"]["ok"] and row["repair"]["seen"] and row["repair"]["ok"]
                                  and row["repair"]["fetched"] <= victim["size"] and row["play"]["ok"])

@@ -1,0 +1,6 @@
+{
+  "defined_by": "cardmodel docs",
+  "description": "What may only move one way: the floor of every goal (the hardest target it has had, its metric and direction), recorded by `cardmodel docs` and held by the integrity check; a goal gets easier, changes or leaves only with a written reason.",
+  "name": "floor",
+  "tier": 0
+}

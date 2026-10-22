@@ -4,8 +4,9 @@ Cardmodel Arcade (docs/ARCADE.md) is the model's Steam-like store: a native laun
 downloads, a content service, and games compiled from cards. This page lists everything that goes into it, what
 the card model contributes to each piece, and which of the products the model makes run through it today. It is
 checked by the `arcade` capability (CM35, CM37) in every `cardmodel verify` and every self-run, and launched end to
-end by the self-run's `store` step (CM42, `cardmodel arcade check`): every catalogue item downloaded through the
-service with every chunk checked, verified, a damaged file repaired, and run natively until it draws a frame.
+end by the self-run's `store` step (CM42, `cardmodel arcade check`): every catalogue item (the Game Boy Player with a
+cartridge assembled from the instruction cards) downloaded through the service with every chunk checked, verified,
+a damaged file repaired, and run natively until it draws a frame.
 
 Checked on main on 2026-10-21: `arcade build vector_duel` made build 0e79b9000ec8 in 3.4 s (465,705 bytes in 5
 chunks, 10 store pictures); `arcade serve` answered the catalog, the store page, the manifest, all 5 chunks (each

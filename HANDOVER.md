@@ -616,6 +616,8 @@ a native (ctypes) path inside improved modules (ROADMAP).
 * Background self-run cycles write only under `state/self/` (CM38); tests run with `CARDMODEL_SELF=0`
   (`tests/helpers.py`), so they see the tracked cards only.
 * Law and goal numbers come from the registry in docs/INTEGRATION.md; every law is carried by a capability (CM37).
+* A goal never gets easier silently: `floor/goals` holds every goal's hardest target, and lowering one, changing what
+  it measures or removing it needs a written reason (docs/INTEGRATION.md section 4a; `cardmodel docs` records it).
 
 ---
 

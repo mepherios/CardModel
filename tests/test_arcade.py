@@ -242,14 +242,17 @@ class Depot(unittest.TestCase):
             httpd.server_close()
 
     def test_every_catalogue_item_launches_from_the_store(self):
-        """CM42: every game the catalogue lists, through the service exactly as the launcher does it: installed
-        with every chunk and file checked, verified, damaged and repaired (only the damaged file is fetched again),
-        played natively headless with its own save folder, drawing a frame that is not one flat colour; the
-        launcher's pages are served and name only endpoints the service has."""
+        """CM42: every item the catalogue lists (games, and console players fed a cartridge assembled from the
+        instruction cards), through the service exactly as the launcher does it: installed with every chunk and file
+        checked, verified, damaged and repaired (only the damaged file is fetched again), played natively headless
+        with its own save folder, drawing a frame that is not one flat colour; the launcher's pages are served and
+        name only routes the service documents."""
         from cardmodel.arcade import client
         rep = client.check_catalog(self.ctx, frames=60)
         self.assertEqual(rep["status"], "pass", json.dumps(rep, default=str)[:3000])
-        self.assertEqual(sorted(rep["items"]), sorted(c.name for c in self.ctx.store.cards("game")))
+        games = {c.name for c in self.ctx.store.cards("game")}
+        self.assertTrue(games <= set(rep["items"]), "every game card is listed and launched")
+        self.assertEqual(sorted(rep["items"]), sorted(rep["catalog"]))
         for gid, r in rep["items"].items():
             self.assertTrue(r["repair"]["seen"], gid)
             self.assertLess(r["repair"]["fetched"], r["install"]["size"], f"{gid}: repair fetched only the damage")
@@ -282,7 +285,7 @@ class Store(unittest.TestCase):
         B.latest = lambda ctx, name: root
         resources.run = lambda cmd, **kw: (seen.append(cmd), type("P", (), {"stdout": "", "returncode": 0})())[1]
         try:
-            args = argparse.Namespace(action="run", target="vector_duel", frames=10, shot=None, input=None,
+            args = argparse.Namespace(action="run", target="vector_duel", frames=10, shot=None, input=None, rom=None,
                                       save_dir=None, json=False, cards=None, no_project=True, project=None)
             self.assertEqual(A.cmd_arcade(args), 0)
         finally:

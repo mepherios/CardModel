@@ -207,7 +207,9 @@ a build; a build there runs the branch's cardmodel, and a failed one keeps its e
 service) while the last good build stays installable.
 
 **The store, end to end** (`cardmodel arcade check`, law CM42, goal G_S1, the self-run's `store` step): for every
-game in the catalogue, `arcade/client.py` does what `Launcher.swift` does, through the service on a free local port:
+item in the release catalogue (the games, and the Game Boy Player, which plays a cartridge assembled from the
+instruction cards: never one of your ROMs), `arcade/client.py` does what `Launcher.swift` does, through the service
+on a free local port:
 asks for a build when the cards changed and waits for it, downloads every chunk and checks its SHA-256 and every
 file's, assembles and installs the files in a temporary library, verifies them, damages one file and repairs it
 (only that file is fetched again: the launcher's verify -> repair), runs the installed executable headless with its

@@ -41,7 +41,6 @@ from . import library as L
 from . import system as S
 from . import work as W
 
-ENDPOINTS = ("/api/status", "/api/catalog", "/api/game", "/api/build")   # what the pages may ask (client.pages)
 _builds: dict[str, dict] = {}
 _lock = threading.Lock()
 _elock = threading.Lock()

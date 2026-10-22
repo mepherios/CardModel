@@ -581,16 +581,26 @@ def cmd_new(args) -> int:
 
 
 def cmd_docs(args) -> int:
+    from datetime import date
+    from .engines import integrity
     from .engines.docs import laws_md
     ctx = _ctx(args)
     text = laws_md(ctx.store)
     target = paths.home() / "LAWS.md"
+    floor = ctx.store.get(integrity.FLOORS)
+    card, changes = integrity.raised_floors(integrity.goal_rows(ctx.store), dict(floor) if floor is not None else None,
+                                            date.today().isoformat())
     if args.check:
         same = target.exists() and target.read_text(encoding="utf-8") == text
         print("LAWS.md in sync" if same else "LAWS.md is stale: run `cardmodel docs`")
-        return 0 if same else 1
+        print("goal floors in sync" if not changes else f"goal floors would change: {'; '.join(changes)}")
+        return 0 if same and not changes else 1
     target.write_text(text, encoding="utf-8")
     print(f"wrote {target}")
+    if changes:
+        ctx.store.save({**(dict(floor) if floor is not None else {}), **card}, layer="model", category="floor")
+        print(f"goal floors ({integrity.FLOORS}): {'; '.join(changes[:12])}"
+              + (f" and {len(changes) - 12} more" if len(changes) > 12 else ""))
     return 0
 
 

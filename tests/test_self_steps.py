@@ -121,6 +121,43 @@ class Deadlines(unittest.TestCase):
         self.assertEqual(left, [], "the interrupted child was left running")
 
 
+class GoalFloors(unittest.TestCase):
+    def test_a_goal_target_never_drops_silently(self):
+        """A lowered target, a changed metric or a removed goal fails integrity until its reason is written down;
+        a harder target or a new goal is recorded by `cardmodel docs`; the committed floors hold."""
+        from cardmodel.engines import integrity as I
+        floor = {"floors": {"G_C4_x": {"metric": "m", "direction": "higher", "target": 111},
+                            "G_A1_y": {"metric": "n", "direction": "lower", "target": 0}}}
+        goals = {"G_C4_x": {"metric": "m", "direction": "higher", "target": 111},
+                 "G_A1_y": {"metric": "n", "direction": "lower", "target": 0}}
+        self.assertEqual(I.floor_problems(goals, floor), [])
+        lowered = dict(goals, G_C4_x={"metric": "m", "direction": "higher", "target": 100})
+        self.assertEqual(len(I.floor_problems(lowered, floor)), 1)
+        self.assertIn("111 to 100", I.floor_problems(lowered, floor)[0])
+        loosened = dict(goals, G_A1_y={"metric": "n", "direction": "lower", "target": 3})
+        self.assertEqual(len(I.floor_problems(loosened, floor)), 1)
+        renamed = dict(goals, G_C4_x={"metric": "other", "direction": "higher", "target": 111})
+        self.assertIn("metric or direction", I.floor_problems(renamed, floor)[0])
+        gone = {"G_A1_y": goals["G_A1_y"]}
+        self.assertIn("was removed", I.floor_problems(gone, floor)[0])
+        self.assertEqual(I.floor_problems(gone, dict(floor, retired=[{"goal": "G_C4_x", "reason": "merged into G_C9"}])),
+                         [])
+        amended = dict(goals, G_C4_x={"metric": "m", "direction": "higher", "target": 100, "amended": {
+            "from": floor["floors"]["G_C4_x"], "reason": "four cards were wrong and are gone"}})
+        self.assertEqual(I.floor_problems(amended, floor), [])
+        card, changes = I.raised_floors(amended, floor, "2026-10-22")
+        self.assertEqual(card["floors"]["G_C4_x"]["target"], 100)
+        self.assertEqual(card["history"][-1]["reason"], "four cards were wrong and are gone")
+        harder = dict(goals, G_C4_x={"metric": "m", "direction": "higher", "target": 120}, G_K9_z={
+            "metric": "k", "direction": "higher", "target": 5})
+        self.assertEqual(I.floor_problems(harder, floor), ["goal G_K9_z has no floor yet: run `cardmodel docs`"])
+        card, changes = I.raised_floors(harder, floor, "2026-10-22")
+        self.assertEqual((card["floors"]["G_C4_x"]["target"], card["floors"]["G_K9_z"]["target"]), (120, 5))
+        card, _ = I.raised_floors(lowered, floor, "2026-10-22")
+        self.assertEqual(card["floors"]["G_C4_x"]["target"], 111, "docs never lowers a floor without a reason")
+        self.assertEqual(I.floor_problems(I.goal_rows(model_ctx().store), dict(model_ctx().store.get(I.FLOORS))), [])
+
+
 class Fixes(unittest.TestCase):
     def test_learning_never_calls_a_source_on_an_input_where_it_hangs(self):
         """`while n != 0: n >>= 1` never returns for a negative n: the step-bounded interpreter drops those inputs

@@ -242,8 +242,10 @@ CAPABILITIES = [
      ["docs/AUTONOMY.md"], ["cardmodel self"], ["cardmodel/engines/selfrun.py", "cardmodel/engines/capabilities.py"],
      "Every use makes the model check and improve itself, and tell you where it falls short."),
     ("integration", "One program: unique law and goal numbers, every law carried by a capability, every command, "
-     "section and doc described, generated docs in sync.", L("CM20_laws_are_cards", "CM39_one_program"),
-     ["tests/test_laws.py::test_laws_md_in_sync", "tests/test_self.py::test_one_program_integrity"],
+     "section and doc described, generated docs in sync, no goal easier than its floor.",
+     L("CM20_laws_are_cards", "CM39_one_program"),
+     ["tests/test_laws.py::test_laws_md_in_sync", "tests/test_self.py::test_one_program_integrity",
+      "tests/test_self_steps.py::test_a_goal_target_never_drops_silently"],
      ["docs/INTEGRATION.md"], ["cardmodel verify --only integrity", "cardmodel docs"],
      ["cardmodel/engines/integrity.py"], "Parallel work lands as one working program, never as pieces."),
 ]

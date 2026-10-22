@@ -118,6 +118,8 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   named-fraction goal (G_U3) could read an observation of `examples/` instead of the model's own code.
 * 🔵 The launcher installs against the main checkout when built from a worktree (`--home` to choose); headless
   `arcade run --frames` never touches the player's save.
+* 🔵 **Goal floors**: `floor/goals` records the hardest target every goal has had (`cardmodel docs`), and the integrity
+  check fails on a goal made easier, re-aimed or removed without a written reason (docs/INTEGRATION.md 4a).
 
 ## Gödel model: next (GOALS.md "What the card model is")
 

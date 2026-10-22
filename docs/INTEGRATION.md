@@ -90,6 +90,20 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main).
   (`cardmodel cover --write COVERAGE.md`), docs/ANYPS5_COVERAGE.md (`cardmodel anyps5 cover --write docs/ANYPS5_COVERAGE.md`),
   stdlib/algebra.card (`cardmodel algebra scan --write`), the `_pack_*.jsonl` card packs (their tools).
 
+## 4a. Goal floors
+
+A goal's target is a promise: lowering it quietly is a way to lose part of the core. `floor/goals` records the floor
+of every goal (the hardest target it has had, its metric and its direction). `cardmodel docs` writes it: a new goal
+or a harder target raises the floor; nothing else does. The integrity check (every quick verify and self-run) fails
+when a goal is easier than its floor, has another metric or direction, or has gone, unless the reason is written
+down:
+
+* to make a goal easier or change what it measures, give its card
+  `"amended": {"from": <the goal's entry in floor/goals>, "reason": "why"}`, then run `cardmodel docs`: the floor
+  moves to the new target and `floor/goals` keeps the change in its `history` (from, to, reason, date);
+* to retire a goal, add `{"goal": "G_...", "reason": "why", "date": "..."}` to `retired` in `floor/goals` before
+  removing its card; `cardmodel docs` then drops its floor.
+
 ## 4b. Project cards (law CM41)
 
 Every project in progress keeps a detailed card, and its owning session keeps it current. The store's In progress
