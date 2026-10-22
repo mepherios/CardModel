@@ -1,0 +1,31 @@
+{
+  "category": "formal_theorem",
+  "evidence_tier": "proof",
+  "file": "formal/GodelCore/T1Lattice.lean",
+  "handover": "T1",
+  "lean": [
+    "GodelCore.dvd_gcd",
+    "GodelCore.gcd_dvd_left",
+    "GodelCore.gcd_dvd_right",
+    "GodelCore.lcm_dvd",
+    "GodelCore.dvd_lcm_left",
+    "GodelCore.dvd_lcm_right",
+    "GodelCore.dvd_antisymm",
+    "GodelCore.gcd_lcm_distrib",
+    "GodelCore.lcm_gcd_distrib",
+    "GodelCore.dvd_iff_exists_mul",
+    "GodelCore.mul_gcd_lcm",
+    "GodelCore.mul_left_cancel"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "T1_divisibility_lattice",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "gcd and lcm are the meet and join of divisibility on exponent vectors over any basis, the lattice is distributive, divisibility is having a cofactor, gcd times lcm is the product, and multiplication cancels.",
+  "tier": 0
+}

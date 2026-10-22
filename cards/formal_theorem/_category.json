@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_formal.py",
+  "description": "Theorems of the Gödel model's formal core, proved in Lean (formal/GodelCore): each card names the Lean theorems; `cardmodel verify --only formal` builds them and checks their axioms.",
+  "name": "formal_theorem",
+  "tier": 0
+}

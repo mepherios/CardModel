@@ -1,0 +1,28 @@
+{
+  "category": "finding",
+  "cites": [
+    "Cap-18",
+    "Ph-15",
+    "GM-7",
+    "Def-4",
+    "Rule-11",
+    "Rule-12",
+    "Rule-13",
+    "Rule-17"
+  ],
+  "evidence": "cardmodel difficulty; tests/test_difficulty.py",
+  "evidence_tier": "proof",
+  "limits": "each rank is an upper bound read from the question's logical form (an ∃ or ∀ over a decidable relation); completeness for the level is cited, not proved",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W15_difficulty_census",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "statement": "Every method decides a decidable question (nine of ten; the tenth, human_written, decides nothing) and serves a general question of rank decidable (symbolic_execution), Σ1 (saturate, lean_kernel) or Π1 (the other six). Of the product's 18 questions, 7 are decidable and promised; 3 are Σ1, 4 Π1, 3 Π2 and 1 beyond the arithmetical hierarchy, and those 11 are left open, each with what the product does instead.",
+  "tier": 1,
+  "workstream": "W-15"
+}

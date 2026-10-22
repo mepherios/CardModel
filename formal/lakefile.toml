@@ -1,0 +1,5 @@
+name = "GodelCore"
+defaultTargets = ["GodelCore"]
+
+[[lean_lib]]
+name = "GodelCore"

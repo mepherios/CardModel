@@ -549,11 +549,12 @@ def cmd_godel(args) -> int:
             return 1
         vecs.append((q, v, why))
     if args.action == "vector":
-        lines = []
-        for q, v, why in vecs:
-            n, missing = GD.number(v, idx)
-            lines.append(f"{q} ({why}): {dict(v)} -> {n if n is not None else 'atoms not in the ledger: ' + str(missing)}")
-        cli._out(args, {q: dict(v) for q, v, _ in vecs}, "\n".join(lines))
+        entries = GD.ledger(ctx.store)
+        recs = {q: GD.stored(v, why, entries) for q, v, why in vecs}
+        lines = [f"{q} ({r['read_from']}): {r['content']} -> vector {r.get('vector')} over basis version {r['basis']}"
+                 + (f"; atoms not in the ledger: {r['missing_atoms']}" if r.get("missing_atoms") else "")
+                 for q, r in recs.items()]
+        cli._out(args, recs, "\n".join(lines))
         return 0
     if args.action in ("gcd", "lcm"):
         if len(vecs) != 2:
@@ -561,9 +562,9 @@ def cmd_godel(args) -> int:
             return 2
         a, b = vecs[0][1], vecs[1][1]
         r = GD.gcd(a, b) if args.action == "gcd" else GD.lcm(a, b)
-        n, _ = GD.number(r, idx)
-        cli._out(args, {"result": dict(r), "number": n, "a_divides_b": GD.divides(a, b), "b_divides_a": GD.divides(b, a)},
-                 f"{args.action}: {dict(r)} = {n}; {vecs[0][0]} divides {vecs[1][0]}: {GD.divides(a, b)}; "
+        vec, _ = GD.to_vector(r, idx)
+        cli._out(args, {"result": dict(r), "vector": vec, "a_divides_b": GD.divides(a, b), "b_divides_a": GD.divides(b, a)},
+                 f"{args.action}: {dict(r)} (vector {vec}); {vecs[0][0]} divides {vecs[1][0]}: {GD.divides(a, b)}; "
                  f"the reverse: {GD.divides(b, a)}")
         return 0
     return 2
@@ -617,6 +618,65 @@ def cmd_sources(args) -> int:
     lines = [f"{r['status']}: {r['definitions']} definitions (coverage {r['coverage']}, canonical {r['canonical']}), "
              f"{r['actions']} actions, {r['transformations']} transformations, {r['methods']} methods"]
     lines += [f"  {p}" for p in r["problems"][:20]]
+    cli._out(args, r, "\n".join(lines))
+    return 1 if r["status"] == "fail" else 0
+
+
+def cmd_tiers(args) -> int:
+    from .engines import tiers as T
+    from .engines.frontend_python import lift_source
+    cli = _cli()
+    ctx = cli._ctx(args)
+    if args.action == "census":
+        c = T.census(ctx)
+        lines = [f"{c['claims']} claims, {c['proof']} at tier proof: {c['total']}"]
+        lines += [f"  {reg:<16} {dict(sorted(t.items()))}" for reg, t in sorted(c["by_registry"].items())]
+        if c["untiered_count"]:
+            lines.append(f"  without a tier (CM46): {c['untiered'][:10]}")
+        cli._out(args, c, "\n".join(lines))
+        return 1 if c["untiered_count"] else 0
+    card = ctx.store.get(f"algorithm/{args.algorithm}") if args.algorithm else None
+    if card is None:
+        print("usage: cardmodel tiers prove ALGORITHM (a card in cards/algorithm)", file=sys.stderr)
+        return 2
+    forms = [f for f in card.get("forms") or [] if f.get("lang") == "python" and f.get("code")]
+    ref = next((f for f in forms if f["name"] == card.get("reference_form")), forms[0] if forms else None)
+    out, lines = {}, []
+    for f in forms:
+        if f is ref:
+            continue
+        r = T.prove(ctx, card, ref, f)
+        out[f["name"]] = r
+        if r is None:
+            lifted = [lf.ir for lf in lift_source(f["code"], ctx.ops) if lf.ok]
+            why = T.shape(lifted[0]).get("why") if lifted else "it does not lift"
+            lines.append(f"{f['name']}: no class sizes a witness ({why or 'the two forms differ in class'}); "
+                         f"it stays sampled")
+        elif r["status"] == "refuted":
+            lines.append(f"{f['name']}: REFUTED at {r['at']}: {r['values']}")
+        else:
+            lines.append(f"{f['name']}: proved on {r['points']} points; " + "; ".join(r["theorems"]))
+    cli._out(args, out, "\n".join(lines) or "no other Python forms")
+    return 1 if any(r and r.get("status") == "refuted" for r in out.values()) else 0
+
+
+def cmd_difficulty(args) -> int:
+    from .engines import difficulty as D
+    cli = _cli()
+    ctx = cli._ctx(args)
+    r = D.check(ctx)
+    lines = [f"{r['status']}: {r['methods']} methods by the rank of what they decide {r['methods_by_rank']}; "
+             f"{r['questions']} questions {r['questions_by_rank']}"]
+    for m in sorted(ctx.store.cards("method"), key=lambda c: c.name):
+        rk = m.get("rank") or {}
+        lines.append(f"  {m.name:<20} {rk.get('decides', '?'):<10} serves: {rk.get('general', '')} "
+                     f"({rk.get('general_rank', '?')})")
+    lines.append("left open (the product says what it does instead):")
+    for q in sorted(ctx.store.cards("question"), key=lambda c: (D.RANKS.index(c.get("rank")) if c.get("rank") in
+                                                                   D.RANKS else 9, c.name)):
+        if q.get("promise") != "answered":
+            lines.append(f"  [{q.get('rank')}] {q.get('statement')}  -> {q.get('instead')}")
+    lines += [f"  problem: {p}" for p in r["problems"]]
     cli._out(args, r, "\n".join(lines))
     return 1 if r["status"] == "fail" else 0
 
@@ -692,6 +752,13 @@ def register(sub) -> None:
                                         "executable semantics")
     s.add_argument("isa", nargs="?", default="lr35902"); s.add_argument("cards", nargs="*")
     s.add_argument("--samples", type=int, default=4); s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_symbolic)
+    s = sub.add_parser("difficulty", help="the arithmetical rank of every method and question: what the product "
+                                          "can decide and what it must leave open (Gödel method W-15)")
+    s.set_defaults(fn=cmd_difficulty)
+    s = sub.add_parser("tiers", help="what each claim's evidence is worth: census, or prove an algorithm's forms "
+                                     "by sized witnesses")
+    s.add_argument("action", choices=["census", "prove"]); s.add_argument("algorithm", nargs="?")
+    s.set_defaults(fn=cmd_tiers)
     s = sub.add_parser("sources", help="the four sources: definitions (truth), actions, transformations, methods")
     s.add_argument("action", choices=["check", "build"]); s.add_argument("--write", action="store_true")
     s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_sources)

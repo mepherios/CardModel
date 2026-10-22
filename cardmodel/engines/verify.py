@@ -9,7 +9,13 @@ Sections (all on by default; ``only`` selects):
                 with unmerged work that no card lists fails (CM41)
   godel         the prime ledger is well formed and only grew since the last commit; content vectors read (CM43)
   sources       the four sources hold: every action names its definition and method and is linked by a proof, a
-                witness or as its source, none refuted; transformations name two truths; methods state limits (CM44)
+                witness or as its source, none refuted; transformations name two truths; methods state limits (CM44);
+                every definition stores a sparse vector with its basis version and an identity hash (CM45)
+  tiers         the tier of every claim (proof, probabilistic, bounded, sample): theorems, rewrite rules,
+                redefinitions, the four sources; a definition's claim without a tier fails (CM46); beside it, the
+                arithmetical rank of every method and question (engines/difficulty.py, Gödel method W-15)
+  formal        the formal core (formal/GodelCore, Lean) builds with no sorry, and every formal_theorem card names
+                Lean theorems that rest only on Lean's standard axioms (the handover's R1)
   forms         op / call / re_operation forms vs their reference (witness.verify_forms)
   vectors       known-answer vectors (crypto atoms, detect_format, ...)
   rules         rewrite rules on seeded integers
@@ -51,10 +57,10 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "integrity", "capabilities", "projects", "godel", "sources", "logic", "lang", "theorems", "game", "anyps5", "machine",
+SECTIONS = ("kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
             "forms", "vectors", "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck",
             "portability")
-QUICK = ["kernel", "integrity", "capabilities", "projects", "godel", "sources", "logic", "lang", "theorems", "game", "anyps5", "machine",
+QUICK = ["kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
          "forms", "vectors", "rules", "redefinitions"]
 
 
@@ -296,6 +302,17 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         elif sec == "sources":
             from . import sources
             res = sources.check(ctx)
+        elif sec == "tiers":
+            from . import difficulty, tiers
+            c = tiers.census(ctx)
+            dk = difficulty.check(ctx)
+            res = {"status": "fail" if c["untiered_count"] else ("pass" if c["claims"] else "vacuous"),
+                   "problems": [f"{q}: no tier (CM46)" for q in c["untiered"]], **c,
+                   "ranks": {"methods": dk["methods_by_rank"], "questions": dk["questions_by_rank"],
+                             "problems": dk["problems"]}}
+        elif sec == "formal":
+            from . import formal
+            res = formal.check(ctx)
         elif sec == "logic":
             res = _logic(ctx)
         elif sec == "lang":

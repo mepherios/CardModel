@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "Def-21",
+    "Ph-15"
+  ],
+  "instead": "run it under a time limit: halting is confirmed, a timeout decides nothing (Turing 1936)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "halts",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Σ1",
+  "statement": "Does this program halt on this input?",
+  "tier": 0
+}

@@ -1,0 +1,22 @@
+{
+  "category": "question",
+  "cites": [
+    "Def-4",
+    "Rule-11",
+    "Ph-15"
+  ],
+  "instead": "search for a proof and let Lean's kernel check what is found; a failed search says nothing (Rule-11)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "provable",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Σ1",
+  "statement": "Is this statement provable?",
+  "tier": 0
+}

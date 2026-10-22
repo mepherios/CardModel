@@ -624,7 +624,10 @@ a native (ctypes) path inside improved modules (ROADMAP).
 ## 8. Concrete next steps (in order)
 
 Start with `cardmodel self report`: the model's own ranked list of its flaws and weaknesses, with the command for
-each. Beyond that:
+each. The mathematics has its own plan: docs/MATH_CORE.md (phases and progress) and the research handover's agenda
+(R1-R10). Its rules for anyone continuing: content is stored as sparse vectors, never as integers, and no index is
+reused (CM45); every claim carries its tier (CM46, `cardmodel tiers census`); the formal core in `formal/` builds
+with no `sorry` (`cardmodel verify --only formal`). Beyond that:
 
 1. **stdin harnesses** (ROADMAP Now): add `read_*` templates to every language card, switch the harness, and confirm
    the build cache hits across seeds. Verify then gets several times faster.

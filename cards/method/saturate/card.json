@@ -4,13 +4,27 @@
   "decides": "equality of terms reached by the rule cards and discovered laws; the cheapest term of the class (the canonical form)",
   "limits": "not shown equal is not unequal; conditional rules are left out",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "673bd51dcda0b4306974c4b76f6b9f85d2057560f863fbcc18e2b34e587d3918",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "saturate",
   "procedure": "cardmodel/engines/egraph.py",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Rule-4",
+      "Ph-15",
+      "GM-3"
+    ],
+    "decides": "decidable",
+    "general": "are two terms equal in the equational theory of the rules",
+    "general_rank": "Σ1",
+    "question": "whether two terms are equal by the rule cards within a budget, and the cheapest term found",
+    "why": "a rewrite chain is a finite witness, so equality is ∃ of a decidable check; the word problem is undecidable in general (Post and Markov 1947), so 'not found' is never 'unequal'"
   },
   "statement": "equality of terms reached by the rule cards and discovered laws; the cheapest term of the class (the canonical form)",
   "status": "built",

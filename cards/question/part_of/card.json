@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-19",
+    "Cap-2"
+  ],
+  "instead": "componentwise comparison of sparse vectors, proved in formal/GodelCore T1",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "part_of",
+  "promise": "answered",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "decidable",
+  "statement": "Is one model a part of another (divides), and what do two models share (gcd)?",
+  "tier": 0
+}

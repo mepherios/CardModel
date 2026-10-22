@@ -1,0 +1,22 @@
+{
+  "category": "formal_theorem",
+  "evidence_tier": "proof",
+  "file": "formal/GodelCore/T2Carry.lean",
+  "handover": "T2",
+  "lean": [
+    "GodelCore.preservesGcd_iff_disjoint",
+    "GodelCore.carry_mul",
+    "GodelCore.carry_basis_eq_of_same_image"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "T2_carry_preserves_gcd",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "A carry-over (each concept sent to a model of the target set) preserves products always, and every gcd exactly when distinct concepts go to disjoint supports; concepts with one image cannot be told apart (the translation gap).",
+  "tier": 0
+}

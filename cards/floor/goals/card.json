@@ -235,11 +235,23 @@
       "direction": "higher",
       "metric": "canonical_definitions",
       "target": 0.9
+    },
+    "G_U8_formal_core": {
+      "direction": "lower",
+      "metric": "formal_core_problems",
+      "target": 0
+    },
+    "G_U9_algorithm_forms_proved": {
+      "direction": "higher",
+      "metric": "algorithm_forms_proved",
+      "target": 0.5
     }
   },
   "history": [],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "7bbe300290488d25ffc1d992188a2bab608120df7c8c8a74026af8af4b11998c",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "goals",
   "provenance": {

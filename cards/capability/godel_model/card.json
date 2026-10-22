@@ -10,11 +10,14 @@
     "docs/MATH_CORE.md"
   ],
   "laws": [
+    "law/CM31_behaviour_is_numbered",
     "law/CM43_primes_are_forever",
-    "law/CM31_behaviour_is_numbered"
+    "law/CM45_content_is_a_sparse_vector"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "aeb75439e9adfec5164fae7a8e83c400c9d29d2e643a3d3f027d7a0c5542faa4",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/godel.py"
@@ -25,11 +28,13 @@
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"
   },
-  "statement": "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded exactly; maps between Gödel sets with their gaps.",
+  "statement": "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded exactly; maps between Gödel sets with their gaps; content stored as sparse vectors with their basis version, merges and deprecations as events.",
   "tests": [
     "tests/test_godel.py::test_ledger_is_append_only",
     "tests/test_godel.py::test_content_algebra_and_carry",
-    "tests/test_godel.py::test_structural_numbers_decode_exactly"
+    "tests/test_godel.py::test_structural_numbers_decode_exactly",
+    "tests/test_godel.py::test_stored_records_follow_the_rules",
+    "tests/test_godel.py::test_merges_and_deprecations_never_relate_products"
   ],
   "tier": 0,
   "usefulness": "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."

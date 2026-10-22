@@ -4,13 +4,27 @@
   "decides": "a Python function's meaning as a core term, exactly, for the supported subset",
   "limits": "no strings, lists or classes yet; unsupported constructs are reported, never guessed",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "c25206b11c8a71fdb17dcd7488a09778b2c5e85539421b88f79ce7c02b77c590",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "lift_python",
   "procedure": "cardmodel/engines/frontend_python.py",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Rule-2",
+      "Rule-4",
+      "Ph-15"
+    ],
+    "decides": "decidable",
+    "general": "is the term what the Python means",
+    "general_rank": "Π1",
+    "question": "the core term of a Python function in the supported subset, and whether it is in the subset",
+    "why": "a syntax-directed translation is a total computable function, and the subset is syntactic; that the term means what CPython does on every input is a ∀ over inputs"
   },
   "statement": "a Python function's meaning as a core term, exactly, for the supported subset",
   "status": "built",

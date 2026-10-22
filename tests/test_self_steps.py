@@ -182,10 +182,11 @@ class Fixes(unittest.TestCase):
         idx = G.index_of(ctx.store)
         term = ["MOD", ["ADD", ["MUL", ["var", "seed"], ["int", 1103515245]], ["int", 12345]], ["int", 2147483648]]
         t0 = time.perf_counter()
-        with self.assertRaises(ValueError):
-            G.structural(term, ctx.ops, idx)
+        n, _, digits = G.structural(term, ctx.ops, idx)
+        self.assertIsNone(n)
+        self.assertGreater(digits, G.STRUCTURAL_MAX_DIGITS)
         self.assertLess(time.perf_counter() - t0, 5)
-        n, _ = G.structural(["ADD", ["var", "x"], ["int", 1]], ctx.ops, idx)
+        n, _, _ = G.structural(["ADD", ["var", "x"], ["int", 1]], ctx.ops, idx)
         self.assertGreater(n, 1)
 
     def test_the_model_can_observe_its_own_code(self):
