@@ -1,0 +1,23 @@
+{
+  "category": "formal_theorem",
+  "evidence_tier": "proof",
+  "file": "formal/GodelCore/T4Free.lean",
+  "handover": "T4",
+  "lean": [
+    "GodelCore.gen_basis_iff",
+    "GodelCore.merge_image",
+    "GodelCore.two_factorizations",
+    "GodelCore.basis_pair_unique"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "T4_free_factor_layer",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "Merging two concepts keeps the factor layer free: congruence under a = b is agreement after the merge, whose image is the free monoid on the remaining concepts. An equation between products, a·b = c·d over four distinct concepts, leaves four distinct atoms with two factorizations of one element, while in a free monoid a product of two atoms factors one way.",
+  "tier": 0
+}

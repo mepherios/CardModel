@@ -1,0 +1,36 @@
+{
+  "category": "capability",
+  "check": "godel_model",
+  "commands": [
+    "cardmodel godel"
+  ],
+  "core": true,
+  "docs": [
+    "GOALS.md",
+    "docs/MATH_CORE.md"
+  ],
+  "laws": [
+    "law/CM43_primes_are_forever",
+    "law/CM31_behaviour_is_numbered"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/godel.py"
+  ],
+  "name": "godel_model",
+  "order": 25,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded exactly; maps between Gödel sets with their gaps.",
+  "tests": [
+    "tests/test_godel.py::test_ledger_is_append_only",
+    "tests/test_godel.py::test_content_algebra_and_carry",
+    "tests/test_godel.py::test_structural_numbers_decode_exactly"
+  ],
+  "tier": 0,
+  "usefulness": "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."
+}

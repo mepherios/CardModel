@@ -256,6 +256,17 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
         return {"definition_coverage": so.get("coverage"), "canonical_definitions": so.get("canonical"),
                 "actions_without_truth": so.get("actions_without_truth"),
                 "symbolic_instructions": so.get("symbolic_instructions")}[name]
+    if name == "formal_core_problems":
+        fo = secs.get("formal")
+        return len(fo.get("problems") or []) if fo and fo.get("status") in ("pass", "fail") else None
+    if name == "proof_tier_claims":
+        ti = secs.get("tiers")
+        return ti.get("proof") if ti else None
+    if name == "algorithm_forms_proved":
+        defs = [d for d in ctx.store.cards("definition") if (d.get("subject") or "").startswith("algorithm/")]
+        obs = [o for d in defs for o in d.get("proof_obligations") or [] if o.get("claim", "").startswith("form ")]
+        return round(sum(1 for o in obs if o.get("tier") == "proof" and o.get("status") == "proved") / len(obs), 4) \
+            if obs else None
     if name == "content_vector_coverage":
         gd = secs.get("godel")
         return gd.get("coverage") if gd else None

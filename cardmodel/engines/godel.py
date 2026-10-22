@@ -5,9 +5,18 @@
              ops; other sets extend it (``godel_set`` cards). A new atom takes the next unused prime. The ledger is
              append-only: ``sync`` only appends lines, and the CM43 test compares it with its git history.
   content    a concept's factorization: the atoms of its terms, with multiplicity (an exponent vector). gcd and
-             lcm are the minimum and maximum per atom, divides is <= per atom, ``number`` is the product of p^e.
+             lcm are the minimum and maximum per atom, divides is <= per atom; each costs time in the support.
+  storage    (law CM45, the research handover's storage rules) a card stores its content as the sparse map
+             ledger index -> exponent with the basis version it was read against (``stored``), never the
+             content integer prod p^e, which grows with every factor. Its identity is the hash of its structure.
+             Gödel's positional number is kept only for small terms (STRUCTURAL_MAX_DIGITS).
+  events     the ledger never deletes, reuses or renumbers an index. Two indices found to name one concept are
+             merged (``merge``: one moves onto the other); a concept found to be a product of others is
+             deprecated with that product (``deprecate``). Both are appended lines; ``resolve`` reads a vector
+             through them. An equation between products (a·b = c·d) is not an event: it would end unique
+             factorization (formal/GodelCore/T4Free.lean), so it belongs in the transformation layer.
   structure  Gödel's positional numbering of a term's prefix token sequence, prod p_i^code_i, decoded exactly
-             given the atoms' arities. Content forgets arrangement; structure keeps it and is the identity.
+             given the atoms' arities. Content forgets arrangement; structure keeps it.
   carry      a map between sets sends each atom to a content vector. It preserves products; it preserves every
              gcd exactly when distinct atoms go to vectors with disjoint support; what it cannot send is the gap.
 
@@ -18,6 +27,7 @@ atoms. Constants and variables are not atoms: content counts operations, not val
 from __future__ import annotations
 
 import json
+import math
 from collections import Counter
 from datetime import date
 
@@ -25,6 +35,8 @@ REGISTRY = "godel"
 PACK = "_pack_ledger.jsonl"
 LOGIC = ("logic/true", "logic/false", "logic/not", "logic/and", "logic/or", "logic/implies", "logic/iff",
          "logic/eq", "logic/forall", "logic/exists")
+EVENT_KINDS = ("merge", "deprecate")
+STRUCTURAL_MAX_DIGITS = 200          # Gödel's positional number is stored for terms up to this many decimal digits
 _PRIMES: list[int] = []
 
 
@@ -42,7 +54,20 @@ def nth_prime(n: int) -> int:
 
 # -- the ledger -----------------------------------------------------------------------------------------------------
 def ledger(store) -> list[dict]:
-    return sorted((dict(c) for c in store.cards(REGISTRY)), key=lambda c: c["index"])
+    """The atoms, by index (the ledger's events are apart: ``events``)."""
+    return sorted((dict(c) for c in store.cards(REGISTRY) if "index" in c), key=lambda c: c["index"])
+
+
+def events(store) -> list[dict]:
+    """The ledger's merges and deprecations, in the order they were appended."""
+    return sorted((dict(c) for c in store.cards(REGISTRY) if "event" in c), key=lambda c: c.get("seq", 0))
+
+
+def basis_version(entries: list[dict]) -> int:
+    """The ledger's version: how many atoms it holds. The ledger only appends, so version n is exactly its first n
+    atoms, and a vector read against version n reads the same in every later version
+    (formal/GodelCore/T3Ledger.lean: enc_append)."""
+    return len(entries)
 
 
 def index_of(store) -> dict[str, dict]:
@@ -83,8 +108,9 @@ def sync(store, atoms: list[str], set_name: str, layer: str = "model", since: st
     return new
 
 
-def problems(entries: list[dict]) -> list[str]:
-    """The ledger's own shape: indices 1..n with no gap, each prime the index's prime, every atom once."""
+def problems(entries: list[dict], evs: list[dict] | None = None) -> list[str]:
+    """The ledger's own shape: indices 1..n with no gap, each prime the index's prime, every atom once; every event
+    a merge or a deprecation of a known index into known, live indices, with no cycle."""
     out, seen = [], set()
     for i, e in enumerate(entries, start=1):
         if e.get("index") != i:
@@ -94,7 +120,84 @@ def problems(entries: list[dict]) -> list[str]:
         if e.get("atom") in seen:
             out.append(f"{e.get('atom')} appears twice")
         seen.add(e.get("atom"))
+    n, gone = len(entries), {}
+    for ev in evs or []:
+        kind, of = ev.get("event"), ev.get("of")
+        if kind not in EVENT_KINDS:
+            out.append(f"ledger event {ev.get('name')}: {kind!r} is not a merge or a deprecation (an equation between "
+                       f"products belongs in the transformation layer, CM45)")
+            continue
+        if not isinstance(of, int) or not 1 <= of <= n:
+            out.append(f"ledger event {ev.get('name')}: index {of!r} is not in the ledger")
+            continue
+        if of in gone:
+            out.append(f"ledger event {ev.get('name')}: index {of} was already {gone[of]}")
+        to = {int(k): v for k, v in (ev.get("to") or {}).items()} if kind == "deprecate" else {ev.get("into"): 1}
+        bad = [k for k in to if not isinstance(k, int) or not 1 <= k <= n or k == of]
+        if bad or not to or any(not isinstance(v, int) or v < 1 for v in to.values()):
+            out.append(f"ledger event {ev.get('name')}: its target {to} is not a product of other ledger indices")
+        gone[of] = "merged" if kind == "merge" else "deprecated"
+    try:
+        for i in gone:
+            resolve({str(i): 1}, evs or [])
+    except ValueError as exc:
+        out.append(str(exc))
     return out
+
+
+def merge(store, atom: str, into: str, reason: str, layer: str = "model") -> dict:
+    """Record that ``atom`` names the same concept as ``into``: its index moves onto ``into``'s from now on. Merging
+    generators keeps the monoid free (formal/GodelCore/T4Free.lean: gen_basis_iff)."""
+    idx = index_of(store)
+    return _append_event(store, {"event": "merge", "of": idx[atom]["index"], "into": idx[into]["index"],
+                                 "reason": reason}, layer)
+
+
+def deprecate(store, atom: str, product: dict[str, int], reason: str, layer: str = "model") -> dict:
+    """Record that ``atom`` is the product of other atoms (atom -> exponent): its index is read as that product."""
+    idx = index_of(store)
+    return _append_event(store, {"event": "deprecate", "of": idx[atom]["index"],
+                                 "to": {str(idx[a]["index"]): e for a, e in product.items()}, "reason": reason}, layer)
+
+
+def _append_event(store, ev: dict, layer: str) -> dict:
+    evs = events(store)
+    seq = max((e.get("seq", 0) for e in evs), default=0) + 1
+    ev = {"name": f"e{seq}__{ev['event']}__{ev['of']}", "category": REGISTRY, "seq": seq,
+          "since": date.today().isoformat(), **ev}
+    probs = problems(ledger(store), evs + [ev])
+    if probs:
+        raise ValueError("; ".join(probs[:3]))
+    reg = store.ensure_registry(REGISTRY, layer, description="The prime ledger of the expanding Gödel model "
+                                "(engines/godel.py): append-only, one atom per prime.", tier=0)
+    with open(reg / PACK, "a", encoding="utf-8") as f:
+        f.write(json.dumps(ev, sort_keys=True, ensure_ascii=False) + "\n")
+    store.invalidate()
+    return ev
+
+
+def resolve(vec: dict[str, int], evs: list[dict], depth: int = 0) -> dict[str, int]:
+    """A stored vector read through the ledger's events: a merged index counts as its target, a deprecated one as
+    its product, until only live indices are left."""
+    if depth > 64:
+        raise ValueError("the ledger's events form a cycle")
+    rule = {}
+    for ev in evs:
+        if ev.get("event") == "merge":
+            rule[str(ev["of"])] = {str(ev["into"]): 1}
+        elif ev.get("event") == "deprecate":
+            rule[str(ev["of"])] = {str(k): v for k, v in ev["to"].items()}
+    out: Counter = Counter()
+    moved = False
+    for i, e in vec.items():
+        if i in rule:
+            moved = True
+            for j, f in rule[i].items():
+                out[j] += e * f
+        else:
+            out[i] += e
+    out = +out
+    return resolve(dict(out), evs, depth + 1) if moved else dict(out)
 
 
 # -- content ----------------------------------------------------------------------------------------------------------
@@ -158,15 +261,60 @@ def card_content(ctx, card) -> tuple[Counter | None, str]:
     return None, f"no content rule for registry {reg}"
 
 
-def number(content: Counter, index: dict[str, dict]) -> tuple[int | None, list[str]]:
-    """prod p^e over the ledger; None and the atoms the ledger lacks, if any."""
+def to_vector(content: Counter, index: dict[str, dict]) -> tuple[dict[str, int], list[str]]:
+    """The sparse map ledger index -> exponent (string keys, as JSON keeps them), and the atoms the ledger lacks."""
     missing = sorted(a for a in content if a not in index)
-    if missing:
-        return None, missing
-    n = 1
-    for a, e in content.items():
-        n *= index[a]["prime"] ** e
-    return n, []
+    vec = {str(index[a]["index"]): e for a, e in sorted((kv for kv in content.items() if kv[0] in index and kv[1]),
+                                                         key=lambda kv: index[kv[0]]["index"])}
+    return vec, missing
+
+
+def from_vector(vec: dict[str, int], entries: list[dict]) -> Counter:
+    """The readable view of a stored vector: atom -> exponent."""
+    by = {e["index"]: e["atom"] for e in entries}
+    return Counter({by[int(i)]: e for i, e in vec.items()})
+
+
+def stored(content: Counter | None, read_from: str, entries: list[dict], ops=None, term=None) -> dict:
+    """What a card stores of its Gödel model (CM45): the sparse vector with the basis version it was read against,
+    the readable atom view beside it, and Gödel's positional number only for a small term. Never the content
+    integer."""
+    index = {e["atom"]: e for e in entries}
+    out = {"content": dict(content) if content is not None else None, "read_from": read_from,
+           "basis": basis_version(entries)}
+    if content is not None:
+        out["vector"], missing = to_vector(content, index)
+        if missing:
+            out["missing_atoms"] = missing
+    if term is not None and ops is not None:
+        try:
+            s, varnames, digits = structural(term, ops, index)
+            out["structural"], out["structural_digits"], out["variables"] = (str(s) if s is not None else None,
+                                                                              digits, varnames)
+        except (KeyError, ValueError):
+            out["structural"] = None
+    return out
+
+
+def vector_problems(godel: dict, entries: list[dict]) -> list[str]:
+    """A stored Gödel record against the storage rules: no content integer, a vector over indices no later than its
+    basis version, a basis version the ledger has reached, and the vector agreeing with its atom view."""
+    out = []
+    if "number" in godel:
+        out.append("stores a content integer (CM45: store the sparse vector)")
+    vec, basis = godel.get("vector"), godel.get("basis")
+    if godel.get("content") is not None and vec is None:
+        out.append("has content but no vector")
+    if not isinstance(basis, int) or not 0 < basis <= len(entries):
+        out.append(f"basis version {basis!r} is not one the ledger has reached ({len(entries)})")
+    elif vec:
+        late = [i for i in vec if int(i) > basis]
+        if late:
+            out.append(f"indices {late[:3]} are later than its basis version {basis}")
+        elif godel.get("content") is not None and dict(from_vector(vec, entries)) != {k: v for k, v in
+                                                                                      godel["content"].items() if v}:
+            out.append("its vector and its atom view disagree")
+    return out
 
 
 def gcd(a: Counter, b: Counter) -> Counter:
@@ -202,14 +350,18 @@ def _tokens(t, ops, index, varnames: list[str]) -> list[int]:
     raise ValueError(f"not a core term: {t!r}")
 
 
-def structural(t, ops, index) -> tuple[int, list[str]]:
-    """Gödel's positional number of a term, and the variable order it used."""
+def structural(t, ops, index, max_digits: int | None = STRUCTURAL_MAX_DIGITS) -> tuple[int | None, list[str], int]:
+    """Gödel's positional number of a term (None when it would pass max_digits decimal digits: it grows too fast for
+    large terms, so the structure hash is the identity), the variable order it used, and its size in digits."""
     varnames: list[str] = []
     toks = _tokens(t, ops, index, varnames)
+    digits = int(sum(code * math.log10(nth_prime(i)) for i, code in enumerate(toks, start=1))) + 1
+    if max_digits is not None and digits > max_digits:
+        return None, varnames, digits
     n = 1
     for i, code in enumerate(toks, start=1):
         n *= nth_prime(i) ** code
-    return n, varnames
+    return n, varnames, len(str(n))
 
 
 def decode(n: int, ops, entries: list[dict], varnames: list[str]):
@@ -269,8 +421,8 @@ def check(ctx) -> dict:
     from ..arcade.hub import git
     from ..kernel import paths
     st = ctx.store
-    entries = ledger(st)
-    probs = problems(entries)
+    entries, evs = ledger(st), events(st)
+    probs = problems(entries, evs)
     rel = f"cards/{REGISTRY}/{PACK}"
     head = git(paths.home(), "show", f"HEAD:{rel}")
     current = (paths.home() / rel).read_text(encoding="utf-8") if (paths.home() / rel).is_file() else ""
@@ -290,9 +442,11 @@ def check(ctx) -> dict:
     total = done + len(missing)
     sets = Counter(e["set"] for e in entries)
     return {"status": "fail" if probs else ("pass" if entries else "vacuous"), "problems": probs,
-            "atoms": len(entries), "sets": dict(sets), "coverage": round(done / total, 4) if total else None,
-            "missing": missing[:20]}
+            "atoms": len(entries), "basis": basis_version(entries), "events": len(evs), "sets": dict(sets),
+            "coverage": round(done / total, 4) if total else None, "missing": missing[:20]}
 
 
-__all__ = ["LOGIC", "basis_atoms", "check", "card_content", "carry", "decode", "divides", "gcd", "index_of", "lcm", "ledger",
-           "module_content", "nth_prime", "number", "preserves_gcd", "problems", "structural", "sync", "term_content"]
+__all__ = ["EVENT_KINDS", "LOGIC", "STRUCTURAL_MAX_DIGITS", "basis_atoms", "basis_version", "card_content", "carry",
+           "check", "decode", "deprecate", "divides", "events", "from_vector", "gcd", "index_of", "lcm", "ledger", "merge",
+           "module_content", "nth_prime", "preserves_gcd", "problems", "resolve", "stored", "structural", "sync",
+           "term_content", "to_vector", "vector_problems"]

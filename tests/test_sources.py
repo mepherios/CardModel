@@ -25,7 +25,14 @@ class Sources(unittest.TestCase):
         self.assertEqual(tri["godel"]["content"], {"op/ADD": 1})
         links = {a["code"]: a["link"] for a in built["actions"] if a["truth"] == f"definition/{tri['name']}"}
         self.assertEqual(links["algorithm/triangular#loop"]["kind"], "source")
-        self.assertEqual(links["algorithm/triangular#closed_form"]["status"], "witnessed")
+        # the closed form is proved by a witness its class sizes (CM46); the recursive form is only sampled
+        self.assertEqual((links["algorithm/triangular#closed_form"]["status"],
+                          links["algorithm/triangular#closed_form"]["tier"]), ("proved", "proof"))
+        self.assertEqual((links["algorithm/triangular#recursive"]["status"],
+                          links["algorithm/triangular#recursive"]["tier"]), ("witnessed", "sample"))
+        self.assertIn("vector", tri["godel"])
+        self.assertNotIn("number", tri["godel"])
+        self.assertTrue(tri["identity"]["hash"].startswith("sha256:"))
         self.assertIn(tri["canonical"]["status"], ("canonical", "recurrence"))
         # an action that names no definition, or whose witness refutes it, breaks the law
         from cardmodel.kernel.store import Store

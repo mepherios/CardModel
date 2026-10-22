@@ -533,6 +533,35 @@ def four_sources(ctx: Ctx, seed: int) -> str:
             f"{r['methods']} methods trace back; triangular's forms are witnessed against its definition")
 
 
+def witness_tiers(ctx: Ctx, seed: int) -> str:
+    from . import tiers as T
+    card = ctx.store.get("algorithm/sum_of_squares")
+    forms = {f["name"]: f for f in card.get("forms") or []}
+    r = T.prove(ctx, card, forms["loop"], forms["closed_form"])
+    _need(r and r["status"] == "proved" and r["tier"] == "proof",
+          f"a C-finite claim was not proved by its sized witness: {r} (CM46)")
+    # a closed form that agrees with the loop on n = 1..9 and nowhere after is refuted, never proved
+    bad = dict(forms["closed_form"], code="def sq_closed(n: int) -> int:\n    if n <= 0:\n        return 0\n"
+               "    return n * (n + 1) * (2 * n + 1) // 6 + (n - 1) * (n - 2) * (n - 3) * (n - 4) * (n - 5) * "
+               "(n - 6) * (n - 7) * (n - 8) * (n - 9)\n")
+    r2 = T.prove(ctx, card, forms["loop"], bad)
+    _need(r2 is not None and r2["status"] == "refuted", f"a wrong closed form was not refuted: {r2}")
+    c = T.census(ctx)
+    _need(c["untiered_count"] == 0, f"claims without a tier: {c['untiered'][:3]} (CM46)")
+    return (f"sum_of_squares proved on {r['points']} points ({'; '.join(r['theorems'][-1:])}); a closed form wrong "
+            f"from n = 10 refuted at {r2['at']}; {c['proof']} of {c['claims']} claims at tier proof")
+
+
+def formal_core(ctx: Ctx, seed: int) -> str:
+    from . import formal as F
+    if F.toolchain() is None:
+        raise Unavailable("no Lean toolchain for formal/lean-toolchain")
+    r = F.check(ctx)
+    _need(r["status"] == "pass", f"the formal core does not hold: {r.get('problems', [])[:3]}")
+    return (f"{r['proved']} of {r['theorems']} theorem cards proved by Lean's kernel ({r['lean_names']} theorems, "
+            f"standard axioms only, no sorry)")
+
+
 def distillation(ctx: Ctx, seed: int) -> str:
     from . import egraph as E
     from . import search
@@ -573,8 +602,11 @@ def godel_model(ctx: Ctx, seed: int) -> str:
     _need(common and G.divides(common, a) and G.divides(common, b), f"no common factor: {a} {b}")
     idx = G.index_of(ctx.store)
     t = ["ADD", ["MUL", ["var", "n"], ["int", 3]], ["int", -2]]
-    n, vs = G.structural(t, ctx.ops, idx)
+    n, vs, _ = G.structural(t, ctx.ops, idx)
     _need(G.decode(n, ctx.ops, entries, vs) == t, "a structural number did not decode to its term")
+    rec = G.stored(a, "test", entries)
+    _need("number" not in rec and rec["vector"] and not G.vector_problems(rec, entries),
+          f"a stored Gödel record breaks the storage rules: {G.vector_problems(rec, entries)} (CM45)")
     image, gap = G.carry(Counter({"x": 1, "y": 2}), {"x": Counter({"X": 1})})
     _need(gap == Counter({"y": 2}), "a map's gap is wrong")
     return (f"{len(entries)} atoms with their primes; gcd(sum_of_squares, triangular) = {dict(common)}; structural "
@@ -619,7 +651,8 @@ CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_sel
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
                                   world, machines, symbolic_instructions, emulation, arcade, live_hub, godel_model,
-                                  distillation, four_sources, anyps5, self_run, integration)}
+                                  distillation, four_sources, witness_tiers, formal_core, anyps5, self_run,
+                                  integration)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

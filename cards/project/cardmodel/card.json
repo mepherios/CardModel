@@ -14,30 +14,28 @@
   "done": [
     "consolidation, knowledge layer, card language, Lean bridge",
     "resource governor, function algebra",
-    "every session branch merged as of 7e4323a",
     "self-run (CM38), capabilities (CM37), one program (CM39)",
-    "the live In progress page with early access (bb480fb)",
-    "law CM41: detailed, current project cards (c8aeb4c)",
-    "docs/MATH_CORE.md proposal (de22b52)",
-    "MATH_CORE phase 0: prime ledger, content vectors (03b1c6e); e-graph distillation",
-    "MATH_CORE phase 1: the four sources, definitions for every algorithm and function",
-    "MATH_CORE phase 0 F5: symbolic LR35902 instruction terms as definitions"
+    "the live In progress page (bb480fb); law CM41 (c8aeb4c)",
+    "MATH_CORE phase 0 (03b1c6e, 51a70b2, 8dbd200) and phase 1 (bcdbdde)",
+    "claude/festive-margulis-43fde7 merged (4d9d755, the user's approval); launcher reinstalled from main",
+    "one store mechanism: early access is the branch versions, every branch inside In progress (a5ed2d5)",
+    "the handover's storage rules (CM45), witness tiers (CM46), the Lean formal core T1-T6"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
-    "phase 0 by the research handover (the user's yes, relayed by Ting): storage rules (no content integers, a structure hash and a sparse vector with its basis version on every definition), witness tiers, the formal core in Lean",
-    "merging claude/festive-margulis-43fde7 (the user approved in its session)"
+    "R3 beyond the first classes: C-finite recursion, Boolean functions, bit-vectors (exhaustive 8-bit for the instruction terms)"
   ],
   "kind": "program",
   "left": [
-    "R3: size witnesses by class so they prove (polynomials, C-finite, Boolean, bit-vectors)",
+    "the formal core on Mathlib's Finsupp (needs the user's yes to download Mathlib), T7 and T8 in Lean",
+    "R4: e-graph extraction by cost vector and an e-class to vector map",
     "the ARM instruction cards as terms (G_M6: 511 of 679)",
     "canonical forms for more definitions (G_U7 0.3 of 0.9)",
-    "one In progress tab after the cartridge merge"
+    "terminal-launch store entries for combat and world"
   ],
   "metadata": {
-    "previous_content_hash": "2495493d7e230edb2e4c987ca0332ed57f93c83c6796eef2ba8af55955660ae2",
-    "version": "2.0.6",
+    "previous_content_hash": "5b8cfe724fff24f223acefc3d7e701f5b0eb65fddb446c64e87e8e3e467ebc4e",
+    "version": "2.0.7",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -52,12 +50,20 @@
     {
       "goal": "G_A4_capabilities_failing",
       "label": "core capabilities failing"
+    },
+    {
+      "goal": "G_U9_algorithm_forms_proved",
+      "label": "algorithm forms proved, not sampled"
+    },
+    {
+      "goal": "G_U8_formal_core",
+      "label": "formal core problems"
     }
   ],
   "name": "cardmodel",
   "next_steps": [
-    "merge the cartridge store and fold its WORK tab into In progress",
-    "storage rules R2, then witness tiers R3, then the Lean formal core R1",
+    "size witnesses for recursive and Boolean forms (G_U9: 6 of 25 algorithm forms proved)",
+    "exhaustive 8-bit checks of the LR35902 terms (bounded tier)",
     "the semantic-hash library and instant lookup (phase 2)"
   ],
   "order": 6,
@@ -70,11 +76,11 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "MATH_CORE phases 0 and 1 are on main (the user's yes): the prime ledger (70 atoms, CM43), an e-graph over 241 equalities, the four sources (CM44) with 552 definitions, the 512 LR35902 instruction cards as symbolic terms. Next: phase 0 brought to the research handover's storage rules and agenda (R1-R3), as the user asked.",
+  "standing": "MATH_CORE phases 0 and 1 are on main and phase 0 follows the research handover: content stored as sparse vectors with basis versions and identity hashes (CM45), every claim tiered (CM46: 2,667 claims, 1,626 at tier proof), the formal core proved in Lean (T1-T6, 6 of 6 cards, no sorry). The cartridge store is merged and In progress is one tab.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T01:28:26+02:00",
+  "updated": "2026-10-22T02:05:08+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",

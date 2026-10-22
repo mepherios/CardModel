@@ -1,0 +1,25 @@
+{
+  "category": "formal_theorem",
+  "evidence_tier": "proof",
+  "file": "formal/GodelCore/T5Transport.lean",
+  "handover": "T5",
+  "lean": [
+    "GodelCore.up_transport",
+    "GodelCore.down_transport",
+    "GodelCore.contains_upClosed",
+    "GodelCore.fragment_downClosed",
+    "GodelCore.gcd_keeps_down",
+    "GodelCore.lcm_keeps_up"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "T5_property_transport",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "Upward-closed properties transport to multiples and downward-closed ones to divisors; containing a factor is upward closed, staying inside a fragment downward closed; gcd keeps downward-closed properties and lcm upward-closed ones.",
+  "tier": 0
+}
