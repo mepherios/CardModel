@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "bounded by iterations and nodes",
+  "decides": "equality of terms reached by the rule cards and discovered laws; the cheapest term of the class (the canonical form)",
+  "limits": "not shown equal is not unequal; conditional rules are left out",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "saturate",
+  "procedure": "cardmodel/engines/egraph.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "equality of terms reached by the rule cards and discovered laws; the cheapest term of the class (the canonical form)",
+  "status": "built",
+  "tier": 0
+}

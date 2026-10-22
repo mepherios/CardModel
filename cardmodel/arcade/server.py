@@ -10,9 +10,8 @@
     GET  /ui/...                         the launcher's pages (the app card's ui folder)
     GET  /api/library, /api/cover/ID.png, POST /api/library/scan   the user's cartridges (library.py)
     GET  /api/work, /api/work/NAME/commit/HASH                     every session's branch (work.py)
-    GET  /api/dev                        everything in progress: projects, activity, early-access builds (hub.py)
+    GET  /api/dev                        everything in progress: projects, activity, branch versions (hub.py)
     GET  /api/events                     the same, pushed as server-sent events whenever it changes (hub.py)
-    GET  /early/WORKTREE/ID/BUILD/...    an early-access build's manifest and pictures, from a worktree's depot
 
 A system card (a console's player, system.py) is in the catalog like a game, under its arcade id. Every program
 also lists its versions on the repository's other worktrees (``branches``), and a program that only a branch has
@@ -349,7 +348,7 @@ class Handler(BaseHTTPRequestHandler):
         q = parse_qs(u.query)
         ctx = self.ctx
         from . import hub
-        if hub.route(self, parts, q):                    # in development, live events, early access
+        if hub.route(self, parts, q):                    # in progress, live events
             return
         if parts[:1] == ["api"]:
             with _lock:

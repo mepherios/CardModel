@@ -1,0 +1,30 @@
+{
+  "applies_to": [
+    "definition"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "definition",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "schema": {
+    "properties": {},
+    "required": [
+      "subject",
+      "math",
+      "canonical",
+      "godel",
+      "proof_obligations",
+      "actions",
+      "origin",
+      "methods"
+    ],
+    "type": "object"
+  },
+  "statement": "A definition (truth): the term, the canonical form, the Gödel numbers, the obligations.",
+  "tier": 0
+}

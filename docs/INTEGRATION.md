@@ -47,14 +47,18 @@ range to this table in the same commit.
 | CM32–CM35 | games (`claude/sad-sanderson-482207`) | machines are cards; lifted code is the cards; emulation effects are the shell; games are cards |
 | CM36 | AnyPS5 (`claude/recursing-williams-ecc80a`) | unknowns are observation obligations (merged as CM32, renumbered CM36 at integration) |
 | CM37–CM39 | main (self-run) | the core is never lost; the model runs itself; one program |
-| CM40 | cartridges (`claude/festive-margulis-43fde7`, reserved through the games branch) | players are cards (written as CM36 on that branch, renumbered CM40 when it caught up with main) |
+| CM40 | cartridges (`claude/festive-margulis-43fde7`) | players are cards (written as CM36 on that branch, renumbered CM40 when it caught up with main) |
 | CM41 | main | projects keep their cards current |
-| CM42 | self-run steps (`claude/jolly-liskov-2d97a8`) | the store runs what it lists (CM39 on that branch before the fold) |
-| **CM43 onward** | free | take the next one (MATH_CORE's laws take theirs when the user approves it) |
+| CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`) | the store runs what it lists (CM39 on that branch before the fold) |
+| CM43 | main (MATH_CORE phase 0) | primes are forever |
+| CM44 | main (MATH_CORE phase 1) | everything traces back to the four sources |
+| **CM45 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U4, G_L1, G_O1–O4, G_A1–A9, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M5 (machines), G_S1 (products: the store). The next free one is the axis's next number (G_A10,
-G_C6, G_K7, G_M6, G_P6, G_S2 ...).
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U7, G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
+(AnyPS5), G_M1–M6 (machines; G_M6 is MATH_CORE's), G_S1 (products: the store, `claude/jolly-liskov-2d97a8`).
+G_A10 is that branch's law-witness goal, written G_A9 there and renumbered where it met MATH_CORE's G_A9
+(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U8, G_C6, G_K7, G_M7,
+G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened
@@ -138,6 +142,14 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | bb480fb | main: the store's live In progress page (cards/project, arcade/hub.py, early access); main took over port 8770 and the installed launcher, agreed with the games session |
 | 2026-10-22 | c8aeb4c | main: law CM41, detailed and current project cards, the Waiting on you list |
 | 2026-10-22 | de22b52 | main: docs/MATH_CORE.md, a proposal awaiting the user's yes |
+| 2026-10-22 | e86a84b | main: project cards revised honestly; a timing race out of `test_affine_match` |
+| 2026-10-22 | 99242f5 | main: the hub re-reads the cards when anything moved, so a revised project card shows at once |
+| 2026-10-22 | e0eca75 | `claude/sad-sanderson-482207`: Vector Duel 0.4.0 is the release (the user's "Yes: merge claude/sad-sanderson-482207 into main so Vector Duel 0.4.0 is the release") |
+| 2026-10-22 | b75a6d2 | main: Vector Duel 0.4.0 released from main's cards; early access only from branches with unmerged work |
+| 2026-10-22 | 03b1c6e | main: MATH_CORE phase 0 F1–F3 (the user's "Yes to MATH_CORE.md: start phase 0 and phase 1"): the prime ledger, content vectors, structural numbers, core types; law CM43 |
+| 2026-10-22 | 51a70b2 | main: MATH_CORE phase 0 F4: equality saturation (an e-graph) over the rule cards and discovered laws |
+| 2026-10-22 | bcdbdde | main: MATH_CORE phase 1: the four sources (definition, action, transformation, method); law CM44 |
+| 2026-10-22 | 8dbd200 | main: MATH_CORE phase 0 F5: the LR35902 instruction cards as symbolic terms (511 of 512 agree with the bench) |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
-sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a.
+sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200.

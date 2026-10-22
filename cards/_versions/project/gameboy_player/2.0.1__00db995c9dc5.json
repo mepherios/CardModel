@@ -1,0 +1,96 @@
+{
+  "blockers": [
+    "the branch's store work is uncommitted",
+    "the merge needs the user's go-ahead"
+  ],
+  "branches": [
+    "claude/festive-margulis-*",
+    "claude/strange-dewdney-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "done": [
+    "960 of 971 surveyed ROMs boot",
+    "every runnable hardware test ROM passes (OAM bug, CGB DMG mode)",
+    "on the branch: library.json cartridge folders, headers, covers, the Game Boy Player build"
+  ],
+  "games": [
+    "gameboy_player"
+  ],
+  "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
+  "in_progress": [
+    "the launcher's library UI and update fallback (uncommitted on the branch)"
+  ],
+  "kind": "game",
+  "left": [
+    "commit the store work",
+    "merge it into main",
+    "one store entry per cartridge on main"
+  ],
+  "metadata": {
+    "previous_content_hash": "dd26687a64257466811fefd6759ef75bfdaf93a64becf9c4635fc75808e52407",
+    "version": "2.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "goal": "G_M2_roms_boot",
+      "label": "surveyed ROMs that boot"
+    },
+    {
+      "goal": "G_M4_test_roms",
+      "label": "hardware test ROMs passing"
+    },
+    {
+      "format": "{passed}/{total}",
+      "label": "test ROMs (count)",
+      "state": "emu_testroms"
+    }
+  ],
+  "name": "gameboy_player",
+  "next_steps": [
+    "commit the work in progress",
+    "renumber CM36_players_are_cards to CM40",
+    "merge into main"
+  ],
+  "order": 2,
+  "owner": {
+    "name": "model-the-dmg-oam-corrup",
+    "session": "local_978e773c-d0b7-4c45-9824-80cad4f52163"
+  },
+  "paths": [
+    "cardmodel/machine/gb.py",
+    "cardmodel/machine/lift.py",
+    "cardmodel/machine/shell.py",
+    "cardmodel/machine/survey.py",
+    "cardmodel/machine/testroms.py",
+    "cards/hardware",
+    "cards/machine/gameboy",
+    "cards/isa/lr35902",
+    "cards/game/gameboy_player",
+    "cards/player",
+    "cards/cartridge"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "The cartridge library, the system player and a WORK tab are on claude/festive-margulis-43fde7; its store work is still uncommitted there.",
+  "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
+  "tier": 1,
+  "title": "Game Boy Player",
+  "updated": "2026-10-22T00:30:00+02:00",
+  "user_actions": [
+    {
+      "action": "Approve merging claude/festive-margulis-43fde7 into main once its store work is committed",
+      "unblocks": [
+        "Game Boy / Color cartridges as store entries",
+        "the DS listed as unplayable",
+        "one In progress tab instead of two"
+      ],
+      "why": "it brings every cartridge into the store as an entry, the DS shown as unplayable, and the system players"
+    }
+  ]
+}

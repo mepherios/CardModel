@@ -28,7 +28,9 @@
     "gameboy_player"
   ],
   "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
-  "in_progress": [],
+  "in_progress": [
+    "a runnable app per cartridge, first the user's Pokémon games, built from the player and the cartridge's own code lifted into card IR"
+  ],
   "kind": "game",
   "left": [
     "merge the branch into main and reinstall Cardmodel Arcade from main",
@@ -37,8 +39,8 @@
     "the DS playable: its 2D engines, VRAM banks, 3D, sound"
   ],
   "metadata": {
-    "previous_content_hash": "dd26687a64257466811fefd6759ef75bfdaf93a64becf9c4635fc75808e52407",
-    "version": "2.0.1",
+    "previous_content_hash": "a138c56e7a132d293f037b24a11a2daeebed156f8b051d09f6a9c52420aa8a0a",
+    "version": "2.0.4",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -58,13 +60,15 @@
   ],
   "name": "gameboy_player",
   "next_steps": [
-    "the main session asks the user to approve merging claude/frosty-lumiere-98e2b7 (it carries claude/festive-margulis-43fde7 and claude/jolly-liskov-2d97a8)",
-    "after the merge: install the launcher from main (`./bin/cardmodel arcade launcher --install`) and play a cartridge from the Library"
+    "the main session asks the user to approve merging claude/frosty-lumiere-98e2b7 (it carries claude/jolly-liskov-2d97a8), then reinstalls Cardmodel Arcade from main (`./bin/cardmodel arcade launcher --install`)",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted; measure what still falls back to the instruction-at-a-time interpreter (code in RAM, after EI and HALT, jump targets no profile saw) and close each gap by distillation from the instruction cards",
+    "MATH_CORE (approved): new behaviour is card-language or IR semantics (hardware and mapper cards), never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method",
+    "MATH_CORE phase 1: trace the player, the library and the lifted code to the definition, transformation, action and method registries once main has them"
   ],
   "order": 2,
   "owner": {
-    "name": "the-game-boy-library-in",
-    "session": "local_18e9d0a7-1733-4ea4-a83c-0e1ee8fed00d"
+    "name": "model-the-dmg-oam-corrup",
+    "session": "local_978e773c-d0b7-4c45-9824-80cad4f52163"
   },
   "paths": [
     "cardmodel/machine/gb.py",
@@ -84,22 +88,20 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "The Game Boy library is in the store end to end on claude/frosty-lumiere-98e2b7 (main plus the cartridge branch and the store-check branch): every cartridge in the user's folders is a library entry, the Game Boy Player installs and plays like a game, and `arcade check` launches all 971 listed cartridges through the store; it waits for the user's go-ahead to merge into main.",
+  "standing": "The cartridge library and the Game Boy Player are on main (4d9d755). claude/frosty-lumiere-98e2b7 adds the store launching every entry it lists: `arcade check` installs the player through the store and launches all 971 of the user's cartridges in it with the pictures their cards compute (CM42, with claude/jolly-liskov-2d97a8's store check); that branch waits for the user's go-ahead.",
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T01:24:05+02:00",
+  "updated": "2026-10-22T01:46:06+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/frosty-lumiere-98e2b7 into main",
       "unblocks": [
-        "your Game Boy / Color cartridges in the launcher's library, each launched through the store by `arcade check`",
-        "Update that falls back to the last good build",
-        "every title and datum clickable",
-        "the WORK tab and branch versions",
-        "the store check and the self-run's store step (CM42)"
+        "every cartridge the library lists launched through the store, by `arcade check` and every self-run (G_S1)",
+        "titles from the cartridge header for files without a No-Intro name; no broken title-screen links",
+        "the store check and the self-run's store step (CM42), which this branch carries from claude/jolly-liskov-2d97a8"
       ],
-      "why": "the launcher you use is built from main; this branch carries the cartridge work (claude/festive-margulis-43fde7) and the store check (claude/jolly-liskov-2d97a8), so approving it merges both"
+      "why": "the cartridges are on main, but nothing checks that each one the store lists starts in the installed player; this branch does, and approving it also merges claude/jolly-liskov-2d97a8 (its store check)"
     }
   ]
 }

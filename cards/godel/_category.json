@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_godel.py",
+  "description": "The prime ledger of the expanding Gödel model (engines/godel.py): append-only, one atom per prime.",
+  "name": "godel",
+  "tier": 0
+}

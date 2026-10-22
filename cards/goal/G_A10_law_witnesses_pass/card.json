@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "metric": "law_witnesses_failing",
-  "name": "G_A9_law_witnesses_pass",
+  "name": "G_A10_law_witnesses_pass",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

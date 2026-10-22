@@ -1,0 +1,32 @@
+{
+  "category": "core_type",
+  "laws": [
+    "every result is taken mod 2^w",
+    "BIT_AND, BIT_OR, BIT_XOR form a Boolean ring",
+    "x << k == x * 2^k mod 2^w"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "BV",
+  "operations": [
+    "op/ADD",
+    "op/SUB",
+    "op/MUL",
+    "op/BIT_AND",
+    "op/BIT_OR",
+    "op/BIT_XOR",
+    "op/BIT_NOT",
+    "op/SHIFT_LEFT",
+    "op/SHIFT_RIGHT"
+  ],
+  "params": [
+    "w"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "Fixed-width bit-vectors BV(w): the integers modulo 2^w, with bitwise operations. The instruction cards (LR35902: w = 8, 16; ARM: w = 32) compute in it by masking.",
+  "tier": 0
+}

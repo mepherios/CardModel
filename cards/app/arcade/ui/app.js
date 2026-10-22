@@ -129,7 +129,7 @@ async function refresh() {
       S.libLoaded = Date.now();
     } catch (e) { /* the service is older or down: no cartridges */ }
   }
-  if (S.view === "work" || !S.work || Date.now() - S.workAt > 60000) loadWork();
+  if (S.view === "dev" || !S.work || Date.now() - S.workAt > 60000) loadWork();
   if (bridge) send("state");
   render();
 }
@@ -140,7 +140,7 @@ async function loadWork(force) {
     S.work = await r.json();
     S.workAt = Date.now();
     footer();
-    if (S.view === "work") render();
+    if (S.view === "dev") render();
   } catch (e) { /* an older service: no work overview */ }
 }
 // a store page's full text (about, statement), fetched again only when that version's build changes
@@ -241,12 +241,15 @@ function problem(g) {
 
 // -- views ----------------------------------------------------------------------------------------------------------
 function go(view, arg, noHistory) {
+  const toBranches = view === "work";              // every branch is a section of IN PROGRESS (dev.js)
+  if (toBranches) view = "dev";
   if (!noHistory) { S.history.push([S.view, S.arg]); S.future = []; }
   S.view = view; S.arg = arg; S.gear = false;
   if (view === "library" && arg) S.libSel = arg;
-  if (view === "work") loadWork();
+  if (view === "dev") loadWork();
   render();
-  $("#view").scrollTop = 0;
+  const at = toBranches && $("#branches");
+  if (at) at.scrollIntoView(); else $("#view").scrollTop = 0;
 }
 function render() {
   const tabFor = { app: "store", browse: "store" };
@@ -266,7 +269,6 @@ function render() {
     if (g) details(S.arg, wt).then((fresh) => { if (fresh && S.view === "app" && game(S.arg) && wtOf(shown(game(S.arg))) === wt) { v.innerHTML = `<div class="store">${storePage(S.arg)}</div>`; bind(); } }).catch(() => {});
   }
   else if (S.view === "library") v.innerHTML = libraryView();
-  else if (S.view === "work") v.innerHTML = workView();
   else if (S.view === "downloads") v.innerHTML = downloadsView();
   else if (S.view === "news") v.innerHTML = newsView();
   else if (S.view === "dev") v.innerHTML = devView();          // dev.js: everything in progress, live
@@ -621,9 +623,10 @@ function gamePage(g) {
       </div></div>`;
 }
 
-// every session's branch: what it changed, what it has not committed, and the programs it has
-function workView() {
-  if (!S.work) return `<div class="store"><h2>Work in progress</h2><div class="empty">Reading every branch of the repository&hellip;</div></div>`;
+// every session's branch: what it changed, what it has not committed, and the programs it has (a section of IN
+// PROGRESS, below the projects)
+function workSection() {
+  if (!S.work) return `<div class="work"><h2>Every branch</h2><div class="empty">Reading every branch of the repository&hellip;</div></div>`;
   const f = S.workFilter;
   const trees = S.work.worktrees.filter((w) => !f || w.areas.includes(f) || w.programs.some((p) => p.id === f));
   const busy = trees.filter((w) => w.own || w.ahead_count || w.uncommitted);
@@ -631,8 +634,8 @@ function workView() {
   const counts = {};
   for (const w of S.work.worktrees) for (const a of w.areas) counts[a] = (counts[a] || 0) + 1;
   const chips = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 18);
-  return `<div class="store work">
-    <div class="workhead"><h2>Work in progress</h2>
+  return `<div class="work">
+    <div class="workhead"><h2>Every branch</h2>
       <span class="dim">${plural(S.work.worktrees.length, "branch", "branches")} of this repository &middot; ${plural(S.work.worktrees.filter((w) => w.programs.length).length, "with programs", "with programs")} &middot; read ${since(S.work.time)}</span>
       <button class="btn small ghost" data-workreload="1">Refresh</button></div>
     <div class="chips"><a class="chip ${f ? "" : "on"}" data-area="">everything</a>${chips.map(([a, n]) => `<a class="chip ${f === a ? "on" : ""}" data-area="${esc(a)}">${esc(a)} <span>${n}</span></a>`).join("")}</div>
@@ -942,7 +945,7 @@ function bind() {
   on("[data-build]", (el) => buildDialog(el.dataset.build, el.dataset.wt));
   on("[data-ach]", (el) => achDialog(el.dataset.ach, parseInt(el.dataset.k, 10)));
   on("[data-commit]", (el) => commitDialog(el.dataset.commit, el.dataset.hash));
-  on("[data-area]", (el) => { S.workFilter = S.workFilter === el.dataset.area ? "" : el.dataset.area; $("#modal").classList.add("hidden"); if (S.view !== "work") go("work"); else render(); });
+  on("[data-area]", (el) => { S.workFilter = S.workFilter === el.dataset.area ? "" : el.dataset.area; $("#modal").classList.add("hidden"); if (S.view !== "dev") go("work"); else render(); });
   on("[data-workreload]", () => { toast("Reading every branch again…"); loadWork(true); });
   on("[data-retry]", (el) => retry(el.dataset.retry, el.dataset.wt));
   on("[data-dismiss]", (el) => {

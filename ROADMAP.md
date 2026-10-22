@@ -82,16 +82,16 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   kernel), compiled through the C card; arcade ladder, training, versus, options, saves, achievements (CM35).
 * 🔵 **Cardmodel Arcade**: a native launcher (store, library, downloads, updates, verify, play time, achievements)
   and the arcade service that builds games from their cards into depots of checked chunks.
-* 🔵 **Vector Duel 0.4.0** (shipped as a launcher update): multi-hit strings as chain cards with two design laws
-  (GL9 strings end, GL10 every link is answerable), the duel-tree AI (`game/tree.py`: backward induction six
-  exchanges deep over abstract states, string sub-games after every connect) as a new stage, the Oracle, and a
-  boss whose three phases are written on the game card. Impacts are now judged after both fighters move.
 * 🔵 **Your own cartridges in the launcher**: the Game Boy Player (the machine cards plus a card-language player,
   CM40) is installed like a game; every cartridge in the user's folders is a library entry, played where it is,
   with the survey's verdict and a title screen the machine draws; the DS is listed with its coverage.
 * 🔵 **Work in progress in the launcher**: a Work tab with every session's branch and its programs; a program's
   version on a branch installs like a beta (built there with that branch's own code); Update falls back to the
   last good build when the cards in progress do not build; every title and datum on the pages opens something.
+* 🔵 **Vector Duel 0.4.0** (shipped as a launcher update): multi-hit strings as chain cards with two design laws
+  (GL9 strings end, GL10 every link is answerable), the duel-tree AI (`game/tree.py`: backward induction six
+  exchanges deep over abstract states, string sub-games after every connect) as a new stage, the Oracle, and a
+  boss whose three phases are written on the game card. Impacts are now judged after both fighters move.
 
 ## Done (2026-10-21, fifth build: the model runs itself)
 
@@ -107,7 +107,7 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 ## Done (2026-10-22, the self-run's deep checks and the store end to end)
 
 * 🔵 **Deep checks as self-run steps**: `law_witnesses` runs every law card's witness test in a child process with
-  the cycle's seed (G_A9); `store` launches every catalogue item through the store's own protocol (checked
+  the cycle's seed (G_A10); `store` launches every catalogue item through the store's own protocol (checked
   download, verify, a damaged file repaired, a native headless run; `cardmodel arcade check`, CM42, G_S1);
   `tests` runs the whole suite weekly. Every step runs under a deadline, so a step that does not return is stopped
   and reported instead of holding the cycle.
@@ -154,8 +154,9 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 * 🟢 **More of the game**: weapons as move sets, strings inside the exchange model itself, the systemic world as a
   campaign map.
-* 🟢 **The players, further**: lifted blocks in the Game Boy Player (built per cartridge on first play), a DS
-  player once the DS picture hardware has cards, a CGB player choice for DMG cartridges (compatibility mode).
+* 🟢 **The players, further**: lifted blocks in the Game Boy Player (built per cartridge on first play), a store
+  page per cartridge (today each is a library entry the player runs), a DS player once the DS picture hardware has
+  cards, a CGB player choice for DMG cartridges (compatibility mode).
 * 🟢 **Other platforms**: a platform card per OS (a shell and a bundle layout each).
 
 ## Machines: now and next

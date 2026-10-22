@@ -1,0 +1,18 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM43_primes_are_forever",
+  "origins": [
+    "user requirement 2026-10-22 (a universal Gödel model that keeps expanding)",
+    "Gödel 1931"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "The Gödel model's atoms take primes in an append-only ledger: an atom keeps its prime forever, a new atom takes the next unused prime, and no line is renumbered or removed. A concept's content vector (its factorization over the atoms) and its structural number (Gödel's positional numbering, the identity) are computed from the ledger; carrying between Gödel sets is a map of atoms, which preserves every GCD exactly when distinct atoms go to disjoint supports, and whose gap is what it cannot send.",
+  "tier": 0,
+  "witness": "tests/test_godel.py::test_ledger_is_append_only"
+}

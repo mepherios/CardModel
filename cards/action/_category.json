@@ -1,0 +1,7 @@
+{
+  "card_type": "action",
+  "defined_by": "tools/seed_sources.py",
+  "description": "Action: an implementation in a language, linked to its definition by a proof or a witness.",
+  "name": "action",
+  "tier": 0
+}

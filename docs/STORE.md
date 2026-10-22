@@ -86,17 +86,16 @@ what is in progress and left, blockers, next steps, the owning session, and when
 card is marked STALE when the project changed since then. The page opens with **Waiting on you**: every user
 action the cards name, ordered by how much each unblocks. The format is in docs/INTEGRATION.md section 4b.
 
-**Early access.** A worktree's latest build of a game, when it differs from the release, is offered under its
-own library id (`<game>.early.<worktree>`). It is labelled with its branch and installs beside the release. The
-release channel (`/api/catalog`, the Store and Library tabs) never lists it. Its manifest and pictures come from
-that worktree's depot. Its chunks come from whichever store has them, since chunks are named by their SHA-256.
-
-**Versions and branches** (`cardmodel/arcade/work.py`, docs/ARCADE.md section 3) is the second way in, from the
-Store and Library: each program's page lists its version on every branch, the Store has an *In development* row,
-and the WORK tab lists every branch with its commits, uncommitted changes and programs. Installing a branch's
-version replaces the program's installed build (same library id, like a beta) and is built in that worktree by
-its own `bin/cardmodel` when its cards changed. Early access and branch versions are two answers to the same
-question for now; they are to become one.
+**Early access and branches: one mechanism** (`cardmodel/arcade/work.py`, docs/ARCADE.md section 3). Every
+program's page lists its version on every branch (*Versions and branches*), the Store has an *In development*
+row, and installing a branch's version replaces the program's installed build (same library id, like a beta),
+built in that worktree by its own `bin/cardmodel` when its cards changed. The In progress page lists as **early
+access** the branch versions that differ from the program here: a newer version, or the same version where the
+branch changed the program's own card. Each opens the program's page on that branch. Below the projects, **Every
+branch** lists each worktree with its commits, uncommitted changes, areas and programs (what the WORK tab showed;
+the store's links to work in progress land there). The hub serves no builds of its own: a branch's manifest,
+pictures and chunks come through the store's branch routes, chunks from whichever store has them (they are named by
+their SHA-256).
 
 **Read-only.** The hub runs git with `--no-optional-locks`, so `status` never rewrites an index a session might
 be committing to. It runs only `log`, `status`, `rev-list`, `for-each-ref`, `ls-files` and `worktree list`.

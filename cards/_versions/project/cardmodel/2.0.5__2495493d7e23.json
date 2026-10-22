@@ -1,0 +1,87 @@
+{
+  "blockers": [
+    "MATH_CORE.md needs the user's yes before anything existing is restructured"
+  ],
+  "branches": [
+    "claude/jolly-liskov-*",
+    "claude/compassionate-margulis-*"
+  ],
+  "category": "project",
+  "docs": [
+    "README.md",
+    "docs/AUTONOMY.md",
+    "docs/INTEGRATION.md"
+  ],
+  "done": [
+    "consolidation, knowledge layer, card language, Lean bridge",
+    "resource governor, function algebra",
+    "every session branch merged as of 7e4323a",
+    "self-run (CM38), capabilities (CM37), one program (CM39)",
+    "the live In progress page with early access (bb480fb)",
+    "law CM41: detailed, current project cards (c8aeb4c)",
+    "docs/MATH_CORE.md proposal (de22b52)",
+    "MATH_CORE phase 0: prime ledger, content vectors (03b1c6e); e-graph distillation",
+    "MATH_CORE phase 1: the four sources, definitions for every algorithm and function",
+    "MATH_CORE phase 0 F5: symbolic LR35902 instruction terms as definitions"
+  ],
+  "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
+  "in_progress": [
+    "phase 2: distillation of lifted code and the semantic-hash library"
+  ],
+  "kind": "program",
+  "left": [
+    "the ARM instruction cards as terms (G_M6: 511 of 679)",
+    "canonical forms for more definitions (G_U7 0.3 of 0.9)",
+    "a polynomial normal form beside the e-graph",
+    "one In progress tab after the cartridge merge"
+  ],
+  "metadata": {
+    "previous_content_hash": "f3a39807753c6253a5cca92abe58ab40806b4eb2306618550f18f77fe6bdff70",
+    "version": "2.0.5",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "label": "last self-run",
+      "self": "status"
+    },
+    {
+      "label": "last verify",
+      "verify": "*"
+    },
+    {
+      "goal": "G_A4_capabilities_failing",
+      "label": "core capabilities failing"
+    }
+  ],
+  "name": "cardmodel",
+  "next_steps": [
+    "symbolic ARM terms",
+    "e-graph canonical forms of the instruction terms",
+    "the semantic-hash library and instant lookup (phase 2)"
+  ],
+  "order": 6,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "MATH_CORE phases 0 and 1 are on main: the prime ledger (70 atoms, CM43), an e-graph over 241 equalities, the four sources (CM44) with 552 definitions, and the 512 LR35902 instruction cards as symbolic terms (511 witnessed against their semantics, the CB prefix a dispatch).",
+  "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
+  "tier": 1,
+  "title": "The card model",
+  "updated": "2026-10-22T01:17:28+02:00",
+  "user_actions": [
+    {
+      "action": "Decide what happens to claude/jolly-liskov-2d97a8",
+      "unblocks": [
+        "merging or retiring that branch"
+      ],
+      "why": "a second self-run built in parallel; its laws CM37-CM39 collide with main's"
+    }
+  ]
+}

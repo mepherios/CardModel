@@ -390,7 +390,8 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   instruction cards), then starts every listed cartridge in it as the launcher does and compares the picture with
   the one the cards compute (`--cartridges N` for the first N; about 0.2 s a cartridge). Tests point the library
   at their own empty file (`CARDMODEL_LIBRARY`, tests/helpers.py) and use only synthetic cartridges.
-* **Work in progress in the launcher** (`arcade/work.py`, docs/ARCADE.md section 3): a WORK tab with every
+* **Work in progress in the launcher** (`arcade/work.py`, docs/ARCADE.md section 3): the *Every branch* section
+  of the IN PROGRESS tab (once a WORK tab of its own) with every
   worktree (branch, last commit, commits not on main and their files, uncommitted changes, areas, programs), and a
   Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its
   own `bin/cardmodel`. When the cards in progress do not build, Update installs the last good build and the page

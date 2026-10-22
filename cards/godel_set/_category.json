@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_godel.py",
+  "description": "Gödel sets: the basis B0 and the domains that extend it; each atom of the ledger names the set it entered with.",
+  "name": "godel_set",
+  "tier": 0
+}

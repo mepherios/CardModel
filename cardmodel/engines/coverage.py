@@ -262,6 +262,16 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "integrity_problems":
         it = secs.get("integrity")
         return len(it.get("problems", [])) if it and "problems" in it else None
+    if name in ("definition_coverage", "canonical_definitions", "actions_without_truth", "symbolic_instructions"):
+        so = secs.get("sources")
+        if not so:
+            return None
+        return {"definition_coverage": so.get("coverage"), "canonical_definitions": so.get("canonical"),
+                "actions_without_truth": so.get("actions_without_truth"),
+                "symbolic_instructions": so.get("symbolic_instructions")}[name]
+    if name == "content_vector_coverage":
+        gd = secs.get("godel")
+        return gd.get("coverage") if gd else None
     if name == "project_card_problems":
         pr = secs.get("projects")
         return len(pr.get("problems", [])) if pr and "problems" in pr else None
