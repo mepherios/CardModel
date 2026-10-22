@@ -1,0 +1,57 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "((double)(float)({0}))",
+    "go": "float64(float32({0}))",
+    "java": "((double)(float)({0}))",
+    "javascript": "Math.fround({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "(string.unpack('f', string.pack('f', {0})))",
+    "python": "struct.unpack('f', struct.pack('f', {0}))[0]",
+    "ruby": "([{0}].pack('f').unpack1('f'))",
+    "rust": "(({0}) as f32 as f64)",
+    "swift": "Double(Float({0}))"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1000000.0,
+            1000000.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: struct.unpack('f', struct.pack('f', a))[0]",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "F32",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math",
+      "struct"
+    ]
+  },
+  "statement": "x rounded to the nearest binary32 (ties to even): float precision",
+  "tier": 1
+}

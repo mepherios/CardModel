@@ -33,6 +33,12 @@ def self_cards() -> Path:
     return home() / "state" / "self" / "cards"
 
 
+def local_cards() -> Path:
+    """The local layer: cards derived from data that stays on this machine (terms lifted from Unreal Engine's
+    source, docs/INTEGRATION.md rule 8); untracked, under state/, written only when a writer names it."""
+    return home() / "state" / "local" / "cards"
+
+
 def state_dir(store_root: Path) -> Path:
     """Cache directory next to a cards root (not a source of truth; safe to delete)."""
     return store_root.parent / "state"

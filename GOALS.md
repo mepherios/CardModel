@@ -115,6 +115,9 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_U6_definitions` | understanding | fraction of algorithm and function cards with a definition card (truth, CM44) | ≥ 1.0 |
 | `G_U7_canonical_definitions` | understanding | fraction of definitions with a canonical form (e-graph or recurrence) | ≥ 0.9 |
 | `G_U8_formal_core` | understanding | problems in the formal core: a theorem card whose Lean theorem is missing or rests on more than the standard axioms, any sorry, a failed build (handover R1) | = 0 |
+| `G_U10_engine_math_lifted` | understanding | fraction of a game engine's math universe (Unreal Engine's functions over numbers) lifted to definitions (CM49) | ≥ 0.9 |
+| `G_U11_engine_math_witnessed` | understanding | fraction of the engine's definitions witnessed against its own compiled code, bit-exact or within a few ulps (CM49) | ≥ 0.9 |
+| `G_U12_engine_math_refuted` | understanding | engine functions whose lifted term the witness refutes (CM49) | = 0 |
 | `G_U9_algorithm_forms_proved` | understanding | fraction of the algorithm cards' other Python forms proved equal to their definition (a sized witness or a kernel proof), not sampled (handover R3) | ≥ 0.5 |
 | `G_L1_learned_cards` | learning | cards promoted by the learning loop with cited evidence | ≥ 10 |
 | `G_O1_measured_forms` | optimization | forms with a host measurement (metric card) | ≥ 30 |

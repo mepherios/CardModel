@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "unreal_lifted_fraction",
+  "name": "G_U10_engine_math_lifted",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "Fraction of the engine's math universe (functions over numbers) lifted to definitions.",
+  "target": 0.9,
+  "tier": 0
+}

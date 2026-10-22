@@ -1,0 +1,28 @@
+{
+  "applies_to": [
+    "unreal_cause"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "unreal_cause",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "schema": {
+    "properties": {
+      "closes_by": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "statement",
+      "closes_by"
+    ],
+    "type": "object"
+  },
+  "statement": "Why an engine function is not lifted, and what would close it.",
+  "tier": 0
+}

@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 25.0,
+  "emit": {
+    "c": "cosh({0})",
+    "go": "math.Cosh({0})",
+    "java": "Math.cosh({0})",
+    "javascript": "Math.cosh({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "UNSUPPORTED",
+    "python": "math.cosh({0})",
+    "ruby": "Math.cosh({0})",
+    "rust": "(({0}).cosh())",
+    "swift": "cosh({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -10.0,
+            10.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.cosh(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "COSH",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "hyperbolic cosine",
+  "tier": 1
+}

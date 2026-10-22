@@ -66,6 +66,14 @@ another folder at runtime.
 ```
 
 ```bash
+./bin/cardmodel unreal scan --save
+```
+
+```bash
+./bin/cardmodel unreal show FVector.CrossProduct
+```
+
+```bash
 ./bin/cardmodel emu "~/Downloads/GB_GBC/Game Boy/Tetris (World) (Rev A).zip"
 ```
 
@@ -104,6 +112,10 @@ identity, shared dynamics, Gödel number of each canonical form). `game check` c
 and `game play` lets you fight the AI that reads your vectors.
 `anyps5 cover` reports AnyPS5 (a PS5 relinker and its reimplemented system libraries, read from a checkout as
 cards): its badge reproduced, the real coverage behind it, and every gap with the cause that keeps it open.
+`unreal scan --save` reads Unreal Engine's math (found through the Epic launcher's own record) with clang as the
+frontend, lifts every function to core terms, gives each its canonical form over the reals, semantic hash, Gödel
+content and use, finds the identities between functions, witnesses every term against the engine's own compiled
+code, and saves it all as cards; `unreal show` prints one function's mathematics (docs/UNREAL.md).
 `emu` runs a Game Boy or Game Boy Color game through the card model: its CPU is instruction cards, its hardware
 is hardware cards, its own code is lifted into the card IR and compiled natively, and the browser page around it
 is the effect shell (video, audio, keys, saves). `machine nds` boots a DS game on the ARM instruction cards and
@@ -147,4 +159,5 @@ command runs the test suite.
 | [docs/AUTONOMY.md](docs/AUTONOMY.md) | the model runs itself: the self-run cycle, the core capabilities, the self layer, findings and the plan |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | how parallel sessions land as one program: rules, the number registry, who works where, the log |
 | [docs/MATH_CORE.md](docs/MATH_CORE.md) | approved 2026-10-22: the four sources around the Gödel model, an audit of understand vs imitate, the semantic core, the migration plan and its progress (phases 0 and 1, the research handover's storage rules, witness tiers and the Lean formal core in `formal/`) |
+| [docs/UNREAL.md](docs/UNREAL.md) | a game engine's math as cards: Unreal Engine read through clang, lifted to terms, canonical over the reals, Gödel-numbered by use, witnessed against the engine's compiled code (CM49) |
 | [docs/GODEL_METHOD.md](docs/GODEL_METHOD.md) | the Gödel method research program: its coordination rules, wave 1's workstreams and their results, citing the handover's ids |

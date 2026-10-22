@@ -320,7 +320,7 @@ def measure(ctx) -> dict:
     def add(card, kind, term):
         try:
             s = sizes(term, reader, entries)
-        except (KeyError, ValueError):
+        except (KeyError, ValueError, OverflowError):     # OverflowError: a constant such as DBL_MAX as a code
             return
         if not s or not s["tokens"]:
             return

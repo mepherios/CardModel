@@ -109,6 +109,19 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   on use (governed, every 6 h); learning into the self layer, quarantine, findings and a ranked plan
   (docs/AUTONOMY.md); docs/STORE.md lists everything in the store and what the model does for it.
 
+## Done (2026-10-22, a game engine's math: Unreal Engine)
+
+* 🔵 **Unreal Engine's math as cards** (CM49, docs/UNREAL.md, `cardmodel unreal`): clang's typed AST as the C++
+  frontend; every function of the engine's math lifted to core terms or given its gap's cause; canonical forms over
+  the reals (with proof-tier sized witnesses for polynomial functions), semantic hashes and identities, Gödel content
+  as sparse vectors, uses with their GCD and LCM, the engine's Gödel set and its carry map; every term witnessed
+  against the engine's own compiled code (UE 5.8.4: 2852 of 3310 functions lifted, 2708 witnessed, none refuted).
+  New atoms (the C library's real functions, F32, float bits) are op cards in the sets analysis and bits,
+  conformant across the language cards.
+* 🟢 **Next there**: the gaps by cause (input-dependent loops through the function algebra, selected writes, packed
+  float bitfields, let-bound terms past the budget), GeometryCore and Chaos, and emitting the definitions through the
+  language cards.
+
 ## Done (2026-10-22, the self-run's deep checks and the store end to end)
 
 * 🔵 **Deep checks as self-run steps**: `law_witnesses` runs every law card's witness test in a child process with

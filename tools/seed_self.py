@@ -247,6 +247,15 @@ CAPABILITIES = [
      ["tests/test_formal.py::test_the_core_builds_without_sorry"], ["docs/MATH_CORE.md"],
      ["cardmodel verify --only formal"], ["cardmodel/engines/formal.py", "formal/GodelCore.lean"],
      "The rules the model keeps its numbers by are theorems, checked by a kernel outside the model."),
+    ("unreal_math", "A game engine's math as cards: Unreal Engine's math read through clang's typed AST, every "
+     "function lifted to core terms (or its gap's cause), its canonical form over the reals, semantic hash and Gödel "
+     "numbers, its use, identities between functions, and a witness against the engine's own compiled code.",
+     L("CM49_engine_math_is_distilled"),
+     ["tests/test_unreal.py::test_engine_math_is_distilled_and_witnessed",
+      "tests/test_unreal.py::test_canonical_forms_over_the_reals", "tests/test_unreal.py::test_engine_cards_trace_to_truth"],
+     ["docs/UNREAL.md"], ["cardmodel unreal"], ["cardmodel/unreal", "cardmodel/engines/realnorm.py"],
+     "The engine's math is understood, not only run: every function a formula with its numbers, checked against "
+     "the engine itself."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],

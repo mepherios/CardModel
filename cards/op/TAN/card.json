@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 25.0,
+  "emit": {
+    "c": "tan({0})",
+    "go": "math.Tan({0})",
+    "java": "Math.tan({0})",
+    "javascript": "Math.tan({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.tan({0})",
+    "python": "math.tan({0})",
+    "ruby": "Math.tan({0})",
+    "rust": "(({0}).tan())",
+    "swift": "tan({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -1.5,
+            1.5
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.tan(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "TAN",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "tangent (radians)",
+  "tier": 1
+}

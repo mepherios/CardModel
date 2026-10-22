@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 2.0,
+  "emit": {
+    "c": "floor({0})",
+    "go": "math.Floor({0})",
+    "java": "Math.floor({0})",
+    "javascript": "Math.floor({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "(math.floor({0}) + 0.0)",
+    "python": "float(math.floor({0}))",
+    "ruby": "(({0}).floor.to_f)",
+    "rust": "(({0}).floor())",
+    "swift": "floor({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: float(math.floor(a))",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "FLOOR",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "the largest integer not above x, as a float",
+  "tier": 1
+}

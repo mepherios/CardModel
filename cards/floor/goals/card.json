@@ -201,6 +201,21 @@
       "metric": "store_items_failing",
       "target": 0
     },
+    "G_U10_engine_math_lifted": {
+      "direction": "higher",
+      "metric": "unreal_lifted_fraction",
+      "target": 0.9
+    },
+    "G_U11_engine_math_witnessed": {
+      "direction": "higher",
+      "metric": "unreal_witnessed_fraction",
+      "target": 0.9
+    },
+    "G_U12_engine_math_refuted": {
+      "direction": "lower",
+      "metric": "unreal_refuted",
+      "target": 0
+    },
     "G_U1_closure": {
       "direction": "lower",
       "metric": "unresolved_references",
@@ -249,8 +264,8 @@
   },
   "history": [],
   "metadata": {
-    "previous_content_hash": "7bbe300290488d25ffc1d992188a2bab608120df7c8c8a74026af8af4b11998c",
-    "version": "1.0.1",
+    "previous_content_hash": "9b4612a15b3ad9921a7f36f8bf81fde748720b20eb9d8eb61e9fcf10f6cd89cc",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "name": "goals",

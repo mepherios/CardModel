@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "unreal_math",
+  "commands": [
+    "cardmodel unreal"
+  ],
+  "core": true,
+  "docs": [
+    "docs/UNREAL.md"
+  ],
+  "laws": [
+    "law/CM49_engine_math_is_distilled"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/unreal",
+    "cardmodel/engines/realnorm.py"
+  ],
+  "name": "unreal_math",
+  "order": 31,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "A game engine's math as cards: Unreal Engine's math read through clang's typed AST, every function lifted to core terms (or its gap's cause), its canonical form over the reals, semantic hash and Gödel numbers, its use, identities between functions, and a witness against the engine's own compiled code.",
+  "tests": [
+    "tests/test_unreal.py::test_engine_math_is_distilled_and_witnessed",
+    "tests/test_unreal.py::test_canonical_forms_over_the_reals",
+    "tests/test_unreal.py::test_engine_cards_trace_to_truth"
+  ],
+  "tier": 0,
+  "usefulness": "The engine's math is understood, not only run: every function a formula with its numbers, checked against the engine itself."
+}

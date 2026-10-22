@@ -1,0 +1,30 @@
+{
+  "category": "method",
+  "complexity": "polynomial size (MAX_TERMS)",
+  "decides": "equality over the reals for the polynomial fragment with uninterpreted atoms: a canonical polynomial with exact rational coefficients, comparisons and conditions normalized, odd and even functions signed",
+  "limits": "identities between atoms beyond parity (sin² + cos² = 1, sqrt(x)² = x) are not used, so equal terms may keep different forms; expansion is bounded",
+  "metadata": {
+    "previous_content_hash": "ab57775ec462660c027a35d5761ebabae7515cab305da75d6c7ff2b3381a606d",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "normal_form",
+  "procedure": "cardmodel/engines/realnorm.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "rank": {
+    "cites": [
+      "Ph-15"
+    ],
+    "decides": "decidable",
+    "general": "are two real functions equal wherever both are defined",
+    "general_rank": "Π1",
+    "question": "whether two terms have one canonical form: a polynomial with rational coefficients over uninterpreted atoms",
+    "why": "normalizing is a total computation; equality of real functions built from sin, exp and the rest is undecidable (Richardson 1968), and a difference is shown by one point, so the general question is a ∀ (Π1) for continuous functions"
+  },
+  "statement": "equality over the reals for the polynomial fragment with uninterpreted atoms: a canonical polynomial with exact rational coefficients, comparisons and conditions normalized, odd and even functions signed",
+  "status": "built",
+  "tier": 0
+}

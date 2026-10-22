@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "(isnan({0}) != 0)",
+    "go": "math.IsNaN({0})",
+    "java": "Double.isNaN({0})",
+    "javascript": "Number.isNaN({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "({0} ~= {0})",
+    "python": "math.isnan({0})",
+    "ruby": "(({0}).nan?)",
+    "rust": "(({0}).is_nan())",
+    "swift": "({0}).isNaN"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: a != a",
+    "types": [
+      [
+        "float",
+        "bool"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ISNAN",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "x is NaN",
+  "tier": 1
+}

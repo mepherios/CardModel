@@ -1,0 +1,28 @@
+{
+  "applies_to": [
+    "unreal_use"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "unreal_use",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "schema": {
+    "properties": {
+      "members": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "statement",
+      "members"
+    ],
+    "type": "object"
+  },
+  "statement": "What the engine's math is for: per use its members, and the logic they all share (the GCD of their Gödel content) and all need (the LCM).",
+  "tier": 0
+}
