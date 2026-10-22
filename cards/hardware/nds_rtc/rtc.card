@@ -219,6 +219,25 @@ fn rtc_advance(cycles: Int) {
     rtc_tick()
   }
 }
+-- the clock set from a count of seconds since 1970-01-01 00:00 (the shell's time plus the local offset): days to a
+-- civil date by the proleptic Gregorian calendar, 1970-01-01 a Thursday (weekday 4, Sunday 0)
+export fn rtc_set_unix(t: Int) {
+  let days = t // 86400
+  let secs = t - days * 86400
+  rtc_hour = secs // 3600
+  rtc_min = (secs // 60) % 60
+  rtc_sec = secs % 60
+  rtc_wday = (days + 4) % 7
+  let z = days + 719468
+  let era = z // 146097
+  let doe = z - era * 146097
+  let yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+  let doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+  let mp = (5 * doy + 2) // 153
+  rtc_day = doy - (153 * mp + 2) // 5 + 1
+  rtc_month = if mp < 10 then mp + 3 else mp - 9
+  rtc_year = (yoe + era * 400 + (if rtc_month <= 2 then 1 else 0)) % 100
+}
 fn rtc_power_on() {
   rtc_stat1 = RTC_STATUS1_BOOT
   rtc_io = 0

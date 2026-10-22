@@ -1,0 +1,185 @@
+-- Direct boot: what the BIOS and the firmware leave in a DS before a game's first instruction, made from the
+-- cartridge image in `cart` and card data (no BIOS or firmware image is read). The header (hardware/nds_cartridge)
+-- says where the ARM9 and ARM7 binaries are in the image and where they load; they are copied there (main RAM,
+-- shared WRAM or the ARM7's WRAM), the header's first bytes go to 0x027FFE00, the chip ID to the words the firmware
+-- leaves it in, and the user settings (hardware/nds_spi: version, colour, birthday, nickname, language, touch
+-- calibration) to 0x027FFC80. The firmware flash gets those settings twice, each with its update counter and CRC,
+-- its header fields and a Wi-Fi block with its length, MAC address and CRC; the rest is erased flash (0xFF). The
+-- save chip is hardware/nds_backup's entry for the game code's first three letters, erased. An image whose secure
+-- area is not decrypted is refused (boot_refused = 1): decrypting it would need key material this program does
+-- not use. The Python host and the arcade player both boot through load_image.
+const H_ARM9_OFF = card.hardware.nds_cartridge.header.arm9_rom_offset.offset
+const H_ARM9_ENTRY = card.hardware.nds_cartridge.header.arm9_entry.offset
+const H_ARM9_RAM = card.hardware.nds_cartridge.header.arm9_ram_address.offset
+const H_ARM9_SIZE = card.hardware.nds_cartridge.header.arm9_size.offset
+const H_ARM7_OFF = card.hardware.nds_cartridge.header.arm7_rom_offset.offset
+const H_ARM7_ENTRY = card.hardware.nds_cartridge.header.arm7_entry.offset
+const H_ARM7_RAM = card.hardware.nds_cartridge.header.arm7_ram_address.offset
+const H_ARM7_SIZE = card.hardware.nds_cartridge.header.arm7_size.offset
+const H_GAME_CODE = card.hardware.nds_cartridge.header.game_code.offset
+const SECURE_AT = card.hardware.nds_cartridge.secure_area.offset
+const SECURE_WORD = card.hardware.nds_cartridge.secure_area.decrypted_word
+const CHIP_ID = card.hardware.nds_cartridge.boot_info.chip_id
+const HEADER_COPY = card.hardware.nds_cartridge.boot_info.header_copy_bytes
+const US_VERSION = card.hardware.nds_spi.firmware.user_settings.version
+const US_COLOR = card.hardware.nds_spi.firmware.user_settings.favorite_color
+const US_MONTH = card.hardware.nds_spi.firmware.user_settings.birth_month
+const US_DAY = card.hardware.nds_spi.firmware.user_settings.birth_day
+const US_LANGUAGE = card.hardware.nds_spi.firmware.user_settings.language
+const US_COUNTER = card.hardware.nds_spi.firmware.user_settings.update_counter
+const US_NICK_LEN = card.hardware.nds_spi.firmware.user_settings.nickname_length
+const FW_BYTES = card.hardware.nds_spi.firmware.bytes
+const FW_CONSOLE = card.hardware.nds_spi.firmware.console_type
+const FW_WIFI = card.hardware.nds_spi.firmware.wifi_config_offset
+const BK_TABLE_LEN = card.hardware.nds_backup.table_length
+const BK_DEFAULT_KIND = card.hardware.nds_backup.default_kind_code
+const BK_DEFAULT_BYTES = card.hardware.nds_backup.default.bytes
+const BK_FLASH_ID = card.hardware.nds_backup.flash_id
+array us_nick: Int[10] = card.hardware.nds_spi.firmware.user_settings.nickname_utf16
+array fw_us_at: Int[2] = card.hardware.nds_spi.firmware.user_settings_offsets
+array fw_mac: Int[6] = card.hardware.nds_spi.firmware.mac_address
+array bk_table: Int[BK_TABLE_LEN] = card.hardware.nds_backup.table
+export global boot_refused: Int = 0
+
+fn cart_word(o: Int) -> Int = cart[o] | (cart[o + 1] << 8) | (cart[o + 2] << 16) | (cart[o + 3] << 24)
+fn boot_store(a: Int, v: Int) {
+  let x = a & MASK32
+  if (x >> 24) == 2 {
+    mram[x & MAIN_MASK] = v
+  } elif x >= 0x03800000 and x < 0x04000000 {
+    wram7[x & 0xFFFF] = v
+  } elif (x >> 24) == 3 {
+    swram[x & 0x7FFF] = v
+  }
+}
+fn boot_copy(off: Int, ram: Int, size: Int) {
+  for i in 0 .. size {
+    if off + i < cart_size {
+      boot_store(ram + i, cart[off + i])
+    }
+  }
+}
+fn mram_put(o: Int, v: Int, n: Int) {
+  for k in 0 .. n {
+    mram[o + k] = (v >> (8 * k)) & 0xFF
+  }
+}
+fn fw_put16(o: Int, v: Int) {
+  firmware[o] = v & 0xFF
+  firmware[o + 1] = (v >> 8) & 0xFF
+}
+-- the firmware's CRC-16 (polynomial 0xA001, reflected) over firmware[start .. start + n)
+fn fw_crc(init: Int, start: Int, n: Int) -> Int {
+  var crc = init
+  for i in 0 .. n {
+    crc = crc ^ firmware[start + i]
+    for k in 0 .. 8 {
+      crc = if (crc & 1) != 0 then (crc >> 1) ^ 0xA001 else crc >> 1
+    }
+  }
+  return crc
+}
+-- one copy of the user settings (0x100 bytes at o): 0x70 bytes of settings, the update counter, their CRC
+fn fw_user_settings(o: Int) {
+  for i in 0 .. 0x70 {
+    firmware[o + i] = 0
+  }
+  fw_put16(o, US_VERSION)
+  firmware[o + 2] = US_COLOR
+  firmware[o + 3] = US_MONTH
+  firmware[o + 4] = US_DAY
+  for i in 0 .. 10 {
+    fw_put16(o + 6 + i * 2, us_nick[i])
+  }
+  fw_put16(o + 0x1A, US_NICK_LEN)
+  fw_put16(o + 0x58, TC_ADC_X1)
+  fw_put16(o + 0x5A, TC_ADC_Y1)
+  firmware[o + 0x5C] = TC_SCR_X1
+  firmware[o + 0x5D] = TC_SCR_Y1
+  fw_put16(o + 0x5E, TC_ADC_X2)
+  fw_put16(o + 0x60, TC_ADC_Y2)
+  firmware[o + 0x62] = TC_SCR_X2
+  firmware[o + 0x63] = TC_SCR_Y2
+  fw_put16(o + 0x64, US_LANGUAGE & 7)
+  fw_put16(o + 0x70, US_COUNTER)
+  fw_put16(o + 0x72, fw_crc(0xFFFF, o, 0x70))
+}
+fn fw_build() {
+  for i in 0 .. FW_BYTES {
+    firmware[i] = 0xFF
+  }
+  firmware[8] = 0x4D
+  firmware[9] = 0x41
+  firmware[10] = 0x43
+  firmware[11] = 0x50
+  firmware[0x1D] = FW_CONSOLE
+  fw_put16(0x20, fw_us_at[0] >> 3)
+  let w = FW_WIFI + 2                      -- the block the Wi-Fi CRC covers: length, version, MAC, channels, RF
+  for i in 0 .. 0x138 {
+    firmware[w + i] = 0
+  }
+  fw_put16(w, 0x138)
+  firmware[w + 3] = 5
+  for i in 4 .. 10 {
+    firmware[w + i] = 0xFF
+  }
+  for i in 0 .. 6 {
+    firmware[w + 10 + i] = fw_mac[i]
+  }
+  fw_put16(w + 16, 0x3FFE)
+  fw_put16(w + 18, 0xFFFF)
+  fw_put16(FW_WIFI, fw_crc(0, w, 0x138))
+  fw_user_settings(fw_us_at[0])
+  fw_user_settings(fw_us_at[1])
+  for i in 0 .. 0x70 {
+    mram[0x3FFC80 + i] = firmware[fw_us_at[0] + i]
+  }
+}
+fn backup_build() {
+  let code = cart[H_GAME_CODE] | (cart[H_GAME_CODE + 1] << 8) | (cart[H_GAME_CODE + 2] << 16)
+  var kind = BK_DEFAULT_KIND
+  var size = BK_DEFAULT_BYTES
+  for r in 0 .. BK_TABLE_LEN // 3 {
+    if bk_table[r * 3] == code {
+      kind = bk_table[r * 3 + 1]
+      size = bk_table[r * 3 + 2]
+    }
+  }
+  backup_kind = kind
+  backup_size = max(1, size)
+  backup_id = BK_FLASH_ID
+  for i in 0 .. min(size, 0x100000) {
+    backup[i] = 0xFF
+  }
+}
+-- the image already in cart (n bytes), booted
+export fn load_image(n: Int) {
+  cart_size = min(n, 0x4000000)
+  boot_refused = 0
+  if cart_word(SECURE_AT) != SECURE_WORD {
+    boot_refused = 1
+    return
+  }
+  for i in 0 .. 0x400000 {
+    mram[i] = 0
+  }
+  for i in 0 .. 0x200000 {
+    exec9[i] = 0
+    exec7[i] = 0
+  }
+  boot_copy(cart_word(H_ARM9_OFF), cart_word(H_ARM9_RAM), cart_word(H_ARM9_SIZE))
+  boot_copy(cart_word(H_ARM7_OFF), cart_word(H_ARM7_RAM), cart_word(H_ARM7_SIZE))
+  for i in 0 .. HEADER_COPY {
+    mram[0x3FFE00 + i] = cart[i]
+  }
+  mram_put(0x3FF800, CHIP_ID, 4)
+  mram_put(0x3FF804, CHIP_ID, 4)
+  mram_put(0x3FFC00, CHIP_ID, 4)
+  mram_put(0x3FFC04, CHIP_ID, 4)
+  mram_put(0x3FFC40, 1, 2)
+  fw_build()
+  backup_build()
+  entry9 = cart_word(H_ARM9_ENTRY)
+  entry7 = cart_word(H_ARM7_ENTRY)
+  power_on()
+}

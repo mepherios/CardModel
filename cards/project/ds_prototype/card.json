@@ -1,7 +1,5 @@
 {
-  "blockers": [
-    "Pokemon Diamond's overworld is drawn by the 3D engine: not playable until 3D exists"
-  ],
+  "blockers": [],
   "branches": [
     "claude/blissful-easley-*"
   ],
@@ -18,23 +16,23 @@
     "headless runs that save both screens: cardmodel machine nds ROM --png / --shots / --input",
     "the 3D engine as hardware cards: geometry (FIFO, matrices, lighting, clipping, two polygon RAMs) and rendering (W/Z depth, Gouraud, perspective-correct textures in all seven formats, translucency); Diamond's title Dialga and its intro's flight over Sinnoh's towns",
     "sound mixing as a hardware card: PCM8, PCM16, IMA-ADPCM, PSG and noise channels with volume, panning and the master volume; Diamond's music comes out (cardmodel machine nds ROM --wav)",
+    "direct boot as a card (machine/nds boot.card, load_image): binaries, header, chip ID, a firmware flash and user settings with their CRCs, the save chip by game code, all from the image and card data; the host and the player share it",
+    "the DS player for Cardmodel Arcade (system/nds, player.card): both screens in one picture, buttons and the touch screen, sound at the shell's rate, the save chip kept per cartridge, the clock from the shell; Pokemon Diamond at 250-320 frames per second natively",
     "Pokemon Diamond: copyright and ESRB screens, intro, title screen, a new game's first dialogue",
-    "tests/test_nds.py: a synthetic image drawn by ARM9 code, every device, Diamond's first screens when present"
+    "tests/test_nds.py: a synthetic image drawn by ARM9 code, every device, the player, Diamond's first screens when present"
   ],
   "goal": "Nintendo DS games running on the ARM instruction cards, lifted like the Game Boy.",
-  "in_progress": [
-    "making Pokemon Diamond playable: the DS player for Cardmodel Arcade (card-language loading, screens, sound, buttons and touch, saves, clock)"
-  ],
+  "in_progress": [],
   "kind": "game",
   "left": [
-    "a DS player in Cardmodel Arcade (screens, buttons, touch, saves, clock)",
     "Thumb and the ARM7 in the lifter (speed)",
     "display capture, the main-memory display FIFO, EEPROM and FRAM save chips",
-    "edge marking, fog, anti-aliasing and shadow polygons in the 3D engine"
+    "edge marking, fog, anti-aliasing and shadow polygons in the 3D engine",
+    "the RTC in local time: the shell's offset from UTC (player_clock_offset)"
   ],
   "metadata": {
-    "previous_content_hash": "3308d38d272cbef4e56eb374456ca73979b81aa9c2b795207b1b2dd6d89f81a5",
-    "version": "2.3.0",
+    "previous_content_hash": "77b22bd977673138915c5c7925a74349d70f966f04312b48a0c8b1027f801269",
+    "version": "2.4.0",
     "version_bump_reason": "minor"
   },
   "metrics": [
@@ -56,11 +54,10 @@
   "name": "ds_prototype",
   "next_steps": [
     "MATH_CORE (approved 2026-10-22): the DS is its hardware cards, card-language semantics the semantic core can reason about and symbolically execute (2D and 3D engines, VRAM banks, SPI, RTC, IPC, sound), never host-language emulation code; emulation, screenshots, test ROMs and differential runs are witnesses, never the method",
-    "a DS player card for Cardmodel Arcade (player.card in card language: cartridge, buttons and touch, saves, clock); the arcade session adds the shell's touch input and a system without cartridge tables",
-    "the direct-boot loading still done in machine/nds.py (firmware image, user settings, save chip choice) into card language, one path for the CLI and the player",
+    "the arcade side for the DS player (the arcade session): system.py and the shell taking a card without cartridge tables and with a pointer (on their branch), the shell's UTC offset into player_clock_offset, the library's DS rows as playable, a DS check cartridge for arcade check",
     "symbolic terms for the ARM/Thumb instruction cards (MATH_CORE F5, after main's LR35902 terms), and the ARM lifter keeping its terms as cards (phase 2)",
     "the DS hardware cards traced to the four sources (CM44): definitions for their behaviour, the methods that run and witness them",
-    "merge claude/blissful-easley-814fa6 into main"
+    "merge claude/blissful-easley-814fa6 into main after the arcade branch (its system.py takes a system card without tables)"
   ],
   "order": 3,
   "owner": {
@@ -73,25 +70,38 @@
     "cards/machine/nds",
     "cards/isa/armv5te",
     "cards/machine/armv5te_bench",
-    "tools/gen_armv5te.py"
+    "tools/gen_armv5te.py",
+    "cards/hardware/nds_memory",
+    "cards/hardware/nds_io",
+    "cards/hardware/nds_bios",
+    "cards/hardware/nds_vram",
+    "cards/hardware/nds_2d",
+    "cards/hardware/nds_3d",
+    "cards/hardware/nds_spi",
+    "cards/hardware/nds_backup",
+    "cards/hardware/nds_rtc",
+    "cards/hardware/nds_sound",
+    "cards/hardware/nds_cartridge",
+    "cards/system/nds",
+    "tests/test_nds.py"
   ],
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "Pokemon Diamond runs natively with its 2D and 3D pictures and its music (intro, title Dialga, the 3D flight over Sinnoh, a new game's first dialogue; buttons and touch reach it); the DS player for Cardmodel Arcade is left before it is playable there.",
-  "statement": "Both DS CPUs direct-booted on the ARM instruction cards with VRAM, both 2D engines, the 3D engine, the sound mixer, the save chip, SPI devices and the clock as cards: Pokemon Diamond runs with its pictures and music; the DS player for Cardmodel Arcade is being built.",
+  "standing": "Pokemon Diamond plays in the DS player (system/nds) from a new game into its 3D world: the touch-screen tutorial, naming, the TV report, the bedroom in Twinleaf Town, walking, the menu and an in-game save kept in the player's save file (headless, 250-375 frames per second). Continuing a save is next: the main menu starts the wireless driver, and the Wi-Fi hardware has no card yet. The player needs the arcade branch's system.py and shell (a card without tables, pointer input).",
+  "statement": "Both DS CPUs direct-booted on the ARM instruction cards with VRAM, both 2D engines, the 3D engine, the sound mixer, the save chip, SPI devices and the clock as cards, and booted by a card: Pokemon Diamond runs with its pictures and music, and the DS player (system/nds) plays it in Cardmodel Arcade.",
   "tier": 1,
   "title": "Nintendo DS prototype",
-  "updated": "2026-10-22T03:02:41+02:00",
+  "updated": "2026-10-22T04:45:16+02:00",
   "user_actions": [
     {
-      "action": "Approve merging claude/blissful-easley-814fa6 into main",
+      "action": "Approve merging claude/blissful-easley-814fa6 into main (after the arcade branch)",
       "unblocks": [
-        "Pokemon Diamond's screens in the store",
-        "the 3D engine work on main"
+        "Pokemon Diamond playable in Cardmodel Arcade",
+        "the 3D engine and sound work on main"
       ],
-      "why": "it brings the DS's video and peripheral cards, so the store can show Pokemon Diamond's own screens"
+      "why": "it brings the DS's hardware cards, its card-language boot and the DS player"
     }
   ]
 }

@@ -1,12 +1,10 @@
 """nds — the Nintendo DS machine card driven from the host (a prototype), its screens and its measured coverage.
 
 ``open_nds(path)`` reads the image (in memory); ``header`` decodes it with the ``hardware/nds_cartridge`` card;
-``DS(ctx, rom)`` loads it the way the BIOS and firmware would (direct boot: both binaries copied to their load
-addresses, the header and chip ID at the top of main RAM, the user settings) and powers on. The firmware flash
-image and the user settings are made from the ``hardware/nds_spi`` card's data (no console's firmware is used);
-the save chip's kind and size come from the ``hardware/nds_backup`` card (by game code) and it starts erased
-unless ``save`` bytes are given; the real-time clock starts at ``clock`` (a datetime; a fixed date by default,
-so runs repeat exactly).
+``DS(ctx, rom)`` puts it in the machine's cartridge and calls the machine's own direct boot (``load_image`` in
+cards/machine/nds/boot.card: the binaries, header, chip ID, user settings, a firmware image and the save chip, all
+from card data), loads ``save`` bytes into the save chip when given, and sets the real-time clock to ``clock`` (a
+datetime; a fixed date by default, so runs repeat exactly).
 
 ``ds.screens()`` returns both screens (RGB888, top then bottom); ``png_screens`` stacks them as on the console.
 ``coverage(ds)`` is the honest account: instructions each CPU ran, where each one is now and why (halted,
@@ -20,9 +18,9 @@ anything: an image whose secure area is encrypted is refused.
 """
 from __future__ import annotations
 
+import calendar
 import datetime
 import hashlib
-import struct
 import time
 from pathlib import Path
 
@@ -59,72 +57,6 @@ def header(rom: bytes, store) -> dict:
     return out
 
 
-def crc16(data: bytes, init: int = 0xFFFF) -> int:
-    """The firmware's CRC-16 (polynomial 0xA001, reflected), as the BIOS's GetCRC16 computes it."""
-    crc = init
-    for b in data:
-        crc ^= b
-        for _ in range(8):
-            crc = (crc >> 1) ^ 0xA001 if crc & 1 else crc >> 1
-    return crc
-
-
-def user_settings(store) -> bytes:
-    """The firmware's user settings (0x70 bytes, as the firmware copies them to 0x027FFC80): version, colour,
-    birthday, nickname, language and the touch calibration, from the ``hardware/nds_spi`` card."""
-    spi = store.get("hardware/nds_spi")
-    us, cal = spi["firmware"]["user_settings"], spi["touch_calibration"]
-    u = bytearray(0x70)
-    u[0:2] = int(us["version"]).to_bytes(2, "little")
-    u[2] = us["favorite_color"]
-    u[3], u[4] = us["birth_month"], us["birth_day"]
-    name = us["nickname"][:10].encode("utf-16-le")
-    u[6:6 + len(name)] = name
-    u[0x1A] = len(us["nickname"][:10])
-    u[0x58:0x64] = struct.pack("<HHBBHHBB", cal["adc_x1"], cal["adc_y1"], cal["scr_x1"], cal["scr_y1"],
-                               cal["adc_x2"], cal["adc_y2"], cal["scr_x2"], cal["scr_y2"])
-    u[0x64] = us["language"] & 7
-    return bytes(u)
-
-
-def firmware_image(store) -> bytes:
-    """A 256 KiB firmware flash made from the ``hardware/nds_spi`` card: the header fields a game's ARM7 reads
-    (console type, where the user settings are), the Wi-Fi settings block with its length, MAC address and CRC,
-    and both user-settings copies (update counter, CRC). Everything else is erased flash (0xFF)."""
-    fw_card = store.get("hardware/nds_spi")["firmware"]
-    img = bytearray(b"\xFF" * fw_card["bytes"])
-    img[0x08:0x0C] = b"MACP"
-    img[0x1D] = fw_card["console_type"]
-    offs = fw_card["user_settings_offsets"]
-    img[0x20:0x22] = (offs[0] // 8).to_bytes(2, "little")
-    w = fw_card["wifi_config_offset"]                    # CRC (2 bytes), then the block it covers
-    body = bytearray(0x138)                              # length, version, MAC address, channels, RF data
-    body[0:2] = len(body).to_bytes(2, "little")
-    body[3] = 5
-    body[4:10] = b"\xFF" * 6
-    body[10:16] = bytes(fw_card["mac_address"])
-    body[16:18] = (0x3FFE).to_bytes(2, "little")
-    body[18:20] = b"\xFF\xFF"
-    img[w + 2:w + 2 + len(body)] = body
-    img[w:w + 2] = crc16(bytes(body), 0).to_bytes(2, "little")
-    us = bytearray(b"\xFF" * 0x100)
-    us[:0x70] = user_settings(store)
-    us[0x70:0x72] = int(fw_card["user_settings"].get("update_counter", 1)).to_bytes(2, "little")
-    us[0x72:0x74] = crc16(bytes(us[:0x70])).to_bytes(2, "little")
-    for o in offs:
-        img[o:o + 0x100] = us
-    return bytes(img)
-
-
-def backup_chip(rom_info: dict, store) -> dict:
-    """{kind, bytes} of the game's save chip, from the ``hardware/nds_backup`` card (by game code)."""
-    card = store.get("hardware/nds_backup")
-    code = (rom_info.get("game_code") or "")[:3]
-    row = (card.get("by_game_code") or {}).get(code) or card["default"]
-    return {"kind": row["kind"], "kind_code": card["kinds"][row["kind"]], "bytes": int(row.get("bytes") or 0),
-            "id": int(card.get("flash_id") or 0)}
-
-
 def png_screens(rgb: bytes, scale: int = 1, gap: int = 0) -> bytes:
     """Both screens (top above bottom, ``gap`` black lines between) as one PNG."""
     from .gb import png
@@ -152,48 +84,24 @@ class DS:
         self.load()
 
     def load(self) -> None:
-        m, h = self.m, self.info
+        """Reset, put the image in the cartridge and boot it the way the BIOS and firmware would (the machine's own
+        direct boot, cards/machine/nds/boot.card), then the save chip's bytes and the clock."""
+        m = self.m
         m.call("reset_all")
         n = min(len(self.rom), 0x4000000)
         m.write("cart", self.rom[:n])
-        m.set("cart_size", n)
-        m.write("mram", bytes(0x400000))
-        for arr in ("exec9", "exec7"):                   # the execution maps are beyond reset_all's size limit
-            m.write(arr, bytes(len(m.array(arr))))
-        for cpu in ("arm9", "arm7"):
-            off, ram, size = h[f"{cpu}_rom_offset"], h[f"{cpu}_ram_address"], h[f"{cpu}_size"]
-            data = self.rom[off:off + size]
-            if 0x02000000 <= ram < 0x02400000:
-                m.write("mram", data, start=ram - 0x02000000)
-            elif 0x03800000 <= ram < 0x03810000:
-                m.write("wram7", data, start=ram - 0x03800000)
-            else:
-                raise ValueError(f"{cpu} loads at {ram:#x}, which this prototype does not map")
-        m.write("mram", self.rom[:0x170], start=0x3FFE00)
-        for a in (0x3FF800, 0x3FF804, 0x3FFC00, 0x3FFC04):
-            m.write("mram", (8130).to_bytes(4, "little"), start=a)
-        m.write("mram", (1).to_bytes(2, "little"), start=0x3FFC40)
-        m.write("mram", user_settings(self.ctx.store), start=0x3FFC80)
-        m.write("firmware", firmware_image(self.ctx.store))
-        chip = backup_chip(h, self.ctx.store)
-        m.set("backup_kind", chip["kind_code"])
-        m.set("backup_size", max(chip["bytes"], 1))
-        m.set("backup_id", chip["id"])
+        m.call("load_image", n)
+        if m.get("boot_refused"):
+            raise ValueError("this image's secure area is encrypted; decrypting it would need BIOS key material, "
+                             "which this program does not use")
         save = getattr(self, "save", None) or b""
-        size = min(chip["bytes"], 0x100000)
-        m.write("backup", (save[:size] + b"\xFF" * size)[:size])
-        m.set("entry9", h["arm9_entry"])
-        m.set("entry7", h["arm7_entry"])
-        m.call("power_on")
+        if save:
+            m.write("backup", save[:min(m.get("backup_size"), 0x100000)])
         self.set_clock(getattr(self, "clock", None) or DEFAULT_CLOCK)
 
     def set_clock(self, when: datetime.datetime) -> None:
-        """Set the real-time clock (binary fields; the card shows them in BCD)."""
-        m = self.m
-        for name, v in (("rtc_year", when.year % 100), ("rtc_month", when.month), ("rtc_day", when.day),
-                        ("rtc_wday", (when.weekday() + 1) % 7), ("rtc_hour", when.hour), ("rtc_min", when.minute),
-                        ("rtc_sec", when.second)):
-            m.set(name, v)
+        """Set the real-time clock to a wall-clock time (the card's rtc_set_unix counts seconds from 1970)."""
+        self.m.call("rtc_set_unix", calendar.timegm(when.timetuple()))
 
     def set_buttons(self, mask: int) -> None:
         """Held buttons (the ``buttons`` mask: A B Select Start Right Left Up Down R L in KEYINPUT, X Y in EXTKEYIN;
@@ -377,6 +285,8 @@ def coverage(ds: DS) -> dict:
             "swi_unmodelled": sorted(k for k in swis if int(k, 16) not in modelled_swi),
             "io_registers_touched": len(regs), "io_unmodelled_touched": unmodelled,
             "unmodelled_hardware_touched": dict(sorted(blocks.items(), key=lambda kv: -kv[1]))}
+        if c == 1 and m.get("wifi_accesses"):              # the wireless hardware is the ARM7's; it has no card
+            out["cpus"][name]["unmodelled_hardware_touched"]["Wi-Fi (0x04800000)"] = m.get("wifi_accesses")
     total_cards = len(cards)
     used_all = set()
     for c in out["cpus"].values():
@@ -386,10 +296,10 @@ def coverage(ds: DS) -> dict:
     out["geometry_commands"] = m.get("gx_commands")
     out.update({"frames": m.get("frames"), "instruction_cards": total_cards,
                 "unmapped_reads": m.get("unmapped_reads"), "unmapped_writes": m.get("unmapped_writes"),
+                "wifi_accesses": m.get("wifi_accesses"), "unmapped_io": m.get("unmapped_io"),
                 "last_unmapped": f"{m.get('last_unmapped'):#010x}", "undefined_hits": m.get("undef_hits"),
                 "swi_last_unknown": m.get("swi_last_unknown")})
     return out
 
 
-__all__ = ["DS", "backup_chip", "buttons", "coverage", "crc16", "firmware_image", "header", "open_nds", "parse_input",
-           "png_screens", "screen_stats", "user_settings"]
+__all__ = ["DS", "buttons", "coverage", "header", "open_nds", "parse_input", "png_screens", "screen_stats"]

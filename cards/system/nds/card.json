@@ -1,15 +1,98 @@
 {
-  "cartridge": {"extensions": [".nds"]},
+  "about": [
+    "Your Nintendo DS cartridges, played natively. The console is the card model's own: both CPUs on the ARM instruction cards, and the hardware as cards in the card language (memory map, VRAM banks, both 2D engines, the 3D engine, sound, the save chip, the touch screen, the clock), the same machine the headless host runs (cardmodel machine nds).",
+    "Point the arcade at the folder your cartridges are in. Each one shows up in your library; Play starts it in its own window with both screens, the top one above the touch screen. Nothing is copied: the player reads the cartridge where it is.",
+    "The save chip is kept per cartridge. The clock is set from your Mac's when a game starts."
+  ],
+  "audio": {
+    "array": "audio",
+    "count": "audio_n",
+    "format": "s16le stereo",
+    "rate": 48000
+  },
+  "cartridge": {
+    "array": "cart",
+    "bytes": 67108864,
+    "extensions": [".nds"],
+    "load": "player_load",
+    "zip": true
+  },
   "category": "system",
+  "changelog": [
+    {
+      "notes": [
+        "The Nintendo DS from the ARM instruction cards and the DS hardware cards, as a native player: both screens, 2D and 3D, sound, buttons and the touch screen.",
+        "Booted the way the BIOS and firmware would leave it (machine/nds boot.card), from the cartridge and card data alone.",
+        "The save chip per cartridge."
+      ],
+      "title": "First release",
+      "version": "1.0.0"
+    }
+  ],
+  "clock": "player_clock",
+  "clock_offset": "player_clock_offset",
+  "controls": "Arrows: the pad. X: A. Z: B. S: X. A: Y. Q: L. W: R. Return: Start. Backspace or Tab: Select. The mouse on the bottom screen: the stylus. F: full screen. Gamepads: stick or pad, A, B, X, Y, the shoulders for L and R, Menu for Start, the left trigger for Select.",
+  "developer": "the card model",
+  "entry": {
+    "frame": "player_frame",
+    "fullscreen": "player_fullscreen",
+    "init": "player_init",
+    "quit": "player_quit"
+  },
+  "genre": ["Utilities"],
+  "input": {
+    "bits": ["a", "b", "select", "start", "right", "left", "up", "down", "r", "l", "x", "y"],
+    "gamepad": {"a": "a", "b": "b", "l": "leftShoulder", "r": "rightShoulder", "select": "leftTrigger", "start": "menu", "x": "x", "y": "y"},
+    "keys": {
+      "a": ["x"],
+      "b": ["z"],
+      "down": ["down"],
+      "l": ["q"],
+      "left": ["left"],
+      "r": ["w"],
+      "right": ["right"],
+      "select": ["backspace", "tab"],
+      "start": ["return"],
+      "up": ["up"],
+      "x": ["s"],
+      "y": ["a"]
+    },
+    "keys2": {}
+  },
   "kind": "system",
   "library": {
     "folders": [],
     "systems": [{"id": "nds", "label": "Nintendo DS"}]
   },
+  "limits": "Booted directly (no BIOS or firmware image), so a cartridge whose secure area is still encrypted is refused and shows a black screen. The wireless hardware has no card yet: a game that starts its wireless driver reports a communication error (Pokemon Diamond does on its main menu, so a save can be made but not continued yet). Serial-flash save chips only (no EEPROM or FRAM). The touch screen takes one exact point; the microphone hears silence; no wireless, no display capture. The machine's own limits are on its hardware cards and in docs/MACHINES.md section 6.",
+  "logic": ["player.card"],
+  "machine": "nds",
   "name": "nds",
+  "platform": "macos",
+  "pointer": {
+    "area": {"height": 192, "width": 256, "x": 0, "y": 196},
+    "down": "player_touch_down",
+    "x": "player_touch_x",
+    "y": "player_touch_y"
+  },
   "provenance": {"origin": "cardmodel"},
-  "statement": "The Nintendo DS as the arcade lists it: its cartridges are found and described, but no player is built yet. The DS machine card (machine/nds) runs both CPUs on the ARM instruction cards and boots games through their start-up code; the picture, sound and input hardware have no cards yet, and its coverage report (cardmodel machine nds ROM) is the work queue.",
-  "playable_note": "Not playable yet: the DS machine boots it on the ARM instruction cards (both CPUs, every BIOS call it makes) but has no 2D/3D picture, sound or input yet.",
+  "save": {
+    "array": "player_save",
+    "bytes": 524292,
+    "dirty": "player_save_dirty",
+    "layout": "the save chip (512 KiB, the game's chip size used), then CMSV"
+  },
+  "screen": {
+    "array": "player_fb",
+    "format": "rgba8",
+    "height": 388,
+    "scale": 2,
+    "width": 256
+  },
+  "short_description": "Play your own Nintendo DS cartridges natively, on a console made of cards.",
+  "statement": "The DS machine card (machine/nds: the ARM instruction cards plus the DS hardware cards) as an arcade player: player.card boots the cartridge with the machine's own direct boot, runs one machine frame per 1/60 s, presents both screens as RGBA (top, a 4-line gap, bottom), hands the buttons to KEYINPUT and EXTKEYIN and the pointer over the bottom screen to the touch screen controller, and keeps the save chip in the save. The platform card's effect shell reads the cartridge file and does the I/O.",
+  "tags": ["Emulation", "Nintendo DS", "Your library"],
   "tier": 1,
-  "title": "Nintendo DS"
+  "title": "DS Player",
+  "version": "1.0.0"
 }

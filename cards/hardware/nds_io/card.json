@@ -1,6 +1,6 @@
 {
   "category": "hardware",
-  "limits": "Wi-Fi, the GBA slot, display capture, the main-memory display FIFO, EXMEMCNT's slot ownership and wait states are not modelled; cartridge encryption is not involved (the image is the plaintext the bus delivers)",
+  "limits": "Wi-Fi (a game that starts its wireless driver waits for the hardware's interrupt and reports a communication error), the GBA slot, display capture, the main-memory display FIFO, EXMEMCNT's slot ownership and wait states are not modelled; cartridge encryption is not involved (the image is the plaintext the bus delivers)",
   "logic": [
     "io.card"
   ],
@@ -153,7 +153,7 @@
   "sources": [
     "GBATEK"
   ],
-  "statement": "DS I/O for both CPUs: IME/IE/IF, IPCSYNC and the IPC FIFOs, timers (prescaler, count-up), DMA (immediate, V-blank, H-blank, start of display, cartridge per ready word, geometry FIFO), the ARM9 divider and square root, the cartridge bus (B7 block reads served from the ROM image, B8 chip ID), DISPSTAT/VCOUNT with the H-blank flag, KEYINPUT/EXTKEYIN, HALTCNT, POSTFLG, and the dispatch to the video, SPI, save chip, clock, sound and 3D cards. Every other register is latched (reads return the last write) and every register touched is recorded for the coverage report; an entry of modelled_registers marked (ARM7) or (ARM9) counts for that CPU only.",
+  "statement": "DS I/O for both CPUs: IME/IE/IF, IPCSYNC and the IPC FIFOs, timers (prescaler, count-up), DMA (immediate, V-blank, H-blank, start of display, cartridge per ready word, geometry FIFO), the ARM9 divider and square root, the cartridge bus (B7 block reads served from the ROM image, B8 chip ID), DISPSTAT/VCOUNT with the H-blank flag, KEYINPUT/EXTKEYIN, HALTCNT, POSTFLG, and the dispatch to the video, SPI, save chip, clock, sound and 3D cards. Every other register is latched (reads return the last write) and every register touched is recorded for the coverage report; an entry of modelled_registers marked (ARM7) or (ARM9) counts for that CPU only. Region 4 beyond the registers (0x04100000's receive ports aside) reaches no register whatever its width: the wireless hardware at 0x04800000 reads 0 and drops writes, counted in wifi_accesses.",
   "tier": 1,
   "timing": {
     "bus_hz": 33513982,

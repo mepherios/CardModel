@@ -10,6 +10,7 @@ from pathlib import Path
 
 from helpers import model_ctx
 
+from cardmodel.arcade import system as S
 from cardmodel.machine import nds
 
 DIAMOND = Path(os.environ.get("CARDMODEL_DS_ROM", "~/Downloads/Pokemon Diamond/Pokemon Diamond.nds")).expanduser()
@@ -67,7 +68,42 @@ def rgb(c: int) -> tuple:
     return tuple(out)
 
 
+def crc16(data: bytes, init: int = 0xFFFF) -> int:
+    """The firmware's CRC-16 (polynomial 0xA001, reflected), written here independently of the card's."""
+    crc = init
+    for b in data:
+        crc ^= b
+        for _ in range(8):
+            crc = (crc >> 1) ^ 0xA001 if crc & 1 else crc >> 1
+    return crc
+
+
 RED, GREEN, BLUE, WHITE, BLACK = 0x001F, 0x03E0, 0x7C00, 0x7FFF, 0x0000
+
+
+def two_screens() -> list:
+    """ARM9 code whose own stores map VRAM banks, fill palettes, tiles, OAM and the display registers: engine A
+    (the top screen) shows a red/blue background and a green sprite at (24, 16), engine B white and black stripes."""
+    a = Arm(0x02000008)
+    a.store(0x04000304, 0x820F, 2)
+    a.store(0x04000240, 0x8281, 2)                     # bank A: engine A BG, bank B: engine A OBJ
+    a.store(0x04000242, 0x0084, 2)                     # bank C: engine B BG
+    a.store(0x05000000, (RED << 16) | BLUE)            # engine A: backdrop blue, colour 1 red
+    a.store(0x05000200, GREEN << 16)                   # engine A OBJ colour 1 green
+    a.store(0x05000400, (WHITE << 16) | BLACK)         # engine B: backdrop black, colour 1 white
+    for i in range(8):
+        a.store(0x06000000 + 4 * i, 0x00001111)        # BG tile 0: left half colour 1
+        a.store(0x06200000 + 4 * i, 0x01010101)        # engine B tile 0: every other pixel colour 1
+        a.store(0x06400020 + 4 * i, 0x11111111)        # OBJ tile 1: solid colour 1
+    a.store(0x07000000, (24 << 16) | 16)               # OBJ 0 at (24, 16), 8x8
+    a.store(0x07000004, 1, 2)                          # tile 1
+    a.store(0x04000008, 0x0100, 2)                     # BG0: map at 2 KiB (all entries tile 0)
+    a.store(0x04001008, 0x0100, 2)
+    a.store(0x04000000, 0x00011110)                    # graphics, 1D OBJ, BG0 and OBJ on
+    a.store(0x04001000, 0x00010100)
+    return a.words()
+
+
 _SHARED: dict = {}
 
 
@@ -113,24 +149,7 @@ class Screens(Base):
     def test_arm9_code_draws_both_screens(self):
         """The ARM9's own stores map VRAM banks, fill palettes, tiles, OAM and the display registers; after a frame
         the top screen (engine A, POWCNT1 bit 15) shows its background and a sprite, the bottom engine B's."""
-        a = Arm(0x02000008)
-        a.store(0x04000304, 0x820F, 2)
-        a.store(0x04000240, 0x8281, 2)                     # bank A: engine A BG, bank B: engine A OBJ
-        a.store(0x04000242, 0x0084, 2)                     # bank C: engine B BG
-        a.store(0x05000000, (RED << 16) | BLUE)            # engine A: backdrop blue, colour 1 red
-        a.store(0x05000200, GREEN << 16)                   # engine A OBJ colour 1 green
-        a.store(0x05000400, (WHITE << 16) | BLACK)         # engine B: backdrop black, colour 1 white
-        for i in range(8):
-            a.store(0x06000000 + 4 * i, 0x00001111)        # BG tile 0: left half colour 1
-            a.store(0x06200000 + 4 * i, 0x01010101)        # engine B tile 0: every other pixel colour 1
-            a.store(0x06400020 + 4 * i, 0x11111111)        # OBJ tile 1: solid colour 1
-        a.store(0x07000000, (24 << 16) | 16)               # OBJ 0 at (24, 16), 8x8
-        a.store(0x07000004, 1, 2)                          # tile 1
-        a.store(0x04000008, 0x0100, 2)                     # BG0: map at 2 KiB (all entries tile 0)
-        a.store(0x04001008, 0x0100, 2)
-        a.store(0x04000000, 0x00011110)                    # graphics, 1D OBJ, BG0 and OBJ on
-        a.store(0x04001000, 0x00010100)
-        ds = make_ds(image(a.words()))
+        ds = make_ds(image(two_screens()))
         ds.run(2, watch=True)
         self.ds = ds
         self.assertEqual(self.px(0, 0, 50), rgb(RED))
@@ -477,8 +496,12 @@ class SaveChip(Base):
         return out[len(data):]
 
     def test_flash_identifies_and_reports_status(self):
-        chip = nds.backup_chip({"game_code": "ADAE"}, self.ctx.store)
-        self.assertEqual((chip["kind"], chip["bytes"]), ("flash", 512 * 1024))
+        card = self.ctx.store.get("hardware/nds_backup")
+        flat = [v for code, row in card["by_game_code"].items()
+                for v in (ord(code[0]) | ord(code[1]) << 8 | ord(code[2]) << 16, card["kinds"][row["kind"]], row["bytes"])]
+        self.assertEqual(card["table"], flat, "the table the card language reads is by_game_code")
+        self.assertEqual((self.ds.m.get("backup_kind"), self.ds.m.get("backup_size")), (2, 512 * 1024),
+                         "a game missing from the table gets the default chip")
         self.assertEqual(self.command(0x9F, read=3), [0x20, 0x40, 0x13])
         self.assertEqual(self.command(0x05, read=1), [0])
         self.command(0x06)
@@ -520,8 +543,9 @@ class Spi(Base):
         head = bytes(self.command(1, 0x03, 0x00, 0x00, 0x20, read=2))
         offset = int.from_bytes(head, "little") * 8
         us = bytes(self.command(1, 0x03, offset >> 16, (offset >> 8) & 0xFF, offset & 0xFF, read=0x74))
-        self.assertEqual(us[6:14].decode("utf-16-le"), "CARD")
-        self.assertEqual(int.from_bytes(us[0x72:0x74], "little"), nds.crc16(us[:0x70]))
+        settings = self.ctx.store.get("hardware/nds_spi")["firmware"]["user_settings"]
+        self.assertEqual(us[6:6 + 2 * len(settings["nickname"])].decode("utf-16-le"), settings["nickname"])
+        self.assertEqual(int.from_bytes(us[0x72:0x74], "little"), crc16(us[:0x70]))
         self.assertEqual(us[:0x70], self.ds.m.read("mram", 0x3FFC80, 0x70), "the copy the firmware leaves in RAM")
 
     def test_touch_screen_reports_the_pen(self):
@@ -657,6 +681,19 @@ class Geometry(Base):
         self.assertEqual(self.r(0x040000B8) & 0x80000000, 0, "the transfer finished at once")
 
 
+class Io(Base):
+    def test_wireless_addresses_reach_no_register(self):
+        """0x04804188 (the Wi-Fi RAM) shares its low bits with IPCFIFOSEND and 0x04804208 with IME: the ARM7
+        clearing the Wi-Fi RAM must not reach the FIFO, nor its loads there read IME. Both are counted."""
+        self.w(0x04000184, 0x8000, 2, cpu=1)               # both FIFOs enabled
+        self.w(0x04000184, 0x8000, 2, cpu=0)
+        self.w(0x04804188, 0x12345678, 4, cpu=1)
+        self.assertEqual(self.r(0x04000184, 2, cpu=0) & 0x100, 0x100, "the ARM9's receive FIFO stays empty")
+        self.w(0x04000208, 1, 4, cpu=1)
+        self.assertEqual(self.r(0x04804208, 4, cpu=1), 0)
+        self.assertEqual(self.ds.m.get("wifi_accesses"), 2)
+
+
 class Cartridge(Base):
     def test_one_word_repeating_dma_moves_a_whole_block(self):
         """NitroSDK reads the card with a 1-word DMA in cartridge mode that the bus starts again for every ready
@@ -675,6 +712,123 @@ class Cartridge(Base):
 
 
 @unittest.skipUnless(DIAMOND.is_file(), f"Pokemon Diamond is not at {DIAMOND} (set CARDMODEL_DS_ROM)")
+def player_ready(ctx) -> bool:
+    """Whether this checkout's arcade/system.py builds a system card that names no cartridge tables card (the DS
+    player reads its cartridge's layout through card constants, so system/nds has none)."""
+    try:
+        S.tables(ctx, S.system_card(ctx.store, "nds"))
+        return True
+    except KeyError:
+        return False
+
+
+class Player(unittest.TestCase):
+    """system/nds, the DS player the arcade builds (player.card on the machine card), run headless as the
+    library and the store check run it: boot, both screens with the gap, the buttons and the pen, the sound at the
+    shell's rate, the save chip packed and restored, the clock, and a refused image."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = _SHARED.get("ctx") or model_ctx()
+        _SHARED["ctx"] = cls.ctx
+        if not player_ready(cls.ctx):
+            raise unittest.SkipTest("arcade/system.py here still needs a tables card for every player")
+        cls.card = S.system_card(cls.ctx.store, "nds")
+
+    def player(self, img: bytes, **kw) -> S.Player:
+        return S.Player(self.ctx, "nds", img, "native", fresh=True, **kw)
+
+    def mask(self, *names) -> int:
+        bits = self.card["input"]["bits"]
+        return sum(1 << bits.index(n) for n in names)
+
+    def test_both_screens_one_above_the_other(self):
+        p = self.player(image(two_screens()))
+        p.frame(0)
+        p.frame(0)
+        fb = p.rgba()
+        W = self.card["screen"]["width"]
+
+        def at(x, y):
+            return tuple(fb[(y * W + x) * 4:(y * W + x) * 4 + 4])
+        self.assertEqual(len(fb), W * self.card["screen"]["height"] * 4)
+        self.assertEqual((at(0, 50), at(5, 50), at(24, 16)), (rgb(RED) + (255,), rgb(BLUE) + (255,), rgb(GREEN) + (255,)))
+        self.assertEqual({at(x, y) for y in range(192, 196) for x in range(W)}, {(0, 0, 0, 255)}, "a 4-line gap")
+        self.assertEqual((at(0, 296), at(1, 296)), (rgb(WHITE) + (255,), rgb(BLACK) + (255,)), "the bottom screen")
+        area = self.card["pointer"]["area"]
+        self.assertEqual((area["y"], area["height"]), (196, 192), "the pointer's area is the bottom screen")
+
+    def test_buttons_and_the_pen(self):
+        p = self.player(image([]))
+        m = p.m
+        p.frame(self.mask("a", "x", "up"))
+        self.assertEqual(m.call("bus_read", 0, 0x04000130, 2) & 0x3FF, 0x3FF & ~0x41, "A and Up in KEYINPUT")
+        self.assertEqual(m.call("bus_read", 1, 0x04000136, 1) & 0xC3, 0x42, "X in EXTKEYIN, Y not, the pen up, open")
+        m.set("player_touch_down", 1)
+        m.set("player_touch_x", 120)
+        m.set("player_touch_y", 40)
+        p.frame(self.mask("l", "y"))
+        self.assertEqual(m.call("bus_read", 0, 0x04000130, 2) & 0x3FF, 0x3FF & ~0x200)
+        self.assertEqual(m.call("bus_read", 1, 0x04000136, 1) & 0xC3, 0x01, "Y and the pen down")
+        self.assertEqual((m.get("touch_down"), m.get("touch_x"), m.get("touch_y")), (1, 120, 40))
+        m.set("player_touch_down", 0)
+        p.frame(0)
+        self.assertEqual((m.get("touch_down"), m.call("bus_read", 1, 0x04000136, 1) & 0x43), (0, 0x43))
+
+    def test_sound_comes_at_the_shells_rate(self):
+        p = self.player(image([]))
+        n = 0
+        for _ in range(120):
+            p.frame(0)
+            n += len(p.drain_audio())
+        self.assertAlmostEqual(n / 4 / 120, self.card["audio"]["rate"] / 60, delta=0.5,
+                               msg="one machine frame leaves 1/60 s of the shell's samples")
+
+    def test_the_save_chip_is_packed_and_restored(self):
+        p = self.player(image([]))
+        m = p.m
+        self.assertEqual(m.get("backup_size"), 524288)
+        m.write("backup", b"\x12\x34", 0x100)
+        m.set("backup_dirty", 1)
+        for _ in range(59):
+            p.frame(0)
+        self.assertEqual(m.get("player_save_dirty"), 0, "packed a second after the last change, not before")
+        p.frame(0)
+        self.assertEqual(m.get("player_save_dirty"), 1)
+        save = m.read("player_save")
+        self.assertEqual((save[0x100:0x102], save[0x80000:0x80004]), (b"\x12\x34", b"CMSV"))
+        m.set("player_save_dirty", 0)
+        m.write("backup", b"\x56", 0x101)
+        m.set("backup_dirty", 1)
+        p.frame(0)
+        m.call("player_flush")
+        self.assertEqual((m.get("player_save_dirty"), m.read("player_save", 0x101, 1)), (1, b"\x56"), "flushed at quit")
+        q = self.player(image([]), save=m.read("player_save"))
+        self.assertEqual(q.m.read("backup", 0x100, 3), b"\x12\x56\xff")
+        self.assertEqual((q.m.get("backup_dirty"), q.m.get("player_save_dirty")), (0, 0))
+
+    def test_the_clock_comes_from_the_shell(self):
+        when = datetime.datetime(2026, 10, 22, 21, 7, 30, tzinfo=datetime.timezone.utc)
+        p = self.player(image([]), clock=int(when.timestamp()))
+        got = [p.m.get(k) for k in ("rtc_year", "rtc_month", "rtc_day", "rtc_hour", "rtc_min", "rtc_sec", "rtc_wday")]
+        self.assertEqual(got, [26, 10, 22, 21, 7, 30, (when.weekday() + 1) % 7])
+
+    def test_an_encrypted_image_shows_a_black_screen(self):
+        img = bytearray(image(two_screens()))
+        img[0x4000:0x4008] = bytes(8)                      # the secure area as the cartridge keeps it, encrypted
+        p = self.player(bytes(img))
+        p.frame(0)
+        self.assertEqual(p.m.get("boot_refused"), 1)
+        self.assertEqual(p.rgba(), b"\0\0\0\xff" * (256 * 388))
+
+    def test_the_players_own_picture(self):
+        p = self.player(image([]))
+        p.m.call("player_draw_art")
+        fb = p.rgba()
+        self.assertEqual(set(fb[3::4]), {255})
+        self.assertGreater(len({fb[i:i + 3] for i in range(0, len(fb), 4)}), 8)
+
+
 class PokemonDiamond(unittest.TestCase):
     def test_first_screens(self):
         """Read where it is: the copyright and ESRB screens appear within the first two seconds, with text on both

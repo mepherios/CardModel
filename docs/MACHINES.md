@@ -204,8 +204,14 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   to the rendering engine, which draws it for the next frame), the 2D engines draw a visible line from the registers
   as they are, the CPUs run the drawing part of the line, H-blank (flag, interrupt, H-blank DMA), the rest of the
   line, then timers, sound and the geometry FIFO interrupt advance. The cartridge bus starts its DMAs again for every ready word,
-  so NitroSDK's 1-word repeating card DMA moves whole blocks. Direct boot as the firmware leaves it.
-* **The host** (`machine/nds.py`): `DS(ctx, rom, clock=..., save=...)` inserts an image (a save chip's bytes and a
+  so NitroSDK's 1-word repeating card DMA moves whole blocks.
+* **Direct boot** is a card as well (`machine/nds` boot.card, `load_image`): from the image in `cart` and card data
+  alone it leaves what the BIOS and firmware would: the ARM9 and ARM7 binaries where the header says, the header
+  and the chip ID where the firmware puts them, a firmware flash with its header, Wi-Fi block and two copies of the
+  user settings with their CRCs (`nds_spi`'s data), the user settings in main RAM, and the save chip the game code
+  names (`nds_backup`'s table), erased. An image whose secure area is still encrypted is refused (`boot_refused`).
+  The host and the arcade player both boot through it.
+* **The host** (`machine/nds.py`): `DS(ctx, rom, clock=..., save=...)` copies an image in and boots it (a save chip's bytes and a
   start time for the clock are inputs; the default clock is fixed so runs repeat), `screens()` returns both
   screens, `png_screens` stacks them as on the console, `drain_audio()` the sound mixed since the last call,
   `set_buttons` / `touch` are the inputs, `save_bytes()` the save chip, `machine=` reuses a loaded machine for
@@ -215,6 +221,19 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   showed a picture. Pokemon Diamond draws its copyright and ESRB screens after frame 51, plays its intro (the Game Freak
   logo, the Pokemon logo, the 3D flight over Sinnoh's towns), shows its title screen with the 3D Dialga and,
   with START and A, starts a new game (Professor Rowan's introduction); buttons and touch-screen taps reach it.
+* **The arcade player** (`system/nds`, its player.card on the machine card): the DS in Cardmodel Arcade, built like
+  the Game Boy player (`arcade/system.py`). `player_load` is `load_image`; each `player_frame` runs one machine
+  frame and presents both screens as one 256x388 RGBA picture (top, a 4-line gap, bottom); the buttons go to
+  KEYINPUT and EXTKEYIN in the card's bit order and the pointer over the bottom screen (`pointer.area`) to the
+  touch screen controller; the sound runs at the rate that leaves exactly the shell's 1/60 s of samples per
+  machine frame (47,860 Hz for 48 kHz: the console's 59.83 Hz shown at 60); the save chip goes into the save a
+  second after it last changed and at quit; the clock is set from the shell's Unix time plus `player_clock_offset`
+  (0, so UTC, until the shell writes it). Pokemon Diamond runs at 250-320 frames per second natively and plays
+  from a new game (the touch-screen tutorial, naming, the TV report) into its 3D world: walking, the menu, and an
+  in-game save that lands in the player's save file. Continuing that save does not work yet: the main menu starts
+  the wireless driver, which waits for the Wi-Fi hardware's interrupt (no card models it) and reports a
+  communication error. The card names no cartridge tables card and has a `pointer`: it needs the arcade's
+  system.py and shell that take both.
 * **Measured coverage**: per CPU the instructions run, distinct addresses, which instruction cards the code used,
   undefined instructions (counted as they run; code overwritten after it ran is reported apart), BIOS calls
   (modelled or not), every hardware register the game touched that no card models, and what the screens show.
@@ -229,8 +248,9 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   each 2D feature pixel by pixel through the bus; VRAM banks; the save chip, firmware, touch screen, power
   management, clock, sound busy bits, the per-word cartridge DMA; the 3D engine through its command ports
   (position, facing, depth, translation and the matrix stack, a direct-colour texture, packed FIFO commands, the
-  box test, BG0 as the 3D layer); and, when the image is on the machine (`CARDMODEL_DS_ROM`), Pokemon Diamond's
-  first screens.
+  box test, BG0 as the 3D layer); the arcade player (both screens and the gap, buttons and the pen through the
+  bus, the sound rate, the save chip packed and restored, the clock, a refused image); and, when the image is on
+  the machine (`CARDMODEL_DS_ROM`), Pokemon Diamond's first screens and its title screen's 3D Dialga.
 * **Nothing is decrypted**: an image whose secure area is encrypted is refused.
 
 ## 7. Adding things

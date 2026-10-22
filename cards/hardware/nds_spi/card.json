@@ -11,7 +11,8 @@
   "firmware": {
     "bytes": 262144, "id": 2113554, "console_type": 255,
     "user_settings_offsets": [261632, 261888],
-    "user_settings": {"version": 5, "favorite_color": 11, "birth_month": 1, "birth_day": 1, "nickname": "CARD", "language": 1, "update_counter": 1},
+    "user_settings": {"version": 5, "favorite_color": 11, "birth_month": 1, "birth_day": 1, "nickname": "CARD", "language": 1, "update_counter": 1,
+                      "nickname_utf16": [67, 65, 82, 68, 0, 0, 0, 0, 0, 0], "nickname_length": 4},
     "wifi_config_offset": 42, "mac_address": [0, 9, 191, 0, 0, 1]
   },
   "touch_calibration": {"adc_x1": 735, "adc_y1": 812, "scr_x1": 32, "scr_y1": 32, "adc_x2": 3387, "adc_y2": 3303, "scr_x2": 224, "scr_y2": 160},

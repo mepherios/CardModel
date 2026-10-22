@@ -12,6 +12,7 @@ const ARM7_SLICE = 1065
 const ARM9_HDRAW = 1536
 const ARM7_HDRAW = 768
 const LINE_CYCLES = 2130
+const FRAME_LINES = 263
 export global chunk9: Int = 64            -- the CPUs alternate this finely inside a line (handshakes need it)
 export global chunk7: Int = 32
 array ctx_r: Int[32]
@@ -200,7 +201,7 @@ fn run_both(n9: Int, n7: Int) {
   }
 }
 export fn run_frame() {
-  for line in 0 .. 263 {
+  for line in 0 .. FRAME_LINES {
     line_events(line)
     if line < 192 {
       render_line(line)
@@ -216,7 +217,7 @@ export fn run_frame() {
     gx_line()
   }
   hblank_flag = 0
-  rtc_advance(LINE_CYCLES * 263)
+  rtc_advance(LINE_CYCLES * FRAME_LINES)
   frames += 1
 }
 -- direct boot: what the BIOS and firmware leave behind before jumping to the game (registers per mode)
