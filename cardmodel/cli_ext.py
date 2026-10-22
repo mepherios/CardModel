@@ -660,6 +660,27 @@ def cmd_tiers(args) -> int:
     return 1 if any(r and r.get("status") == "refuted" for r in out.values()) else 0
 
 
+def cmd_difficulty(args) -> int:
+    from .engines import difficulty as D
+    cli = _cli()
+    ctx = cli._ctx(args)
+    r = D.check(ctx)
+    lines = [f"{r['status']}: {r['methods']} methods by the rank of what they decide {r['methods_by_rank']}; "
+             f"{r['questions']} questions {r['questions_by_rank']}"]
+    for m in sorted(ctx.store.cards("method"), key=lambda c: c.name):
+        rk = m.get("rank") or {}
+        lines.append(f"  {m.name:<20} {rk.get('decides', '?'):<10} serves: {rk.get('general', '')} "
+                     f"({rk.get('general_rank', '?')})")
+    lines.append("left open (the product says what it does instead):")
+    for q in sorted(ctx.store.cards("question"), key=lambda c: (D.RANKS.index(c.get("rank")) if c.get("rank") in
+                                                                   D.RANKS else 9, c.name)):
+        if q.get("promise") != "answered":
+            lines.append(f"  [{q.get('rank')}] {q.get('statement')}  -> {q.get('instead')}")
+    lines += [f"  problem: {p}" for p in r["problems"]]
+    cli._out(args, r, "\n".join(lines))
+    return 1 if r["status"] == "fail" else 0
+
+
 def cmd_symbolic(args) -> int:
     from .engines import values as V
     from .engines.exprs import to_text
@@ -731,6 +752,9 @@ def register(sub) -> None:
                                         "executable semantics")
     s.add_argument("isa", nargs="?", default="lr35902"); s.add_argument("cards", nargs="*")
     s.add_argument("--samples", type=int, default=4); s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_symbolic)
+    s = sub.add_parser("difficulty", help="the arithmetical rank of every method and question: what the product "
+                                          "can decide and what it must leave open (Gödel method W-15)")
+    s.set_defaults(fn=cmd_difficulty)
     s = sub.add_parser("tiers", help="what each claim's evidence is worth: census, or prove an algorithm's forms "
                                      "by sized witnesses")
     s.add_argument("action", choices=["census", "prove"]); s.add_argument("algorithm", nargs="?")
