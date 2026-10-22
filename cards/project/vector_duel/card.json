@@ -22,11 +22,11 @@
   "in_progress": [],
   "kind": "game",
   "left": [
-    "more of the game (ROADMAP: Arcade next)"
+    "more of the game (ROADMAP: Arcade next): weapons as move sets, strings inside the exchange model, the systemic world as a campaign map"
   ],
   "metadata": {
-    "previous_content_hash": "e8e4fc73907d27d0463cddcd2a6629469e628fa02713bac45e170650eb8135a2",
-    "version": "2.0.2",
+    "previous_content_hash": "3b591e204b9dca41ddf3fd9644f213ac87a3c81bbfb17360a57ae798a9a83837",
+    "version": "2.0.3",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -38,6 +38,9 @@
   ],
   "name": "vector_duel",
   "next_steps": [
+    "per docs/MATH_CORE.md (approved by the user): new game behaviour stays card-language logic and cards, never host-language imitation",
+    "keep the model's solutions as cards with their certificates (the exact equilibria and the duel tree's mixes, now only tables in the build), traced to the definition, transformation and method registries of phase 1",
+    "playtests, AI tournaments and screenshots stay witnesses, never the method",
     "the next version, on a branch"
   ],
   "order": 1,
@@ -59,6 +62,6 @@
   "statement": "The native fighting game made of cards. Its next version is built on the games branch and offered as early access beside the release.",
   "tier": 1,
   "title": "Vector Duel",
-  "updated": "2026-10-22T00:51:47+02:00",
+  "updated": "2026-10-22T00:58:19+02:00",
   "user_actions": []
 }
