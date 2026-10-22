@@ -155,7 +155,9 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
 
 * **The shell** gained three optional fields in game.json: `cartridge` (the array the cartridge's bytes go into and
   the function that decodes them; `--rom PATH` names the file, a .zip is read in memory), `clock` (an Int64 the
-  shell keeps at the Unix time) and `flush` (called before quitting). A game without them runs as before.
+  shell keeps at the Unix time), `clockOffset` (an Int64 it keeps at the local time's offset from UTC, in seconds:
+  a system card's `clock_offset`, for a console whose clock shows the local time) and `flush` (called before
+  quitting). A game without them runs as before.
 * **The library** (`arcade/library.py`): every file in a system's folders, read where it is, nothing copied, with
   its header, the ROM survey's verdict as a compatibility badge (verified, playable, unsupported) and a title
   screen the machine draws headless (ten seconds, no buttons; cached in `state/arcade/covers/`). The folders are
@@ -164,8 +166,9 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
 * **The launcher**: Library has a group per console with search, a home of title-screen shelves, and a page per
   cartridge (Play, or Install Game Boy Player first; play time; the verdict; the header; the file). Play starts
   the installed player with `--rom` on the file and a save folder per cartridge.
-* **The DS** (`system/nds`) is listed with what the DS machine does so far (its coverage report) and is not
-  playable: the DS picture, sound and input hardware have no cards yet.
+* **The DS** (`system/nds`) is listed with what the DS machine does so far (its coverage report). Its cartridges
+  are playable once its system card has a machine and a player (`machine`, `logic`), and not playable (with the
+  card's `playable_note`) until then.
 * **One cartridge as its own app** (`arcade/cartapp.py`, `cardmodel arcade app ROM [--install]`): the Game Boy
   Player with the cartridge's own code lifted into card IR (docs/MACHINES.md section 4: every block a long
   profile found or an abstract run of the machine's cards found by reasoning, every instruction also on its own,
