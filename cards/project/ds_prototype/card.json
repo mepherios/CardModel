@@ -18,6 +18,7 @@
     "sound mixing as a hardware card: PCM8, PCM16, IMA-ADPCM, PSG and noise channels with volume, panning and the master volume; Diamond's music comes out (cardmodel machine nds ROM --wav)",
     "direct boot as a card (machine/nds boot.card, load_image): binaries, header, chip ID, a firmware flash and user settings with their CRCs, the save chip by game code, all from the image and card data; the host and the player share it",
     "the DS player for Cardmodel Arcade (system/nds, player.card): both screens in one picture, buttons and the touch screen, sound at the shell's rate, the save chip kept per cartridge, the clock from the shell; Pokemon Diamond at 250-320 frames per second natively",
+    "the Wi-Fi hardware as a card (nds_wifi): the register file the wireless driver tests, the baseband and RF chips, power-up and its interrupt, the microsecond counter and beacon interrupts, TX slots; Diamond's main menu starts its wireless driver, scans three channels and continues a save",
     "Pokemon Diamond: copyright and ESRB screens, intro, title screen, a new game's first dialogue",
     "tests/test_nds.py: a synthetic image drawn by ARM9 code, every device, the player, Diamond's first screens when present"
   ],
@@ -31,8 +32,8 @@
     "the RTC in local time: the shell's offset from UTC (player_clock_offset)"
   ],
   "metadata": {
-    "previous_content_hash": "77b22bd977673138915c5c7925a74349d70f966f04312b48a0c8b1027f801269",
-    "version": "2.4.0",
+    "previous_content_hash": "c3c4bc2aea2f7eef0c9691fe4473231d5c870ca4d63a6253b2ea09000e7b7c7c",
+    "version": "2.5.0",
     "version_bump_reason": "minor"
   },
   "metrics": [
@@ -83,17 +84,18 @@
     "cards/hardware/nds_sound",
     "cards/hardware/nds_cartridge",
     "cards/system/nds",
-    "tests/test_nds.py"
+    "tests/test_nds.py",
+    "cards/hardware/nds_wifi"
   ],
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "Pokemon Diamond plays in the DS player (system/nds) from a new game into its 3D world: the touch-screen tutorial, naming, the TV report, the bedroom in Twinleaf Town, walking, the menu and an in-game save kept in the player's save file (headless, 250-375 frames per second). Continuing a save is next: the main menu starts the wireless driver, and the Wi-Fi hardware has no card yet. The player needs the arcade branch's system.py and shell (a card without tables, pointer input).",
-  "statement": "Both DS CPUs direct-booted on the ARM instruction cards with VRAM, both 2D engines, the 3D engine, the sound mixer, the save chip, SPI devices and the clock as cards, and booted by a card: Pokemon Diamond runs with its pictures and music, and the DS player (system/nds) plays it in Cardmodel Arcade.",
+  "standing": "Pokemon Diamond plays in the DS player (system/nds): a new game through the touch-screen tutorial and naming into its 3D world (walking, the menu, an in-game save kept in the player's save file), and a later boot continues that save (its main menu's wireless scan runs on the Wi-Fi card); headless 190-375 frames per second. The player needs the arcade branch's system.py and shell (a card without tables, pointer input) and is not yet installed in the arcade.",
+  "statement": "Both DS CPUs direct-booted on the ARM instruction cards with VRAM, both 2D engines, the 3D engine, the sound mixer, the save chip, SPI devices, the clock and the Wi-Fi hardware as cards, and booted by a card: Pokemon Diamond plays in the DS player (system/nds) for Cardmodel Arcade, new game and continue.",
   "tier": 1,
   "title": "Nintendo DS prototype",
-  "updated": "2026-10-22T04:45:16+02:00",
+  "updated": "2026-10-22T04:52:43+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/blissful-easley-814fa6 into main (after the arcade branch)",

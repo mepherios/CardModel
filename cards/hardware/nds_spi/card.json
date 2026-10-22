@@ -13,12 +13,13 @@
     "user_settings_offsets": [261632, 261888],
     "user_settings": {"version": 5, "favorite_color": 11, "birth_month": 1, "birth_day": 1, "nickname": "CARD", "language": 1, "update_counter": 1,
                       "nickname_utf16": [67, 65, 82, 68, 0, 0, 0, 0, 0, 0], "nickname_length": 4},
-    "wifi_config_offset": 42, "mac_address": [0, 9, 191, 0, 0, 1]
+    "wifi_config_offset": 42, "mac_address": [0, 9, 191, 0, 0, 1],
+    "wifi": {"rf_chip_type": 2, "rf_bits_per_entry": 24, "rf_entries": 12, "byte_43": 1}
   },
   "touch_calibration": {"adc_x1": 735, "adc_y1": 812, "scr_x1": 32, "scr_y1": 32, "adc_x2": 3387, "adc_y2": 3303, "scr_x2": 224, "scr_y2": 160},
   "touch_channels": {"0": "temperature 0", "1": "Y", "2": "battery (not connected)", "3": "pressure Z1", "4": "pressure Z2", "5": "X", "6": "microphone (AUX)", "7": "temperature 1"},
   "touch_idle": {"temperature0": 800, "temperature1": 928, "microphone": 2048},
-  "limits": "transfers finish at once; 16-bit transfers act as 8-bit ones; the firmware's Wi-Fi calibration and access point settings are blank; the microphone always reads silence; the touch screen reports one exact point (no noise or pressure curve)",
+  "limits": "transfers finish at once; 16-bit transfers act as 8-bit ones; the firmware's Wi-Fi block names the RF chip and its table's shape, but its calibration values are zeros and its access point settings blank; the microphone always reads silence; the touch screen reports one exact point (no noise or pressure curve)",
   "sources": ["GBATEK (DS serial peripheral interface bus, power management, firmware, touch screen)"],
   "logic": ["spi.card"],
   "provenance": {"origin": "cardmodel"},

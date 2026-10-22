@@ -2,7 +2,7 @@
   "category": "machine",
   "name": "nds",
   "isa": "armv5te",
-  "components": ["nds_memory", "nds_io", "nds_bios", "nds_vram", "nds_2d", "nds_3d", "nds_spi", "nds_backup", "nds_rtc", "nds_sound"],
+  "components": ["nds_memory", "nds_io", "nds_bios", "nds_vram", "nds_2d", "nds_3d", "nds_spi", "nds_backup", "nds_rtc", "nds_sound", "nds_wifi"],
   "logic": ["nds.card", "boot.card"],
   "export_state": true,
   "statement": "The Nintendo DS as a prototype: the ARM9 (ARMv5TE) and the ARM7 (ARMv4T) on one set of ARM/Thumb instruction cards, the memory maps, I/O (interrupts, IPC, timers, DMA, divider, cartridge bus), an HLE BIOS, VRAM banks and both 2D engines drawing two screens, the SPI devices (power management, firmware, touch screen), the save chip, the real-time clock, the sound mixer and the 3D engine (geometry and rendering); direct boot from a ROM image. What the games touch that no card models is in the coverage report of `cardmodel machine nds ROM`.",

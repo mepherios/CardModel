@@ -121,7 +121,13 @@ fn rd8(a: Int) -> Int {
   last_unmapped = x
   return 0
 }
-fn rd16(a: Int) -> Int = rd8(a) | (rd8(a + 1) << 8)
+fn rd16(a: Int) -> Int {
+  let x = a & MASK32
+  if (x >> 24) == 4 {
+    return io_read16(x)
+  }
+  return rd8(x) | (rd8(x + 1) << 8)
+}
 fn rd32(a: Int) -> Int {
   let x = a & MASK32
   if (x >> 24) == 4 {

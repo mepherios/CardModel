@@ -42,7 +42,7 @@ global sqrt_cnt: Int = 0
 array sqrt_w: Int[2]                      -- parameter lo hi
 global sqrt_res: Int = 0
 export global keyinput: Int = 0x3FF       -- 1 = released (A B Select Start Right Left Up Down R L)
-export global wifi_accesses: Int = 0       -- reads and writes at 0x04800000-0x04FFFFFF (no card models them)
+export global wifi_accesses: Int = 0       -- the ARM7's halfword accesses to the wireless hardware (hardware/nds_wifi)
 export global unmapped_io: Int = 0         -- other region-4 addresses beyond the registers
 export global extkey: Int = 0x7F          -- X Y (debug) pen-down hinge, ARM7 only
 array halted_cpu: Int[2]
@@ -371,9 +371,9 @@ fn cart_data() -> Int {
   return v
 }
 
--- an access in region 4 beyond the I/O registers (0x04000000-0x040FFFFF) and the receive ports at 0x04100000: the
--- ARM7's wireless hardware at 0x04800000 has no card, so its reads give 0 and its writes are dropped; both are
--- counted (wifi_accesses) so the coverage report shows them, and none may reach a register whose low bits it shares
+-- an access in region 4 beyond the I/O registers (0x04000000-0x040FFFFF), the receive ports at 0x04100000 and the
+-- ARM7's wireless hardware (16-bit, hardware/nds_wifi): reads give 0 and writes are dropped (a byte write to the
+-- wireless hardware too), counted, and none may reach a register whose low bits it shares
 fn io_beyond(a: Int) -> Int {
   if (a >> 23) == 9 {
     wifi_accesses += 1
@@ -391,6 +391,10 @@ fn io_read32(a: Int) -> Int {
   if a == 0x04100010 {
     touch(0x1FF4, 1)
     return cart_data()
+  }
+  if (a >> 23) == 9 and cur == 1 {
+    wifi_accesses += 2
+    return wifi_read16(a) | (wifi_read16(a + 2) << 16)
   }
   if (a >> 20) != 0x040 {
     return io_beyond(a)
@@ -421,13 +425,23 @@ fn io_read32(a: Int) -> Int {
   }
   return io_read16(a) | (io_read16(a + 2) << 16)
 }
-fn io_read16(a: Int) -> Int = io_read8(a) | (io_read8(a + 1) << 8)
+fn io_read16(a: Int) -> Int {
+  if (a >> 23) == 9 and cur == 1 {
+    wifi_accesses += 1
+    return wifi_read16(a)
+  }
+  return io_read8(a) | (io_read8(a + 1) << 8)
+}
 fn io_read8(a: Int) -> Int {
   let o = a & 0x1FFF
   let sh = (o & 3) * 8
   if (a >> 20) != 0x040 {
     if a >= 0x04100000 and a < 0x04100004 {
       return (fifo_pop(cur) >> sh) & 0xFF
+    }
+    if (a >> 23) == 9 and cur == 1 {
+      wifi_accesses += 1
+      return (wifi_read16(a) >> ((a & 1) * 8)) & 0xFF
     }
     return io_beyond(a)
   }
@@ -538,6 +552,12 @@ fn io_read8(a: Int) -> Int {
 }
 fn io_write32(a: Int, v: Int) {
   let o = a & 0x1FFF
+  if (a >> 23) == 9 and cur == 1 {
+    wifi_accesses += 2
+    wifi_write16(a, v & 0xFFFF)
+    wifi_write16(a + 2, (v >> 16) & 0xFFFF)
+    return
+  }
   if (a >> 20) != 0x040 {
     io_beyond(a)
     return
@@ -595,6 +615,11 @@ fn io_write32(a: Int, v: Int) {
 }
 fn io_write16(a: Int, v: Int) {
   let o = a & 0x1FFF
+  if (a >> 23) == 9 and cur == 1 {
+    wifi_accesses += 1
+    wifi_write16(a, v)
+    return
+  }
   if (a >> 20) != 0x040 {
     io_beyond(a)
     return

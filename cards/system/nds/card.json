@@ -23,7 +23,7 @@
       "notes": [
         "The Nintendo DS from the ARM instruction cards and the DS hardware cards, as a native player: both screens, 2D and 3D, sound, buttons and the touch screen.",
         "Booted the way the BIOS and firmware would leave it (machine/nds boot.card), from the cartridge and card data alone.",
-        "The save chip per cartridge."
+        "The save chip per cartridge, and the wireless hardware a game's main menu starts (nothing to connect to)."
       ],
       "title": "First release",
       "version": "1.0.0"
@@ -64,7 +64,7 @@
     "folders": [],
     "systems": [{"id": "nds", "label": "Nintendo DS"}]
   },
-  "limits": "Booted directly (no BIOS or firmware image), so a cartridge whose secure area is still encrypted is refused and shows a black screen. The wireless hardware has no card yet: a game that starts its wireless driver reports a communication error (Pokemon Diamond does on its main menu, so a save can be made but not continued yet). Serial-flash save chips only (no EEPROM or FRAM). The touch screen takes one exact point; the microphone hears silence; no wireless, no display capture. The machine's own limits are on its hardware cards and in docs/MACHINES.md section 6.",
+  "limits": "Booted directly (no BIOS or firmware image), so a cartridge whose secure area is still encrypted is refused and shows a black screen. Wireless play is not possible: the Wi-Fi hardware answers a game's wireless driver (Pokemon Diamond scans for others on its main menu) but nothing is ever received. Serial-flash save chips only (no EEPROM or FRAM). The touch screen takes one exact point; the microphone hears silence; no wireless, no display capture. The machine's own limits are on its hardware cards and in docs/MACHINES.md section 6.",
   "logic": ["player.card"],
   "machine": "nds",
   "name": "nds",

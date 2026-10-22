@@ -198,6 +198,7 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   | `nds_spi` | the ARM7's SPI bus: power management, a firmware flash made from the card's data (header, Wi-Fi block, user settings with CRC; no console's firmware), the touch screen controller through the firmware's calibration |
   | `nds_backup` | the save chip on the auxiliary SPI bus: serial flash commands; which chip a game has is data by game code |
   | `nds_rtc` | the real-time clock on three bit-banged wires: status, date and time in BCD, alarms stored; it runs on machine time from what the host sets |
+  | `nds_wifi` | the ARM7's wireless hardware as far as a game's wireless driver needs it to come up and stay idle: the 16-bit register file (the driver tests it by writing and reading back), the baseband and RF chips' registers, power-up with its wake-up interrupt, the microsecond counter with the beacon, pre- and post-beacon interrupts, the RX/TX ports into the Wi-Fi RAM, TX slots that complete; nothing is ever received |
   | `nds_sound` | the sixteen channels mixed into stereo samples: PCM8, PCM16 and IMA-ADPCM from memory, PSG square waves and noise, each at its timer's rate, with volume, divider, panning and the master volume; one-shot channels stop and clear their busy bits when their samples run out, looping ones return to their loop start |
 
   A frame is 263 lines: per line the line events (at line 192 a waiting SWAP_BUFFERS hands the filled polygon RAM
@@ -230,10 +231,10 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   second after it last changed and at quit; the clock is set from the shell's Unix time plus `player_clock_offset`
   (0, so UTC, until the shell writes it). Pokemon Diamond runs at 250-320 frames per second natively and plays
   from a new game (the touch-screen tutorial, naming, the TV report) into its 3D world: walking, the menu, and an
-  in-game save that lands in the player's save file. Continuing that save does not work yet: the main menu starts
-  the wireless driver, which waits for the Wi-Fi hardware's interrupt (no card models it) and reports a
-  communication error. The card names no cartridge tables card and has a `pointer`: it needs the arcade's
-  system.py and shell that take both.
+  in-game save that lands in the player's save file; a later boot continues it (the main menu first starts the
+  wireless driver, which tests the Wi-Fi registers, powers the radio up and scans three channels: `nds_wifi`). The
+  card names no cartridge tables card and has a `pointer`: it needs the arcade's system.py and shell that take
+  both.
 * **Measured coverage**: per CPU the instructions run, distinct addresses, which instruction cards the code used,
   undefined instructions (counted as they run; code overwritten after it ran is reported apart), BIOS calls
   (modelled or not), every hardware register the game touched that no card models, and what the screens show.
@@ -248,8 +249,10 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   each 2D feature pixel by pixel through the bus; VRAM banks; the save chip, firmware, touch screen, power
   management, clock, sound busy bits, the per-word cartridge DMA; the 3D engine through its command ports
   (position, facing, depth, translation and the matrix stack, a direct-colour texture, packed FIFO commands, the
-  box test, BG0 as the 3D layer); the arcade player (both screens and the gap, buttons and the pen through the
-  bus, the sound rate, the save chip packed and restored, the clock, a refused image); and, when the image is on
+  box test, BG0 as the 3D layer); the Wi-Fi hardware (the baseband's registers, power-up and its interrupt, the
+  microsecond counter and the beacon interrupt, a TX slot completing, the RAM ports); region 4 beyond the
+  registers; the arcade player (both screens and the gap, buttons and the pen through the bus, the sound rate,
+  the save chip packed and restored, the clock, a refused image); and, when the image is on
   the machine (`CARDMODEL_DS_ROM`), Pokemon Diamond's first screens and its title screen's 3D Dialga.
 * **Nothing is decrypted**: an image whose secure area is encrypted is refused.
 

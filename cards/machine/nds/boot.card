@@ -31,6 +31,10 @@ const US_NICK_LEN = card.hardware.nds_spi.firmware.user_settings.nickname_length
 const FW_BYTES = card.hardware.nds_spi.firmware.bytes
 const FW_CONSOLE = card.hardware.nds_spi.firmware.console_type
 const FW_WIFI = card.hardware.nds_spi.firmware.wifi_config_offset
+const FW_RF_TYPE = card.hardware.nds_spi.firmware.wifi.rf_chip_type
+const FW_RF_BITS = card.hardware.nds_spi.firmware.wifi.rf_bits_per_entry
+const FW_RF_ENTRIES = card.hardware.nds_spi.firmware.wifi.rf_entries
+const FW_WIFI_43 = card.hardware.nds_spi.firmware.wifi.byte_43
 const BK_TABLE_LEN = card.hardware.nds_backup.table_length
 const BK_DEFAULT_KIND = card.hardware.nds_backup.default_kind_code
 const BK_DEFAULT_BYTES = card.hardware.nds_backup.default.bytes
@@ -128,6 +132,10 @@ fn fw_build() {
   }
   fw_put16(w + 16, 0x3FFE)
   fw_put16(w + 18, 0xFFFF)
+  firmware[w + 20] = FW_RF_TYPE              -- 0x40: the RF chip, its table's entry size and length
+  firmware[w + 21] = FW_RF_BITS
+  firmware[w + 22] = FW_RF_ENTRIES
+  firmware[w + 23] = FW_WIFI_43
   fw_put16(FW_WIFI, fw_crc(0, w, 0x138))
   fw_user_settings(fw_us_at[0])
   fw_user_settings(fw_us_at[1])

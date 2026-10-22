@@ -684,14 +684,100 @@ class Geometry(Base):
 class Io(Base):
     def test_wireless_addresses_reach_no_register(self):
         """0x04804188 (the Wi-Fi RAM) shares its low bits with IPCFIFOSEND and 0x04804208 with IME: the ARM7
-        clearing the Wi-Fi RAM must not reach the FIFO, nor its loads there read IME. Both are counted."""
+        clearing the Wi-Fi RAM must reach the Wi-Fi RAM, not the FIFO, and its loads there must not read IME.
+        Both go to the wireless card as halfwords and are counted."""
         self.w(0x04000184, 0x8000, 2, cpu=1)               # both FIFOs enabled
         self.w(0x04000184, 0x8000, 2, cpu=0)
         self.w(0x04804188, 0x12345678, 4, cpu=1)
         self.assertEqual(self.r(0x04000184, 2, cpu=0) & 0x100, 0x100, "the ARM9's receive FIFO stays empty")
+        self.assertEqual(self.r(0x04804188, 4, cpu=1), 0x12345678, "the Wi-Fi RAM holds it")
         self.w(0x04000208, 1, 4, cpu=1)
         self.assertEqual(self.r(0x04804208, 4, cpu=1), 0)
-        self.assertEqual(self.ds.m.get("wifi_accesses"), 2)
+        self.assertEqual(self.ds.m.get("wifi_accesses"), 6)
+        self.w(0x05000000, 0x1234, 2, cpu=0)
+        self.assertEqual(self.r(0x04400000, 4, cpu=0), 0, "beyond the registers nothing answers")
+
+
+class Wifi(Base):
+    """The ARM7's wireless hardware (hardware/nds_wifi) through the bus, as a wireless driver programs it."""
+    W = 0x04808000
+
+    def wr(self, o, v):
+        self.w(self.W + o, v, 2, cpu=1)
+
+    def rd(self, o):
+        return self.r(self.W + o, 2, cpu=1)
+
+    def advance(self, us):
+        self.ds.m.call("wifi_advance", (us * 33513982 + 999999) // 1000000)
+
+    def power(self):
+        self.w(0x04000304, 0x0003, 2, cpu=1)               # POWCNT2: sound and Wi-Fi on
+        self.wr(0x036, 0)                                   # W_POWER_US: not held down
+
+    def test_chip_id_and_baseband(self):
+        self.assertEqual(self.rd(0x000), 0x1440)
+        self.wr(0x15A, 0x5A)
+        self.wr(0x158, 0x5001)                              # write baseband register 1
+        self.wr(0x158, 0x6001)                              # read it back
+        self.assertEqual(self.rd(0x15C), 0x5A)
+        self.wr(0x15A, 0x12)
+        self.wr(0x158, 0x5000)                              # register 0 is the chip ID: fixed
+        self.wr(0x158, 0x6000)
+        self.assertEqual(self.rd(0x15C), 0x6D)
+        self.assertEqual((self.rd(0x15E), self.rd(0x180)), (0, 0), "never busy")
+
+    def test_power_up_raises_the_wake_interrupt(self):
+        self.power()
+        self.assertEqual(self.rd(0x03C), 0x0200, "powered down after reset")
+        self.wr(0x012, 1 << 11)                             # W_IE: RF wake-up
+        self.w(0x04000210, 1 << 24, 4, cpu=1)               # the ARM7's IE: Wi-Fi
+        self.wr(0x03C, 2)                                   # request power-up
+        self.advance(1000)
+        self.assertEqual(self.rd(0x010) & (1 << 11), 0, "not awake after 1 ms")
+        self.advance(1100)
+        self.assertEqual((self.rd(0x03C), self.rd(0x010) & (1 << 11)), (0, 1 << 11))
+        self.assertTrue(self.r(0x04000214, 4, cpu=1) & (1 << 24), "the ARM7's Wi-Fi interrupt")
+        self.wr(0x010, 1 << 11)                             # acknowledged
+        self.assertEqual(self.rd(0x010), 0)
+
+    def test_microsecond_counter_and_beacon_interrupt(self):
+        self.power()
+        self.wr(0x0E8, 1)                                   # W_US_COUNTCNT
+        self.advance(500)
+        self.assertAlmostEqual(self.rd(0x0F8) | (self.rd(0x0FA) << 16), 500, delta=2)
+        self.wr(0x0F0, 0x0C00)                              # W_US_COMPARE: 3 x 1024 us
+        self.wr(0x0F2, 0)
+        self.wr(0x0EA, 1)
+        self.wr(0x012, 1 << 14)
+        self.advance(2500)
+        self.assertEqual(self.rd(0x010) & (1 << 14), 0)
+        self.advance(200)
+        self.assertEqual(self.rd(0x010) & (1 << 14), 1 << 14, "the beacon timeslot at the compare")
+
+    def test_a_tx_slot_completes(self):
+        self.power()
+        self.w(0x04804100, 0, 2, cpu=1)                     # the frame's TX header: status
+        self.wr(0x0A0, 0x8000 | (0x100 >> 1))               # W_TXBUF_LOC1: ready, at 0x100
+        self.wr(0x0AE, 1)                                   # W_TXREQ_SET: LOC1
+        self.assertEqual(self.rd(0x010) & (1 << 7), 1 << 7, "TX start")
+        self.advance(250)
+        self.assertEqual(self.rd(0x010) & 2, 2, "TX done")
+        self.assertEqual(self.r(0x04804100, 2, cpu=1), 1, "its status written")
+        self.assertEqual(self.rd(0x0A0) & 0x8000, 0)
+        self.assertEqual(self.rd(0x0B0) & 1, 0)
+
+    def test_ram_ports_and_mirror(self):
+        self.wr(0x068, 0x0200)                              # W_TXBUF_WR_ADDR
+        self.wr(0x070, 0xBEEF)
+        self.wr(0x070, 0xCAFE)
+        self.assertEqual((self.r(0x04804200, 2, cpu=1), self.r(0x04804202, 2, cpu=1)), (0xBEEF, 0xCAFE))
+        self.assertEqual(self.r(0x0480C200, 2, cpu=1), 0xBEEF, "the second window mirrors the first")
+        self.wr(0x050, 0x0200)                              # the RX ring: 0x200-0x204
+        self.wr(0x052, 0x0204)
+        self.wr(0x058, 0x0200)
+        self.assertEqual([self.rd(0x060) for _ in range(3)], [0xBEEF, 0xCAFE, 0xBEEF], "the read port wraps")
+        self.assertEqual(self.r(0x04804200, 2, cpu=0), 0, "the ARM9 has no wireless hardware")
 
 
 class Cartridge(Base):

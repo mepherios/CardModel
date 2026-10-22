@@ -214,6 +214,7 @@ export fn run_frame() {
     switch_cpu(1)
     timer_advance(1, LINE_CYCLES)
     sound_advance(LINE_CYCLES)
+    wifi_advance(LINE_CYCLES)
     gx_line()
   }
   hblank_flag = 0
@@ -265,6 +266,7 @@ export fn power_on() {
   vram_remap()
   pm_reset()
   rtc_power_on()
+  wifi_reset()
   io_file[0x300] = 1
   io_file[0x2300] = 1
   io_file[0x304] = 0x0F

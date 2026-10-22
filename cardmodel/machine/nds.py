@@ -285,8 +285,6 @@ def coverage(ds: DS) -> dict:
             "swi_unmodelled": sorted(k for k in swis if int(k, 16) not in modelled_swi),
             "io_registers_touched": len(regs), "io_unmodelled_touched": unmodelled,
             "unmodelled_hardware_touched": dict(sorted(blocks.items(), key=lambda kv: -kv[1]))}
-        if c == 1 and m.get("wifi_accesses"):              # the wireless hardware is the ARM7's; it has no card
-            out["cpus"][name]["unmodelled_hardware_touched"]["Wi-Fi (0x04800000)"] = m.get("wifi_accesses")
     total_cards = len(cards)
     used_all = set()
     for c in out["cpus"].values():
