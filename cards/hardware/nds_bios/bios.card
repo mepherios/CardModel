@@ -2,11 +2,16 @@
 -- documented behaviour, plus CP15 (the ARM9's system control coprocessor: control, TCM regions, wait for
 -- interrupt) and interrupt entry. The interrupt vector holds our own six/nine-word dispatcher (it saves
 -- R0-R3, R12, LR, calls the handler the game stored at DTCM+0x3FFC / 0x0380FFFC and returns), placed there at
--- power-on as instruction words. Undefined instructions stop that CPU and are counted.
+-- power-on as instruction words. Undefined instructions stop that CPU and are counted. The ARM7's sine, pitch and
+-- volume tables (SWI 0x1A-0x1C) are card data, computed from their definitions (card.json `sound_tables`).
 export array swi_hits: Int[64]            -- per CPU: 32 counters (SWI numbers 0..31)
+array sine_table: Int[64] = card.hardware.nds_bios.sound_tables.sine.values
+array pitch_table: Int[768] = card.hardware.nds_bios.sound_tables.pitch.values
+array volume_table: Int[724] = card.hardware.nds_bios.sound_tables.volume.values
 export global swi_last_unknown: Int = -1
 export array stopped_cpu: Int[2]
 export array stop_pc: Int[2]
+export array undef_cpu: Int[2]            -- undefined instructions each CPU executed (counted as they run)
 
 fn bios_if_addr() -> Int = if cur == 0 then dtcm_base + 0x3FF8 else 0x0380FFF8
 fn intr_wait(discard: Int, mask: Int) {
@@ -199,12 +204,19 @@ fn swi(comment: Int) {
     lz77(regs[0], regs[1], true)
   } elif n == 0x14 or n == 0x15 {
     rl_uncomp(regs[0], regs[1])
+  } elif n == 0x1A {
+    regs[0] = sine_table[regs[0] & 63]
+  } elif n == 0x1B {
+    regs[0] = pitch_table[min(regs[0], 767)]
+  } elif n == 0x1C {
+    regs[0] = volume_table[min(regs[0], 723)]
   } else {
     swi_last_unknown = (cur << 8) | n
   }
 }
 fn undefined_op(op: Int) {
   undef_hits += 1
+  undef_cpu[cur] += 1
   stopped_cpu[cur] = 1
   stop_pc[cur] = pc
 }

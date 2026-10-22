@@ -36,6 +36,10 @@ the ROM survey, differential runs, DS coverage) are in `COVERAGE.md` and come fr
 ./bin/cardmodel machine nds "Pokemon Diamond.nds" --frames 300   # the DS prototype and its coverage
 ```
 
+```bash
+./bin/cardmodel machine nds "Pokemon Diamond.nds" --frames 2400 --input "1500:start,1506:-" --png both.png --shots shots/ --every 120
+```
+
 ROMs are read where they are (zips in memory). No ROM byte is ever copied into the repository; lifted code and
 execution profiles live in the state cache (`state/emu/`, gitignored); saves go to `saves/` (gitignored) or
 `--save-dir`.
@@ -209,19 +213,77 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 * **ISA**: `isa/armv5te`: ARM and Thumb instruction forms with masks, fields, ISA level (`v4t` / `v5te`),
   nominal ARM946E-S cycles, flags as data, semantics and vectors; the decoder tables are generated from them.
   The same cards run the ARM9 (arch 5) and the ARM7 (arch 4), which take turns on the core's registers.
-* **Machine**: `machine/nds` with `nds_memory` (both maps, TCMs via CP15, WRAMCNT), `nds_io` (interrupts,
-  IPC sync and FIFOs, timers, DMA, divider and square root, the cartridge bus serving reads from the image),
-  `nds_bios` (HLE BIOS calls, CP15, our own IRQ dispatcher words at the vector). Direct boot as the firmware
-  leaves it.
-* **What it is for now**: measured coverage. `cardmodel machine nds ROM` reports per CPU the instructions run,
-  distinct addresses, which instruction cards the code used, undecodable instructions, BIOS calls (modelled or
-  not), and every hardware block the game touched that no card models. That list is the work queue.
+* **Machine**: `machine/nds` with `nds_memory` (both maps, TCMs via CP15, WRAMCNT; palettes and OAM drop byte
+  writes), `nds_io` (interrupts, IPC sync and FIFOs, timers, DMA, divider and square root, the cartridge bus
+  serving reads from the image, and the dispatch to the cards below), `nds_bios` (HLE BIOS calls, the ARM7's
+  sine/pitch/volume tables computed from their definitions, CP15, our own IRQ dispatcher words at the vector),
+  and the video and peripherals:
+
+  | card | what it is |
+  |---|---|
+  | `nds_vram` | the nine VRAM banks in one array, placed by VRAMCNT into the LCDC window, engine A/B BG and OBJ, the extended palette, texture and texture palette slots or the ARM7's window; an 8 KiB page table rebuilt at every VRAMCNT write |
+  | `nds_2d` | engines A and B, drawn line by line into two 256x192 screens: display modes, BG modes 0-6 (text, affine, extended map, 256-colour and direct-colour bitmaps, large bitmap), 4/8 bpp, extended palettes, 128 OBJs per engine (tiled 1D/2D, bitmap, affine, double size, semi-transparent, OBJ window), windows, blending, brightness, mosaic on text BGs, master brightness, POWCNT1's screen swap |
+  | `nds_3d` | the 3D engine: a geometry card (GXFIFO packed commands and the command ports, matrix modes and stacks, vertex formats, lighting, triangle/quad lists and strips, facing, clipping in homogeneous space, the viewport, box/position/vector tests, two polygon RAMs swapped at V-blank) and a rendering card (rear plane, Z or W depth test, Gouraud shading, perspective-correct texturing in all seven formats, modulation, decal and toon, translucency and the alpha test); engine A shows the picture as BG0 |
+  | `nds_spi` | the ARM7's SPI bus: power management, a firmware flash made from the card's data (header, Wi-Fi block, user settings with CRC; no console's firmware), the touch screen controller through the firmware's calibration |
+  | `nds_backup` | the save chip on the auxiliary SPI bus: serial flash commands; which chip a game has is data by game code |
+  | `nds_rtc` | the real-time clock on three bit-banged wires: status, date and time in BCD, alarms stored; it runs on machine time from what the host sets |
+  | `nds_wifi` | the ARM7's wireless hardware as far as a game's wireless driver needs it to come up and stay idle: the 16-bit register file (the driver tests it by writing and reading back), the baseband and RF chips' registers, power-up with its wake-up interrupt, the microsecond counter with the beacon, pre- and post-beacon interrupts, the RX/TX ports into the Wi-Fi RAM, TX slots that complete; nothing is ever received |
+  | `nds_sound` | the sixteen channels mixed into stereo samples: PCM8, PCM16 and IMA-ADPCM from memory, PSG square waves and noise, each at its timer's rate, with volume, divider, panning and the master volume; one-shot channels stop and clear their busy bits when their samples run out, looping ones return to their loop start |
+
+  A frame is 263 lines: per line the line events (at line 192 a waiting SWAP_BUFFERS hands the filled polygon RAM
+  to the rendering engine, which draws it for the next frame), the 2D engines draw a visible line from the registers
+  as they are, the CPUs run the drawing part of the line, H-blank (flag, interrupt, H-blank DMA), the rest of the
+  line, then timers, sound and the geometry FIFO interrupt advance. The cartridge bus starts its DMAs again for every ready word,
+  so NitroSDK's 1-word repeating card DMA moves whole blocks.
+* **Direct boot** is a card as well (`machine/nds` boot.card, `load_image`): from the image in `cart` and card data
+  alone it leaves what the BIOS and firmware would: the ARM9 and ARM7 binaries where the header says, the header
+  and the chip ID where the firmware puts them, a firmware flash with its header, Wi-Fi block and two copies of the
+  user settings with their CRCs (`nds_spi`'s data), the user settings in main RAM, and the save chip the game code
+  names (`nds_backup`'s table), erased. An image whose secure area is still encrypted is refused (`boot_refused`).
+  The host and the arcade player both boot through it.
+* **The host** (`machine/nds.py`): `DS(ctx, rom, clock=..., save=...)` copies an image in and boots it (a save chip's bytes and a
+  start time for the clock are inputs; the default clock is fixed so runs repeat), `screens()` returns both
+  screens, `png_screens` stacks them as on the console, `drain_audio()` the sound mixed since the last call,
+  `set_buttons` / `touch` are the inputs, `save_bytes()` the save chip, `machine=` reuses a loaded machine for
+  another image.
+* **Headless** (`cardmodel machine nds ROM`): `--input` holds buttons from a frame on, `--png` saves both screens
+  after the run, `--shots DIR --every K` every K frames, `--wav` the sound; the report says when each screen first
+  showed a picture. Pokemon Diamond draws its copyright and ESRB screens after frame 51, plays its intro (the Game Freak
+  logo, the Pokemon logo, the 3D flight over Sinnoh's towns), shows its title screen with the 3D Dialga and,
+  with START and A, starts a new game (Professor Rowan's introduction); buttons and touch-screen taps reach it.
+* **The arcade player** (`system/nds`, its player.card on the machine card): the DS in Cardmodel Arcade, built like
+  the Game Boy player (`arcade/system.py`). `player_load` is `load_image`; each `player_frame` runs one machine
+  frame and presents both screens as one 256x388 RGBA picture (top, a 4-line gap, bottom); the buttons go to
+  KEYINPUT and EXTKEYIN in the card's bit order and the pointer over the bottom screen (`pointer.area`) to the
+  touch screen controller; the sound runs at the rate that leaves exactly the shell's 1/60 s of samples per
+  machine frame (47,860 Hz for 48 kHz: the console's 59.83 Hz shown at 60); the save chip goes into the save a
+  second after it last changed and at quit; the clock is set from the shell's Unix time plus `player_clock_offset`
+  (0, so UTC, until the shell writes it). Pokemon Diamond runs at 250-320 frames per second natively and plays
+  from a new game (the touch-screen tutorial, naming, the TV report) into its 3D world: walking, the menu, and an
+  in-game save that lands in the player's save file; a later boot continues it (the main menu first starts the
+  wireless driver, which tests the Wi-Fi registers, powers the radio up and scans three channels: `nds_wifi`). The
+  card names no cartridge tables card and has a `pointer`. Its `check_cartridge` (for `arcade check`) is a DS
+  image `nds.check_image` builds, its ARM9 words read off the instruction cards (`asm.arm_word`): it draws on
+  both screens and writes one byte to the save chip.
+* **Measured coverage**: per CPU the instructions run, distinct addresses, which instruction cards the code used,
+  undefined instructions (counted as they run; code overwritten after it ran is reported apart), BIOS calls
+  (modelled or not), every hardware register the game touched that no card models, and what the screens show.
+  That list is the work queue.
 * **The same pipeline for ARM code** (`machine/lift_arm.py`, `cardmodel machine nds ROM --lift`): an ARM card is a
   function of its instruction word, so a block is the cards' IR with constant words: fields fold, register-list
   loops unroll, pure helpers are evaluated at lift time, the condition becomes one flag test, registers live in
   locals. DS code is in RAM and overlays replace it, so a block first checks that its words are still there; it
   leaves after a branch and wherever the interpreter would check for interrupts, halts or a CPSR change. The
   differential run compares both CPUs' registers and every RAM after each frame.
+* **Witnesses** (`tests/test_nds.py`): a synthetic image whose ARM9 code maps banks and draws on both screens;
+  each 2D feature pixel by pixel through the bus; VRAM banks; the save chip, firmware, touch screen, power
+  management, clock, sound busy bits, the per-word cartridge DMA; the 3D engine through its command ports
+  (position, facing, depth, translation and the matrix stack, a direct-colour texture, packed FIFO commands, the
+  box test, BG0 as the 3D layer); the Wi-Fi hardware (the baseband's registers, power-up and its interrupt, the
+  microsecond counter and the beacon interrupt, a TX slot completing, the RAM ports); region 4 beyond the
+  registers; the arcade player (both screens and the gap, buttons and the pen through the bus, the sound rate,
+  the save chip packed and restored, the clock, a refused image); and, when the image is on
+  the machine (`CARDMODEL_DS_ROM`), Pokemon Diamond's first screens and its title screen's 3D Dialga.
 * **Nothing is decrypted**: an image whose secure area is encrypted is refused.
 
 ## 7. Adding things
@@ -252,6 +314,11 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
   interpreter (counted in `interpreted`). The abstract run knows only the constants its own path set (a value
   loaded from memory it did not write is unknown); a table's length is found by its entries, so a table that runs
   into another adds code that may never run (harmless); each run is bounded.
-* DS: no 2D/3D graphics, sound, touch, SPI devices, RTC or Wi-Fi yet; no wait states; flat VRAM. ARM lifting
-  covers ARM-state ARM9 code only; its word guards read through the bus, so it saves the decode but not the
-  fetches (little speed-up for RAM-resident code).
+* DS: no display capture or main-memory display FIFO; the Wi-Fi hardware answers a game's driver but
+  nothing is ever received; sound is mixed without interpolation and the capture
+  units write no memory; 3D has no edge marking, fog,
+  anti-aliasing, shadow polygons, rear-plane bitmap or Y-sorting of translucent polygons; no wait states (a nominal
+  instructions-per-line budget); a 2D line is drawn from the registers as they are when it starts; two VRAM
+  banks on one page do not OR together; the save chip is serial flash only. ARM lifting covers ARM-state ARM9
+  code only (Thumb and the ARM7 stay interpreted); its word guards read through the bus, so it saves the decode
+  but not the fetches (little speed-up for RAM-resident code).

@@ -1,11 +1,18 @@
 -- The Nintendo DS (a prototype): two CPUs on one set of ARM instruction cards - the ARM9 at arch 5 and the ARM7
 -- at arch 4 - taking turns on the core's registers (each CPU's registers are saved and restored at a switch),
--- with the memory maps, I/O and HLE BIOS cards. A frame is 263 lines; per line the ARM9 runs ARM9_SLICE
--- instructions and the ARM7 ARM7_SLICE (a nominal 2 and 1 instructions per bus-cycle pair: no wait states),
--- (taking turns every chunk9 / chunk7 instructions, so a handshake between them sees the other side), then
--- H-blank, timers, and at line 192 V-blank. Direct boot: the host loads both binaries and the header.
+-- with the memory maps, I/O, HLE BIOS, video and peripheral cards. A frame is 263 lines of 2130 bus cycles. Per
+-- line: the line events (VCOUNT, V-blank at 192), the 2D engines draw a visible line from the registers as they
+-- are, the CPUs run the drawing part of the line (ARM9_HDRAW / ARM7_HDRAW instructions: a nominal 1 and 0.5
+-- instructions per bus cycle, no wait states, taking turns every chunk9 / chunk7 instructions so a handshake
+-- between them sees the other side), H-blank begins (flag, interrupt, H-blank DMA on visible lines), the CPUs run
+-- the rest of the line, and the timers, sound channels and geometry FIFO advance. The clock advances per frame.
+-- Direct boot: the host loads both binaries, the header, the firmware image and the save chip's contents.
 const ARM9_SLICE = 2130
 const ARM7_SLICE = 1065
+const ARM9_HDRAW = 1536
+const ARM7_HDRAW = 768
+const LINE_CYCLES = 2130
+const FRAME_LINES = 263
 export global chunk9: Int = 64            -- the CPUs alternate this finely inside a line (handshakes need it)
 export global chunk7: Int = 32
 array ctx_r: Int[32]
@@ -145,6 +152,10 @@ fn run_cpu(c: Int, n: Int) {
 }
 fn line_events(line: Int) {
   vcount = line
+  hblank_flag = 0
+  if line == 192 {
+    gx_vblank()
+  }
   for c in 0 .. 2 {
     let lyc = (dispstat[c] >> 8) | ((dispstat[c] & 0x80) << 1)
     if (dispstat[c] & 0x20) != 0 and lyc == line {
@@ -157,32 +168,57 @@ fn line_events(line: Int) {
       dma_event(c, if c == 0 then 1 else 2)
     }
   }
+  if line == 0 {
+    dma_event(0, 3)
+  }
+}
+fn hblank_events(line: Int) {
+  hblank_flag = 1
+  for c in 0 .. 2 {
+    if (dispstat[c] & 0x10) != 0 {
+      request(c, IRQ_HBLANK)
+    }
+  }
+  if line < 192 {
+    dma_event(0, 2)
+  }
+}
+-- both CPUs for n9 / n7 instructions, alternating in chunks
+fn run_both(n9: Int, n7: Int) {
+  var done9 = 0
+  var done7 = 0
+  while done9 < n9 or done7 < n7 {
+    if done9 < n9 {
+      let k = min(chunk9, n9 - done9)
+      run_cpu(0, k)
+      done9 += k
+    }
+    if done7 < n7 {
+      let k = min(chunk7, n7 - done7)
+      run_cpu(1, k)
+      done7 += k
+    }
+  }
 }
 export fn run_frame() {
-  for line in 0 .. 263 {
+  for line in 0 .. FRAME_LINES {
     line_events(line)
-    var done9 = 0
-    var done7 = 0
-    while done9 < ARM9_SLICE or done7 < ARM7_SLICE {
-      if done9 < ARM9_SLICE {
-        run_cpu(0, chunk9)
-        done9 += chunk9
-      }
-      if done7 < ARM7_SLICE {
-        run_cpu(1, chunk7)
-        done7 += chunk7
-      }
+    if line < 192 {
+      render_line(line)
     }
-    for c in 0 .. 2 {
-      if (dispstat[c] & 0x10) != 0 {
-        request(c, IRQ_HBLANK)
-      }
-    }
+    run_both(ARM9_HDRAW, ARM7_HDRAW)
+    hblank_events(line)
+    run_both(ARM9_SLICE - ARM9_HDRAW, ARM7_SLICE - ARM7_HDRAW)
     switch_cpu(0)
-    timer_advance(0, 2130)
+    timer_advance(0, LINE_CYCLES)
     switch_cpu(1)
-    timer_advance(1, 2130)
+    timer_advance(1, LINE_CYCLES)
+    sound_advance(LINE_CYCLES)
+    wifi_advance(LINE_CYCLES)
+    gx_line()
   }
+  hblank_flag = 0
+  rtc_advance(LINE_CYCLES * FRAME_LINES)
   frames += 1
 }
 -- direct boot: what the BIOS and firmware leave behind before jumping to the game (registers per mode)
@@ -226,6 +262,15 @@ export fn power_on() {
     executed[c] = 0
   }
   bios_install()
+  gx_power_on()
+  vram_remap()
+  pm_reset()
+  rtc_power_on()
+  wifi_reset()
+  io_file[0x300] = 1
+  io_file[0x2300] = 1
+  io_file[0x304] = 0x0F
+  io_file[0x305] = 0x82
   boot_cpu(1, entry7, 0x0380FD80, 0x0380FF80, 0x0380FFC0, 4)
   boot_cpu(0, entry9, 0x03002F7C, 0x03003F80, 0x03003FC0, 5)
   load_cpu(0)
@@ -240,4 +285,26 @@ export fn dbg_rd8(a: Int) -> Int {
 -- one instruction on the CPU now loaded (debugging)
 export fn step_cpu() {
   cpu_step()
+}
+-- a load or store as CPU c would make it (width 1, 2 or 4 bytes; I/O side effects included): tests drive the
+-- hardware cards through these exactly as the CPUs' instructions do
+export fn bus_write(c: Int, a: Int, v: Int, width: Int) {
+  switch_cpu(c)
+  if width == 1 {
+    wr8(a, v & 0xFF)
+  } elif width == 2 {
+    wr16(a, v & 0xFFFF)
+  } else {
+    wr32(a, v & MASK32)
+  }
+}
+export fn bus_read(c: Int, a: Int, width: Int) -> Int {
+  switch_cpu(c)
+  if width == 1 {
+    return rd8(a)
+  }
+  if width == 2 {
+    return rd16(a)
+  }
+  return rd32(a)
 }

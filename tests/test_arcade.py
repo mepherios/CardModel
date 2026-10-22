@@ -252,15 +252,16 @@ class Depot(unittest.TestCase):
         rep = client.check_catalog(self.ctx, frames=60)
         self.assertEqual(rep["status"], "pass", json.dumps(rep, default=str)[:3000])
         players = [S.arcade_id(c) for c in self.ctx.store.cards("system") if c.get("machine") and c.get("logic")]
-        self.assertEqual(players, ["gameboy_player"])
+        self.assertEqual(players, ["gameboy_player", "nds_player"])
         self.assertEqual(sorted(rep["items"]), sorted([c.name for c in self.ctx.store.cards("game")] + players))
         self.assertEqual(sorted(rep["items"]), sorted(rep["catalog"]), "the release catalogue lists exactly these")
         for gid, r in rep["items"].items():
             self.assertTrue(r["repair"]["seen"], gid)
             self.assertLess(r["repair"]["fetched"], r["install"]["size"], f"{gid}: repair fetched only the damage")
             self.assertGreater(r["play"]["picture"]["colours_sampled"], 1, gid)
-        gbp = rep["items"]["gameboy_player"]["play"]
-        self.assertTrue(gbp["same_as_cards"] and gbp["save_kept"], gbp)
+        for player in players:                  # each on its check cartridge: the cards' picture, the card's byte saved
+            pl = rep["items"][player]["play"]
+            self.assertTrue(pl["same_as_cards"] and pl["save_kept"], (player, pl))
         self.assertEqual(rep["cartridges"]["listed"], 0, "the tests' own library is empty (tests/helpers.py)")
         self.assertTrue(rep["pages"]["ok"], rep["pages"])
         self.assertIn("/api/library", rep["pages"]["api"])

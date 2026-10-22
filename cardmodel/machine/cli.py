@@ -10,8 +10,12 @@
   cardmodel machine diff ROM [--frames N] [--model M]   lifted vs interpreter, frame by frame (state hashes)
   cardmodel machine info ROM                    the cartridge header, decoded with the cartridge card
   cardmodel machine testroms DIR                run test ROMs, read their verdicts (serial / screen / registers)
-  cardmodel machine nds ROM [--frames N] [--lift]   the DS prototype: direct boot, both CPUs, measured coverage;
-                                                --lift also lifts the ARM9's ARM code and runs a differential
+  cardmodel machine nds ROM [--frames N] [--lift] [--input SCRIPT] [--png F] [--wav F] [--shots DIR --every K]
+                                                [--scale S]   the DS prototype: direct boot, both CPUs, both
+                                                screens and the sound, measured coverage; --png saves both
+                                                screens (top above bottom) after the run, --shots every K frames,
+                                                --wav the sound; --lift also lifts the ARM9's ARM code and runs a
+                                                differential
 """
 from __future__ import annotations
 
@@ -151,12 +155,37 @@ def cmd_machine(args) -> int:
         rom = nds.open_nds(args.target)
         try:
             ds = nds.DS(ctx, rom, engine=args.engine)
+            script = nds.parse_input(args.input, ctx.store)
         except ValueError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
-        secs = ds.run(args.frames)
+        shots = Path(args.shots).expanduser() if args.shots else None
+        saved = []
+
+        def shot(frame, rgb):
+            shots.mkdir(parents=True, exist_ok=True)
+            f = shots / f"frame-{frame:05d}.png"
+            f.write_bytes(nds.png_screens(rgb, scale=args.scale, gap=4 * args.scale))
+            saved.append(str(f))
+
+        pcm = bytearray() if args.wav else None
+        secs = ds.run(args.frames, script=script, every=args.every if shots else 0, shot=shot if shots else None,
+                      watch=True, pcm=pcm)
         cov = nds.coverage(ds)
         cov["seconds"] = round(secs, 2)
+        cov["first_drawn"] = dict(ds.first_drawn)
+        if args.png:
+            Path(args.png).expanduser().write_bytes(nds.png_screens(ds.screens(), scale=args.scale,
+                                                                    gap=4 * args.scale))
+            cov["png"] = str(Path(args.png).expanduser())
+        if saved:
+            cov["shots"] = saved
+        if pcm is not None:
+            Path(args.wav).expanduser().write_bytes(G.wav(bytes(pcm), ds.m.get("snd_rate")))
+            peak = max((abs(int.from_bytes(pcm[i:i + 2], "little", signed=True)) for i in range(0, len(pcm), 2)),
+                       default=0)
+            cov["sound"] = {"wav": str(Path(args.wav).expanduser()), "seconds": round(len(pcm) / 4 / ds.m.get("snd_rate"), 2),
+                            "peak": peak}
         if args.lift:
             from . import lift_arm
             cov["lifted_differential"] = lift_arm.differential(ctx, rom, args.frames, args.frames)
@@ -170,6 +199,18 @@ def cmd_machine(args) -> int:
                          f"{c['pc']} ({c['state']}, mode {c['mode']}, {why})")
             lines.append(f"     BIOS calls {c['swi_calls']} (not modelled: {c['swi_unmodelled'] or 'none'})")
             lines.append(f"     touched but not modelled: {c['unmodelled_hardware_touched'] or 'nothing'}")
+        for name in ("top", "bottom"):
+            st = cov["screens"][name]
+            first = cov["first_drawn"].get(name)
+            lines.append(f"  {name} screen: {'blank' if st['blank'] else str(st['colours']) + ' colours'} now; "
+                         + (f"first picture after frame {first}" if first else "never drawn"))
+        if cov.get("png"):
+            lines.append(f"  screens saved to {cov['png']}")
+        if cov.get("sound"):
+            snd = cov["sound"]
+            lines.append(f"  sound: {snd['seconds']} s saved to {snd['wav']} (peak {snd['peak']} of 32767)")
+        if saved:
+            lines.append(f"  {len(saved)} screenshots in {shots}")
         if "lifted_differential" in cov:
             d = cov["lifted_differential"]
             lines.append(f"  lifted ARM9 code: {d['blocks']} blocks ({d['instructions_lifted']} instructions); "
@@ -213,6 +254,12 @@ def register(sub) -> None:
     s.add_argument("--frames", type=int, default=1200); s.add_argument("--engine", default="native")
     s.add_argument("--limit", type=int); s.add_argument("--shots"); s.add_argument("--relift", action="store_true")
     s.add_argument("--lift", action="store_true", help="nds: also lift the ARM9's code and run a differential")
+    s.add_argument("--input", help="nds: input script, e.g. '1500:start,1506:-' (buttons a b x y l r start select "
+                                   "and the d-pad)")
+    s.add_argument("--png", help="nds: save both screens (top above bottom) after the run")
+    s.add_argument("--wav", help="nds: save the sound of the run")
+    s.add_argument("--every", type=int, default=60, help="nds: with --shots, a screenshot every N frames")
+    s.add_argument("--scale", type=int, default=1, help="nds: pixel scale of the PNGs")
     s.add_argument("--model", default="auto", choices=["auto", "dmg", "cgb"],
                    help="survey/diff: the console (cgb runs DMG cartridges in DMG compatibility mode)")
     s.set_defaults(fn=cmd_machine)

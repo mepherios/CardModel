@@ -16,7 +16,7 @@
     "arm9_overlay_offset": {"offset": 80, "size": 4}, "arm9_overlay_size": {"offset": 84, "size": 4},
     "arm7_overlay_offset": {"offset": 88, "size": 4}, "arm7_overlay_size": {"offset": 92, "size": 4},
     "icon_offset": {"offset": 104, "size": 4}, "rom_used": {"offset": 128, "size": 4}, "header_size": {"offset": 132, "size": 4}},
-  "secure_area": {"offset": 16384, "size": 2048, "decrypted_marker": "E7FFDEFF"},
+  "secure_area": {"offset": 16384, "size": 2048, "decrypted_marker": "E7FFDEFF", "decrypted_word": 3892305663},
   "boot_info": {"chip_id": 8130, "header_copy_bytes": 368},
   "sources": ["GBATEK (DS cartridge header)"],
   "provenance": {"origin": "cardmodel"},

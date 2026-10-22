@@ -179,11 +179,17 @@ def check_cartridge(ctx, name: str) -> dict | None:
     if not c:
         return None
     isa = c.get("isa", "lr35902")
-    items = [tuple(_num(x) for x in it) for it in c["program"]]
-    extra = {int(a, 16): asm.assemble(ctx.store, [tuple(_num(x) for x in it) for it in prog], org=int(a, 16), isa=isa)
-             for a, prog in (c.get("at") or {}).items()}
-    data = asm.rom(ctx.store, items, title=c.get("title", "CARDCHECK"), cart_type=_num(c.get("cart_type", "0x00")),
-                   ram_size_code=int(c.get("ram_size_code", 0)), extra=extra)
+    if isa == "armv5te":                     # a DS image: its ARM9 does the card's stores, then idles
+        from ..machine import nds
+        data = nds.check_image(ctx.store, [tuple(_num(x) for x in it) for it in c["stores"]],
+                               title=c.get("title", "CARDCHECK"), code=c.get("game_code", "CMCK"))
+    else:
+        items = [tuple(_num(x) for x in it) for it in c["program"]]
+        extra = {int(a, 16): asm.assemble(ctx.store, [tuple(_num(x) for x in it) for it in prog], org=int(a, 16),
+                                          isa=isa)
+                 for a, prog in (c.get("at") or {}).items()}
+        data = asm.rom(ctx.store, items, title=c.get("title", "CARDCHECK"), cart_type=_num(c.get("cart_type", "0x00")),
+                       ram_size_code=int(c.get("ram_size_code", 0)), extra=extra)
     save = c.get("save") or {}
     return {"file": c.get("file", "check.gb"), "bytes": data,
             "save": {"offset": _num(save["offset"]), "byte": _num(save["byte"])} if save else None}

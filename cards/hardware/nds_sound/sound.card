@@ -1,0 +1,245 @@
+-- Sound as the ARM7 sets it and the speakers play it. The channel registers are the ARM7's latched I/O bytes (io_file
+-- at 0x2000 + offset). Starting a channel (SOUNDxCNT bit 31 going from 0 to 1) puts it before its first sample;
+-- it steps one sample every (0x10000 - TMR) * 2 bus cycles: PCM8 and PCM16 read memory, IMA-ADPCM decodes the next
+-- nibble after its header word, PSG (channels 8-13) steps an 8-step square wave and noise (14-15) a 15-bit LFSR.
+-- Past its last sample a looping channel goes back to its loop start (ADPCM with the state it had there the first
+-- time) and a one-shot channel stops, clearing its busy bit. snd_rate times a second the mixer sums the playing
+-- channels (volume, divider, panning) into a stereo sample, applies SOUNDCNT's enable and master volume with a
+-- quarter of headroom, and appends it to `audio` (signed 16-bit little-endian, left then right; the host drains
+-- audio_n bytes). A one-shot capture (SNDCAPxCNT bit 2) stops when its LEN words would be full, at the rate of the
+-- channel it follows (1 for capture 0, 3 for capture 1); captures write no memory.
+const SND_TICK = card.hardware.nds_sound.cycles_per_sample_tick
+const SND_BUS_HZ = card.hardware.nds_sound.bus_hz
+const SND_RATE = card.hardware.nds_sound.sample_rate
+const SND_AUDIO = 16384
+array adpcm_step: Int[89] = card.hardware.nds_sound.adpcm.step_table
+array adpcm_move: Int[8] = card.hardware.nds_sound.adpcm.index_table
+export global snd_rate: Int = SND_RATE
+export array audio: Byte[16384]
+export global audio_n: Int = 0
+global snd_acc: Int = 0
+array ch_on: Int[16]
+array ch_pos: Int[16]             -- the sample now playing (PSG: the step, noise: the LFSR)
+array ch_time: Int[16]            -- 1/256 bus cycles until the next step
+array ch_val: Int[16]             -- the sample now playing, 16 bits
+array ch_adv: Int[16]             -- ADPCM: the decoder's value and step index, and both at the loop start
+array ch_adi: Int[16]
+array ch_alv: Int[16]
+array ch_ali: Int[16]
+array ch_alset: Int[16]
+array cap_left: Int[2]
+
+fn snd_reg(o: Int) -> Int = io_file[0x2000 + o] | (io_file[0x2000 + o + 1] << 8)
+fn snd_cnt(ch: Int) -> Int = snd_reg(0x400 + ch * 16) | (snd_reg(0x402 + ch * 16) << 16)
+fn snd_sad(ch: Int) -> Int = (snd_reg(0x404 + ch * 16) | (snd_reg(0x406 + ch * 16) << 16)) & 0x7FFFFFC
+fn snd_period(ch: Int) -> Int = (0x10000 - snd_reg(0x408 + ch * 16)) * SND_TICK
+fn snd_pnt(ch: Int) -> Int = snd_reg(0x40A + ch * 16)
+fn snd_len(ch: Int) -> Int = snd_reg(0x40C + ch * 16) | ((io_file[0x2000 + 0x40E + ch * 16] & 0x3F) << 16)
+-- a byte of sample memory as the ARM7 sees it: main RAM, shared WRAM (by WRAMCNT) or its own WRAM
+fn snd_mem8(a: Int) -> Int {
+  let r = (a >> 24) & 0xFF
+  if r == 2 {
+    return mram[a & MAIN_MASK]
+  }
+  if r == 3 {
+    let m = wramcnt & 3
+    if a >= 0x03800000 or m == 0 {
+      return wram7[a & 0xFFFF]
+    }
+    if m == 1 {
+      return swram[a & 0x3FFF]
+    }
+    if m == 2 {
+      return swram[0x4000 | (a & 0x3FFF)]
+    }
+    return swram[a & 0x7FFF]
+  }
+  return 0
+}
+fn snd_s16(a: Int) -> Int {
+  let v = snd_mem8(a) | (snd_mem8(a + 1) << 8)
+  return if v >= 0x8000 then v - 0x10000 else v
+}
+fn adpcm_nibble(ch: Int, n: Int) {
+  let st = adpcm_step[ch_adi[ch]]
+  var d = st >> 3
+  if (n & 1) != 0 {
+    d += st >> 2
+  }
+  if (n & 2) != 0 {
+    d += st >> 1
+  }
+  if (n & 4) != 0 {
+    d += st
+  }
+  if (n & 8) != 0 {
+    ch_adv[ch] = max(-0x7FFF, ch_adv[ch] - d)
+  } else {
+    ch_adv[ch] = min(0x7FFF, ch_adv[ch] + d)
+  }
+  ch_adi[ch] = max(0, min(88, ch_adi[ch] + adpcm_move[n & 7]))
+}
+fn snd_start(ch: Int) {
+  ch_on[ch] = 1
+  ch_pos[ch] = -1
+  ch_val[ch] = 0
+  ch_alset[ch] = 0
+  ch_time[ch] = snd_period(ch) << 8
+  let fmt = (snd_cnt(ch) >> 29) & 3
+  if fmt == 2 {
+    let a = snd_sad(ch)
+    ch_adv[ch] = snd_s16(a)
+    ch_adi[ch] = min(88, snd_mem8(a + 2) & 0x7F)
+    ch_val[ch] = ch_adv[ch]
+  } elif fmt == 3 {
+    ch_pos[ch] = if ch >= 14 then 0x7FFF else 0
+  }
+}
+fn snd_stop(ch: Int) {
+  ch_on[ch] = 0
+  ch_val[ch] = 0
+  let a = 0x2000 + 0x403 + ch * 16
+  io_file[a] = io_file[a] & 0x7F
+}
+-- the next sample of channel ch
+fn snd_step(ch: Int) {
+  let cnt = snd_cnt(ch)
+  let fmt = (cnt >> 29) & 3
+  if fmt == 3 {
+    if ch >= 14 {
+      let x = ch_pos[ch]
+      if (x & 1) != 0 {
+        ch_pos[ch] = (x >> 1) ^ 0x6000
+        ch_val[ch] = -0x7FFF
+      } else {
+        ch_pos[ch] = x >> 1
+        ch_val[ch] = 0x7FFF
+      }
+    } elif ch >= 8 {
+      let s = (ch_pos[ch] + 1) & 7
+      let duty = (cnt >> 24) & 7
+      ch_pos[ch] = s
+      ch_val[ch] = if duty != 7 and s <= duty then 0x7FFF else -0x7FFF
+    }
+    return
+  }
+  let spw = if fmt == 0 then 4 else (if fmt == 1 then 2 else 8)
+  let hdr = if fmt == 2 then 1 else 0
+  let total = max(0, snd_pnt(ch) + snd_len(ch) - hdr) * spw
+  let loop_at = max(0, snd_pnt(ch) - hdr) * spw
+  var p = ch_pos[ch] + 1
+  if p >= total {
+    if ((cnt >> 27) & 3) == 2 or total == 0 {
+      snd_stop(ch)
+      return
+    }
+    p = loop_at
+    if fmt == 2 and ch_alset[ch] != 0 {
+      ch_adv[ch] = ch_alv[ch]
+      ch_adi[ch] = ch_ali[ch]
+    }
+  }
+  ch_pos[ch] = p
+  let a = snd_sad(ch)
+  if fmt == 0 {
+    let b = snd_mem8(a + p)
+    ch_val[ch] = (if b >= 0x80 then b - 0x100 else b) << 8
+  } elif fmt == 1 {
+    ch_val[ch] = snd_s16(a + p * 2)
+  } else {
+    if p == loop_at and ch_alset[ch] == 0 {
+      ch_alv[ch] = ch_adv[ch]
+      ch_ali[ch] = ch_adi[ch]
+      ch_alset[ch] = 1
+    }
+    let b = snd_mem8(a + 4 + (p >> 1))
+    adpcm_nibble(ch, if (p & 1) != 0 then b >> 4 else b & 15)
+    ch_val[ch] = ch_adv[ch]
+  }
+}
+-- one output sample: every playing channel moves on by 1/snd_rate s and is mixed in
+fn snd_sample() {
+  var l = 0
+  var r = 0
+  let adv = (SND_BUS_HZ << 8) // max(1, snd_rate)
+  for ch in 0 .. 16 {
+    if ch_on[ch] != 0 {
+      let per = max(64, snd_period(ch)) << 8
+      var t = ch_time[ch] - adv
+      var guard = 0
+      while t <= 0 and guard < 64 and ch_on[ch] != 0 {
+        snd_step(ch)
+        t += per
+        guard += 1
+      }
+      ch_time[ch] = if t <= 0 then per else t
+      if ch_on[ch] != 0 {
+        let cnt = snd_cnt(ch)
+        let dv = (cnt >> 8) & 3
+        let v = (ch_val[ch] * (cnt & 127)) >> (7 + (if dv == 3 then 4 else dv))
+        let pan = (cnt >> 16) & 127
+        l += (v * (127 - pan)) >> 7
+        r += (v * pan) >> 7
+      }
+    }
+  }
+  let sc = snd_reg(0x500)
+  if (sc & 0x8000) == 0 {
+    l = 0
+    r = 0
+  }
+  let mv = sc & 127
+  l = max(-32768, min(32767, (l * mv) >> 9))
+  r = max(-32768, min(32767, (r * mv) >> 9))
+  if audio_n + 4 <= SND_AUDIO {
+    audio[audio_n] = l & 0xFF
+    audio[audio_n + 1] = (l >> 8) & 0xFF
+    audio[audio_n + 2] = r & 0xFF
+    audio[audio_n + 3] = (r >> 8) & 0xFF
+    audio_n += 4
+  }
+}
+fn capture_start(k: Int, v: Int, was: Int) {
+  if (v & 0x80) == 0 or (v & 4) == 0 {
+    cap_left[k] = if (v & 0x80) != 0 then -1 else 0
+    return
+  }
+  if (was & 0x80) != 0 {
+    return
+  }
+  let words = snd_reg(0x514 + k * 8)
+  let samples = if (v & 8) != 0 then words * 4 else words * 2
+  cap_left[k] = max(1, samples * snd_period(1 + k * 2))
+}
+-- an ARM7 byte write into the sound block (after it was latched); was = the byte before
+fn sound_written(o: Int, v: Int, was: Int) {
+  if o < 0x500 and (o & 15) == 3 {
+    let ch = (o - 0x400) >> 4
+    if (v & 0x80) == 0 {
+      ch_on[ch] = 0
+    } elif (was & 0x80) == 0 {
+      snd_start(ch)
+    }
+  } elif o == 0x508 or o == 0x509 {
+    capture_start(o - 0x508, v, was)
+  }
+}
+fn sound_advance(cycles: Int) {
+  for k in 0 .. 2 {
+    let left = cap_left[k]
+    if left > 0 {
+      if left <= cycles {
+        cap_left[k] = 0
+        let a = 0x2000 + 0x508 + k
+        io_file[a] = io_file[a] & 0x7F
+      } else {
+        cap_left[k] = left - cycles
+      }
+    }
+  }
+  snd_acc += cycles * snd_rate
+  while snd_acc >= SND_BUS_HZ {
+    snd_acc -= SND_BUS_HZ
+    snd_sample()
+  }
+}

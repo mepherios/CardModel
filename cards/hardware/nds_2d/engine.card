@@ -1,0 +1,669 @@
+-- The DS's 2D engines A (e = 0, registers at 0x04000000) and B (e = 1, at 0x04001000), drawn one line at a time
+-- from the registers as the ARM9 left them (the latched I/O bytes), the palettes, OAM and the VRAM spaces the
+-- bank page table maps. Per line and engine: each enabled background into bgl (15-bit colour, -1 transparent),
+-- the OBJs into objc/objp/objm (colour, priority, semi-transparent or bitmap alpha) and objw (OBJ window),
+-- the windows into winm (the layer and effect bits each pixel may use), then the two front layers are found
+-- by priority (an OBJ is in front of a background of the same priority, a lower BG number in front of a higher)
+-- and blended (alpha, brightness up/down, semi-transparent OBJs), and master brightness turns the line into
+-- RGB888 on the screen POWCNT1 bit 15 sends it to. Affine backgrounds keep internal reference points that
+-- start each frame from BGxX/BGxY (and at every write to them) and step by PB/PD per line.
+const SCREEN_BYTES = 147456       -- 256 x 192 x 3
+const K_OFF = -1
+const K_TEXT = 0
+const K_AFFINE = 1
+const K_EXT_MAP = 2
+const K_BITMAP8 = 3
+const K_DIRECT = 4
+const K_LARGE = 5
+const K_3D = 6
+export array screen: Byte[294912]
+export global lines_drawn: Int = 0
+array bgl: Int[1024]
+array objc: Int[256]
+array objp: Int[256]
+array objm: Int[256]
+array objw: Int[256]
+array winm: Int[256]
+array lout: Int[256]
+array a3d: Int[256]                -- the 3D layer's alpha per pixel of the line (BG0 in 3D mode)
+array affx: Int[4]
+array affy: Int[4]
+array layer_kind: Int[4]
+array bgord: Int[4]
+array bgordp: Int[4]
+array obj_wt: Int[16] = [8, 16, 32, 64, 16, 32, 32, 64, 8, 8, 16, 32, 8, 8, 8, 8]
+array obj_ht: Int[16] = [8, 16, 32, 64, 8, 8, 16, 32, 16, 32, 32, 64, 8, 8, 8, 8]
+
+-- the ARM9's latched I/O bytes (the 2D registers are write-latched there)
+fn g8(o: Int) -> Int = io_file[o]
+fn g16(o: Int) -> Int = io_file[o] | (io_file[o + 1] << 8)
+fn g32(o: Int) -> Int = g16(o) | (g16(o + 2) << 16)
+fn gs16(v: Int) -> Int = if v >= 0x8000 then v - 0x10000 else v
+fn gs28(v: Int) -> Int = if (v & 0x8000000) != 0 then (v & 0x7FFFFFF) - 0x8000000 else v & 0x7FFFFFF
+fn pal16(a: Int) -> Int = (pal[a] | (pal[a + 1] << 8)) & 0x7FFF
+fn oam16(a: Int) -> Int = oam[a] | (oam[a + 1] << 8)
+fn bg_seg(e: Int) -> Int = if e == 0 then SEG_ABG else SEG_BBG
+fn bg_pm(e: Int) -> Int = if e == 0 then 63 else 15
+fn obj_seg(e: Int) -> Int = if e == 0 then SEG_AOBJ else SEG_BOBJ
+fn obj_pm(e: Int) -> Int = if e == 0 then 31 else 15
+fn ext_bg_color(e: Int, slot: Int, idx: Int) -> Int =
+  vspace16(if e == 0 then SEG_ABGX else SEG_BBGX, 3, (slot << 13) + (idx << 1)) & 0x7FFF
+fn ext_obj_color(e: Int, idx: Int) -> Int = vspace16(if e == 0 then SEG_AOBJX else SEG_BOBJX, 0, idx << 1) & 0x7FFF
+
+-- affine reference points: reloaded from BGxX/BGxY (k = 0 for BG2, 1 for BG3), stepped by PB/PD per line
+fn aff_reload(e: Int, k: Int) {
+  let r = (e << 12) + 0x28 + k * 0x10
+  affx[e * 2 + k] = gs28(g32(r))
+  affy[e * 2 + k] = gs28(g32(r + 4))
+}
+fn aff_advance(e: Int) {
+  for k in 0 .. 2 {
+    let r = (e << 12) + 0x20 + k * 0x10
+    affx[e * 2 + k] += gs16(g16(r + 2))
+    affy[e * 2 + k] += gs16(g16(r + 6))
+  }
+}
+-- the ARM9 wrote I/O byte o: a write to BG2X/BG2Y/BG3X/BG3Y sets that internal reference point at once
+fn gpu_io_written(o: Int) {
+  let r = o & 0xFFF
+  if (o < 0x70 or (o >= 0x1000 and o < 0x1070)) and r >= 0x28 and r < 0x40 and (r & 0xF) >= 8 {
+    aff_reload(o >> 12, (r - 0x28) >> 4)
+  }
+}
+
+fn ext_kind(cnt: Int) -> Int {
+  if (cnt & 0x80) == 0 {
+    return K_EXT_MAP
+  }
+  return if (cnt & 4) == 0 then K_BITMAP8 else K_DIRECT
+}
+-- what kind of background BGn is in this BG mode
+fn bg_kind(e: Int, n: Int, mode: Int, dc: Int) -> Int {
+  let cnt = g16((e << 12) + 8 + n * 2)
+  if n == 0 {
+    return if e == 0 and (dc & 8) != 0 then K_3D else K_TEXT
+  }
+  if n == 1 {
+    return if mode == 6 then K_OFF else K_TEXT
+  }
+  if n == 2 {
+    if mode <= 1 or mode == 3 {
+      return K_TEXT
+    }
+    if mode == 2 or mode == 4 {
+      return K_AFFINE
+    }
+    if mode == 5 {
+      return ext_kind(cnt)
+    }
+    if mode == 6 and e == 0 {
+      return K_LARGE
+    }
+    return K_OFF
+  }
+  if mode == 0 {
+    return K_TEXT
+  }
+  if mode == 1 or mode == 2 {
+    return K_AFFINE
+  }
+  if mode >= 3 and mode <= 5 {
+    return ext_kind(cnt)
+  }
+  return K_OFF
+}
+
+-- a text background: 32x32-tile screen blocks of 16-bit entries (tile, flips, palette), 4 or 8 bits per pixel
+fn bg_text(e: Int, n: Int, y: Int, dc: Int) {
+  let b = e << 12
+  let cnt = g16(b + 8 + n * 2)
+  let hofs = g16(b + 0x10 + n * 4) & 0x1FF
+  let vofs = g16(b + 0x12 + n * 4) & 0x1FF
+  let size = (cnt >> 14) & 3
+  let wmask = if (size & 1) != 0 then 511 else 255
+  let hmask = if (size & 2) != 0 then 511 else 255
+  var cbase = ((cnt >> 2) & 15) << 14
+  var sbase = ((cnt >> 8) & 31) << 11
+  if e == 0 {
+    cbase += ((dc >> 24) & 7) << 16
+    sbase += ((dc >> 27) & 7) << 16
+  }
+  let bpp8 = (cnt & 0x80) != 0
+  var mh = 1
+  var yy = y
+  if (cnt & 0x40) != 0 {
+    let mos = g16(b + 0x4C)
+    mh = (mos & 15) + 1
+    let mv = ((mos >> 4) & 15) + 1
+    yy = y - (y % mv)
+  }
+  yy = (yy + vofs) & hmask
+  var row = sbase + ((yy & 255) >> 3) * 64
+  if yy >= 256 {
+    row += if wmask == 511 then 0x1000 else 0x800
+  }
+  let extp = bpp8 and (dc & 0x40000000) != 0
+  let slot = if n < 2 and (cnt & 0x2000) != 0 then n + 2 else n
+  let seg = bg_seg(e)
+  let pm = bg_pm(e)
+  let pbase = e << 10
+  let o = n << 8
+  var last = -1
+  var en = 0
+  for x in 0 .. 256 {
+    var sx = x
+    if mh > 1 {
+      sx = x - (x % mh)
+    }
+    let xx = (sx + hofs) & wmask
+    var ma = row + (((xx & 255) >> 3) << 1)
+    if xx >= 256 {
+      ma += 0x800
+    }
+    if ma != last {
+      en = vspace16(seg, pm, ma)
+      last = ma
+    }
+    var px = xx & 7
+    var py = yy & 7
+    if (en & 0x400) != 0 {
+      px = 7 - px
+    }
+    if (en & 0x800) != 0 {
+      py = 7 - py
+    }
+    var col = -1
+    if bpp8 {
+      let c = vspace8(seg, pm, cbase + ((en & 0x3FF) << 6) + (py << 3) + px)
+      if c != 0 {
+        col = if extp then ext_bg_color(e, slot, ((en >> 12) << 8) | c) else pal16(pbase + (c << 1))
+      }
+    } else {
+      let v = vspace8(seg, pm, cbase + ((en & 0x3FF) << 5) + (py << 2) + (px >> 1))
+      let c = if (px & 1) != 0 then v >> 4 else v & 15
+      if c != 0 {
+        col = pal16(pbase + ((en >> 12) << 5) + (c << 1))
+      }
+    }
+    bgl[o + x] = col
+  }
+}
+
+-- BG0 as the 3D layer: the rendering engine's colour buffer (nds_3d) at this line, scrolled by BG0HOFS; a pixel
+-- with alpha 0 is transparent, and its alpha is kept for blending with the layer under it
+fn bg_3d(y: Int) {
+  let hofs = g16(0x10) & 0x1FF
+  for x in 0 .. 256 {
+    let sx = (x + hofs) & 0x1FF
+    var col = -1
+    var al = 0
+    if sx < 256 {
+      let px = fb3d[y * 256 + sx]
+      al = (px >> 18) & 31
+      if al != 0 {
+        col = ((px & 63) >> 1) | ((((px >> 6) & 63) >> 1) << 5) | ((((px >> 12) & 63) >> 1) << 10)
+      }
+    }
+    bgl[x] = col
+    a3d[x] = al
+  }
+}
+
+-- the affine kinds: rotation/scaling with 8-bit map entries, extended with 16-bit entries (flips, extended
+-- palettes), 256-colour and direct-colour bitmaps, the large bitmap; each pixel steps the reference point by PA/PC
+fn bg_affine(e: Int, n: Int, y: Int, kind: Int, dc: Int) {
+  let b = e << 12
+  let r = b + 0x20 + (n - 2) * 0x10
+  let mpa = gs16(g16(r))
+  let mpc = gs16(g16(r + 4))
+  let k = e * 2 + n - 2
+  var fx = affx[k]
+  var fy = affy[k]
+  let cnt = g16(b + 8 + n * 2)
+  let size = (cnt >> 14) & 3
+  let wrap = (cnt & 0x2000) != 0
+  var w = 128 << size
+  var h = w
+  if kind == K_BITMAP8 or kind == K_DIRECT {
+    if size == 2 {
+      w = 512
+      h = 256
+    }
+  } elif kind == K_LARGE {
+    w = if size == 0 then 512 else 1024
+    h = if size == 0 then 1024 else 512
+  }
+  var cbase = ((cnt >> 2) & 15) << 14
+  var sbase = ((cnt >> 8) & 31) << 11
+  if e == 0 {
+    cbase += ((dc >> 24) & 7) << 16
+    sbase += ((dc >> 27) & 7) << 16
+  }
+  let bbase = ((cnt >> 8) & 31) << 14
+  let seg = bg_seg(e)
+  let pm = bg_pm(e)
+  let extp = (dc & 0x40000000) != 0
+  let pbase = e << 10
+  let tiles = w >> 3
+  let o = n << 8
+  for x in 0 .. 256 {
+    var tx = fx >> 8
+    var ty = fy >> 8
+    fx += mpa
+    fy += mpc
+    var col = -1
+    var inside = true
+    if wrap {
+      tx = tx & (w - 1)
+      ty = ty & (h - 1)
+    } elif tx < 0 or ty < 0 or tx >= w or ty >= h {
+      inside = false
+    }
+    if inside {
+      if kind == K_AFFINE {
+        let t = vspace8(seg, pm, sbase + (ty >> 3) * tiles + (tx >> 3))
+        let c = vspace8(seg, pm, cbase + (t << 6) + ((ty & 7) << 3) + (tx & 7))
+        if c != 0 {
+          col = pal16(pbase + (c << 1))
+        }
+      } elif kind == K_EXT_MAP {
+        let en = vspace16(seg, pm, sbase + (((ty >> 3) * tiles + (tx >> 3)) << 1))
+        var px = tx & 7
+        var py = ty & 7
+        if (en & 0x400) != 0 {
+          px = 7 - px
+        }
+        if (en & 0x800) != 0 {
+          py = 7 - py
+        }
+        let c = vspace8(seg, pm, cbase + ((en & 0x3FF) << 6) + (py << 3) + px)
+        if c != 0 {
+          col = if extp then ext_bg_color(e, n, ((en >> 12) << 8) | c) else pal16(pbase + (c << 1))
+        }
+      } elif kind == K_BITMAP8 {
+        let c = vspace8(seg, pm, bbase + ty * w + tx)
+        if c != 0 {
+          col = pal16(pbase + (c << 1))
+        }
+      } elif kind == K_DIRECT {
+        let c = vspace16(seg, pm, bbase + ((ty * w + tx) << 1))
+        if (c & 0x8000) != 0 {
+          col = c & 0x7FFF
+        }
+      } else {
+        let c = vspace8(seg, pm, ty * w + tx)
+        if c != 0 {
+          col = pal16(pbase + (c << 1))
+        }
+      }
+    }
+    bgl[o + x] = col
+  }
+}
+
+-- the OBJs crossing line y, in OAM order: a pixel keeps the first OBJ with the lowest priority number
+fn obj_line(e: Int, y: Int, dc: Int) {
+  for x in 0 .. 256 {
+    objc[x] = -1
+    objp[x] = 4
+    objm[x] = 0
+    objw[x] = 0
+  }
+  let ob = e << 10
+  let seg = obj_seg(e)
+  let pm = obj_pm(e)
+  let pbase = (e << 10) + 0x200
+  for i in 0 .. 128 {
+    let a0 = oam16(ob + i * 8)
+    let a1 = oam16(ob + i * 8 + 2)
+    let a2 = oam16(ob + i * 8 + 4)
+    let aff = (a0 & 0x100) != 0
+    let mode = (a0 >> 10) & 3
+    let si = ((a0 >> 14) << 2) | (a1 >> 14)
+    let w = obj_wt[si]
+    let h = obj_ht[si]
+    let dbl = aff and (a0 & 0x200) != 0
+    let bw = if dbl then w * 2 else w
+    let bh = if dbl then h * 2 else h
+    let dy = (y - (a0 & 0xFF)) & 0xFF
+    if (aff or (a0 & 0x200) == 0) and dy < bh and (mode != 3 or (a2 >> 12) != 0) {
+      var x0 = a1 & 0x1FF
+      if x0 >= 256 {
+        x0 -= 512
+      }
+      let prio = (a2 >> 10) & 3
+      let palno = a2 >> 12
+      let tile = a2 & 0x3FF
+      let bpp8 = (a0 & 0x2000) != 0
+      var mpa = 0x100
+      var mpb = 0
+      var mpc = 0
+      var mpd = 0x100
+      if aff {
+        let g = ob + ((a1 >> 9) & 31) * 32
+        mpa = gs16(oam16(g + 6))
+        mpb = gs16(oam16(g + 14))
+        mpc = gs16(oam16(g + 22))
+        mpd = gs16(oam16(g + 30))
+      }
+      let hf = not aff and (a1 & 0x1000) != 0
+      let vf = not aff and (a1 & 0x2000) != 0
+      let one_d = (dc & 0x10) != 0
+      let tbase = if one_d then tile << (5 + ((dc >> 20) & 3)) else (if bpp8 then tile & 0x3FE else tile) << 5
+      let tw = w >> 3
+      for k in 0 .. bw {
+        let sx = x0 + k
+        if sx >= 0 and sx < 256 {
+          var tx = k
+          var ty = dy
+          var ok = true
+          if aff {
+            let rx = k - (bw >> 1)
+            let ry = dy - (bh >> 1)
+            tx = ((mpa * rx + mpb * ry) >> 8) + (w >> 1)
+            ty = ((mpc * rx + mpd * ry) >> 8) + (h >> 1)
+            ok = tx >= 0 and ty >= 0 and tx < w and ty < h
+          } else {
+            if hf {
+              tx = w - 1 - tx
+            }
+            if vf {
+              ty = h - 1 - ty
+            }
+          }
+          if ok {
+            var col = -1
+            if mode == 3 {
+              var addr = 0
+              if (dc & 0x40) != 0 {
+                addr = tile * (128 << ((dc >> 22) & 1)) + ((ty * w + tx) << 1)
+              } elif (dc & 0x20) != 0 {
+                addr = ((tile & 0x1F) << 4) + ((tile >> 5) << 12) + ((ty * 256 + tx) << 1)
+              } else {
+                addr = ((tile & 0x0F) << 4) + ((tile >> 4) << 11) + ((ty * 128 + tx) << 1)
+              }
+              let c = vspace16(seg, pm, addr)
+              if (c & 0x8000) != 0 {
+                col = c & 0x7FFF
+              }
+            } else {
+              -- the 8x8 tile holding (tx, ty): 1D counts tiles across the OBJ, 2D in rows of 32 (1 KiB)
+              var addr = tbase
+              var t = (ty >> 3) * tw + (tx >> 3)
+              if not one_d {
+                addr += (ty >> 3) << 10
+                t = tx >> 3
+              }
+              if bpp8 {
+                addr += (t << 6) + ((ty & 7) << 3) + (tx & 7)
+              } else {
+                addr += (t << 5) + ((ty & 7) << 2) + ((tx & 7) >> 1)
+              }
+              let v = vspace8(seg, pm, addr)
+              if bpp8 {
+                if v != 0 {
+                  col = if (dc & 0x80000000) != 0 then ext_obj_color(e, (palno << 8) | v) else pal16(pbase + (v << 1))
+                }
+              } else {
+                let c = if (tx & 1) != 0 then v >> 4 else v & 15
+                if c != 0 {
+                  col = pal16(pbase + (palno << 5) + (c << 1))
+                }
+              }
+            }
+            if col >= 0 {
+              if mode == 2 {
+                objw[sx] = 1
+              } elif prio < objp[sx] {
+                objc[sx] = col
+                objp[sx] = prio
+                objm[sx] = if mode == 1 then 1 else (if mode == 3 then 2 | (palno << 4) else 0)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+fn win_in(r: Int, v: Int) -> Bool {
+  let lo = r >> 8
+  let hi = r & 0xFF
+  if lo <= hi {
+    return v >= lo and v < hi
+  }
+  return v >= lo or v < hi
+}
+-- the window control bits per pixel (WIN0 over WIN1 over the OBJ window over the outside); false: no windows
+fn window_line(e: Int, y: Int, dc: Int) -> Bool {
+  let on = (dc >> 13) & 7
+  if on == 0 {
+    return false
+  }
+  let b = e << 12
+  let winin = g16(b + 0x48)
+  let winout = g16(b + 0x4A)
+  let in0 = (on & 1) != 0 and win_in(g16(b + 0x44), y)
+  let in1 = (on & 2) != 0 and win_in(g16(b + 0x46), y)
+  let h0 = g16(b + 0x40)
+  let h1 = g16(b + 0x42)
+  for x in 0 .. 256 {
+    var m = winout & 0x3F
+    if in0 and win_in(h0, x) {
+      m = winin & 0x3F
+    } elif in1 and win_in(h1, x) {
+      m = (winin >> 8) & 0x3F
+    } elif (on & 4) != 0 and objw[x] != 0 {
+      m = (winout >> 8) & 0x3F
+    }
+    winm[x] = m
+  }
+  return true
+}
+
+fn blend(a: Int, c: Int, ea: Int, eb: Int) -> Int {
+  let r = min(31, ((a & 31) * ea + (c & 31) * eb) >> 4)
+  let g = min(31, (((a >> 5) & 31) * ea + ((c >> 5) & 31) * eb) >> 4)
+  let bl = min(31, (((a >> 10) & 31) * ea + ((c >> 10) & 31) * eb) >> 4)
+  return r | (g << 5) | (bl << 10)
+}
+-- a 3D pixel over a 2D one by the 3D alpha: (c3 (a + 1) + c2 (31 - a)) / 32
+fn mix15(a: Int, c: Int, ea: Int, eb: Int) -> Int {
+  let r = ((a & 31) * ea + (c & 31) * eb) >> 5
+  let g = (((a >> 5) & 31) * ea + ((c >> 5) & 31) * eb) >> 5
+  let bl = (((a >> 10) & 31) * ea + ((c >> 10) & 31) * eb) >> 5
+  return r | (g << 5) | (bl << 10)
+}
+fn brighten(a: Int, ey: Int) -> Int {
+  let r = a & 31
+  let g = (a >> 5) & 31
+  let bl = (a >> 10) & 31
+  return (r + (((31 - r) * ey) >> 4)) | ((g + (((31 - g) * ey) >> 4)) << 5) | ((bl + (((31 - bl) * ey) >> 4)) << 10)
+}
+fn darken(a: Int, ey: Int) -> Int {
+  let r = a & 31
+  let g = (a >> 5) & 31
+  let bl = (a >> 10) & 31
+  return (r - ((r * ey) >> 4)) | ((g - ((g * ey) >> 4)) << 5) | ((bl - ((bl * ey) >> 4)) << 10)
+}
+
+-- the two front layers of each pixel and the colour effect between them
+fn compose(e: Int, dc: Int, anywin: Bool) {
+  let b = e << 12
+  let bld = g16(b + 0x50)
+  let fxm = (bld >> 6) & 3
+  let eva = min(16, g8(b + 0x52) & 31)
+  let evb = min(16, g8(b + 0x53) & 31)
+  let evy = min(16, g8(b + 0x54) & 31)
+  let bd = pal16(e << 10)
+  var nb = 0
+  for p in 0 .. 4 {
+    for n in 0 .. 4 {
+      if layer_kind[n] != K_OFF and (g16(b + 8 + n * 2) & 3) == p {
+        bgord[nb] = n
+        bgordp[nb] = p
+        nb += 1
+      }
+    }
+  }
+  let objon = (dc & 0x1000) != 0
+  for x in 0 .. 256 {
+    let wm = if anywin then winm[x] else 0x3F
+    var top = bd
+    var tl = 5
+    var sec = bd
+    var sl = 5
+    var found = 0
+    var objdone = not objon or objc[x] < 0 or (wm & 0x10) == 0
+    for j in 0 .. nb {
+      if found < 2 {
+        if not objdone and objp[x] <= bgordp[j] {
+          objdone = true
+          if found == 0 {
+            top = objc[x]
+            tl = 4
+          } else {
+            sec = objc[x]
+            sl = 4
+          }
+          found += 1
+        }
+        let n = bgord[j]
+        if found < 2 and ((wm >> n) & 1) != 0 {
+          let c = bgl[(n << 8) + x]
+          if c >= 0 {
+            if found == 0 {
+              top = c
+              tl = n
+            } else {
+              sec = c
+              sl = n
+            }
+            found += 1
+          }
+        }
+      }
+    }
+    if found < 2 and not objdone {
+      if found == 0 {
+        top = objc[x]
+        tl = 4
+      } else {
+        sec = objc[x]
+        sl = 4
+      }
+    }
+    var c = top
+    let second_ok = ((bld >> (8 + sl)) & 1) != 0
+    if tl == 0 and layer_kind[0] == K_3D and a3d[x] < 31 and second_ok {
+      let al = a3d[x]
+      c = mix15(top, sec, al + 1, 31 - al)
+    } elif tl == 4 and objm[x] != 0 and second_ok {
+      if (objm[x] & 2) != 0 {
+        let a = (objm[x] >> 4) + 1
+        c = blend(top, sec, a, 16 - a)
+      } else {
+        c = blend(top, sec, eva, evb)
+      }
+    } elif (wm & 0x20) != 0 and ((bld >> tl) & 1) != 0 {
+      if fxm == 1 and second_ok {
+        c = blend(top, sec, eva, evb)
+      } elif fxm == 2 {
+        c = brighten(top, evy)
+      } elif fxm == 3 {
+        c = darken(top, evy)
+      }
+    }
+    lout[x] = c
+  }
+}
+
+-- one engine's line into lout (15-bit colours)
+fn engine_line(e: Int, y: Int) {
+  let b = e << 12
+  let dc = g32(b)
+  let dmode = if e == 0 then (dc >> 16) & 3 else (dc >> 16) & 1
+  if (dc & 0x80) != 0 or dmode == 0 {
+    for x in 0 .. 256 {
+      lout[x] = 0x7FFF
+    }
+  } elif dmode == 2 {
+    let base = ((dc >> 18) & 3) * 0x20000 + y * 512
+    for x in 0 .. 256 {
+      lout[x] = (vram[base + x * 2] | (vram[base + x * 2 + 1] << 8)) & 0x7FFF
+    }
+  } elif dmode == 3 {
+    for x in 0 .. 256 {
+      lout[x] = 0
+    }
+  } else {
+    let mode = dc & 7
+    for n in 0 .. 4 {
+      var kind = K_OFF
+      if ((dc >> (8 + n)) & 1) != 0 {
+        kind = bg_kind(e, n, mode, dc)
+      }
+      layer_kind[n] = kind
+      if kind == K_3D {
+        bg_3d(y)
+      } elif kind == K_TEXT {
+        bg_text(e, n, y, dc)
+      } elif kind != K_OFF {
+        bg_affine(e, n, y, kind, dc)
+      }
+    }
+    if (dc & 0x1000) != 0 or (dc & 0x8000) != 0 {
+      obj_line(e, y, dc)
+    } else {
+      for x in 0 .. 256 {
+        objc[x] = -1
+        objw[x] = 0
+      }
+    }
+    compose(e, dc, window_line(e, y, dc))
+  }
+  aff_advance(e)
+}
+
+-- master brightness, then RGB888 on screen s (0 top, 1 bottom)
+fn emit_line(e: Int, s: Int, y: Int) {
+  let mb = g16((e << 12) + 0x6C)
+  let mode = (mb >> 14) & 3
+  let f = min(16, mb & 31)
+  var o = s * SCREEN_BYTES + y * 768
+  for x in 0 .. 256 {
+    let c = lout[x]
+    var r = ((c & 31) << 1) | ((c >> 4) & 1)
+    var g = (((c >> 5) & 31) << 1) | ((c >> 9) & 1)
+    var bl = (((c >> 10) & 31) << 1) | ((c >> 14) & 1)
+    if mode == 1 and f > 0 {
+      r += ((63 - r) * f) >> 4
+      g += ((63 - g) * f) >> 4
+      bl += ((63 - bl) * f) >> 4
+    } elif mode == 2 and f > 0 {
+      r -= (r * f) >> 4
+      g -= (g * f) >> 4
+      bl -= (bl * f) >> 4
+    }
+    screen[o] = (r << 2) | (r >> 4)
+    screen[o + 1] = (g << 2) | (g >> 4)
+    screen[o + 2] = (bl << 2) | (bl >> 4)
+    o += 3
+  }
+}
+
+-- line y of both screens (y < 192); line 0 also restarts the affine reference points
+export fn render_line(y: Int) {
+  if y == 0 {
+    for k in 0 .. 4 {
+      aff_reload(k >> 1, k & 1)
+    }
+  }
+  let swap = (io_file[0x305] & 0x80) != 0
+  for e in 0 .. 2 {
+    engine_line(e, y)
+    emit_line(e, if swap then e else 1 - e, y)
+  }
+  lines_drawn += 1
+}

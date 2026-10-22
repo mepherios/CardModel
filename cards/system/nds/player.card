@@ -1,0 +1,149 @@
+-- The Nintendo DS as an arcade player (system/nds). The platform's effect shell copies a cartridge image into `cart`
+-- and calls player_load with its size, copies the save file into player_save, writes the Unix time into
+-- player_clock (and the local offset in seconds into player_clock_offset when it has one) and calls player_init;
+-- then player_frame once per 1/60 s with the pressed buttons and the pointer over the bottom screen
+-- (player_touch_down, player_touch_x, player_touch_y in its pixels), and player_flush before it quits.
+-- player_load is the machine's own direct boot (load_image in cards/machine/nds/boot.card). Each player_frame runs
+-- one machine frame (the console's 59.83 Hz shown at 60) and presents both screens as RGBA, the top one above the
+-- bottom one with a 4-line black gap; the sound is left in `audio` at a rate that gives the shell one frame's worth
+-- of its own samples per frame; the save chip goes into player_save a second after it last changed. An image the
+-- machine refuses (an encrypted secure area) shows a black screen.
+const PLAYER_W = 256
+const PLAYER_H = 388
+const PLAYER_GAP = 4
+const PLAYER_SAVE_FRAMES = 60
+const PLAYER_SAVE_MAX = 0x80000          -- the save chip bytes kept (Diamond's 512 KiB flash)
+const PLAYER_MAGIC = 0x80000
+export global player_quit: Int = 0
+export global player_fullscreen: Int = 0
+export global player_clock: Int = 0          -- Unix seconds, set by the shell
+export global player_clock_offset: Int = 0   -- seconds east of UTC, when the shell sets it
+export global player_save_dirty: Int = 0
+export global player_touch_down: Int = 0
+export global player_touch_x: Int = 0
+export global player_touch_y: Int = 0
+global player_save_wait: Int = 0
+export array player_fb: Byte[397312]         -- 256 x 388 RGBA
+export array player_save: Byte[524292]       -- the save chip, then CMSV at PLAYER_MAGIC
+
+export fn player_load(n: Int) {
+  load_image(n)
+}
+fn player_saved() -> Bool = (player_save[PLAYER_MAGIC] == 0x43 and player_save[PLAYER_MAGIC + 1] == 0x4D and
+                             player_save[PLAYER_MAGIC + 2] == 0x53 and player_save[PLAYER_MAGIC + 3] == 0x56)
+-- the save unpacked into the save chip, the clock set, and the sound's rate chosen so that one machine frame
+-- (FRAME_LINES x LINE_CYCLES bus cycles) leaves exactly the shell's 1/60 s of samples
+export fn player_init() {
+  if player_saved() {
+    for i in 0 .. min(backup_size, PLAYER_SAVE_MAX) {
+      backup[i] = player_save[i]
+    }
+  }
+  backup_dirty = 0
+  rtc_set_unix(player_clock + player_clock_offset)
+  snd_rate = (PLAYER_RATE * SND_BUS_HZ) // (60 * LINE_CYCLES * FRAME_LINES)
+}
+fn player_pack() {
+  for i in 0 .. min(backup_size, PLAYER_SAVE_MAX) {
+    player_save[i] = backup[i]
+  }
+  player_save[PLAYER_MAGIC] = 0x43
+  player_save[PLAYER_MAGIC + 1] = 0x4D
+  player_save[PLAYER_MAGIC + 2] = 0x53
+  player_save[PLAYER_MAGIC + 3] = 0x56
+  player_save_dirty = 1
+}
+fn player_present() {
+  for y in 0 .. PLAYER_H {
+    let d = y * PLAYER_W * 4
+    let shown = boot_refused == 0 and (y < 192 or y >= 192 + PLAYER_GAP)
+    let s = if y < 192 then y * 768 else SCREEN_BYTES + (y - 192 - PLAYER_GAP) * 768
+    for x in 0 .. PLAYER_W {
+      player_fb[d + x * 4] = if shown then screen[s + x * 3] else 0
+      player_fb[d + x * 4 + 1] = if shown then screen[s + x * 3 + 1] else 0
+      player_fb[d + x * 4 + 2] = if shown then screen[s + x * 3 + 2] else 0
+      player_fb[d + x * 4 + 3] = 255
+    }
+  }
+}
+-- one frame: the buttons in the system card's order (A B Select Start Right Left Up Down R L, then X Y), which is
+-- KEYINPUT's bit order with X and Y after it; the pointer on the bottom screen is the pen
+export fn player_frame(p1: Int, p2: Int) -> Int {
+  keyinput = (p1 ^ 0x3FF) & 0x3FF
+  var ext = (extkey & 0x3C) | (((p1 >> 10) ^ 3) & 3)
+  if player_touch_down != 0 {
+    touch_down = 1
+    touch_x = max(0, min(255, player_touch_x))
+    touch_y = max(0, min(191, player_touch_y))
+  } else {
+    touch_down = 0
+    ext = ext | 0x40
+  }
+  extkey = ext
+  if boot_refused == 0 {
+    run_frame()
+  }
+  player_present()
+  if backup_dirty != 0 {
+    player_save_wait = PLAYER_SAVE_FRAMES
+    backup_dirty = 0
+  }
+  if player_save_wait > 0 {
+    player_save_wait -= 1
+    if player_save_wait == 0 {
+      player_pack()
+    }
+  }
+  return player_quit
+}
+-- the shell is closing: a save not packed yet is packed now
+export fn player_flush() {
+  if player_save_wait > 0 {
+    player_save_wait = 0
+    player_pack()
+  }
+}
+
+-- the player's own picture (store and icon): a DS, open, on a dark ground
+fn player_rect(x0: Int, y0: Int, w: Int, h: Int, r: Int, g: Int, b: Int) {
+  for y in max(0, y0) .. min(PLAYER_H, y0 + h) {
+    for x in max(0, x0) .. min(PLAYER_W, x0 + w) {
+      let o = (y * PLAYER_W + x) * 4
+      player_fb[o] = r
+      player_fb[o + 1] = g
+      player_fb[o + 2] = b
+      player_fb[o + 3] = 255
+    }
+  }
+}
+fn player_disc(cx: Int, cy: Int, rad: Int, r: Int, g: Int, b: Int) {
+  for y in cy - rad .. cy + rad + 1 {
+    for x in cx - rad .. cx + rad + 1 {
+      if (x - cx) * (x - cx) + (y - cy) * (y - cy) <= rad * rad {
+        player_rect(x, y, 1, 1, r, g, b)
+      }
+    }
+  }
+}
+export fn player_draw_art() {
+  player_rect(0, 0, PLAYER_W, PLAYER_H, 0x1B, 0x28, 0x38)
+  player_rect(28, 26, 200, 158, 0xC8, 0xC6, 0xC2)
+  player_rect(32, 30, 192, 150, 0xDA, 0xD8, 0xD4)
+  player_rect(60, 44, 136, 104, 0x30, 0x34, 0x3C)
+  player_rect(66, 50, 124, 92, 0x3E, 0x6E, 0xB0)
+  player_rect(88, 66, 80, 18, 0xF2, 0xC6, 0x3C)
+  player_rect(100, 94, 56, 30, 0x7A, 0xC2, 0x5A)
+  player_rect(28, 190, 200, 6, 0x9C, 0x9A, 0x96)
+  player_rect(28, 200, 200, 158, 0xC8, 0xC6, 0xC2)
+  player_rect(32, 204, 192, 150, 0xDA, 0xD8, 0xD4)
+  player_rect(76, 222, 104, 80, 0x30, 0x34, 0x3C)
+  player_rect(82, 228, 92, 68, 0x8A, 0xB6, 0xD8)
+  player_rect(42, 250, 24, 8, 0x26, 0x26, 0x2A)
+  player_rect(50, 242, 8, 24, 0x26, 0x26, 0x2A)
+  player_disc(204, 254, 5, 0x3C, 0x70, 0xC8)
+  player_disc(192, 242, 5, 0x3C, 0x70, 0xC8)
+  player_disc(216, 242, 5, 0x3C, 0x70, 0xC8)
+  player_disc(204, 230, 5, 0x3C, 0x70, 0xC8)
+  player_rect(110, 320, 14, 4, 0x7A, 0x78, 0x80)
+  player_rect(132, 320, 14, 4, 0x7A, 0x78, 0x80)
+}

@@ -1,0 +1,30 @@
+{
+  "category": "hardware",
+  "name": "nds_backup",
+  "machine": "nds",
+  "statement": "The cartridge's backup memory (the save chip) on the auxiliary SPI bus: AUXSPICNT (0x040001A0) puts the slot in serial mode (bit 13) and keeps the chip selected while bit 6 holds; each byte written to AUXSPIDATA (0x040001A2) is one transfer and the chip's answer reads there afterwards. A serial flash answers READ, FAST READ, RDSR, RDID, WREN/WRDI, PAGE WRITE, PAGE PROGRAM, PAGE ERASE and SECTOR ERASE. Which chip a game has is data here (by game code, without the region letter): the cartridge header does not say.",
+  "kinds": {"none": 0, "flash": 2},
+  "flash_id": 2113555,
+  "by_game_code": {
+    "ADA": {"kind": "flash", "bytes": 524288, "title": "Pokemon Diamond"},
+    "APA": {"kind": "flash", "bytes": 524288, "title": "Pokemon Pearl"},
+    "CPU": {"kind": "flash", "bytes": 524288, "title": "Pokemon Platinum"},
+    "IPK": {"kind": "flash", "bytes": 524288, "title": "Pokemon HeartGold"},
+    "IPG": {"kind": "flash", "bytes": 524288, "title": "Pokemon SoulSilver"}
+  },
+  "table": [4277313, 2, 524288, 4280385, 2, 524288, 5591107, 2, 524288, 4935753, 2, 524288, 4673609, 2, 524288],
+  "table_length": 15,
+  "table_note": "by_game_code as numbers for the card language: per game, its code's first three letters (the first in the lowest byte), the kind's number and the size in bytes",
+  "default": {"kind": "flash", "bytes": 524288},
+  "default_kind_code": 2,
+  "flash_commands": {"0x03": "READ (3 address bytes)", "0x0B": "FAST READ (3 address bytes, 1 dummy)", "0x05": "RDSR (bit 0 busy, bit 1 write enabled)", "0x9F": "RDID (3 bytes)", "0x06": "WREN", "0x04": "WRDI", "0x0A": "PAGE WRITE (3 address bytes, data within a 256-byte page)", "0x02": "PAGE PROGRAM (bits only go from 1 to 0)", "0xDB": "PAGE ERASE (256 bytes)", "0xD8": "SECTOR ERASE (64 KiB)"},
+  "registers": [
+    {"address": "0x040001A0", "name": "AUXSPICNT", "bits": "0-1 baud rate, 6 hold chip select, 7 busy (never shown: transfers finish at once), 13 serial mode, 14 ROM transfer IRQ, 15 slot enable"},
+    {"address": "0x040001A2", "name": "AUXSPIDATA", "bits": "0-7 the byte sent (write) / received (read)"}
+  ],
+  "limits": "serial flash only (no EEPROM or FRAM chips, no infrared cartridges); program and erase finish at once (status never shows busy); a game missing from the table gets the default chip",
+  "sources": ["GBATEK (DS cartridge backup: SPI bus, flash commands)", "ST M25PE40 datasheet (command set)"],
+  "logic": ["backup.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

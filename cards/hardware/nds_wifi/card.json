@@ -1,0 +1,43 @@
+{
+  "category": "hardware",
+  "name": "nds_wifi",
+  "machine": "nds",
+  "statement": "The ARM7's wireless hardware (0x04800000-0x0480FFFF: 16-bit registers at 0x04808000, 8 KiB of Wi-Fi RAM at 0x04804000), as far as a game's wireless driver needs it to come up and stay idle: the register file; the baseband chip's registers behind W_BB_CNT (5xxxh writes W_BB_WRITE, 6xxxh latches the register for W_BB_READ; the fixed ones stay fixed); the RF chip's behind W_RF_DATA2/W_RF_DATA1; power-up (W_POWERSTATE bit 1, W_POWERFORCE, or W_MODE_RST enabled with W_POWER_US bit 1) that completes after wake_microseconds with W_POWERSTATE clear and the RF wake-up interrupt; the microsecond counter (W_US_COUNT, enabled by W_US_COUNTCNT) with the compare (beacon timeslot) interrupt at W_US_COMPARE, the beacon count and the pre- and post-beacon interrupts; W_RANDOM; the RX and TX buffer ports into the Wi-Fi RAM; and TX requests for the LOC1-LOC3 slots that complete after tx_microseconds with their status written. W_IF & W_IE drive the ARM7's Wi-Fi interrupt (IE/IF bit 24).",
+  "chip_id": 5184,
+  "wake_microseconds": 2048,
+  "tx_microseconds": 200,
+  "bus_hz": 33513982,
+  "baseband": {
+    "chip_id": 109,
+    "fixed": [0, 109, 13, 0, 14, 0, 15, 0, 16, 0, 17, 0, 18, 0, 22, 0, 23, 0, 24, 0, 25, 0, 26, 0, 39, 0, 77, 0, 93, 1, 94, 0, 95, 0, 96, 0, 97, 0, 100, 255, 102, 0],
+    "fixed_note": "pairs of register number and its fixed value (the chip ID 6Dh at 00h); registers 69h-FFh read 0"
+  },
+  "registers": [
+    {"offset": "0x000", "name": "W_ID", "bits": "chip ID (1440h on the original DS)"},
+    {"offset": "0x004", "name": "W_MODE_RST", "bits": "0 enable, 13-14 reset RX/TX pointers"},
+    {"offset": "0x010", "name": "W_IF", "bits": "interrupt flags (write 1 to clear): 0 RX done, 1 TX done, 7 TX start, 8 TX buffer count, 9 RX buffer count, 11 RF wake-up, 13 post-beacon, 14 beacon timeslot, 15 pre-beacon"},
+    {"offset": "0x012", "name": "W_IE"},
+    {"offset": "0x036", "name": "W_POWER_US", "bits": "0 hold the radio down, 1 power up when W_MODE_RST is enabled"},
+    {"offset": "0x03C", "name": "W_POWERSTATE", "bits": "1 request power-up, 8 waking up, 9 powered down"},
+    {"offset": "0x040", "name": "W_POWERFORCE", "bits": "0 off, 15 apply"},
+    {"offset": "0x044", "name": "W_RANDOM", "bits": "11-bit generator: x = (x & 1) ^ (x rotated left)"},
+    {"offset": "0x050-0x064", "name": "W_RXBUF_*", "bits": "the RX ring in Wi-Fi RAM and its read port (0x060)"},
+    {"offset": "0x068-0x076", "name": "W_TXBUF_*", "bits": "the TX write port (0x070) into Wi-Fi RAM"},
+    {"offset": "0x0A0-0x0A8", "name": "W_TXBUF_LOC1-3", "bits": "0-11 frame address / 2, 15 ready"},
+    {"offset": "0x0AC-0x0B8", "name": "W_TXREQ_RESET/SET/READ, W_TXBUSY, W_TXSTAT"},
+    {"offset": "0x0E8", "name": "W_US_COUNTCNT"},
+    {"offset": "0x0EA", "name": "W_US_COMPARECNT", "bits": "0 enable, 1 force the beacon interrupt"},
+    {"offset": "0x0F0-0x0FE", "name": "W_US_COMPARE, W_US_COUNT", "bits": "64-bit microsecond counter and its compare (units of 1024)"},
+    {"offset": "0x110", "name": "W_PRE_BEACON"},
+    {"offset": "0x11C", "name": "W_BEACON_COUNT"},
+    {"offset": "0x158-0x15E", "name": "W_BB_CNT, W_BB_WRITE, W_BB_READ, W_BB_BUSY"},
+    {"offset": "0x17C-0x184", "name": "W_RF_DATA2, W_RF_DATA1, W_RF_BUSY, W_RF_CNT"},
+    {"offset": "0x214", "name": "W_RF_STATUS", "bits": "3 transmitting, 9 idle"},
+    {"offset": "0x21C", "name": "W_IF_SET"}
+  ],
+  "limits": "nothing is ever received (no other console, no access point); transmitted frames go nowhere and always succeed; timing is by microsecond, not by bit; the baseband and RF chips are never busy; multiplayer command slots, WEP, the content-free and listen periods, and power-saving sleep after the beacon are not modelled",
+  "sources": ["GBATEK (DS Wifi: I/O map, interrupts, power-down, microsecond timers, baseband and RF chips, TX/RX buffers)"],
+  "logic": ["wifi.card"],
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}
