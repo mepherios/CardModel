@@ -29,10 +29,16 @@ cd ~/Programmering/cardmodel
 ./bin/cardmodel cover --write COVERAGE.md
 ```
 
+```bash
+./bin/cardmodel self run
+```
+
 * `probe` shows which toolchains this machine has (Python, Node, C, C++, Rust, Go, Swift, Java, Ruby, Lua, Lean, …).
 * `verify --quick` runs the kernel, forms, vectors, rules and redefinitions (about 1 minute).
 * Plain `verify` adds the op × language matrix, the function cards and the Lean proofs (several minutes).
 * `cover --write` regenerates the coverage report and the goal values.
+* `self run` runs one cycle of the model on itself (§3i): its core capabilities, integrity, verify, learning, every
+  law's witness test, the store, measurements and every goal, then its flaws, weaknesses and a ranked plan.
 
 To use it from any folder, put the shim on PATH (it resolves symlinks):
 
@@ -397,10 +403,17 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   cartridge. Recursive descent now follows conditional returns' fall-through (the last gap). Pokemon Crystal:
   100 % lifted on an unseen run (0 instructions interpreted); an app that ever interprets code keeps it beside the
   save and rebuilds itself in the background when you quit.
-* Witnesses: `tests/test_arcade.py` (CM35), `tests/test_arcade_systems.py` (CM40), `tests/test_arcade_work.py`,
+* Witnesses: `tests/test_arcade.py` (CM35, CM42), `tests/test_arcade_systems.py` (CM40), `tests/test_arcade_work.py`,
   `tests/test_cartapp.py`.
 * What is in the store and what the model does for each piece: docs/STORE.md. Install the launcher from this
-  checkout (`main`), not from a worktree: the app records the checkout it was installed from.
+  checkout (`main`), not from a worktree: the app records the checkout it was installed from. Run from a linked
+  worktree, `arcade launcher --install` now points the app at the main checkout anyway (`--home PATH` chooses
+  another).
+* **Checking the store end to end** (CM42): `cardmodel arcade check` launches every catalogue item through the
+  service exactly as the launcher does (a download with every chunk's and file's SHA-256 checked, verify, a damaged
+  file repaired with only that file fetched again, a headless native run that must draw a frame); `--launcher` also
+  compiles the launcher. The self-run's `store` step runs it on every cycle. Headless runs (`arcade run --frames N`)
+  use a temporary save folder, never the player's save.
 
 ## 3i. The model runs itself (fifth build)
 
@@ -428,7 +441,10 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   in docs/INTEGRATION.md), every command in the help, every section and doc described, generated docs in sync,
   no merge markers, no publishing calls. docs/INTEGRATION.md also has the merge procedure and the integration
   log.
-* Witnesses: `tests/test_self.py`. How it works and how to extend it: docs/AUTONOMY.md.
+* **Deep checks as steps**: `law_witnesses` runs every law card's witness test in a child process with the cycle's
+  seed (daily); `store` launches the catalogue through the store (every cycle); `tests` runs the whole suite
+  (weekly). Each step runs under a deadline, so one that does not return is stopped and reported.
+* Witnesses: `tests/test_self.py`, `tests/test_self_steps.py`. How it works and how to extend it: docs/AUTONOMY.md.
 
 ## 4. How to add things
 
@@ -581,6 +597,13 @@ tests for other hardware revisions and one Blargg single that overflows its own 
 the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted (COVERAGE.md
 has the numbers).
 
+**Real since the self-run's deep checks:** every law's witness test runs in the self-run (`law_witnesses`); the
+store's catalogue is launched through the store's own protocol on every cycle (`store`); a partial `verify` keeps
+the sections it did not run.
+
+**Partial (the self-run's deep checks):** the store check replays the launcher's protocol in Python and compiles
+the launcher, but does not drive its window; a step's deadline cannot interrupt one long C-level operation.
+
 **Not built:** C/JS frontends, string/list IR, a watch daemon, suggestion application, proof backends other than Lean,
 a native (ctypes) path inside improved modules (ROADMAP).
 
@@ -604,6 +627,8 @@ a native (ctypes) path inside improved modules (ROADMAP).
 * Background self-run cycles write only under `state/self/` (CM38); tests run with `CARDMODEL_SELF=0`
   (`tests/helpers.py`), so they see the tracked cards only.
 * Law and goal numbers come from the registry in docs/INTEGRATION.md; every law is carried by a capability (CM37).
+* A goal never gets easier silently: `floor/goals` holds every goal's hardest target, and lowering one, changing what
+  it measures or removing it needs a written reason (docs/INTEGRATION.md section 4a; `cardmodel docs` records it).
 
 ---
 

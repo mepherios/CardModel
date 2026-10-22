@@ -1,0 +1,19 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 168,
+  "measures": "the suite",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "tests",
+  "on_change": [],
+  "order": 95,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "run": "tests",
+  "statement": "the whole unit suite, test by test, in a child process",
+  "tier": 0
+}

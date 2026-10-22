@@ -1,0 +1,562 @@
+{
+  "category": "observation",
+  "fallback_call_files": {
+    "A.descendants": [
+      "lang/family.card"
+    ],
+    "able": [
+      "lang/hierarchy.card"
+    ],
+    "above": [
+      "lang/hierarchy.card"
+    ],
+    "ackermann_small": [
+      "algorithms/algos.py"
+    ],
+    "add_comm": [
+      "lang/math.card"
+    ],
+    "age_gap": [
+      "lang/family.card"
+    ],
+    "algorithm.fibonacci": [
+      "lang/math.card"
+    ],
+    "ancestor": [
+      "lang/family.card"
+    ],
+    "blocked": [
+      "lang/hierarchy.card"
+    ],
+    "bool_demorgan": [
+      "lang/math.card"
+    ],
+    "born": [
+      "lang/family.card"
+    ],
+    "broken": [
+      "lang/hierarchy.card"
+    ],
+    "can": [
+      "lang/hierarchy.card"
+    ],
+    "cannot": [
+      "lang/hierarchy.card"
+    ],
+    "cat_at": [
+      "lang/grammar.card"
+    ],
+    "collatz_steps": [
+      "lang/math.card"
+    ],
+    "descendants": [
+      "lang/family.card"
+    ],
+    "digit_sum": [
+      "algorithms/algos.py"
+    ],
+    "factorial": [
+      "lang/math.card"
+    ],
+    "fails": [
+      "lang/hierarchy.card"
+    ],
+    "fib": [
+      "lang/math.card"
+    ],
+    "fib_add": [
+      "lang/math.card"
+    ],
+    "fib_fast": [
+      "lang/math.card"
+    ],
+    "floor_div_mod": [
+      "lang/math.card"
+    ],
+    "gcd2": [
+      "lang/math.card"
+    ],
+    "generation": [
+      "lang/family.card"
+    ],
+    "grammatical": [
+      "lang/grammar.card"
+    ],
+    "inside": [
+      "lang/hierarchy.card"
+    ],
+    "is_a": [
+      "lang/hierarchy.card"
+    ],
+    "is_prime": [
+      "algorithms/algos.py",
+      "lang/math.card"
+    ],
+    "kind": [
+      "lang/hierarchy.card"
+    ],
+    "leaf": [
+      "lang/hierarchy.card"
+    ],
+    "lexicon": [
+      "lang/grammar.card"
+    ],
+    "mod_sign": [
+      "lang/math.card"
+    ],
+    "mul_distrib": [
+      "lang/math.card"
+    ],
+    "nbar": [
+      "lang/grammar.card"
+    ],
+    "np": [
+      "lang/grammar.card"
+    ],
+    "num": [
+      "lang/math.card"
+    ],
+    "ok": [
+      "lang/hierarchy.card"
+    ],
+    "parent": [
+      "lang/family.card"
+    ],
+    "part_of": [
+      "lang/hierarchy.card"
+    ],
+    "person": [
+      "lang/hierarchy.card"
+    ],
+    "pred_lt": [
+      "lang/math.card"
+    ],
+    "prime": [
+      "lang/math.card"
+    ],
+    "reports_to": [
+      "lang/hierarchy.card"
+    ],
+    "root": [
+      "lang/family.card"
+    ],
+    "s": [
+      "lang/grammar.card"
+    ],
+    "sentence_end": [
+      "lang/grammar.card"
+    ],
+    "small": [
+      "lang/math.card"
+    ],
+    "span": [
+      "lang/hierarchy.card"
+    ],
+    "square_nonneg": [
+      "lang/math.card"
+    ],
+    "twin": [
+      "lang/math.card"
+    ],
+    "vp": [
+      "lang/grammar.card"
+    ],
+    "word": [
+      "lang/grammar.card"
+    ]
+  },
+  "fallback_calls_by_language": {
+    "cardlang": {
+      "A.descendants": 1,
+      "able": 5,
+      "above": 5,
+      "add_comm": 1,
+      "age_gap": 3,
+      "algorithm.fibonacci": 1,
+      "ancestor": 8,
+      "blocked": 3,
+      "bool_demorgan": 1,
+      "born": 7,
+      "broken": 3,
+      "can": 4,
+      "cannot": 3,
+      "cat_at": 6,
+      "collatz_steps": 2,
+      "descendants": 1,
+      "factorial": 2,
+      "fails": 6,
+      "fib": 6,
+      "fib_add": 1,
+      "fib_fast": 2,
+      "floor_div_mod": 1,
+      "gcd2": 2,
+      "generation": 4,
+      "grammatical": 2,
+      "inside": 5,
+      "is_a": 10,
+      "is_prime": 2,
+      "kind": 5,
+      "leaf": 3,
+      "lexicon": 9,
+      "mod_sign": 1,
+      "mul_distrib": 1,
+      "nbar": 5,
+      "np": 5,
+      "num": 11,
+      "ok": 3,
+      "parent": 10,
+      "part_of": 7,
+      "person": 4,
+      "pred_lt": 1,
+      "prime": 5,
+      "reports_to": 11,
+      "root": 3,
+      "s": 5,
+      "sentence_end": 3,
+      "small": 1,
+      "span": 3,
+      "square_nonneg": 1,
+      "twin": 3,
+      "vp": 4,
+      "word": 9
+    },
+    "python": {
+      "ackermann_small": 3,
+      "digit_sum": 1,
+      "is_prime": 1
+    }
+  },
+  "files": [
+    {
+      "cards": 121,
+      "language": "python",
+      "lines": 170,
+      "named": 116,
+      "path": "algorithms/algos.py",
+      "sha256_12": "945eaaea78c4",
+      "top": {
+        "ADD": 11,
+        "CMP_EQ": 14,
+        "CMP_LE": 9,
+        "FLOORDIV": 9,
+        "MOD": 11,
+        "OR": 9,
+        "SQUARE": 7,
+        "SUB": 6
+      }
+    },
+    {
+      "cards": 37,
+      "language": "cardlang",
+      "lines": 32,
+      "method": "token-level",
+      "named": 0,
+      "path": "lang/family.card",
+      "sha256_12": "4cafc943ec98",
+      "top": {
+        "CALL_GENERIC": 37
+      }
+    },
+    {
+      "cards": 48,
+      "language": "cardlang",
+      "lines": 32,
+      "method": "token-level",
+      "named": 0,
+      "path": "lang/grammar.card",
+      "sha256_12": "7855524a5c0f",
+      "top": {
+        "CALL_GENERIC": 48
+      }
+    },
+    {
+      "cards": 80,
+      "language": "cardlang",
+      "lines": 49,
+      "method": "token-level",
+      "named": 0,
+      "path": "lang/hierarchy.card",
+      "sha256_12": "ea0274f2aed8",
+      "top": {
+        "CALL_GENERIC": 80
+      }
+    },
+    {
+      "cards": 45,
+      "language": "cardlang",
+      "lines": 71,
+      "method": "token-level",
+      "named": 0,
+      "path": "lang/math.card",
+      "sha256_12": "2ffac83f0286",
+      "top": {
+        "CALL_GENERIC": 45
+      }
+    }
+  ],
+  "functions": [
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 4,
+      "name": "gcd",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 10,
+      "name": "fib",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 17,
+      "name": "is_prime",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 28,
+      "name": "collatz_steps",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 36,
+      "name": "digit_sum",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 45,
+      "name": "isqrt_newton",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 56,
+      "name": "count_primes",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 64,
+      "name": "mean3",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 68,
+      "name": "clamp",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": false,
+      "line": 72,
+      "name": "sign_sum",
+      "reasons": [
+        "line 72: type annotation 'list' (only int/float/bool)"
+      ]
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 76,
+      "name": "tri",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 85,
+      "name": "power_mod",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 96,
+      "name": "binomial",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 106,
+      "name": "popcount",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 115,
+      "name": "lerp",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 119,
+      "name": "hypot_int",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 127,
+      "name": "triangle_kind",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 137,
+      "name": "sum_of_divisors",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 151,
+      "name": "lcm_iter",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 157,
+      "name": "digital_root",
+      "reasons": []
+    },
+    {
+      "file": "algorithms/algos.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 164,
+      "name": "ackermann_small",
+      "reasons": []
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "obs_990256d7bef0b7b0",
+  "observed_at": "2026-10-21T21:53:38+00:00",
+  "provenance": {
+    "method": "ast (python) + token-level (others)",
+    "tool": "cardmodel observe"
+  },
+  "root": "examples",
+  "tier": 3,
+  "top_cards": {
+    "ABS": 5,
+    "ADD": 11,
+    "AND": 1,
+    "BIT_AND": 1,
+    "BUILTIN_RANGE": 4,
+    "BUILTIN_SUM": 1,
+    "CALL_GENERIC": 215,
+    "CMP_EQ": 14,
+    "CMP_GE": 1,
+    "CMP_GT": 5,
+    "CMP_LE": 9,
+    "CMP_LT": 4,
+    "CMP_NE": 3,
+    "DIV": 1,
+    "FLOORDIV": 9,
+    "IF_EXPR": 1,
+    "MAX": 1,
+    "MIN": 2,
+    "MOD": 11,
+    "MUL": 4,
+    "MULADD": 3,
+    "NEG": 1,
+    "OR": 9,
+    "SQUARE": 7,
+    "SUB": 6
+  },
+  "top_fallback_calls": {
+    "able": 5,
+    "above": 5,
+    "ackermann_small": 3,
+    "age_gap": 3,
+    "ancestor": 8,
+    "blocked": 3,
+    "born": 7,
+    "broken": 3,
+    "can": 4,
+    "cannot": 3,
+    "cat_at": 6,
+    "collatz_steps": 2,
+    "factorial": 2,
+    "fails": 6,
+    "fib": 6,
+    "gcd2": 2,
+    "generation": 4,
+    "grammatical": 2,
+    "inside": 5,
+    "is_a": 10,
+    "is_prime": 3,
+    "kind": 5,
+    "leaf": 3,
+    "lexicon": 9,
+    "nbar": 5,
+    "np": 5,
+    "num": 11,
+    "ok": 3,
+    "parent": 10,
+    "part_of": 7,
+    "person": 4,
+    "prime": 5,
+    "reports_to": 11,
+    "root": 3,
+    "s": 5,
+    "sentence_end": 3,
+    "span": 3,
+    "twin": 3,
+    "vp": 4,
+    "word": 9
+  },
+  "totals": {
+    "by_language": {
+      "cardlang": 4,
+      "python": 1
+    },
+    "cards_fired": 331,
+    "files": 5,
+    "functions": 21,
+    "functions_liftable": 20,
+    "named": 116,
+    "named_calls_and_ops": 116,
+    "named_fraction": 0.3505
+  }
+}

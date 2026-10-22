@@ -1,0 +1,631 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_LT",
+    "op/MUL",
+    "op/SUB"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef damage(attack: int, defense: int, crit: bool) -> int:\n    base = attack * 2 + 0 - defense\n    if base < 1:\n        base = 1\n    if crit:\n        return base * 2\n    return base",
+      "cost": 1.0,
+      "entry": "damage",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t damage(int64_t attack, int64_t defense, bool crit) {\n    int64_t base = 0;\n    base = (((attack * INT64_C(2)) + INT64_C(0)) - defense);\n    if ((base < INT64_C(1))) {\n        base = INT64_C(1);\n    }\n    if (crit) {\n        return (base * INT64_C(2));\n    }\n    return base;\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc damage(attack int64, defense int64, crit bool) int64 {\n\tvar base int64 = 0\n\t_ = base\n\tbase = (((attack * int64(2)) + int64(0)) - defense)\n\tif (base < int64(1)) {\n\t\tbase = int64(1)\n\t}\n\tif crit {\n\t\treturn (base * int64(2))\n\t}\n\treturn base\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function damage(attack, defense, crit) {\n    let base = 0n;\n    base = (((attack * (2n)) + (0n)) - defense);\n    if ((base < (1n))) {\n        base = (1n);\n    }\n    if (crit) {\n        return (base * (2n));\n    }\n    return base;\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def damage(attack: int, defense: int, crit: bool) -> int:\n    base = (((attack * 2) + 0) - defense)\n    if (base < 1):\n        base = 1\n    if crit:\n        return (base * 2)\n    return base\n\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn damage(attack: i64, defense: i64, crit: bool) -> i64 {\n    let mut base: i64 = 0;\n    base = (((attack * (2i64)) + (0i64)) - defense);\n    if (base < (1i64)) {\n        base = (1i64);\n    }\n    if crit {\n        return (base * (2i64));\n    }\n    return base;\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t damage(int64_t attack, int64_t defense, bool crit) {\n    int64_t base = 0;\n    base = (((attack * INT64_C(2)) + INT64_C(0)) - defense);\n    if ((base < INT64_C(1))) {\n        base = INT64_C(1);\n    }\n    if (crit) {\n        return (base * INT64_C(2));\n    }\n    return base;\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long damage(long attack, long defense, boolean crit) {\n    long base = 0L;\n    base = (((attack * (2L)) + (0L)) - defense);\n    if ((base < (1L))) {\n        base = (1L);\n    }\n    if (crit) {\n        return (base * (2L));\n    }\n    return base;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def damage (attack : Int) (defense : Int) (crit : Bool) : Int := Id.run do\n  let mut base : Int := 0\n  base := (((attack * (2 : Int)) + (0 : Int)) - defense)\n  if (decide (base < (1 : Int))) then\n    base := (1 : Int)\n  if crit then\n    return (base * (2 : Int))\n  return base\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function damage(attack, defense, crit)\n  local base = 0\n  base = (((attack * (2)) + (0)) - defense)\n  if (base < (1)) then\n    base = (1)\n  end\n  if crit then\n    return (base * (2))\n  end\n  return base\nend\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def damage(attack, defense, crit)\n  base = 0\n  base = (((attack * (2)) + (0)) - defense)\n  if (base < (1))\n    base = (1)\n  end\n  if crit\n    return (base * (2))\n  end\n  return base\nend\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc damage(_ attack: Int, _ defense: Int, _ crit: Bool) -> Int {\n    var base: Int = 0\n    base = (((attack * (2)) + (0)) - defense)\n    if (base < (1)) {\n        base = (1)\n    }\n    if crit {\n        return (base * (2))\n    }\n    return base\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function damage(attack: bigint, defense: bigint, crit: boolean): bigint {\n    let base: bigint = 0n;\n    base = (((attack * (2n)) + (0n)) - defense);\n    if ((base < (1n))) {\n        base = (1n);\n    }\n    if (crit) {\n        return (base * (2n));\n    }\n    return base;\n}\n",
+      "cost": 1.0,
+      "entry": "damage",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "bool": true
+    }
+  ],
+  "ir": {
+    "entry": "damage",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "base",
+            "value": [
+              "SUB",
+              [
+                "ADD",
+                [
+                  "MUL",
+                  [
+                    "var",
+                    "attack"
+                  ],
+                  [
+                    "int",
+                    2
+                  ]
+                ],
+                [
+                  "int",
+                  0
+                ]
+              ],
+              [
+                "var",
+                "defense"
+              ]
+            ]
+          },
+          {
+            "cond": [
+              "CMP_LT",
+              [
+                "var",
+                "base"
+              ],
+              [
+                "int",
+                1
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "assign",
+                "target": "base",
+                "value": [
+                  "int",
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "cond": [
+              "var",
+              "crit"
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "MUL",
+                  [
+                    "var",
+                    "base"
+                  ],
+                  [
+                    "int",
+                    2
+                  ]
+                ]
+              }
+            ]
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "base"
+            ]
+          }
+        ],
+        "locals": {
+          "base": "int"
+        },
+        "name": "damage",
+        "params": [
+          {
+            "name": "attack",
+            "type": "int"
+          },
+          {
+            "name": "defense",
+            "type": "int"
+          },
+          {
+            "name": "crit",
+            "type": "bool"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_damage_afa77cb479b7",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/game.py",
+    "seed": 3558831672,
+    "source_sha256_12": "afa77cb479b7"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "attack",
+        "type": "int"
+      },
+      {
+        "name": "defense",
+        "type": "int"
+      },
+      {
+        "name": "crit",
+        "type": "bool"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "damage(attack: int, defense: int, crit: bool) -> int lifted from slowframework/game.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0,
+        true
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        1,
+        1,
+        false
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        -1,
+        true
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -50,
+        -50,
+        false
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        50,
+        50,
+        true
+      ],
+      "out": 100
+    },
+    {
+      "args": [
+        26,
+        39,
+        false
+      ],
+      "out": 13
+    },
+    {
+      "args": [
+        37,
+        33,
+        true
+      ],
+      "out": 82
+    },
+    {
+      "args": [
+        30,
+        -36,
+        false
+      ],
+      "out": 96
+    },
+    {
+      "args": [
+        -38,
+        -4,
+        false
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -25,
+        -39,
+        true
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -18,
+        16,
+        true
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        13,
+        -23,
+        true
+      ],
+      "out": 98
+    },
+    {
+      "args": [
+        39,
+        19,
+        false
+      ],
+      "out": 59
+    },
+    {
+      "args": [
+        38,
+        4,
+        true
+      ],
+      "out": 144
+    },
+    {
+      "args": [
+        -12,
+        -32,
+        true
+      ],
+      "out": 16
+    },
+    {
+      "args": [
+        45,
+        -13,
+        true
+      ],
+      "out": 206
+    },
+    {
+      "args": [
+        -40,
+        28,
+        false
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        24,
+        24,
+        true
+      ],
+      "out": 48
+    },
+    {
+      "args": [
+        -24,
+        -36,
+        false
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        46,
+        35,
+        false
+      ],
+      "out": 57
+    },
+    {
+      "args": [
+        33,
+        -19,
+        false
+      ],
+      "out": 85
+    },
+    {
+      "args": [
+        4,
+        -3,
+        false
+      ],
+      "out": 11
+    },
+    {
+      "args": [
+        3,
+        41,
+        true
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -6,
+        40,
+        false
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        40,
+        -37,
+        true
+      ],
+      "out": 234
+    },
+    {
+      "args": [
+        47,
+        28,
+        false
+      ],
+      "out": 66
+    },
+    {
+      "args": [
+        -7,
+        10,
+        true
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -39,
+        -2,
+        true
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -23,
+        34,
+        true
+      ],
+      "out": 2
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}

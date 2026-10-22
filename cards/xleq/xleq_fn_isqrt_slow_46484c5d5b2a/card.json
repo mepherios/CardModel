@@ -1,0 +1,34 @@
+{
+  "category": "xleq",
+  "confidence": "established",
+  "evidence_count": 43,
+  "languages": [
+    "python_source",
+    "c",
+    "cpp",
+    "go",
+    "java",
+    "javascript",
+    "lean",
+    "lua",
+    "python",
+    "ruby",
+    "rust",
+    "swift",
+    "typescript"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "xleq_fn_isqrt_slow_46484c5d5b2a",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "tool": "cardmodel learn"
+  },
+  "seed": 3132429613,
+  "statement": "isqrt_slow: same outputs in 13 implementations",
+  "subject": "function/fn_isqrt_slow_46484c5d5b2a",
+  "tier": 3
+}

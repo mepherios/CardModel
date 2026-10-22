@@ -1,0 +1,646 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ABS",
+    "op/CMP_EQ",
+    "op/CMP_GT",
+    "op/CMP_NE",
+    "op/SUB"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef reduce_ratio(a: int, b: int) -> int:\n    \"\"\"gcd by repeated subtraction.\"\"\"\n    a = abs(a)\n    b = abs(b)\n    if a == 0:\n        return b\n    if b == 0:\n        return a\n    while a != b:\n        if a > b:\n            a = a - b\n        else:\n            b = b - a\n    return a",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t reduce_ratio(int64_t a, int64_t b) {\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if ((a == INT64_C(0))) {\n        return b;\n    }\n    if ((b == INT64_C(0))) {\n        return a;\n    }\n    while ((a != b)) {\n        if ((a > b)) {\n            a = (a - b);\n        } else {\n            b = (b - a);\n        }\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_abs_i(a int64) int64 {\n\tif a < 0 {\n\t\treturn -a\n\t}\n\treturn a\n}\nfunc reduce_ratio(a int64, b int64) int64 {\n\ta = cm_abs_i(a)\n\tb = cm_abs_i(b)\n\tif (a == int64(0)) {\n\t\treturn b\n\t}\n\tif (b == int64(0)) {\n\t\treturn a\n\t}\n\tfor (a != b) {\n\t\tif (a > b) {\n\t\t\ta = (a - b)\n\t\t} else {\n\t\t\tb = (b - a)\n\t\t}\n\t}\n\treturn a\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction reduce_ratio(a, b) {\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if ((a === (0n))) {\n        return b;\n    }\n    if ((b === (0n))) {\n        return a;\n    }\n    while ((a !== b)) {\n        if ((a > b)) {\n            a = (a - b);\n        } else {\n            b = (b - a);\n        }\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def reduce_ratio(a: int, b: int) -> int:\n    a = abs(a)\n    b = abs(b)\n    if (a == 0):\n        return b\n    if (b == 0):\n        return a\n    while (a != b):\n        if (a > b):\n            a = (a - b)\n        else:\n            b = (b - a)\n    return a\n\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_abs_i(a: i64) -> i64 { if a < 0 { -a } else { a } }\nfn reduce_ratio(a: i64, b: i64) -> i64 {\n    let mut a: i64 = a;\n    let mut b: i64 = b;\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if (a == (0i64)) {\n        return b;\n    }\n    if (b == (0i64)) {\n        return a;\n    }\n    while (a != b) {\n        if (a > b) {\n            a = (a - b);\n        } else {\n            b = (b - a);\n        }\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_abs_i(int64_t a) { return a < 0 ? -a : a; }\nstatic int64_t reduce_ratio(int64_t a, int64_t b) {\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if ((a == INT64_C(0))) {\n        return b;\n    }\n    if ((b == INT64_C(0))) {\n        return a;\n    }\n    while ((a != b)) {\n        if ((a > b)) {\n            a = (a - b);\n        } else {\n            b = (b - a);\n        }\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long reduce_ratio(long a, long b) {\n    a = Math.abs(a);\n    b = Math.abs(b);\n    if ((a == (0L))) {\n        return b;\n    }\n    if ((b == (0L))) {\n        return a;\n    }\n    while ((a != b)) {\n        if ((a > b)) {\n            a = (a - b);\n        } else {\n            b = (b - a);\n        }\n    }\n    return a;\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def reduce_ratio (a : Int) (b : Int) : Int := Id.run do\n  let mut a : Int := a\n  let mut b : Int := b\n  a := (Int.ofNat (Int.natAbs a))\n  b := (Int.ofNat (Int.natAbs b))\n  if (a == (0 : Int)) then\n    return b\n  if (b == (0 : Int)) then\n    return a\n  while (a != b) do\n    if (decide (a > b)) then\n      a := (a - b)\n    else\n      b := (b - a)\n  return a\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function reduce_ratio(a, b)\n  a = math.abs(a)\n  b = math.abs(b)\n  if (a == (0)) then\n    return b\n  end\n  if (b == (0)) then\n    return a\n  end\n  while (a ~= b) do\n    if (a > b) then\n      a = (a - b)\n    else\n      b = (b - a)\n    end\n    ::cm_continue_1::\n  end\n  return a\nend\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def reduce_ratio(a, b)\n  a = ((a).abs)\n  b = ((b).abs)\n  if (a == (0))\n    return b\n  end\n  if (b == (0))\n    return a\n  end\n  while (a != b)\n    if (a > b)\n      a = (a - b)\n    else\n      b = (b - a)\n    end\n  end\n  return a\nend\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc reduce_ratio(_ a: Int, _ b: Int) -> Int {\n    var a: Int = a\n    var b: Int = b\n    a = abs(a)\n    b = abs(b)\n    if (a == (0)) {\n        return b\n    }\n    if (b == (0)) {\n        return a\n    }\n    while (a != b) {\n        if (a > b) {\n            a = (a - b)\n        } else {\n            b = (b - a)\n        }\n    }\n    return a\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function cm_abs_i(a) { return a < 0n ? -a : a; }\nfunction reduce_ratio(a: bigint, b: bigint): bigint {\n    a = cm_abs_i(a);\n    b = cm_abs_i(b);\n    if ((a === (0n))) {\n        return b;\n    }\n    if ((b === (0n))) {\n        return a;\n    }\n    while ((a !== b)) {\n        if ((a > b)) {\n            a = (a - b);\n        } else {\n            b = (b - a);\n        }\n    }\n    return a;\n}\n",
+      "cost": 1.0,
+      "entry": "reduce_ratio",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "reduce_ratio",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "assign",
+            "target": "a",
+            "value": [
+              "ABS",
+              [
+                "var",
+                "a"
+              ]
+            ]
+          },
+          {
+            "k": "assign",
+            "target": "b",
+            "value": [
+              "ABS",
+              [
+                "var",
+                "b"
+              ]
+            ]
+          },
+          {
+            "cond": [
+              "CMP_EQ",
+              [
+                "var",
+                "a"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "var",
+                  "b"
+                ]
+              }
+            ]
+          },
+          {
+            "cond": [
+              "CMP_EQ",
+              [
+                "var",
+                "b"
+              ],
+              [
+                "int",
+                0
+              ]
+            ],
+            "else": [],
+            "k": "if",
+            "then": [
+              {
+                "k": "return",
+                "value": [
+                  "var",
+                  "a"
+                ]
+              }
+            ]
+          },
+          {
+            "body": [
+              {
+                "cond": [
+                  "CMP_GT",
+                  [
+                    "var",
+                    "a"
+                  ],
+                  [
+                    "var",
+                    "b"
+                  ]
+                ],
+                "else": [
+                  {
+                    "k": "assign",
+                    "target": "b",
+                    "value": [
+                      "SUB",
+                      [
+                        "var",
+                        "b"
+                      ],
+                      [
+                        "var",
+                        "a"
+                      ]
+                    ]
+                  }
+                ],
+                "k": "if",
+                "then": [
+                  {
+                    "k": "assign",
+                    "target": "a",
+                    "value": [
+                      "SUB",
+                      [
+                        "var",
+                        "a"
+                      ],
+                      [
+                        "var",
+                        "b"
+                      ]
+                    ]
+                  }
+                ]
+              }
+            ],
+            "cond": [
+              "CMP_NE",
+              [
+                "var",
+                "a"
+              ],
+              [
+                "var",
+                "b"
+              ]
+            ],
+            "k": "while"
+          },
+          {
+            "k": "return",
+            "value": [
+              "var",
+              "a"
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "reduce_ratio",
+        "params": [
+          {
+            "name": "a",
+            "type": "int"
+          },
+          {
+            "name": "b",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_reduce_ratio_b5a4c9710e3e",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/mathx.py",
+    "seed": 3132429613,
+    "source_sha256_12": "b5a4c9710e3e"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "a",
+        "type": "int"
+      },
+      {
+        "name": "b",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "reduce_ratio(a: int, b: int) -> int lifted from slowframework/mathx.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0
+      ],
+      "out": 0
+    },
+    {
+      "args": [
+        1,
+        1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -1,
+        -1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -50,
+        -50
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        50,
+        50
+      ],
+      "out": 50
+    },
+    {
+      "args": [
+        -28,
+        26
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -43,
+        37
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        26,
+        -43
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -19,
+        -30
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -19,
+        -21
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        7,
+        -46
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        2,
+        -24
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        23,
+        -45
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        27,
+        -17
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        23,
+        19
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -29,
+        46
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -34,
+        -4
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -11,
+        -42
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -28,
+        -21
+      ],
+      "out": 7
+    },
+    {
+      "args": [
+        -5,
+        -11
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        19,
+        2
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -23,
+        -11
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -38,
+        26
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        -49,
+        -1
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        47,
+        -3
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -21,
+        39
+      ],
+      "out": 3
+    },
+    {
+      "args": [
+        -11,
+        -17
+      ],
+      "out": 1
+    },
+    {
+      "args": [
+        -6,
+        4
+      ],
+      "out": 2
+    },
+    {
+      "args": [
+        9,
+        -25
+      ],
+      "out": 1
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3132429613
+    }
+  }
+}

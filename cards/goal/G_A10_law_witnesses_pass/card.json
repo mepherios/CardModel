@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "law_witnesses_failing",
+  "name": "G_A10_law_witnesses_pass",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Law cards whose witness test fails, errs or is missing in the self-run's latest law_witnesses step (CM20, CM38).",
+  "target": 0,
+  "tier": 0
+}

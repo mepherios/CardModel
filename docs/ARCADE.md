@@ -34,6 +34,10 @@ launchers, that installs builds of the game made by the card model and launches 
 ./bin/cardmodel arcade run gameboy_player --rom "path/to/game.zip"          # one of them, natively
 ```
 
+```bash
+./bin/cardmodel arcade check                     # every catalogue item launched through the store (CM42)
+```
+
 ## 1. What is a card here
 
 | card | holds |
@@ -188,7 +192,9 @@ guard only blocks (no HP through when aligned, posture taken); a slash that hits
 lands at 80 %, a slash that whiffs does not link, and a struck defender holding the high guard redirects the
 link (the string breaks); the boss changes phase at the card's share of health, at that phase's level and tempo,
 and fights on; the build's chunks reassemble its files exactly; the service serves catalog, manifest and chunks;
-the native package runs headless. `tests/test_game.py` holds the model side: GL9 and GL10 (and a planted loop and
+the native package runs headless; every catalogue item launches from the store (below); a headless run never writes
+the player's save; the launcher is pointed at the main checkout when installed from a worktree. `tests/test_game.py`
+holds the model side: GL9 and GL10 (and a planted loop and
 a planted true combo that they catch), and the duel tree (depth 1 is the exchange matrix, a mirror's states are
 worth exactly opposite values, a broken opponent takes the heaviest attack, linking after a hit is an option).
 
@@ -216,11 +222,24 @@ service) while the last good build stays installable.
 lifted player equals the plain one frame by frame, every instruction it runs (the HRAM routine, HALT, EI) runs as
 lifted card IR, and the app plays the cartridge from where it is and keeps what ran beside the save.
 
+**The store, end to end** (`cardmodel arcade check`, law CM42, goal G_S1, the self-run's `store` step): for every
+item in the release catalogue (the games, and the Game Boy Player, which plays a cartridge assembled from the
+instruction cards: never one of your ROMs), `arcade/client.py` does what `Launcher.swift` does, through the service
+on a free local port:
+asks for a build when the cards changed and waits for it, downloads every chunk and checks its SHA-256 and every
+file's, assembles and installs the files in a temporary library, verifies them, damages one file and repairs it
+(only that file is fetched again: the launcher's verify -> repair), runs the installed executable headless with its
+own save folder, and looks at the frame it drew (more than one colour). It also checks that the launcher's pages
+are served and name only API endpoints the service has; `--launcher` compiles the launcher. The player's
+installation in ~/Library/Application Support is never touched. What goes into the store, and what the model
+contributes to each piece, is docs/STORE.md.
+
 ## 7. Honest limits
 
 * macOS only (one platform card), built for this Mac's architecture, signed only ad hoc by the linker.
-* The launcher remembers this checkout's path to start the service: after moving the repository, run
-  `cardmodel arcade launcher --install` again.
+* The launcher remembers a checkout's path to start the service: after moving the repository, run
+  `cardmodel arcade launcher --install` again. Installed from a linked worktree, it points at the main checkout
+  (`--home` chooses another); the copy installed on 2026-10-21 still points at the worktree it was built in.
 * The game is a 480 x 270 software renderer with stick-figure fighters; the AIs' reflexes (reaction, accuracy,
   timing per level) are tuned by hand in `ai.card`; their choices come from the model (the equilibrium, the duel
   tree, the string mixes) or from the reader's counts.

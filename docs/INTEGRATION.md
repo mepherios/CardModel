@@ -36,11 +36,6 @@ quick verify and every self-run) checks the mechanical part.
    `~/Documents/rea-main`, `~/Programmering/ting`, `~/Programmering/rea-cards`, `~/Documents/AnyPS5-main`, the
    ROM folders). ROM bytes, firmware and keys are never copied into the repository.
 
-**Goal floors.** A goal's target is never quietly made easier: `cards/goal_floor/floors` records the hardest target
-each goal has been held to, and `cardmodel verify --only integrity` fails on a goal whose target asks less, unless
-the goal card carries an `amendment` {from, to, reason}. `python3 -B tools/goal_floors.py` records floors for new
-goals and raises them when a target gets stricter; it never lowers one except to record an amendment.
-
 ## 2. Number registry
 
 A law's number is its identity (LAWS.md is generated from the cards). Take the next free number here, and add the
@@ -54,7 +49,7 @@ range to this table in the same commit.
 | CM37–CM39 | main (self-run) | the core is never lost; the model runs itself; one program |
 | CM40 | cartridges (`claude/festive-margulis-43fde7`) | players are cards (written as CM36 on that branch, renumbered CM40 when it caught up with main) |
 | CM41 | main | projects keep their cards current |
-| CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`), announced | the store runs what it lists |
+| CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`) | the store runs what it lists (CM39 on that branch before the fold) |
 | CM43 | main (MATH_CORE phase 0) | primes are forever |
 | CM44 | main (MATH_CORE phase 1) | everything traces back to the four sources |
 | CM45–CM46 | main (the research handover's phase 0) | content is a sparse vector; every claim carries its tier |
@@ -62,8 +57,8 @@ range to this table in the same commit.
 | CM48 | universalization (`worktree-universal-domains`), reserved | "every domain is a Gödel set", written as CM45 on that branch; renumber before merging |
 | **CM49 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A9, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M5 (machines); reserved: G_M6 (main, MATH_CORE), G_S1 (self-running-improvement). The next free one is the axis's next number (G_A10, G_U10, G_C6, G_K7, G_M7, G_P6 ...).
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
+(AnyPS5), G_M1–M6 (machines), G_S1 (the store). The next free one is the axis's next number (G_A11, G_U10, G_C6, G_K7, G_M7, G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened
@@ -82,9 +77,9 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 | integrating session | `main`, the repository folder | kernel, engines, lang, emit, game, docs, the self-run (`engines/selfrun.py`, `capabilities.py`, `integrity.py`) | — |
 | cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 032dc88 (merge ab76427); still active (a Game Boy Player store entry) |
 | cardmodel-anyps5 | `claude/recursing-williams-ecc80a` | `cardmodel/anyps5`, `stdlib/ps5_*.card`, `cards/anyps5_*`, docs/ANYPS5*.md, tests/test_anyps.py, tools/seed_anyps5.py | up to 10c688f (merge 65a059c) |
-| model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | d4fb3c9 (merge 9469e58); 538f29c goes to main through the games branch |
+| model-the-dmg-oam-corrup | `claude/festive-margulis-43fde7` | the DMG OAM corruption bug (machine and hardware cards), then cartridges and players (538f29c) | up to 11284a6 (merge f25e82a): cartridges, players, per-cartridge apps, the lifter, the static pass, DS touch input |
 | game-boy-cgb-dmg-compati | `claude/strange-dewdney-f8f39d` | the CGB's DMG compatibility mode | 05178e1 (merge 7e4323a) |
-| self-running-improvement | `claude/jolly-liskov-2d97a8` | the same request as main's self-run, built in parallel (`cardmodel/cycle`, store inventory and launch checks); asked to build on `cardmodel self` | nothing yet (uncommitted when main's self-run landed) |
+| self-running-improvement | `claude/jolly-liskov-2d97a8` | folded into `cardmodel self`: the `law_witnesses`, `observe_self`, `store` and `tests` steps (`engines/selfrun.py`, `engines/witness_runner.py`), step deadlines (`kernel/resources.deadline`), the store's end-to-end check (`arcade/client.py`, `arcade check`, CM42, G_A10, G_S1), goal floors in the integrity check (§4a), fixes in translate, exprs, coverage and verify | up to 984fc7a (merged 2026-10-22 with the user's approval); its goal floors replaced main's dccedca |
 | fix-flaky-arena-test-dec | `claude/sharp-goldwasser-8b0d81` | the arena's triangular decoy | d9e2ba3 (merge 05c54ea) |
 | fix-flaky-numeric-check | `claude/brave-montalcini-19f1b8` | float rounding in the redefinition witness | 60e72ca (merge cf775f2) |
 
@@ -97,6 +92,20 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 * **Generated** (regenerate, never merge by hand): LAWS.md (`cardmodel docs`), COVERAGE.md
   (`cardmodel cover --write COVERAGE.md`), docs/ANYPS5_COVERAGE.md (`cardmodel anyps5 cover --write docs/ANYPS5_COVERAGE.md`),
   stdlib/algebra.card (`cardmodel algebra scan --write`), the `_pack_*.jsonl` card packs (their tools).
+
+## 4a. Goal floors
+
+A goal's target is a promise: lowering it quietly is a way to lose part of the core. `floor/goals` records the floor
+of every goal (the hardest target it has had, its metric and its direction). `cardmodel docs` writes it: a new goal
+or a harder target raises the floor; nothing else does. The integrity check (every quick verify and self-run) fails
+when a goal is easier than its floor, has another metric or direction, or has gone, unless the reason is written
+down:
+
+* to make a goal easier or change what it measures, give its card
+  `"amended": {"from": <the goal's entry in floor/goals>, "reason": "why"}`, then run `cardmodel docs`: the floor
+  moves to the new target and `floor/goals` keeps the change in its `history` (from, to, reason, date);
+* to retire a goal, add `{"goal": "G_...", "reason": "why", "date": "..."}` to `retired` in `floor/goals` before
+  removing its card; `cardmodel docs` then drops its floor.
 
 ## 4b. Project cards (law CM41)
 

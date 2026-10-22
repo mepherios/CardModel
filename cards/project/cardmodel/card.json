@@ -20,7 +20,7 @@
     "the live In progress page; law CM41; one store mechanism for work in progress (a5ed2d5)",
     "MATH_CORE phases 0 and 1; the research handover's storage rules (CM45), witness tiers (CM46), the formal core T1-T6",
     "Gödel method wave 1: difficulty census, code sizes and the GM-2 decision record, admissible numberings, Gödel's 46 definitions with a proof checker, arithmetized instruction terms",
-    "goal floors in integrity (dccedca)"
+    "the self-running-improvement merge (984fc7a): law witnesses, the store's end-to-end check (CM42), goal floors on floor/goals"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [],
@@ -31,8 +31,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "c30d1cdd1a1b8a3a7f38b4f30601ac6e24ec38d0b25ea516f9b94eccab6f3c4d",
-    "version": "2.0.12",
+    "previous_content_hash": "361792e15e3e463f0f680f7ec2ecc5bbb2e2c632bfce7725d269809215ccfdff",
+    "version": "2.0.13",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -76,16 +76,8 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T04:42:55+02:00",
+  "updated": "2026-10-22T04:50:55+02:00",
   "user_actions": [
-    {
-      "action": "Approve merging claude/jolly-liskov-2d97a8 (68e6a01): the second self-run folded into `cardmodel self`",
-      "unblocks": [
-        "law CM42 (the store runs what it lists)",
-        "goals G_A10 and G_S1"
-      ],
-      "why": "its session folded its loop into main's self-run (law witnesses, observe_self, the store client, CM42, G_A10, G_S1); the user decides the merge"
-    },
     {
       "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",
       "unblocks": [

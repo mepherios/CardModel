@@ -1,0 +1,444 @@
+{
+  "category": "observation",
+  "fallback_call_files": {
+    "<expression>": [
+      "online.py"
+    ],
+    "distance_sq": [
+      "game.py"
+    ],
+    "frame": [
+      "app.py"
+    ],
+    "game.damage": [
+      "app.py"
+    ],
+    "game.level_from_xp": [
+      "app.py"
+    ],
+    "hmac.new": [
+      "online.py"
+    ],
+    "mathx.wave_size": [
+      "app.py"
+    ],
+    "sign": [
+      "online.py"
+    ],
+    "sock.makefile": [
+      "online.py"
+    ],
+    "sock.sendall": [
+      "online.py"
+    ],
+    "socket.create_connection": [
+      "online.py"
+    ],
+    "wave_size": [
+      "mathx.py"
+    ],
+    "xp_for_level": [
+      "game.py"
+    ]
+  },
+  "fallback_calls_by_language": {
+    "python": {
+      "<expression>": 7,
+      "distance_sq": 1,
+      "frame": 1,
+      "game.damage": 1,
+      "game.level_from_xp": 1,
+      "hmac.new": 1,
+      "mathx.wave_size": 1,
+      "sign": 1,
+      "sock.makefile": 2,
+      "sock.sendall": 2,
+      "socket.create_connection": 1,
+      "wave_size": 2,
+      "xp_for_level": 1
+    }
+  },
+  "files": [
+    {
+      "cards": 0,
+      "language": "python",
+      "lines": 6,
+      "named": 0,
+      "path": "__init__.py",
+      "sha256_12": "f18c695c5a20",
+      "top": {}
+    },
+    {
+      "cards": 17,
+      "language": "python",
+      "lines": 17,
+      "named": 10,
+      "path": "app.py",
+      "sha256_12": "3f5aa7f4d78a",
+      "top": {
+        "ATTR": 3,
+        "BUILTIN_PRINT": 1,
+        "BUILTIN_RANGE": 1,
+        "CALL_GENERIC": 4,
+        "CMP_EQ": 1,
+        "MIN": 1,
+        "SUBSCRIPT_STR": 6
+      }
+    },
+    {
+      "cards": 46,
+      "language": "python",
+      "lines": 66,
+      "named": 44,
+      "path": "game.py",
+      "sha256_12": "3e96535663b3",
+      "top": {
+        "ADD": 6,
+        "BUILTIN_RANGE": 4,
+        "CMP_LE": 3,
+        "CONST_POW": 4,
+        "MUL": 5,
+        "MULADD": 6,
+        "SQUARE": 5,
+        "SUB": 4
+      }
+    },
+    {
+      "cards": 70,
+      "language": "python",
+      "lines": 126,
+      "named": 68,
+      "path": "mathx.py",
+      "sha256_12": "8385ad1241eb",
+      "top": {
+        "ABS": 5,
+        "ADD": 9,
+        "BUILTIN_RANGE": 8,
+        "CMP_EQ": 8,
+        "CMP_LT": 4,
+        "CMP_NE": 4,
+        "MOD": 8,
+        "SUB": 5
+      }
+    },
+    {
+      "cards": 51,
+      "language": "python",
+      "lines": 32,
+      "named": 14,
+      "path": "online.py",
+      "sha256_12": "71e5f8645934",
+      "top": {
+        "ADD": 2,
+        "ATTR": 23,
+        "CALL_GENERIC": 14,
+        "CALL_METHOD_ENCODE": 2,
+        "JSON_DUMPS_CALL": 3,
+        "JSON_LOADS_CALL": 2,
+        "SUBSCRIPT_STR": 3,
+        "TIME_NOW": 1
+      }
+    }
+  ],
+  "functions": [
+    {
+      "file": "app.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 5,
+      "name": "frame",
+      "reasons": [
+        "line 6: augmented assignment to \"state['xp']\""
+      ]
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 4,
+      "name": "xp_for_level",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 12,
+      "name": "level_from_xp",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 19,
+      "name": "combo_bonus",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 29,
+      "name": "damage",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 38,
+      "name": "distance_sq",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 42,
+      "name": "in_range",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 46,
+      "name": "tiles_in_circle",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 56,
+      "name": "next_seed",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 60,
+      "name": "trajectory_y",
+      "reasons": []
+    },
+    {
+      "file": "game.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 64,
+      "name": "lerp",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 4,
+      "name": "wave_size",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 11,
+      "name": "total_points",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 18,
+      "name": "is_prime_level",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 27,
+      "name": "reduce_ratio",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 43,
+      "name": "common_period",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 55,
+      "name": "int_power",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 62,
+      "name": "checksum_pow",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 69,
+      "name": "isqrt_slow",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 76,
+      "name": "set_bits",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 84,
+      "name": "is_texture_size",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 92,
+      "name": "divisor_sum",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 102,
+      "name": "digit_root",
+      "reasons": []
+    },
+    {
+      "file": "mathx.py",
+      "inferred_types": false,
+      "liftable": true,
+      "line": 113,
+      "name": "choose",
+      "reasons": []
+    },
+    {
+      "file": "online.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 12,
+      "name": "login",
+      "reasons": [
+        "line 13: keyword arguments in call"
+      ]
+    },
+    {
+      "file": "online.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 20,
+      "name": "sign",
+      "reasons": [
+        "line 21: call to hmac.new(session_key.encode(), json.dumps(payload, sort_keys=True).encode(), hashlib.sha256).hexdigest() (no op card or lifted function)"
+      ]
+    },
+    {
+      "file": "online.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 24,
+      "name": "send_state",
+      "reasons": [
+        "line 25: expression Dict"
+      ]
+    },
+    {
+      "file": "online.py",
+      "inferred_types": true,
+      "liftable": false,
+      "line": 30,
+      "name": "receive",
+      "reasons": [
+        "line 31: call to sock.makefile().readline() (no op card or lifted function)"
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "obs_2f10a6599769ebb1",
+  "observed_at": "2026-10-21T21:53:46+00:00",
+  "provenance": {
+    "method": "ast (python) + token-level (others)",
+    "tool": "cardmodel observe"
+  },
+  "root": "slowframework",
+  "tier": 3,
+  "top_cards": {
+    "ABS": 5,
+    "ADD": 17,
+    "ATTR": 26,
+    "BUILTIN_PRINT": 1,
+    "BUILTIN_RANGE": 13,
+    "CALL_GENERIC": 22,
+    "CALL_METHOD_ENCODE": 2,
+    "CMP_EQ": 9,
+    "CMP_GT": 3,
+    "CMP_LE": 5,
+    "CMP_LT": 5,
+    "CMP_NE": 4,
+    "CONST_MUL_POW2": 2,
+    "CONST_POW": 4,
+    "FLOORDIV": 3,
+    "JSON_DUMPS_CALL": 3,
+    "JSON_LOADS_CALL": 2,
+    "MOD": 9,
+    "MUL": 7,
+    "MULADD": 6,
+    "NEG": 2,
+    "OR": 3,
+    "SQUARE": 6,
+    "SUB": 9,
+    "SUBSCRIPT_STR": 9
+  },
+  "top_fallback_calls": {
+    "<expression>": 7,
+    "distance_sq": 1,
+    "frame": 1,
+    "game.damage": 1,
+    "game.level_from_xp": 1,
+    "hmac.new": 1,
+    "mathx.wave_size": 1,
+    "sign": 1,
+    "sock.makefile": 2,
+    "sock.sendall": 2,
+    "socket.create_connection": 1,
+    "wave_size": 2,
+    "xp_for_level": 1
+  },
+  "totals": {
+    "by_language": {
+      "python": 5
+    },
+    "cards_fired": 184,
+    "files": 5,
+    "functions": 28,
+    "functions_liftable": 23,
+    "named": 136,
+    "named_calls_and_ops": 127,
+    "named_fraction": 0.7391
+  }
+}

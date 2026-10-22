@@ -1,0 +1,738 @@
+{
+  "category": "function",
+  "depends_on": [
+    "op/ADD",
+    "op/CMP_LE",
+    "op/MUL",
+    "op/POW",
+    "op/SUB"
+  ],
+  "emit_gaps": {},
+  "forms": [
+    {
+      "code": "import math\n\ndef in_range(x1: int, y1: int, x2: int, y2: int, radius: int) -> bool:\n    return distance_sq(x1, y1, x2, y2) <= radius * radius\n\ndef distance_sq(x1: int, y1: int, x2: int, y2: int) -> int:\n    return (x2 - x1) ** 2 + (y2 - y1) ** 2",
+      "cost": 1.0,
+      "entry": "in_range",
+      "lang": "python",
+      "name": "python_source",
+      "notes": "the observed original",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_ipow(int64_t a, int64_t b) { int64_t r = 1; while (b > 0) { if (b & 1) r *= a; b >>= 1; if (b) a *= a; } return r; }\nstatic bool in_range(int64_t x1, int64_t y1_cm, int64_t x2, int64_t y2, int64_t radius);\nstatic int64_t distance_sq(int64_t x1, int64_t y1_cm, int64_t x2, int64_t y2);\n\nstatic int64_t distance_sq(int64_t x1, int64_t y1_cm, int64_t x2, int64_t y2) {\n    return (cm_ipow((x2 - x1), INT64_C(2)) + cm_ipow((y2 - y1_cm), INT64_C(2)));\n}\n\nstatic bool in_range(int64_t x1, int64_t y1_cm, int64_t x2, int64_t y2, int64_t radius) {\n    return (distance_sq(x1, y1_cm, x2, y2) <= (radius * radius));\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "c",
+      "name": "c",
+      "runnable": true
+    },
+    {
+      "code": "package cardmodel\n\nimport (\n)\n\nfunc cm_ipow(a int64, b int64) int64 {\n\tvar r int64 = 1\n\tfor b > 0 {\n\t\tif b&1 == 1 {\n\t\t\tr *= a\n\t\t}\n\t\tb >>= 1\n\t\tif b > 0 {\n\t\t\ta *= a\n\t\t}\n\t}\n\treturn r\n}\nfunc distance_sq(x1 int64, y1 int64, x2 int64, y2 int64) int64 {\n\treturn (cm_ipow((x2 - x1), int64(2)) + cm_ipow((y2 - y1), int64(2)))\n}\n\nfunc in_range(x1 int64, y1 int64, x2 int64, y2 int64, radius int64) bool {\n\treturn (distance_sq(x1, y1, x2, y2) <= (radius * radius))\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "go",
+      "name": "go",
+      "runnable": true
+    },
+    {
+      "code": "function distance_sq(x1, y1, x2, y2) {\n    return (((x2 - x1) ** (2n)) + ((y2 - y1) ** (2n)));\n}\n\nfunction in_range(x1, y1, x2, y2, radius) {\n    return (distance_sq(x1, y1, x2, y2) <= (radius * radius));\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "javascript",
+      "name": "javascript",
+      "runnable": true
+    },
+    {
+      "code": "def distance_sq(x1: int, y1: int, x2: int, y2: int) -> int:\n    return (((x2 - x1) ** 2) + ((y2 - y1) ** 2))\n\n\ndef in_range(x1: int, y1: int, x2: int, y2: int, radius: int) -> bool:\n    return (distance_sq(x1, y1, x2, y2) <= (radius * radius))\n\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "python",
+      "name": "python",
+      "runnable": true
+    },
+    {
+      "code": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n\nfn cm_ipow(a: i64, b: i64) -> i64 { let mut r: i64 = 1; let mut a = a; let mut b = b; while b > 0 { if (b & 1) == 1 { r = r.wrapping_mul(a); } b >>= 1; if b > 0 { a = a.wrapping_mul(a); } } r }\nfn distance_sq(x1: i64, y1: i64, x2: i64, y2: i64) -> i64 {\n    return (cm_ipow((x2 - x1), (2i64)) + cm_ipow((y2 - y1), (2i64)));\n}\n\nfn in_range(x1: i64, y1: i64, x2: i64, y2: i64, radius: i64) -> bool {\n    return (distance_sq(x1, y1, x2, y2) <= (radius * radius));\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "rust",
+      "name": "rust",
+      "runnable": true
+    },
+    {
+      "code": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n\nstatic int64_t cm_ipow(int64_t a, int64_t b) { int64_t r = 1; while (b > 0) { if (b & 1) r *= a; b >>= 1; if (b) a *= a; } return r; }\nstatic bool in_range(int64_t x1, int64_t y1, int64_t x2, int64_t y2, int64_t radius);\nstatic int64_t distance_sq(int64_t x1, int64_t y1, int64_t x2, int64_t y2);\n\nstatic int64_t distance_sq(int64_t x1, int64_t y1, int64_t x2, int64_t y2) {\n    return (cm_ipow((x2 - x1), INT64_C(2)) + cm_ipow((y2 - y1), INT64_C(2)));\n}\n\nstatic bool in_range(int64_t x1, int64_t y1, int64_t x2, int64_t y2, int64_t radius) {\n    return (distance_sq(x1, y1, x2, y2) <= (radius * radius));\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "cpp",
+      "name": "cpp",
+      "runnable": true
+    },
+    {
+      "code": "public class CardModule {\n    static long cm_ipow(long a, long b) { long r = 1; while (b > 0) { if ((b & 1) == 1) r *= a; b >>= 1; if (b > 0) a *= a; } return r; }\n    static long distance_sq(long x1, long y1, long x2, long y2) {\n    return (cm_ipow((x2 - x1), (2L)) + cm_ipow((y2 - y1), (2L)));\n    }\n\n    static boolean in_range(long x1, long y1, long x2, long y2, long radius) {\n    return (distance_sq(x1, y1, x2, y2) <= (radius * radius));\n    }\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "java",
+      "name": "java",
+      "runnable": true
+    },
+    {
+      "code": "namespace CM\n\npartial def distance_sq (x1 : Int) (y1 : Int) (x2 : Int) (y2 : Int) : Int := Id.run do\n  return (((x2 - x1) ^ ((2 : Int)).toNat) + ((y2 - y1) ^ ((2 : Int)).toNat))\n\n\npartial def in_range (x1 : Int) (y1 : Int) (x2 : Int) (y2 : Int) (radius : Int) : Bool := Id.run do\n  return (decide ((distance_sq x1 y1 x2 y2) <= (radius * radius)))\n\nend CM\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "lean",
+      "name": "lean",
+      "runnable": true
+    },
+    {
+      "code": "function cm_ipow(a, b)\n  local r = 1\n  while b > 0 do\n    if b % 2 == 1 then r = r * a end\n    b = b // 2\n    if b > 0 then a = a * a end\n  end\n  return r\nend\nfunction distance_sq(x1, y1, x2, y2)\n  return (cm_ipow((x2 - x1), (2)) + cm_ipow((y2 - y1), (2)))\nend\n\nfunction in_range(x1, y1, x2, y2, radius)\n  return (distance_sq(x1, y1, x2, y2) <= (radius * radius))\nend\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "lua",
+      "name": "lua",
+      "runnable": true
+    },
+    {
+      "code": "def distance_sq(x1, y1, x2, y2)\n  return (((x2 - x1) ** (2)) + ((y2 - y1) ** (2)))\nend\n\ndef in_range(x1, y1, x2, y2, radius)\n  return (distance_sq(x1, y1, x2, y2) <= (radius * radius))\nend\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "ruby",
+      "name": "ruby",
+      "runnable": true
+    },
+    {
+      "code": "import Foundation\n\nfunc cm_ipow(_ a0: Int, _ b0: Int) -> Int { var r = 1; var a = a0; var b = b0; while b > 0 { if (b & 1) == 1 { r = r &* a }; b >>= 1; if b > 0 { a = a &* a } }; return r }\nfunc distance_sq(_ x1: Int, _ y1: Int, _ x2: Int, _ y2: Int) -> Int {\n    return (cm_ipow((x2 - x1), (2)) + cm_ipow((y2 - y1), (2)))\n}\n\nfunc in_range(_ x1: Int, _ y1: Int, _ x2: Int, _ y2: Int, _ radius: Int) -> Bool {\n    return (distance_sq(x1, y1, x2, y2) <= (radius * radius))\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "swift",
+      "name": "swift",
+      "runnable": true
+    },
+    {
+      "code": "function distance_sq(x1: bigint, y1: bigint, x2: bigint, y2: bigint): bigint {\n    return (((x2 - x1) ** (2n)) + ((y2 - y1) ** (2n)));\n}\n\nfunction in_range(x1: bigint, y1: bigint, x2: bigint, y2: bigint, radius: bigint): boolean {\n    return (distance_sq(x1, y1, x2, y2) <= (radius * radius));\n}\n",
+      "cost": 1.0,
+      "entry": "in_range",
+      "generated": true,
+      "lang": "typescript",
+      "name": "typescript",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    },
+    {
+      "int": [
+        -50,
+        50
+      ]
+    }
+  ],
+  "ir": {
+    "entry": "in_range",
+    "functions": [
+      {
+        "body": [
+          {
+            "k": "return",
+            "value": [
+              "CMP_LE",
+              [
+                "CALL",
+                "distance_sq",
+                [
+                  "var",
+                  "x1"
+                ],
+                [
+                  "var",
+                  "y1"
+                ],
+                [
+                  "var",
+                  "x2"
+                ],
+                [
+                  "var",
+                  "y2"
+                ]
+              ],
+              [
+                "MUL",
+                [
+                  "var",
+                  "radius"
+                ],
+                [
+                  "var",
+                  "radius"
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "in_range",
+        "params": [
+          {
+            "name": "x1",
+            "type": "int"
+          },
+          {
+            "name": "y1",
+            "type": "int"
+          },
+          {
+            "name": "x2",
+            "type": "int"
+          },
+          {
+            "name": "y2",
+            "type": "int"
+          },
+          {
+            "name": "radius",
+            "type": "int"
+          }
+        ],
+        "returns": "bool"
+      },
+      {
+        "body": [
+          {
+            "k": "return",
+            "value": [
+              "ADD",
+              [
+                "POW",
+                [
+                  "SUB",
+                  [
+                    "var",
+                    "x2"
+                  ],
+                  [
+                    "var",
+                    "x1"
+                  ]
+                ],
+                [
+                  "int",
+                  2
+                ]
+              ],
+              [
+                "POW",
+                [
+                  "SUB",
+                  [
+                    "var",
+                    "y2"
+                  ],
+                  [
+                    "var",
+                    "y1"
+                  ]
+                ],
+                [
+                  "int",
+                  2
+                ]
+              ]
+            ]
+          }
+        ],
+        "locals": {},
+        "name": "distance_sq",
+        "params": [
+          {
+            "name": "x1",
+            "type": "int"
+          },
+          {
+            "name": "y1",
+            "type": "int"
+          },
+          {
+            "name": "x2",
+            "type": "int"
+          },
+          {
+            "name": "y2",
+            "type": "int"
+          }
+        ],
+        "returns": "int"
+      }
+    ]
+  },
+  "metadata": {
+    "agreeing_languages": [
+      "python_source",
+      "c",
+      "cpp",
+      "go",
+      "java",
+      "javascript",
+      "lean",
+      "lua",
+      "python",
+      "ruby",
+      "rust",
+      "swift",
+      "typescript"
+    ],
+    "confidence": "established",
+    "evidence_count": 45,
+    "learned": true,
+    "version": "1.0.0"
+  },
+  "name": "fn_in_range_3a061e74671e",
+  "provenance": {
+    "learning_loop_refs": [
+      "observation/obs_2f10a6599769ebb1"
+    ],
+    "origin": "slowframework/game.py",
+    "seed": 3558831672,
+    "source_sha256_12": "3a061e74671e"
+  },
+  "signature": {
+    "params": [
+      {
+        "name": "x1",
+        "type": "int"
+      },
+      {
+        "name": "y1",
+        "type": "int"
+      },
+      {
+        "name": "x2",
+        "type": "int"
+      },
+      {
+        "name": "y2",
+        "type": "int"
+      },
+      {
+        "name": "radius",
+        "type": "int"
+      }
+    ],
+    "returns": "bool"
+  },
+  "statement": "in_range(x1: int, y1: int, x2: int, y2: int, radius: int) -> bool lifted from slowframework/game.py",
+  "status": "healthy",
+  "tier": 2,
+  "vectors": [
+    {
+      "args": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        -50,
+        -50,
+        -50,
+        -50,
+        -50
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        50,
+        50,
+        50,
+        50,
+        50
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        26,
+        39,
+        21,
+        37,
+        33
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        -8,
+        -43,
+        30,
+        -36,
+        29
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -38,
+        -4,
+        33,
+        -29,
+        -25
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -39,
+        -24,
+        2,
+        -18,
+        16
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        11,
+        -19,
+        13,
+        -23,
+        -13
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        -35,
+        39,
+        19,
+        22,
+        36
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        38,
+        4,
+        -6,
+        -21,
+        -12
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -32,
+        -2,
+        -38,
+        45,
+        -13
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        8,
+        -40,
+        28,
+        -20,
+        24
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        24,
+        -23,
+        16,
+        -24,
+        -36
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        16,
+        -42,
+        46,
+        35,
+        31
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -9,
+        33,
+        -19,
+        46,
+        4
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -3,
+        38,
+        28,
+        3,
+        41
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -45,
+        33,
+        -6,
+        40,
+        36
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        40,
+        -37,
+        1,
+        -5,
+        47
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        28,
+        28,
+        -7,
+        10,
+        -1
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -41,
+        -39,
+        -2,
+        -8,
+        5
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -23,
+        34,
+        2,
+        -11,
+        1
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        -1,
+        -39,
+        -12,
+        -50,
+        -37
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        -42,
+        29,
+        -35,
+        31,
+        -18
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        9,
+        -16,
+        26,
+        -20,
+        8
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        39,
+        20,
+        12,
+        22,
+        -47
+      ],
+      "out": true
+    },
+    {
+      "args": [
+        10,
+        6,
+        45,
+        4,
+        -6
+      ],
+      "out": false
+    },
+    {
+      "args": [
+        2,
+        -9,
+        -37,
+        -27,
+        -5
+      ],
+      "out": false
+    }
+  ],
+  "verification": {
+    "languages": {
+      "c": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "cpp": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "go": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "java": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "javascript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lean": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "lua": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "python": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "ruby": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "rust": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "swift": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      },
+      "typescript": {
+        "checks": 45,
+        "out_of_width": 0,
+        "status": "pass"
+      }
+    },
+    "lift_fidelity": {
+      "checked": 29,
+      "mismatched": 0
+    },
+    "run": {
+      "agreeing_languages": [
+        "python_source",
+        "c",
+        "cpp",
+        "go",
+        "java",
+        "javascript",
+        "lean",
+        "lua",
+        "python",
+        "ruby",
+        "rust",
+        "swift",
+        "typescript"
+      ],
+      "inputs": 45,
+      "lift_mismatches": 0,
+      "seed": 3558831672
+    }
+  }
+}
