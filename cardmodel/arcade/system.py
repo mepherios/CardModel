@@ -92,6 +92,13 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
     for text, label in srcs:
         h.update(label.encode() + b"\0" + text.encode() + b"\0")
     h.update(json.dumps(externs, sort_keys=True).encode())
+    # the data of every card the module reads `card.` constants from (the machine's components, the machine, the
+    # system and its tables card), as machine/build.py keys its own: a changed constant is a new module
+    mc = ctx.store.get(f"machine/{card['machine']}") or {}
+    for comp in [*(mc.get("components") or []), f"machine/{card['machine']}", card.qualified,
+                 *([card["tables"]] if card.get("tables") else [])]:
+        h.update(json.dumps(ctx.store.get(comp if "/" in comp else f"hardware/{comp}"), sort_keys=True,
+                            default=str).encode())
     h.update(Path(__file__).read_bytes())
     h.update(Path(Bd.__file__).read_bytes())
     key = h.hexdigest()[:20]
