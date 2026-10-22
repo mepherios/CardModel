@@ -2,6 +2,9 @@
 
 Checks, each cheap and read-only:
   identifiers   law numbers (CMnn) and goal ids (G_Xn) are unique; a law's number is its identity
+  floors        no goal's target is easier than its recorded floor (cards/goal_floor, the hardest target accepted)
+                unless the goal card carries an amendment {from, to, reason}; tools/goal_floors.py records the
+                floors, raising each when its target got stricter and never lowering one by itself
   carried       every law is carried by a capability card, and every capability's laws, tests and docs exist
   documented    every command the CLI registers is in its help, every verify section is in verify's docstring,
                 every docs/*.md file is linked from README.md
@@ -27,6 +30,34 @@ MARKERS = re.compile(r"^(<{7}|={7}|>{7})( |$)", re.M)
 PUBLISHING = re.compile(r"git\"?,?\s*\"?pu[s]h|\bgh\s+(pr|repo|gist)|twin[e] upload|np[m] publish")
 LAW_ID = re.compile(r"^(CM\d{2})_[a-z0-9_]+$")
 GOAL_ID = re.compile(r"^(G_[A-Z]+\d+)_[a-z0-9_]+$")
+
+
+def easier(target, floor: dict, direction) -> bool:
+    """Whether ``target`` asks less than the floor: a lower bar for a 'higher' goal, a higher one for 'lower', any
+    change for 'equal', or a changed direction."""
+    if direction != floor.get("direction"):
+        return True
+    f = floor.get("target")
+    if not isinstance(target, (int, float)) or not isinstance(f, (int, float)):
+        return target != f
+    return target < f if direction == "higher" else target > f if direction == "lower" else target != f
+
+
+def floor_problems(goals, store) -> list[str]:
+    """A goal made easier than its floor, without an amendment saying from what, to what and why."""
+    floors = ((store.get("goal_floor/floors") or {}).get("floors")) or {}
+    out = []
+    for g in goals:
+        f = floors.get(g.name)
+        if not f or not easier(g.get("target"), f, g.get("direction")):
+            continue
+        am = g.get("amendment") or {}
+        if am.get("from") == f.get("target") and am.get("to") == g.get("target") and am.get("reason"):
+            continue
+        out.append(f"goal {g.name}: target {g.get('target')} ({g.get('direction')}) is easier than its floor "
+                   f"{f.get('target')} ({f.get('direction')}); lowering a goal needs an amendment "
+                   f"{{from, to, reason}} on its card")
+    return out
 
 
 def program_files(home: Path | None = None) -> list[Path]:
@@ -80,6 +111,7 @@ def check(ctx) -> dict:
         if m.group(1) in gseen:
             problems.append(f"goal id {m.group(1)} is used twice: {gseen[m.group(1)]} and {g.name}")
         gseen[m.group(1)] = g.name
+    problems += floor_problems(goals, st)
 
     caps = st.cards("capability")
     carried = {law for c in caps for law in c.get("laws") or []}

@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/goal_floors.py",
+  "description": "The hardest target each goal has been held to: integrity fails on a goal made easier without an amendment.",
+  "name": "goal_floor",
+  "tier": 0
+}
