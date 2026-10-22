@@ -7,8 +7,14 @@
 --   reader       counts which vector features you lean on (decaying), attacks where you do not guard,
 --                pre-guards where you attack, and mixes in the equilibrium a quarter of the time
 --   equilibrium  samples the exact equilibrium the model computed for this pair and distance (eq_w)
---   boss         the reader with sharper reactions and timing
+--   tree         the duel tree: samples the policy the model computed by backward induction several exchanges
+--                deep (tree_w), for its fighter, the opponent's, the distance, the frame advantage and both
+--                postures; it still reads tells to guard
+--   boss         the game card's phases: each names the kind it plays, its level and its strings
 --   dummy        training: what the training options say
+-- Strings: when an attack of theirs connects, each kind decides whether to cancel into a link (a chain card)
+-- and which: habit always the same, greedy on a clean hit, the reader where you guard least, the
+-- equilibrium and the tree from the string mixes the model computed (ch_w).
 const AI_THINK = 9
 const READ_DECAY = 230
 const READ_ONE = 256
@@ -21,6 +27,9 @@ array ai_raise_at: Int[2]      -- duel frame to raise it at
 array ai_reacted: Int[2]       -- the opponent's move this AI has already reacted to (its start frame)
 array ai_level: Int[2]
 array ai_walk: Int[2]
+array ai_link_key: Int[2]      -- the attack (its start frame) the string decision was made for
+array ai_link_c: Int[2]        -- the link chosen for it (-1: let it recover)
+array ai_link_at: Int[2]       -- the frame of its recovery to press the link on
 -- what the reader has seen of the human (fighter index 0 normally): per direction 0..8 attacks and guards
 array rd_att: Int[18]
 array rd_grd: Int[18]
@@ -46,6 +55,9 @@ fn ai_round_setup() {
     ai_raise_at[i] = -1
     ai_reacted[i] = -1
     ai_walk[i] = 0
+    ai_link_key[i] = -1
+    ai_link_c[i] = -1
+    ai_link_at[i] = 0
   }
 }
 -- observer i saw the other start move m: the reader keeps a decaying count per feature
@@ -269,6 +281,65 @@ fn eq_move(i: Int) -> Int {
   return -1
 }
 
+-- the duel tree: the abstract state the model solved, seen by fighter i -------------------------------------------
+-- frames i is ahead if it starts now: the other's stun or recovery left, minus how long its tell has been up
+fn adv_of(i: Int) -> Int {
+  let j = other(i)
+  if f_stun[j] > 0 {
+    return f_stun[j]
+  }
+  let m = f_move[j]
+  if m < 0 {
+    return 0
+  }
+  if attacking(j) and f_t[j] < f_start[j] {
+    return -f_t[j]
+  }
+  if mv_kind[m] == K_GUARD {
+    return 0
+  }
+  return f_len[j] - f_t[j]
+}
+fn adv_bucket(a: Int) -> Int {
+  var b = 0
+  for k in 0 .. N_ADV - 1 {
+    if adv_cut[k] < a {
+      b += 1
+    }
+  }
+  return b
+}
+-- open with low posture 0, open with high posture 1, recoil 2, broken 3
+fn status_of(i: Int) -> Int {
+  if f_stance[i] == ST_BROKEN {
+    return 3
+  }
+  if f_stance[i] == ST_RECOIL {
+    return 2
+  }
+  return if f_post[i] * 2 >= f_postmax[i] then 1 else 0
+}
+fn tree_state(i: Int) -> Int = ((band() * N_ADV + adv_bucket(adv_of(i))) * 4 + status_of(i)) * 4 + status_of(other(i))
+-- a move from the tree's equilibrium mix at this state
+fn tree_move(i: Int) -> Int {
+  let base = ((f_ft[i] * N_FIGHTERS + f_ft[other(i)]) * N_TS + tree_state(i)) * N_MOVES
+  var total = 0
+  for m in 0 .. N_MOVES {
+    total += tree_w[base + m]
+  }
+  if total <= 0 {
+    return -1
+  }
+  var r = rnd(total)
+  for m in 0 .. N_MOVES {
+    r -= tree_w[base + m]
+    if r < 0 {
+      return m
+    }
+  }
+  return -1
+}
+
 -- react to the other's tell: a guard toward what it shows (right with the AI's accuracy), raised so that it is
 -- up a few frames before the impact (perfect with the AI's timing), or an evade that slips it
 fn react(i: Int) {
@@ -339,7 +410,8 @@ fn react(i: Int) {
   ai_guard_until[i] = impact_at + 8
 }
 
-fn ai_kind(i: Int) -> Int = f_ctl[i]
+-- the boss plays the kind its current phase names
+fn ai_kind(i: Int) -> Int = if f_ctl[i] == AI_BOSS then ph_ai[boss_phase] else f_ctl[i]
 
 fn ai_offense(i: Int) -> Int {
   let j = other(i)
@@ -373,6 +445,14 @@ fn ai_offense(i: Int) -> Int {
   if kind == AI_EQUILIBRIUM {
     return eq_move(i)
   }
+  if kind == AI_TREE {
+    -- a lower level sometimes plays a plain attack instead of the tree's answer
+    let r_slip = rnd(100)
+    if r_slip < max(0, 30 - ai_level[i] * 4 - difficulty * 6) {
+      return attack_in_reach(i, NO_DIR)
+    }
+    return tree_move(i)
+  }
   if kind == AI_READER or kind == AI_BOSS {
     if rnd(100) < 25 {
       return eq_move(i)
@@ -405,6 +485,143 @@ fn ai_offense(i: Int) -> Int {
   return attack_in_reach(i, NO_DIR)
 }
 
+-- strings -----------------------------------------------------------------------------------------------------------
+fn ai_max_links(i: Int) -> Int {
+  if f_ctl[i] == AI_BOSS {
+    return ph_links[boss_phase]
+  }
+  if f_ctl[i] == AI_DUMMY {
+    return if dummy_mode == 3 then 2 else 0
+  }
+  let kind = ai_kind(i)
+  if kind == AI_READER {
+    return if ai_level[i] >= 5 then 2 else 1
+  }
+  if kind == AI_EQUILIBRIUM or kind == AI_TREE {
+    return 2
+  }
+  return 1
+}
+-- how often (%) a kind continues a string at all
+fn ai_string_chance(i: Int) -> Int {
+  if f_ctl[i] == AI_BOSS {
+    return ph_strings[boss_phase]
+  }
+  let kind = ai_kind(i)
+  if kind == AI_HABIT {
+    return 70
+  }
+  if kind == AI_GREEDY {
+    return if f_conn[i] == 0 then 100 else 0
+  }
+  if kind == AI_DUMMY {
+    return 100
+  }
+  return min(95, 25 + ai_level[i] * 8 + difficulty * 5)
+}
+-- link c can follow attack m now (the fighter has it, the outcome allows it, the stamina pays for it)
+fn link_ok(i: Int, m: Int, c: Int) -> Bool {
+  if ch_from[c] != m or not has_move(i, ch_to[c]) {
+    return false
+  }
+  return ((ch_on[c] >> f_conn[i]) & 1) != 0 and f_stam[i] >= mv_stamina[ch_to[c]]
+}
+-- the link whose vector the other guards least
+fn least_guarded_link(i: Int, m: Int) -> Int {
+  var best = -1
+  var bv = 1 << 30
+  for c in 0 .. N_CHAINS {
+    if link_ok(i, m, c) {
+      let g = guard_share(i, min(8, mv_dir[ch_to[c]])) * 4 + rnd(4)
+      if g < bv {
+        bv = g
+        best = c
+      }
+    }
+  }
+  return best
+}
+-- the model's string mix for this pair, link, outcome and distance: weights out of EQ_SCALE, the rest is "stop"
+fn table_link(i: Int, m: Int) -> Int {
+  let pair = f_ft[i] * N_FIGHTERS + f_ft[other(i)]
+  let o = if f_conn[i] == 0 then 0 else 1
+  var r = rnd(EQ_SCALE)
+  for c in 0 .. N_CHAINS {
+    if link_ok(i, m, c) {
+      r -= ch_w[((pair * N_CHAINS + c) * 2 + o) * 3 + band()]
+      if r < 0 {
+        return c
+      }
+    }
+  }
+  return -1
+}
+fn ai_choose_link(i: Int, m: Int) -> Int {
+  if f_links[i] >= ai_max_links(i) {
+    return -1
+  }
+  var n = 0
+  for c in 0 .. N_CHAINS {
+    if link_ok(i, m, c) {
+      n += 1
+    }
+  }
+  if n == 0 {
+    return -1
+  }
+  let kind = ai_kind(i)
+  let r_go = rnd(100)
+  let r_pick = rnd(n)
+  if kind == AI_EQUILIBRIUM or kind == AI_TREE {
+    if r_go < ai_string_chance(i) + 20 {
+      return table_link(i, m)
+    }
+    return -1
+  }
+  if r_go >= ai_string_chance(i) {
+    return -1
+  }
+  if kind == AI_READER {
+    return least_guarded_link(i, m)
+  }
+  -- habit: always its first link; the others any
+  var k = if kind == AI_HABIT then 0 else r_pick
+  for c in 0 .. N_CHAINS {
+    if link_ok(i, m, c) {
+      if k == 0 {
+        return c
+      }
+      k -= 1
+    }
+  }
+  return -1
+}
+-- the buttons for a string this frame: decided once per connected attack, pressed on a frame of the window
+-- (a varied delay is part of the mixup)
+fn ai_string_bits(i: Int) -> Int {
+  let m = f_move[i]
+  if m < 0 or f_stun[i] > 0 {
+    return 0
+  }
+  if mv_kind[m] != K_ATTACK or f_conn[i] < 0 or f_t[i] < f_start[i] + mv_active[m] {
+    return 0
+  }
+  let key = duel_t - f_t[i]
+  if ai_link_key[i] != key {
+    ai_link_key[i] = key
+    let c = ai_choose_link(i, m)
+    ai_link_c[i] = c
+    if c >= 0 {
+      ai_link_at[i] = ch_lo[c] + rnd(max(1, min(4, ch_hi[c] - ch_lo[c] + 1)))
+    }
+  }
+  let c = ai_link_c[i]
+  if c >= 0 and f_t[i] - f_start[i] - mv_active[m] == ai_link_at[i] {
+    return bits_for(i, ch_to[c])
+  }
+  return 0
+}
+
 fn dummy_bits(i: Int) -> Int {
   if dummy_mode == 0 {
     return 0
@@ -413,7 +630,11 @@ fn dummy_bits(i: Int) -> Int {
     react(i)
     return ai_guard_bits(i) | (if ai_guard_dir[i] == NO_DIR then B_GUARD | B_UP else 0)
   }
-  if dummy_mode == 2 {
+  if dummy_mode == 2 or dummy_mode == 3 {
+    let sb = ai_string_bits(i)
+    if sb != 0 {
+      return sb
+    }
     if idle(i) and band() <= 1 and duel_t % 50 == 0 {
       return bits_for(i, attack_in_reach(i, NO_DIR))
     }
@@ -440,6 +661,10 @@ fn ai_guard_bits(i: Int) -> Int {
 }
 fn reader_bits(i: Int) -> Int {
   react(i)
+  let sb = ai_string_bits(i)
+  if sb != 0 {
+    return sb
+  }
   let gb = ai_guard_bits(i)
   if gb != 0 {
     return gb
@@ -460,6 +685,10 @@ fn reader_bits(i: Int) -> Int {
   ai_wait[i] -= 1
   let b = band()
   let j = other(i)
+  -- the tree sees a punish window (the other stunned or recovering) and decides at once
+  if ai_kind(i) == AI_TREE and adv_of(i) > adv_cut[N_ADV // 2] and ai_wait[i] > 0 {
+    ai_wait[i] = 0
+  }
   -- spacing: close in from far, sometimes give ground
   if b == 2 {
     if rnd(100) < 70 {

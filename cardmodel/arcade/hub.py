@@ -17,8 +17,10 @@ whose builds belong to it), ``metrics`` and ``docs``. Nothing on the card says h
              verify section (the newest record holding it), a state value (the newest record), a card count, a
              count of committed files in the project's repository, or the last self-run
   activity   commits and merges in every repository watched (7 days), verify runs, self-run cycles, new builds
-  early      early-access builds: the latest build of each game in every worktree's depot whose build differs from
-             the release, installable beside it under its own library id ``<game>.early.<worktree>``
+  early      early access is the store's branch versions (arcade/work.py): a program's version on a branch with
+             unmerged work, when it is not older than the release and not the release's own build. It is built on
+             that branch by its own code and installed from the program's store page like a beta: one mechanism.
+             The hub only lists them.
   live       a watcher thread compares, every 2 s, the modification times of the git refs, HEADs and logs and of the
              records and depots it reads; when anything moved it recomputes and pushes the snapshot to every page
              listening on /api/events (server-sent events). Uncommitted changes are re-read every 60 s in this
@@ -37,7 +39,6 @@ from __future__ import annotations
 import fnmatch
 import json
 import os
-import re
 import subprocess
 import threading
 import time
@@ -46,7 +47,6 @@ from pathlib import Path
 
 from ..kernel import paths, resources
 
-EARLY = ".early."
 POLL_S = 2.0
 DIRTY_EVERY_S = 60.0              # this repository's worktrees
 DIRTY_OTHER_EVERY_S = 300.0       # other repositories (tracked files only: their untracked trees can be large)
@@ -54,7 +54,6 @@ ACTIVE_NOW_S = 15 * 60
 ACTIVE_DAY_S = 24 * 3600
 RECENT_DAYS = 7
 FEED = 120
-SAFE = re.compile(r"^[A-Za-z0-9._+-]+$")
 STATE_FILES = ("last_verify.json", "emu_survey.json", "emu_testroms.json", "nds_coverage.json", "emu_diffs.json")
 
 
@@ -117,6 +116,14 @@ def _ts(value) -> float | None:
         except ValueError:
             continue
     return None
+
+
+def _version(v) -> tuple:
+    """Dotted versions compare as numbers; no version sorts first."""
+    try:
+        return tuple(int(x) for x in str(v).split("."))
+    except ValueError:
+        return ()
 
 
 def _read(path: Path):
@@ -352,28 +359,36 @@ class Snapshot:
         return out
 
     def early(self) -> list[dict]:
+        """Every program's versions on branches with unmerged work (work.branches) that differ from the program
+        here: a newer version, or the same version where the branch changed the program's own card (committed or
+        not). An older version, or one a branch only inherited, is not early access."""
+        from . import work as W
         rel = self.releases()
+        own = self.repos[""]
+        info = {b["name"]: b for b in own.branches}
+        dirty = {wt["name"]: wt["dirty"] for wt in own.worktrees}
+        here = {g["id"]: g["version"] for g in W.programs(paths.home())}
         out = []
-        for co in self.checkouts:
-            if co.name == "main":
-                continue
-            depots = co.state / "arcade" / "depots"
-            for latest in sorted(depots.glob("*/latest")) if depots.is_dir() else []:
-                game = latest.parent.name
-                build_dir = latest.read_text(encoding="utf-8").strip()
-                m = _read(latest.parent / build_dir / "manifest.json")
-                if not m or not SAFE.match(game) or not SAFE.match(build_dir) or not SAFE.match(co.name):
+        for gid, versions in W.branches().items():
+            r = rel.get(gid) or {}
+            base = r.get("version") or here.get(gid)
+            for v in versions:
+                b = info.get(v["branch"])
+                if not b or not b["ahead"]:
                     continue
-                if rel.get(game, {}).get("build") == m.get("build"):
-                    continue
-                base = f"/early/{co.name}/{game}/{build_dir}"
-                out.append({"id": f"{game}{EARLY}{co.name}", "game": game, "title": m.get("title") or game,
-                            "version": m.get("version"), "build": m.get("build"), "created": m.get("created"),
-                            "size": m.get("size"), "branch": co.branch, "worktree": co.name, "channel": "early access",
-                            "release": rel.get(game, {}).get("version"), "manifest": f"{base}/manifest.json",
-                            "media": {x.rsplit(".", 1)[0]: f"{base}/media/{x}" for x in m.get("media", [])},
-                            "executable": m.get("executable"), "app": m.get("app"), "save": m.get("save"),
-                            "chunks": m.get("chunks")})
+                card = v.get("card") or {}
+                if base is not None and W.version_key(v["version"]) <= W.version_key(base):
+                    if W.version_key(v["version"]) < W.version_key(base):
+                        continue
+                    where = f"cards/{'system' if gid.endswith('_player') else 'game'}/{card.get('name', gid)}/"
+                    if not (any(f.startswith(where) for c in b["commits"] for f in c["files"])
+                            or any(f["path"].startswith(where) for f in dirty.get(v["worktree"], []))):
+                        continue
+                bd = v.get("build") or {}
+                out.append({"game": gid, "title": card.get("title") or gid, "version": v["version"],
+                            "branch": v["branch"], "worktree": v["worktree"], "channel": "early access",
+                            "release": r.get("version"), "build": bd.get("build"), "created": bd.get("created"),
+                            "size": bd.get("size")})
         return sorted(out, key=lambda e: (e["game"], str(e.get("created"))), reverse=True)
 
     # projects ---------------------------------------------------------------------------------------------------
@@ -612,39 +627,6 @@ def get(ctx) -> Hub:
         return _HUB
 
 
-def worktree_root(name: str) -> Path | None:
-    if not SAFE.match(name or ""):
-        return None
-    if name == "main":
-        return paths.home()
-    p = paths.home() / ".claude" / "worktrees" / name
-    return p if p.is_dir() else None
-
-
-def find_chunk(ctx, sha: str) -> Path | None:
-    """Chunks are named by their SHA-256, so a chunk is the same wherever it is found: main's store, then the
-    worktrees' stores (early-access builds)."""
-    from . import build as B
-    if not re.fullmatch(r"[0-9a-f]{64}", sha or ""):
-        return None
-    cands = [B.arcade_root(ctx) / "chunks" / sha]
-    cands += [w / "state" / "arcade" / "chunks" / sha for w in sorted((paths.home() / ".claude" / "worktrees").glob("*"))]
-    return next((p for p in cands if p.is_file()), None)
-
-
-def early_entry(hub: Hub, eid: str) -> dict | None:
-    e = next((x for x in (hub.current().get("early") or []) if x["id"] == eid), None)
-    if e is None:
-        return None
-    return {"id": e["id"], "title": f"{e['title']} (early access)", "version": e["version"], "developer": None,
-            "genre": [], "tags": ["Early Access"], "short_description": f"A development build from {e['branch']}.",
-            "achievements": [], "changelog": [], "media": e["media"], "build_due": False, "building": False,
-            "early_access": True, "branch": e["branch"], "worktree": e["worktree"], "release": e["release"],
-            "build": {"version": e["version"], "build": e["build"], "size": e["size"], "created": e["created"],
-                      "manifest": e["manifest"], "executable": e["executable"], "app": e["app"], "save": e["save"],
-                      "chunks": e["chunks"]}}
-
-
 def events(handler, hub: Hub) -> None:
     """Server-sent events: the snapshot now, then again every time it changes; a comment every 15 s keeps it open."""
     handler.send_response(200)
@@ -674,37 +656,7 @@ def route(handler, parts: list[str], query: dict) -> bool:
     if parts == ["api", "dev"]:
         handler._json(get(handler.ctx).current())
         return True
-    if len(parts) == 3 and parts[0] == "api" and parts[1] in ("game", "build") and EARLY in parts[2]:
-        if parts[1] == "build":
-            handler._json({"state": "done", "label": "early-access builds are made on their branch"})
-            return True
-        entry = early_entry(get(handler.ctx), parts[2])
-        handler._json(entry or {"error": "no such early-access build"}, 200 if entry else 404)
-        return True
-    if parts[:1] == ["early"] and len(parts) in (5, 6) and all(SAFE.match(p) for p in parts[1:]):
-        root = worktree_root(parts[1])
-        if root is None:
-            handler._json({"error": "no such worktree"}, 404)
-            return True
-        depot = root / "state" / "arcade" / "depots" / parts[2] / parts[3]
-        if len(parts) == 5 and parts[4] == "manifest.json" and (depot / "manifest.json").is_file():
-            handler._send(200, (depot / "manifest.json").read_bytes())
-        elif len(parts) == 6 and parts[4] == "media" and (depot / "media" / parts[5]).is_file():
-            handler._send(200, (depot / "media" / parts[5]).read_bytes(), "image/png")
-        else:
-            handler._json({"error": "not found"}, 404)
-        return True
-    if len(parts) == 2 and parts[0] == "chunk":
-        from . import build as B
-        if (B.arcade_root(handler.ctx) / "chunks" / parts[1]).is_file():
-            return False                                    # main's own chunk: the service serves it as before
-        p = find_chunk(handler.ctx, parts[1])
-        if p is None:
-            return False
-        handler._chunk(p.read_bytes(), int((query.get("rate") or ["0"])[0] or 0))
-        return True
     return False
 
 
-__all__ = ["EARLY", "Hub", "RepoScan", "Snapshot", "early_entry", "find_chunk", "get", "git", "match", "route",
-           "scan_dirty"]
+__all__ = ["Hub", "RepoScan", "Snapshot", "get", "git", "match", "route", "scan_dirty"]

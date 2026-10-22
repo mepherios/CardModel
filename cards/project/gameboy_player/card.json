@@ -1,11 +1,9 @@
 {
-  "blockers": [
-    "the branch's store work is uncommitted",
-    "the merges need the user's go-ahead"
-  ],
+  "blockers": [],
   "branches": [
     "claude/festive-margulis-*",
     "claude/strange-dewdney-*",
+    "claude/frosty-lumiere-*",
     "claude/sad-clarke-*"
   ],
   "category": "project",
@@ -13,31 +11,36 @@
     "docs/MACHINES.md"
   ],
   "done": [
-    "969 of 971 surveyed ROMs boot (claude/sad-clarke-108d42; 961 before)",
-    "MBC7 (Kirby Tilt 'n' Tumble: the d-pad tilts, the EEPROM is the save), HuC3 (Robopon: the clock chip, infrared), the Game Boy Camera (registers, capture time, a synthetic scene), Wisdom Tree and Sachen boards, each tested on an assembled cartridge and frame-identical when lifted",
-    "a CGB game gets BCPS as the boot ROM leaves it (Jurassic Boy 2's background)",
-    "the survey runs a static ROM again without input (Jeopardy! pauses on START) and names pass-through devices",
-    "every runnable hardware test ROM passes: 159 of 159 with the new boards (OAM bug, CGB DMG mode)",
-    "on the branch: library.json cartridge folders, headers, covers, the Game Boy Player build"
+    "960 of 971 surveyed ROMs boot on main, 969 of 971 on claude/sad-clarke-108d42; every runnable hardware test ROM passes (153 of 153 on main, 159 of 159 on that branch: the DMG OAM bug, the CGB's DMG mode)",
+    "the Game Boy Player (system/gameboy: the gameboy machine card plus player.card, law CM40) builds, installs and plays like a game; battery saves and the MBC3 clock survive closing",
+    "the library: every cartridge in the user's folders read where it is (a zip in memory), with its header, the survey's verdict and a title screen the machine draws headless; the folders live in library.json",
+    "the DS listed with its coverage, not playable",
+    "the launcher's Update installs the last good build when the cards in progress do not build, remembers the error across restarts, and the pages restart a stopped service",
+    "a WORK tab (every branch's commits, uncommitted changes, areas, programs) and a Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its own cardmodel",
+    "every title and datum on the launcher's pages opens something (230 clicks over 11 views, no errors)",
+    "on claude/sad-clarke-108d42: MBC7 (Kirby Tilt 'n' Tumble: the d-pad tilts, the EEPROM is in the save), HuC3 (Robopon: the clock chip, infrared), the Game Boy Camera (registers, capture time, a synthetic scene), Wisdom Tree and Sachen boards, all card language (gb_cartridge: cart.card, mbc7.card, huc3.card, camera.card), each tested on an assembled cartridge, lifted code identical to the interpreter",
+    "on claude/sad-clarke-108d42: a CGB game gets BCPS as the boot ROM leaves it (Jurassic Boy 2's background); the survey runs a static ROM again without input (Jeopardy! pauses on START) and names pass-through devices"
   ],
   "games": [
     "gameboy_player"
   ],
   "goal": "Every Game Boy and Game Boy Color cartridge in the user's folders is a store entry that plays through the model's cards.",
   "in_progress": [
-    "the launcher's library UI and update fallback (uncommitted on claude/festive-margulis-43fde7)"
+    "a runnable app per cartridge, first the user's Pokémon games, built from the player and the cartridge's own code lifted into card IR",
+    "a second session (claude/frosty-lumiere-98e2b7) builds the Game Boy library on this branch's library"
   ],
   "kind": "game",
   "left": [
-    "commit the store work",
-    "merge it into main",
-    "one store entry per cartridge on main",
-    "player.card: decide CGB from the header as the board shows it (call cart_power_on, then rom_read(0x143)), so a Sachen cartridge plays in colour in the launcher as it does in cardmodel emu",
+    "merge the branch into main and reinstall Cardmodel Arcade from main",
+    "fold the WORK tab into main's IN PROGRESS tab, and branch versions into early access (one mechanism)",
+    "one store page per cartridge (today cartridges are library entries played by the player)",
+    "the DS playable: its 2D engines, VRAM banks, 3D, sound",
+    "player.card: decide CGB from the header as the board shows it (cart_power_on, then rom_read(0x143)), so a Sachen cartridge plays in colour in the launcher (the OAM session, once claude/sad-clarke-108d42 is on main)",
     "the GameSharks: a pass-through model (a cartridge from the library in their slot) and Datel's registers, which are not documented; the GameShark (USA) file also lacks its font bank"
   ],
   "metadata": {
-    "previous_content_hash": "00db995c9dc5160ae4c7eba6be3a2282af79fcbc8d340ce285dd131d7d760d73",
-    "version": "2.0.2",
+    "previous_content_hash": "0c6716a5e6a0a2f15bb9679b22beff36a6cf74417bf5337666f2b8dcd2337655",
+    "version": "2.0.5",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -57,10 +60,11 @@
   ],
   "name": "gameboy_player",
   "next_steps": [
-    "merge claude/sad-clarke-108d42 (the boards) into main",
-    "commit the store work",
-    "renumber CM36_players_are_cards to CM40",
-    "merge claude/festive-margulis-43fde7 into main"
+    "merge claude/sad-clarke-108d42 (the last bank controllers as cards) into main",
+    "the main session merges claude/festive-margulis-43fde7 into main and reinstalls Cardmodel Arcade from main",
+    "top priority (the user, 2026-10-22): the cartridge's code runs as cards, nothing interpreted; measure what still falls back to the instruction-at-a-time interpreter (code in RAM, after EI and HALT, jump targets no profile saw) and close each gap by distillation from the instruction cards",
+    "MATH_CORE (approved): new behaviour is card-language or IR semantics (hardware and mapper cards), never host emulation code; lifting keeps the terms it produces as cards; matching and optimizing produce certificates; emulation, test ROMs and differential runs are witnesses, never the method",
+    "MATH_CORE phase 1: trace the player, the library and the lifted code to the definition, transformation, action and method registries once main has them"
   ],
   "order": 2,
   "owner": {
@@ -76,19 +80,22 @@
     "cards/hardware",
     "cards/machine/gameboy",
     "cards/isa/lr35902",
-    "cards/game/gameboy_player",
-    "cards/player",
-    "cards/cartridge"
+    "cards/system",
+    "cardmodel/arcade/system.py",
+    "cardmodel/arcade/library.py",
+    "cardmodel/arcade/work.py",
+    "cardmodel/machine/build.py",
+    "tests/test_gb_mappers.py"
   ],
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "Every bank controller in the user's folders is a card now: the survey boots 969 of 971, and the two GameShark cheat devices cannot run from their files (docs/MACHINES.md says why). The new boards are on claude/sad-clarke-108d42; the store work is on claude/festive-margulis-43fde7.",
+  "standing": "The Game Boy Player and the cartridge library are on main (4d9d755). On claude/sad-clarke-108d42 every bank controller in the user's folders is a card (MBC7, HuC3, the Game Boy Camera, the Wisdom Tree and Sachen boards): the survey boots 969 of 971; the two GameShark cheat devices cannot run from their files (docs/MACHINES.md says why). That branch waits for the user's go-ahead to merge.",
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T01:49:46+02:00",
+  "updated": "2026-10-22T02:03:25+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/sad-clarke-108d42 into main",
@@ -98,15 +105,6 @@
         "the Sachen cartridges, in colour"
       ],
       "why": "it makes the last bank controllers in your folders cards: Kirby Tilt 'n' Tumble, Robopon, the Game Boy Camera, the Wisdom Tree and Sachen cartridges"
-    },
-    {
-      "action": "Approve merging claude/festive-margulis-43fde7 into main once its store work is committed",
-      "unblocks": [
-        "Game Boy / Color cartridges as store entries",
-        "the DS listed as unplayable",
-        "one In progress tab instead of two"
-      ],
-      "why": "it brings every cartridge into the store as an entry, the DS shown as unplayable, and the system players"
     }
   ]
 }

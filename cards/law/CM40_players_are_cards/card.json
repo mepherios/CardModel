@@ -1,0 +1,19 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM40_players_are_cards",
+  "origins": [
+    "user requirement 2026-10-21 (the user's own Game Boy and DS games in the arcade, run natively)",
+    "CM32",
+    "CM34",
+    "CM35"
+  ],
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "A console player is its cards: the machine card (instruction and hardware cards) plus the system card's card-language player, which decodes the cartridge header with the cartridge card's tables, runs the machine and keeps battery RAM and the clock in the save. The effect shell only reads the cartridge file and moves pixels, samples, buttons and save bytes. Cartridges are read where they are: no cartridge byte is copied into the repository, a depot or the arcade's library.",
+  "tier": 0,
+  "witness": "tests/test_arcade_systems.py::test_the_package_plays_a_zipped_cartridge"
+}

@@ -1,10 +1,9 @@
 {
-  "blockers": [
-    "MATH_CORE.md needs the user's yes before anything existing is restructured"
-  ],
+  "blockers": [],
   "branches": [
     "claude/jolly-liskov-*",
-    "claude/compassionate-margulis-*"
+    "claude/compassionate-margulis-*",
+    "claude/elated-mestorf-*"
   ],
   "category": "project",
   "docs": [
@@ -19,21 +18,26 @@
     "self-run (CM38), capabilities (CM37), one program (CM39)",
     "the live In progress page with early access (bb480fb)",
     "law CM41: detailed, current project cards (c8aeb4c)",
-    "docs/MATH_CORE.md proposal (de22b52)"
+    "docs/MATH_CORE.md proposal (de22b52)",
+    "MATH_CORE phase 0: prime ledger, content vectors (03b1c6e); e-graph distillation",
+    "MATH_CORE phase 1: the four sources, definitions for every algorithm and function",
+    "MATH_CORE phase 0 F5: symbolic LR35902 instruction terms as definitions"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
-    "waiting for the user's yes on MATH_CORE.md"
+    "phase 0 by the research handover (the user's yes, relayed by Ting): storage rules (no content integers, a structure hash and a sparse vector with its basis version on every definition), witness tiers, the formal core in Lean",
+    "merging claude/festive-margulis-43fde7 (the user approved in its session)"
   ],
   "kind": "program",
   "left": [
-    "phase 0 of MATH_CORE: the prime ledger, content vectors, core types, an e-graph, symbolic LR35902",
-    "the semantic core migration, after the yes",
+    "R3: size witnesses by class so they prove (polynomials, C-finite, Boolean, bit-vectors)",
+    "the ARM instruction cards as terms (G_M6: 511 of 679)",
+    "canonical forms for more definitions (G_U7 0.3 of 0.9)",
     "one In progress tab after the cartridge merge"
   ],
   "metadata": {
-    "previous_content_hash": "f5114263df38e1819a3a9509941e6e7cfcd6c888afbe1486f2959daf9075b97f",
-    "version": "2.0.1",
+    "previous_content_hash": "2495493d7e230edb2e4c987ca0332ed57f93c83c6796eef2ba8af55955660ae2",
+    "version": "2.0.6",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -52,8 +56,9 @@
   ],
   "name": "cardmodel",
   "next_steps": [
-    "after the yes: start MATH_CORE phase 0 and 1",
-    "merge the branches the user approves"
+    "merge the cartridge store and fold its WORK tab into In progress",
+    "storage rules R2, then witness tiers R3, then the Lean formal core R1",
+    "the semantic-hash library and instant lookup (phase 2)"
   ],
   "order": 6,
   "owner": {
@@ -65,27 +70,19 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main: 41 laws carried by 27 capabilities, verify passes, the self-run on every use, the live store page with Waiting on you, project cards under CM41; MATH_CORE.md is written and waits for the user's yes.",
+  "standing": "MATH_CORE phases 0 and 1 are on main (the user's yes): the prime ledger (70 atoms, CM43), an e-graph over 241 equalities, the four sources (CM44) with 552 definitions, the 512 LR35902 instruction cards as symbolic terms. Next: phase 0 brought to the research handover's storage rules and agenda (R1-R3), as the user asked.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T00:38:37+02:00",
+  "updated": "2026-10-22T01:28:26+02:00",
   "user_actions": [
     {
-      "action": "Read the MATH_CORE summary and say yes, or what to change",
+      "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",
       "unblocks": [
-        "the semantic core migration",
-        "definition cards for every function",
-        "sessions stop adding imitation-only paths"
+        "law CM42 (the store runs what it lists)",
+        "goals G_A9 and G_S1"
       ],
-      "why": "moving from imitation (emulation, tests) to understanding (one semantic core, definitions, Gödel factors) changes how everything is built"
-    },
-    {
-      "action": "Decide what happens to claude/jolly-liskov-2d97a8",
-      "unblocks": [
-        "merging or retiring that branch"
-      ],
-      "why": "a second self-run built in parallel; its laws CM37-CM39 collide with main's"
+      "why": "its session folded its loop into main's self-run (law witnesses, observe_self, the store client, CM42); the user decides the merge"
     }
   ]
 }

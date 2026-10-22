@@ -1,0 +1,6 @@
+{
+  "defined_by": "tools/seed_game.py",
+  "description": "Strings as cards: one link each. A chain card lets an attack that connected (hit, block or pierce) cancel its recovery into the next attack inside a window of frames, at a damage proration; the links form an acyclic graph (GL9) and every link stays answerable (GL10).",
+  "name": "chain",
+  "tier": 1
+}

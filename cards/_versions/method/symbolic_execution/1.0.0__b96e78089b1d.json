@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "linear in the semantics",
+  "decides": "an instruction card's meaning as core terms over symbolic registers and memory (MATH_CORE phase 0, F5)",
+  "limits": "checked against the executable semantics exhaustively on small widths",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "symbolic_execution",
+  "procedure": "cardmodel/machine/symbolic.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "an instruction card's meaning as core terms over symbolic registers and memory (MATH_CORE phase 0, F5)",
+  "status": "planned",
+  "tier": 0
+}

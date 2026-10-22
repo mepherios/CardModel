@@ -1,0 +1,27 @@
+{
+  "applies_to": [
+    "action"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "action",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "schema": {
+    "properties": {},
+    "required": [
+      "truth",
+      "lang",
+      "code",
+      "method",
+      "link"
+    ],
+    "type": "object"
+  },
+  "statement": "An action: code that does what its definition says, linked by a proof or a witness.",
+  "tier": 0
+}

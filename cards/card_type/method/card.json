@@ -1,0 +1,26 @@
+{
+  "applies_to": [
+    "method"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "method",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "schema": {
+    "properties": {},
+    "required": [
+      "procedure",
+      "decides",
+      "limits",
+      "status"
+    ],
+    "type": "object"
+  },
+  "statement": "A method: a procedure, what it decides, its complexity and its limits.",
+  "tier": 0
+}

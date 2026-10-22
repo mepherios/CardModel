@@ -1,0 +1,35 @@
+{
+  "category": "chain",
+  "damage_pct": 80,
+  "depends_on": [
+    "move/slash_left",
+    "move/rising",
+    "precedent/for_honor_chains",
+    "precedent/tekken_strings"
+  ],
+  "from": "slash_left",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "slash_left_to_rising",
+  "on": [
+    "hit",
+    "block",
+    "pierce"
+  ],
+  "precedent": [
+    "for_honor_chains",
+    "tekken_strings"
+  ],
+  "provenance": {
+    "origin": "cardmodel game design (game/DESIGN.md)",
+    "tool": "tools/seed_game.py"
+  },
+  "statement": "Left, then up from below: the second vector comes from the other height.",
+  "tier": 1,
+  "to": "rising",
+  "window": [
+    1,
+    10
+  ]
+}

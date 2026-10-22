@@ -1,0 +1,31 @@
+{
+  "category": "core_type",
+  "laws": [
+    "AND and OR are associative, commutative and idempotent",
+    "NOT NOT p == p",
+    "de Morgan"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "Bool",
+  "operations": [
+    "op/AND",
+    "op/OR",
+    "op/NOT",
+    "op/CMP_EQ",
+    "op/CMP_NE",
+    "op/CMP_LT",
+    "op/CMP_LE",
+    "op/CMP_GT",
+    "op/CMP_GE",
+    "op/IF_EXPR"
+  ],
+  "params": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "Truth values: true and false.",
+  "tier": 0
+}

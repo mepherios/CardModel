@@ -361,10 +361,12 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
 ./bin/cardmodel arcade build vector_duel
 ```
 
-* **Vector Duel** (`cards/game/vector_duel`): the game card holds the data (strings, music, ladder, achievements,
-  store text, versions); its eight `.card` files are the whole game (frame loop, software renderer, duel on the
-  move cards and the combat kernel, AIs, drawing, screens, synth, save). `arcade/gen.py` turns the data cards into
-  tables and solves the exact equilibria the equilibrium AI samples. docs/ARCADE.md describes it.
+* **Vector Duel** (`cards/game/vector_duel`): the game card holds the data (strings, music, ladder, arenas, the
+  boss's phases, the duel tree's depth, achievements, store text, versions); its eight `.card` files are the whole
+  game (frame loop, software renderer, duel on the move cards, chain cards and the combat kernel, AIs, drawing,
+  screens, synth, save). `arcade/gen.py` turns the data cards into tables, solves the exact equilibria the
+  equilibrium AI samples and the duel tree the Oracle plays (`game/tree.py`, cached by a hash of its inputs).
+  docs/ARCADE.md describes it.
 * **The pipeline** (`arcade/build.py`): module -> C card -> `game.dylib`; the platform card's Swift effect shell;
   store pictures drawn by the game; a bundle; a depot of SHA-256 chunks. **The service** (`arcade serve`) builds
   on demand when the cards change and serves catalog, manifests, chunks, pictures and the launcher's pages.
@@ -373,7 +375,19 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   ~/Library/Application Support/Cardmodel Arcade.
 * **Shipping an update**: change the game's cards, bump `version` and add a `changelog` entry in its card.json; the
   launcher shows Update with the notes, and the service compiles the new build when the player asks for it.
-* Witnesses: `tests/test_arcade.py` (CM35).
+* **Your own cartridges** (`cards/system/gameboy`, `system/nds`; docs/ARCADE.md section 5): the Game Boy Player is
+  the gameboy machine card plus `player.card`, built and installed like a game; the library lists every cartridge
+  in the user's folders (`arcade library --add DIR`, kept in library.json beside the saves) where it is, with the
+  survey's verdict and a title screen the machine draws; Play starts the player on the file. The DS is listed,
+  not playable yet.
+* **Work in progress in the launcher** (`arcade/work.py`, docs/ARCADE.md section 3): the *Every branch* section
+  of the IN PROGRESS tab (once a WORK tab of its own) with every
+  worktree (branch, last commit, commits not on main and their files, uncommitted changes, areas, programs), and a
+  Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its
+  own `bin/cardmodel`. When the cards in progress do not build, Update installs the last good build and the page
+  shows the error (remembered in `state/arcade/build-errors.json`). Every title and datum on the pages opens
+  something. `CARDMODEL_BRANCHES=0` keeps the service to its own checkout (the tests set it).
+* Witnesses: `tests/test_arcade.py` (CM35), `tests/test_arcade_systems.py` (CM40), `tests/test_arcade_work.py`.
 * What is in the store and what the model does for each piece: docs/STORE.md. Install the launcher from this
   checkout (`main`), not from a worktree: the app records the checkout it was installed from.
 
@@ -531,7 +545,8 @@ core import with kernel-checked faithfulness and re-proofs; rule mining; the mod
 engine, exact equilibria, design laws, AIs and the systemic world.
 
 **Partial (second build):** the Lean fragment is arithmetic (Nat/Int/Bool); logic terms are constants (no
-function symbols); the game is one-exchange deep (matrix games per state, not a duel-tree search); the world
+function symbols); the game was one-exchange deep (matrix games per state; the duel tree came with Vector Duel
+0.4.0, over abstract states); the world
 is a demonstration map; there is no graphics or engine integration yet beyond the C++ kernel.
 
 **Real since the AnyPS5 build:** a C++ code base read as cards with file and line (exports, debt, libraries,

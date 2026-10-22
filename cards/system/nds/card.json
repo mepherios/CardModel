@@ -1,0 +1,15 @@
+{
+  "cartridge": {"extensions": [".nds"]},
+  "category": "system",
+  "kind": "system",
+  "library": {
+    "folders": [],
+    "systems": [{"id": "nds", "label": "Nintendo DS"}]
+  },
+  "name": "nds",
+  "provenance": {"origin": "cardmodel"},
+  "statement": "The Nintendo DS as the arcade lists it: its cartridges are found and described, but no player is built yet. The DS machine card (machine/nds) runs both CPUs on the ARM instruction cards and boots games through their start-up code; the picture, sound and input hardware have no cards yet, and its coverage report (cardmodel machine nds ROM) is the work queue.",
+  "playable_note": "Not playable yet: the DS machine boots it on the ARM instruction cards (both CPUs, every BIOS call it makes) but has no 2D/3D picture, sound or input yet.",
+  "tier": 1,
+  "title": "Nintendo DS"
+}

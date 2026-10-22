@@ -1,0 +1,11 @@
+{
+  "card_type": "method",
+  "defined_by": "tools/seed_sources.py",
+  "description": "Method: a procedure the model runs between the sources, with what it decides and its limits.",
+  "name": "method",
+  "status_values": [
+    "built",
+    "planned"
+  ],
+  "tier": 0
+}

@@ -7,9 +7,13 @@
 //   --shot PATH         with --frames: write the last frame as a PNG
 //   --input SCRIPT      frame:button+button,... pressed for one frame each (tests)
 //   --save-dir DIR      where save.bin lives (default ~/Library/Application Support/Cardmodel Arcade/saves/ID)
+//   --rom PATH          a cartridge, for a console player (game.json has "cartridge"): read where it is (a .zip
+//                       in memory), its bytes copied into the module, which decodes it
+//   --title TEXT        the window's title
 
 import AppKit
 import AVFoundation
+import Compression
 import GameController
 import ImageIO
 import UniformTypeIdentifiers
@@ -29,10 +33,47 @@ struct Spec: Decodable {
     let keys: [String: [String]]
     let keys2: [String: [String]]
     let gamepad: [String: String]
+    struct Cartridge: Decodable { let symbol: String; let bytes: Int; let load: String; let extensions: [String]; let zip: Bool }
+    let cartridge: Cartridge?      // a console player: the cartridge array and the function that decodes it
+    let clock: String?             // an Int64 the shell keeps at the Unix time (a cartridge's real-time clock)
+    let flush: String?             // called before the shell quits (unsaved battery RAM)
 }
 
 typealias VoidFn = @convention(c) () -> Void
 typealias FrameFn = @convention(c) (Int64, Int64) -> Int64
+typealias LoadFn = @convention(c) (Int64) -> Void
+
+// a cartridge file's bytes: the file itself, or the first member of a .zip with one of the extensions
+func readCartridge(_ path: String, _ exts: [String]) -> Data? {
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { return nil }
+    if !path.lowercased().hasSuffix(".zip") { return data }
+    let b = [UInt8](data)
+    func u16(_ o: Int) -> Int { Int(b[o]) | Int(b[o + 1]) << 8 }
+    func u32(_ o: Int) -> Int { u16(o) | u16(o + 2) << 16 }
+    guard b.count >= 22 else { return nil }
+    var eocd = b.count - 22
+    while eocd >= 0 && u32(eocd) != 0x06054b50 { eocd -= 1 }
+    guard eocd >= 0 else { return nil }
+    var o = u32(eocd + 16)
+    for _ in 0..<u16(eocd + 10) {
+        guard o + 46 <= b.count, u32(o) == 0x02014b50 else { return nil }
+        let method = u16(o + 10), csize = u32(o + 20), usize = u32(o + 24)
+        let nlen = u16(o + 28), elen = u16(o + 30), clen = u16(o + 32), local = u32(o + 42)
+        let name = String(decoding: b[(o + 46)..<(o + 46 + nlen)], as: UTF8.self).lowercased()
+        o += 46 + nlen + elen + clen
+        guard exts.contains(where: { name.hasSuffix($0) }), local + 30 <= b.count else { continue }
+        let start = local + 30 + u16(local + 26) + u16(local + 28)
+        guard start + csize <= b.count else { return nil }
+        if method == 0 { return Data(b[start..<(start + csize)]) }
+        guard method == 8 else { return nil }
+        var out = [UInt8](repeating: 0, count: max(usize, 1))
+        let n = b.withUnsafeBufferPointer { src in
+            compression_decode_buffer(&out, usize, src.baseAddress! + start, csize, nil, COMPRESSION_ZLIB)
+        }
+        return n == usize ? Data(out[0..<n]) : nil
+    }
+    return nil
+}
 
 final class Game {
     let spec: Spec
@@ -45,8 +86,10 @@ final class Game {
     let quit: UnsafeMutablePointer<Int64>
     let fullscreen: UnsafeMutablePointer<Int64>
     let saveURL: URL
+    var clock: UnsafeMutablePointer<Int64>?
+    var flushFn: VoidFn?
 
-    init(bundle: Bundle, saveDir: URL?) {
+    init(bundle: Bundle, saveDir: URL?, romPath: String?) {
         let specURL = bundle.url(forResource: "game", withExtension: "json")!
         spec = try! JSONDecoder().decode(Spec.self, from: Data(contentsOf: specURL))
         let libPath = bundle.privateFrameworksPath! + "/game.dylib"
@@ -68,6 +111,19 @@ final class Game {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         saveURL = dir.appendingPathComponent("save.bin")
         unsafeBitCast(sym(spec.entry.reset), to: VoidFn.self)()
+        if let c = spec.cartridge {
+            guard let path = romPath else { fatalError("\(spec.title) plays a cartridge: start it with --rom PATH") }
+            guard let data = readCartridge(path, c.extensions) else { fatalError("cannot read a cartridge from \(path)") }
+            let dst = sym(c.symbol).assumingMemoryBound(to: UInt8.self)
+            let n = min(data.count, c.bytes)
+            data.withUnsafeBytes { raw in _ = memcpy(dst, raw.baseAddress!, n) }
+            unsafeBitCast(sym(c.load), to: LoadFn.self)(Int64(n))
+        }
+        if let c = spec.clock {
+            clock = sym(c).assumingMemoryBound(to: Int64.self)
+            clock?.pointee = Int64(Date().timeIntervalSince1970)
+        }
+        if let f = spec.flush { flushFn = unsafeBitCast(sym(f), to: VoidFn.self) }
         if let data = try? Data(contentsOf: saveURL) {
             data.withUnsafeBytes { raw in
                 let n = min(raw.count, spec.save.bytes)
@@ -78,9 +134,16 @@ final class Game {
     }
 
     func step(_ p1: Int64, _ p2: Int64) -> Bool {
+        clock?.pointee = Int64(Date().timeIntervalSince1970)
         let q = frameFn(p1, p2)
         if saveDirty.pointee != 0 { writeSave() }
         return q != 0
+    }
+
+    // before quitting: let the module save what it has not, then write it
+    func finish() {
+        flushFn?()
+        if saveDirty.pointee != 0 { writeSave() }
     }
 
     func writeSave() {
@@ -175,10 +238,12 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var script: [Int: Int64] = [:]
     var saveDir: URL?
     var scriptText = ""
+    var romPath: String?
+    var titleText: String?
 
     func applicationDidFinishLaunching(_ note: Notification) {
         parseArgs()
-        game = Game(bundle: Bundle.main, saveDir: saveDir)
+        game = Game(bundle: Bundle.main, saveDir: saveDir, romPath: romPath)
         parseScript(scriptText)
         let s = game.spec
         for (name, keys) in s.keys { if let b = s.bits.firstIndex(of: name) { for k in keys { if let c = keyCodes[k] { map1[c, default: 0] |= 1 << Int64(b) } } } }
@@ -187,7 +252,7 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let w = CGFloat(s.screen.width * s.screen.scale), h = CGFloat(s.screen.height * s.screen.scale)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: w, height: h),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-        window.title = s.title
+        window.title = titleText ?? s.title
         window.contentAspectRatio = NSSize(width: s.screen.width, height: s.screen.height)
         window.collectionBehavior = [.fullScreenPrimary]
         window.backgroundColor = .black
@@ -222,6 +287,8 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
             case "--shot": shotPath = a[i + 1]; i += 1
             case "--save-dir": saveDir = URL(fileURLWithPath: a[i + 1], isDirectory: true); i += 1
             case "--input": scriptText = a[i + 1]; i += 1
+            case "--rom": romPath = a[i + 1]; i += 1
+            case "--title": titleText = a[i + 1]; i += 1
             default: break
             }
             i += 1
@@ -252,7 +319,7 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 CGImageDestinationFinalize(dest)
             }
         }
-        if game.saveDirty.pointee != 0 { game.writeSave() }
+        game.finish()
         print("ran \(maxFrames) frames")
         NSApp.terminate(nil)
     }
@@ -348,7 +415,7 @@ final class Shell: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ app: NSApplication) -> Bool { true }
-    func applicationWillTerminate(_ note: Notification) { if game?.saveDirty.pointee != 0 { game?.writeSave() } }
+    func applicationWillTerminate(_ note: Notification) { game?.finish() }
 }
 
 let app = NSApplication.shared

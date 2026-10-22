@@ -52,7 +52,8 @@ cardmodel/                      the repository IS the model (its home)
 │   ├── lang/                   the card language: syntax.py (lexer, parser), compile.py (IR, logic, theorems,
 │   │                           cards, algorithm resolution), run.py (tests, queries, theorems, build, emit)
 │   ├── game/                   the Vector Counter System: combat.py (engine on the card-language kernel),
-│   │                           analysis.py (exact equilibria, design laws, sensitivity, balance), ai.py, world.py
+│   │                           analysis.py (exact equilibria, design laws, sensitivity, balance), tree.py (the
+│   │                           duel tree by backward induction), ai.py, world.py
 │   ├── anyps5/                 AnyPS5 as cards: scan.py (a checkout, read-only, the badge's rule reproduced),
 │   │                           cards.py (packs with file and line), classify.py (facts + stdlib/anyps5.card: every
 │   │                           gap's cause), cover.py (the ladder, causes, findings), witness.py (AnyPS5's C++ next
