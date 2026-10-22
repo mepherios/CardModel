@@ -175,12 +175,20 @@ def block_extent(dec: Decoder, rom: bytes, key: int, mask: int) -> list:
     return out
 
 
+CONDITIONS = ("Z", "NZ", "C", "NC")
+
+
+def conditional(mnemonic: str) -> bool:
+    """A jump, call or return that may not be taken (JP NZ,nn; CALL Z,nn; JR C,e; RET NC): it can fall through."""
+    return mnemonic.partition(" ")[2].split(",")[0] in CONDITIONS
+
+
 def successors(card, pc: int, n: int, imm: list) -> list[int]:
     """Statically known next addresses (CPU addresses)."""
     m = card["mnemonic"]
     nxt = pc + n
     out = []
-    if card["group"] not in ENDS or "," in m and card["group"] in ("jump", "call", "ret"):
+    if card["group"] not in ENDS or (card["group"] in ("jump", "call", "ret") and conditional(m)):
         out.append(nxt)
     if m.startswith("JR"):
         e = imm[0] - 256 if imm[0] >= 128 else imm[0]
@@ -1099,6 +1107,6 @@ def save_profile(ctx, rom: bytes, m, machine: str = "gameboy") -> dict:
     return {"new_entries": sum(bin(x).count("1") for x in after["entries"]) - sum(bin(x).count("1") for x in before)}
 
 
-__all__ = ["Decoder", "Lifter", "add_profile", "block_extent", "build_parts", "cache_dir", "discover", "effects",
+__all__ = ["Decoder", "Lifter", "add_profile", "conditional", "block_extent", "build_parts", "cache_dir", "discover", "effects",
            "lift_blocks", "lift_rom", "lifted_machine", "lifted_module", "merge_profile", "merge_ram", "profile",
            "profile_rom", "ram_image", "save_profile", "stored_profile"]

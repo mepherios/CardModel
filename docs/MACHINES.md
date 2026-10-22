@@ -187,9 +187,11 @@ Crystal it adds 1,163 leaders (916 far-call targets, 532 table entries) to the 1
 2.5 minutes. `arcade app` runs it once per cartridge.
 
 So the ROM's code that was found runs as lifted card IR; the machine counts what still went through the
-instruction-at-a-time interpreter (`interpreted`, `interpreted_ram`). Pokemon Crystal, after a 31,800-frame
-profile (the survey's presses, then a seeded walk), on a run with another seed: 98.4 % of 15.6 million
-instructions ran lifted, none from RAM through the interpreter, frame-identical to the interpreter.
+instruction-at-a-time interpreter (`interpreted`, `interpreted_ram`). Recursive descent follows the fall-through
+of every conditional jump, call and return (`conditional`: a `RET Z` falls through as a `JP NZ,nn` does; missing
+it had left the code after every conditional return to profiles). Pokemon Crystal, after a 31,800-frame profile
+(the survey's presses, then a seeded walk) and the abstract run, on a run with another seed: every one of its
+instructions ran as lifted card IR (0 interpreted, none from RAM), frame-identical to the interpreter.
 
 Blocks are cached per ROM, machine and lifter version, emitted through the C card in per-bank parts, linked into
 one library. The profile grows with each session (the shell saves the new entries at exit, and an app made for

@@ -7,7 +7,9 @@ cartridge copies into RAM), compiled natively in parts and packed with the platf
 ``<title>.app``. The cartridge is read where it is when the app starts (never copied). Saves go where the
 arcade's library keeps that cartridge's (``~/Library/Application Support/Cardmodel Arcade/saves/<id>``), so the
 app and the library play the same save. The app keeps, beside the save, what the interpreter still had to run
-while you played (``profile-*.bin``); the next build of the app lifts that too.
+while you played (``profile-*.bin``), and when you quit after anything ran there it starts its own next build in
+the background (at low priority, one at a time: ``relift.log`` beside the save), which lifts that too: the next
+launch runs it as cards.
 
     cardmodel arcade app ROM [--install]          the app (in state/arcade/cartapps; --install: ~/Applications)
 
@@ -30,6 +32,7 @@ import time
 from pathlib import Path
 
 from ..engines.codegen import Emitter
+from ..kernel import paths
 from ..machine import absint
 from ..machine import build as Bd
 from ..machine import gb as G
@@ -205,6 +208,8 @@ def build(ctx, rom_path: Path, install: bool = False, progress=None) -> dict:
     sizes = {"seen": rom_size(rom) // 8, "entries": rom_size(rom) // 8, "ram_seen": 0x1000, "ram_code": 0x8000}
     sp["keep"] = [{"symbol": sym(a), "bytes": sizes[a], "file": f, "mode": mode} for a, f, mode in KEEP]
     sp["globals"] = {sym("lifted_on"): 1, sym("profiling"): 1}
+    argv = [str(paths.home() / "bin" / "cardmodel"), "arcade", "app", str(path)] + (["--install"] if install else [])
+    sp["relift"] = {"counter": sym("interpreted"), "argv": argv, "log": "relift.log"}
     build_id = hashlib.sha256(lib.read_bytes() + exe.read_bytes() + json.dumps(sp, sort_keys=True).encode()
                               ).hexdigest()[:12]
     bundle = plat["bundle"]

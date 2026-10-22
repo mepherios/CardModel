@@ -89,6 +89,33 @@ class CartridgeApp(unittest.TestCase):
         self.assertEqual(rgb, ref.rgb(), "the app shows what the plain player computes")
         for _, f, _ in C.KEEP:
             self.assertTrue((save / f).is_file(), f"{f} is kept beside the save")
+        self.assertEqual(spec["relift"]["argv"][1:4], ["arcade", "app", str(self.path.resolve())])
+
+    def test_quitting_after_interpreted_code_starts_the_next_build(self):
+        """With the lifted code switched off (everything interpreted), quitting starts the relift command."""
+        from cardmodel.kernel import resources
+        app = Path(self.info["app"])
+        spec_path = next(app.rglob("game.json"))
+        original = spec_path.read_text()
+        spec = json.loads(original)
+        marker = self.tmp / "relifted"
+        spec["globals"] = {k: 0 for k in spec["globals"]}                      # lifted_on off
+        spec["relift"]["argv"] = ["/bin/sh", "-c", f"echo relifted > '{marker}'"]
+        spec_path.write_text(json.dumps(spec))
+        exe = next(p for p in (app / "Contents" / "MacOS").iterdir())
+        save = self.tmp / "save2"
+        try:
+            p = resources.run([str(exe), "--frames", "30", "--save-dir", str(save), "--relift"], timeout=120,
+                              heavy=False)
+        finally:
+            spec_path.write_text(original)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        for _ in range(100):
+            if marker.is_file():
+                break
+            import time
+            time.sleep(0.05)
+        self.assertEqual(marker.read_text().strip(), "relifted")
 
 
 if __name__ == "__main__":

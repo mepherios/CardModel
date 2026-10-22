@@ -175,7 +175,9 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   cartridge. Before packing, the lifted player plays the cartridge headless next to the plain one with the same
   buttons (pictures and sound must be equal) and reports its purity: the share of instructions that ran as lifted
   card IR. The app keeps what the interpreter still ran while it was played (`profile-*.bin` beside the save; the
-  shell's new `keep` and `globals` fields in game.json), and the next `arcade app` lifts that too.
+  shell's new `keep` and `globals` fields in game.json), and when anything did, quitting starts the app's own next
+  build in the background (`relift` in game.json: at low priority, one at a time, `relift.log` beside the save),
+  so the next launch runs that code as cards too.
 
 ## 6. Witnesses
 

@@ -394,8 +394,9 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   HALT, STOP and EI, and lifts the code a cartridge copies into RAM behind byte guards; the machine counts what
   still runs in the interpreter (`interpreted`). `machine/absint.py` finds more code by an abstract run of the
   machine's cards (far calls through bank-switching trampolines, jump tables); `arcade app` runs it once per
-  cartridge. Pokemon Crystal: 98.4 % lifted on an unseen run; the app keeps what the interpreter ran while
-  played, and the next build lifts it.
+  cartridge. Recursive descent now follows conditional returns' fall-through (the last gap). Pokemon Crystal:
+  100 % lifted on an unseen run (0 instructions interpreted); an app that ever interprets code keeps it beside the
+  save and rebuilds itself in the background when you quit.
 * Witnesses: `tests/test_arcade.py` (CM35), `tests/test_arcade_systems.py` (CM40), `tests/test_arcade_work.py`,
   `tests/test_cartapp.py`.
 * What is in the store and what the model does for each piece: docs/STORE.md. Install the launcher from this
