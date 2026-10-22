@@ -12,6 +12,7 @@
   cardmodel arcade check [GAME] [--launcher] [--no-build] [--cartridges N]   every catalogue item launched
                                                 through the store as the launcher does it (install, verify, repair,
                                                 play headless), then every cartridge the library lists
+  cardmodel arcade app ROM [--install]          one cartridge as its own app, its code lifted into cards (cartapp.py)
 
 Honest limits (L1): the launcher remembers a checkout's path (to start the service): after moving the
 repository, run `cardmodel arcade launcher --install` again. Installing from a linked git worktree points the
@@ -233,6 +234,24 @@ def cmd_arcade(args) -> int:
         cli._out(args, info, f"{info['title']} {info['version']} build {info['build']}: {info['size']:,} bytes in "
                              f"{info['chunks']} chunks, {len(info['media'])} store pictures, {info['seconds']} s")
         return 0
+    if args.action == "app":
+        from . import cartapp
+        if not args.target:
+            print("error: arcade app needs a cartridge file (a .gb, .gbc or a .zip with one)", file=sys.stderr)
+            return 2
+        info = cartapp.build(ctx, Path(args.target), install=args.install, progress=lambda m: print(m, file=sys.stderr))
+        w, lf = info["witness"], info["lift"]
+        cli._out(args, info, "\n".join([
+            f"{info['title']}: {info['installed'] or info['app']}",
+            f"  lifted: {lf['blocks']:,} blocks ({lf['instructions_lifted']:,} instructions), "
+            f"{lf.get('single_instructions', 0):,} instructions on their own, {lf['ram_instructions_lifted']} RAM "
+            f"instructions; found by reasoning: {lf.get('static', {}).get('far', 0):,} far calls, "
+            f"{lf.get('static', {}).get('tables', 0):,} jump-table entries",
+            f"  witness: {w['frames']:,} frames identical to the plain player; {100 * w['purity']:.2f} % of the "
+            f"{w['instructions']:,} instructions ran as lifted card IR ({w['interpreted']:,} interpreted, "
+            f"{w['interpreted_ram']:,} of them in RAM)",
+            f"  saves: {info['saves']}  ({info['seconds']} s)"]))
+        return 0
     if args.action == "serve":
         from . import server
         app = ctx.store.get("app/arcade")
@@ -328,7 +347,7 @@ def cmd_arcade(args) -> int:
 
 def register(sub) -> None:
     s = sub.add_parser("arcade", help="games built from cards: build them natively, serve them to the launcher")
-    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "library", "check"])
+    s.add_argument("action", choices=["list", "build", "serve", "launcher", "run", "library", "check", "app"])
     s.add_argument("target", nargs="?")
     s.add_argument("--port", type=int, default=8770)
     s.add_argument("--install", action="store_true")

@@ -397,7 +397,17 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   own `bin/cardmodel`. When the cards in progress do not build, Update installs the last good build and the page
   shows the error (remembered in `state/arcade/build-errors.json`). Every title and datum on the pages opens
   something. `CARDMODEL_BRANCHES=0` keeps the service to its own checkout (the tests set it).
-* Witnesses: `tests/test_arcade.py` (CM35, CM42), `tests/test_arcade_systems.py` (CM40), `tests/test_arcade_work.py`.
+* **A cartridge as its own app** (`arcade/cartapp.py`, `cardmodel arcade app ROM --install`): the Game Boy
+  Player with the cartridge's code lifted into card IR, witnessed against the plain player, packed as
+  `~/Applications/Cardmodel Games/<title>.app`. The lifter (`machine/lift.py`, docs/MACHINES.md section 4) now
+  lifts every instruction start on its own besides the blocks (near events, after EI, mid-block entries), lifts
+  HALT, STOP and EI, and lifts the code a cartridge copies into RAM behind byte guards; the machine counts what
+  still runs in the interpreter (`interpreted`). `machine/absint.py` finds more code by an abstract run of the
+  machine's cards (far calls through bank-switching trampolines, jump tables); `arcade app` runs it once per
+  cartridge. Pokemon Crystal: 98.4 % lifted on an unseen run; the app keeps what the interpreter ran while
+  played, and the next build lifts it.
+* Witnesses: `tests/test_arcade.py` (CM35, CM42), `tests/test_arcade_systems.py` (CM40), `tests/test_arcade_work.py`,
+  `tests/test_cartapp.py`.
 * What is in the store and what the model does for each piece: docs/STORE.md. Install the launcher from this
   checkout (`main`), not from a worktree: the app records the checkout it was installed from. Run from a linked
   worktree, `arcade launcher --install` now points the app at the main checkout anyway (`--home PATH` chooses

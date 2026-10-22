@@ -177,6 +177,16 @@ game was closed). `system.py` builds it through the same pipeline as a game (`ga
   game, plays it on the system card's `check_cartridge` (a program assembled from the instruction cards, no one's
   game: a checkerboard and one byte of battery RAM), then starts every cartridge the library lists in that
   installed player, as the launcher starts it.
+* **One cartridge as its own app** (`arcade/cartapp.py`, `cardmodel arcade app ROM [--install]`): the Game Boy
+  Player with the cartridge's own code lifted into card IR (docs/MACHINES.md section 4: every block a long
+  profile found or an abstract run of the machine's cards found by reasoning, every instruction also on its own,
+  the code the cartridge copies into RAM), compiled
+  natively and packed as `<title>.app` (with `--install`: in `~/Applications/Cardmodel Games`). The cartridge is
+  read where it is when the app starts; the app shares its save folder with the library's entry for that
+  cartridge. Before packing, the lifted player plays the cartridge headless next to the plain one with the same
+  buttons (pictures and sound must be equal) and reports its purity: the share of instructions that ran as lifted
+  card IR. The app keeps what the interpreter still ran while it was played (`profile-*.bin` beside the save; the
+  shell's new `keep` and `globals` fields in game.json), and the next `arcade app` lifts that too.
 
 ## 6. Witnesses
 
@@ -237,6 +247,10 @@ programs, and a commit with its files; the branch's program is in the catalog wi
 branch (manifest, chunk, picture; unknown worktrees refused); the branch's own `arcade list` says whether it needs
 a build; a build there runs the branch's cardmodel, and a failed one keeps its error (across a restart of the
 service) while the last good build stays installable.
+
+`tests/test_cartapp.py` (a synthetic cartridge that copies a routine into HRAM and calls it every frame): the
+lifted player equals the plain one frame by frame, every instruction it runs (the HRAM routine, HALT, EI) runs as
+lifted card IR, and the app plays the cartridge from where it is and keeps what ran beside the save.
 
 ## 7. Honest limits
 

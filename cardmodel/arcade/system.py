@@ -48,7 +48,10 @@ def is_system(store, gid: str) -> bool:
 
 def tables(ctx, card) -> str:
     """The cartridge card's tables as card-language arrays (the language has no records): per type byte its
-    controller kind and features, the RAM size codes, the multicart signature, the player's sample rate."""
+    controller kind and features, the RAM size codes, the multicart signature, the player's sample rate. A system
+    card without ``tables`` (its player reads its cartridge's layout through card constants) gets the rate only."""
+    if not card.get("tables"):
+        return f"const PLAYER_RATE = {int(card['audio']['rate'])}\n"
     cc = ctx.store.get(card["tables"])
     kinds = cc.get("mbc_kind") or {}
     types = cc.get("types") or {}
@@ -112,14 +115,16 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
 
 
 class Player:
-    """The player headless (tests, the library's title screens, the store check): a cartridge in, frames out, in
-    any engine. ``machine`` reuses a loaded module (``start`` inserts the next cartridge into it)."""
+    """The player headless (tests, the library's title screens, the store check, cartapp's witness): a cartridge in,
+    frames out, in any engine. ``machine`` is a loaded module to use (``start`` inserts the next cartridge into it);
+    ``ir`` is its module when it is not the plain player's (lifted code)."""
 
     def __init__(self, ctx, name: str, rom: bytes, engine: str = "native", fresh: bool = False, clock: int = 0,
-                 save: bytes | None = None, machine=None):
+                 save: bytes | None = None, machine=None, ir: dict | None = None):
         self.ctx = ctx
         self.card = system_card(ctx.store, name)
-        self.ir = machine.ir if machine is not None else module(ctx, name)
+        # machine: a loaded module to reuse (the store check) or one with lifted code (cartapp, with its ir)
+        self.ir = ir if ir is not None else (machine.ir if machine is not None else module(ctx, name))
         self.m = machine if machine is not None else N.load(ctx, self.ir, engine, fresh=fresh)
         self.start(rom, clock=clock, save=save)
 
@@ -208,6 +213,9 @@ def spec(ctx, card, ir, lang: str) -> dict:
                       "extensions": cart.get("extensions", []), "zip": bool(cart.get("zip"))},
         "clock": sym(card["clock"]),
         "flush": sym("player_flush"),
+        **({"pointer": {"x": sym(card["pointer"]["x"]), "y": sym(card["pointer"]["y"]),
+                        "down": sym(card["pointer"]["down"]), "area": card["pointer"]["area"]}}
+           if card.get("pointer") else {}),
     }
 
 
