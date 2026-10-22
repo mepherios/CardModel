@@ -1,0 +1,40 @@
+{
+  "category": "finding",
+  "cites": [
+    "Rule-2",
+    "GM-4",
+    "Def-1"
+  ],
+  "data": {
+    "arities_from": {
+      "op/BIT_NAND": "its Python form",
+      "op/BIT_NOR": "stated: NOR of two words (its Python form names a library function)",
+      "op/CONST_MUL": "its Python form",
+      "op/CONST_MUL_POW2": "its Python form",
+      "op/CONST_POW": "its Python form",
+      "op/EC_ADD": "stated: two points / a scalar and a point",
+      "op/EC_SCALAR_MUL": "stated: two points / a scalar and a point",
+      "op/LCM": "its Python form",
+      "op/MODINV": "its Python form",
+      "op/MODINV_PRIME": "its Python form",
+      "op/MULADD": "its Python form",
+      "op/SQRT": "its Python form",
+      "op/SQUARE": "its Python form"
+    }
+  },
+  "evidence": "tests/test_numbering.py; engines/numbering.py",
+  "evidence_tier": "bounded",
+  "limits": "found by the decidability test on generated objects; the arities of EC_ADD, EC_SCALAR_MUL and BIT_NOR are stated, the others read from the op cards' Python forms",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W5_arity_gaps",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-5",
+    "tool": "tools/seed_numbering.py"
+  },
+  "statement": "Two numberings were not admissible as stored: the machines set's effects carried an optional guard and no fixed argument count, and the computation set's 13 atoms are not IR ops, so nothing stated their arities; their codes could not be parsed back (Rule-2). Each set card now states its arities (op/BIT_NAND from its Python form, op/BIT_NOR from stated: NOR of two words (its Python form names a library function), op/CONST_MUL from its Python form, ...), and an effect's guard slot holds logic/true when it always happens.",
+  "tier": 1,
+  "workstream": "W-5"
+}

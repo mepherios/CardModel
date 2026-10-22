@@ -1,0 +1,22 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-12",
+    "Rule-10",
+    "GM-9"
+  ],
+  "instead": "never certified from inside (second incompleteness); changes are accepted only with Lean's external check (GM-9)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "consistent",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Π1",
+  "statement": "Is the card model's theory consistent?",
+  "tier": 0
+}

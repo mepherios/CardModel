@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "linear in the source",
+  "decides": "a Python function's meaning as a core term, exactly, for the supported subset",
+  "limits": "no strings, lists or classes yet; unsupported constructs are reported, never guessed",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "lift_python",
+  "procedure": "cardmodel/engines/frontend_python.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "a Python function's meaning as a core term, exactly, for the supported subset",
+  "status": "built",
+  "tier": 0
+}

@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "depends on the tactic",
+  "decides": "a statement, with a proof the Lean kernel accepts",
+  "limits": "the statement must be expressible in Lean; failing tactics are not a disproof",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "lean_kernel",
+  "procedure": "cardmodel/emit/lean.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "a statement, with a proof the Lean kernel accepts",
+  "status": "built",
+  "tier": 0
+}

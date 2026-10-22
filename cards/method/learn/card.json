@@ -4,13 +4,26 @@
   "decides": "new cards from observed code, promoted only with evidence",
   "limits": "names and statistics, not semantics, for code it cannot lift",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "e7d62929d9baa11638e7f32468e67dd3922964ac931e592a3693e2b5f82ad592",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "learn",
   "procedure": "cardmodel/engines/learn.py",
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_sources.py"
+  },
+  "rank": {
+    "cites": [
+      "Ph-15",
+      "GM-7"
+    ],
+    "decides": "decidable",
+    "general": "is a promoted card right on every input",
+    "general_rank": "Π1",
+    "question": "whether an observed tree yields candidate cards that pass their checks on the evidence",
+    "why": "promotion runs finitely many checks; correctness everywhere is a ∀, so learned cards stay at tier sample until a proof or a sized witness lifts them"
   },
   "statement": "new cards from observed code, promoted only with evidence",
   "status": "built",

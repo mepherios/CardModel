@@ -1,0 +1,33 @@
+{
+  "category": "method",
+  "complexity": "points: the product of (degree + 1) per input times the sum of the recurrence orders",
+  "decides": "equality of two integer functions on their domain, when both forms fall in a class with a finite-witness theorem",
+  "limits": "only straight-line polynomials and single counted loops with constant-coefficient affine updates; the lifter's faithfulness is assumed; machine integers are not covered",
+  "metadata": {
+    "previous_content_hash": "13be9174d26e5b4f7fd9da7dd1f1af047d55753469aada1341214884c8fc2c58",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "sized_witness",
+  "procedure": "Read both forms' classes from their lifted IR (polynomial, C-finite in one counted loop, regions cut by leading guards), size the witness by the theorems for those classes, and run both forms on it with exact integers.",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "rank": {
+    "cites": [
+      "Ph-15",
+      "GM-7",
+      "Cap-18"
+    ],
+    "decides": "decidable",
+    "general": "are two integer functions equal on their domain",
+    "general_rank": "Π1",
+    "question": "whether two forms in a recognized class (polynomial, C-finite loop or recursion, guarded regions) agree on the points their class theorem names",
+    "why": "inside the classes a finite witness is a proof (the grid lemma, C-finite agreement), so the ∀ collapses to a finite check; outside them the question stays Π1"
+  },
+  "statement": "equality of two integer functions on their domain, when both forms fall in a class with a finite-witness theorem",
+  "status": "built",
+  "tier": 0
+}

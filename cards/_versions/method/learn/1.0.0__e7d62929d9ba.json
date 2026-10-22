@@ -1,0 +1,18 @@
+{
+  "category": "method",
+  "complexity": "linear in the observed tree",
+  "decides": "new cards from observed code, promoted only with evidence",
+  "limits": "names and statistics, not semantics, for code it cannot lift",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "learn",
+  "procedure": "cardmodel/engines/learn.py",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "new cards from observed code, promoted only with evidence",
+  "status": "built",
+  "tier": 0
+}

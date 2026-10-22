@@ -1,0 +1,14 @@
+{
+  "category": "godel_set",
+  "extends": null,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "B0",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "The basis: the core types, the logic primitives and the IR's operations. Every other set extends it.",
+  "tier": 0
+}

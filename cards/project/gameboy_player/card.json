@@ -39,8 +39,8 @@
     "the GameSharks: a pass-through model (a cartridge from the library in their slot) and Datel's registers, which are not documented; the GameShark (USA) file also lacks its font bank"
   ],
   "metadata": {
-    "previous_content_hash": "0c6716a5e6a0a2f15bb9679b22beff36a6cf74417bf5337666f2b8dcd2337655",
-    "version": "2.0.5",
+    "previous_content_hash": "60e461604546dcea353f19567da795cd0bd80054db556bc72375cf29bdafcc47",
+    "version": "2.0.6",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -95,7 +95,7 @@
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T02:03:25+02:00",
+  "updated": "2026-10-22T02:58:56+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/sad-clarke-108d42 into main",

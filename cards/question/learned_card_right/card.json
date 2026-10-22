@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "Ph-15",
+    "GM-7"
+  ],
+  "instead": "keep it at tier sample until a proof or a sized witness lifts it",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "learned_card_right",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Π1",
+  "statement": "Is a learned card right on every input?",
+  "tier": 0
+}

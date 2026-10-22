@@ -1,0 +1,22 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-17",
+    "Ph-15",
+    "GM-7"
+  ],
+  "instead": "prove it in a recognized class or in Lean; otherwise sample it, and say so (tier sample, Rice's theorem)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "programs_equal",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Π1",
+  "statement": "Do two total programs compute the same function on every input?",
+  "tier": 0
+}

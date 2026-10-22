@@ -1,0 +1,75 @@
+{
+  "arities": {
+    "op/BIT_NAND": 2,
+    "op/CONST_MUL": 2,
+    "op/CONST_MUL_POW2": 2,
+    "op/CONST_POW": 2,
+    "op/EC_ADD": 2,
+    "op/EC_SCALAR_MUL": 2,
+    "op/LCM": 2,
+    "op/MODINV": 2,
+    "op/MODINV_PRIME": 2,
+    "op/MULADD": 3,
+    "op/SQRT": 1,
+    "op/SQUARE": 1
+  },
+  "category": "godel_set",
+  "extends": "B0",
+  "metadata": {
+    "previous_content_hash": "94ebad588bcf588eb7869614a1d02b2b0a83c00dbb33157fa398d86af866f477",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "computation",
+  "numbering": {
+    "arities_from": {
+      "op/BIT_NAND": "its Python form",
+      "op/CONST_MUL": "its Python form",
+      "op/CONST_MUL_POW2": "its Python form",
+      "op/CONST_POW": "its Python form",
+      "op/EC_ADD": "stated: two points / a scalar and a point",
+      "op/EC_SCALAR_MUL": "stated: two points / a scalar and a point",
+      "op/LCM": "its Python form",
+      "op/MODINV": "its Python form",
+      "op/MODINV_PRIME": "its Python form",
+      "op/MULADD": "its Python form",
+      "op/SQRT": "its Python form",
+      "op/SQUARE": "its Python form"
+    },
+    "cites": [
+      "GM-4",
+      "Rule-1",
+      "Rule-2",
+      "Rule-3",
+      "Rule-5",
+      "Rule-6",
+      "Def-1",
+      "Def-4",
+      "Ph-6"
+    ],
+    "code": "Gödel's positional code of the prefix tokens (Def-9, Def-27): atom k -> 3k + 1, integer c -> 3·zig(c) + 2, the j-th variable by first appearance -> 3j + 3; variables are named by that order",
+    "conditions": [
+      "injective",
+      "effective",
+      "decidable_image",
+      "codes_start_at_1",
+      "parts_smaller",
+      "natural_provability"
+    ],
+    "content": "the sparse vector ledger index -> exponent (Def-10, CM45)",
+    "identity": "sha256 of the canonical term (Def-16)",
+    "objects": "core terms over the set's op atoms and those of the sets it extends, integer constants and variables",
+    "provability": {
+      "form": "exists_proof",
+      "relation": "method/lean_kernel",
+      "statement": "Prov(x) = ∃y Proof(y, x), Proof the kernel's check of a proof term (Def-4); no further clause"
+    },
+    "witness": "tests/test_numbering.py::Sets::test_computation"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "The op cards beyond the IR's basis (squares, modular inverses, elliptic-curve operations, ...): atoms of the computing domain, each to be defined over B0 where it can.",
+  "tier": 0
+}

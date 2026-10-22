@@ -1,0 +1,18 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "algorithm_forms_proved",
+  "name": "G_U9_algorithm_forms_proved",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "Fraction of the algorithm cards' other Python forms whose equality with the definition is proved (a sized witness or a kernel proof), not sampled (agenda R3).",
+  "target": 0.5,
+  "tier": 0
+}

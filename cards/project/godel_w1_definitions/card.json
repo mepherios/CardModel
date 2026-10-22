@@ -1,0 +1,48 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/godel-w1-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [],
+  "goal": "Can every 1931 definition run as a card?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "46 definition cards with Python and Lean forms",
+    "round-trip witnesses on generated codes",
+    "a checker for Gödel-coded proofs of a small system"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [],
+  "name": "godel_w1_definitions",
+  "next_steps": [
+    "start on claude/godel-w1-*"
+  ],
+  "order": 40,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cards/godel1931/*",
+    "cardmodel/engines/godel1931.py",
+    "formal/Godel1931/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "statement": "Gödel method research program, wave 1: Can every 1931 definition run as a card?",
+  "tier": 1,
+  "title": "W-1 Gödel's 46 definitions as cards",
+  "updated": "2026-10-22T02:22:50+02:00",
+  "user_actions": []
+}

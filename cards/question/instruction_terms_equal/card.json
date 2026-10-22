@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "Cap-11",
+    "Ph-15"
+  ],
+  "instead": "a finite check: exhaustive runs, SMT, or polynomial constraints (W-12)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "instruction_terms_equal",
+  "promise": "answered",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "decidable",
+  "statement": "Do an instruction's terms equal its executable semantics on every 8-bit input?",
+  "tier": 0
+}

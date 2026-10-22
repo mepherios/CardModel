@@ -1,0 +1,18 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "formal_core_problems",
+  "name": "G_U8_formal_core",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "Problems in the formal core: a formal_theorem card whose Lean theorem is missing or rests on more than Lean's standard axioms, any sorry, or a failed build (agenda R1).",
+  "target": 0,
+  "tier": 0
+}

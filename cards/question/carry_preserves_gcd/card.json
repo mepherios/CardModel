@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "Rule-20",
+    "Cap-4"
+  ],
+  "instead": "the disjoint-support test, proved equivalent in formal/GodelCore T2",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "carry_preserves_gcd",
+  "promise": "answered",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "decidable",
+  "statement": "Does a carry-over map preserve every gcd?",
+  "tier": 0
+}

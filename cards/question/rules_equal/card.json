@@ -1,0 +1,21 @@
+{
+  "category": "question",
+  "cites": [
+    "GM-3",
+    "Ph-15"
+  ],
+  "instead": "equality saturation: an equality found is a proof; none found within the budget is not a disproof (the word problem, Post and Markov 1947)",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rules_equal",
+  "promise": "open",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-15",
+    "tool": "tools/seed_difficulty.py"
+  },
+  "rank": "Σ1",
+  "statement": "Are two terms equal under the rule cards?",
+  "tier": 0
+}

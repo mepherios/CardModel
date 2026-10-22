@@ -20,6 +20,7 @@ e-graph canonicalizes them as a separate step).
 from __future__ import annotations
 
 import random
+from collections import Counter
 
 from ..lang.compile import compile_sources
 from . import isa as I
@@ -250,7 +251,7 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
     semantics is the action, linked by the check's witness."""
     from ..engines import godel as G
     from ..engines.egraph import semantic_hash
-    idx = G.index_of(ctx.store)
+    entries = G.ledger(ctx.store)
     cards = {c.name: c for c in I.instructions(ctx.store, isa)}
     defs, acts = [], []
     for name, res in sorted(checked["results"].items()):
@@ -258,7 +259,6 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
         card = cards[name]
         dname, aname = f"isa__{name}", f"isa__{name}__semantics"
         cont = content(res, ctx.ops)
-        n, missing = G.number(cont, idx)
         status = {"pass": "witnessed", "fail": "refuted"}.get(row.get("status"), row.get("status", "pending"))
         term = {"state": res["state"], "effects": res["effects"]}
         defs.append({"name": dname, "category": "definition", "subject": card.qualified,
@@ -270,9 +270,10 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
                                     f"conditions under which it happens.",
                      "canonical": {"status": "symbolic", "hash": semantic_hash(term), "by": "method/symbolic_execution",
                                    "note": "exact terms; the e-graph's canonical form is a later step"},
-                     "godel": {"content": cont, "number": str(n) if n is not None else None,
-                               **({"missing_atoms": missing} if missing else {})},
+                     "identity": {"hash": semantic_hash(term), "of": "symbolic terms"},
+                     "godel": G.stored(Counter(cont), "its symbolic terms", entries),
                      "proof_obligations": [{"claim": "the terms equal the executable semantics", "status": status,
+                                            "tier": "sample",
                                             "evidence": {"seed": checked["seed"], "runs": row.get("runs"),
                                                          "reason": row.get("reason")}}],
                      "actions": [f"action/{aname}"], "transformations": [],
@@ -282,6 +283,7 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
                      "code": f"{card.qualified}#semantics", "method": "method/human_written",
                      "link": {"kind": "witness" if status != "dispatch" else "source",
                               "status": status if status != "dispatch" else "source", "seed": checked["seed"],
+                              "tier": "sample",
                               "checks": row.get("runs")}})
     return defs, acts
 
