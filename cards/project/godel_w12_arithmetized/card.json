@@ -1,0 +1,47 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/godel-w12-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [],
+  "goal": "Can instruction terms become polynomial constraints over a prime field?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "the LR35902 instruction terms compiled to constraints over a prime field",
+    "equality checked by Schwartz-Zippel",
+    "a comparison with SMT and exhaustive checking"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metrics": [],
+  "name": "godel_w12_arithmetized",
+  "next_steps": [
+    "start on claude/godel-w12-*"
+  ],
+  "order": 44,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cardmodel/machine/arith.py",
+    "cards/finding/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "statement": "Gödel method research program, wave 1: Can instruction terms become polynomial constraints over a prime field?",
+  "tier": 1,
+  "title": "W-12 Arithmetized execution",
+  "updated": "2026-10-22T02:22:50+02:00",
+  "user_actions": []
+}

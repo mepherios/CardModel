@@ -141,3 +141,4 @@ command runs the test suite.
 | [docs/AUTONOMY.md](docs/AUTONOMY.md) | the model runs itself: the self-run cycle, the core capabilities, the self layer, findings and the plan |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | how parallel sessions land as one program: rules, the number registry, who works where, the log |
 | [docs/MATH_CORE.md](docs/MATH_CORE.md) | approved 2026-10-22: the four sources around the Gödel model, an audit of understand vs imitate, the semantic core, the migration plan and its progress (phases 0 and 1, the research handover's storage rules, witness tiers and the Lean formal core in `formal/`) |
+| [docs/GODEL_METHOD.md](docs/GODEL_METHOD.md) | the Gödel method research program: its coordination rules, wave 1's workstreams and their results, citing the handover's ids |
