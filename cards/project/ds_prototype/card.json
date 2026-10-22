@@ -20,7 +20,9 @@
     "tests/test_nds.py: a synthetic image drawn by ARM9 code, every device, Diamond's first screens when present"
   ],
   "goal": "Nintendo DS games running on the ARM instruction cards, lifted like the Game Boy.",
-  "in_progress": [],
+  "in_progress": [
+    "making Pokemon Diamond playable (the user's request): the 3D engine and sound mixing as hardware cards, and a DS player for Cardmodel Arcade"
+  ],
   "kind": "game",
   "left": [
     "3D: the geometry engine and rasteriser (the title's Dialga, the 3D overworld)",
@@ -30,9 +32,9 @@
     "display capture, the main-memory display FIFO, EEPROM and FRAM save chips"
   ],
   "metadata": {
-    "previous_content_hash": "7ff437bdaf1e15b8c2dee617fb79554937f653cfc81a677102f9c6f1ccbd667d",
-    "version": "2.1.0",
-    "version_bump_reason": "minor"
+    "previous_content_hash": "d62a41cfc360f61c695a17e1cafb50ae9499980bee87260534f3d0eb1f90c486",
+    "version": "2.1.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [
     {
@@ -52,8 +54,12 @@
   ],
   "name": "ds_prototype",
   "next_steps": [
-    "the 3D engine: geometry commands, matrices, polygon setup, a textured rasteriser",
-    "a DS player in the launcher (the OAM and main sessions own those files)",
+    "MATH_CORE (approved 2026-10-22): the DS is its hardware cards, card-language semantics the semantic core can reason about and symbolically execute (2D and 3D engines, VRAM banks, SPI, RTC, IPC, sound), never host-language emulation code; emulation, screenshots, test ROMs and differential runs are witnesses, never the method",
+    "the 3D engine (geometry commands, matrices, polygon setup, a textured rasteriser) and sound mixing as hardware cards",
+    "a DS player card for Cardmodel Arcade (player.card in card language: cartridge, buttons and touch, saves, clock); the arcade session adds the shell's touch input and a system without cartridge tables",
+    "the direct-boot loading still done in machine/nds.py (firmware image, user settings, save chip choice) into card language, one path for the CLI and the player",
+    "symbolic terms for the ARM/Thumb instruction cards (MATH_CORE F5, after main's LR35902 terms), and the ARM lifter keeping its terms as cards (phase 2)",
+    "the DS hardware cards traced to the four sources (CM44): definitions for their behaviour, the methods that run and witness them",
     "merge claude/blissful-easley-814fa6 into main"
   ],
   "order": 3,
@@ -77,7 +83,7 @@
   "statement": "Both DS CPUs direct-booted on the ARM instruction cards with VRAM, both 2D engines, the save chip, SPI devices, the clock and the sound channels' status as cards: Pokemon Diamond draws its first screens; no 3D or sound output yet.",
   "tier": 1,
   "title": "Nintendo DS prototype",
-  "updated": "2026-10-22T01:51:30+02:00",
+  "updated": "2026-10-22T02:09:26+02:00",
   "user_actions": [
     {
       "action": "Approve merging claude/blissful-easley-814fa6 into main",
