@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 2.0,
+  "emit": {
+    "c": "ceil({0})",
+    "go": "math.Ceil({0})",
+    "java": "Math.ceil({0})",
+    "javascript": "Math.ceil({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "(math.ceil({0}) + 0.0)",
+    "python": "float(math.ceil({0}))",
+    "ruby": "(({0}).ceil.to_f)",
+    "rust": "(({0}).ceil())",
+    "swift": "ceil({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: float(math.ceil(a))",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CEIL",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "the smallest integer not below x, as a float",
+  "tier": 1
+}

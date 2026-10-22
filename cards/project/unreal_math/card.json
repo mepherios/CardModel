@@ -1,0 +1,81 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/unreal-math"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/UNREAL.md"
+  ],
+  "done": [
+    "the engine found through the Epic launcher's record; truth (scalar) and shipped (NEON) builds of its headers, checks compiled out, -ffp-contract=off as UnrealBuildTool compiles for Mac",
+    "clang's typed AST as the C++ frontend (a generated unit instantiating every UE::Math template, the engine's own math .cpp files), read as a stream",
+    "the lifter: records as slots, unions, arrays, references and out-parameters, branches merged, calls inlined across units, C library and bit-level atoms, effects at the boundary, gaps with causes",
+    "canonical forms over the reals (engines/realnorm.py) with proof-tier sized witnesses for polynomial functions; semantic hashes and identities; Gödel content as sparse vectors; uses with GCD and LCM; the carry map from the engine's Gödel set",
+    "the new atoms as op cards in sets analysis and bits, conformant in every language card that spells them; law CM49, goals G_U10-G_U12, capability unreal_math, verify section unreal",
+    "the witness against the engine's compiled code: the shipped (NEON) build first, then the scalar build with every .cpp file the term reaches compiled in; access opened, inputs where C++ is undefined never run, the platform's own C library for the atoms (Apple's acosf(-1) is the float below pi); 2708 of 2852 lifted functions witnessed (2680 bit-exact), none refuted",
+    "reads through an index the inputs choose (an index outside the object is undefined: the term says so), shifts guarded by the operand's width, compound assignments that return *this witnessed by address",
+    "the engine-derived cards kept on this machine (state/local/cards, the local layer of every store; docs/INTEGRATION.md rule 8); the ledger keeps the engine's atom names and the set card their arities"
+  ],
+  "goal": "Unreal Engine's math distilled into the card model: every function understood as mathematics (a definition), organised by its use, numbered in the Gödel model, and checked against the engine itself.",
+  "in_progress": [],
+  "kind": "program",
+  "left": [
+    "gaps (458 of 3310): writes through an index the inputs choose, unknown types, terms past the size budget (let-bound DAGs), bit-level reinterpretation, loops whose trip count depends on the inputs (closed forms), containers in the IR; `cardmodel unreal cover` lists each cause with what closes it",
+    "78 lifted functions the harness cannot call yet (friend functions, `Super` in derived classes, a few crashes on blank objects)",
+    "the other engine modules with math: GeometryCore, Chaos, AnimationCore, the Kismet math library (lift_source already reads any C++)",
+    "emission of the definitions to other languages through the language cards (act from truth)"
+  ],
+  "metrics": [
+    {
+      "goal": "G_U10_engine_math_lifted",
+      "label": "engine math lifted"
+    },
+    {
+      "goal": "G_U11_engine_math_witnessed",
+      "label": "engine math witnessed against the binary"
+    },
+    {
+      "goal": "G_U12_engine_math_refuted",
+      "label": "engine terms refuted"
+    }
+  ],
+  "name": "unreal_math",
+  "next_steps": [
+    "close the largest gap causes (cardmodel unreal cover lists them with what closes each)",
+    "lift GeometryCore and Chaos math with the same pipeline",
+    "emit the definitions through the language cards and witness them against the engine"
+  ],
+  "order": 30,
+  "owner": {
+    "name": "unreal-distill (Unreal Engine math as cards)",
+    "session": "9882e8eb-e715-49f1-90d6-7bbe0aac8f61"
+  },
+  "paths": [
+    "cardmodel/unreal",
+    "cardmodel/engines/realnorm.py",
+    "docs/UNREAL.md",
+    "tests/test_unreal.py",
+    "tools/seed_unreal.py",
+    "cards/unreal_math/_category.json",
+    "state/local/cards (untracked: the engine-derived cards, rule 8)"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "hand-written (CM41)"
+  },
+  "standing": "Unreal Engine 5.8.4's Core math is read (3938 functions, 3310 in the math universe), lifted (2852, 86%), distilled into definitions with canonical forms, Gödel content and uses, and witnessed against the engine's compiled code (2708, none refuted); every function is an atom of the Gödel set unreal.",
+  "statement": "Unreal Engine's math as cards (law CM49).",
+  "tier": 1,
+  "title": "Unreal Engine's math as cards",
+  "updated": "2026-10-22T17:20:00+02:00",
+  "user_actions": [
+    {
+      "action": "Decide whether the branch claude/unreal-distill is merged into main",
+      "unblocks": [
+        "the engine's math in main's cards and verify"
+      ],
+      "why": "only the integrating session merges, and only after your yes (docs/INTEGRATION.md rule 2)"
+    }
+  ]
+}

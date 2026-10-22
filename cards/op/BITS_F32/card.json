@@ -1,0 +1,57 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "UNSUPPORTED",
+    "go": "UNSUPPORTED",
+    "java": "UNSUPPORTED",
+    "javascript": "UNSUPPORTED",
+    "lean": "UNSUPPORTED",
+    "lua": "UNSUPPORTED",
+    "python": "struct.unpack('<f', struct.pack('<I', ({0}) & 0xFFFFFFFF))[0]",
+    "ruby": "UNSUPPORTED",
+    "rust": "UNSUPPORTED",
+    "swift": "UNSUPPORTED"
+  },
+  "godel_set": "bits",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            0,
+            2139095039
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: struct.unpack('<f', struct.pack('<I', a & 0xFFFFFFFF))[0]",
+    "types": [
+      [
+        "int",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "BITS_F32",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math",
+      "struct"
+    ]
+  },
+  "statement": "an unsigned 32-bit integer's bits read as a binary32",
+  "tier": 1
+}

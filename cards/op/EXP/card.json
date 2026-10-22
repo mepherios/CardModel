@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 20.0,
+  "emit": {
+    "c": "exp({0})",
+    "go": "math.Exp({0})",
+    "java": "Math.exp({0})",
+    "javascript": "Math.exp({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.exp({0})",
+    "python": "math.exp({0})",
+    "ruby": "Math.exp({0})",
+    "rust": "(({0}).exp())",
+    "swift": "exp({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -20.0,
+            20.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.exp(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "EXP",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "e ** x",
+  "tier": 1
+}

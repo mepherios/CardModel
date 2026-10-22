@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 20.0,
+  "emit": {
+    "c": "sin({0})",
+    "go": "math.Sin({0})",
+    "java": "Math.sin({0})",
+    "javascript": "Math.sin({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.sin({0})",
+    "python": "math.sin({0})",
+    "ruby": "Math.sin({0})",
+    "rust": "(({0}).sin())",
+    "swift": "sin({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.sin(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "SIN",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "sine (radians)",
+  "tier": 1
+}

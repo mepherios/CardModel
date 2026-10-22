@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 25.0,
+  "emit": {
+    "c": "sinh({0})",
+    "go": "math.Sinh({0})",
+    "java": "Math.sinh({0})",
+    "javascript": "Math.sinh({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "UNSUPPORTED",
+    "python": "math.sinh({0})",
+    "ruby": "Math.sinh({0})",
+    "rust": "(({0}).sinh())",
+    "swift": "sinh({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -10.0,
+            10.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.sinh(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "SINH",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "hyperbolic sine",
+  "tier": 1
+}

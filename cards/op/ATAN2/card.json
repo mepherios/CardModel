@@ -1,0 +1,63 @@
+{
+  "category": "op",
+  "cost": 30.0,
+  "emit": {
+    "c": "atan2({0}, {1})",
+    "go": "math.Atan2({0}, {1})",
+    "java": "Math.atan2({0}, {1})",
+    "javascript": "Math.atan2({0}, {1})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.atan({0}, {1})",
+    "python": "math.atan2({0}, {1})",
+    "ruby": "Math.atan2({0}, {1})",
+    "rust": "(({0}).atan2({1}))",
+    "swift": "atan2({0}, {1})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        },
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: math.atan2(a, b)",
+    "types": [
+      [
+        "float",
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ATAN2",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "atan2(y, x): the angle of (x, y)",
+  "tier": 1
+}

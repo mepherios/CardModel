@@ -1,0 +1,28 @@
+{
+  "carry": {
+    "gap": 473,
+    "image": 2837,
+    "preserves_gcd": false,
+    "statement": "each lifted function's atom goes to its definition's content; a gap has no image",
+    "to": [
+      "B0",
+      "analysis",
+      "bits"
+    ]
+  },
+  "category": "godel_set",
+  "engine": "5.8.4",
+  "extends": "analysis",
+  "metadata": {
+    "previous_content_hash": "7e213764074b7bca4d1e738e8864780570f76a73ba3a2864703d45c6c598e570",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "unreal",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "Unreal Engine's math: each function of its math universe is an atom (its named vocabulary). The carry map sends a lifted function to the Gödel content of its canonical form over B0, analysis and bits; a function that is a gap has no image, and that is the map's gap.",
+  "tier": 0
+}

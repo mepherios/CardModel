@@ -450,6 +450,33 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   (weekly). Each step runs under a deadline, so one that does not return is stopped and reported.
 * Witnesses: `tests/test_self.py`, `tests/test_self_steps.py`. How it works and how to extend it: docs/AUTONOMY.md.
 
+## 3j. A game engine's math (Unreal Engine)
+
+```bash
+./bin/cardmodel unreal scan --save
+```
+
+```bash
+./bin/cardmodel unreal show FVector.CrossProduct
+```
+
+```bash
+./bin/cardmodel unreal cover
+```
+
+* `scan` finds the engine through the Epic launcher's record (or `--engine PATH`), builds its math units in
+  `state/unreal/<version>/` (clang's AST dumps run to gigabytes; the cache keeps the compact pickles), lifts every
+  function, distills it, witnesses every term against the engine's compiled code, and with `--save` writes the
+  cards to the untracked local layer (`state/local/cards`: UE-derived data stays local, docs/INTEGRATION.md rule 8)
+  and appends the engine's atoms (names) to the tracked ledger. `--reuse` starts from the cached scan; a scan takes minutes,
+  the witness longer. `witness --missing` witnesses again only what has no settling verdict, and
+  `scan --reuse --no-witness --save` rewrites the cards from the cached scan and the last verdicts.
+* A new C library atom: an entry in `cardmodel/unreal/atoms.py`, then `python3 -B tools/seed_unreal.py` (op card,
+  ledger), then `scan --reuse --save`. Closing a gap: `cover` lists every cause with what closes it; the lifter is
+  `cardmodel/unreal/lift.py`. Any other C++ code base: `unreal/scan.py::lift_source` and `witness.Target`.
+* Witnesses: `tests/test_unreal.py` (on `examples/engine_math/mini_math.h`, no engine needed); verify section
+  `unreal`. docs/UNREAL.md has the whole method and its limits.
+
 ## 4. How to add things
 
 **A card.** Run `cardmodel new <registry> <name> --statement "..."`, or write `cards/<registry>/<name>/card.json`

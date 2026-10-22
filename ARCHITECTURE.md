@@ -7,14 +7,16 @@ cardmodel/                      the repository IS the model (its home)
 │   ├── kernel/                 the universal card contract
 │   │   ├── card.py             Card = dict + load facts (path, registry, layer, source)
 │   │   ├── registry.py         a directory with _category.json is a registry; ALL/get/all_names
-│   │   ├── store.py            layers (model < extra read-only < self read-only < project), merged views, writes
+│   │   ├── store.py            layers (model < extra read-only < local < self read-only < project), merged
+│   │   │                       views, writes (the local layer only when a writer names it)
 │   │   ├── schema.py           dependency-free JSON-Schema subset validator
 │   │   ├── types.py            card types are cards; validation; closure (L45)
 │   │   ├── versioning.py       semver bump + archive + verify-before-overwrite
 │   │   ├── resources.py        bounded resources: machine-wide slots, child memory caps, self cap, background
 │   │   │                       spawns (CM30)
 │   │   ├── canon.py            canonical JSON (Ting) + card content hash
-│   │   └── paths.py            home, project discovery (.cardmodel/, like .git), the self layer (state/self/cards)
+│   │   └── paths.py            home, project discovery (.cardmodel/, like .git), the self layer (state/self/cards),
+│   │                           the local layer (state/local/cards: data that stays on this machine, INTEGRATION rule 8)
 │   ├── engines/
 │   │   ├── probes.py           capability probes as data (rea-cards lesson)
 │   │   ├── ir.py               the card IR: functions as trees of op cards + reference interpreter
@@ -58,6 +60,12 @@ cardmodel/                      the repository IS the model (its home)
 │   │                           cards.py (packs with file and line), classify.py (facts + stdlib/anyps5.card: every
 │   │                           gap's cause), cover.py (the ladder, causes, findings), witness.py (AnyPS5's C++ next
 │   │                           to card-language semantics), cli.py
+│   ├── unreal/                 a game engine's math as cards (docs/UNREAL.md): engine.py (the install, the truth and
+│   │                           shipped builds), units.py (the generated header unit, the engine's .cpp units),
+│   │                           clangast.py (clang's typed AST, streamed), lift.py (symbolic execution into core
+│   │                           terms), scan.py, distill.py (canonical forms, hashes, Gödel content, uses, carry),
+│   │                           witness.py (the engine's compiled code against the terms), atoms.py, cards.py,
+│   │                           metrics.py, cli.py; engines/realnorm.py is the normal form over the reals
 │   ├── emit/                   lean.py (theorems, fail-closed batch checker, lint), lean_logic.py (derivations
 │   │                           as Lean terms), lean_import.py (Lean theorems as cards, faithfulness), lean_chain.py
 │   │                           (rule-card chains as calc proofs), proofs.py, hints.py

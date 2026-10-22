@@ -1,0 +1,14 @@
+{
+  "category": "godel_set",
+  "extends": "B0",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "bits",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "A float's bits as an integer and back, and bit counting: the atoms of bit-level numeric code (sign tricks, float packing, integer logarithms).",
+  "tier": 0
+}

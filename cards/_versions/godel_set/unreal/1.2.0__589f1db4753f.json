@@ -1,0 +1,61 @@
+{
+  "carry": {
+    "gap": 458,
+    "image": 2852,
+    "preserves_gcd": false,
+    "statement": "each lifted function's atom goes to its definition's content; a gap has no image",
+    "to": [
+      "B0",
+      "analysis",
+      "bits"
+    ]
+  },
+  "category": "godel_set",
+  "engine": "5.8.4",
+  "extends": "analysis",
+  "metadata": {
+    "previous_content_hash": "a1c3d234a1efe74984ae1483b1bcba090f874b4cfee715167628b471e0dc0eb5",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "unreal",
+  "numbering": {
+    "arities_from": "each unreal_math card's arity: the function's parameters, and the object for a non-static member",
+    "arities_registry": "unreal_math",
+    "cites": [
+      "GM-4",
+      "Rule-1",
+      "Rule-2",
+      "Rule-3",
+      "Rule-5",
+      "Rule-6",
+      "Def-1",
+      "Def-4",
+      "Ph-6"
+    ],
+    "code": "Gödel's positional code of the prefix tokens (Def-9, Def-27): atom k -> 3k + 1, integer c -> 3·zig(c) + 2, the j-th variable by first appearance -> 3j + 3; variables are named by that order",
+    "conditions": [
+      "injective",
+      "effective",
+      "decidable_image",
+      "codes_start_at_1",
+      "parts_smaller",
+      "natural_provability"
+    ],
+    "content": "the sparse vector ledger index -> exponent (Def-10, CM45)",
+    "identity": "sha256 of the canonical term (Def-16)",
+    "objects": "core terms over the engine's functions (each applied to its arguments) and the atoms of analysis and B0, integer constants and variables",
+    "provability": {
+      "form": "exists_proof",
+      "relation": "method/lean_kernel",
+      "statement": "Prov(x) = ∃y Proof(y, x), Proof the kernel's check of a proof term (Def-4); no further clause"
+    },
+    "witness": "tests/test_unreal.py::EngineSets::test_the_sets_are_admissible"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "statement": "Unreal Engine's math: each function of its math universe is an atom (its named vocabulary). The carry map sends a lifted function to the Gödel content of its canonical form over B0, analysis and bits; a function that is a gap has no image, and that is the map's gap.",
+  "tier": 0
+}

@@ -1,0 +1,13 @@
+{
+  "card_type": "unreal_math",
+  "defined_by": "tools/seed_unreal.py",
+  "description": "A game engine's math as observed: one card per function of Unreal Engine's math (its file and line, type, use), lifted to a definition, outside the math universe, or a gap with its cause (cardmodel/unreal, law CM49).",
+  "name": "unreal_math",
+  "status_values": [
+    "lifted",
+    "gap",
+    "outside",
+    "refuted"
+  ],
+  "tier": 1
+}

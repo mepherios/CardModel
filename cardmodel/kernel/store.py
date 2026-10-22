@@ -137,7 +137,7 @@ class Store:
     # -- writing -------------------------------------------------------------
     def writable_layer(self) -> str:
         for name, _ in reversed(self.layers):
-            if name not in self.readonly:
+            if name not in self.readonly and name != "local":      # the local layer only when a writer names it
                 return name
         raise PermissionError("every layer of this store is read-only")
 
@@ -206,18 +206,22 @@ class Store:
 
 def open_store(project: Path | str | None | bool = True, strict: bool = False,
                home_cards: Path | None = None, extra: list[str | Path] | None = None,
-               include_self: bool = False) -> Store:
+               include_self: bool = False, include_local: bool = True) -> Store:
     """project=True: discover from cwd; a path: use it; False/None: model layer only.
 
     ``extra``: other card trees (any directory of registries, e.g. another program's cards/) loaded
     READ-ONLY between the model and the project; nothing is ever written into them.
     ``include_self``: also the self layer (what the model's own cycles learned, engines/selfrun.py), READ-ONLY,
-    above the model and the extras and below the project; only the self-run writes it."""
+    above the model and the extras and below the project; only the self-run writes it.
+    ``include_local``: the local layer (state/local/cards, untracked: cards derived from data that stays on this
+    machine, docs/INTEGRATION.md rule 8), above the extras; written only by a writer that names it."""
     layers: list[tuple[str, Path]] = [("model", Path(home_cards) if home_cards else paths.model_cards())]
     readonly = set()
     for i, e in enumerate(extra or []):
         layers.append((f"extra{i}", Path(e).expanduser().resolve()))
         readonly.add(f"extra{i}")
+    if include_local and home_cards is None:
+        layers.append(("local", paths.local_cards()))
     if include_self and paths.self_cards().is_dir():
         layers.append(("self", paths.self_cards()))
         readonly.add("self")

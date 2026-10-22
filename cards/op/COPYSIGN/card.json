@@ -1,0 +1,63 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "copysign({0}, {1})",
+    "go": "math.Copysign({0}, {1})",
+    "java": "Math.copySign({0}, {1})",
+    "javascript": "UNSUPPORTED",
+    "lean": "UNSUPPORTED",
+    "lua": "UNSUPPORTED",
+    "python": "math.copysign({0}, {1})",
+    "ruby": "UNSUPPORTED",
+    "rust": "(({0}).copysign({1}))",
+    "swift": "copysign({0}, {1})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        },
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: math.copysign(a, b)",
+    "types": [
+      [
+        "float",
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "COPYSIGN",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "the magnitude of x with the sign of y",
+  "tier": 1
+}

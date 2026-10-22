@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 25.0,
+  "emit": {
+    "c": "atan({0})",
+    "go": "math.Atan({0})",
+    "java": "Math.atan({0})",
+    "javascript": "Math.atan({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.atan({0})",
+    "python": "math.atan({0})",
+    "ruby": "Math.atan({0})",
+    "rust": "(({0}).atan())",
+    "swift": "atan({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.atan(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ATAN",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "arctangent",
+  "tier": 1
+}

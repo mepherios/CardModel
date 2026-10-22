@@ -32,6 +32,9 @@ Sections (all on by default; ``only`` selects):
   game          the design_law cards on the exact equilibrium of the neutral exchange, and the world (CM28, CM29)
   anyps5        AnyPS5's cards: every gap classified (stdlib/anyps5.card), the semantics programs pass, the
                 recorded witnesses agree and belong to the current scan, the badge reproduced (CM36)
+  unreal        a game engine's math (unreal/, CM45): every lifted subject has its definition and action, every atom
+                its prime in the ledger, the canonical forms re-derive from the stored terms, and a seeded sample is
+                witnessed again against the engine's compiled code when the engine is on this host
   machine       every ISA's instruction cards: stored IR in sync with their semantics, and per-instruction
                 conformance on the ISA's bench in every engine (reference interpreter, host, native), with their
                 cycle and flag data checked (CM32)
@@ -57,7 +60,7 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
+SECTIONS = ("kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "unreal", "machine",
             "forms", "vectors", "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck",
             "portability")
 QUICK = ["kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
@@ -323,6 +326,9 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
             res = _game(ctx)
         elif sec == "anyps5":
             res = _anyps5(ctx, report["sections"].get("lang"))
+        elif sec == "unreal":
+            from ..unreal import metrics as UM
+            res = UM.check(ctx, seed)
         elif sec == "machine":
             res = _machine(ctx, seed)
         elif sec == "forms":

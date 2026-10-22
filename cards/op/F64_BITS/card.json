@@ -1,0 +1,57 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "UNSUPPORTED",
+    "go": "UNSUPPORTED",
+    "java": "UNSUPPORTED",
+    "javascript": "UNSUPPORTED",
+    "lean": "UNSUPPORTED",
+    "lua": "UNSUPPORTED",
+    "python": "struct.unpack('<Q', struct.pack('<d', {0}))[0]",
+    "ruby": "UNSUPPORTED",
+    "rust": "UNSUPPORTED",
+    "swift": "UNSUPPORTED"
+  },
+  "godel_set": "bits",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: struct.unpack('<Q', struct.pack('<d', a))[0]",
+    "types": [
+      [
+        "float",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "F64_BITS",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math",
+      "struct"
+    ]
+  },
+  "statement": "the bits of a binary64 as an unsigned integer",
+  "tier": 1
+}

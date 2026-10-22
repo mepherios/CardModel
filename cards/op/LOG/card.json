@@ -1,0 +1,56 @@
+{
+  "category": "op",
+  "cost": 20.0,
+  "emit": {
+    "c": "log({0})",
+    "go": "math.Log({0})",
+    "java": "Math.log({0})",
+    "javascript": "Math.log({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.log({0})",
+    "python": "math.log({0})",
+    "ruby": "Math.log({0})",
+    "rust": "(({0}).ln())",
+    "swift": "log({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            0.001,
+            1000.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.log(a)",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "LOG",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "natural logarithm",
+  "tier": 1
+}

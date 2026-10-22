@@ -58,12 +58,13 @@ range to this table in the same commit.
 | CM45–CM46 | main (the research handover's phase 0) | content is a sparse vector; every claim carries its tier |
 | CM47 | world game (`claude/heuristic-ptolemy-2e6700`), reserved | written as CM45 on that branch; renumber before merging |
 | CM48 | universalization (`worktree-universal-domains`), reserved | "every domain is a Gödel set", written as CM45 on that branch; renumber before merging |
-| **CM49 onward** | free | take the next one |
+| CM49 | unreal-distill (`claude/unreal-distill`) | a game engine's math is distilled (Unreal Engine as cards, docs/UNREAL.md); written as CM47 on the branch, renumbered before merging |
+| **CM50 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U12 (G_U10–U12: unreal-distill), G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
 (AnyPS5), G_M1–M6 (machines; G_M6 is MATH_CORE's), G_S1 (products: the store, `claude/jolly-liskov-2d97a8`).
 G_A10 is that branch's law-witness goal, written G_A9 there and renumbered where it met MATH_CORE's G_A9
-(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U10, G_C6, G_K7, G_M7,
+(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U13, G_C6, G_K7, G_M7,
 G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
@@ -80,6 +81,7 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 
 | session | branch / worktree | area (files it owns) | on main |
 |---|---|---|---|
+| unreal-distill | `claude/unreal-math` (the work of `claude/unreal-distill` as one commit: that branch's history held engine-derived packs, rule 8) | `cardmodel/unreal`, `cardmodel/engines/realnorm.py`, the registries `unreal_math`, `unreal_use`, `unreal_cause` (their cards in the local layer `state/local/cards`, rule 8), the analysis and bits op cards, `tools/seed_unreal.py`, `examples/engine_math`, docs/UNREAL*.md, tests/test_unreal.py; verify section `unreal` | not yet (awaiting the user's yes) |
 | integrating session | `main`, the repository folder | kernel, engines, lang, emit, game, docs, the self-run (`engines/selfrun.py`, `capabilities.py`, `integrity.py`) | — |
 | cardmodel-games | `claude/sad-sanderson-482207` | `cardmodel/machine`, `cardmodel/arcade`, `cards/{isa,hardware,machine,app,game,platform,asset}`, docs/MACHINES.md, docs/ARCADE.md, tests/test_machine.py, tests/test_arcade.py | up to 85909ec (merge c1bf07f) |
 | cardmodel-anyps5 | `claude/recursing-williams-ecc80a` | `cardmodel/anyps5`, `stdlib/ps5_*.card`, `cards/anyps5_*`, docs/ANYPS5*.md, tests/test_anyps.py, tools/seed_anyps5.py | up to 10c688f (merge 65a059c) |

@@ -89,6 +89,8 @@ class Numbering:
                 self.arity[a] = LOGIC_ARITY[a]
             elif a.startswith("core_type/"):
                 self.arity[a] = 0
+            elif a in arities:                                  # any other atom: its arity is stated
+                self.arity[a] = arities[a]
         self.true = "logic/true" if "logic/true" in self.by_atom else None
 
     # -- objects as trees: [atom, child...] | ["var", name] | ["int", value] -------------------------------------
