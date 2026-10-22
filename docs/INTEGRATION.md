@@ -160,7 +160,18 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | a5ed2d5 | main: one store mechanism for work in progress: early access is the branch versions, the WORK tab is In progress's Every branch section |
 | 2026-10-22 | baa785a | main: the live_hub capability's witness follows the new test |
 | 2026-10-22 | 7d4da20 | main: MATH_CORE phase 0 by the research handover (the user's "Yes, send the research handover to the card-model session so its phase 0 work follows the agenda and the storage rules"): storage rules (CM45), witness tiers (CM46), the formal core in Lean (T1–T6), verify sections tiers and formal |
+| 2026-10-22 | ccad4bc | main: witness tiers: linear recursions with constant coefficients are C-finite (8 of 25 algorithm forms proved) |
+| 2026-10-22 | e549b1d | main: the Gödel method research program, wave 1 (the user's "Yes, send the Gödel method handover to the card-model session and have it start the wave-1 workstreams (W-1, W-2, W-3, W-5, W-12, W-15) under its coordination rules"): a project card per workstream, the finding registry |
+| 2026-10-22 | 3b7798b | `claude/godel-w15-difficulty`: the difficulty census (W-15): a rank on every method, 18 question cards |
+| 2026-10-22 | 48d496a | `claude/godel-w3-identity`: identity and size of codes (W-3): six codes measured, the size model, the GM-2 decision record |
+| 2026-10-22 | 7c588e6 | `claude/godel-w5-numberings`: admissible numberings (W-5): six conditions, every Gödel set passes, arities stated |
+| 2026-10-22 | 1c6f08a | main: tests no longer depend on other sessions' branches (CM41's check honours CARDMODEL_BRANCHES=0) |
+| 2026-10-22 | 8be8819 | `claude/godel-w1-definitions`: Gödel's 46 definitions as cards with Python and Lean forms (W-1), the proof checker |
+| 2026-10-22 | 9d68e93 | main: CM47 and CM48 reserved for the two branches that wrote CM45 |
+| 2026-10-22 | dd7840e | `claude/godel-w12-arithmetized`: the instruction terms as constraints over a prime field (W-12); formal.build stages its targets |
+| 2026-10-22 | dccedca | `claude/integrity-goal-floors`: no goal's target made easier without an amendment (asked for by the self-running-improvement session) |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
 sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21
-of 21 sections after 4d9d755; 231 tests and 23 of 23 sections after the research handover's phase 0.
+of 21 sections after 4d9d755; 231 tests and 23 of 23 sections after the research handover's phase 0; 260 tests after
+Gödel method wave 1 (dd7840e), and every workstream branch passed a full verify before it merged.

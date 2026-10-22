@@ -9,7 +9,9 @@
   "docs": [
     "docs/GODEL_METHOD.md"
   ],
-  "done": [],
+  "done": [
+    "formal/GodelCore: T1-T6 in plain Lean 4.35 (the content algebra, carry-over and gcd, the append-only ledger, merging versus relating generators, transport, rewrite invariants)"
+  ],
   "goal": "Can the content algebra and the carry-over laws be kernel-checked?",
   "in_progress": [],
   "kind": "research",
@@ -19,12 +21,14 @@
     "Foundation's incompleteness and GL results imported as truth cards"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "9a4b6dccc4a8fd1fdf2344c1f716c0c1c07d7a1139219a9423b74a5931dcb4e3",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "metrics": [],
   "name": "godel_w2_formal_core",
   "next_steps": [
-    "start on claude/godel-w2-*"
+    "after the user's yes: a lake project on Mathlib's Finsupp and Multiset, then Foundation's incompleteness and GL results as truth cards"
   ],
   "order": 41,
   "owner": {
@@ -39,11 +43,11 @@
     "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
     "tool": "tools/seed_godel_method.py"
   },
-  "standing": "Not started; wave 1 runs one workstream at a time on its own branch.",
+  "standing": "Blocked: W-2 needs Mathlib (with its prebuilt cache) and FormalizedFormalLogic/Foundation, multi-gigabyte downloads that need the user's yes. The plain-Lean formal core on main (formal/GodelCore) already proves Rule-19, Rule-20 and the freeness behind GM-3 without them.",
   "statement": "Gödel method research program, wave 1: Can the content algebra and the carry-over laws be kernel-checked?",
   "tier": 1,
   "title": "W-2 Formal core in Lean, on Mathlib",
-  "updated": "2026-10-22T02:22:50+02:00",
+  "updated": "2026-10-22T04:42:39+02:00",
   "user_actions": [
     {
       "action": "Allow downloading Mathlib (with its prebuilt cache) and FormalizedFormalLogic/Foundation for the formal core",
