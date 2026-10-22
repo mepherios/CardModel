@@ -11,6 +11,12 @@ with a scripted input (START and A tapped periodically, so title screens move on
                     scripted input does not get past, sometimes stuck);
 * ``runs``        - drawn and changing.
 
+A ROM that comes out ``static`` or ``blank`` gets a second run with no input at all, and counts as running when
+that one animates (the row says ``input: none``): START pauses some games, and the scripted taps can keep one
+paused (Jeopardy!'s unpause waits about 1.5 s, and the next START comes 1.5 s later). A ROM without the
+Nintendo logo at 0x104 that no board explains is a pass-through device (a cheat cartridge), which boots with the
+header of the game in its slot; its reason says so.
+
 ``runs`` is evidence of booting, not of correctness; correctness is the per-instruction bench, the test
 ROMs and the differential runs. The report keeps titles and ROM hashes only in the state directory (user
 data); docs carry the aggregate counts.
@@ -19,7 +25,7 @@ data); docs carry the aggregate counts.
 (DMG cartridges then run in the CGB's DMG compatibility mode).
 
 Honest limits (L1): a scripted input cannot play a game, so "runs" means it boots and animates; games that
-wait for a specific button sequence show up as ``static``.
+wait for a specific button sequence, with or without the taps, show up as ``static``.
 """
 from __future__ import annotations
 
@@ -51,6 +57,31 @@ def roms_in(folder) -> list[Path]:
     return out
 
 
+def _boot(g, machine, frames: int, checkpoints: int, keys) -> tuple[list, bytes, bool]:
+    """Run ``frames`` frames with ``keys(i)`` pressed; (checkpoint frame hashes, last frame, locked)."""
+    marks = sorted({int(frames * (k + 1) / checkpoints) - 1 for k in range(checkpoints)})
+    hashes = []
+    for i in range(frames):
+        g.set_buttons(keys(i))
+        g.run_frame()
+        if machine.get("locked"):
+            break
+        if i in marks:
+            hashes.append(hashlib.sha1(g.frame()).hexdigest()[:12])
+    return hashes, g.frame(), bool(machine.get("locked"))
+
+
+def _classify(hashes: list, frame: bytes, locked: bool, machine) -> tuple[str, str]:
+    distinct = len(set(hashes))
+    if locked:
+        return "locked", f"illegal opcode near PC {machine.get('PC'):#06x}"
+    if distinct <= 1 and G.frame_stats(frame)["colours"] <= 1:
+        return "blank", "every checkpoint frame is one colour"
+    if distinct <= 1:
+        return "static", "drawn, but no checkpoint frame differs"
+    return "runs", f"{distinct} distinct checkpoint frames"
+
+
 def boot_one(ctx, machine, path: Path, frames: int = 1200, checkpoints: int = 8, shots_dir: Path | None = None,
              model: str = "auto") -> dict:
     t0 = time.perf_counter()
@@ -63,38 +94,28 @@ def boot_one(ctx, machine, path: Path, frames: int = 1200, checkpoints: int = 8,
     except ValueError as exc:
         return {"file": path.name, "status": "error", "reason": str(exc)}
     g = G.GameBoy(ctx, rom, machine=machine, sample_rate=0, model=model)
-    marks = sorted({int(frames * (k + 1) / checkpoints) - 1 for k in range(checkpoints)})
-    hashes, stats = [], None
-    for i in range(frames):
-        g.set_buttons(script(i))
-        g.run_frame()
-        if machine.get("locked"):
-            break
-        if i in marks:
-            f = g.frame()
-            hashes.append(hashlib.sha1(f).hexdigest()[:12])
-            stats = G.frame_stats(f)
-    f = g.frame()
+    hashes, f, locked = _boot(g, machine, frames, checkpoints, script)
+    status, reason = _classify(hashes, f, locked, machine)
+    keys = "scripted"
+    if status in ("static", "blank"):
+        g = G.GameBoy(ctx, rom, machine=machine, sample_rate=0, model=model)
+        h2, f2, l2 = _boot(g, machine, frames, checkpoints, lambda i: 0)
+        s2, r2 = _classify(h2, f2, l2, machine)
+        if s2 == "runs":
+            status, reason, hashes, f, keys = s2, f"{r2} with no input (with the scripted taps: {reason})", h2, f2, "none"
+    if status != "runs" and not info["logo"] and not info["unlicensed"]:
+        reason += ("; no Nintendo logo at 0x104 and no board that explains it: a pass-through device (a cheat "
+                   "cartridge), which boots with the header of the game in its slot")
     st = G.frame_stats(f)
-    locked = bool(machine.get("locked"))
-    distinct = len(set(hashes))
-    flat = st["colours"] <= 1
-    if locked:
-        status, reason = "locked", f"illegal opcode near PC {machine.get('PC'):#06x}"
-    elif distinct <= 1 and flat:
-        status, reason = "blank", "every checkpoint frame is one colour"
-    elif distinct <= 1:
-        status, reason = "static", "drawn, but no checkpoint frame differs"
-    else:
-        status, reason = "runs", f"{distinct} distinct checkpoint frames"
     if shots_dir is not None:
         shots_dir.mkdir(parents=True, exist_ok=True)
         (shots_dir / f"{hashlib.sha1(rom).hexdigest()[:10]}_{status}.png").write_bytes(G.png(f))
     return {"file": path.name, "title": info["title"], "sha1": info["sha1"], "mbc": info["mbc"],
             "cgb": info["cgb"], "model": g.model, "supported": info["supported"], "status": status, "reason": reason,
-            "frames": frames, "distinct_frames": distinct, "last_frame": st, "pc": machine.get("PC"),
-            "instructions": machine.get("instructions"), "seconds": round(time.perf_counter() - t0, 3),
-            "unsupported_mapper": not info["supported"], "checkpoint_stats": stats}
+            "frames": frames, "distinct_frames": len(set(hashes)), "input": keys, "last_frame": st,
+            "pc": machine.get("PC"), "instructions": machine.get("instructions"),
+            "seconds": round(time.perf_counter() - t0, 3), "unsupported_mapper": not info["supported"],
+            "checkpoint_stats": st}
 
 
 def run(ctx, folder, frames: int = 1200, engine: str = "native", limit: int | None = None,

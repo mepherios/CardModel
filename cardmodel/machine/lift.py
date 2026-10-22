@@ -20,9 +20,10 @@ The lifted functions join the machine module (``run_block`` becomes a switch ove
 through a language card like the rest of it: split into parts so no compile unit is huge, compiled one part per
 slot, linked into one library cached per ROM and machine.
 
-Honest limits (L1): code in RAM, code after EI and the HALT/STOP/illegal opcodes always run in the interpreter;
-a key is (ROM offset, which half of the address space), so a bank mapped at an unusual place gets its own
-blocks; MBC1 multicart remapping is treated like any bank.
+Honest limits (L1): code in RAM, code after EI and the HALT/STOP/illegal opcodes always run in the interpreter, and
+so does a Sachen board's scrambled header page (0x0100-0x01FF); a key is (ROM offset, which half of the address
+space), so a bank mapped at an unusual place gets its own blocks; MBC1 multicart remapping and Wisdom Tree's 32 KiB
+banks are treated like any bank.
 """
 from __future__ import annotations
 
@@ -115,8 +116,13 @@ def _loop_free(fn) -> bool:
 
 # -- decoding the ROM -------------------------------------------------------------------------------------
 class Decoder:
-    def __init__(self, store, isa: str = "lr35902"):
+    """Instruction cards by the bytes at a ROM offset. ``avoid``: a CPU address range in bank 0's half whose bytes
+    the board does not show the CPU as they are stored (a Sachen board's scrambled header page); no block covers
+    it, so that code runs in the interpreter, which reads through the board."""
+
+    def __init__(self, store, isa: str = "lr35902", avoid: tuple | None = None):
         self.table = I.decode_table(store, isa)
+        self.avoid = avoid
 
     def at(self, rom: bytes, phys: int, mask: int):
         op = rom[phys & mask]
@@ -143,6 +149,8 @@ def block_extent(dec: Decoder, rom: bytes, key: int, mask: int) -> list:
     out = []
     region_end = 0x8000 if pc >= 0x4000 else 0x4000
     while len(out) < MAX_INSTRUCTIONS:
+        if dec.avoid and pc < 0x4000 and dec.avoid[0] < pc + 3 and pc < dec.avoid[1]:
+            break                                       # the instruction may reach into the scrambled page
         card, n, imm = dec.at(rom, phys, mask)
         if card.get("illegal") or (card.get("prefix") is None and card["opcode"] in EXCLUDED):
             break
@@ -175,10 +183,11 @@ def successors(card, pc: int, n: int, imm: list) -> list[int]:
     return out
 
 
-def discover(store, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None) -> dict:
+def discover(store, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
+             avoid: tuple | None = None) -> dict:
     """Block leaders: recursive descent through bank 0 from the vectors, plus the profile's entry points (any
     bank), plus static successors of everything the profile saw. Returns {key: [pc list]}."""
-    dec = Decoder(store)
+    dec = Decoder(store, avoid=avoid)
     leaders: set = set()
     todo = [0x100] + list(range(0x00, 0x40, 8)) + list(range(0x40, 0x68, 8))
     work = [(_key(a, a)) for a in todo]
@@ -721,14 +730,26 @@ def merge_profile(d: Path, name: str, data: bytes) -> bytes:
     return merged
 
 
+def scrambled_page(ctx, rom: bytes) -> tuple | None:
+    """The CPU address range whose bytes the cartridge's board scrambles (Sachen: the header page), from the
+    cartridge card; None for every other board."""
+    from . import gb as G
+    card = ctx.store.get("hardware/gb_cartridge")
+    if G.unlicensed(rom, card, None) != "sachen":
+        return None
+    lo, hi = ((card.get("unlicensed") or {}).get("sachen") or {}).get("header_page") or (0x100, 0x200)
+    return int(lo), int(hi)
+
+
 def lift_rom(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: bytes | None = None,
              machine: str = "gameboy", cache: dict | None = None) -> tuple[dict, dict]:
     """Discover and lift every block; returns (lifted module, report). ``cache`` maps block keys to blocks
     lifted before (for the same ROM and machine) and receives the new ones."""
     ir = Bd.module(ctx, machine)
-    found = discover(ctx.store, rom, mask, seen, entries)
+    avoid = scrambled_page(ctx, rom)
+    found = discover(ctx.store, rom, mask, seen, entries, avoid)
     lifter = Lifter(ctx, ir)
-    dec = Decoder(ctx.store)
+    dec = Decoder(ctx.store, avoid=avoid)
     blocks = []
     instrs = 0
     reused = 0

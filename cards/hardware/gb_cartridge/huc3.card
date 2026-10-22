@@ -1,0 +1,116 @@
+-- HuC3 (Hudson: Robopon, Pocket Family, Pocket Monsters Card GB...): ROM and RAM banking, a clock chip with
+-- 256 nibbles of memory, and an infrared port. 0000-1FFF picks what A000-BFFF is (the low nibble): 0x0 RAM
+-- read-only, 0xA RAM read/write, 0xB a command for the clock chip, 0xC its answer, 0xD its semaphore, 0xE the
+-- infrared port.
+--
+-- A command is one byte: the command in bits 4-6, its argument in bits 0-3. Games wait for the semaphore (mode
+-- 0xD, bit 0 = 1), write the command in mode 0xB, write 0xFE in mode 0xD to run it, wait again and read the
+-- answer's low nibble in mode 0xC. The chip here answers at once. Commands: 1 reads the nibble at the address
+-- and moves on, 3 writes the argument there and moves on, 4 and 5 set the address's low and high nibbles,
+-- 6 is extended: 0 copies the clock into nibbles 00-05 (minutes of the day, then the day count, low nibbles
+-- first), 1 sets the clock from them, 2 answers 1.
+--
+-- The clock keeps its minutes and 12-bit day count in the cartridge's clock registers (cart.card: rtc_h:rtc_m
+-- the minutes, rtc_dh:rtc_dl the days), so it runs, saves and catches up exactly as MBC3's does. Nothing is seen
+-- on the infrared port: mode 0xE reads 0xC0 (0xC1 would be light).
+const HUC3_IR_DARK = 0xC0
+global huc3_mode: Int = 0
+global huc3_addr: Int = 0
+global huc3_answer: Int = 0
+global huc3_cmd: Int = 0
+global huc3_led: Int = 0
+array huc3_mem: Byte[256]
+
+fn huc3_power_on() {
+  huc3_mode = 0
+  huc3_addr = 0
+  huc3_answer = 0
+  huc3_cmd = 0
+  huc3_led = 0
+}
+fn huc3_control(a: Int, v: Int) {
+  if a < 0x2000 {
+    huc3_mode = v & 0x0F
+  } elif a < 0x4000 {
+    bank_lo = v
+  } elif a < 0x6000 {
+    rtc_sel = v
+  }
+}
+fn huc3_read(a: Int) -> Int {
+  if huc3_mode == 0x0A or huc3_mode == 0x00 {
+    if ram_mask < 0 {
+      return 0xFF
+    }
+    return cram[(ram_off | (a & 0x1FFF)) & ram_mask]
+  }
+  if huc3_mode == 0x0C {
+    return (huc3_cmd << 4) | huc3_answer
+  }
+  if huc3_mode == 0x0D {
+    return 0xFF
+  }
+  if huc3_mode == 0x0E {
+    return HUC3_IR_DARK
+  }
+  return 0xFF
+}
+fn huc3_write(a: Int, v: Int) {
+  if huc3_mode == 0x0A {
+    if ram_mask >= 0 {
+      cram[(ram_off | (a & 0x1FFF)) & ram_mask] = v
+      cram_dirty = 1
+    }
+  } elif huc3_mode == 0x0B {
+    huc3_command(v)
+  } elif huc3_mode == 0x0E {
+    huc3_led = v & 1
+  }
+}
+fn huc3_minutes() -> Int = rtc_h * 60 + rtc_m
+fn huc3_days() -> Int = ((rtc_dh & 0x0F) << 8) | rtc_dl
+fn huc3_command(v: Int) {
+  let c = (v >> 4) & 7
+  let arg = v & 0x0F
+  huc3_cmd = c
+  if c == 1 {
+    huc3_answer = huc3_mem[huc3_addr] & 0x0F
+    huc3_addr = (huc3_addr + 1) & 0xFF
+  } elif c == 3 {
+    huc3_mem[huc3_addr] = arg
+    huc3_addr = (huc3_addr + 1) & 0xFF
+  } elif c == 4 {
+    huc3_addr = (huc3_addr & 0xF0) | arg
+  } elif c == 5 {
+    huc3_addr = (huc3_addr & 0x0F) | (arg << 4)
+  } elif c == 6 {
+    if arg == 0 {
+      rtc_sync()
+      let mins = huc3_minutes()
+      let days = huc3_days()
+      for k in 0 .. 3 {
+        huc3_mem[k] = (mins >> (k * 4)) & 0x0F
+        huc3_mem[3 + k] = (days >> (k * 4)) & 0x0F
+      }
+    } elif arg == 1 {
+      rtc_sync()
+      var mins = 0
+      var days = 0
+      for k in 0 .. 3 {
+        mins = mins | (huc3_mem[k] << (k * 4))
+        days = days | (huc3_mem[3 + k] << (k * 4))
+      }
+      days = (days + mins // 1440) & 0xFFF
+      mins = mins % 1440
+      rtc_s = 0
+      rtc_sub = 0
+      rtc_m = mins % 60
+      rtc_h = mins // 60
+      rtc_dl = days & 0xFF
+      rtc_dh = days >> 8
+      cram_dirty = 1
+    } elif arg == 2 {
+      huc3_answer = 1
+    }
+  }
+}

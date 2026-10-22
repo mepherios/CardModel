@@ -171,9 +171,11 @@ fn clear_memory() {
     nr[i] = 0
   }
 }
--- the state after the boot ROM (which is not used: it is not ours to ship). A CGB's boot ROM picks the mode
--- from the cartridge header: CGB mode, or DMG compatibility mode for a DMG cartridge (cgb_boot_mode).
+-- the state after the boot ROM (which is not used: it is not ours to ship). The cartridge powers on first, so
+-- the boot's header reads see the board (a Sachen board's header page is scrambled). A CGB's boot ROM picks the
+-- mode from the cartridge header: CGB mode, or DMG compatibility mode for a DMG cartridge (cgb_boot_mode).
 export fn power_on(want_cgb: Int) {
+  cart_power_on()
   cgb = want_cgb
   model = want_cgb
   cgb_boot_mode(want_cgb)
@@ -290,13 +292,6 @@ export fn power_on(want_cgb: Int) {
   nr[0x24 - 0x10] = 0x77
   nr[0x25 - 0x10] = 0xF3
   c1_on = 1
-  ram_on = 0
-  bank_lo = 1
-  bank_hi = 0
-  mbc_mode = 0
-  rtc_sel = 0
-  rtc_last = 0
-  mbc_map()
   frame_done = 0
   frames = 0
   instructions = 0
@@ -306,9 +301,7 @@ export fn power_on(want_cgb: Int) {
     frame[i] = 0xFF
   }
   if cgb_mode != 0 {
-    for i in 0 .. 64 {
-      bgpal[i] = 0xFF
-    }
+    boot_cgb_palettes()
   } elif cgb != 0 {
     boot_dmg_compat()
   }
