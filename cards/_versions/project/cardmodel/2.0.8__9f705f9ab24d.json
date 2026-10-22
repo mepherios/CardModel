@@ -1,0 +1,94 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/jolly-liskov-*",
+    "claude/compassionate-margulis-*",
+    "claude/elated-mestorf-*"
+  ],
+  "category": "project",
+  "docs": [
+    "README.md",
+    "docs/AUTONOMY.md",
+    "docs/INTEGRATION.md"
+  ],
+  "done": [
+    "consolidation, knowledge layer, card language, Lean bridge",
+    "resource governor, function algebra",
+    "self-run (CM38), capabilities (CM37), one program (CM39)",
+    "the live In progress page (bb480fb); law CM41 (c8aeb4c)",
+    "MATH_CORE phase 0 (03b1c6e, 51a70b2, 8dbd200) and phase 1 (bcdbdde)",
+    "claude/festive-margulis-43fde7 merged (4d9d755, the user's approval); launcher reinstalled from main",
+    "one store mechanism: early access is the branch versions, every branch inside In progress (a5ed2d5)",
+    "the handover's storage rules (CM45), witness tiers (CM46), the Lean formal core T1-T6"
+  ],
+  "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
+  "in_progress": [
+    "R3 beyond the first classes: C-finite recursion, Boolean functions, bit-vectors (exhaustive 8-bit for the instruction terms)"
+  ],
+  "kind": "program",
+  "left": [
+    "the formal core on Mathlib's Finsupp (needs the user's yes to download Mathlib), T7 and T8 in Lean",
+    "R4: e-graph extraction by cost vector and an e-class to vector map",
+    "the ARM instruction cards as terms (G_M6: 511 of 679)",
+    "canonical forms for more definitions (G_U7 0.3 of 0.9)",
+    "terminal-launch store entries for combat and world"
+  ],
+  "metadata": {
+    "previous_content_hash": "5945aaf8b14a63fd112983a33bacd1bb37186802d20f6c8afa537cd808c396a5",
+    "version": "2.0.8",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "label": "last self-run",
+      "self": "status"
+    },
+    {
+      "label": "last verify",
+      "verify": "*"
+    },
+    {
+      "goal": "G_A4_capabilities_failing",
+      "label": "core capabilities failing"
+    },
+    {
+      "goal": "G_U9_algorithm_forms_proved",
+      "label": "algorithm forms proved, not sampled"
+    },
+    {
+      "goal": "G_U8_formal_core",
+      "label": "formal core problems"
+    }
+  ],
+  "name": "cardmodel",
+  "next_steps": [
+    "size witnesses for more classes: Boolean inputs, P-recursive sequences, while loops with a counted bound (G_U9: 8 of 25 algorithm forms proved)",
+    "exhaustive 8-bit checks of the LR35902 terms (bounded tier)",
+    "the semantic-hash library and instant lookup (phase 2)"
+  ],
+  "order": 6,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "MATH_CORE phases 0 and 1 are on main and phase 0 follows the research handover: content stored as sparse vectors with basis versions and identity hashes (CM45), every claim tiered (CM46: 2,667 claims, 1,626 at tier proof), the formal core proved in Lean (T1-T6, 6 of 6 cards, no sorry). The cartridge store is merged and In progress is one tab.",
+  "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
+  "tier": 1,
+  "title": "The card model",
+  "updated": "2026-10-22T02:16:39+02:00",
+  "user_actions": [
+    {
+      "action": "Approve merging claude/jolly-liskov-2d97a8 (37a4528): the second self-run, folded into `cardmodel self`",
+      "unblocks": [
+        "law CM42 (the store runs what it lists)",
+        "goals G_A9 and G_S1"
+      ],
+      "why": "its session folded its loop into main's self-run (law witnesses, observe_self, the store client, CM42); the user decides the merge"
+    }
+  ]
+}

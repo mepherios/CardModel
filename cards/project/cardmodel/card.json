@@ -3,7 +3,8 @@
   "branches": [
     "claude/jolly-liskov-*",
     "claude/compassionate-margulis-*",
-    "claude/elated-mestorf-*"
+    "claude/elated-mestorf-*",
+    "worktree-universal-domains"
   ],
   "category": "project",
   "docs": [
@@ -34,8 +35,8 @@
     "terminal-launch store entries for combat and world"
   ],
   "metadata": {
-    "previous_content_hash": "1a15381beefdfaeb69fd6173263f3bdc3d699673927727672aa75cc864cb8458",
-    "version": "2.0.9",
+    "previous_content_hash": "df2ff690734cf076281d0050ce9c6a9c11cb44bc80aa38527a7d6fc7b91ce761",
+    "version": "2.0.10",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -80,6 +81,6 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T02:54:50+02:00",
+  "updated": "2026-10-22T03:00:30+02:00",
   "user_actions": []
 }

@@ -1,0 +1,62 @@
+{
+  "category": "finding",
+  "cites": [
+    "GM-4",
+    "Rule-1",
+    "Rule-2",
+    "Rule-3",
+    "Rule-5",
+    "Rule-6",
+    "Def-1",
+    "Def-4",
+    "Ph-6"
+  ],
+  "data": {
+    "checks": {
+      "B0": 1406,
+      "computation": 1459,
+      "machines": 1309
+    },
+    "sets": {
+      "B0": {
+        "codes_start_at_1": "pass",
+        "decidable_image": "pass",
+        "effective": "pass",
+        "injective": "pass",
+        "natural_provability": "pass",
+        "parts_smaller": "pass"
+      },
+      "computation": {
+        "codes_start_at_1": "pass",
+        "decidable_image": "pass",
+        "effective": "pass",
+        "injective": "pass",
+        "natural_provability": "pass",
+        "parts_smaller": "pass"
+      },
+      "machines": {
+        "codes_start_at_1": "pass",
+        "decidable_image": "pass",
+        "effective": "pass",
+        "injective": "pass",
+        "natural_provability": "pass",
+        "parts_smaller": "pass"
+      }
+    }
+  },
+  "evidence": "tests/test_numbering.py; engines/numbering.py",
+  "evidence_tier": "proof",
+  "limits": "each condition holds by the argument stated with it in engines/numbering.py (unique factorization, a total decision procedure, shifting positions to larger primes); the generated objects, corrupted codes and random integers are its witnesses (tier bounded); natural provability is checked as the card's statement",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W5_admissible_numberings",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-5",
+    "tool": "tools/seed_numbering.py"
+  },
+  "statement": "Every Gödel set states its numbering and passes all 6 conditions (injective, effective, decidable_image, codes_start_at_1, parts_smaller, natural_provability): B0 (48 atoms with the sets it extends, 1406 checks); computation (61 atoms with the sets it extends, 1459 checks); machines (57 atoms with the sets it extends, 1309 checks). Provability is ∃ of the decidable proof relation (Lean's kernel) with no further clause, so no set can 'prove its own consistency' by a deviant predicate.",
+  "tier": 1,
+  "workstream": "W-5"
+}

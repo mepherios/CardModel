@@ -1,0 +1,45 @@
+{
+  "category": "finding",
+  "cites": [
+    "Def-9",
+    "Def-10",
+    "Def-11",
+    "Ph-2"
+  ],
+  "data": {
+    "example": {
+      "content": 238.8451699550625,
+      "positional": 97773183.07201922
+    },
+    "formula_vs_built": {
+      "content": {
+        "checked": 2308,
+        "max_bits_off": 1
+      },
+      "positional": {
+        "checked": 2223,
+        "max_bits_off": 1.0
+      }
+    },
+    "model_cantor": {
+      "checked": 2118,
+      "median_rel_error": 0.0,
+      "p95_rel_error": 0.0
+    }
+  },
+  "evidence": "cardmodel godel sizes; tests/test_codes.py",
+  "evidence_tier": "bounded",
+  "limits": "the formulas are exact identities of the codes' definitions; the check builds every integer up to 2^16 bits; the example uses the prime number theorem's estimate of the millionth prime",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "W3_size_model",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22), W-3",
+    "tool": "tools/seed_codes.py"
+  },
+  "statement": "The sizes are predicted without building any integer: the positional and content codes by their logarithmic formulas, within 1.0 and 1 bit of the built integer on all 2223 and 2308 terms small enough to build; the Cantor tree code by carrying log2 up the tree, exact on all 2118 terms whose code was built. The handover's example, 10 tokens over atoms near index 10^6, needs about 9.78e+07 bits as a positional code and 239 as a content code.",
+  "tier": 1,
+  "workstream": "W-3"
+}

@@ -1,10 +1,54 @@
 {
+  "arities": {
+    "effect/cb_dispatch": 1,
+    "effect/halt": 0,
+    "effect/hang": 0,
+    "effect/idle": 0,
+    "effect/idu": 1,
+    "effect/rd8": 1,
+    "effect/rd8_idu": 1,
+    "effect/stop": 0,
+    "effect/wr8": 2
+  },
   "category": "godel_set",
   "extends": "B0",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "685242a5b5cc95870ce84f39c4cec9de67fc890195bade5a7f2dca875cf81c65",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "machines",
+  "numbering": {
+    "cites": [
+      "GM-4",
+      "Rule-1",
+      "Rule-2",
+      "Rule-3",
+      "Rule-5",
+      "Rule-6",
+      "Def-1",
+      "Def-4",
+      "Ph-6"
+    ],
+    "code": "Gödel's positional code of the prefix tokens (Def-9, Def-27): atom k -> 3k + 1, integer c -> 3·zig(c) + 2, the j-th variable by first appearance -> 3j + 3; variables are named by that order",
+    "conditions": [
+      "injective",
+      "effective",
+      "decidable_image",
+      "codes_start_at_1",
+      "parts_smaller",
+      "natural_provability"
+    ],
+    "content": "the sparse vector ledger index -> exponent (Def-10, CM45)",
+    "identity": "sha256 of the canonical term (Def-16)",
+    "objects": "effects: an effect atom, a guard slot (logic/true when the effect always happens) and its arguments, the argument count fixed per effect",
+    "provability": {
+      "form": "exists_proof",
+      "relation": "method/lean_kernel",
+      "statement": "Prov(x) = ∃y Proof(y, x), Proof the kernel's check of a proof term (Def-4); no further clause"
+    },
+    "witness": "tests/test_numbering.py::Sets::test_machines"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_godel.py"
