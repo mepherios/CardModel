@@ -67,7 +67,10 @@ export fn player_load(n: Int) {
     mbc1m = same
   }
   sample_rate = PLAYER_RATE
-  power_on(if rom[0x143] == 0x80 or rom[0x143] == 0xC0 then 1 else 0)
+  -- colour from the header as the CPU reads it: through the board, which a Sachen board scrambles there
+  cart_power_on()
+  let flag = rom_read(0x143)
+  power_on(if flag == 0x80 or flag == 0xC0 then 1 else 0)
 }
 fn player_get32(at: Int) -> Int = player_save[at] | (player_save[at + 1] << 8) | (player_save[at + 2] << 16) | (player_save[at + 3] << 24)
 fn player_put32(at: Int, v: Int) {
