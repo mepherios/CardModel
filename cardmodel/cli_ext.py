@@ -522,6 +522,170 @@ def cmd_repl(args) -> int:
             print(f"error: {exc}")
 
 
+def cmd_godel(args) -> int:
+    from collections import Counter
+
+    from .engines import godel as GD
+    cli = _cli()
+    ctx = cli._ctx(args)
+    idx = GD.index_of(ctx.store)
+    if args.action == "ledger":
+        rows = GD.ledger(ctx.store)
+        sets = Counter(e["set"] for e in rows)
+        text = [f"{len(rows)} atoms ({', '.join(f'{k}: {v}' for k, v in sets.items())}); problems: "
+                f"{GD.problems(rows) or 'none'}"]
+        text += [f"  {e['index']:>4}  {e['prime']:>6}  {e['set']:<12} {e['atom']}" for e in rows[-args.limit:]]
+        cli._out(args, rows, "\n".join(text))
+        return 0
+    vecs = []
+    for q in args.cards:
+        card = ctx.store.get(q)
+        if card is None:
+            print(f"error: no card {q!r}", file=sys.stderr)
+            return 2
+        v, why = GD.card_content(ctx, card)
+        if v is None:
+            print(f"error: {q}: {why}", file=sys.stderr)
+            return 1
+        vecs.append((q, v, why))
+    if args.action == "vector":
+        entries = GD.ledger(ctx.store)
+        recs = {q: GD.stored(v, why, entries) for q, v, why in vecs}
+        lines = [f"{q} ({r['read_from']}): {r['content']} -> vector {r.get('vector')} over basis version {r['basis']}"
+                 + (f"; atoms not in the ledger: {r['missing_atoms']}" if r.get("missing_atoms") else "")
+                 for q, r in recs.items()]
+        cli._out(args, recs, "\n".join(lines))
+        return 0
+    if args.action in ("gcd", "lcm"):
+        if len(vecs) != 2:
+            print("error: gcd and lcm take two cards", file=sys.stderr)
+            return 2
+        a, b = vecs[0][1], vecs[1][1]
+        r = GD.gcd(a, b) if args.action == "gcd" else GD.lcm(a, b)
+        vec, _ = GD.to_vector(r, idx)
+        cli._out(args, {"result": dict(r), "vector": vec, "a_divides_b": GD.divides(a, b), "b_divides_a": GD.divides(b, a)},
+                 f"{args.action}: {dict(r)} (vector {vec}); {vecs[0][0]} divides {vecs[1][0]}: {GD.divides(a, b)}; "
+                 f"the reverse: {GD.divides(b, a)}")
+        return 0
+    return 2
+
+
+def cmd_distill(args) -> int:
+    from .engines import egraph as E
+    from .engines import search
+    from .engines import values as V
+    from .engines.exprs import parse, to_text
+    cli = _cli()
+    ctx = cli._ctx(args)
+    rules, costs = E.rules_from_cards(ctx.store), search.op_costs(ctx.store)
+    budget = {"max_iter": args.iterations, "max_nodes": args.nodes}
+    if args.measure:
+        r = E.measure(ctx)
+        cli._out(args, r, f"{r['terms']} function-card terms through {r['rules']} equalities: {r['reduced']} reduced, "
+                          f"{r['saturated']} saturated, {len(r['shared'])} canonical terms shared by several cards")
+        return 0
+    if not args.exprs or len(args.exprs) > 2:
+        print("usage: cardmodel distill EXPR [EXPR2] | --measure", file=sys.stderr)
+        return 2
+    terms = [parse(e) for e in args.exprs]
+    if len(terms) == 1:
+        r = E.canonical(terms[0], rules, costs, **budget)
+        cli._out(args, r, f"{to_text(r['term'])}   cost {r['cost']}   {r['hash']}\n"
+                          f"{r['iterations']} iterations, {r['nodes']} nodes, {'saturated' if r['saturated'] else 'budget spent'}; "
+                          f"equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")
+        return 0
+    r = E.equal(terms[0], terms[1], rules, **budget)
+    w = E.witness(terms[0], terms[1], V.fresh_seed() if args.seed is None else args.seed)
+    verdict = "equal" if r["equal"] else "not shown equal (within the budget; not a disproof)"
+    cli._out(args, {**r, "witness": w}, f"{verdict}; witness {w['status']} on {w['checks']} inputs "
+                                        f"(seed {w.get('seed')}); equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")
+    return 0 if r["equal"] else 1
+
+
+def cmd_sources(args) -> int:
+    from .engines import sources as SO
+    cli = _cli()
+    ctx = cli._ctx(args)
+    if args.action == "build":
+        built = SO.build(ctx, seed=args.seed)
+        counts = SO.write(ctx, built) if args.write else {k: len(built[k]) for k in ("definitions", "actions",
+                                                                                     "transformations")}
+        cli._out(args, counts, f"{'wrote' if args.write else 'built (not written; --write saves the packs)'}: "
+                               f"{counts['definitions']} definitions, {counts['actions']} actions, "
+                               f"{counts['transformations']} transformations")
+        return 0
+    r = SO.check(ctx)
+    lines = [f"{r['status']}: {r['definitions']} definitions (coverage {r['coverage']}, canonical {r['canonical']}), "
+             f"{r['actions']} actions, {r['transformations']} transformations, {r['methods']} methods"]
+    lines += [f"  {p}" for p in r["problems"][:20]]
+    cli._out(args, r, "\n".join(lines))
+    return 1 if r["status"] == "fail" else 0
+
+
+def cmd_tiers(args) -> int:
+    from .engines import tiers as T
+    from .engines.frontend_python import lift_source
+    cli = _cli()
+    ctx = cli._ctx(args)
+    if args.action == "census":
+        c = T.census(ctx)
+        lines = [f"{c['claims']} claims, {c['proof']} at tier proof: {c['total']}"]
+        lines += [f"  {reg:<16} {dict(sorted(t.items()))}" for reg, t in sorted(c["by_registry"].items())]
+        if c["untiered_count"]:
+            lines.append(f"  without a tier (CM46): {c['untiered'][:10]}")
+        cli._out(args, c, "\n".join(lines))
+        return 1 if c["untiered_count"] else 0
+    card = ctx.store.get(f"algorithm/{args.algorithm}") if args.algorithm else None
+    if card is None:
+        print("usage: cardmodel tiers prove ALGORITHM (a card in cards/algorithm)", file=sys.stderr)
+        return 2
+    forms = [f for f in card.get("forms") or [] if f.get("lang") == "python" and f.get("code")]
+    ref = next((f for f in forms if f["name"] == card.get("reference_form")), forms[0] if forms else None)
+    out, lines = {}, []
+    for f in forms:
+        if f is ref:
+            continue
+        r = T.prove(ctx, card, ref, f)
+        out[f["name"]] = r
+        if r is None:
+            lifted = [lf.ir for lf in lift_source(f["code"], ctx.ops) if lf.ok]
+            why = T.shape(lifted[0]).get("why") if lifted else "it does not lift"
+            lines.append(f"{f['name']}: no class sizes a witness ({why or 'the two forms differ in class'}); "
+                         f"it stays sampled")
+        elif r["status"] == "refuted":
+            lines.append(f"{f['name']}: REFUTED at {r['at']}: {r['values']}")
+        else:
+            lines.append(f"{f['name']}: proved on {r['points']} points; " + "; ".join(r["theorems"]))
+    cli._out(args, out, "\n".join(lines) or "no other Python forms")
+    return 1 if any(r and r.get("status") == "refuted" for r in out.values()) else 0
+
+
+def cmd_symbolic(args) -> int:
+    from .engines import values as V
+    from .engines.exprs import to_text
+    from .machine import symbolic as SY
+    cli = _cli()
+    ctx = cli._ctx(args)
+    seed = V.fresh_seed() if args.seed is None else args.seed
+    only = args.cards or None
+    r = SY.check(ctx, args.isa, seed=seed, samples=args.samples, only=only)
+    lines = [f"seed {seed}: {r['counts']} ({sum(c.get('runs', 0) for c in r['cards'].values())} runs against the "
+             f"executable semantics)"]
+    for name, row in r["cards"].items():
+        if only or row["status"] not in ("pass",):
+            lines.append(f"  {name}: {row['status']} {row.get('problems') or row.get('reason') or ''}")
+        if only and name in r["results"]:
+            res = r["results"][name]
+            for k, t in res["state"].items():
+                lines.append(f"      {k} = {to_text(t)}")
+            for e in res["effects"]:
+                g = f" if {to_text(e['guard'])}" if e["guard"] is not None else ""
+                lines.append(f"      {e['op']}({', '.join(to_text(a) for a in e['args'])}){g}")
+    r.pop("results", None)
+    cli._out(args, r, "\n".join(lines))
+    return 1 if r["status"] == "fail" else 0
+
+
 def register(sub) -> None:
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
@@ -558,6 +722,25 @@ def register(sub) -> None:
     s.add_argument("--start", type=int, default=0); s.add_argument("--write", action="store_true")
     s.add_argument("--number"); s.add_argument("--global", dest="global_", action="store_true")
     s.set_defaults(fn=cmd_algebra)
+    s = sub.add_parser("distill", help="equality saturation: a term's canonical form and semantic hash, or whether "
+                                       "two terms are equal")
+    s.add_argument("exprs", nargs="*"); s.add_argument("--measure", action="store_true")
+    s.add_argument("--iterations", type=int, default=8); s.add_argument("--nodes", type=int, default=4000)
+    s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_distill)
+    s = sub.add_parser("symbolic", help="instruction cards as terms: symbolic execution, checked against their "
+                                        "executable semantics")
+    s.add_argument("isa", nargs="?", default="lr35902"); s.add_argument("cards", nargs="*")
+    s.add_argument("--samples", type=int, default=4); s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_symbolic)
+    s = sub.add_parser("tiers", help="what each claim's evidence is worth: census, or prove an algorithm's forms "
+                                     "by sized witnesses")
+    s.add_argument("action", choices=["census", "prove"]); s.add_argument("algorithm", nargs="?")
+    s.set_defaults(fn=cmd_tiers)
+    s = sub.add_parser("sources", help="the four sources: definitions (truth), actions, transformations, methods")
+    s.add_argument("action", choices=["check", "build"]); s.add_argument("--write", action="store_true")
+    s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_sources)
+    s = sub.add_parser("godel", help="the expanding Gödel model: the prime ledger, content vectors, GCD and LCM")
+    s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm"]); s.add_argument("cards", nargs="*")
+    s.add_argument("--limit", type=int, default=20); s.set_defaults(fn=cmd_godel)
     from .game import cli as game_cli
     game_cli.register(sub)
     from .anyps5 import cli as anyps5_cli

@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "content_vector_coverage",
+  "name": "G_U5_content_vectors",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "Fraction of op, function and algorithm cards whose content vector is computed (their terms read into atoms of the ledger).",
+  "target": 1.0,
+  "tier": 0
+}

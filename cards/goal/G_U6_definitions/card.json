@@ -1,0 +1,17 @@
+{
+  "axis": "understanding",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "definition_coverage",
+  "name": "G_U6_definitions",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_sources.py"
+  },
+  "statement": "Fraction of algorithm and function cards with a definition card (truth).",
+  "target": 1.0,
+  "tier": 0
+}

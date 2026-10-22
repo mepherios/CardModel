@@ -49,10 +49,14 @@ range to this table in the same commit.
 | CM37–CM39 | main (self-run) | the core is never lost; the model runs itself; one program |
 | CM40 | cartridges (`claude/festive-margulis-43fde7`) | players are cards (written as CM36 on that branch, renumbered CM40 when it caught up with main) |
 | CM41 | main | projects keep their cards current |
-| **CM42 onward** | free | take the next one (MATH_CORE's laws take theirs when the user approves it) |
+| CM42 | self-running-improvement (`claude/jolly-liskov-2d97a8`), announced | the store runs what it lists |
+| CM43 | main (MATH_CORE phase 0) | primes are forever |
+| CM44 | main (MATH_CORE phase 1) | everything traces back to the four sources |
+| CM45–CM46 | main (the research handover's phase 0) | content is a sparse vector; every claim carries its tier |
+| **CM47 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U4, G_L1, G_O1–O4, G_A1–A8, G_K1–K6, G_D1–D2, G_P1–P5
-(AnyPS5), G_M1–M5 (machines). The next free one is the axis's next number (G_A9, G_C6, G_K7, G_M6, G_P6 ...).
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U9, G_L1, G_O1–O4, G_A1–A9, G_K1–K6, G_D1–D2, G_P1–P5
+(AnyPS5), G_M1–M5 (machines); reserved: G_M6 (main, MATH_CORE), G_S1 (self-running-improvement). The next free one is the axis's next number (G_A10, G_U10, G_C6, G_K7, G_M7, G_P6 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
 "law number CMnn is used twice". The branch that merges second renumbers (rule 3). On 2026-10-21 this happened
@@ -61,7 +65,8 @@ G_A4–G_A6. That session was told to move to CM41+ and G_A8+.
 
 Verify sections (`engines/verify.py` SECTIONS; each is described in its docstring): kernel, integrity,
 capabilities, logic, lang, theorems, game (main); anyps5 (AnyPS5); machine (games); forms, vectors, rules,
-redefinitions, conformance, functions, proofs, selfcheck, portability (main).
+redefinitions, conformance, functions, proofs, selfcheck, portability (main); projects, godel, sources, tiers, formal
+(main).
 
 ## 3. Who works where
 
@@ -136,6 +141,19 @@ and `cardmodel verify` (section `projects`) fails when one is missing or stale.
 | 2026-10-22 | bb480fb | main: the store's live In progress page (cards/project, arcade/hub.py, early access); main took over port 8770 and the installed launcher, agreed with the games session |
 | 2026-10-22 | c8aeb4c | main: law CM41, detailed and current project cards, the Waiting on you list |
 | 2026-10-22 | de22b52 | main: docs/MATH_CORE.md, a proposal awaiting the user's yes |
+| 2026-10-22 | e86a84b | main: project cards revised honestly; a timing race out of `test_affine_match` |
+| 2026-10-22 | 99242f5 | main: the hub re-reads the cards when anything moved, so a revised project card shows at once |
+| 2026-10-22 | e0eca75 | `claude/sad-sanderson-482207`: Vector Duel 0.4.0 is the release (the user's "Yes: merge claude/sad-sanderson-482207 into main so Vector Duel 0.4.0 is the release") |
+| 2026-10-22 | b75a6d2 | main: Vector Duel 0.4.0 released from main's cards; early access only from branches with unmerged work |
+| 2026-10-22 | 03b1c6e | main: MATH_CORE phase 0 F1–F3 (the user's "Yes to MATH_CORE.md: start phase 0 and phase 1"): the prime ledger, content vectors, structural numbers, core types; law CM43 |
+| 2026-10-22 | 51a70b2 | main: MATH_CORE phase 0 F4: equality saturation (an e-graph) over the rule cards and discovered laws |
+| 2026-10-22 | bcdbdde | main: MATH_CORE phase 1: the four sources (definition, action, transformation, method); law CM44 |
+| 2026-10-22 | 8dbd200 | main: MATH_CORE phase 0 F5: the LR35902 instruction cards as symbolic terms (511 of 512 agree with the bench) |
+| 2026-10-22 | 4d9d755 | `claude/festive-margulis-43fde7` at 11e2560 (the user's "approved", in the OAM session): the Game Boy Player as cards, the cartridge library, every session's branch in the launcher; launcher reinstalled from main, 8770 restarted |
+| 2026-10-22 | a5ed2d5 | main: one store mechanism for work in progress: early access is the branch versions, the WORK tab is In progress's Every branch section |
+| 2026-10-22 | baa785a | main: the live_hub capability's witness follows the new test |
+| 2026-10-22 | 7d4da20 | main: MATH_CORE phase 0 by the research handover (the user's "Yes, send the research handover to the card-model session so its phase 0 work follows the agenda and the storage rules"): storage rules (CM45), witness tiers (CM46), the formal core in Lean (T1–T6), verify sections tiers and formal |
 
 Each merge was followed by the full test suite and a full verify on the merged code: 168 tests and 16 of 16
-sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a.
+sections after 9469e58; 182 tests and 18 of 18 sections after 7e4323a; 206 tests after 8dbd200; 218 tests and 21
+of 21 sections after 4d9d755; 231 tests and 23 of 23 sections after the research handover's phase 0.

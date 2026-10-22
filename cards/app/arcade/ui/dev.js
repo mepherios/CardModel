@@ -1,6 +1,8 @@
 // In progress: everything being built, live. The arcade service's hub (cardmodel/arcade/hub.py) computes every
 // project's status from git and from the model's own records and pushes it here as server-sent events
-// (/api/events). Early-access builds install beside the release, under their own library id.
+// (/api/events). Early access is a program's version on a branch: it opens the program's store page on that
+// branch, where it installs like a beta (one mechanism, app.js). Every branch of the repository is listed below
+// the projects (app.js workSection).
 "use strict";
 
 S.dev = null; S.devLive = false; S.devBuilds = ""; S.devFilter = "all";
@@ -16,16 +18,8 @@ function ago(t) {
 const tsOf = (v) => (typeof v === "number" ? v : v ? Date.parse(String(v).replace(/([+-]\d\d)(\d\d)$/, "$1:$2")) / 1000 : 0);
 const cls = (s) => String(s || "").replace(/[^a-z]+/g, "-");
 
-function earlyStatus(e) {
-  const inst = S.native.library[e.id];
-  const p = S.progress[e.id];
-  if (S.native.downloading === e.id || p) return { kind: "busy", label: p ? phaseLabel(p) : "Queued" };
-  if (!inst) return { kind: "install", label: "Install early access" };
-  if (inst.running) return { kind: "stop", label: "Stop" };
-  if (inst.build !== e.build) return { kind: "update", label: "Update" };
-  return { kind: "play", label: "Play" };
-}
-const earlyButton = (e) => { const st = earlyStatus(e); return `<button class="btn small ${st.kind}" data-early="${esc(e.id)}">${esc(st.label)}</button>`; };
+const earlyButton = (e) => `<a class="btn small install" data-open="${esc(e.game)}" data-wt="${esc(e.worktree)}">See it on its branch</a>`;
+const earlyBuilt = (e) => (e.build ? `build ${esc(e.build)}${e.created ? " &middot; built " + ago(tsOf(e.created)) : ""}` : "not built yet: its page builds it from the branch's cards");
 
 function metricHTML(m) {
   let v = m.value == null ? m.note || "—" : m.value;
@@ -48,7 +42,7 @@ function projectHTML(p) {
     <div class="bl">${esc(b.last.title)} &middot; ${ago(b.last.t)}</div></div>`).join("");
   const builds = (p.builds || []).map((b) => (b.channel === "release"
     ? `<div class="build"><span class="chan">RELEASE</span> ${esc(b.version)} <span class="dim">build ${esc(b.build)}</span></div>`
-    : `<div class="build"><span class="chan ea">EARLY ACCESS</span> ${esc(b.version)} <span class="dim">from ${esc(b.branch)}</span> ${earlyButton(b)}</div>`)).join("");
+    : `<div class="build"><span class="chan ea">EARLY ACCESS</span> ${esc(b.version)} <span class="dim">from ${esc(b.branch)} &middot; ${earlyBuilt(b)}</span> ${earlyButton(b)}</div>`)).join("");
   const d = p.detail || {}, card = p.card || {};
   const list = (label, xs, n) => (xs && xs.length ? `<div class="dl"><span>${label}</span><ul>${xs.slice(0, n || 4).map((x) => `<li>${esc(x)}</li>`).join("")}${xs.length > (n || 4) ? `<li class="dim">and ${xs.length - (n || 4)} more</li>` : ""}</ul></div>` : "");
   const det = `<div class="detail">${d.standing ? `<div class="status">${esc(d.standing)}</div>` : ""}
@@ -84,30 +78,21 @@ function devView() {
       <div class="tags">${a.unblocks.map((u) => `<span class="tag">unblocks: ${esc(u)}</span>`).join("")}</div>
       <div class="dim">${esc(a.title)}${a.owner ? " &middot; " + esc(a.owner) : ""}</div></div></div>`).join("")}</div>` : ""}
     ${(d.card_problems || []).length ? `<div class="cardprobs">${d.card_problems.length} project card problem${d.card_problems.length === 1 ? "" : "s"} (law CM41): ${d.card_problems.slice(0, 3).map(esc).join(" &middot; ")}</div>` : ""}
-    ${early.length ? `<h2>Early access</h2><div class="early">${early.map((e) => `<div class="eacard">
-      <div class="art" style="background-image:url('${esc(e.media.header_460x215 || e.media.capsule_231x87 || "")}')"></div>
+    ${early.length ? `<h2>Early access</h2><div class="early">${early.map((e) => { const g = game(e.game); return `<div class="eacard">
+      <div class="art" style="background-image:url('${g ? art(g, "header_460x215") : ""}')"></div>
       <div class="meta"><span class="chan ea">EARLY ACCESS</span><b>${esc(e.title)} ${esc(e.version)}</b>
-        <div class="dim">from ${esc(e.branch)} &middot; built ${ago(tsOf(e.created))}${e.release ? ` &middot; the release is ${esc(e.release)}` : ""}</div>
-        ${earlyButton(e)}</div></div>`).join("")}</div>` : ""}
+        <div class="dim">from ${esc(e.branch)} &middot; ${earlyBuilt(e)}${e.release ? ` &middot; the release is ${esc(e.release)}` : ""}</div>
+        ${earlyButton(e)}</div></div>`; }).join("")}</div>` : ""}
     <div class="devcols"><div class="projects">${shown.map(([k, l]) => {
       const ps = d.projects.filter((p) => p.kind === k);
       return ps.length ? `<h2>${l}</h2>${ps.map(projectHTML).join("")}` : "";
     }).join("")}</div>
       <div class="feed"><h2>Activity</h2>${feedHTML(d.activity || []) || '<div class="empty">Nothing this week.</div>'}</div></div>
+    <div id="branches">${workSection()}</div>
   </div>`;
 }
 
 document.addEventListener("click", (ev) => {
-  const b = ev.target.closest && ev.target.closest("[data-early]");
-  if (b) {
-    ev.stopPropagation();
-    const e = ((S.dev && S.dev.early) || []).find((x) => x.id === b.dataset.early);
-    if (!e) return;
-    const st = earlyStatus(e);
-    if (st.kind === "install" || st.kind === "update") send(st.kind, { id: e.id });
-    else if (st.kind === "play" || st.kind === "stop") send(st.kind, { id: e.id });
-    return;
-  }
   const f = ev.target.closest && ev.target.closest("[data-devfilter]");
   if (f) { S.devFilter = f.dataset.devfilter; render(); }
 }, true);
@@ -115,7 +100,7 @@ document.addEventListener("click", (ev) => {
 function devConnect() {
   const take = (d) => {
     S.dev = d;
-    const sig = (d.releases || []).map((r) => r.id + r.build).join() + "|" + (d.early || []).map((e) => e.id + e.build).join();
+    const sig = (d.releases || []).map((r) => r.id + r.build).join() + "|" + (d.early || []).map((e) => e.game + e.worktree + e.build).join();
     if (S.devBuilds && sig !== S.devBuilds) refresh();          // a new build: the store and library see it at once
     S.devBuilds = sig;
     if (S.view === "dev") render();

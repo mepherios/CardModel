@@ -1,0 +1,22 @@
+{
+  "category": "core_type",
+  "laws": [
+    "select(store(m, i, v), i) == v",
+    "select(store(m, i, v), j) == select(m, j) for i != j"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "Array",
+  "operations": [],
+  "params": [
+    "index",
+    "value"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_godel.py"
+  },
+  "statement": "Total maps from an index type to a value type: memory is Array(BV(a), BV(8)). Reading a cell after writing it gives what was written; other cells are unchanged.",
+  "tier": 0
+}

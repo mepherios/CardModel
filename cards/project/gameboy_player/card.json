@@ -2,6 +2,8 @@
   "blockers": [],
   "branches": [
     "claude/festive-margulis-*",
+    "claude/frosty-lumiere-*",
+    "claude/sad-clarke-*",
     "claude/strange-dewdney-*"
   ],
   "category": "project",
@@ -35,8 +37,8 @@
     "the DS playable (the DS session has it; the shell's touch input and tables are ready)"
   ],
   "metadata": {
-    "previous_content_hash": "651398aee868c8a2ff40d5ed4a3006e725163d9449eb3612894240aaefbeb948",
-    "version": "2.0.5",
+    "previous_content_hash": "b8ef481e268ce6eb5f4c7a2e240aef29a0e0e181132e68c8893cd82e3bc65489",
+    "version": "2.0.6",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -89,6 +91,6 @@
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; its store entry is being built on a branch.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T02:20:02+02:00",
+  "updated": "2026-10-22T02:21:14+02:00",
   "user_actions": []
 }

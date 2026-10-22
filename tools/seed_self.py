@@ -195,13 +195,55 @@ CAPABILITIES = [
     ("live_hub", "The store follows everything in progress: project cards say what to watch and keep their owner's "
      "detail current (CM41); the hub computes each one's phase, branches, uncommitted work, metrics and builds from "
      "git and the model's records, read-only, gathers what waits on the user, and pushes changes to the launcher as "
-     "they happen; early-access builds install beside the release.",
+     "they happen; early access is a program's version on a branch, installed from its store page like a beta "
+     "(one mechanism with the store's branches).",
      L("CM01_honest_limits", "CM35_games_are_cards", "CM41_projects_keep_their_cards_current"),
      ["tests/test_hub.py::test_status_is_computed_from_git_and_state", "tests/test_hub.py::test_git_reads_never_write",
-      "tests/test_hub.py::test_changes_are_pushed", "tests/test_hub.py::test_early_access_is_separate_and_installable",
+      "tests/test_hub.py::test_changes_are_pushed", "tests/test_hub.py::test_early_access_is_the_branch_version",
       "tests/test_projects.py::test_missing_or_stale_project_cards_fail"],
      ["docs/STORE.md"], ["cardmodel arcade serve (the In progress page)"], ["cardmodel/arcade/hub.py"],
      "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."),
+    ("godel_model", "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's "
+     "content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded "
+     "exactly; maps between Gödel sets with their gaps; content stored as sparse vectors with their basis version, "
+     "merges and deprecations as events.",
+     L("CM43_primes_are_forever", "CM31_behaviour_is_numbered", "CM45_content_is_a_sparse_vector"),
+     ["tests/test_godel.py::test_ledger_is_append_only", "tests/test_godel.py::test_content_algebra_and_carry",
+      "tests/test_godel.py::test_structural_numbers_decode_exactly",
+      "tests/test_godel.py::test_stored_records_follow_the_rules",
+      "tests/test_godel.py::test_merges_and_deprecations_never_relate_products"],
+     ["GOALS.md", "docs/MATH_CORE.md"], ["cardmodel godel"], ["cardmodel/engines/godel.py"],
+     "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."),
+    ("distillation", "Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms "
+     "land in one class, the cheapest term is the canonical one and its hash names it (MATH_CORE phase 0).",
+     L("CM25_laws_carry_into_optimization"),
+     ["tests/test_egraph.py::test_saturation_proves_and_canonicalizes", "tests/test_egraph.py::test_congruence"],
+     ["docs/MATH_CORE.md"], ["cardmodel distill"], ["cardmodel/engines/egraph.py"],
+     "Two pieces of code that mean the same thing are recognised as one, and the cheapest is chosen."),
+    ("symbolic_instructions", "Instruction cards as mathematics: symbolic execution gives each instruction's "
+     "registers as terms over what it reads, with its bus effects and their conditions, checked against the "
+     "executable semantics (MATH_CORE phase 0, F5).", L("CM32_machines_are_cards"),
+     ["tests/test_symbolic.py::test_terms_agree_with_the_semantics", "tests/test_symbolic.py::test_a_wrong_term_is_caught"],
+     ["docs/MATH_CORE.md", "docs/MACHINES.md"], ["cardmodel symbolic"], ["cardmodel/machine/symbolic.py"],
+     "A CPU's instructions are understood, not only run: each one is a formula the model can reason about."),
+    ("four_sources", "The four sources: every algorithm and function has a definition (truth) with its term, "
+     "canonical form, Gödel numbers and proof obligations; every implementation is an action linked to it by a "
+     "witness or proof; identities are transformations; procedures are methods with their limits.",
+     L("CM44_everything_traces_to_truth"), ["tests/test_sources.py::test_every_artifact_traces_back"],
+     ["docs/MATH_CORE.md"], ["cardmodel sources"], ["cardmodel/engines/sources.py"],
+     "Every piece of code knows what it means, and every claim knows its evidence."),
+    ("witness_tiers", "Every claim carries its tier: a finite witness sized by the class both forms fall in "
+     "(a polynomial, a C-finite sequence of one counted loop, regions cut by guards) proves equality; everything "
+     "else is labelled a sample.", L("CM46_every_claim_carries_its_tier"),
+     ["tests/test_tiers.py::test_sized_witnesses_prove_and_refute", "tests/test_tiers.py::test_every_claim_carries_a_tier"],
+     ["docs/MATH_CORE.md"], ["cardmodel tiers"], ["cardmodel/engines/tiers.py"],
+     "A test that only samples says so, and where a theorem makes a few points enough, those points are a proof."),
+    ("formal_core", "The Gödel model's own mathematics proved in Lean (formal/GodelCore): the divisibility lattice, "
+     "carry-over and gcd, the append-only ledger, merging versus relating generators, transport of properties, "
+     "rewrite invariants.", L("CM43_primes_are_forever", "CM45_content_is_a_sparse_vector"),
+     ["tests/test_formal.py::test_the_core_builds_without_sorry"], ["docs/MATH_CORE.md"],
+     ["cardmodel verify --only formal"], ["cardmodel/engines/formal.py", "formal/GodelCore.lean"],
+     "The rules the model keeps its numbers by are theorems, checked by a kernel outside the model."),
     ("anyps5", "AnyPS5 as cards: every gap classified by what would close it; an unknown is an observation "
      "obligation, never a made-up success.", L("CM36_unknowns_are_observation_obligations"),
      ["tests/test_anyps.py::test_unknown_gaps_are_observation_obligations"], ["docs/ANYPS5.md"],

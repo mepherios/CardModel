@@ -30,6 +30,11 @@
   cardmodel lean import F.lean | --core  Lean theorems as cards: faithful reading, witness, re-proof
   cardmodel repl                         interactive card language
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
+  cardmodel godel ledger|vector|gcd|lcm CARD...   the expanding Gödel model: primes, sparse content vectors (CM43, CM45)
+  cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
+  cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
+  cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics
+  cardmodel tiers census|prove ALGORITHM    each claim's tier; prove an algorithm's forms by sized witnesses (CM46)
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
 
@@ -198,6 +203,18 @@ def cmd_verify(args) -> int:
         if sec == "projects" and "cards" in r:
             extra = (f"{r['cards']} project cards, {sum(1 for x in r['projects'].values() if x['stale'])} stale; "
                      f"{len(r['problems'])} problems")
+        if sec == "sources" and "definitions" in r:
+            extra = (f"{r['definitions']} definitions (coverage {r['coverage']}, canonical {r['canonical']}), "
+                     f"{r['actions']} actions, {r['transformations']} transformations, {r['methods']} methods; "
+                     f"{len(r['problems'])} problems")
+        if sec == "tiers" and "claims" in r:
+            extra = (f"{r['claims']} claims: {r['total']}; {r['untiered_count']} without a tier")
+        if sec == "formal" and "theorems" in r:
+            extra = (f"{r.get('proved')} of {r['theorems']} theorem cards proved in Lean ({r.get('toolchain')}); "
+                     f"{len(r.get('problems') or [])} problems")
+        if sec == "godel" and "atoms" in r:
+            extra = (f"{r['atoms']} atoms in {len(r['sets'])} sets, content vectors for {r['coverage']} of op, "
+                     f"function and algorithm cards; {len(r['problems'])} problems")
         if sec == "integrity" and "laws" in r:
             extra = (f"{r['laws']} laws, {r['goals']} goals, {r['capabilities']} capabilities, {r['commands']} commands, "
                      f"{r['sections']} sections, {r['docs']} docs; {len(r['problems'])} problems")
@@ -227,7 +244,7 @@ def _failures(sec: str, r: dict):
         return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
     if sec == "theorems":
         return r.get("problems")
-    if sec in ("anyps5", "integrity", "projects"):
+    if sec in ("anyps5", "integrity", "projects", "godel", "sources", "tiers", "formal"):
         return r.get("problems")
     if sec == "capabilities":
         return {n: c.get("reason") for n, c in r["capabilities"].items() if c["status"] == "fail"}

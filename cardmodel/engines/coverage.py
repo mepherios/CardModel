@@ -249,6 +249,27 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "integrity_problems":
         it = secs.get("integrity")
         return len(it.get("problems", [])) if it and "problems" in it else None
+    if name in ("definition_coverage", "canonical_definitions", "actions_without_truth", "symbolic_instructions"):
+        so = secs.get("sources")
+        if not so:
+            return None
+        return {"definition_coverage": so.get("coverage"), "canonical_definitions": so.get("canonical"),
+                "actions_without_truth": so.get("actions_without_truth"),
+                "symbolic_instructions": so.get("symbolic_instructions")}[name]
+    if name == "formal_core_problems":
+        fo = secs.get("formal")
+        return len(fo.get("problems") or []) if fo and fo.get("status") in ("pass", "fail") else None
+    if name == "proof_tier_claims":
+        ti = secs.get("tiers")
+        return ti.get("proof") if ti else None
+    if name == "algorithm_forms_proved":
+        defs = [d for d in ctx.store.cards("definition") if (d.get("subject") or "").startswith("algorithm/")]
+        obs = [o for d in defs for o in d.get("proof_obligations") or [] if o.get("claim", "").startswith("form ")]
+        return round(sum(1 for o in obs if o.get("tier") == "proof" and o.get("status") == "proved") / len(obs), 4) \
+            if obs else None
+    if name == "content_vector_coverage":
+        gd = secs.get("godel")
+        return gd.get("coverage") if gd else None
     if name == "project_card_problems":
         pr = secs.get("projects")
         return len(pr.get("problems", [])) if pr and "problems" in pr else None

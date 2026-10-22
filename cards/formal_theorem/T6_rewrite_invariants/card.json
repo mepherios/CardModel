@@ -1,0 +1,22 @@
+{
+  "category": "formal_theorem",
+  "evidence_tier": "proof",
+  "file": "formal/GodelCore/T6Invariants.lean",
+  "handover": "T6",
+  "lean": [
+    "GodelCore.balanced_step",
+    "GodelCore.dot_step",
+    "GodelCore.invariant"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "T6_rewrite_invariants",
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "Card Model Research Handover (2026-10-22), sections 8, 11 and the theorems the formal core needs",
+    "tool": "tools/seed_formal.py"
+  },
+  "statement": "A balanced rule applied anywhere under any substitution moves a term's content by exactly its delta, so a weight orthogonal to every rule's delta is the same at both ends of every rewrite sequence: a different weight proves no rewrite exists.",
+  "tier": 0
+}

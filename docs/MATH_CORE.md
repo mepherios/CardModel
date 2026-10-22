@@ -1,8 +1,32 @@
 # MATH_CORE: the card model as mathematics
 
-**Status: a proposal waiting for the user's yes.** Nothing that exists is restructured until then. The
-foundation work in section 6 (phase 0) adds new pieces beside the old ones and changes nothing, so it may start
-now. The center of the design is already in GOALS.md ("What the card model is").
+**Status: approved by the user on 2026-10-22** ("Yes to MATH_CORE.md: start phase 0 and phase 1, and tell the
+sessions to stop adding imitation-only paths"). The center of the design is in GOALS.md ("What the card model
+is"). Progress:
+* phase 0, done:
+  * F1 and F2, the prime ledger and content vectors (`engines/godel.py`, CM43);
+  * F3, the core types (`cards/core_type`);
+  * F4, the e-graph (`engines/egraph.py`, `cardmodel distill`);
+  * F5, symbolic instruction terms (`machine/symbolic.py`, `cardmodel symbolic`): the 512 LR35902 cards, 511
+    witnessed against their executable semantics, the CB prefix a dispatch. The ARM cards are next.
+* phase 1: the four source registries, with definitions for every algorithm and function card, actions,
+  transformations and methods (`engines/sources.py`, `cardmodel sources`, CM44).
+* phase 0 brought to the research handover's agenda and storage rules (the user's "Yes, send the research
+  handover to the card-model session so its phase 0 work follows the agenda and the storage rules"; the handover
+  is the Claude Doc "Card Model Research Handover"):
+  * storage rules (CM45): definitions store the sparse vector ledger index -> exponent with the basis version it
+    was read against, and an identity (the hash of their structure); no content integer is stored anywhere;
+    Gödel's positional number only up to 200 digits; the ledger's merges and deprecations are appended events,
+    and an equation between products is refused (`engines/godel.py`: `stored`, `merge`, `deprecate`, `resolve`);
+  * R1, the formal core: `formal/GodelCore` proves T1 to T6 in plain Lean 4 (v4.35.0, no Mathlib, no sorry,
+    standard axioms only), one `formal_theorem` card per theorem (`engines/formal.py`, `verify --only formal`);
+  * R3, witness tiers (CM46): every claim carries one (`engines/tiers.py`, `cardmodel tiers`). Polynomial forms,
+    C-finite counted loops and linear recursions with constant coefficients are recognised from the lifted IR and
+    their witnesses sized by the theorems, so eight algorithm claims are proved, not sampled (sums of 1..n, squares
+    and cubes, triangular numbers by closed form and by recursion, the arithmetic series, cubic evaluation,
+    Fibonacci's naive recursion). The census: 2,667 claims, 1,628 at tier proof.
+  * Not yet: the Mathlib (Finsupp) version of the core, which needs a Mathlib download; T7 (the finite-witness
+    theorems) and T8 in Lean; R4's cost-vector extraction and e-class-to-vector map; R5-R10.
 
 ## 0. The goal, in the user's words
 
@@ -115,9 +139,12 @@ witness or substitute. The artifacts show where the gap is:
   "math": {"text": "T(n) = n(n+1)/2", "latex": "T(n)=\\tfrac{n(n+1)}{2}",
            "term": ["FLOORDIV", ["MUL", "n", ["ADD", "n", 1]], 2], "type": "Nat -> Nat"},
   "explanation": "Markdown: what it means and why the definition is right.",
-  "canonical": {"term": ["...the extracted canonical term..."], "hash": "sha256:...",
-                "godel": {"structural": "decimal string", "content": {"op/ADD": 1, "op/MUL": 1, "op/FLOORDIV": 1}}},
-  "proof_obligations": [{"claim": "T(n+1) = T(n) + n + 1", "status": "proved", "lean": "theorem ..."}],
+  "canonical": {"term": ["...the extracted canonical term..."], "hash": "sha256:..."},
+  "identity": {"hash": "sha256:...", "of": "canonical term"},
+  "godel": {"vector": {"52": 1, "64": 1, "53": 1}, "basis": 70, "content": {"op/ADD": 1, "op/MUL": 1,
+            "op/FLOORDIV": 1}, "structural": "decimal string, small terms only"},
+  "proof_obligations": [{"claim": "T(n+1) = T(n) + n + 1", "status": "proved", "tier": "proof",
+                         "lean": "theorem ..."}],
   "actions": ["action/triangular__c", "action/triangular__python"],
   "transformations": ["transformation/triangular_loop_to_closed_form"],
   "origin": {"kind": "written | lifted | observed | imported", "from": "..."},
@@ -126,7 +153,10 @@ witness or substitute. The artifacts show where the gap is:
 ```
 
 **Action**: `{"truth": "definition/...", "lang": "c", "code": "...", "method": "method/emit", "link":
-{"kind": "proof | witness", "lean": "...", "seed": 123}}`.
+{"kind": "proof | witness", "tier": "proof | probabilistic | bounded | sample", "lean": "...", "seed": 123}}`.
+
+The identity is the structure's hash; the vector is the content, over ledger indices, with the basis version it
+was read against (CM45). A hash has no arithmetic and a vector is not an identity, so both are stored.
 **Transformation**: `{"from": "definition/...", "to": "definition/...", "proof": {...}, "cost": {...}}`.
 **Method**: `{"procedure": "engines/...", "complexity": "...", "decides": "...", "limits": "..."}`.
 

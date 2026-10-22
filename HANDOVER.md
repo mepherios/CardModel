@@ -380,7 +380,8 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   in the user's folders (`arcade library --add DIR`, kept in library.json beside the saves) where it is, with the
   survey's verdict and a title screen the machine draws; Play starts the player on the file. The DS is listed,
   not playable yet.
-* **Work in progress in the launcher** (`arcade/work.py`, docs/ARCADE.md section 3): a WORK tab with every
+* **Work in progress in the launcher** (`arcade/work.py`, docs/ARCADE.md section 3): the *Every branch* section
+  of the IN PROGRESS tab (once a WORK tab of its own) with every
   worktree (branch, last commit, commits not on main and their files, uncommitted changes, areas, programs), and a
   Versions and branches card per program: a branch's version installs like a beta, built in that worktree by its
   own `bin/cardmodel`. When the cards in progress do not build, Update installs the last good build and the page
@@ -608,7 +609,10 @@ a native (ctypes) path inside improved modules (ROADMAP).
 ## 8. Concrete next steps (in order)
 
 Start with `cardmodel self report`: the model's own ranked list of its flaws and weaknesses, with the command for
-each. Beyond that:
+each. The mathematics has its own plan: docs/MATH_CORE.md (phases and progress) and the research handover's agenda
+(R1-R10). Its rules for anyone continuing: content is stored as sparse vectors, never as integers, and no index is
+reused (CM45); every claim carries its tier (CM46, `cardmodel tiers census`); the formal core in `formal/` builds
+with no `sorry` (`cardmodel verify --only formal`). Beyond that:
 
 1. **stdin harnesses** (ROADMAP Now): add `read_*` templates to every language card, switch the harness, and confirm
    the build cache hits across seeds. Verify then gets several times faster.
