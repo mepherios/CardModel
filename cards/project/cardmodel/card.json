@@ -22,7 +22,8 @@
     "Gödel method wave 1: difficulty census, code sizes and the GM-2 decision record, admissible numberings, Gödel's 46 definitions with a proof checker, arithmetized instruction terms",
     "the self-running-improvement merge (984fc7a): law witnesses, the store's end-to-end check (CM42), goal floors on floor/goals",
     "the merges of 2026-10-22: festive-margulis up to 11284a6 (f25e82a), jolly-liskov 984fc7a (e72fa77), frosty-lumiere b15b527 (32f5f58)",
-    "the merges of 2026-10-22 afternoon (the user's yes in the games session): the DS player 0fcb468 (9269eee), the last bank controllers ea14439 (593fe5c), the lifted STOP fix 73e6220 (16ea9fc), the Vector Duel card 85909ec (c1bf07f)"
+    "the merges of 2026-10-22 afternoon (the user's yes in the games session): the DS player 0fcb468 (9269eee), the last bank controllers ea14439 (593fe5c), the lifted STOP fix 73e6220 (16ea9fc), the Vector Duel card 85909ec (c1bf07f)",
+    "the merges of 2026-10-22 evening: unreal-math c18209b (daf4923), festive-margulis dac3282 (0c8fd0d), sad-sanderson 86d9a58 (34cd5cc)"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [],
@@ -74,11 +75,11 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main 32f5f58: MATH_CORE phases 0 and 1, Gödel method wave 1, and the merges of festive-margulis (11284a6), jolly-liskov (984fc7a) and frosty-lumiere (b15b527). 290 tests pass (1 skipped); the full verify passes 23 of 23 sections (seed 2992561134).",
+  "standing": "On main f582d59: MATH_CORE phases 0 and 1, Gödel method wave 1 and every merge of 2026-10-22 in the integration log (docs/INTEGRATION.md section 5), the last being claude/sad-sanderson-482207 (34cd5cc); the full verify after it passed 23 of 24 sections (unreal skipped: no engine scan in main). The user approved merging claude/epic-bun-008aca (Cardmodel Arcade on iPhone and iPad) on 2026-11-03.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T16:39:44+02:00",
+  "updated": "2026-11-03T23:57:56+01:00",
   "user_actions": [
     {
       "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",

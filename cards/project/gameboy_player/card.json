@@ -35,7 +35,9 @@
     "an app build lifts what its witness interpreted and witnesses again on a new seed (up to three rounds)",
     "the nine Pokemon apps rebuilt and installed: Red, Blue, Yellow, Gold, Silver, Crystal, Puzzle Challenge 100.00 % with 0 instructions interpreted on an unseen walk; Trading Card Game 100.00 % (0 interpreted, after a second round); Pinball 100.00 % (0 interpreted, after a second round); every witness frame-identical",
     "the Game Boy Player picks colour through the board (a Sachen board scrambles the header page), as the host does",
-    "for the DS player: game.json's clockOffset (the shell keeps the local time's offset) and DS rows playable once the DS card has a machine and a player"
+    "for the DS player: game.json's clockOffset (the shell keeps the local time's offset) and DS rows playable once the DS card has a machine and a player",
+    "the player builds for iOS like every program (`arcade build gameboy_player --platform ios-iphonesimulator`) and plays the Mac's cartridges in the iOS launcher: Oracle of Ages, 900 frames byte-identical to the Mac's on an iPhone and an iPad Simulator (claude/epic-bun-008aca)",
+    "system.module's cache is keyed by the card data the player bakes in, so a changed card is a new module: test_gb_mappers' Sachen test no longer depends on test order (6eb7bf6)"
   ],
   "games": [
     "gameboy_player"
@@ -99,10 +101,10 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main: the player, the library, the store check, per-cartridge apps whose code is lifted card IR, the static pass, relift, DS touch input and the lifted STOP fix. On claude/festive-margulis-43fde7 (waiting for the user's approval): every RAM encoding lifted, witness rounds, the Sachen colour fix and the DS clock offset; all nine Pokemon apps are rebuilt from it and installed.",
+  "standing": "On main: the player, the library, the store check, per-cartridge apps whose code is lifted card IR, the static pass, relift, DS touch input and the lifted STOP fix. On main since 0c8fd0d (dac3282): every RAM encoding lifted, witness rounds, the Sachen colour fix and the DS clock offset; all nine Pokemon apps are rebuilt from it and installed. The player also builds for iPhone and iPad (project arcade_ios).",
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; the store installs the player and launches every cartridge it lists.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T18:05:15+02:00",
+  "updated": "2026-11-03T23:57:56+01:00",
   "user_actions": []
 }

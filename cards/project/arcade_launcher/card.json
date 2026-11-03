@@ -16,12 +16,11 @@
     "controller setup with a live test, and the launcher driven with a controller",
     "installs never stop: a refused or lost build ends the wait, installs queue, one launcher at a time, the installed list follows the library folder",
     "a console player's button opens its cartridges instead of starting it with nothing to play",
-    "a damaged, empty or half-copied cartridge is refused with a message, never a player crash"
+    "a damaged, empty or half-copied cartridge is refused with a message, never a player crash",
+    "the service serves iPhones and iPads (project arcade_ios, from claude/epic-bun-008aca; the user approved its merge on 2026-11-03): every program built for any platform card (`?platform=`, `arcade build ID --platform KEY`), pairing (`cardmodel arcade pair`) with a network listener only once a device has paired, a paired device reaching only the store, its builds, the pages, the library and its cartridges; the pages with ui/touch.css on a device"
   ],
   "goal": "Every game the card model runs installs, updates and plays from one launcher, with your own keys and any controller, on every device you have.",
-  "in_progress": [
-    "the iPhone and iPad launcher (its own session: Cardmodel Arcade on iPhone and iPad)"
-  ],
+  "in_progress": [],
   "kind": "program",
   "left": [
     "controller navigation tried with a real controller",
@@ -51,11 +50,11 @@
     "origin": "cardmodel",
     "session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b"
   },
-  "standing": "All 972 of your cartridges launch through the installed app (971 in the Game Boy Player, Pokemon Diamond in the DS Player). In main since 34cd5cc and in the installed launcher, reinstalled from main: controls per game, controller setup, the library's own verdicts, the page fixes, installs that keep working, and a damaged cartridge refused instead of a crash. The installed programs keep the old shell until each is updated in the launcher.",
+  "standing": "All 972 of your cartridges launch through the installed app (971 in the Game Boy Player, Pokemon Diamond in the DS Player). In main since 34cd5cc and in the installed launcher, reinstalled from main: controls per game, controller setup, the library's own verdicts, the page fixes, installs that keep working, and a damaged cartridge refused instead of a crash. The installed programs keep the old shell until each is updated in the launcher. The service also serves paired iPhones and iPads (project arcade_ios).",
   "statement": "The Steam-like launcher: store, library, downloads and updates for everything the card model plays natively, with the player's own controls and any controller.",
   "tier": 1,
   "title": "Cardmodel Arcade",
-  "updated": "2026-10-22T19:27:00+02:00",
+  "updated": "2026-11-03T23:57:56+01:00",
   "user_actions": [
     {
       "action": "Update the Game Boy Player, the DS Player and Vector Duel in Cardmodel Arcade (Library: Update)",
