@@ -22,7 +22,8 @@
     "Gödel method wave 1: difficulty census, code sizes and the GM-2 decision record, admissible numberings, Gödel's 46 definitions with a proof checker, arithmetized instruction terms",
     "the self-running-improvement merge (984fc7a): law witnesses, the store's end-to-end check (CM42), goal floors on floor/goals",
     "the merges of 2026-10-22: festive-margulis up to 11284a6 (f25e82a), jolly-liskov 984fc7a (e72fa77), frosty-lumiere b15b527 (32f5f58)",
-    "the merges of 2026-10-22 afternoon (the user's yes in the games session): the DS player 0fcb468 (9269eee), the last bank controllers ea14439 (593fe5c), the lifted STOP fix 73e6220 (16ea9fc), the Vector Duel card 85909ec (c1bf07f)"
+    "the merges of 2026-10-22 afternoon (the user's yes in the games session): the DS player 0fcb468 (9269eee), the last bank controllers ea14439 (593fe5c), the lifted STOP fix 73e6220 (16ea9fc), the Vector Duel card 85909ec (c1bf07f)",
+    "2026-11-03: the installed Cardmodel Arcade starts its own service again (the launcher ran the shell script bin/cardmodel with Python; it now runs python -m cardmodel and logs to service.log)"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [],
@@ -78,7 +79,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-10-22T16:39:44+02:00",
+  "updated": "2026-11-03T23:54:01+01:00",
   "user_actions": [
     {
       "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",

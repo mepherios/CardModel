@@ -184,22 +184,37 @@ final class Arcade: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
             let home = Bundle.main.object(forInfoDictionaryKey: "CardmodelHome") as? String ?? ""
             let python = Bundle.main.object(forInfoDictionaryKey: "CardmodelPython") as? String ?? ""
             let p = Process()
+            // bin/cardmodel is a shell script: run the package as a module, the way that script does
+            let serve = ["-B", "-m", "cardmodel", "arcade", "serve", "--port", "\(port)"]
             if FileManager.default.isExecutableFile(atPath: python) {
                 p.executableURL = URL(fileURLWithPath: python)
-                p.arguments = ["-B", home + "/bin/cardmodel", "arcade", "serve", "--port", "\(port)"]
+                p.arguments = serve
             } else {
                 p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-                p.arguments = ["python3", "-B", home + "/bin/cardmodel", "arcade", "serve", "--port", "\(port)"]
+                p.arguments = ["python3"] + serve
             }
+            var env = ProcessInfo.processInfo.environment
+            env["PYTHONPATH"] = home + (env["PYTHONPATH"].map { ":" + $0 } ?? "")
+            env["PYTHONDONTWRITEBYTECODE"] = "1"
+            p.environment = env
             p.currentDirectoryURL = URL(fileURLWithPath: home)
-            p.standardOutput = FileHandle.nullDevice
-            p.standardError = FileHandle.nullDevice
+            // the service's output goes to service.log beside launcher.json, so a failed start can be read
+            let logURL = support.appendingPathComponent("service.log")
+            try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
+            FileManager.default.createFile(atPath: logURL.path, contents: nil)
+            let log = (try? FileHandle(forWritingTo: logURL)) ?? FileHandle.nullDevice
+            p.standardOutput = log
+            p.standardError = log
             do { try p.run(); server = p } catch {
                 await MainActor.run { self.showSplash("Could not start the arcade service: \(error)") }
                 return
             }
             for _ in 0..<100 {
                 if await alive() { break }
+                if !p.isRunning {
+                    await MainActor.run { self.showSplash("The arcade service stopped while starting. Its output is in \(logURL.path)") }
+                    return
+                }
                 try? await Task.sleep(nanoseconds: 200_000_000)
             }
         }
