@@ -64,8 +64,11 @@ typealias FrameFn = @convention(c) (Int64, Int64) -> Int64
 typealias LoadFn = @convention(c) (Int64) -> Void
 
 // a cartridge file's bytes: the file itself, or the first member of a .zip with one of the extensions
-func readCartridge(_ path: String, _ exts: [String]) -> Data? {
-    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else { return nil }
+// a cartridge file, or the first member of a .zip with one of the extensions; every offset and size the zip gives is
+// checked against the file and the card's slot (limit) first, so a damaged, empty or half-copied file is "cannot
+// read", never a crash or a giant allocation
+func readCartridge(_ path: String, _ exts: [String], limit: Int) -> Data? {
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)), !data.isEmpty else { return nil }
     if !path.lowercased().hasSuffix(".zip") { return data }
     let b = [UInt8](data)
     func u16(_ o: Int) -> Int { Int(b[o]) | Int(b[o + 1]) << 8 }
@@ -79,20 +82,38 @@ func readCartridge(_ path: String, _ exts: [String]) -> Data? {
         guard o + 46 <= b.count, u32(o) == 0x02014b50 else { return nil }
         let method = u16(o + 10), csize = u32(o + 20), usize = u32(o + 24)
         let nlen = u16(o + 28), elen = u16(o + 30), clen = u16(o + 32), local = u32(o + 42)
+        guard o + 46 + nlen <= b.count else { return nil }
         let name = String(decoding: b[(o + 46)..<(o + 46 + nlen)], as: UTF8.self).lowercased()
         o += 46 + nlen + elen + clen
-        guard exts.contains(where: { name.hasSuffix($0) }), local + 30 <= b.count else { continue }
+        guard exts.contains(where: { name.hasSuffix($0) }), local + 30 <= b.count, u32(local) == 0x04034b50,
+              usize > 0, usize <= limit else { continue }
         let start = local + 30 + u16(local + 26) + u16(local + 28)
         guard start + csize <= b.count else { return nil }
         if method == 0 { return Data(b[start..<(start + csize)]) }
         guard method == 8 else { return nil }
-        var out = [UInt8](repeating: 0, count: max(usize, 1))
+        var out = [UInt8](repeating: 0, count: usize)
         let n = b.withUnsafeBufferPointer { src in
-            compression_decode_buffer(&out, usize, src.baseAddress! + start, csize, nil, COMPRESSION_ZLIB)
+            src.baseAddress.map { compression_decode_buffer(&out, usize, $0 + start, csize, nil, COMPRESSION_ZLIB) } ?? 0
         }
-        return n == usize ? Data(out[0..<n]) : nil
+        return n == usize ? Data(out) : nil
     }
     return nil
+}
+
+// a cartridge this player cannot start: said on stderr (the launcher and the checks read it) and, with a window, in an
+// alert; then the player quits with status 1 (not a crash)
+func cannotPlay(_ message: String) -> Never {
+    FileHandle.standardError.write((message + "\n").data(using: .utf8)!)
+    let a = CommandLine.arguments
+    if !a.contains("--frames") && !a.contains("--dump-controls") {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "This cartridge can't be played"
+        alert.informativeText = message
+        alert.runModal()
+    }
+    exit(1)
 }
 
 final class Game {
@@ -137,11 +158,16 @@ final class Game {
         saveURL = dir.appendingPathComponent("save.bin")
         unsafeBitCast(sym(spec.entry.reset), to: VoidFn.self)()
         if let c = spec.cartridge {
-            guard let path = romPath ?? c.path else { fatalError("\(spec.title) plays a cartridge: start it with --rom PATH") }
-            guard let data = readCartridge(path, c.extensions) else { fatalError("cannot read a cartridge from \(path)") }
+            guard let path = romPath ?? c.path else {
+                cannotPlay("\(spec.title) plays your cartridges: open one from Cardmodel Arcade's library (or start it with --rom PATH).")
+            }
+            guard let data = readCartridge(path, c.extensions, limit: c.bytes) else {
+                cannotPlay("cannot read a cartridge from \(path): the file is empty, incomplete or damaged, or holds no "
+                           + c.extensions.joined(separator: " / ") + " cartridge.")
+            }
             let dst = sym(c.symbol).assumingMemoryBound(to: UInt8.self)
             let n = min(data.count, c.bytes)
-            data.withUnsafeBytes { raw in _ = memcpy(dst, raw.baseAddress!, n) }
+            data.withUnsafeBytes { raw in if let a = raw.baseAddress { _ = memcpy(dst, a, n) } }
             unsafeBitCast(sym(c.load), to: LoadFn.self)(Int64(n))
         }
         if let c = spec.clock {

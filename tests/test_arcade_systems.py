@@ -286,6 +286,38 @@ class PlayerPackage(unittest.TestCase):
         self.assertEqual((w, h), (160, 144))
         self.assertEqual(rgb, ref.rgb(), "the native package shows what the module computes")
 
+    def test_a_damaged_cartridge_is_refused_not_a_crash(self):
+        """A file the player cannot play (empty, half copied, a zip whose name or size fields point past the file or
+        past the card's cartridge slot) ends with status 1 and the reason on stderr, never a crash (status 133) or a
+        giant allocation; started with no cartridge it says where to start one."""
+        import struct
+        from cardmodel.kernel import resources
+        root = B.latest(self.ctx, "gameboy_player")
+        man = json.loads((root / "manifest.json").read_text())
+        exe = str(root / "content" / man["executable"])
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_badcart_"))
+        with zipfile.ZipFile(d / "good.zip", "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("test.gb", cart(self.ctx))
+        good = (d / "good.zip").read_bytes()
+        cd = good.index(b"PK\x01\x02")
+
+        def patched(offset, fmt, value):
+            b = bytearray(good)
+            struct.pack_into(fmt, b, cd + offset, value)
+            return bytes(b)
+        files = {"empty.gb": b"", "half.zip": good[: len(good) // 2],
+                 "longname.zip": patched(28, "<H", 0xFFFF),           # the member's name runs past the end
+                 "huge.zip": patched(24, "<I", 0xFFFFFFF0)}           # 4 GiB uncompressed: past the 8 MiB slot
+        for name, data in files.items():
+            (d / name).write_bytes(data)
+            p = resources.run([exe, "--rom", str(d / name), "--frames", "1", "--save-dir", str(d / "save")],
+                              timeout=60, heavy=False)
+            self.assertEqual(p.returncode, 1, (name, p.returncode, p.stderr[-500:]))
+            self.assertIn("cannot read a cartridge", p.stderr, name)
+        p = resources.run([exe, "--frames", "1", "--save-dir", str(d / "save")], timeout=60, heavy=False)
+        self.assertEqual(p.returncode, 1, p.stderr[-500:])
+        self.assertIn("open one from Cardmodel Arcade's library", p.stderr)
+
     def test_the_launchers_controls_reach_the_player(self):
         """The launcher passes a program's controls (its Controls page) as --controls FILE; the player's window then
         maps those keys and controller buttons instead of the system card's, and keeps the card's without one."""

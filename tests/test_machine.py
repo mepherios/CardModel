@@ -1,6 +1,7 @@
 """Machines as cards: instruction cards (conformance in every engine, timing and flag data), the Game Boy machine
 on synthetic ROMs built by the card assembler (no game is needed or stored), banking, saves, the survey."""
 import copy
+import os
 import random
 import unittest
 
@@ -816,6 +817,48 @@ class ArmLifting(unittest.TestCase):
         ml.set("lifted_on", 1)
         ml.call("run_frame")
         self.assertNotEqual(int.from_bytes(ml.read("mram", 0x100000, 4), "little"), 55)
+
+
+class FreshCopies(unittest.TestCase):
+    """A fresh native machine loads a private copy of its library. The copy goes with the machine (closed or
+    collected), and copies a killed process left behind go when the next process makes a fresh machine; 8,918 had
+    piled up in the temp folder (about 2 GB) before."""
+
+    def test_a_fresh_copy_goes_with_its_machine(self):
+        import gc
+        from pathlib import Path
+        ctx = model_ctx()
+        try:
+            m = native.load(ctx, Bd.module(ctx, "gameboy"), "native", fresh=True)
+        except native.EngineError as exc:
+            self.skipTest(f"no native engine here: {exc}")
+        d = Path(m._tmpdir)
+        self.assertTrue(d.is_dir() and d.name.startswith(f"{native.COPY_PREFIX}{os.getpid()}-"))
+        del m
+        gc.collect()
+        self.assertFalse(d.exists(), "collected: its copy is gone")
+        m = native.load(ctx, Bd.module(ctx, "gameboy"), "native", fresh=True)
+        d = Path(m._tmpdir)
+        m.close()
+        self.assertFalse(d.exists(), "closed: its copy is gone")
+        m.close()                                    # twice is fine
+
+    def test_copies_of_a_process_that_is_gone_are_swept(self):
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        tmp = Path(tempfile.mkdtemp(prefix="cardmodel_sweep_"))
+        p = subprocess.Popen(["true"])
+        p.wait()                                     # a process id that no longer runs
+        dead = tmp / f"{native.COPY_PREFIX}{p.pid}-abc"
+        mine = tmp / f"{native.COPY_PREFIX}{os.getpid()}-def"
+        old = tmp / f"cardmodel_machine_{p.pid}_x1"  # named before process ids (mkdtemp's letters): left alone
+        other = tmp / "unrelated_1"
+        for d in (dead, mine, old, other):
+            d.mkdir()
+            (d / "lib.dylib").write_bytes(b"x")
+        self.assertEqual(native.sweep_copies(tmp), 1)
+        self.assertEqual(sorted(x.name for x in tmp.iterdir()), sorted([mine.name, old.name, other.name]))
 
 
 if __name__ == "__main__":

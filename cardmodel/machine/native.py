@@ -13,7 +13,10 @@ Engines:
 sliceable; a ctypes array, a bytearray or a list), ``read(name)`` -> bytes, ``write(name, data, start)``.
 
 Shared libraries are cached by source hash under the state directory; ``fresh=True`` loads a private copy so
-two machines in one process never share state.
+two machines in one process never share state. The copy is removed when its machine is closed or collected, or
+when the process exits; a process killed before that leaves its copies behind, named with its process id
+(``cardmodel_machine-<pid>-...``), and the next process that makes a fresh machine removes them. Copies made
+before they were named so (``cardmodel_machine_...``) are never touched: mkdtemp's names hold no "-".
 
 Honest limits (L1): a ``cabi`` machine runs with the user's privileges like any compiled code, and an index
 out of range is undefined behaviour there (machine code masks every index; the reference interpreter checks).
@@ -27,6 +30,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import weakref
 from pathlib import Path
 
 from ..engines import probes
@@ -168,6 +172,34 @@ def build_library(ctx, ir: dict, lang: str, flags: list[str] | None = None,
     return lib, src
 
 
+COPY_PREFIX = "cardmodel_machine-"
+_swept = False
+
+
+def sweep_copies(tmp: Path | None = None) -> int:
+    """Remove the private library copies of processes that no longer run (a fresh machine's process killed before
+    it could clean up): folders named COPY_PREFIX<pid>-... whose pid is gone. Returns how many went."""
+    gone = 0
+    try:
+        entries = list(Path(tmp or tempfile.gettempdir()).iterdir())
+    except OSError:
+        return 0
+    for d in entries:
+        if not d.name.startswith(COPY_PREFIX):
+            continue
+        pid, sep, _ = d.name[len(COPY_PREFIX):].partition("-")
+        if not sep or not pid.isdigit() or int(pid) == os.getpid():
+            continue
+        try:
+            os.kill(int(pid), 0)
+        except ProcessLookupError:
+            shutil.rmtree(d, ignore_errors=True)
+            gone += 1
+        except OSError:
+            pass                                    # alive (another user's process): not ours to judge
+    return gone
+
+
 class CABIMachine(Machine):
     def __init__(self, ctx, ir: dict, lang: str, fresh: bool = False, lib_path: Path | None = None):
         super().__init__(ir, lang)
@@ -177,8 +209,16 @@ class CABIMachine(Machine):
         self.lib_path, self.source = (lib_path, None) if lib_path else build_library(ctx, ir, lang)
         path = self.lib_path
         self._tmpdir = None
+        self._cleanup = None
         if fresh:
-            self._tmpdir = tempfile.mkdtemp(prefix="cardmodel_machine_")
+            global _swept
+            if not _swept:
+                _swept = True
+                sweep_copies()
+            self._tmpdir = tempfile.mkdtemp(prefix=f"{COPY_PREFIX}{os.getpid()}-")
+            # the copy goes with this machine (closed, collected, or the process exiting); the loaded library stays
+            # mapped, so removing its file never disturbs the machine
+            self._cleanup = weakref.finalize(self, shutil.rmtree, self._tmpdir, True)
             path = Path(self._tmpdir) / self.lib_path.name
             shutil.copy(self.lib_path, path)
         self.lib = ctypes.CDLL(str(path))
@@ -231,8 +271,8 @@ class CABIMachine(Machine):
         return a
 
     def close(self) -> None:
-        if self._tmpdir:
-            shutil.rmtree(self._tmpdir, ignore_errors=True)
+        if self._cleanup is not None:
+            self._cleanup()
 
 
 def load(ctx, ir: dict, engine: str = "native", fresh: bool = False) -> Machine:
@@ -248,4 +288,4 @@ def load(ctx, ir: dict, engine: str = "native", fresh: bool = False) -> Machine:
 
 
 __all__ = ["CABIMachine", "EngineError", "HostMachine", "IRMachine", "Machine", "build_library", "embed_languages",
-           "load", "resolve_engine"]
+           "load", "resolve_engine", "sweep_copies"]
