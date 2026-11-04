@@ -167,21 +167,11 @@ def propose_rewrites(ctx: Ctx, root: Path, seed: int, limit: int = 60) -> list[d
             res = optimize(expr, rules, costs, max_depth=3, max_nodes=400)
             if res["best_cost"] >= res["input_cost"]:
                 continue
-            vars_ = sorted(variables(expr))
-            checks = 0
-            ok = True
-            for _ in range(24):
-                env = {v: rng.randint(-50, 50) for v in vars_}
-                try:
-                    a, b = evaluate(expr, env), evaluate(res["best_tree"], env)
-                except (ArithmeticError, ValueError):
-                    continue
-                checks += 1
-                if a != b:
-                    ok = False
-                    break
+            checks, mismatch = check_rewrite(expr, res["best_tree"], rng)
+            ok = mismatch is None
+            valid_when = res.get("valid_when") or []
             out.append({"kind": "rewrite", "ready": ok and checks >= MIN_EVIDENCE,
-                        "reason": f"{checks} seeded checks" + ("" if ok else ", MISMATCH"),
+                        "reason": f"{checks} checks (edge values, then seeded)" + ("" if ok else f", MISMATCH {mismatch}"),
                         "candidate": {"name": "sugg_" + hashlib.sha256(
                                           f"{p.relative_to(base)}:{node.lineno}:{key}".encode()).hexdigest()[:12],
                                       "category": "suggestion", "tier": 3,
@@ -189,12 +179,51 @@ def propose_rewrites(ctx: Ctx, root: Path, seed: int, limit: int = 60) -> list[d
                                       "file": str(p.relative_to(base)), "line": node.lineno,
                                       "from": res["input"], "to": res["best"], "steps": res["steps"],
                                       "cost_from": res["input_cost"], "cost_to": res["best_cost"],
+                                      "valid_when": valid_when,
                                       "metadata": {"learned": True, "evidence_count": checks,
                                                    "confidence": "established" if ok and checks >= 3 else "tentative",
                                                    "advisory": "the source file is not edited (hub L3)"}}})
             if len(out) >= limit:
                 return out
     return out
+
+
+EDGE_INTS = (0, 1, -1, 2, -2, 63, 64, -64)
+
+
+def check_rewrite(expr, best, rng: random.Random, samples: int = 24) -> tuple[int, dict | None]:
+    """Evaluate ``expr`` and ``best`` on the edge values (every variable at each of ``EDGE_INTS``, all variables
+    together) and on seeded random ints. Returns (checks, first counterexample or None).
+
+    A rewrite must keep the source's behaviour on every input, errors included: when one side raises and the other
+    returns a value (``x // x`` -> ``1`` at x = 0, ``x >> x`` -> ``0`` at x = -1) that is a counterexample, not a
+    skipped sample. Inputs on which both sides raise are not checks."""
+    vars_ = sorted(variables(expr))
+    envs = [{v: e for v in vars_} for e in EDGE_INTS] if vars_ else [{}]
+    for i, v in enumerate(vars_):   # one variable at an edge, the others random: catches x - y at x = 0 etc.
+        for e in EDGE_INTS[:3]:
+            env = {w: rng.randint(-50, 50) for w in vars_}
+            env[v] = e
+            envs.append(env)
+    envs += [{v: rng.randint(-50, 50) for v in vars_} for _ in range(samples)] if vars_ else []
+    checks = 0
+    for env in envs:
+        a = b = None
+        ea = eb = None
+        try:
+            a = evaluate(expr, env)
+        except (ArithmeticError, ValueError, OverflowError) as exc:
+            ea = type(exc).__name__
+        try:
+            b = evaluate(best, env)
+        except (ArithmeticError, ValueError, OverflowError) as exc:
+            eb = type(exc).__name__
+        if ea and eb:
+            continue
+        checks += 1
+        if ea or eb or a != b:
+            return checks, {"env": env, "from": ea or a, "to": eb or b}
+    return checks, None
 
 
 def _nodes(e):

@@ -60,3 +60,38 @@ class Optimize(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Verdicts(unittest.TestCase):
+    """The anchor verdict compares forms on the same calls, inside the noise, and never on an unresolved slope."""
+
+    @staticmethod
+    def row(form, ns, anchor, sig="s", mad=0.0, **kw):
+        return {"target_card": "op/X", "card": "X", "form": form, "median_ns": ns, "mad_ns": mad, "anchor": anchor,
+                "inputs_signature": sig, **kw}
+
+    def test_forms_on_different_inputs_are_not_compared(self):
+        rows = [self.row("native", 100.0, 1.0, sig="a"), self.row("fast", 10.0, 2.0, sig="b")]
+        self.assertEqual(optimize.verdicts(rows), [])
+
+    def test_gap_within_spread_is_white(self):
+        rows = [self.row("native", 100.0, 1.0, mad=20.0), self.row("fast", 70.0, 2.0, mad=20.0)]
+        self.assertEqual(optimize.verdicts(rows)[0]["verdict"], "white")
+        rows = [self.row("native", 100.0, 1.0, mad=1.0), self.row("fast", 70.0, 2.0, mad=1.0)]
+        self.assertEqual(optimize.verdicts(rows)[0]["verdict"], "red")
+
+    def test_unresolved_slope_is_not_a_free_function(self):
+        rows = [self.row("c", 50.0, 1.0), self.row("rust", 0.0, 2.0, resolved=False)]
+        self.assertEqual(optimize.verdicts(rows), [])
+
+    def test_python_forms_share_inputs(self):
+        p = TempProject()
+        try:
+            ctx = p.ctx()
+            rows = optimize.measure_python_forms(ctx, ctx.store.get("op/MOD"), SEED, n_inputs=24, repeats=2)
+        finally:
+            p.cleanup()
+        forms = {r["form"]: r for r in rows}
+        self.assertIn("pow2_bit", forms)
+        self.assertTrue(all(r["shared_inputs"] for r in rows), rows)
+        self.assertEqual(len({r["inputs_signature"] for r in rows}), 1, "every form timed on the same calls")
