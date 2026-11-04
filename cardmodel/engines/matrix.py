@@ -135,25 +135,31 @@ def _compare(ctx: Ctx, a: dict, b: dict, inputs: list) -> dict:
             continue
         checked += 1
         if not V.same(out_a, out_b):
-            return {"status": "fail", "checked": checked, "args": list(args), "a": out_a, "b": out_b}
+            return {"status": "fail", "checked": checked, "args": list(args), "out_a": out_a, "out_b": out_b}
     return {"status": "pass" if checked else "no_inputs", "checked": checked}
 
 
-def cross_source(ctx: Ctx, by_source: dict[str, dict[str, dict]], seed: int) -> list[dict]:
-    """Ports of one function in two source languages must agree (on both sides' vectors plus fresh inputs)."""
+def cross_source(ctx: Ctx, ports: dict[str, dict[str, dict[str, dict]]], seed: int) -> list[dict]:
+    """Ports of one function in two source languages must agree (on both sides' vectors plus fresh inputs).
+
+    ``ports``: {group: {source language: {function: card}}}. A group is one folder and file stem
+    (examples/matrix/corpus.card, corpus.py, corpus.math), so only files written as ports of each other are
+    compared; an unrelated function that happens to share a name in another corpus is not."""
     out = []
-    names = sorted({n for cards in by_source.values() for n in cards})
-    srcs = sorted(by_source)
-    for name in names:
-        have = [s for s in srcs if name in by_source[s]]
-        for i, a in enumerate(have):
-            for b in have[i + 1:]:
-                ca, cb = by_source[a][name], by_source[b][name]
-                rng = random.Random(seed)
-                gens = cb.get("generators") or ca.get("generators") or []
-                inputs = ([v["args"] for v in ca.get("vectors", [])] + [v["args"] for v in cb.get("vectors", [])]
-                          + [list(x) for x in V.inputs(gens, 16, rng, edge=False)])
-                out.append({"function": name, "a": a, "b": b, **_compare(ctx, ca["ir"], cb["ir"], inputs)})
+    for group, by_source in sorted(ports.items()):
+        names = sorted({n for cards in by_source.values() for n in cards})
+        srcs = sorted(by_source)
+        for name in names:
+            have = [s for s in srcs if name in by_source[s]]
+            for i, a in enumerate(have):
+                for b in have[i + 1:]:
+                    ca, cb = by_source[a][name], by_source[b][name]
+                    rng = random.Random(seed)
+                    gens = cb.get("generators") or ca.get("generators") or []
+                    inputs = ([v["args"] for v in ca.get("vectors", [])] + [v["args"] for v in cb.get("vectors", [])]
+                              + [list(x) for x in V.inputs(gens, 16, rng, edge=False)])
+                    out.append({"group": group, "function": name, "a": a, "b": b,
+                                **_compare(ctx, ca["ir"], cb["ir"], inputs)})
     return out
 
 
@@ -184,7 +190,7 @@ def math_round_trip(ctx: Ctx, card: dict) -> dict:
 
 def default_corpus(root: Path) -> list[Path]:
     files = []
-    for d in ("examples/matrix", "examples/algorithms"):
+    for d in ("examples/matrix", "examples/algorithms", "tests/frontends"):   # tests/frontends: all 15 text languages
         p = root / d
         if p.is_dir():
             files += sorted(f for f in p.iterdir() if frontend_for(f) is not None)
@@ -198,6 +204,7 @@ def run(ctx: Ctx, files: list[Path], targets: list[str] | None = None, seed: int
     avail = {t: ctx.available(t) for t in targets}
     functions, not_lifted = [], []
     by_source: dict[str, dict[str, dict]] = {}
+    ports: dict[str, dict[str, dict[str, dict]]] = {}
     for path in files:
         fe = frontend_for(path)
         if fe is None:
@@ -218,9 +225,11 @@ def run(ctx: Ctx, files: list[Path], targets: list[str] | None = None, seed: int
             rt = {t: round_trip(ctx, card, t) for t in targets if t in FRONTENDS and FRONTENDS[t].lift_text}
             rt["math"] = math_round_trip(ctx, card)      # mathematical notation as a target (engines/mathlang.py)
             functions.append({"file": str(path), "source": fe.lang, "function": name, "inputs": rep["inputs"],
-                              "lift_mismatches": rep["lift_mismatches"], "targets": cells, "round_trip": rt})
+                              "lift_mismatches": rep["lift_mismatches"], "targets": cells, "round_trip": rt,
+                              "source_witness": (card.get("verification") or {}).get("source_witness")})
             by_source.setdefault(fe.lang, {})[name] = card
-    cross = cross_source(ctx, by_source, seed)
+            ports.setdefault(str(path.with_suffix("")), {}).setdefault(fe.lang, {})[name] = card
+    cross = cross_source(ctx, ports, seed)
     return {"seed": seed, "targets": targets,
             "unavailable": {t: why for t, (ok, why) in avail.items() if not ok},
             "sources": sorted(by_source), "functions": functions, "not_lifted": not_lifted,
@@ -249,12 +258,17 @@ def failures(functions: list[dict], cross: list[dict]) -> list[dict]:
         if f["lift_mismatches"]:
             out.append({"kind": "lift", "source": f["source"], "function": f["function"],
                         "detail": f"{f['lift_mismatches']} inputs where the lifted IR and the source differ"})
+        sw = f.get("source_witness") or {}
+        if sw.get("status") in ("fail", "error"):        # the original, run by its own toolchain, disagrees with the lift
+            out.append({"kind": "source_witness", "source": f["source"], "function": f["function"], "detail": sw})
         for t, c in f["targets"].items():
             if c["status"] in ("fail", "error"):
                 out.append({"kind": "pair", "source": f["source"], "target": t, "function": f["function"],
                             "detail": c})
         for t, c in f["round_trip"].items():
-            if c["status"] not in ("pass", "no_inputs", "gap"):      # a gap is a translation gap, not a failure
+            # a gap (target cannot emit it) or not_lifted (the target's frontend cannot read the emitted code back,
+            # e.g. a helper it has no construct for) is a translation gap, counted in the report, not a failure
+            if c["status"] not in ("pass", "no_inputs", "gap", "not_lifted"):
                 out.append({"kind": "round_trip", "source": f["source"], "target": t, "function": f["function"],
                             "detail": c})
     out += [{"kind": "cross_source", "function": c["function"], "source": c["a"], "target": c["b"], "detail": c}
@@ -292,7 +306,13 @@ def report_text(rep: dict) -> str:
     rts = [(f["source"], t, c["status"]) for f in rep["functions"] for t, c in f["round_trip"].items()]
     if rts:
         ok = sum(1 for *_, s in rts if s in ("pass", "no_inputs"))
-        lines.append(f"round trip lift(emit_T(f)) == f: {ok}/{len(rts)}")
+        nl = sum(1 for *_, s in rts if s in ("gap", "not_lifted"))
+        lines.append(f"round trip lift(emit_T(f)) == f: {ok}/{len(rts)}" + (f" ({nl} gaps: not emitted or not read back)"
+                                                                         if nl else ""))
+    sws = [f["source_witness"]["status"] for f in rep["functions"] if f.get("source_witness")]
+    if sws:
+        lines.append(f"source witness (the original, run by its own toolchain, == the lift): "
+                     f"{sws.count('pass')}/{len(sws)} pass, {len(sws) - sws.count('pass')} not runnable here or failing")
     cr = rep["cross_source"]
     if cr:
         ok = sum(1 for c in cr if c["status"] == "pass")

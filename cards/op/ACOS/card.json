@@ -8,8 +8,8 @@
     "javascript": "Math.acos({0})",
     "lean": "UNSUPPORTED",
     "lua": "math.acos({0})",
-    "python": "math.acos({0})",
-    "ruby": "Math.acos({0})",
+    "python": "cm_acos({0})",
+    "ruby": "cm_acos({0})",
     "rust": "(({0}).acos())",
     "swift": "acos({0})"
   },

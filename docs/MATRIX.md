@@ -4,17 +4,32 @@ Seed 20261104. Each cell is functions passed / functions run for (source row, ta
 
 | source \ target | c | go | javascript | python | rust | cpp | java | lean | lua | ruby | swift | typescript |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| cardlang | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | — | 24/24 | 24/24 | — | — |
-| math | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | — | 29/29 | 29/29 | — | — |
-| python | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | — | 48/48 | 48/48 | — | — |
+| c | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | — | 8/8 | 8/8 | — | 8/8 |
+| cardlang | 28/28 | 28/28 | 28/28 | 28/28 | 28/28 | 28/28 | 28/28 | — | 28/28 | 28/28 | — | 28/28 |
+| cpp | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | — | 4/4 | 4/4 | — | 4/4 |
+| csharp | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | — | 2/2 | 2/2 | — | 2/2 |
+| go | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | — | 4/4 | 4/4 | — | 4/4 |
+| java | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | — | 5/5 | 5/5 | — | 5/5 |
+| javascript | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | — | 4/4 | 4/4 | — | 4/4 |
+| julia | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | — | 7/7 | 7/7 | — | 7/7 |
+| kotlin | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | — | 5/5 | 5/5 | — | 5/5 |
+| lua | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | 5/5 | — | 5/5 | 5/5 | — | 5/5 |
+| math | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | — | 29/29 | 29/29 | — | 29/29 |
+| php | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | — | 3/3 | 3/3 | — | 3/3 |
+| python | 65/65 | 65/65 | 65/65 | 65/65 | 65/65 | 65/65 | 65/65 | — | 65/65 | 65/65 | — | 65/65 |
+| ruby | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | 6/6 | — | 6/6 | 6/6 | — | 6/6 |
+| rust | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | 7/7 | — | 7/7 | 7/7 | — | 7/7 |
+| swift | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | — | 3/3 | 3/3 | — | 3/3 |
+| typescript | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 | — | 2/2 | 2/2 | — | 2/2 |
+| zig | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | 3/3 | — | 3/3 | 3/3 | — | 3/3 |
 
-* Round trip lift(emit_T(f)) behaves like f: 202/202 (targets that also have a frontend).
-* Ports of one function in different source languages agree: 72/72.
+* Round trip lift(emit_T(f)) behaves like f: 2267/2280 (targets that also have a frontend).
+* Ports of one function in different source languages agree: 168/168.
 * Functions a frontend does not lift (gaps, not failures): 3.
   * python `float_floordiv`: line 30: FLOORDIV on (float, float)
   * python `float_mod`: line 36: MOD on (float, float)
   * python `sign_sum`: line 72: type annotation 'list' (only int/float/bool)
-* Unavailable here: lean (lean not found); swift (swiftc not found); typescript (/opt/node22/bin/node: version (22, 23, 4) < required 23.6.0)
+* Unavailable here: lean (lean not found); swift (swiftc not found)
 * Translation gaps (constructs a target cannot emit yet; the function is not run there):
-  * lean: op TO_FLOAT on (int) has no template (×8); no type for 'float' (×6); op BIT_XOR on (int, int) has no template (×5); op BIT_AND on (int, int) has no template (×4); op SHIFT_RIGHT on (int, int) has no template (×3); op TRUNC_INT on (float) has no template (×3)
+  * lean: op REM on (int, int) has no template (×25); op TO_FLOAT on (int) has no template (×20); no type for 'float' (×13); op BIT_AND on (int, int) has no template (×6); op BIT_XOR on (int, int) has no template (×5); op SHIFT_RIGHT on (int, int) has no template (×3); op TRUNC_INT on (float) has no template (×3); op TRUNCDIV on (int, int) has no template (×3); op DIV on (float, float) has no template (×2); op FSQRT on (float) has no template (×1); op POW on (float, float) has no template (×1); op SHIFT_LEFT on (int, int) has no template (×1); op BIT_NOT on (int) has no template (×1); op ABS on (float) has no template (×1)
 * Failures: 0.
