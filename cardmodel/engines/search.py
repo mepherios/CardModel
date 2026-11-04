@@ -19,6 +19,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 
+from . import sorts as S
 from .exprs import parse, size, to_text
 
 
@@ -29,6 +30,7 @@ class Rule:
     rhs: object
     card: str
     condition: str | None = None
+    domain: str | None = None           # the sort the law's variables range over (FOUNDATIONS.md rule A3)
 
 
 def load_rules(store, names: list[str] | None = None) -> list[Rule]:
@@ -41,9 +43,9 @@ def load_rules(store, names: list[str] | None = None) -> list[Rule]:
             lhs, rhs = parse(card["lhs"], pv), parse(card["rhs"], pv)
         except Exception as exc:  # noqa: BLE001 -- a malformed rule card is reported, not fatal
             raise ValueError(f"rewrite_rule/{card.name}: {exc}") from exc
-        out.append(Rule(card.name, lhs, rhs, card.name, card.get("condition")))
+        out.append(Rule(card.name, lhs, rhs, card.name, card.get("condition"), card.get("domain")))
         if card.get("bidirectional"):
-            out.append(Rule(card.name + "~rev", rhs, lhs, card.name, card.get("condition")))
+            out.append(Rule(card.name + "~rev", rhs, lhs, card.name, card.get("condition"), card.get("domain")))
     return out
 
 
@@ -84,15 +86,27 @@ def _unbound(e) -> bool:
     return False
 
 
-def rewrites(expr, rules: list[Rule]):
-    """Every (rule name, expression) reachable by applying one rule at one position."""
+def _pattern_vars(p) -> set:
+    if isinstance(p, str) and p.startswith("?"):
+        return {p}
+    return set().union(*(_pattern_vars(x) for x in p)) if isinstance(p, list) and p else set()
+
+
+def rewrites(expr, rules: list[Rule], var_sorts: dict | None = None, ops: dict | None = None):
+    """Every (rule name, expression) reachable by applying one rule at one position. A rule applies only where its
+    variables bind terms of the rule's sort (FOUNDATIONS.md rule A3); ``var_sorts`` gives the variables' sorts
+    (untyped: int) and ``ops`` the op table whose ranks give each subterm's sort."""
     out = []
     seen = set()
+    law = {id(r): S.law_sorts(_pattern_vars(r.lhs) | _pattern_vars(r.rhs), r.domain) for r in rules}
+
+    def sort_of(t):
+        return S.term_sort(t, var_sorts, ops)
 
     def visit(node, rebuild):
         for r in rules:
             b = match(r.lhs, node)
-            if b is not None:
+            if b is not None and S.admits(law[id(r)], b, sort_of):
                 sub = instantiate(r.rhs, b)
                 if _unbound(sub):
                     continue            # a variable that occurs only on the other side: not a rewrite
@@ -114,7 +128,8 @@ def rewrites(expr, rules: list[Rule]):
     return out
 
 
-def prove(lhs, rhs, rules: list[Rule], max_depth: int = 6, max_nodes: int = 50000) -> dict | None:
+def prove(lhs, rhs, rules: list[Rule], max_depth: int = 6, max_nodes: int = 50000, var_sorts: dict | None = None,
+          ops: dict | None = None) -> dict | None:
     """Meet-in-the-middle BFS. Returns {"steps": [(rule, expr), ...], "nodes": n} or None."""
     if isinstance(lhs, str) and not lhs.startswith("?"):
         lhs = parse(lhs)
@@ -136,7 +151,7 @@ def prove(lhs, rhs, rules: list[Rule], max_depth: int = 6, max_nodes: int = 5000
             cur, d = frontier[side].popleft()
             if d >= max_depth:
                 continue
-            for rule, new in rewrites(cur, rules):
+            for rule, new in rewrites(cur, rules, var_sorts, ops):
                 k = _key(new)
                 if k in parents[side]:
                     continue
@@ -189,7 +204,8 @@ def expr_cost(expr, costs: dict[str, float]) -> float:
     return 0.0
 
 
-def optimize(expr, rules: list[Rule], costs: dict[str, float], max_depth: int = 4, max_nodes: int = 20000) -> dict:
+def optimize(expr, rules: list[Rule], costs: dict[str, float], max_depth: int = 4, max_nodes: int = 20000,
+             var_sorts: dict | None = None, ops: dict | None = None) -> dict:
     """Cheapest expression reachable within the budget, with the chain of rules that reaches it."""
     if isinstance(expr, str):
         expr = parse(expr)
@@ -202,7 +218,7 @@ def optimize(expr, rules: list[Rule], costs: dict[str, float], max_depth: int = 
         cur, d = q.popleft()
         if d >= max_depth:
             continue
-        for rule, new in rewrites(cur, rules):
+        for rule, new in rewrites(cur, rules, var_sorts, ops):
             k = _key(new)
             if k in parents:
                 continue

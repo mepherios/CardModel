@@ -61,12 +61,19 @@ def identity(canon: dict, term, whole) -> dict:
     return {"hash": semantic_hash(whole), "of": "lifted function"}
 
 
-def _canonical(term, rules, costs) -> dict:
+def _var_sorts(fn) -> dict:
+    """The sorts of a function's parameters and locals: the laws distillation may use depend on them (A3)."""
+    out = {p["name"]: p.get("type") for p in (fn or {}).get("params") or []}
+    out.update((fn or {}).get("locals") or {})
+    return out
+
+
+def _canonical(term, rules, costs, fn=None, ops=None) -> dict:
     from . import egraph as E
     if term is None:
         return {"status": "pending", "why": "a loop or several statements: its closed form waits for distillation"}
     try:
-        r = E.canonical(term, rules, costs, max_iter=6, max_nodes=3000)
+        r = E.canonical(term, rules, costs, _var_sorts(fn), ops, max_iter=6, max_nodes=3000)
     except ValueError as exc:
         return {"status": "pending", "why": str(exc)}
     return {"status": "canonical", "term": r["term"], "hash": r["hash"], "cost": r["cost"], "by": "method/saturate",
@@ -120,7 +127,7 @@ def build(ctx, seed: int | None = None) -> dict:
         lifted = [lf for lf in lift_source(ref["code"], ctx.ops) if lf.ok] if ref else []
         entry = next((lf.ir for lf in lifted if lf.name == (ref or {}).get("entry")), lifted[0].ir if lifted else None)
         term = _single_return(entry)
-        canon = _canonical(term, rules, costs)
+        canon = _canonical(term, rules, costs, entry, ctx.ops)
         fc = forms_canon.get(card.name)
         if canon["status"] == "pending" and fc:
             canon = {"status": "recurrence", "canonical": fc["canonical"], "godel": fc["godel"],
@@ -160,7 +167,7 @@ def build(ctx, seed: int | None = None) -> dict:
         mod = card.get("ir") or {}
         entry = next((f for f in mod.get("functions") or [] if f.get("name") == mod.get("entry")), None)
         term = _single_return(entry)
-        canon = _canonical(term, rules, costs)
+        canon = _canonical(term, rules, costs, entry, ctx.ops)
         res = (fn_results.get(card.qualified) or {}).get("languages") or {}
         actions, obligations = [], []
         for f in card.get("forms") or []:
