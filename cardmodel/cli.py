@@ -428,9 +428,37 @@ def cmd_translate(args) -> int:
             card["status"] = "healthy" if len(rep["agreeing_languages"]) >= 3 and not rep["lift_mismatches"] else "suspect"
             ctx.store.save(card, category="function")
     _out(args, results, "\n".join(lines))
-    failed = [n for n, r in results.items() if "report" in r and any(
-        lr["status"] in ("fail", "error") for lr in r["report"]["languages"].values())]
+    failed = [n for n, r in results.items() if "report" in r and (not r["report"]["inputs"] or any(
+        lr["status"] in ("fail", "error") for lr in r["report"]["languages"].values()))]
+    for n in failed:
+        if not results[n]["report"]["inputs"]:
+            lines.append(f"  {n:<22} UNVERIFIED: no input where the source and the lifted IR both evaluate")
+            if not args.json:
+                print(lines[-1])
     return 1 if failed else 0   # functions that did not lift are reported gaps, not failures
+
+
+def cmd_matrix(args) -> int:
+    from .engines import matrix as M
+    ctx = _ctx(args)
+    root = Path(__file__).resolve().parent.parent
+    files = []
+    for f in map(Path, args.files):
+        files += sorted(x for x in f.iterdir() if M.frontend_for(x)) if f.is_dir() else [f]
+    files = files or M.default_corpus(root)
+    missing = [str(f) for f in files if not f.exists()]
+    if missing:
+        print(f"error: no such file: {', '.join(missing)}", file=sys.stderr)
+        return 2
+    targets = args.to.split(",") if args.to else None
+    rep = M.run(ctx, files, targets=targets, seed=args.seed,
+                progress=None if args.json else (lambda s: print(f"  {s}", file=sys.stderr, flush=True)))
+    if args.write:
+        out = Path(args.write)
+        out.write_text(M.markdown(rep), encoding="utf-8")
+    ctx.save_state("last_matrix", rep)
+    _out(args, rep, M.report_text(rep) + (f"\nwrote {args.write}" if args.write else ""))
+    return 1 if rep["failures"] else 0
 
 
 def cmd_improve(args) -> int:
@@ -782,6 +810,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(fn=cmd_optimize)
     s = sub.add_parser("improve"); s.add_argument("path"); s.add_argument("--out"); s.add_argument("--seed", type=int)
     s.add_argument("--no-native", action="store_true"); s.set_defaults(fn=cmd_improve)
+    s = sub.add_parser("matrix", help="every source language x every target: translate, run, compare; round "
+                                      "trips and cross-source ports")
+    s.add_argument("files", nargs="*", help="corpus files (default: examples/matrix and examples/algorithms)")
+    s.add_argument("--to", help="comma-separated targets (default: every codegen language)")
+    s.add_argument("--seed", type=int); s.add_argument("--write", metavar="FILE", help="also write the matrix as Markdown")
+    s.set_defaults(fn=cmd_matrix)
     s = sub.add_parser("arena"); s.add_argument("--count", type=int, default=60); s.add_argument("--seed", type=int)
     s.add_argument("--samples", type=int, default=24); s.add_argument("--out")
     s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_arena)

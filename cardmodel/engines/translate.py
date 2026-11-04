@@ -53,7 +53,9 @@ def _gen_for(name: str, typ: str, narrow: int = 0) -> dict:
 def python_reference(module: dict, lifted: list[Lifted]):
     """The original source of the module's functions, executed (ground truth)."""
     by = {lf.name: lf for lf in lifted}
-    src = "import math\n\n" + "\n\n".join(by[f["name"]].source for f in module["functions"])
+    # the frontend lifts bare gcd(a, b) as math.gcd, so the reference must define it too (else every input
+    # raises NameError, is dropped as "outside the domain" and the function is verified on nothing)
+    src = "import math\nfrom math import gcd\n\n" + "\n\n".join(by[f["name"]].source for f in module["functions"])
     ns: dict = {"__name__": "cardmodel_reference"}
     exec(compile(src, "<reference>", "exec"), ns)  # noqa: S102 -- the user's own source, being observed
     return ns[module["entry"]], src
