@@ -1,0 +1,24 @@
+-- triangular numbers
+T : ℕ → ℕ
+T(n) = ⌊n(n + 1)/2⌋
+
+gcd(a, b) = |a|                if b = 0
+          = gcd(b, a mod b)    otherwise
+
+fact(0) = 1
+fact(n) = n · fact(n − 1)
+
+s(n) = Σ_{i=1}^{n} i²
+h(x) = y² + 1  where y = x + 1
+f(x) = { x if x ≥ 0; −x otherwise }
+g(x) = \frac{\sqrt{x^{2} + 1}}{2} + \sin x
+fib(n) = fibk(n, 0, 1)
+fibk(n, a, b) = a                  if n = 0
+              = fibk(n − 1, b, a + b) otherwise
+q(n) = \begin{cases} 1 & n = 0 \\ n \cdot q(n-1) & \text{otherwise} \end{cases}
+test T(4) = 10
+test fib(10) = 55
+test s(3) = 14
+test fact(5) = 120
+test gcd(12, 18) = 6
+test q(4) = 24
