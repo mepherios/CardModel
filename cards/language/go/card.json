@@ -17,7 +17,9 @@
       "print": {
         "bool": "fmt.Printf(\"b:%v\\n\", {e})",
         "float": "fmt.Printf(\"f:%v\\n\", {e})",
-        "int": "fmt.Printf(\"i:%d\\n\", {e})"
+        "int": "fmt.Printf(\"i:%d\\n\", {e})",
+        "list[float]": "cm_lf_print({e})",
+        "list[int]": "cm_li_print({e})"
       },
       "truthy": {
         "bool": "({e})",
@@ -31,6 +33,10 @@
       "cm_floormod": "func cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}",
       "cm_gcd": "func cm_gcd(a int64, b int64) int64 {\n\tif a < 0 {\n\t\ta = -a\n\t}\n\tif b < 0 {\n\t\tb = -b\n\t}\n\tfor b != 0 {\n\t\ta, b = b, a%b\n\t}\n\treturn a\n}",
       "cm_ipow": "func cm_ipow(a int64, b int64) int64 {\n\tvar r int64 = 1\n\tfor b > 0 {\n\t\tif b&1 == 1 {\n\t\t\tr *= a\n\t\t}\n\t\tb >>= 1\n\t\tif b > 0 {\n\t\t\ta *= a\n\t\t}\n\t}\n\treturn r\n}",
+      "cm_lf_new": "func cm_lf_new(n int64, v float64) []float64 {\n\tif n < 0 {\n\t\tpanic(\"negative length\")\n\t}\n\tr := make([]float64, n)\n\tfor i := range r {\n\t\tr[i] = v\n\t}\n\treturn r\n}",
+      "cm_lf_print": "func cm_lf_print(xs []float64) {\n\tfmt.Printf(\"l:%d\\n\", len(xs))\n\tfor _, v := range xs {\n\t\tfmt.Printf(\"f:%v\\n\", v)\n\t}\n}",
+      "cm_li_new": "func cm_li_new(n int64, v int64) []int64 {\n\tif n < 0 {\n\t\tpanic(\"negative length\")\n\t}\n\tr := make([]int64, n)\n\tfor i := range r {\n\t\tr[i] = v\n\t}\n\treturn r\n}",
+      "cm_li_print": "func cm_li_print(xs []int64) {\n\tfmt.Printf(\"l:%d\\n\", len(xs))\n\tfor _, v := range xs {\n\t\tfmt.Printf(\"i:%d\\n\", v)\n\t}\n}",
       "cm_max_f": "func cm_max_f(a float64, b float64) float64 {\n\tif b > a {\n\t\treturn b\n\t}\n\treturn a\n}",
       "cm_max_i": "func cm_max_i(a int64, b int64) int64 {\n\tif b > a {\n\t\treturn b\n\t}\n\treturn a\n}",
       "cm_min_f": "func cm_min_f(a float64, b float64) float64 {\n\tif b < a {\n\t\treturn b\n\t}\n\treturn a\n}",
@@ -45,6 +51,10 @@
     "import": "\t\"@name@\"\n",
     "indent": "\t",
     "lib_prelude": "package cardmodel\n\nimport (\n@imports@)\n\n",
+    "list_lit": {
+      "list[float]": "[]float64{{{items}}}",
+      "list[int]": "[]int64{{{items}}}"
+    },
     "lit": {
       "false": "false",
       "float": "float64({v})",
@@ -59,17 +69,22 @@
     "param": "{name} {type}",
     "prelude": "package main\n\nimport (\n\t\"fmt\"\n@imports@)\n\nvar _ = fmt.Sprint\n\n",
     "return": "return {value}",
+    "set": "{name}[{idx}] = {value}",
     "style": "braces",
     "types": {
       "bool": "bool",
       "float": "float64",
-      "int": "int64"
+      "int": "int64",
+      "list[float]": "[]float64",
+      "list[int]": "[]int64"
     },
     "while": "for {cond} {{",
     "zero": {
       "bool": "false",
       "float": "0.0",
-      "int": "0"
+      "int": "0",
+      "list[float]": "[]float64{}",
+      "list[int]": "[]int64{}"
     }
   },
   "comments": {

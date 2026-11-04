@@ -86,14 +86,14 @@ So of 23 language cards: **2 full frontends, 12 targets, 0 language pairs that d
 | fixed-width bit-vectors BV(w) | implicit in machine code | first-class type (MATH_CORE F3) |
 | globals, byte/int arrays, void functions, switch | ✅ (machine extension) | — |
 | strings | ❌ | `str` + op cards len/index/slice/concat/find/format, per-language templates |
-| lists / arrays of any element | ❌ (only fixed machine arrays) | `list[T]` with len/index/append/slice/iterate |
+| lists / arrays of any element | ✅ `list[int]`, `list[float]` with value semantics: len, index, store, new, copy, `for x in xs`, comprehensions over `range` ([LISTS.md](LISTS.md)) | other element types, append, slicing |
 | tuples, multiple return values | ❌ | `tuple[...]` and destructuring |
 | dicts / maps, sets | ❌ | `dict[K,V]`, `set[T]` |
 | records / structs / classes, methods | ❌ | record types, methods as functions over a receiver |
 | optionals / None, exceptions | ❌ | `Option[T]`, error results; exceptions as an effect at the boundary |
 | closures, higher-order functions, lambdas | ❌ | function values (needs a lowering for C) |
 | generics | ❌ | monomorphisation at emission |
-| iterators, generators, `for x in seq` | only `for i in range(...)` | iteration over list/str/range/dict |
+| iterators, generators, `for x in seq` | `for i in range(...)` and `for x in xs` over a list | iteration over list/str/range/dict |
 | async, I/O, network | out of scope for the core | effect shell (CM21, CM34): kept byte-identical |
 
 ### 2.3 Mathematics
@@ -155,7 +155,7 @@ reason each top-level function fails. Methods inside classes are not passed to t
 | call to an unknown function | 3.2 % | resolve module functions and the `math` module to op cards; call cards with semantics |
 | constant (str, None, tuple) | 3.2 % | strings and None in the IR |
 | name not a parameter or local (module constants, globals) | 2.7 % | read module-level constants as `["int", v]`/globals |
-| attribute (`math.pi`, `self.x`) | 2.7 % | module attributes to op cards; `self.x` with record types |
+| attribute (`math.pi`, `self.x`) | 2.7 % | `math.pi`, `math.e`, `math.tau` lift as constants; `self.x` waits on record types |
 | tuple, list, subscript, dict expressions | ~4.2 % | the structure types of §2.2 |
 | try, nested def, import, global, async | ~3.4 % | effects and closures, later phases |
 

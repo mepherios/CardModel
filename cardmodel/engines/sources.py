@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import random
 
+from . import equivalence as EQ
 from . import values as V
 
 REGISTRIES = ("definition", "action", "transformation", "method")
@@ -45,8 +46,15 @@ def _single_return(fn: dict):
     return body[0]["value"] if len(body) == 1 and body[0].get("k") == "return" else None
 
 
-def _godel(ctx, card, entries, term) -> dict:
+def _godel(ctx, card, entries, term, canon: dict | None = None, single: bool = False) -> dict:
+    """The definition's Gödel record. Content is not invariant under the laws (a(b + c) and ab + ac have different
+    factors), so when distillation reached a canonical term and that term is the whole definition (one function),
+    content and structure are read from it, and equal definitions share their content (FOUNDATIONS.md D11, A4).
+    Otherwise they are read from the lifted code, and ``read_from`` says so."""
     from . import godel as G
+    if single and (canon or {}).get("status") == "canonical" and canon.get("term") is not None:
+        return G.stored(G.term_content(canon["term"], ctx.ops), "its canonical term (method/saturate)", entries,
+                        ctx.ops, canon["term"])
     content, why = G.card_content(ctx, card)
     return G.stored(content, why, entries, ctx.ops, term)
 
@@ -55,10 +63,10 @@ def identity(canon: dict, term, whole) -> dict:
     """A definition's identity: the hash of its structure, the canonical term's when distillation reached one."""
     from .egraph import semantic_hash
     if canon.get("status") == "canonical":
-        return {"hash": canon["hash"], "of": "canonical term"}
+        return {"hash": canon["hash"], "of": "canonical term", "under": "laws"}
     if term is not None:
-        return {"hash": semantic_hash(term), "of": "lifted term"}
-    return {"hash": semantic_hash(whole), "of": "lifted function"}
+        return {"hash": semantic_hash(term), "of": "lifted term", "under": "syntax"}
+    return {"hash": semantic_hash(whole), "of": "lifted function", "under": "syntax"}
 
 
 def _var_sorts(fn) -> dict:
@@ -158,7 +166,8 @@ def build(ctx, seed: int | None = None) -> dict:
                      "explanation": f"{card.get('statement', '')}. Its term is the {(ref or {}).get('name')} form "
                                     f"lifted into the core; every other form is an action checked against it.",
                      "canonical": canon, "identity": identity(canon, term, entry),
-                     "godel": _godel(ctx, card, entries, term), "proof_obligations": obligations,
+                     "godel": _godel(ctx, card, entries, term, canon, len(lifted) == 1),
+                     "proof_obligations": obligations,
                      "actions": actions, "transformations": [],
                      "origin": {"kind": "written", "from": (card.get("provenance") or {}).get("origin", "cardmodel")},
                      "methods": ["method/lift_python", canon.get("by", "method/saturate")]})
@@ -193,7 +202,8 @@ def build(ctx, seed: int | None = None) -> dict:
                      "explanation": f"{card.get('statement', '')}. Lifted from its source; every language form is "
                                     f"emitted from the term and witnessed against it.",
                      "canonical": canon, "identity": identity(canon, term, mod),
-                     "godel": _godel(ctx, card, entries, term), "proof_obligations": obligations,
+                     "godel": _godel(ctx, card, entries, term, canon, len(mod.get("functions") or []) == 1),
+                     "proof_obligations": obligations,
                      "actions": actions, "transformations": [],
                      "origin": {"kind": "lifted", "from": prov.get("origin", "")},
                      "methods": ["method/lift_python", "method/emit", canon.get("by", "method/saturate")]})
@@ -248,6 +258,8 @@ def check(ctx) -> dict:
             problems += [f"{q}: {x}" for x in G.vector_problems(d.get("godel") or {}, entries)]
         if not str((d.get("identity") or {}).get("hash", "")).startswith("sha256:"):
             problems.append(f"{q}: no identity (the hash of its structure, CM45)")
+        elif (d.get("identity") or {}).get("under") not in EQ.RELATIONS:
+            problems.append(f"{q}: its identity names no equivalence it was taken under (FOUNDATIONS.md A4)")
         for a in d.get("actions") or []:
             if a not in acts:
                 problems.append(f"{q}: action {a} does not exist")

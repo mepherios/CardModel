@@ -1,0 +1,80 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": {
+      "->list[float]": "cm_lf_new({0}, {1})",
+      "->list[int]": "cm_li_new({0}, {1})"
+    },
+    "go": {
+      "->list[float]": "cm_lf_new({0}, {1})",
+      "->list[int]": "cm_li_new({0}, {1})"
+    },
+    "java": {
+      "->list[float]": "cm_lf_new({0}, {1})",
+      "->list[int]": "cm_li_new({0}, {1})"
+    },
+    "javascript": "cm_list_new({0}, {1})",
+    "lua": "cm_list_new({0}, {1})",
+    "python": "[{1}] * ({0})",
+    "ruby": "Array.new({0}, {1})",
+    "rust": "vec![{1}; ({0}) as usize]",
+    "swift": "Array(repeating: {1}, count: Int({0}))"
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int,float": [
+        {
+          "int": [
+            0,
+            6
+          ]
+        },
+        {
+          "float": [
+            -100.0,
+            100.0
+          ]
+        }
+      ],
+      "int,int": [
+        {
+          "int": [
+            0,
+            6
+          ]
+        },
+        {
+          "int": [
+            -1000,
+            1000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda n, v: list_new(n, v)",
+    "types": [
+      [
+        "int",
+        "int",
+        "list[int]"
+      ],
+      [
+        "int",
+        "float",
+        "list[float]"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "LIST_NEW",
+  "provenance": {
+    "origin": "cardmodel lists (transformer math)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "a list of n copies of a value (n >= 0)",
+  "tier": 1
+}

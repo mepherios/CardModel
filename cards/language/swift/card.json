@@ -17,7 +17,9 @@
       "print": {
         "bool": "print(\"b:\\({e})\")",
         "float": "print(\"f:\\({e})\")",
-        "int": "print(\"i:\\({e})\")"
+        "int": "print(\"i:\\({e})\")",
+        "list[float]": "cm_print_list_f({e})",
+        "list[int]": "cm_print_list_i({e})"
       },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
@@ -35,15 +37,21 @@
       "cm_max_i": "func cm_max_i(_ a: Int, _ b: Int) -> Int { return b > a ? b : a }",
       "cm_min_f": "func cm_min_f(_ a: Double, _ b: Double) -> Double { return b < a ? b : a }",
       "cm_min_i": "func cm_min_i(_ a: Int, _ b: Int) -> Int { return b < a ? b : a }",
+      "cm_modinv": "func cm_modinv(_ a: Int, _ m: Int) -> Int { let n = m < 0 ? -m : m; var r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while r1 != 0 { let q = r0 / r1; (r0, r1) = (r1, r0 - q * r1); (s0, s1) = (s1, s0 - q * s1) }; if r0 != 1 { fatalError(\"base is not invertible\") }; return cm_floormod(s0, n) }",
       "cm_opaque_b": "@inline(never) func cm_opaque_b(_ x: Bool) -> Bool { return x }",
       "cm_opaque_f": "@inline(never) func cm_opaque_f(_ x: Double) -> Double { return x }",
       "cm_opaque_i": "@inline(never) func cm_opaque_i(_ x: Int) -> Int { return x }",
       "cm_powmod": "func cm_powmod(_ a0: Int, _ b0: Int, _ m: Int) -> Int { var r = cm_floormod(1, m); var a = cm_floormod(b0 < 0 ? cm_modinv(a0, m) : a0, m); var b = b0 < 0 ? -b0 : b0; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m) }; a = cm_floormod(a * a, m); b >>= 1 }; return r }",
-      "cm_modinv": "func cm_modinv(_ a: Int, _ m: Int) -> Int { let n = m < 0 ? -m : m; var r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while r1 != 0 { let q = r0 / r1; (r0, r1) = (r1, r0 - q * r1); (s0, s1) = (s1, s0 - q * s1) }; if r0 != 1 { fatalError(\"base is not invertible\") }; return cm_floormod(s0, n) }"
+      "cm_print_list_f": "func cm_print_list_f(_ xs: [Double]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"f:\\(v)\") } }",
+      "cm_print_list_i": "func cm_print_list_i(_ xs: [Int]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"i:\\(v)\") } }"
     },
     "if": "if {cond} {{",
     "indent": "    ",
     "lib_prelude": "import Foundation\n@imports@\n",
+    "list_lit": {
+      "list[float]": "[{items}]",
+      "list[int]": "[{items}]"
+    },
     "lit": {
       "false": "false",
       "float": "({v})",
@@ -59,17 +67,22 @@
     "param_rebind": "var {name}: {type} = {name}",
     "prelude": "import Foundation\n@imports@\n",
     "return": "return {value}",
+    "set": "{name}[Int({idx})] = {value}",
     "style": "braces",
     "types": {
       "bool": "Bool",
       "float": "Double",
-      "int": "Int"
+      "int": "Int",
+      "list[float]": "[Double]",
+      "list[int]": "[Int]"
     },
     "while": "while {cond} {{",
     "zero": {
       "bool": "false",
       "float": "0.0",
-      "int": "0"
+      "int": "0",
+      "list[float]": "[]",
+      "list[int]": "[]"
     }
   },
   "comments": {

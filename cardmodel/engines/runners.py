@@ -10,7 +10,8 @@ Two protocols:
 * ``program`` protocol (IR-generated programs, int/float/bool): codegen
   bakes the inputs into a program; the runner compiles it (cached by source
   hash under the store's state/build directory), runs it with a timeout and
-  parses one tagged line per call: ``i:<int>`` ``f:<float>`` ``b:true|false``.
+  parses one tagged line per call: ``i:<int>`` ``f:<float>`` ``b:true|false``, or ``l:<n>`` followed by
+  the n element lines of a list.
 
 Every subprocess has a timeout; failures come back as data (status, stderr),
 never as silent empties (L36/L39).
@@ -175,6 +176,22 @@ def parse_line(line: str):
     raise ValueError(f"untagged output line {line!r}")
 
 
+def parse_values(lines: list[str]) -> list:
+    """Tagged lines -> values; ``l:<n>`` collects the next n values into one list (a list-valued result)."""
+    out, i = [], 0
+    while i < len(lines):
+        if lines[i].startswith("l:"):
+            n = int(lines[i][2:].strip())
+            if i + 1 + n > len(lines):
+                raise ValueError(f"list of {n} values cut short")
+            out.append([parse_line(x) for x in lines[i + 1:i + 1 + n]])
+            i += 1 + n
+            continue
+        out.append(parse_line(lines[i]))
+        i += 1
+    return out
+
+
 def _fill(args: list[str], **kw) -> list[str]:
     return [a.format(**kw) for a in args]
 
@@ -236,7 +253,7 @@ def run_program(lang_card: dict, source: str, state_root: Path, timeout: float =
     lines = [ln for ln in p.stdout.splitlines() if ln.strip()]
     if parse:
         try:
-            res.values = [parse_line(ln) for ln in lines if ln[:2] in ("i:", "f:", "b:")]
+            res.values = parse_values([ln for ln in lines if ln[:2] in ("i:", "f:", "b:", "l:")])
         except ValueError as exc:
             res.status, res.detail = "runtime_error", str(exc)
             return res
