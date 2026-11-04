@@ -28,6 +28,12 @@ No dependencies beyond Python 3.9+. From this checkout:
 That links `cardmodel` into `~/.local/bin` (use `--dir` for another bin directory, `--uninstall` to remove it) and
 tells you if that directory is not on PATH. `pip install -e .` also works and gives the same `cardmodel` command.
 
+## In the cloud
+
+GitHub Actions installs every target language's toolchain and runs the unit suite, the full `verify` and the
+translation check on every push and pull request, and runs the self cycle daily, proposing what it learned as a pull
+request (docs/AUTONOMY.md section 6).
+
 ## The main loop
 
 ```bash

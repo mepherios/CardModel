@@ -931,6 +931,7 @@ class Player(unittest.TestCase):
         self.assertGreater(len({fb[i:i + 3] for i in range(0, len(fb), 4)}), 8)
 
 
+@unittest.skipUnless(DIAMOND.is_file(), f"Pokemon Diamond is not at {DIAMOND} (set CARDMODEL_DS_ROM)")
 class PokemonDiamond(unittest.TestCase):
     def test_first_screens(self):
         """Read where it is: the copyright and ESRB screens appear within the first two seconds, with text on both

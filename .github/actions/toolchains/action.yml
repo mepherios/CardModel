@@ -1,0 +1,43 @@
+name: cardmodel toolchains
+description: >-
+  Python plus every toolchain cardmodel translates to (C, C++, Go, Java, JavaScript, TypeScript, Lua, Lean,
+  Python, Ruby, Rust, Swift), then cardmodel itself installed from this checkout.
+inputs:
+  python-version:
+    description: Python version for cardmodel itself
+    default: "3.12"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    # TypeScript runs on Node's type stripping, which the typescript card needs at >= 23.6.
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "24"
+    - uses: actions/setup-go@v5
+      with:
+        go-version: stable
+        cache: false
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "21"
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "3.3"
+    - name: Rust
+      shell: bash
+      run: rustup toolchain install stable --profile minimal && rustup default stable
+    - name: Cache Lean (elan)
+      uses: actions/cache@v4
+      with:
+        path: ~/.elan
+        key: elan-${{ runner.os }}-${{ hashFiles('formal/lean-toolchain') }}
+    - name: Lua 5.4 and Lean
+      shell: bash
+      run: bash tools/install_toolchains.sh
+    - name: Install cardmodel
+      shell: bash
+      run: python -m pip install -e .
