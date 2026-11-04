@@ -37,6 +37,25 @@ class EGraph(unittest.TestCase):
         self.assertEqual(best["cost"], 2.0)
         self.assertIn(best["term"], (parse("x + abs(z)"), parse("abs(z) + x")))
 
+    def test_laws_fire_only_at_their_sorts(self):
+        # FOUNDATIONS.md rule A3: associativity holds on int and fails on binary64, so the e-graph must not use it there
+        self.assertNotEqual((0.1 + 0.2) + 0.3, 0.1 + (0.2 + 0.3))
+        self.assertTrue(all(r.sorts for r in self.rules), "every law carries the sorts of its variables")
+        left, right = parse("(x + y) + z"), parse("x + (y + z)")
+        ops = self.ctx.ops
+        self.assertTrue(E.equal(left, right, self.rules, {"x": "int", "y": "int", "z": "int"}, ops)["equal"])
+        self.assertFalse(E.equal(left, right, self.rules, {"x": "float", "y": "float", "z": "float"}, ops)["equal"])
+        lits = ["ADD", ["ADD", ["float", 0.1], ["float", 0.2]], ["float", 0.3]]
+        relit = ["ADD", ["float", 0.1], ["ADD", ["float", 0.2], ["float", 0.3]]]
+        self.assertFalse(E.equal(lits, relit, self.rules, ops=ops)["equal"])
+        # the bounded search obeys the same rule
+        got = search.optimize(parse("x * 1"), search.load_rules(self.ctx.store), self.costs, var_sorts={"x": "float"},
+                              ops=ops)
+        self.assertEqual(got["best_tree"], parse("x * 1"))
+        got = search.optimize(parse("x * 1"), search.load_rules(self.ctx.store), self.costs, var_sorts={"x": "int"},
+                              ops=ops)
+        self.assertEqual(got["best_tree"], parse("x"))
+
     def test_not_shown_is_not_a_disproof(self):
         # no rule cancels (a + b) - b, so this stays unproved within the budget, and the witness still agrees
         r = E.equal(parse("(a + b) * c - c * b"), parse("a * c"), self.rules, max_iter=4, max_nodes=800)
