@@ -21,6 +21,12 @@ apart within noise (white: under NOISE or within twice the summed MADs), per hub
 Only forms timed on the same calls are compared, and a compiled slope at or below
 zero (``resolved: False``) is never taken as the cheapest.
 
+Costs are per function x language x host: a metric card keeps one entry per host id (OS, architecture, CPU,
+Python) in ``by_host``; ``rewrite.measured_ns`` and ``rewrite.rank_targets`` read this host's entry, so the
+ranking answers which target a function should run in here. A compiled slope whose two runs differ by less than
+``SLOPE_MIN_MS`` is re-run with ten times the calls (up to ``SLOPE_MAX_REPS``); the card's own Python source is
+timed in-process on the same calls as the baseline.
+
 Honest limits (L1): timings depend on this machine and its load; Python
 in-process timings include call overhead; compiled per-call costs are a
 slope over two runs, not a cycle count.
@@ -47,7 +53,25 @@ NOISE = 0.15
 
 def host() -> dict:
     return {"system": platform.system(), "machine": platform.machine(), "python": sys.version.split()[0],
-            "node": None}
+            "node": None, "cpu": _cpu_model(), "id": host_id()}
+
+
+def _cpu_model() -> str:
+    try:
+        with open("/proc/cpuinfo", encoding="utf-8") as f:       # Linux
+            for line in f:
+                if line.startswith("model name"):
+                    return line.split(":", 1)[1].strip()
+    except OSError:
+        pass
+    return platform.processor() or platform.machine()
+
+
+def host_id() -> str:
+    """A short, stable name for this machine's cost model: OS, architecture, CPU and Python version. Two hosts
+    with the same id are expected to rank forms the same way; the machine's name is not part of it."""
+    key = f"{platform.system()}|{platform.machine()}|{_cpu_model()}|{sys.version.split()[0]}"
+    return hashlib.sha256(key.encode()).hexdigest()[:12]
 
 
 def _mad(xs):
@@ -136,7 +160,7 @@ def _same(got, exp) -> bool:
 
 
 def measure_function(ctx: Ctx, card, langs: list[str] | None = None, seed: int = 0, reps=(200, 2000),
-                     n_inputs: int = 16) -> list[dict]:
+                     n_inputs: int = 16, python_source: bool = True) -> list[dict]:
     module = card["ir"]
     vecs = [v["args"] for v in card.get("vectors", [])][:n_inputs]
     if not vecs:
@@ -154,25 +178,70 @@ def measure_function(ctx: Ctx, card, langs: list[str] | None = None, seed: int =
         calls = [a for a in vecs if all(V.fits(x, bits) for x in a)]
         if not calls:
             continue
-        times = []
         try:
-            for r in reps:
-                src = Emitter(ctx.store, lang, ctx.ops).program(module, calls, mode="bench", reps=r)
-                run_program(lang_card, src, ctx.state_root, parse=False)   # warm the build cache
-                best = min((run_program(lang_card, src, ctx.state_root, parse=False).run_ms for _ in range(3)))
-                times.append(best)
+            reps_used, times = _slope_runs(ctx, lang_card, lang, module, calls, reps)
         except EmitGap:
             continue
         # the slope is the per-call cost only when the longer run took measurably longer: a slope at or below
         # zero is noise (startup jitter larger than the extra calls), not a free function
         resolved = times[1] > times[0]
-        per_call_ns = max(0.0, (times[1] - times[0]) * 1e6 / ((reps[1] - reps[0]) * len(calls)))
-        startup_ms = max(0.0, times[0] - per_call_ns * reps[0] * len(calls) / 1e6)
+        per_call_ns = max(0.0, (times[1] - times[0]) * 1e6 / ((reps_used[1] - reps_used[0]) * len(calls)))
+        startup_ms = max(0.0, times[0] - per_call_ns * reps_used[0] * len(calls) / 1e6)
         out.append({"target_card": f"function/{card['name']}", "card": card["name"], "form": f["name"], "lang": lang,
                     "median_ns": per_call_ns, "resolved": resolved,
-                    "startup_ms": round(startup_ms, 2), "samples": 3 * len(reps),
-                    "calls_per_sample": list(reps), "seed": seed, "anchor": f.get("cost"),
+                    "startup_ms": round(startup_ms, 2), "samples": 3 * len(reps_used),
+                    "calls_per_sample": list(reps_used), "seed": seed, "anchor": f.get("cost"),
                     "inputs_signature": hashlib.sha256(repr(calls).encode()).hexdigest()[:16]})
+    if python_source and (not langs or "python" in langs):
+        out += _measure_python_source(ctx, card, vecs, seed)
+    return out
+
+
+SLOPE_MIN_MS = 5.0       # the long run must take this much longer than the short one to give a slope
+SLOPE_MAX_REPS = 200000
+
+
+def _slope_runs(ctx: Ctx, lang_card, lang: str, module, calls, reps) -> tuple[tuple, list]:
+    """Best-of-3 wall times of the bench program at two repetition counts. When the difference is lost in startup
+    noise (fast code: a C function at 2000 reps is microseconds), the long count grows tenfold, up to
+    ``SLOPE_MAX_REPS``, so the slope is a measurement and not jitter."""
+    def best(r):
+        src = Emitter(ctx.store, lang, ctx.ops).program(module, calls, mode="bench", reps=r)
+        run_program(lang_card, src, ctx.state_root, parse=False)   # warm the build cache
+        return min(run_program(lang_card, src, ctx.state_root, parse=False).run_ms for _ in range(3))
+
+    lo, hi = reps
+    t_lo, t_hi = best(lo), best(hi)
+    while t_hi - t_lo < max(SLOPE_MIN_MS, 0.2 * t_lo) and hi * 10 <= SLOPE_MAX_REPS:
+        hi *= 10
+        t_hi = best(hi)
+    return (lo, hi), [t_lo, t_hi]
+
+
+def _measure_python_source(ctx: Ctx, card, vecs, seed: int, repeats: int = 7) -> list[dict]:
+    """The card's own Python source, timed in-process on the same calls as the compiled forms: the per-call cost
+    of staying in Python, the baseline every native target is compared with."""
+    f = next((x for x in card.get("forms") or [] if x.get("name") == "python_source"), None)
+    if f is None:
+        return []
+    try:
+        fn = python_callable(ctx, f, card)
+        for a in vecs:
+            fn(*a)
+    except Exception:  # noqa: BLE001 -- a source that does not run here is not measured
+        return []
+    loops = max(1, 2000 // len(vecs))
+    samples = []
+    for _ in range(repeats):
+        t0 = time.perf_counter_ns()
+        for _ in range(loops):
+            for a in vecs:
+                fn(*a)
+        samples.append((time.perf_counter_ns() - t0) / (loops * len(vecs)))
+    return [{"target_card": f"function/{card['name']}", "card": card["name"], "form": f["name"], "lang": "python",
+             "in_process": True, "median_ns": statistics.median(samples), "mad_ns": _mad(samples),
+             "samples": repeats, "calls_per_sample": loops * len(vecs), "seed": seed, "anchor": f.get("cost"),
+             "inputs_signature": hashlib.sha256(repr(vecs).encode()).hexdigest()[:16]}]
     return out
 
 
@@ -191,6 +260,13 @@ def write_metrics(ctx: Ctx, rows: list[dict], layer: str | None = None) -> list[
                 "host": h, "metadata": {"seed": r["seed"], "run_conditions": h,
                                         "inputs_signature": r["inputs_signature"]},
                 "provenance": {"tool": "cardmodel optimize"}}
+        # every host keeps its own measurement: the card's top-level fields are the latest run, ``by_host`` holds
+        # the latest run per host id, so a second machine adds to the cost model instead of overwriting it
+        prev = ctx.store.get(f"metric/{name}")
+        by_host = dict((prev.get("by_host") or {}) if prev else {})
+        by_host[h["id"]] = {k: card[k] for k in ("median_ns", "mad_ns", "startup_ms", "resolved", "samples")}
+        by_host[h["id"]].update(host=h, seed=r["seed"], inputs_signature=r["inputs_signature"])
+        card["by_host"] = by_host
         ctx.store.save(card, layer=layer, category="metric")
         names.append(f"metric/{name}")
     return names

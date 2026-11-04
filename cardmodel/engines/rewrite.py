@@ -90,9 +90,41 @@ def available(store, form: Form) -> tuple[bool, str]:
     return probes.probe(resolve_language(store, form.lang).get("probe"))
 
 
-def measured_ns(store, card_name: str, form_name: str) -> float | None:
+def measured_ns(store, card_name: str, form_name: str, host: str | None = None) -> float | None:
+    """The measured per-call cost of a form on ``host`` (default: this machine). A metric card keeps one entry per
+    host id (``by_host``); a card without one is used as it is (measured before hosts were kept apart), and an
+    unresolved measurement (a slope lost in noise) counts as not measured."""
     m = store.get(f"metric/metric__{card_name}__{form_name}") if store is not None else None
-    return float(m["median_ns"]) if m and "median_ns" in m else None
+    if not m:
+        return None
+    by_host = m.get("by_host")
+    if by_host:
+        if host is None:
+            from .optimize import host_id
+            host = host_id()
+        m = by_host.get(host)
+        if not m:
+            return None
+    if m.get("resolved") is False or "median_ns" not in m:
+        return None
+    return float(m["median_ns"])
+
+
+def rank_targets(store, card, host: str | None = None) -> list[dict]:
+    """Every form of ``card`` measured on ``host``, fastest first: which language should this run in here."""
+    if isinstance(card, str):
+        card = store.get(card)
+    if card is None:
+        return []
+    rows = []
+    for f in forms_of(card):
+        ns = measured_ns(store, card["name"], f.name, host)
+        if ns is not None:
+            rows.append({"form": f.name, "lang": f.lang, "ns": ns})
+    rows.sort(key=lambda r: r["ns"])
+    for r in rows:
+        r["x_vs_fastest"] = round(r["ns"] / max(rows[0]["ns"], 1e-9), 2)
+    return rows
 
 
 def candidates(store, card, domain: str = "any", lang: str | None = None, runnable_only: bool = True,
@@ -128,9 +160,12 @@ def cheapest(store, card, domain: str = "any", lang: str | None = None, runnable
     if not cands:
         return None
     if cost == "measured":
-        ms = [measured_ns(store, card["name"], f.name) for f in cands]
-        if all(m is not None for m in ms):
-            return min(zip(cands, ms), key=lambda p: p[1])[0]
+        # measured forms are compared with each other only (ns and anchor units do not mix); with fewer than two
+        # measured here, the anchors decide
+        ms = [(f, measured_ns(store, card["name"], f.name)) for f in cands]
+        ms = [(f, m) for f, m in ms if m is not None]
+        if len(ms) >= 2 or (len(ms) == 1 and len(cands) == 1):
+            return min(ms, key=lambda p: p[1])[0]
     return min(cands, key=lambda f: f.cost)
 
 
