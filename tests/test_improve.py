@@ -153,3 +153,39 @@ class EGraphRewrites(unittest.TestCase):
         rep = improve.improve_source(model_ctx(), src, seed=SEED, native=False)
         forms = {c.get("form") for c in rep["functions"]["f"].get("candidates", []) if c["kind"] == "rewrite"}
         self.assertIn("egraph", forms, rep["functions"]["f"])
+
+
+class NativeCall(unittest.TestCase):
+    """E3: a loop-heavy function calls its compiled C form through ctypes inside the verified box, Python outside
+    it, and the module still works without the library."""
+
+    SRC = ("def collatz(n: int) -> int:\n    steps = 0\n    while n > 1:\n        if n % 2 == 0:\n"
+           "            n = n // 2\n        else:\n            n = 3 * n + 1\n        steps += 1\n    return steps\n")
+
+    def test_native_candidate_is_verified_and_falls_back(self):
+        from cardmodel.engines import native
+        if native.compiler() is None:
+            self.skipTest("no C compiler")
+        rep = improve.improve_source(model_ctx(), self.SRC, seed=SEED, native=False, native_call=True)
+        f = rep["functions"]["collatz"]
+        kinds = {c["kind"]: c for c in f["candidates"]}
+        self.assertIn("native", kinds, f)
+        self.assertNotIn("rejected", kinds["native"], kinds["native"])
+        self.assertEqual(rep["end_to_end"]["status"], "pass" if rep["changed"] else "nothing_changed")
+        ns = improve._load(rep["optimized_source"])
+        orig = improve._load(self.SRC)
+        for n in (1, 7, 27, 97, 10 ** 30):       # 10**30 is outside the box (and 64 bits): Python answers
+            self.assertEqual(ns["collatz"](n), orig["collatz"](n), (n, seed_note(self)))
+        if f.get("native_lib"):
+            self.assertEqual(f["action"], "native:language/c#ctypes")
+            with tempfile.TemporaryDirectory() as d:
+                written = improve.write_outputs(rep, Path(d), "m")
+                self.assertTrue(any(p.suffix == ".so" for p in written))
+
+    def test_wrapper_without_library_stays_python(self):
+        from cardmodel.engines import native
+        fn_ir = {"name": "collatz", "params": [{"name": "n", "type": "int"}], "returns": "int"}
+        src = native.wrapper_source(fn_ir, Path("/nonexistent/libcm_x.so"), [(0, 100)], self.SRC, improve.rename)
+        ns = improve._load(src)
+        self.assertEqual(ns["collatz"](27), 111)
+        self.assertIsNone(ns["_cm_native_collatz"]())
