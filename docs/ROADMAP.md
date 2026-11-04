@@ -278,8 +278,9 @@ Recorded 2026-11-04, to be done after the phases above. In the user's words: *th
 to design and optimize any card model language, so language → math/systems logic system → optimization → output
 language / language package / binary, depending on the desired output.*
 
-So far, languages are inputs and outputs that the model translates between. In this phase the math language (the
-card language plus the core terms of MATH_CORE §4) becomes the hub that a language is *made* from:
+So far, languages are inputs and outputs that the model translates between. The math language
+([MATH_LANGUAGE.md](MATH_LANGUAGE.md)) already reads equations in and emits every codegen language. In this phase it
+becomes, together with the card language and the core terms of MATH_CORE §4, the hub that a language is *made* from:
 
 * H1. **A language as a math object.** A language card's grammar, types, operational semantics and codegen are
   described as terms in the math language, with laws (type soundness, determinism, evaluation order) as theorem
