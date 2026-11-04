@@ -19,6 +19,8 @@ os.environ["CARDMODEL_SELF"] = "0"
 os.environ["CARDMODEL_BRANCHES"] = "0"
 # the arcade's cartridge library is the tests' own (empty unless a test adds folders), never the user's cartridges
 os.environ["CARDMODEL_LIBRARY"] = str(Path(tempfile.mkdtemp(prefix="cardmodel_library_")) / "library.json")
+# the card index (kernel/index.py) is the tests' own, never the checkout's state/index
+os.environ.setdefault("CARDMODEL_INDEX", str(Path(tempfile.mkdtemp(prefix="cardmodel_index_")) / "cards.sqlite"))
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
