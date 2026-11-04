@@ -7,10 +7,10 @@
   cardmodel verify [--seed N] [--quick] run every witness; prints the seed; --record writes verdicts into cards
   cardmodel cover [--write FILE]        computed coverage (forms, conformance matrix, witnesses, goals)
   cardmodel rewrite CARD | --all | --prove L R | --optimize EXPR | --rank REG --weights k=v,...
-  cardmodel emit --lang L FILE.py       translate liftable functions (or --rules for Lean theorems, --hints CARD)
+  cardmodel emit --lang L FILE          translate liftable functions of any readable language (or --rules, --hints CARD)
   cardmodel learn [PATH] [--promote]    observe -> propose -> verify -> promote (cards with evidence)
   cardmodel optimize [--card Q] [--apply]  measure real costs -> metric cards -> cost anchors
-  cardmodel translate FILE.py [--to ...]   lift + emit + verify every function, report per language
+  cardmodel translate FILE [--to ...]      lift (any readable language, --from to force) + emit + verify per language
   cardmodel improve PATH [--out DIR]       make a module/package faster: verified algorithm substitutions and
                                            rewrites; effectful code byte-identical; native forms for every language
   cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
@@ -30,6 +30,8 @@
   cardmodel laws [--save]                discover the laws the op cards obey; prove them; promote to rules
   cardmodel lean import F.lean | --core  Lean theorems as cards: faithful reading, witness, re-proof
   cardmodel repl                         interactive card language
+  cardmodel math emit|lift|run|translate|roundtrip SOURCE   mathematical notation (Unicode or LaTeX) as a source
+                                           and a target: equations in, every language out; any function out as math
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel godel ledger|vector|gcd|lcm CARD...   the expanding Gödel model: primes, sparse content vectors (CM43, CM45)
   cardmodel godel sizes [--limit N]         each code's size for every card with a term (Gödel method W-3)
@@ -367,15 +369,21 @@ def cmd_emit(args) -> int:
     if not args.lang or not args.source:
         print("error: emit needs --lang and a source file or function card", file=sys.stderr)
         return 2
+    from .engines import frontends
     from .engines.codegen import EmitGap, emit_module
-    from .engines.frontend_python import lift_source, module_for
-    card = ctx.store.get(args.source) if "/" in args.source or not args.source.endswith(".py") else None
+    from .engines.frontend_python import module_for
+    is_file = Path(args.source).is_file()
+    card = ctx.store.get(args.source) if not is_file and ("/" in args.source or not args.source.endswith(".py")) \
+        else None
     texts = []
     if card is not None:
         texts.append(emit_module(ctx.store, ctx.ops, args.lang, card["ir"]))
     else:
         src = Path(args.source).read_text(encoding="utf-8")
-        lifted = lift_source(src, ctx.ops)
+        src_lang = _source_lang(ctx, args, args.source)
+        if src_lang is None:
+            return 2
+        lifted = frontends.lift(ctx, src, src_lang)
         names = [args.function] if args.function else [lf.name for lf in lifted if lf.ok]
         for lf in lifted:
             if not lf.ok and (not args.function or lf.name == args.function):
@@ -399,12 +407,23 @@ def cmd_emit(args) -> int:
     return 0
 
 
+def _source_lang(ctx, args, path: str) -> str | None:
+    from .engines import frontends
+    lang = getattr(args, "from_lang", None) or frontends.language_for_path(ctx.store, path)
+    if lang is None:
+        print(f"error: cannot tell the language of {path}; pass --from LANG "
+              f"(readable: {', '.join(frontends.frontend_languages(ctx.store))})", file=sys.stderr)
+    return lang
+
+
 def cmd_translate(args) -> int:
-    from .engines import translate
-    from .engines.frontend_python import lift_source
+    from .engines import frontends, translate
     ctx = _ctx(args)
     src = Path(args.file).read_text(encoding="utf-8")
-    lifted = lift_source(src, ctx.ops)
+    lang = _source_lang(ctx, args, args.file)
+    if lang is None:
+        return 2
+    lifted = frontends.lift(ctx, src, lang)
     langs = args.to.split(",") if args.to else None
     seed = args.seed
     from .engines import values as V
@@ -416,21 +435,59 @@ def cmd_translate(args) -> int:
             results[lf.name] = {"lifted": False, "reasons": lf.reasons}
             lines.append(f"  {lf.name:<22} not lifted: {'; '.join(lf.reasons)}")
             continue
-        card = translate.function_card(ctx, lf.name, lifted, Path(args.file).name, seed=seed)
+        card = translate.function_card(ctx, lf.name, lifted, Path(args.file).name, seed=seed, lang=lang)
         rep = translate.verify_function(ctx, card, langs=langs, seed=seed)
+        if lang != "python":            # the lift itself, witnessed against the original source's own toolchain
+            rows = [v["args"] for v in card["vectors"]] + frontends.sample_inputs(card["ir"], 12, seed)
+            wit = frontends.witness_source(ctx, lang, src, card["ir"], rows, getattr(lf, "src_types", None))
+            card["verification"]["source_witness"] = wit
+            rep["source_witness"] = wit
+            if wit["status"] == "fail":
+                rep["languages"][f"{lang} (source)"] = {"status": "fail", **wit}
         results[lf.name] = {"card": card["name"], "report": rep}
         bad = {k: v for k, v in rep["languages"].items() if v["status"] not in ("pass",)}
         other = ", ".join(f"{k}={v['status']}" for k, v in bad.items())
+        wit = rep.get("source_witness")
         lines.append(f"  {lf.name:<22} agrees in {len(rep['agreeing_languages'])}: "
-                     f"{', '.join(rep['agreeing_languages'])}" + (f"  | other: {other}" if bad else ""))
+                     f"{', '.join(rep['agreeing_languages'])}" + (f"  | other: {other}" if bad else "") +
+                     (f"  | {lang} source: {wit['status']}" + (f" ({wit.get('checks')} checks)" if wit.get("checks")
+                                                                else "") if wit else ""))
         if args.save:
             card["verification"]["run"] = {k: v for k, v in rep.items() if k != "languages"}
             card["status"] = "healthy" if len(rep["agreeing_languages"]) >= 3 and not rep["lift_mismatches"] else "suspect"
             ctx.store.save(card, category="function")
     _out(args, results, "\n".join(lines))
-    failed = [n for n, r in results.items() if "report" in r and any(
-        lr["status"] in ("fail", "error") for lr in r["report"]["languages"].values())]
+    failed = [n for n, r in results.items() if "report" in r and (not r["report"]["inputs"] or any(
+        lr["status"] in ("fail", "error") for lr in r["report"]["languages"].values()))]
+    for n in failed:
+        if not results[n]["report"]["inputs"]:
+            lines.append(f"  {n:<22} UNVERIFIED: no input where the source and the lifted IR both evaluate")
+            if not args.json:
+                print(lines[-1])
     return 1 if failed else 0   # functions that did not lift are reported gaps, not failures
+
+
+def cmd_matrix(args) -> int:
+    from .engines import matrix as M
+    ctx = _ctx(args)
+    root = Path(__file__).resolve().parent.parent
+    files = []
+    for f in map(Path, args.files):
+        files += sorted(x for x in f.iterdir() if M.frontend_for(x)) if f.is_dir() else [f]
+    files = files or M.default_corpus(root)
+    missing = [str(f) for f in files if not f.exists()]
+    if missing:
+        print(f"error: no such file: {', '.join(missing)}", file=sys.stderr)
+        return 2
+    targets = args.to.split(",") if args.to else None
+    rep = M.run(ctx, files, targets=targets, seed=args.seed,
+                progress=None if args.json else (lambda s: print(f"  {s}", file=sys.stderr, flush=True)))
+    if args.write:
+        out = Path(args.write)
+        out.write_text(M.markdown(rep), encoding="utf-8")
+    ctx.save_state("last_matrix", rep)
+    _out(args, rep, M.report_text(rep) + (f"\nwrote {args.write}" if args.write else ""))
+    return 1 if rep["failures"] else 0
 
 
 def cmd_improve(args) -> int:
@@ -769,8 +826,10 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("emit")
     s.add_argument("source", nargs="?"); s.add_argument("--lang"); s.add_argument("--function")
     s.add_argument("--out"); s.add_argument("--rules", action="store_true"); s.add_argument("--check", action="store_true")
-    s.add_argument("--hints", metavar="CARD"); s.set_defaults(fn=cmd_emit)
+    s.add_argument("--hints", metavar="CARD"); s.add_argument("--from", dest="from_lang", metavar="LANG")
+    s.set_defaults(fn=cmd_emit)
     s = sub.add_parser("translate"); s.add_argument("file"); s.add_argument("--to"); s.add_argument("--seed", type=int)
+    s.add_argument("--from", dest="from_lang", metavar="LANG", help="source language (default: from the extension)")
     s.add_argument("--save", action="store_true"); s.set_defaults(fn=cmd_translate)
     s = sub.add_parser("learn")
     s.add_argument("path", nargs="?"); s.add_argument("--promote", action="store_true")
@@ -782,6 +841,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(fn=cmd_optimize)
     s = sub.add_parser("improve"); s.add_argument("path"); s.add_argument("--out"); s.add_argument("--seed", type=int)
     s.add_argument("--no-native", action="store_true"); s.set_defaults(fn=cmd_improve)
+    s = sub.add_parser("matrix", help="every source language x every target: translate, run, compare; round "
+                                      "trips and cross-source ports")
+    s.add_argument("files", nargs="*", help="corpus files (default: examples/matrix and examples/algorithms)")
+    s.add_argument("--to", help="comma-separated targets (default: every codegen language)")
+    s.add_argument("--seed", type=int); s.add_argument("--write", metavar="FILE", help="also write the matrix as Markdown")
+    s.set_defaults(fn=cmd_matrix)
     s = sub.add_parser("arena"); s.add_argument("--count", type=int, default=60); s.add_argument("--seed", type=int)
     s.add_argument("--samples", type=int, default=24); s.add_argument("--out")
     s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_arena)

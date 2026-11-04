@@ -140,6 +140,32 @@ class SelfRun(unittest.TestCase):
             self.assertFalse((d / "cards").exists())
             self.assertIsNone(c.ctx.store.get("fact/bad_link"))
 
+    def test_learn_step_promotes_strictly_and_relearns_when_rules_change(self):
+        calls = []
+
+        def fake_learn(ctx, root, **kw):
+            calls.append(kw)
+            return {"observation": "o", "proposals": {}, "ready": {}, "promoted": [], "pending": 0}
+
+        with IsolatedSelf() as d:
+            corpus = d / "corpus"
+            corpus.mkdir()
+            (corpus / "m.py").write_text("def f(x):\n    return x + 1\n", encoding="utf-8")
+            with mock.patch.object(selfrun, "corpora", lambda cfg: [corpus]), \
+                    mock.patch("cardmodel.engines.learn.learn", fake_learn):
+                c = selfrun.Cycle(SEED, selfrun.config(), {}, lambda m: None)
+                self.assertEqual(selfrun._learn(c)["status"], "pass")
+                # a function that disagrees in one language would fail the next verify and quarantine the layer
+                self.assertTrue(calls[0]["strict"])
+                self.assertTrue(calls[0]["skip_existing"])
+                self.assertEqual(selfrun._learn(c)["status"], "unchanged")
+                self.assertEqual(len(calls), 1)
+                # new rewrite rules: the same tree gives new suggestions, so it is learned from again
+                with mock.patch.object(selfrun, "registry_hash",
+                                       lambda ctx, r: "new" if r == "rewrite_rule" else "same"):
+                    self.assertEqual(selfrun._learn(c)["status"], "pass")
+                self.assertEqual(len(calls), 2)
+
     def test_use_starts_a_background_cycle_when_due(self):
         started = []
         with IsolatedSelf(), mock.patch.dict(os.environ, {"CARDMODEL_SELF": "1"}), \

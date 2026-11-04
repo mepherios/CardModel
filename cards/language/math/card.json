@@ -1,0 +1,27 @@
+{
+  "category": "language",
+  "comments": {
+    "block": [],
+    "line": [
+      "--",
+      "#",
+      "%"
+    ]
+  },
+  "emitter": "cardmodel.engines.mathlang",
+  "extensions": [
+    ".math"
+  ],
+  "frontend": "cardmodel.engines.mathlang",
+  "grammar": "cardmodel/engines/mathlang.py (module docstring) and docs/MATH_LANGUAGE.md",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "math",
+  "provenance": {
+    "origin": "cardmodel math language",
+    "tool": "cardmodel/engines/mathlang.py"
+  },
+  "statement": "Mathematical notation as a language, in Unicode or a LaTeX subset: signatures (ℤ ℕ ℝ 𝔹), equations, piecewise cases, pattern equations, Σ and Π, where-bindings, domains and tests. It is a source (math lifts to the card IR, so to every codegen language) and a target (every IR function without machine state is emitted as equations; loops become recursive equations), and the target is witnessed by a round trip: lift(emit(f)) behaves like f.",
+  "tier": 0
+}

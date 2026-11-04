@@ -3,7 +3,8 @@
 Form costs on cards start as anchors (estimates inherited from the hub).
 ``measure`` times every runnable, available form on the card's own inputs:
 
-  Python forms         in-process, ``time.perf_counter_ns`` over repeated batches
+  Python forms         in-process, ``time.perf_counter_ns`` over repeated batches, every form
+                       on one shared input set when the forms' domains overlap enough
   compiled functions   (function cards) the bench harness of each language,
                        run at two repetition counts; per-call time is the slope
                        (startup cancels), arguments pass through the language's
@@ -16,7 +17,9 @@ calibrated units: 1 unit = the measured cost of ``op/ADD`` form ``native``
 on this host, so anchors and measurements stay comparable; the old anchor is
 kept in ``cost_anchor``. A verdict per card says whether the measurement
 confirms the anchor ordering (green), contradicts it (red) or cannot tell
-apart within noise (white), per hub L4.
+apart within noise (white: under NOISE or within twice the summed MADs), per hub L4.
+Only forms timed on the same calls are compared, and a compiled slope at or below
+zero (``resolved: False``) is never taken as the cheapest.
 
 Honest limits (L1): timings depend on this machine and its load; Python
 in-process timings include call overhead; compiled per-call costs are a
@@ -52,14 +55,22 @@ def _mad(xs):
     return statistics.median([abs(x - m) for x in xs])
 
 
+MIN_SHARED = 8
+
+
 def measure_python_forms(ctx: Ctx, card, seed: int, n_inputs: int = 64, repeats: int = 7) -> list[dict]:
+    """Every runnable Python form of ``card``, timed per call. Forms are timed on one shared input set when they
+    can be: the union of each form's own generated inputs, kept where every form returns the reference's value.
+    A form whose domain is narrower (``pow2_bit`` for MOD, small exponents for ``square_mul``) is then timed
+    on the same calls as ``native``, so the verdict compares like with like. When fewer than ``MIN_SHARED``
+    inputs are shared, each form is timed on its own inputs and its row says ``shared_inputs: False``."""
     ref = _reference(card)
     if ref is None:
         return []
     ref_fn = python_callable(ctx, ref, card)
     arity = _arity(card, ref_fn)
     rng = random.Random(f"{seed}:{card['name']}")
-    out = []
+    forms = []
     for f in card.get("forms") or []:
         if f.get("lang", "python") != "python":
             continue
@@ -77,6 +88,11 @@ def measure_python_forms(ctx: Ctx, card, seed: int, n_inputs: int = 64, repeats:
                 fn(*a)
         except Exception:  # noqa: BLE001 -- a form that raises on its own domain is not measured
             continue
+        forms.append((f, fn, rows))
+    shared = _shared_inputs(forms)
+    out = []
+    for f, fn, rows in forms:
+        args = shared if len(shared) >= MIN_SHARED else [a for a, _ in rows]
         samples = []
         loops = 20
         for _ in range(repeats):
@@ -89,8 +105,34 @@ def measure_python_forms(ctx: Ctx, card, seed: int, n_inputs: int = 64, repeats:
         out.append({"target_card": f"{card.registry or card.get('category')}/{card['name']}",
                     "card": card["name"], "form": f["name"], "lang": "python", "median_ns": statistics.median(samples),
                     "mad_ns": _mad(samples), "samples": repeats, "calls_per_sample": loops * len(args),
-                    "anchor": f.get("cost"), "seed": seed, "inputs_signature": sig})
+                    "anchor": f.get("cost"), "seed": seed, "inputs_signature": sig,
+                    "shared_inputs": len(shared) >= MIN_SHARED})
     return out
+
+
+def _shared_inputs(forms: list) -> list[tuple]:
+    """The inputs on which every form agrees with the reference (in first-seen order)."""
+    pool: dict[str, tuple] = {}
+    for _, _, rows in forms:
+        for a, e in rows:
+            pool.setdefault(repr(a), (a, e))
+    shared = []
+    for a, e in pool.values():
+        try:
+            if all(_same(fn(*a), e) for _, fn, _ in forms):
+                shared.append(a)
+        except Exception:  # noqa: BLE001 -- outside some form's domain: not shared
+            continue
+    return shared
+
+
+def _same(got, exp) -> bool:
+    if isinstance(exp, float) or isinstance(got, float):
+        try:
+            return abs(got - exp) <= 1e-9 * max(1.0, abs(exp))
+        except TypeError:
+            return False
+    return got == exp
 
 
 def measure_function(ctx: Ctx, card, langs: list[str] | None = None, seed: int = 0, reps=(200, 2000),
@@ -121,10 +163,14 @@ def measure_function(ctx: Ctx, card, langs: list[str] | None = None, seed: int =
                 times.append(best)
         except EmitGap:
             continue
+        # the slope is the per-call cost only when the longer run took measurably longer: a slope at or below
+        # zero is noise (startup jitter larger than the extra calls), not a free function
+        resolved = times[1] > times[0]
         per_call_ns = max(0.0, (times[1] - times[0]) * 1e6 / ((reps[1] - reps[0]) * len(calls)))
         startup_ms = max(0.0, times[0] - per_call_ns * reps[0] * len(calls) / 1e6)
         out.append({"target_card": f"function/{card['name']}", "card": card["name"], "form": f["name"], "lang": lang,
-                    "median_ns": per_call_ns, "startup_ms": round(startup_ms, 2), "samples": 3 * len(reps),
+                    "median_ns": per_call_ns, "resolved": resolved,
+                    "startup_ms": round(startup_ms, 2), "samples": 3 * len(reps),
                     "calls_per_sample": list(reps), "seed": seed, "anchor": f.get("cost"),
                     "inputs_signature": hashlib.sha256(repr(calls).encode()).hexdigest()[:16]})
     return out
@@ -141,6 +187,7 @@ def write_metrics(ctx: Ctx, rows: list[dict], layer: str | None = None) -> list[
                 "median_ns": round(r["median_ns"], 3), "mad_ns": round(r.get("mad_ns", 0.0), 3),
                 "samples": r["samples"], "calls_per_sample": r.get("calls_per_sample"),
                 "startup_ms": r.get("startup_ms"), "anchor": r.get("anchor"),
+                "shared_inputs": r.get("shared_inputs"), "resolved": r.get("resolved", True),
                 "host": h, "metadata": {"seed": r["seed"], "run_conditions": h,
                                         "inputs_signature": r["inputs_signature"]},
                 "provenance": {"tool": "cardmodel optimize"}}
@@ -161,7 +208,12 @@ def verdicts(rows: list[dict]) -> list[dict]:
         by_card.setdefault(r["target_card"], []).append(r)
     out = []
     for card, rs in by_card.items():
-        rs = [r for r in rs if isinstance(r.get("anchor"), (int, float))]
+        rs = [r for r in rs if isinstance(r.get("anchor"), (int, float)) and r.get("resolved", True)]
+        # forms are compared only on the same calls: the largest group sharing one input signature
+        groups: dict[str, list[dict]] = {}
+        for r in rs:
+            groups.setdefault(r.get("inputs_signature"), []).append(r)
+        rs = max(groups.values(), key=len, default=[])
         if len(rs) < 2:
             continue
         cheap_anchor = min(rs, key=lambda r: r["anchor"])
@@ -169,8 +221,10 @@ def verdicts(rows: list[dict]) -> list[dict]:
         if cheap_anchor is cheap_meas:
             verdict = "green"
         else:
+            gap = cheap_anchor["median_ns"] - cheap_meas["median_ns"]
             ratio = cheap_anchor["median_ns"] / max(cheap_meas["median_ns"], 1e-9)
-            verdict = "white" if ratio < 1 + NOISE else "red"
+            spread = 2 * ((cheap_anchor.get("mad_ns") or 0.0) + (cheap_meas.get("mad_ns") or 0.0))
+            verdict = "white" if ratio < 1 + NOISE or gap <= spread else "red"
         out.append({"card": card, "verdict": verdict, "anchor_pick": cheap_anchor["form"],
                     "measured_pick": cheap_meas["form"],
                     "measured_ns": {r["form"]: round(r["median_ns"], 1) for r in rs}})
