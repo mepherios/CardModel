@@ -25,7 +25,7 @@ TEXT_LANGS = ["c", "cpp", "csharp", "go", "java", "javascript", "julia", "kotlin
 
 # every function each idiomatic source defines must lift (main and module code are not functions to lift)
 EXPECTED = {
-    "algos.c": ["gcd", "collatz", "div_sum", "harmonic", "is_prime", "fib", "bits", "hyp"],
+    "algos.c": ["gcd", "collatz", "div_sum", "harmonic_skip3", "is_prime", "fib", "bits", "hyp_pow"],
     "algos.cpp": ["gcd", "clamp3", "mean", "tri"],
     "Algos.cs": ["Gcd", "Area"],
     "Algos.java": ["gcd", "collatz", "floorPair", "even", "avg"],

@@ -27,7 +27,7 @@ int64_t div_sum(int64_t a, int64_t b) {
     return a / b + a % b;          // truncation toward zero, remainder with the sign of a
 }
 
-double harmonic(int n) {
+double harmonic_skip3(int n) {
     double s = 0;
     for (int i = 1; i <= n; i++) {
         if (i % 3 == 0) continue;
@@ -57,7 +57,7 @@ int64_t bits(int64_t x) {
     return c;
 }
 
-double hyp(double a, double b) {
+double hyp_pow(double a, double b) {
     return sqrt(a * a + b * b) + fabs(a) * pow(2.0, 3);
 }
 

@@ -103,6 +103,15 @@ def _math_lift_text(ctx: Ctx, text: str) -> dict[str, dict]:
 register(Frontend("math", (".math",), _math_cards, _math_lift_text))
 
 
+def _register_text_frontends() -> None:
+    import sys
+    from . import frontends
+    frontends.register_matrix(sys.modules[__name__])
+
+
+_register_text_frontends()
+
+
 # ---- checks ----------------------------------------------------------------------------------------------------
 
 def _entry(card: dict) -> str:

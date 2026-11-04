@@ -1418,7 +1418,8 @@ class Parser:
             body = self.end_block(("end",))
             self.expect("end")
             return [{"k": "while", "cond": ("bool", True), "body": body, "line": line}]
-        if w in ("puts", "print", "println", "p", "printf", "io"):
+        if w in ("puts", "print", "println", "printf") and not (self.peek(1).kind == "op" and
+                                                                self.peek(1).text in ("=", "+=", "-=")):
             raise ParseError(f"I/O (`{w}`)", line)
         if w in ("case", "begin", "rescue", "raise", "yield", "error", "assert"):
             raise ParseError(f"`{w}`", line)
@@ -2300,10 +2301,22 @@ class Lowerer:
                 "counter": it_name, "stop_var": stop_name, "body": body}
 
     # expressions
+    def retype_float(self, e, t) -> None:
+        """An untyped parameter that is floored, ceiled or truncated was not an integer."""
+        if t == INT and e[0] == "var" and e[1] in self.untyped_params and e[1] not in self.widened:
+            raise Widen(e[1], FLOAT)
+
+    def retype_bool(self, e, t) -> None:
+        """An untyped parameter used as a condition is a bool."""
+        if t != BOOL and e[0] == "var" and e[1] in self.untyped_params and e[1] not in self.widened:
+            raise Widen(e[1], BOOL)
+
     def cond(self, node):
         e, t = self.expr(node)
         if t == BOOL:
             return e
+        if not self.d.truthy_ints:
+            self.retype_bool(e, t)
         if self.d.truthy_ints and t == INT:
             return ["CMP_NE", e, ["int", 0]]
         if self.d.truthy_ints and t == FLOAT:
@@ -2346,6 +2359,9 @@ class Lowerer:
                 a, ta = (self.cond(a_node), BOOL) if ta != BOOL else (a, ta)
                 b, tb = (self.cond(b_node), BOOL) if tb != BOOL else (b, tb)
             if ta != BOOL or tb != BOOL:
+                if not d.truthy_ints:
+                    self.retype_bool(a, ta)
+                    self.retype_bool(b, tb)
                 if op in ("and", "or") and d.name == "kotlin" and ta == tb == INT:
                     return self.apply("BIT_AND" if op == "and" else "BIT_OR", [(a, ta), (b, tb)])
                 self.err(f"{op} on {ta}, {tb} (the IR's and/or take bools)")
@@ -2501,6 +2517,7 @@ class Lowerer:
                     return ["CMP_EQ", e, ["int", 0]], BOOL
                 if self.d.name in ("rust",) and t == INT:
                     return self.apply("BIT_NOT", [(e, t)])
+                self.retype_bool(e, t)
                 self.err(f"! on {t}")
             if op == "~" or (op == "^" and self.d.name == "go"):
                 e, t = self.expr(n[2])
@@ -2585,6 +2602,8 @@ class Lowerer:
             for (e, t), want in zip(args, sig["params"]):
                 if want is None:
                     want = t
+                if t != want and e[0] == "var" and e[1] in self.untyped_params and e[1] not in self.widened:
+                    raise Widen(e[1], want)           # passed to a typed parameter: that is its type
                 fixed.append(self.coerce(e, t, want))
             ret = sig.get("returns")
             if ret is None:
@@ -2670,6 +2689,7 @@ class Lowerer:
             return self.coerce(e, t, want), want
         if kind == "lua_floor":
             e, t = args[0]
+            self.retype_float(e, t)
             if t == INT:
                 return e, INT
             f, _ = self.apply(entry[1], [(e, t)])
@@ -2718,6 +2738,9 @@ class Lowerer:
                     self.err(f".{name}() on an integer")
             return self.apply(op, allargs)
         if kind == "cast":
+            if entry[1] == INT and rt == INT and r[0] == "var" and r[1] in self.untyped_params \
+                    and r[1] not in self.widened:
+                raise Widen(r[1], FLOAT)       # x.to_i / x.toLong(): x was not an integer
             return self.cast(r, rt, entry[1])
         if kind == "id":
             return r, rt
@@ -2761,6 +2784,7 @@ class Lowerer:
         if kind == "ruby_round":
             if args:
                 self.err(f".{name}(digits)")
+            self.retype_float(r, rt)
             if rt == INT:
                 return r, INT
             f, _ = self.apply(entry[1], [(r, rt)])
@@ -2794,6 +2818,9 @@ class Lowerer:
             return self.apply(op, ordered)
         # an untyped parameter passed to a typed helper (cm_min_i) takes the helper's type
         for op, slots, typ in cands:
+            spec = self.ops.get(op)
+            if typ is None and spec is not None and len({sig[0] for sig in spec.types}) == 1:
+                typ = spec.types[0][0]                # GCD: every signature takes ints
             if typ is None or len(slots) != len(args):
                 continue
             for e, t in args:

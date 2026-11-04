@@ -203,3 +203,41 @@ def sample_inputs(module: dict, n: int, seed: int) -> list:
     entry = next(f for f in module["functions"] if f["name"] == module["entry"])
     gens = [_gen_for(p["name"], p["type"], 1) for p in entry["params"]]
     return [list(a) for a in V.inputs(gens, n, random.Random(seed))]
+
+
+# -- the source x target matrix (engines/matrix.py) ------------------------------------------------------------------
+
+def register_matrix(matrix) -> None:
+    """Give every text-frontend language a row (and every codegen language a round-trip column) in the matrix."""
+    from .frontend_python import module_for
+    from .frontend_text import DIALECTS, lift_source as text_lift
+
+    def cards_for(lang):
+        def cards(ctx: Ctx, path: Path, seed: int):
+            from . import translate
+            src = path.read_text(encoding="utf-8")
+            lifted = lift(ctx, src, lang)
+            out, gaps = [], {}
+            for lf in lifted:
+                if not lf.ok:
+                    gaps[lf.name] = lf.reasons
+                    continue
+                card = translate.function_card(ctx, lf.name, lifted, path.name, seed=seed, lang=lang)
+                card["verification"]["source_witness"] = witness_source(
+                    ctx, lang, src, card["ir"], [v["args"] for v in card["vectors"]], lf.src_types)
+                out.append(card)
+            return out, gaps
+        return cards
+
+    def lift_text_for(lang):
+        def lift_text(ctx: Ctx, text: str) -> dict:
+            lifted = text_lift(text, ctx.ops, lang)
+            return {lf.name: module_for(lf.name, lifted) for lf in lifted if lf.ok}
+        return lift_text
+
+    exts = {"c": (".c",), "cpp": (".cpp", ".cc", ".cxx"), "csharp": (".cs",), "go": (".go",), "java": (".java",),
+            "javascript": (".js", ".mjs", ".cjs"), "julia": (".jl",), "kotlin": (".kt", ".kts"), "lua": (".lua",),
+            "php": (".php",), "ruby": (".rb",), "rust": (".rs",), "swift": (".swift",), "typescript": (".ts", ".mts"),
+            "zig": (".zig",)}
+    for lang in DIALECTS:
+        matrix.register(matrix.Frontend(lang, exts[lang], cards_for(lang), lift_text_for(lang)))
