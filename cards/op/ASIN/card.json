@@ -8,8 +8,8 @@
     "javascript": "Math.asin({0})",
     "lean": "UNSUPPORTED",
     "lua": "math.asin({0})",
-    "python": "math.asin({0})",
-    "ruby": "Math.asin({0})",
+    "python": "cm_asin({0})",
+    "ruby": "cm_asin({0})",
     "rust": "(({0}).asin())",
     "swift": "asin({0})"
   },

@@ -82,6 +82,8 @@ def inputs(gens: list[dict], n: int, rng: random.Random, filt=None, edge: bool =
 def same(a, b) -> bool:
     if isinstance(a, bool) or isinstance(b, bool):
         return isinstance(a, bool) and isinstance(b, bool) and a == b
+    if type(a) is int and isinstance(b, float):
+        return False   # an int result came back as a float: the target lost the type (and maybe precision)
     if isinstance(a, float) or isinstance(b, float):
         if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
             return False
@@ -97,6 +99,8 @@ def same(a, b) -> bool:
 
 
 def finite(v) -> bool:
+    if isinstance(v, complex):   # Python's float ** float leaves the reals (a negative base): no target has it
+        return False
     return not (isinstance(v, float) and (math.isnan(v) or math.isinf(v)))
 
 

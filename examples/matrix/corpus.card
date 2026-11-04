@@ -109,3 +109,9 @@ fn mixed(a: Int, x: Float) -> Float = float(a) * x + float(a) / 3.0 - float(a) *
 fn float_eq(x: Float) -> Bool = x * 3.0 / 3.0 == x
 
 fn int_of_float(x: Float) -> Int = int(x)
+
+-- domain edges: the IR (and C, Go, Java, JS...) give NaN where Python's math and Ruby's Math raise
+fn sqrt_edge(x: Float) -> Float = op.FSQRT(x) + 1.0
+fn acos_edge(x: Float) -> Float = op.ACOS(x / 50.0)
+fn asin_edge(x: Float) -> Float = op.ASIN(x / 50.0)
+fn fmod_edge(x: Float, y: Float) -> Float = op.FMOD(x, if y > 50.0 then 0.0 else y)

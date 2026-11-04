@@ -60,7 +60,8 @@
       "cm_opaque_b": "static @bool@ cm_opaque_b(@bool@ x) { volatile @bool@ v = x; return v; }",
       "cm_opaque_f": "static @float@ cm_opaque_f(@float@ x) { volatile @float@ v = x; return v; }",
       "cm_opaque_i": "static @int@ cm_opaque_i(@int@ x) { volatile @int@ v = x; return v; }",
-      "cm_powmod": "static @int@ cm_powmod(@int@ a, @int@ b, @int@ m) { @int@ r = cm_floormod(1, m); a = cm_floormod(a, m); while (b > 0) { if (b & 1) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1; } return r; }"
+      "cm_powmod": "static @int@ cm_powmod(@int@ a, @int@ b, @int@ m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } @int@ r = cm_floormod(1, m); a = cm_floormod(a, m); while (b > 0) { if (b & 1) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1; } return r; }",
+      "cm_modinv": "static @int@ cm_modinv(@int@ a, @int@ m) { @int@ n = m < 0 ? -m : m; @int@ r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { @int@ q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) __builtin_trap(); return cm_floormod(s0, n); }"
     },
     "if": "if ({cond}) {{",
     "import": "#include <@name@>\n",

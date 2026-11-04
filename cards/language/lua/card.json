@@ -32,7 +32,8 @@
       "cm_max_i": "function cm_max_i(a, b) if b > a then return b else return a end end",
       "cm_min_f": "function cm_min_f(a, b) if b < a then return b else return a end end",
       "cm_min_i": "function cm_min_i(a, b) if b < a then return b else return a end end",
-      "cm_powmod": "function cm_powmod(a, b, m)\n  local r = 1 % m\n  a = a % m\n  while b > 0 do\n    if b % 2 == 1 then r = (r * a) % m end\n    a = (a * a) % m\n    b = b // 2\n  end\n  return r\nend"
+      "cm_powmod": "function cm_powmod(a, b, m)\n  if b < 0 then\n    a = cm_modinv(a, m)\n    b = -b\n  end\n  local r = 1 % m\n  a = a % m\n  while b > 0 do\n    if b % 2 == 1 then r = (r * a) % m end\n    a = (a * a) % m\n    b = b // 2\n  end\n  return r\nend",
+      "cm_modinv": "function cm_modinv(a, m)\n  local n = math.abs(m)\n  local r0, r1 = a % n, n\n  local s0, s1 = 1, 0\n  while r1 ~= 0 do\n    local q = r0 // r1\n    r0, r1 = r1, r0 - q * r1\n    s0, s1 = s1, s0 - q * s1\n  end\n  if r0 ~= 1 then error(\"base is not invertible\") end\n  return s0 % n\nend"
     },
     "if": "if {cond} then",
     "indent": "  ",

@@ -120,6 +120,9 @@ class Emitter:
                 raise EmitGap(f"{self.lang_name}: non-finite float literal")
             text = repr(float(v))
             return lits.get("float", "{v}").format(v=text)
+        bits = self.lang.get("int_bits")
+        if bits and not -(2 ** (bits - 1)) <= int(v) < 2 ** (bits - 1):
+            raise EmitGap(f"{self.lang_name}: integer constant {int(v)} does not fit {bits}-bit int")
         return lits.get("int", "{v}").format(v=int(v))
 
     def ident(self, name: str) -> str:
@@ -130,9 +133,26 @@ class Emitter:
         reserved = self.lang.get("reserved") or []
         if name == "_" and self.cg.get("underscore_ok") is not True:
             return "cm_u"
-        if name in reserved:
+        if name in reserved or name in self.platform_names():
             return f"{name}_cm"
+        if self.cg.get("lowercase_idents") and name[:1].isupper():
+            return f"cm_{name}"   # e.g. Ruby: a capitalized name is a constant, not a variable
         return name
+
+    def platform_names(self) -> set[str]:
+        """Names this language's op templates call (``tanh`` in C, ``cm_powmod``...) and its helpers: a user
+        function or variable with one of these names would shadow or clash with the platform's own."""
+        if getattr(self, "_platform", None) is None:
+            names: set[str] = set()
+            keys = (*self.lineage, self.family, "default")
+            for spec in self.ops.values():
+                emit = (spec.card or {}).get("emit") or {}
+                for tmpl in (emit.get(k) for k in keys):   # this language's templates only
+                    if isinstance(tmpl, str):
+                        names.update(re.findall(r"(?<![.\w:])([A-Za-z_]\w*)\s*\(", tmpl))   # free functions, not methods
+            names.update(self.cg.get("helpers") or {})
+            self._platform = names
+        return self._platform
 
     def state(self, module: dict) -> None:
         """Note the module's globals, arrays and exports (machine state) before emitting its functions."""
