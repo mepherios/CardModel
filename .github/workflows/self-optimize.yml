@@ -37,6 +37,8 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the projects section reads each project's history (CM41)
       - uses: ./.github/actions/toolchains
       - name: Every codegen language is runnable
         run: python -B tools/require_toolchains.py
