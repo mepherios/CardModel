@@ -85,5 +85,22 @@ class Symbolic(unittest.TestCase):
                 checked += 1
         self.assertGreater(checked, 60)
 
+    def test_distill_certificate_is_reproducible(self):
+        # the e-graph's budget cut makes which laws fire depend on set order; the certificate is the whole fired
+        # set, sorted, so regenerating the pack under another hash seed gives the same bytes (09 and B0 differed)
+        import json, os, subprocess, sys
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[1]
+        prog = ("import json, sys; sys.path.insert(0, '.')\n"
+                "from cardmodel.engines.context import Ctx\n"
+                "from cardmodel.kernel.store import open_store\n"
+                "from cardmodel.machine import symbolic as SY\n"
+                "ctx = Ctx(open_store(project=False)); ex = SY.Executor(ctx, SY.module(ctx, 'lr35902')[0])\n"
+                "print(json.dumps({n: list(SY.distill(ctx, 'lr35902', ex.run(n)['state'])['fired'])\n"
+                "                  for n in ('LR35902_09', 'LR35902_B0', 'LR35902_CB_28')}, sort_keys=True))\n")
+        outs = [subprocess.run([sys.executable, "-B", "-c", prog], cwd=root, capture_output=True, text=True,
+                               env={**os.environ, "PYTHONHASHSEED": str(h)}, check=True).stdout for h in (0, 1)]
+        self.assertEqual(json.loads(outs[0]), json.loads(outs[1]))
+
 if __name__ == "__main__":
     unittest.main()

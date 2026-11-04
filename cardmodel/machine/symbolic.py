@@ -284,7 +284,8 @@ def distill(ctx, isa: str, state: dict, rules=None, costs=None) -> dict:
         out[reg] = r["term"] if r["term"] is not None else t
         fired.update(r["fired"])
         saturated = saturated and r["saturated"]
-    return {"state": out, "fired": dict(fired.most_common(12)), "saturated": saturated}
+    # the whole fired set, sorted: under the budget cut, a top-k by count depends on set order (not reproducible)
+    return {"state": out, "fired": dict(sorted(fired.items())), "saturated": saturated}
 
 
 def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
