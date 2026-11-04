@@ -162,11 +162,13 @@ def module_constants(tree: ast.Module) -> dict:
 
 class _FnLifter:
     def __init__(self, fdef: ast.FunctionDef, ops: dict[str, OpSpec], sigs: dict[str, dict],
-                 param_hint: dict[str, str] | None, consts: dict | None = None):
+                 param_hint: dict[str, str] | None, consts: dict | None = None,
+                 externs: dict[str, dict] | None = None):
         self.f = fdef
         self.consts = consts or {}
         self.ops = ops
         self.sigs = sigs                      # name -> {"params": [types], "returns": type|None}
+        self.externs = externs or {}          # call text -> {"qual", "params", "returns"} (other files, methods)
         self.hint = param_hint or {}
         self.env: dict[str, str] = {}
         self.locals: dict[str, str] = {}
@@ -491,6 +493,21 @@ class _FnLifter:
             if op == "TRUNC_INT" and args[0][1] == "int":
                 return args[0]
             return self.apply(op, args, n)
+        ext = self.externs.get(fname)
+        if ext is not None:                   # a function of another module or a method: resolved by lift_project
+            if len(args) != len(ext["params"]):
+                raise Unsupported(f"{fname}() arity mismatch", n)
+            fixed = []
+            for (e, t), want in zip(args, ext["params"]):
+                if t != want:
+                    if t == "int" and want == "float":
+                        e = ["TO_FLOAT", e]
+                    else:
+                        raise Unsupported(f"{fname}() argument {t} where {want} expected", n)
+                fixed.append(e)
+            if ext.get("returns") is None:
+                self.inferred = True
+            return ["CALL", ext["qual"], *fixed], ext.get("returns") or "int"
         raise Unsupported(f"call to {fname}() (no op card or lifted function)", n)
 
     def call_lifted(self, n: ast.Call):
@@ -546,9 +563,18 @@ def lift_source(source: str, ops: dict[str, OpSpec], only: list[str] | None = No
     """Lift every top-level function in ``source``. Calls between lifted functions resolve;
     a function that calls a non-liftable one fails with that reason (closure, L45)."""
     tree = ast.parse(source)
-    lines = source.splitlines()
-    consts = module_constants(tree)
     fdefs = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    return lift_defs(fdefs, source.splitlines(), ops, only, param_hints, consts=module_constants(tree))
+
+
+def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[str] | None = None,
+              param_hints: dict[str, dict[str, str]] | None = None, externs: dict[str, dict] | None = None,
+              close: bool = True, consts: dict | None = None) -> list[Lifted]:
+    """Lift these function definitions (top-level functions, or methods prepared by lift_project) of one file.
+    ``externs`` resolves calls to functions defined elsewhere (their CALL names the qualified name); the closure
+    treats them as lifted, and lift_project re-checks them across files. ``consts`` are the module's constants
+    (module_constants)."""
+    consts = consts or {}
     sigs: dict[str, dict] = {}
     for f in fdefs:
         try:
@@ -566,27 +592,51 @@ def lift_source(source: str, ops: dict[str, OpSpec], only: list[str] | None = No
         "".join(f"{k} = {v!r}\n" for k, v in consts.items())
     for f in fdefs:
         src = "\n".join(lines[f.lineno - 1 - len(f.decorator_list): f.end_lineno])
-        lifter = _FnLifter(f, ops, sigs, (param_hints or {}).get(f.name), consts)
+        lifter = _FnLifter(f, ops, sigs, (param_hints or {}).get(f.name), consts, externs)
         try:
             ir = lifter.lift()
             sigs[f.name]["returns"] = ir["returns"]
             results[f.name] = Lifted(f.name, True, ir, src, [], lifter.inferred, f.lineno, preamble)
         except Unsupported as exc:
             results[f.name] = Lifted(f.name, False, None, src, [str(exc)], lifter.inferred, f.lineno, preamble)
-    # closure: a lifted function calling a failed one fails too (iterate to a fixed point)
-    changed = True
-    while changed:
-        changed = False
-        for name, lf in results.items():
-            if not lf.ok:
-                continue
-            callees = {e[1] for s in _stmts(lf.ir["body"]) for e in _exprs_of(s) if e[0] == "CALL"}
-            bad = [c for c in callees if c in results and not results[c].ok or c not in results]
-            if bad:
-                lf.ok = False
-                lf.reasons.append(f"calls {', '.join(sorted(bad))} which did not lift")
-                changed = True
+    if close:
+        external = {e["qual"] for e in (externs or {}).values()}
+        close_calls(results, lambda c: c in external)
     return [lf for lf in results.values() if not only or lf.name in only]
+
+
+def callees_of(ir: dict) -> set[str]:
+    return {e[1] for s in _stmts(ir["body"]) for e in _exprs_of(s) if e[0] == "CALL"}
+
+
+def close_calls(results: dict, known_ok=lambda name: False) -> None:
+    """A lifted function that calls a failed or missing one fails too (L45), linear in calls: one pass builds the
+    reverse call graph, then a worklist spreads each failure to its callers once (the old fixed-point loop re-scanned
+    every function per pass: quadratic in the depth of a call chain)."""
+    callers: dict[str, list[str]] = {}
+    work: list[str] = []
+    for name, lf in results.items():
+        if not lf.ok:
+            work.append(name)
+            continue
+        missing = []
+        for c in callees_of(lf.ir):
+            if c in results:
+                callers.setdefault(c, []).append(name)
+            elif not known_ok(c):
+                missing.append(c)
+        if missing:
+            lf.ok = False
+            lf.reasons.append(f"calls {', '.join(sorted(missing))} which did not lift")
+            work.append(name)
+    while work:
+        bad = work.pop()
+        for name in callers.get(bad, ()):
+            lf = results[name]
+            if lf.ok:
+                lf.ok = False
+                lf.reasons.append(f"calls {bad} which did not lift")
+                work.append(name)
 
 
 def module_for(name: str, lifted: list[Lifted]) -> dict:

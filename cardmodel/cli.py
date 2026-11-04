@@ -420,6 +420,15 @@ def _source_lang(ctx, args, path: str) -> str | None:
     return lang
 
 
+def cmd_lift_sweep(args) -> int:
+    from .engines import sweep
+    ctx = _ctx(args)
+    rep = sweep.sweep(ctx, args.path, exclude=args.exclude or [], langs=args.langs.split(",") if args.langs else None,
+                      methods=not args.no_methods, project=not args.single_file, top=args.top)
+    _out(args, rep, sweep.report_text(rep))
+    return 0
+
+
 def cmd_translate(args) -> int:
     from .engines import frontends, translate
     ctx = _ctx(args)
@@ -839,6 +848,12 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("translate"); s.add_argument("file"); s.add_argument("--to"); s.add_argument("--seed", type=int)
     s.add_argument("--from", dest="from_lang", metavar="LANG", help="source language (default: from the extension)")
     s.add_argument("--save", action="store_true"); s.set_defaults(fn=cmd_translate)
+    s = sub.add_parser("lift-sweep", help="how much of a source tree lifts, and the first reason the rest does not")
+    s.add_argument("path"); s.add_argument("--exclude", action="append", metavar="GLOB")
+    s.add_argument("--langs"); s.add_argument("--top", type=int, default=25)
+    s.add_argument("--no-methods", action="store_true", help="top-level functions only")
+    s.add_argument("--single-file", action="store_true", help="lift each file alone (no calls across files)")
+    s.set_defaults(fn=cmd_lift_sweep)
     s = sub.add_parser("learn")
     s.add_argument("path", nargs="?"); s.add_argument("--promote", action="store_true")
     s.add_argument("--global", dest="global_", action="store_true"); s.add_argument("--seed", type=int)
