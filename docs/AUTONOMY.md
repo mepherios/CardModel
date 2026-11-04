@@ -117,7 +117,27 @@ the model's cards, so every use benefits from what was learned. Only a cycle wri
   does.
 * **A new step**: a `self_step` card (order, `every_hours` and/or `on_change`) and a function in `STEPS`.
 
-## 6. Honest limits
+## 6. In the cloud
+
+The same cycle runs on GitHub's runners, with every target language's toolchain installed
+(`.github/actions/toolchains`, which uses `tools/install_toolchains.sh` for Lua 5.4 and the Lean pinned in
+`formal/lean-toolchain`).
+
+* **CI** (`.github/workflows/ci.yml`, every push and pull request): `verify --quick` on the oldest and newest
+  supported Python; then, with every toolchain, `tools/require_toolchains.py` (every codegen language must be
+  runnable, so no check passes because a language was skipped), `docs --check`, the full `verify`,
+  `translate examples/algorithms/algos.py`, the `examples/lang` programs and the unit suite with
+  `CARDMODEL_SLOW=1`. CI sets `CARDMODEL_SELF=0`: it checks the tracked cards only.
+* **The scheduled cycle** (`.github/workflows/self-optimize.yml`, daily and on demand): `self run --force`, then
+  `self adopt`, `docs`, `cover --write COVERAGE.md`. When `cards/` changed and the adopted cards pass `verify`,
+  `docs --check` and the unit suite, it opens (or updates) one pull request from the branch
+  `self-optimize/cycle` with the cycle's report as its body. Merging it is a person's decision. The program
+  itself still never publishes (CM19): the workflow opens the pull request, not `cardmodel`.
+* **Claude cloud sessions**: the environment's setup script runs `pip install -e .` and
+  `tools/install_toolchains.sh`, and turns automatic cycles off (a session is short-lived; run `self run`
+  explicitly).
+
+## 7. Honest limits
 
 * The plan ranks by rules written in `selfrun.findings` (severity, kind, the size of a goal's gap), not by a
   learned model of what matters.

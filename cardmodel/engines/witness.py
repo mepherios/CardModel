@@ -41,6 +41,9 @@ from .runners import call_node, call_python, run_program
 
 _LIB_CACHE: dict[str, dict] = {}
 FORM_TIME_LIMIT_S = 20
+# a native form compiles first and may wait for the machine-wide build slot (resources.run): its limit guards
+# against a hang, not against a slow compiler on a loaded host (rustc under CI took over 20 s)
+NATIVE_FORM_TIME_LIMIT_S = 120
 
 
 class TimeLimit(Exception):
@@ -68,7 +71,7 @@ def time_limit(seconds: float):
 
 
 def lib_namespace(ctx: Ctx, libs: list[str]) -> dict:
-    ns: dict = {"math": math}
+    ns: dict = {math.__name__: math}           # the Python module, named by itself (not the math language card)
     for name in libs or []:
         if name not in _LIB_CACHE:
             card = ctx.store.get(f"lib/{name}")
@@ -219,7 +222,7 @@ def verify_forms(ctx: Ctx, card, seed: int | None = None, samples: int = 64, inc
         return {"seed": seed, "reference": None, "forms": {}, "note": "no runnable python reference form"}
     ref_fn = python_callable(ctx, ref, card)
     arity = _arity(card, ref_fn)
-    filt = eval(card["filter"], {"math": math, "__builtins__": {}}) if card.get("filter") else None  # noqa: S307
+    filt = eval(card["filter"], {math.__name__: math, "__builtins__": {}}) if card.get("filter") else None  # noqa: S307
     ir = card.get("ir") or {}
     sig = (ir.get("types") or [["int"] * arity + ["int"]])[0]
     out = {"seed": seed, "reference": ref["name"], "forms": {}}
@@ -244,7 +247,8 @@ def verify_forms(ctx: Ctx, card, seed: int | None = None, samples: int = 64, inc
             gens = _generators(ctx, card, f, arity, dom)
             project = _projection(ctx, dom)
             try:
-                with time_limit(FORM_TIME_LIMIT_S):
+                native = f.get("lang", "python") != "python"
+                with time_limit(NATIVE_FORM_TIME_LIMIT_S if native else FORM_TIME_LIMIT_S):
                     rows = _ref_rows(ref_fn, gens, samples, rng, filt)
                     if f.get("lang", "python") == "python":
                         fn = python_callable(ctx, f, card)

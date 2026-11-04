@@ -17,10 +17,12 @@ import hashlib
 import json
 import os
 import plistlib
+import re
 import shutil
 import time
 from pathlib import Path
 
+from ..kernel.canon import card_hash
 from ..lang.compile import compile_sources
 from ..machine import build as Bd
 from ..machine import native as N
@@ -87,6 +89,9 @@ def sources(ctx, card) -> tuple[list, dict]:
     return srcs, externs
 
 
+_CARD_REF = re.compile(r"\bcard\.([A-Za-z_]\w*)\.([A-Za-z_]\w*)")
+
+
 def module(ctx, name: str, use_cache: bool = True) -> dict:
     card = system_card(ctx.store, name)
     srcs, externs = sources(ctx, card)
@@ -94,6 +99,11 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
     for text, label in srcs:
         h.update(label.encode() + b"\0" + text.encode() + b"\0")
     h.update(json.dumps(externs, sort_keys=True).encode())
+    # constants read from card data (`const X = card.registry.name.field`) are compiled in, so the cards they
+    # read are part of the key: a store with other values (a test's stand-in card) must not reuse this build
+    for ref in sorted({m.group(1) + "/" + m.group(2) for text, _ in srcs for m in _CARD_REF.finditer(text)}):
+        ref_card = ctx.store.get(ref)
+        h.update(ref.encode() + b"\0" + (card_hash(ref_card) if ref_card is not None else "-").encode() + b"\0")
     h.update(Path(__file__).read_bytes())
     h.update(Path(Bd.__file__).read_bytes())
     key = h.hexdigest()[:20]

@@ -25,10 +25,19 @@
       "file": "python.py",
       "lang": "python",
       "name": "host_strings",
-      "notes": "Apple cctools strings under LC_ALL=C",
+      "notes": "Apple cctools strings under LC_ALL=C (macOS only: GNU binutils strings scans other sections and pads differently)",
       "probe": {
-        "kind": "executable",
-        "name": "strings"
+        "kind": "all",
+        "of": [
+          {
+            "kind": "platform",
+            "system": "Darwin"
+          },
+          {
+            "kind": "executable",
+            "name": "strings"
+          }
+        ]
       },
       "runnable": true
     },
@@ -45,8 +54,7 @@
       "choice": [
         "/bin/ls",
         "/usr/bin/true",
-        "/bin/cat",
-        "/usr/lib/dyld"
+        "/bin/cat"
       ]
     },
     {
@@ -58,8 +66,8 @@
     }
   ],
   "metadata": {
-    "previous_content_hash": "df0a0d0c1567fd4d5dc0cbb54e0d9ee8f26ef6264e5e3f148c2de78f0039cda3",
-    "version": "1.1.0",
+    "previous_content_hash": "90f8e1a8d90e8a19215fe832111354d2b7a7220424e98f62f0af4ed92eea5f6a",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "list_strings",
