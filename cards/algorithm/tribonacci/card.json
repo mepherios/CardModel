@@ -1,0 +1,81 @@
+{
+  "category": "algorithm",
+  "domain_generators": {
+    "small_int": [
+      {
+        "int": [
+          0,
+          18
+        ]
+      }
+    ]
+  },
+  "filter": "lambda n: n >= 0",
+  "forms": [
+    {
+      "code": "def trib_naive(n: int) -> int:\n    if n < 2:\n        return 0\n    if n == 2:\n        return 1\n    return trib_naive(n - 1) + trib_naive(n - 2) + trib_naive(n - 3)\n",
+      "complexity": "O(1.84^n)",
+      "cost": 1000.0,
+      "domain": "small_int",
+      "entry": "trib_naive",
+      "lang": "python",
+      "name": "naive_recursive",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def trib_iter(n: int) -> int:\n    a = 0\n    b = 0\n    c = 1\n    if n < 2:\n        return 0\n    for _ in range(n - 2):\n        a, b, c = b, c, a + b + c\n    return c\n",
+      "complexity": "O(n)",
+      "cost": 10.0,
+      "domain": "any",
+      "entry": "trib_iter",
+      "lang": "python",
+      "name": "iterative",
+      "runnable": true
+    },
+    {
+      "code": "def trib_matrix(n: int) -> int:\n    if n < 2:\n        return 0\n    m00 = 1\n    m01 = 0\n    m02 = 0\n    m10 = 0\n    m11 = 1\n    m12 = 0\n    m20 = 0\n    m21 = 0\n    m22 = 1\n    b00 = 1\n    b01 = 1\n    b02 = 1\n    b10 = 1\n    b11 = 0\n    b12 = 0\n    b20 = 0\n    b21 = 1\n    b22 = 0\n    k = n - 2\n    while k > 0:\n        if k % 2 == 1:\n            t00 = m00 * b00 + m01 * b10 + m02 * b20\n            t01 = m00 * b01 + m01 * b11 + m02 * b21\n            t02 = m00 * b02 + m01 * b12 + m02 * b22\n            t10 = m10 * b00 + m11 * b10 + m12 * b20\n            t11 = m10 * b01 + m11 * b11 + m12 * b21\n            t12 = m10 * b02 + m11 * b12 + m12 * b22\n            t20 = m20 * b00 + m21 * b10 + m22 * b20\n            t21 = m20 * b01 + m21 * b11 + m22 * b21\n            t22 = m20 * b02 + m21 * b12 + m22 * b22\n            m00, m01, m02, m10, m11, m12, m20, m21, m22 = t00, t01, t02, t10, t11, t12, t20, t21, t22\n        t00 = b00 * b00 + b01 * b10 + b02 * b20\n        t01 = b00 * b01 + b01 * b11 + b02 * b21\n        t02 = b00 * b02 + b01 * b12 + b02 * b22\n        t10 = b10 * b00 + b11 * b10 + b12 * b20\n        t11 = b10 * b01 + b11 * b11 + b12 * b21\n        t12 = b10 * b02 + b11 * b12 + b12 * b22\n        t20 = b20 * b00 + b21 * b10 + b22 * b20\n        t21 = b20 * b01 + b21 * b11 + b22 * b21\n        t22 = b20 * b02 + b21 * b12 + b22 * b22\n        b00, b01, b02, b10, b11, b12, b20, b21, b22 = t00, t01, t02, t10, t11, t12, t20, t21, t22\n        k = k // 2\n    return m00\n",
+      "complexity": "O(log n) 3x3 products",
+      "cost": 3.0,
+      "domain": "any",
+      "entry": "trib_matrix",
+      "lang": "python",
+      "name": "matrix_power",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        3000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "tribonacci",
+  "precondition": "n >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "iterative",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "T(0)=0, T(1)=0, T(2)=1, T(n)=T(n-1)+T(n-2)+T(n-3): a linear recurrence, so a matrix power",
+  "tags": [
+    "sequence",
+    "recurrence",
+    "matrix"
+  ],
+  "tier": 1
+}

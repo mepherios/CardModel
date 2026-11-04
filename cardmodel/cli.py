@@ -11,6 +11,7 @@
   cardmodel learn [PATH] [--promote]    observe -> propose -> verify -> promote (cards with evidence)
   cardmodel optimize [--card Q] [--apply]  measure real costs -> metric cards -> cost anchors
   cardmodel translate FILE [--to ...]      lift (any readable language, --from to force) + emit + verify per language
+  cardmodel lift-sweep PATH [--exclude G]  lift a whole tree (calls across files, methods): rate + first reasons
   cardmodel improve PATH [--out DIR]       make a module/package faster: verified algorithm substitutions and
                                            rewrites; effectful code byte-identical; native forms for every language
   cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
@@ -422,6 +423,15 @@ def _source_lang(ctx, args, path: str) -> str | None:
     return lang
 
 
+def cmd_lift_sweep(args) -> int:
+    from .engines import sweep
+    ctx = _ctx(args)
+    rep = sweep.sweep(ctx, args.path, exclude=args.exclude or [], langs=args.langs.split(",") if args.langs else None,
+                      methods=not args.no_methods, project=not args.single_file, top=args.top)
+    _out(args, rep, sweep.report_text(rep))
+    return 0
+
+
 def cmd_translate(args) -> int:
     from .engines import frontends, translate
     ctx = _ctx(args)
@@ -626,7 +636,17 @@ def cmd_optimize(args) -> int:
                      f"{v['measured_pick']}  {v['measured_ns']}")
     if applied:
         lines.append(f"cost anchors updated (versioned) on {len(applied)} cards: {', '.join(applied[:10])}")
-    _out(args, {"seed": seed, "metrics": names, "verdicts": vs, "applied": applied}, "\n".join(lines))
+    from .engines import rewrite
+    targets = {}
+    for t in sorted({r["target_card"] for r in rows if r["target_card"].startswith("function/")}):
+        ranked = rewrite.rank_targets(ctx.store, t)
+        if ranked:
+            targets[t] = ranked
+            lines.append(f"  {t}: fastest here " + ", ".join(
+                f"{r['lang']} {r['ns']:.1f} ns" + ("" if i == 0 else f" (x{r['x_vs_fastest']})")
+                for i, r in enumerate(ranked[:6])))
+    _out(args, {"seed": seed, "host": optimize.host(), "metrics": names, "verdicts": vs, "applied": applied,
+                "targets": targets}, "\n".join(lines))
     return 0
 
 
@@ -863,6 +883,12 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("translate"); s.add_argument("file"); s.add_argument("--to"); s.add_argument("--seed", type=int)
     s.add_argument("--from", dest="from_lang", metavar="LANG", help="source language (default: from the extension)")
     s.add_argument("--save", action="store_true"); s.set_defaults(fn=cmd_translate)
+    s = sub.add_parser("lift-sweep", help="how much of a source tree lifts, and the first reason the rest does not")
+    s.add_argument("path"); s.add_argument("--exclude", action="append", metavar="GLOB")
+    s.add_argument("--langs"); s.add_argument("--top", type=int, default=25)
+    s.add_argument("--no-methods", action="store_true", help="top-level functions only")
+    s.add_argument("--single-file", action="store_true", help="lift each file alone (no calls across files)")
+    s.set_defaults(fn=cmd_lift_sweep)
     s = sub.add_parser("learn")
     s.add_argument("path", nargs="?"); s.add_argument("--promote", action="store_true")
     s.add_argument("--global", dest="global_", action="store_true"); s.add_argument("--seed", type=int)

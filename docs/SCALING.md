@@ -49,8 +49,8 @@ a content-addressed store outside git, distributed workers, and lifting of build
 | loading the store | 24,233 cards in 3.5 s, peak 92 MiB (about 3.8 KB and 0.14 ms per card), on **every** command | about 380 GB and 4 hours before the first command does anything | `kernel/store.py` walks every registry and reads every card eagerly |
 | the store on disk | 34 MB: 1,243 `card.json` files plus 22,990 pack lines | git can't hold 10⁸ cards | `cards/`, one git repository |
 | lifting one file | linear on independent functions: 4,000 in 0.52 s | ~4 h of one core per 10⁸ | `frontend_python.lift_source` |
-| the lift closure (a caller of a failed function fails) | **quadratic**: a 2,000-function call chain takes 3.2 s (500 take 0.23 s) | a 10⁵-deep dependency chain: days | the `while changed` loop in `lift_source` re-scans every function per pass |
-| call resolution | within one file only (Python and the text frontend) | cross-module calls are gaps | `frontend_python`, `frontend_text` ("a call resolves to a function of the same file") |
+| the lift closure (a caller of a failed function fails) | **linear** since the worklist (`frontend_python.close_calls`): a 2,000-function chain with a failed root takes 0.21 s (it took 3.06 s with the old `while changed` loop) | — | one pass over the reverse call graph of the whole project |
+| call resolution | across files and modules with `engines/lift_project.py` (Python follows its imports; text languages link by unique name, `Other.f` for class-per-file languages); single-file `lift_source` stays same-file | no build-system or header resolution yet (§4.2) | `lift_project`, `frontend_*.lift_*(externs=)` |
 | translating and verifying | 22 functions × 9 runtimes in 46 s: one compile per function per language | about one core-year per language | `translate`, `conformance`, `matrix` |
 | parallelism | threads over subprocesses, capped at `min(4, cores/2, RAM/4 GiB)` machine-wide; all Python-side work is one process (the GIL) | 3 of 4 cores idle in Python stages, and a 64-core host still runs 4 compiles at once | `kernel/resources.max_parallel` |
 | logic evaluation | 56,818 facts about the store in 0.33 s, in memory, budget 400,000 facts | the facts of a large codebase exceed the budget | `engines/logic.evaluate(max_facts=400_000)` |
@@ -208,7 +208,7 @@ row is a recommendation for that workstream, not a change made here.
 
 | component (workstream) | concern at scale | recommendation | urgency |
 |---|---|---|---|
-| `frontend_python.lift_source` closure (lifting) | quadratic: the closure loop re-scans all functions per pass (2,000-deep chain: 3.2 s) | worklist over a reverse call graph, or SCCs (§3.2); linear | before any S2 sweep |
+| `frontend_python.lift_source` closure (lifting) | done: worklist over a reverse call graph, linear (2,000-deep chain: 3.06 s → 0.21 s) | — | done |
 | failure propagation (lifting) | one unliftable callee fails every caller | opaque boundary cards for the failed callee (§3.3) | high: it hides most of the lift rate |
 | `frontend_text` call resolution (lifting) | same-file only, no includes or preprocessor | module/link resolution from build-system cards, `compile_commands.json` for C (§4.2) | before S2 |
 | new IR types such as lists and strings (lifting) | must not assume in-memory, single-threaded semantics | element types generic; length symbolic; aliasing and mutation explicit, so the memory model (§4.5) can attach later | design now |
