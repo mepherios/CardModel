@@ -133,6 +133,6 @@ The audit ([GODEL_AUDIT.md](GODEL_AUDIT.md)) lists every call site. The rule it 
 |---|---|
 | 1. this document | done 2026-11-04 |
 | 2. the core | done 2026-11-04: the algebra, `cost`, `jaccard`, `ContentIndex`, `match`, `factor`, `expand`, the iterative walks, the duplicates retired; every identity of §2 tested on random terms (`tests/test_godel.py`, class `Algebra`) |
-| 3. cofactor factoring and similarity as commands | next |
+| 3. cofactor factoring and similarity as commands | done 2026-11-04: `cardmodel godel factor CARD... | --expr E` (a term over the definitions it contains, with the cofactor and the vector check), `similar` (by |gcd| / |lcm| through the index), `cofactor WHOLE PART`, `decode N --vars`. Today 11 of 577 definitions have a closed term (the rest wait for distillation), so the library is small; it grows with every canonical term |
 | 4. physics as a Gödel set | planned |
 | 5. call sites | waiting on the audit's ranking |
