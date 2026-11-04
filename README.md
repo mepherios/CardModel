@@ -194,3 +194,4 @@ command runs the test suite.
 | [docs/MATH_CORE.md](docs/MATH_CORE.md) | approved 2026-10-22: the four sources around the Gödel model, an audit of understand vs imitate, the semantic core, the migration plan and its progress (phases 0 and 1, the research handover's storage rules, witness tiers and the Lean formal core in `formal/`) |
 | [docs/UNREAL.md](docs/UNREAL.md) | a game engine's math as cards: Unreal Engine read through clang, lifted to terms, canonical over the reals, Gödel-numbered by use, witnessed against the engine's compiled code (CM49) |
 | [docs/GODEL_METHOD.md](docs/GODEL_METHOD.md) | the Gödel method research program: its coordination rules, wave 1's workstreams and their results, citing the handover's ids |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | the master plan: what the model does today (measured), the capability matrix for languages, types, math and platforms, the ranked gaps, goals and phased milestones every workstream aligns with |
