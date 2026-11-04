@@ -427,4 +427,111 @@ def cubic_pow(a: int, b: int, c: int, d: int, x: int) -> int:
         form("horner", """
 def cubic_horner(a: int, b: int, c: int, d: int, x: int) -> int:
     return ((a * x + b) * x + c) * x + d""", "3 MUL + 3 ADD", 6.0, domain="int")], ["math", "polynomial"]),
+
+    algo("tribonacci", "T(0)=0, T(1)=0, T(2)=1, T(n)=T(n-1)+T(n-2)+T(n-3): a linear recurrence, so a matrix power",
+         [("n", "int")], "int", "n >= 0", [{"int": [0, 3000]}], "iterative", [
+        form("naive_recursive", """
+def trib_naive(n: int) -> int:
+    if n < 2:
+        return 0
+    if n == 2:
+        return 1
+    return trib_naive(n - 1) + trib_naive(n - 2) + trib_naive(n - 3)""", "O(1.84^n)", 1000.0, S, "small_int"),
+        form("iterative", """
+def trib_iter(n: int) -> int:
+    a = 0
+    b = 0
+    c = 1
+    if n < 2:
+        return 0
+    for _ in range(n - 2):
+        a, b, c = b, c, a + b + c
+    return c""", "O(n)", 10.0),
+        form("matrix_power", """
+def trib_matrix(n: int) -> int:
+    if n < 2:
+        return 0
+    m00 = 1
+    m01 = 0
+    m02 = 0
+    m10 = 0
+    m11 = 1
+    m12 = 0
+    m20 = 0
+    m21 = 0
+    m22 = 1
+    b00 = 1
+    b01 = 1
+    b02 = 1
+    b10 = 1
+    b11 = 0
+    b12 = 0
+    b20 = 0
+    b21 = 1
+    b22 = 0
+    k = n - 2
+    while k > 0:
+        if k % 2 == 1:
+            t00 = m00 * b00 + m01 * b10 + m02 * b20
+            t01 = m00 * b01 + m01 * b11 + m02 * b21
+            t02 = m00 * b02 + m01 * b12 + m02 * b22
+            t10 = m10 * b00 + m11 * b10 + m12 * b20
+            t11 = m10 * b01 + m11 * b11 + m12 * b21
+            t12 = m10 * b02 + m11 * b12 + m12 * b22
+            t20 = m20 * b00 + m21 * b10 + m22 * b20
+            t21 = m20 * b01 + m21 * b11 + m22 * b21
+            t22 = m20 * b02 + m21 * b12 + m22 * b22
+            m00, m01, m02, m10, m11, m12, m20, m21, m22 = t00, t01, t02, t10, t11, t12, t20, t21, t22
+        t00 = b00 * b00 + b01 * b10 + b02 * b20
+        t01 = b00 * b01 + b01 * b11 + b02 * b21
+        t02 = b00 * b02 + b01 * b12 + b02 * b22
+        t10 = b10 * b00 + b11 * b10 + b12 * b20
+        t11 = b10 * b01 + b11 * b11 + b12 * b21
+        t12 = b10 * b02 + b11 * b12 + b12 * b22
+        t20 = b20 * b00 + b21 * b10 + b22 * b20
+        t21 = b20 * b01 + b21 * b11 + b22 * b21
+        t22 = b20 * b02 + b21 * b12 + b22 * b22
+        b00, b01, b02, b10, b11, b12, b20, b21, b22 = t00, t01, t02, t10, t11, t12, t20, t21, t22
+        k = k // 2
+    return m00""", "O(log n) 3x3 products", 3.0)], ["sequence", "recurrence", "matrix"],
+         small=[{"int": [0, 18]}]),
+
+    algo("popcount_prefix", "total number of 1 bits in 0, 1, ..., n", [("n", "int")], "int", "n >= 0",
+         [{"int": [0, 100000]}], "per_bit", [
+        form("count_each", """
+def popsum_loop(n: int) -> int:
+    total = 0
+    for i in range(n + 1):
+        x = i
+        while x > 0:
+            total += x & 1
+            x = x >> 1
+    return total""", "O(n log n)", 100.0, S),
+        form("per_bit", """
+def popsum_bits(n: int) -> int:
+    total = 0
+    bit = 1
+    while bit <= n:
+        period = bit * 2
+        total += (n + 1) // period * bit
+        rest = (n + 1) % period - bit
+        if rest > 0:
+            total += rest
+        bit = period
+    return total""", "O(log n)", 3.0)], ["bits", "counting"]),
+
+    algo("josephus2", "survivor of n people when every second one leaves (Josephus, k = 2), 1-based",
+         [("n", "int")], "int", "n >= 1", [{"int": [1, 100000]}], "closed_form", [
+        form("recurrence", """
+def jos_loop(n: int) -> int:
+    j = 0
+    for m in range(2, n + 1):
+        j = (j + 2) % m
+    return j + 1""", "O(n)", 20.0, S),
+        form("closed_form", """
+def jos_closed(n: int) -> int:
+    p = 1
+    while p * 2 <= n:
+        p = p * 2
+    return 2 * (n - p) + 1""", "O(log n)", 2.0)], ["recurrence", "puzzle"]),
 ]

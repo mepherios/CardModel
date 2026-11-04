@@ -1,7 +1,7 @@
 """Optimizer: real measurements become metric cards; anchors change only from measurements (CM09)."""
 import unittest
 
-from helpers import SEED, TempProject
+from helpers import SEED, TempProject, model_ctx
 
 from cardmodel.engines import optimize, rewrite
 
@@ -95,3 +95,62 @@ class Verdicts(unittest.TestCase):
         self.assertIn("pow2_bit", forms)
         self.assertTrue(all(r["shared_inputs"] for r in rows), rows)
         self.assertEqual(len({r["inputs_signature"] for r in rows}), 1, "every form timed on the same calls")
+
+
+class HostCosts(unittest.TestCase):
+    """Costs per function x language x host: each host keeps its own measurement, and the ranking answers which
+    target a function should run in here."""
+
+    def test_hosts_are_kept_apart_and_ranked(self):
+        from unittest import mock
+        p = TempProject()
+        try:
+            ctx = p.ctx()
+            card = next(iter(ctx.store.cards("function")))
+            forms = [f["name"] for f in card["forms"]][:3]
+
+            def rows(ns):
+                return [{"target_card": f"function/{card['name']}", "card": card["name"], "form": f, "lang": f,
+                         "median_ns": n, "samples": 3, "seed": SEED, "inputs_signature": "s"}
+                        for f, n in zip(forms, ns)]
+
+            with mock.patch.object(optimize, "host_id", return_value="hostA"):
+                optimize.write_metrics(ctx, rows([30.0, 10.0, 20.0]))
+            with mock.patch.object(optimize, "host_id", return_value="hostB"):
+                optimize.write_metrics(ctx, rows([5.0, 50.0, 40.0]))
+            m = ctx.store.get(f"metric/metric__{card['name']}__{forms[0]}")
+            self.assertEqual(sorted(m["by_host"]), ["hostA", "hostB"], "a second host adds, never overwrites")
+            self.assertEqual([r["form"] for r in rewrite.rank_targets(ctx.store, card, host="hostA")],
+                             [forms[1], forms[2], forms[0]])
+            self.assertEqual(rewrite.rank_targets(ctx.store, card, host="hostB")[0]["form"], forms[0])
+            self.assertEqual(rewrite.rank_targets(ctx.store, card, host="hostC"), [], "not measured on hostC")
+            with mock.patch.object(optimize, "host_id", return_value="hostA"):
+                self.assertEqual(rewrite.cheapest(ctx.store, card, available_only=False, cost="measured").name,
+                                 forms[1])
+        finally:
+            p.cleanup()
+
+    def test_slope_grows_until_it_is_measurable(self):
+        from unittest import mock
+        calls = []
+
+        class Run:
+            def __init__(self, ms):
+                self.run_ms = ms
+
+        def fake_run(lang_card, src, root, parse=False):
+            reps = int(src)
+            calls.append(reps)
+            return Run(2.0 + reps * 1e-4)          # 0.1 us per rep: lost in startup until 200000 reps
+
+        class Em:
+            def __init__(self, *a):
+                pass
+
+            def program(self, module, calls_, mode, reps):
+                return str(reps)
+
+        with mock.patch.object(optimize, "run_program", fake_run), mock.patch.object(optimize, "Emitter", Em):
+            reps, times = optimize._slope_runs(model_ctx(), {}, "c", {}, [(1,)], (200, 2000))
+        self.assertEqual(reps, (200, 200000))
+        self.assertGreater(times[1] - times[0], optimize.SLOPE_MIN_MS)

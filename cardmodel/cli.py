@@ -635,7 +635,17 @@ def cmd_optimize(args) -> int:
                      f"{v['measured_pick']}  {v['measured_ns']}")
     if applied:
         lines.append(f"cost anchors updated (versioned) on {len(applied)} cards: {', '.join(applied[:10])}")
-    _out(args, {"seed": seed, "metrics": names, "verdicts": vs, "applied": applied}, "\n".join(lines))
+    from .engines import rewrite
+    targets = {}
+    for t in sorted({r["target_card"] for r in rows if r["target_card"].startswith("function/")}):
+        ranked = rewrite.rank_targets(ctx.store, t)
+        if ranked:
+            targets[t] = ranked
+            lines.append(f"  {t}: fastest here " + ", ".join(
+                f"{r['lang']} {r['ns']:.1f} ns" + ("" if i == 0 else f" (x{r['x_vs_fastest']})")
+                for i, r in enumerate(ranked[:6])))
+    _out(args, {"seed": seed, "host": optimize.host(), "metrics": names, "verdicts": vs, "applied": applied,
+                "targets": targets}, "\n".join(lines))
     return 0
 
 
