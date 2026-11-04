@@ -64,6 +64,14 @@ def lift(ctx: Ctx, source: str, lang: str, only: list[str] | None = None,
     if module == "cardmodel.lang":
         return _lift_cardlang(ctx, source, only)
     mod = importlib.import_module(module)
+    if not hasattr(mod, "lift_source") and hasattr(mod, "lift_text"):     # mathlang: one module per text
+        from .frontend_text import Lifted
+        try:
+            m = mod.lift_text(source, ctx.ops)
+        except Exception as exc:  # noqa: BLE001 -- a parse error is the reason the text did not lift
+            return [Lifted("<module>", False, None, source, [str(exc)], False, 0, lang)]
+        return [Lifted(f["name"], True, f, "", [], False, 0, lang) for f in m["functions"]
+                if not only or f["name"] in only]
     return mod.lift_source(source, ctx.ops, lang, only=only, param_hints=param_hints)
 
 
