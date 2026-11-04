@@ -20,6 +20,7 @@
     ".kts"
   ],
   "frontend": "cardmodel.engines.frontend_text",
+  "frontend_link": "class_per_file",
   "metadata": {
     "version": "1.0.0"
   },

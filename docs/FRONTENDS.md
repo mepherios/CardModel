@@ -53,6 +53,20 @@ checks)`. A language with no toolchain on the host reports `unavailable` or `no_
   toolchain is installed agrees with its own compiler or interpreter (C, C++, Java, Go, Rust, JavaScript, PHP and
   Ruby here).
 
+## Whole projects (`engines/lift_project.py`, `cardmodel lift-sweep PATH`)
+
+A project lift reads every file first for signatures, then lifts each file with the other files' functions as
+externs. Python follows its imports (`from a.b import f as g`, relative imports, `import a.b as m`, static methods of
+an imported class); the text languages link by unique name like a C linker, and a language whose card says
+`"frontend_link": "class_per_file"` (Java, C#, Kotlin) also resolves `Other.f(x)`. Python methods lift as
+`Class_method` when `self`/`cls` is used only to call other methods; `self.x` is reported (it needs record types).
+Functions are named `<module>::<name>`; `ProjectLift.module_for(qual)` gives back one ordinary IR module, renaming
+only where two files define the same name. The closure is one linear pass over the project's reverse call graph.
+
+Python 3.13 stdlib without its tests (3,183 files): 110 of 11,999 top-level functions lift one file at a time; 113
+with calls across modules (most callees fail for their own reasons first); 296 of 49,743 with methods. The first
+reasons are `self.x` (23,968 methods), non-scalar annotations (5,495) and defaults/varargs (4,611).
+
 ## Honest limits (L1)
 
 * Scalars only (`int`, `float`, `bool`), like the Python frontend. Arrays, strings, structs, pointers, closures,
