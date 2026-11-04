@@ -272,6 +272,35 @@ passes. Phases A and B start now; C and D can overlap B once the IR types land.
   condition computed; the translation gap as the residual factor.
 * G3. The physics set: SI base units as primes, dimensional analysis as a witness.
 
+### Phase H (later): the math language designs and optimizes languages
+
+Recorded 2026-11-04, to be done after the phases above. In the user's words: *the math language should also be able
+to design and optimize any card model language, so language → math/systems logic system → optimization → output
+language / language package / binary, depending on the desired output.*
+
+So far, languages are inputs and outputs that the model translates between. The math language
+([MATH_LANGUAGE.md](MATH_LANGUAGE.md)) already reads equations in and emits every codegen language. In this phase it
+becomes, together with the card language and the core terms of MATH_CORE §4, the hub that a language is *made* from:
+
+* H1. **A language as a math object.** A language card's grammar, types, operational semantics and codegen are
+  described as terms in the math language, with laws (type soundness, determinism, evaluation order) as theorem
+  cards. The 23 existing language cards are the first corpus.
+* H2. **The pipeline as one path.** Source language → core terms (math / systems logic) → optimization (e-graph,
+  measured costs, Phase E) → the output the user asks for: source in another language, a **language package**
+  (a language's own toolchain artifacts: a frontend, codegen, runtime library and tests generated from its card),
+  or a **binary** for a platform card (Phase F).
+* H3. **Designing a language.** Given goals (target platform, performance, safety properties, the domain's
+  operations), the model proposes a language card: syntax, types and ops chosen from the math, with its laws
+  witnessed and its codegen conformance-checked like any other language card.
+* H4. **Optimizing a language.** Measure an existing language card (emitted code cost, lift rate, gaps per
+  construct) and propose changes to its ops, types or lowering, each with a certificate that existing programs
+  keep their meaning.
+* H5. **Self-application.** The card language itself is optimized by the same pipeline, and the change reaches
+  main as a PR with its evidence (§7).
+
+Precondition: Phases B–E (a wide IR, frontends, the pair matrix and optimization from truth), since a generated
+language is only as good as the core it is built from.
+
 ## 6. Workstreams running now and what each owns
 
 Four sessions work in parallel from this plan. Each owns its files (docs/INTEGRATION.md rule: one owner per file
