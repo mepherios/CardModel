@@ -353,21 +353,37 @@ def verify_vectors(ctx: Ctx, card) -> dict:
     return out
 
 
-def verify_rule(card, seed: int | None = None, samples: int = 64) -> dict:
-    """lhs == rhs on seeded integers (respecting ``condition``); also checks the witness can fail."""
+def verify_rule(card, seed: int | None = None, samples: int = 64, ops: dict | None = None) -> dict:
+    """lhs == rhs on seeded integers (respecting ``condition``); also checks the witness can fail.
+
+    With ``ops`` (``ir.op_table``) both sides are evaluated in the model M, the op cards' own semantics, the one
+    the rule is applied in (FOUNDATIONS.md rule A2). Without it, ``exprs.evaluate``'s exact-integer reading is used,
+    which ``test_witness`` pins to the op cards on their integer domains."""
     seed = V.fresh_seed() if seed is None else seed
     rng = random.Random(f"{seed}:{card['name']}")
     vars_ = card.get("vars") or []
     lhs, rhs = parse(card["lhs"]), parse(card["rhs"])
     cond = parse(card["condition"]) if card.get("condition") else None
+    ev = evaluate
+    if ops is not None:
+        from .exprs import resolve_ops
+        from .logic import LogicError, eval_expr
+        lhs, rhs = resolve_ops(lhs, ops), resolve_ops(rhs, ops)
+        cond = resolve_ops(cond, ops) if cond is not None else None
+
+        def ev(t, env):                # the model's semantics replaces exprs' for this rule
+            try:
+                return eval_expr(t, env, ops)
+            except LogicError as exc:
+                raise ValueError(str(exc)) from exc
     gens = [{"int": [0, 24]} if v in ("k", "n", "e") else {"int": [-60, 60]} for v in vars_]
     checks, bad, perturbed_caught = 0, None, False
     for args in V.inputs(gens, samples, rng):
         env = dict(zip(vars_, args))
         try:
-            if cond is not None and not evaluate(cond, env):
+            if cond is not None and not ev(cond, env):
                 continue
-            a, b = evaluate(lhs, env), evaluate(rhs, env)
+            a, b = ev(lhs, env), ev(rhs, env)
         except (ArithmeticError, ValueError):
             continue
         checks += 1
