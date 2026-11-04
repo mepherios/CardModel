@@ -727,6 +727,8 @@ def cmd_symbolic(args) -> int:
 
 
 def register(sub) -> None:
+    from . import math_cli
+    math_cli.register(sub)
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
     s.add_argument("--deep", action="store_true"); s.add_argument("--verbose", action="store_true")

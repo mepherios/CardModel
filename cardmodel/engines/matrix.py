@@ -8,7 +8,8 @@ For each corpus file the frontend registered for its extension lifts every funct
   2. cross-source agreement: when one function is written in several source languages (the shared corpus is
      written once in the card language and hand-ported), the lifted IRs of every pair of ports must agree on
      the union of their vectors, so "Python's legendre" and "the card language's legendre" are one function;
-  3. round trip (D3): for every target that also has a frontend, lift(emit_T(f)) must behave like f on f's
+  3. round trip (D3): for every target that also has a frontend, and for mathematical notation (engines/mathlang.py,
+     a target without a compiler), lift(emit_T(f)) must behave like f on f's
      vectors (sampled, seed printed; the IR has loops, so the check is behavioural, not a semantic hash).
 
 New frontends join with ``register(Frontend(...))``: the matrix grows a row (and, for targets with a frontend, a
@@ -88,6 +89,20 @@ register(Frontend("python", (".py",), _python_cards, _python_lift_text))
 register(Frontend("cardlang", (".card",), _card_cards))
 
 
+def _math_cards(ctx: Ctx, path: Path, seed: int):
+    from . import mathlang
+    return mathlang.function_cards(ctx, path, seed)
+
+
+def _math_lift_text(ctx: Ctx, text: str) -> dict[str, dict]:
+    from . import mathlang
+    module = mathlang.lift_text(text, ctx.ops)
+    return {f["name"]: {"entry": f["name"], "functions": module["functions"]} for f in module["functions"]}
+
+
+register(Frontend("math", (".math",), _math_cards, _math_lift_text))
+
+
 # ---- checks ----------------------------------------------------------------------------------------------------
 
 def _entry(card: dict) -> str:
@@ -148,6 +163,14 @@ def round_trip(ctx: Ctx, card: dict, target: str) -> dict:
     return _compare(ctx, card["ir"], back, [v["args"] for v in card.get("vectors", [])])
 
 
+def math_round_trip(ctx: Ctx, card: dict) -> dict:
+    """lift_math(emit_math(f)) behaves like f on f's vectors (math is a target with no compiler: its witness)."""
+    from . import mathlang
+    r = mathlang.round_trip(ctx, card)
+    r.pop("math", None)
+    return r
+
+
 # ---- the matrix ------------------------------------------------------------------------------------------------
 
 def default_corpus(root: Path) -> list[Path]:
@@ -184,6 +207,7 @@ def run(ctx: Ctx, files: list[Path], targets: list[str] | None = None, seed: int
                 if t in cells and cells[t]["status"] == "unavailable":
                     cells[t] = {"status": "gap", "reason": gap}
             rt = {t: round_trip(ctx, card, t) for t in targets if t in FRONTENDS and FRONTENDS[t].lift_text}
+            rt["math"] = math_round_trip(ctx, card)      # mathematical notation as a target (engines/mathlang.py)
             functions.append({"file": str(path), "source": fe.lang, "function": name, "inputs": rep["inputs"],
                               "lift_mismatches": rep["lift_mismatches"], "targets": cells, "round_trip": rt})
             by_source.setdefault(fe.lang, {})[name] = card
@@ -221,7 +245,7 @@ def failures(functions: list[dict], cross: list[dict]) -> list[dict]:
                 out.append({"kind": "pair", "source": f["source"], "target": t, "function": f["function"],
                             "detail": c})
         for t, c in f["round_trip"].items():
-            if c["status"] not in ("pass", "no_inputs"):
+            if c["status"] not in ("pass", "no_inputs", "gap"):      # a gap is a translation gap, not a failure
                 out.append({"kind": "round_trip", "source": f["source"], "target": t, "function": f["function"],
                             "detail": c})
     out += [{"kind": "cross_source", "function": c["function"], "source": c["a"], "target": c["b"], "detail": c}

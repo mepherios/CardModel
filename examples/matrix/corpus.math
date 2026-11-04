@@ -1,0 +1,88 @@
+-- The pair-matrix corpus in mathematical notation: the same functions as corpus.card and corpus.py, written the
+-- way mathematics writes them (cases instead of if, recursion and Σ instead of loops). `cardmodel matrix` checks
+-- that every port of a function agrees with the others.
+
+floordiv_neg(a, b) = 0 if b = 0
+                   = ⌊a / b⌋ otherwise
+
+mod_neg(a, b) = 0 if b = 0
+              = a mod b otherwise
+
+true_div(a, b) = 0.0 if b = 0
+               = a / b otherwise
+
+shifts(a, s) = shift_right(a, t) + shift_left(a, t)  where t = s mod 8
+
+bit_ops(a, b) = bit_xor(bit_and(a, b), bit_or(a, −1 − b))
+
+powmod3(a, e, m) = 0 if m ≤ 1
+                 = pow_mod(a, |e|, m) otherwise
+
+legendre(a, p0) = 0 if p < 3 ∨ p mod 2 = 0
+                = 0 if has_odd_factor(p, 3)
+                = −1 if r = p − 1
+                = r otherwise
+  where p = |p0| mod 50, r = pow_mod(a, ⌊(p − 1) / 2⌋, p)
+
+has_odd_factor(p, d) = false if d · d > p
+                     = true if p mod d = 0
+                     = has_odd_factor(p, d + 2) otherwise
+
+gcd_neg(a, b) = gcd(a, b)
+
+cube(a) = a³
+
+chain_cmp(a, b, c) = a < b ≤ c
+
+short_circuit(a, b) = (b ≠ 0 ∧ a mod b = 0) ∨ a = b
+
+ternary(a, b) = if a > b then a else −b
+
+loop_step(n) = steps(n, n)
+  for 0 ≤ n ≤ 30
+steps(i, n) = 0 if i ≤ −n
+            = i² + steps(i − 3, n) otherwise
+
+nested_loops(n) = outer(0, n, 0)
+  for 0 ≤ n ≤ 30
+outer(i, n, c) = c if i ≥ n
+               = outer(i + 1, n, inner(i, 0, c)) otherwise
+inner(i, j, c) = c if j ≥ i
+               = inner(i, j + 1, c) if (i + j) mod 3 = 0
+               = c if j > 7
+               = inner(i, j + 1, c + bit_xor(i, j)) otherwise
+
+not_bool : ℤ × 𝔹 → 𝔹
+not_bool(a, flag) = ¬flag ∨ a > 0
+
+bool_arith : 𝔹 × 𝔹 → ℤ
+bool_arith(p, q) = (if p then 1 else 0) + (if q then 2 else 0)
+
+big_product(a, b) = a · b · 1000003
+
+swap_loop(n) = fib_pair(n, 0, 1) mod 1000
+  for 0 ≤ n ≤ 30
+fib_pair(k, a, b) = a if k ≤ 0
+                  = fib_pair(k − 1, b, a + b) otherwise
+
+helper(x) = 2x + 1
+
+calls_helper(n) = helper(helper(n)) − helper(−n)
+
+recur(n) = 0 if n ≤ 0
+         = n + recur(n − 2) otherwise
+  for n ≤ 30
+
+mixed : ℤ × ℝ → ℝ
+mixed(a, x) = a·x + a/3 − a · 0.5
+
+float_eq : ℝ → 𝔹
+float_eq(x) = x · 3.0 / 3.0 = x
+
+int_of_float : ℝ → ℤ
+int_of_float(x) = int(x)
+
+test legendre(2, 7) = 1
+test nested_loops(5) = 22
+test swap_loop(10) = 55
+test loop_step(3) = 9

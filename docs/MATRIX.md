@@ -4,16 +4,17 @@ Seed 20261104. Each cell is functions passed / functions run for (source row, ta
 
 | source \ target | c | go | javascript | python | rust | cpp | java | lean | lua | ruby | swift | typescript |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| cardlang | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | — | 24/24 | 24/24 | — | 24/24 |
-| python | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | — | 48/48 | 48/48 | — | 48/48 |
+| cardlang | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | 24/24 | — | 24/24 | 24/24 | — | — |
+| math | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | 29/29 | — | 29/29 | 29/29 | — | — |
+| python | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | 48/48 | — | 48/48 | 48/48 | — | — |
 
-* Round trip lift(emit_T(f)) behaves like f: 72/72 (targets that also have a frontend).
-* Ports of one function in different source languages agree: 24/24.
+* Round trip lift(emit_T(f)) behaves like f: 202/202 (targets that also have a frontend).
+* Ports of one function in different source languages agree: 72/72.
 * Functions a frontend does not lift (gaps, not failures): 3.
   * python `float_floordiv`: line 30: FLOORDIV on (float, float)
   * python `float_mod`: line 36: MOD on (float, float)
   * python `sign_sum`: line 72: type annotation 'list' (only int/float/bool)
-* Unavailable here: lean (lean not found); swift (swiftc not found)
+* Unavailable here: lean (lean not found); swift (swiftc not found); typescript (/opt/node22/bin/node: version (22, 23, 4) < required 23.6.0)
 * Translation gaps (constructs a target cannot emit yet; the function is not run there):
-  * lean: op TO_FLOAT on (int) has no template (×6); no type for 'float' (×5); op BIT_AND on (int, int) has no template (×3); op SHIFT_RIGHT on (int, int) has no template (×2); op BIT_XOR on (int, int) has no template (×2); op TRUNC_INT on (float) has no template (×2)
+  * lean: op TO_FLOAT on (int) has no template (×8); no type for 'float' (×6); op BIT_XOR on (int, int) has no template (×5); op BIT_AND on (int, int) has no template (×4); op SHIFT_RIGHT on (int, int) has no template (×3); op TRUNC_INT on (float) has no template (×3)
 * Failures: 0.

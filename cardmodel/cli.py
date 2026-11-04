@@ -30,6 +30,8 @@
   cardmodel laws [--save]                discover the laws the op cards obey; prove them; promote to rules
   cardmodel lean import F.lean | --core  Lean theorems as cards: faithful reading, witness, re-proof
   cardmodel repl                         interactive card language
+  cardmodel math emit|lift|run|translate|roundtrip SOURCE   mathematical notation (Unicode or LaTeX) as a source
+                                           and a target: equations in, every language out; any function out as math
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel godel ledger|vector|gcd|lcm CARD...   the expanding Gödel model: primes, sparse content vectors (CM43, CM45)
   cardmodel godel sizes [--limit N]         each code's size for every card with a term (Gödel method W-3)
