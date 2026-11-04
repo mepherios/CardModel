@@ -3407,3 +3407,5 @@
 {"atom": "unreal/TVector2__float.TVector2-59a5de9a", "category": "godel", "index": 3407, "name": "p3407__unreal__TVector2__float.TVector2-59a5de9a", "prime": 31667, "set": "unreal", "since": "2026-10-22"}
 {"atom": "unreal/FScopedFTZFloatMode.FScopedFTZFloatMode-59c7c55b", "category": "godel", "index": 3408, "name": "p3408__unreal__FScopedFTZFloatMode.FScopedFTZFloatMode-59c7c55b", "prime": 31687, "set": "unreal", "since": "2026-10-22"}
 {"atom": "unreal/FScopedFTZFloatMode._FScopedFTZFloatMode-d2fd6cef", "category": "godel", "index": 3409, "name": "p3409__unreal__FScopedFTZFloatMode._FScopedFTZFloatMode-d2fd6cef", "prime": 31699, "set": "unreal", "since": "2026-10-22"}
+{"atom": "op/TRUNCDIV", "category": "godel", "index": 3410, "name": "p3410__op__TRUNCDIV", "prime": 31721, "set": "B0", "since": "2026-11-04"}
+{"atom": "op/REM", "category": "godel", "index": 3411, "name": "p3411__op__REM", "prime": 31723, "set": "B0", "since": "2026-11-04"}

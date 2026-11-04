@@ -117,17 +117,34 @@ def lift_file_source(ctx: Ctx, source: str, names: list[str] | None = None) -> l
     return lift_source(source, ctx.ops, only=None if names is None else None)
 
 
+def ir_reference(ctx: Ctx, module: dict, lifted: list):
+    """For a source that is not Python: the IR interpreter is the reference (frontends.witness_source checks it
+    against the original source run by its own toolchain), and the original text is kept as the source form."""
+    by = {lf.name: lf for lf in lifted}
+    src = "\n\n".join(by[f["name"]].source for f in module["functions"] if f["name"] in by)
+    interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
+
+    def ref(*args):
+        return interp.call(module["entry"], list(args))
+    return ref, src
+
+
 def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, seed: int,
-                  samples: int = 24) -> dict:
+                  samples: int = 24, lang: str = "python") -> dict:
     module = module_for(name, lifted)
-    ref, ref_src = python_reference(module, lifted)
+    if lang == "python":
+        ref, ref_src = python_reference(module, lifted)
+    else:
+        ref, ref_src = ir_reference(ctx, module, lifted)
     gens, _ = infer_domain(ctx, module, ref, want=samples, seed=seed)
     rng = random.Random(seed)
     rows = reference_rows(ctx, module, ref, V.inputs(gens, samples, rng))
     mismatched = [r for r in rows if not V.same(r["out"], r["ir_out"])]
     entry = next(f for f in module["functions"] if f["name"] == name)
     forms = [{"name": "python_source", "lang": "python", "entry": name, "cost": 1.0, "runnable": True,
-              "code": ref_src, "notes": "the observed original"}]
+              "code": ref_src, "notes": "the observed original"}] if lang == "python" else \
+        [{"name": f"{lang}_source", "lang": lang, "entry": name, "cost": 1.0, "runnable": True, "original": True,
+          "code": ref_src, "notes": "the observed original (witnessed by frontends.witness_source)"}]
     gaps = {}
     for lang in ctx.codegen_languages():
         try:
@@ -149,7 +166,7 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
         "status": "suspect",
         "verification": {"lift_fidelity": {"checked": len(rows), "mismatched": len(mismatched),
                                            **({"example": mismatched[0]} if mismatched else {})}},
-        "provenance": {"origin": source_label, "source_sha256_12": digest, "seed": seed},
+        "provenance": {"origin": source_label, "source_sha256_12": digest, "seed": seed, "source_lang": lang},
     }
 
 

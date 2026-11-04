@@ -117,7 +117,9 @@ class Structure(unittest.TestCase):
             t = term(3)
             n, varnames, digits = G.structural(t, ctx.ops, idx, max_digits=None)
             self.assertEqual(G.decode(n, ctx.ops, entries, varnames), t, seed_note(self))
-            self.assertEqual(digits, len(str(n)))
+            self.assertEqual(digits, G.decimal_digits(n))
+            if digits < 4000:
+                self.assertEqual(digits, len(str(n)))
 
     def test_large_terms_keep_only_their_hash(self):
         ctx = model_ctx()

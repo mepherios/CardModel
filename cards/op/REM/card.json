@@ -1,0 +1,49 @@
+{
+  "category": "op",
+  "cost": 2.0,
+  "emit": {
+    "c_like": "({0} % {1})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.fmod({0}, {1})",
+    "python": "(({0}) - ({1}) * (abs({0}) // abs({1}) * (1 if (({0}) < 0) == (({1}) < 0) else -1)))",
+    "ruby": "(({0}).remainder({1}))"
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        },
+        {
+          "int": [
+            -1000,
+            1000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a - b * ((abs(a) // abs(b)) * (1 if (a < 0) == (b < 0) else -1))",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "REM",
+  "provenance": {
+    "observed_in": "the `%` of every C-family language on integers",
+    "origin": "cardmodel",
+    "tool": "cardmodel/engines/frontend_text.py"
+  },
+  "statement": "integer remainder with the sign of the dividend: a - b * trunc(a / b) (C-family `%` on integers)",
+  "tier": 0
+}

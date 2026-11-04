@@ -19,6 +19,33 @@
   "extensions": [
     ".php"
   ],
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "lit": {
+      "false": "false",
+      "float": "{v}",
+      "int": "{v}",
+      "true": "true"
+    },
+    "main": "{calls}",
+    "prelude": "<?php\n",
+    "print": {
+      "bool": "echo \"b:\" . (({e}) ? \"true\" : \"false\") . \"\\n\";",
+      "float": "echo \"f:\" . var_export((float)({e}), true) . \"\\n\";",
+      "int": "echo \"i:\" . ({e}) . \"\\n\";"
+    },
+    "replace": [
+      [
+        "^\\s*<\\?php",
+        ""
+      ],
+      [
+        "\\?>\\s*$",
+        ""
+      ]
+    ]
+  },
+  "int_bits": 64,
   "metadata": {
     "version": "1.0.0"
   },
@@ -33,6 +60,13 @@
   "provenance": {
     "origin": "cardmodel bootstrap",
     "tool": "tools/bootstrap.py"
+  },
+  "runner": {
+    "file": "main.php",
+    "run": [
+      "{exe}",
+      "{src}"
+    ]
   },
   "statement": "php: recognised by the observer; no codegen block yet.",
   "tier": 2

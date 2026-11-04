@@ -80,6 +80,7 @@
     ".lua"
   ],
   "family": "lua",
+  "frontend": "cardmodel.engines.frontend_text",
   "int_bits": 64,
   "metadata": {
     "version": "1.0.0"
