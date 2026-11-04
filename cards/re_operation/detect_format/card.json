@@ -12,8 +12,8 @@
     }
   ],
   "metadata": {
-    "previous_content_hash": "667b78222711ecfb1b37165ee482c591072568de532631f71fdc108ceef1258c",
-    "version": "1.1.0",
+    "previous_content_hash": "d842850415e10396492ee4f70cc14e0152d3b31f8e46ba6960c28f35f1128ed6",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "detect_format",
@@ -33,10 +33,11 @@
       "args": [
         "/bin/ls"
       ],
-      "name": "ls_is_macho",
+      "name": "ls_is_native_binary",
       "out_one_of": [
         "macho",
-        "macho_fat"
+        "macho_fat",
+        "elf"
       ]
     }
   ],

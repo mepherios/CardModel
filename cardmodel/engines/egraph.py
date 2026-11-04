@@ -142,7 +142,16 @@ class EGraph:
     def _node_sort(self, node) -> str | None:
         if node[0] in LEAVES:
             return S.leaf_sort([node[0], *json.loads(node[1])], self.var_sorts)
-        return S.result_sort(node[0], [self.sort.get(self.find(c)) for c in node[1]], self.ops)
+        got = S.result_sort(node[0], [self.sort.get(self.find(c)) for c in node[1]], self.ops)
+        width = self._literal(node[1][1]) if len(node[1]) > 1 else None
+        sub = S.refine(node[0], width, self.ops) if got is not None else None
+        return sub if sub is not None and S.base(sub) == got else got
+
+    def _literal(self, cid):
+        for n in self.nodes.get(self.find(cid), ()):
+            if n[0] == "int":
+                return json.loads(n[1])[0]
+        return None
 
     def add_node(self, node) -> int:
         node = self._canon(node)
@@ -166,7 +175,9 @@ class EGraph:
         self.parent[b] = a
         self.nodes[a] |= self.nodes.pop(b)
         sa, sb = self.sort.get(a), self.sort.pop(b, None)
-        self.sort[a] = sa if sb in (None, sa) else (sb if sa is None else None)  # a clash: unknown, so no law fires
+        # one class, two sorts proved for it: it has the more specific (an int term equal to WRAPU(x, 8) is a u8);
+        # sorts that cannot meet (int and float) make it unknown, so no law fires on it
+        self.sort[a] = S.meet(sa, sb) if sa is not None and sb is not None else (sa if sb is None else sb)
         for head, cls in self.by_head.items():
             if b in cls:
                 cls.discard(b)

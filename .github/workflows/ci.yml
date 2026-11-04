@@ -1,0 +1,80 @@
+name: CI
+
+# Every push and pull request: install cardmodel with every target language's toolchain, then run the unit
+# suite, the full verify (kernel, op x language matrix, function cards, Lean proofs), the translation check
+# and the generated-docs check. Nothing here writes to the repository.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # No background self-cycles and no self layer: CI checks the tracked cards only.
+  CARDMODEL_SELF: "0"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  python-floor:
+    # cardmodel promises Python >= 3.9 and only the standard library: import it and run the quick checks there.
+    name: Python ${{ matrix.python }} (quick)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the projects section reads each project's history (CM41)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e .
+      - run: cardmodel --help > /dev/null
+      - run: cardmodel probe
+      - run: cardmodel verify --quick
+
+  full:
+    name: Every language (verify, translate, tests)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the projects section reads each project's history (CM41)
+      - uses: ./.github/actions/toolchains
+      - name: Every codegen language is runnable
+        run: python -B tools/require_toolchains.py
+      - name: Generated docs are in sync (LAWS.md, goal floors)
+        run: cardmodel docs --check
+      - name: Verify everything
+        run: cardmodel verify
+      - name: Translate and check in every language
+        run: cardmodel translate examples/algorithms/algos.py
+      - name: Card programs
+        run: |
+          for f in examples/lang/*.card; do echo "== $f"; cardmodel run "$f"; done
+      - name: Unit tests (conformance matrix in every language)
+        working-directory: tests
+        env:
+          CARDMODEL_SLOW: "1"
+        run: python -B -m unittest
+      - name: Coverage report
+        if: always()
+        run: cardmodel cover --write "$RUNNER_TEMP/COVERAGE.md" && cat "$RUNNER_TEMP/COVERAGE.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep the verify record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-record
+          path: state/last_verify.json
+          if-no-files-found: ignore
