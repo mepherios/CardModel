@@ -56,9 +56,31 @@ else
   fi
 fi
 
-# --- report the rest ---------------------------------------------------------------------------------------
-if have node; then
-  log "node: $(node --version) (typescript needs >= v23.6)"
+# --- Node >= 23.6 for TypeScript (type stripping) ----------------------------------------------------------
+node_ok() { have node && node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>23||(a==23&&b>=6)?0:1)'; }
+if node_ok; then
+  log "node: $(node --version)"
+elif [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "x86_64" ]; then
+  # official Linux build of the latest v24, checked against the release's SHASUMS256.txt; installed under /opt
+  BASE="https://nodejs.org/dist/latest-v24.x"
+  TMP="$(mktemp -d)"
+  if curl -sSfL "$BASE/SHASUMS256.txt" -o "$TMP/SHASUMS256.txt"; then
+    FILE="$(grep -oE 'node-v[0-9.]+-linux-x64\.tar\.xz' "$TMP/SHASUMS256.txt" | head -1)"
+    if [ -n "$FILE" ] && curl -sSfL "$BASE/$FILE" -o "$TMP/$FILE" \
+       && (cd "$TMP" && grep " $FILE\$" SHASUMS256.txt | sha256sum -c - >/dev/null); then
+      $SUDO tar -xJf "$TMP/$FILE" -C /opt && NODE_BIN="/opt/${FILE%.tar.xz}/bin"
+      log "node: installed $("$NODE_BIN/node" --version) in $NODE_BIN"
+      [ -n "${GITHUB_PATH:-}" ] && echo "$NODE_BIN" >> "$GITHUB_PATH"
+      grep -qs "$NODE_BIN" "$HOME/.bashrc" || echo "export PATH=\"$NODE_BIN:\$PATH\"" >> "$HOME/.bashrc"
+    else
+      log "node: download or checksum failed"
+    fi
+  fi
+  rm -rf "$TMP"
+else
+  log "node: $(node --version 2>/dev/null || echo none) (typescript needs >= v23.6)"
 fi
+
+# --- report the rest ---------------------------------------------------------------------------------------
 have swiftc && log "swift: $(swiftc --version 2>&1 | head -1)" || log "swift: not installed (swiftc)"
 exit 0
