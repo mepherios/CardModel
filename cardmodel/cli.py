@@ -11,6 +11,7 @@
   cardmodel learn [PATH] [--promote]    observe -> propose -> verify -> promote (cards with evidence)
   cardmodel optimize [--card Q] [--apply]  measure real costs -> metric cards -> cost anchors
   cardmodel translate FILE [--to ...]      lift (any readable language, --from to force) + emit + verify per language
+  cardmodel lift-sweep PATH [--top N]     how much of a source tree lifts, and the first reason the rest does not
   cardmodel improve PATH [--out DIR]       make a module/package faster: verified algorithm substitutions and
                                            rewrites; effectful code byte-identical; native forms for every language
   cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
