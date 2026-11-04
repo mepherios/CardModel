@@ -236,9 +236,9 @@ passes. Phases A and B start now; C and D can overlap B once the IR types land.
 * B5. Methods: lift classes as records plus functions over a receiver; `self.x` reads and writes.
 * B6. The sweep as a tool and a goal: `cardmodel lift-sweep PATH` prints the rate and the reason histogram, and the
   self-run measures it on the stdlib and on the user's corpora. *Tool done (engines/sweep.py, project lift with
-  methods and calls across modules); measured 2026-11-04 on the Python 3.13 stdlib without tests: 97 of 11,999
-  top-level functions one file at a time, 100 with calls across modules, 283 of 49,743 with methods. 23,968 methods
-  stop at `self.x` (B5), 5,673 functions at defaults/varargs (B1). The self-run goal is still to wire.*
+  methods and calls across modules); measured 2026-11-04 on the Python 3.13 stdlib without tests: 110 of 11,999
+  top-level functions one file at a time, 113 with calls across modules, 296 of 49,743 with methods. 23,968 methods
+  stop at `self.x` (B5), 5,495 at non-scalar annotations, 4,611 at defaults/varargs (B1). The self-run goal is still to wire.*
 
 ### Phase C: any language in
 
