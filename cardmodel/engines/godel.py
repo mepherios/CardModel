@@ -848,11 +848,17 @@ def check(ctx) -> dict:
                 probs.append(f"{c.qualified}: atoms not in the ledger: {absent[:4]}")
     total = done + len(missing)
     sets = Counter(e["set"] for e in entries)
-    from . import numbering
+    from . import dimensions, numbering
     nb = numbering.check(ctx)                      # GM-4 is a proposal: reported here, not yet a failure
+    laws = {}
+    if dimensions.set_card(ctx) is not None:       # a domain that joined as a set: its laws must be consistent
+        dims = dimensions.check(ctx)
+        probs += dims["problems"]
+        laws = {q: r["consistent"] for q, r in dims["laws"].items()}
     return {"status": "fail" if probs else ("pass" if entries else "vacuous"), "problems": probs,
             "numberings": {s: v["status"] for s, v in nb["sets"].items()}, "numbering_problems": nb["problems"],
             "atoms": len(entries), "basis": basis_version(entries), "events": len(evs), "sets": dict(sets),
+            "physics_laws": laws,
             "coverage": round(done / total, 4) if total else None, "missing": missing[:20]}
 
 

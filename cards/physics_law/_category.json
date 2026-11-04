@@ -1,0 +1,6 @@
+{
+  "defined_by": "cardmodel",
+  "description": "Physical laws as equations between terms over variables with stated dimensions; consistent when both sides have one dimension (engines/dimensions.py, the Gödel set physics).",
+  "name": "physics_law",
+  "tier": 0
+}

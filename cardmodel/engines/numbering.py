@@ -163,14 +163,21 @@ class Numbering:
         heads = sorted(a for a in self.arity if not a.startswith("effect/") or self.name == "machines")
         terms = [a for a in heads if a.startswith("op/") and self.arity[a] <= 3]
         if self.name != "machines":
-            heads = [a for a in heads if a.startswith("op/")]
+            heads = [a for a in heads if a.startswith("op/") or self.arity[a] == 0]
+
+        own = [a for a in heads if self.by_atom[a]["set"] == self.name]
+        # the set's constants, as its card lists them (a base quantity of the physics set): atoms of arity 0
+        # that are leaves of its objects
+        declared = set((self.card or {}).get("constants") or [])
+        consts = [a for a in own if a in declared and self.arity.get(a) == 0]
 
         def term(d):
             if d == 0 or rng.random() < 0.3 or not terms:
+                if consts and rng.random() < 0.4:
+                    return [rng.choice(consts)]
                 return ["var", rng.choice("abc")] if rng.random() < 0.5 else ["int", rng.randint(-40, 40)]
             a = rng.choice(terms)
             return [a, *[term(d - 1) for _ in range(self.arity[a])]]
-        own = [a for a in heads if self.by_atom[a]["set"] == self.name]
         if self.name == "machines":
             eff = rng.choice(own)
             guard = [self.true] if rng.random() < 0.6 else term(1)
@@ -275,7 +282,7 @@ def check(ctx, seed: int = 0) -> dict:
         if not (c.get("numbering") or {}).get("conditions"):
             problems.append(f"{c.qualified}: states no admissible numbering (GM-4)")
             continue
-        r = check_set(ctx, c.name, seed)
+        r = check_set(ctx, c.name, seed, samples=int((c.get("numbering") or {}).get("samples") or 120))
         sets[c.name] = r
         problems += [f"{c.qualified}: {k} fails: {v.get('at')}" for k, v in r["conditions"].items()
                      if v["status"] == "fail"]
