@@ -3,7 +3,9 @@
 Written 2026-11-04, from the code on `main` (8bfe8af) and measurements taken in the Linux cloud container that
 day. This is the reference the parallel workstreams align with. The dated record of what shipped stays in the
 root [ROADMAP.md](../ROADMAP.md); goals live as goal cards and in [GOALS.md](../GOALS.md); the mathematical target
-is [MATH_CORE.md](MATH_CORE.md). When this plan and a goal card disagree, the goal card is the measurement and this
+is [MATH_CORE.md](MATH_CORE.md); how big it has to get (up to a whole distribution such as Ubuntu with its drivers),
+with multi-core and distributed work, the math spectrum and the interaction model, is [SCALING.md](SCALING.md), a
+living plan every workstream checks its design against. When this plan and a goal card disagree, the goal card is the measurement and this
 plan is updated.
 
 ## 0. The goal, in the user's words
@@ -133,6 +135,9 @@ this plan adds. They get their `G_` numbers from the registry when adopted.
 | self-run in the cloud | days since the last scheduled cloud cycle | never | ≤ 1 |
 | adoption through PRs | self-run findings that reach main as a PR with evidence | 0 | every adoption |
 | optimization coverage | fraction of lifted functions with a measured cheapest form and target | not measured | 0.9 |
+| self-contained on the device | external programs a shipped program starts or needs at run time (service, interpreter, compiler, browser, git) | Arcade: 5 (§5 Phase I audit) | 0 |
+| lifted purity of shipped programs | share of executed instructions that run as lifted, natively compiled card code, not an interpreter | per cartridge app (Pokemon Crystal 1.0); the Game Boy Player 0 | 1.0 for every shipped program |
+| target devices | platform cards on which the whole program runs with no host toolchain | 0 (macOS needs cc and swiftc) | macOS, iPadOS/iOS, Linux, Windows |
 
 ## 4. Gaps, ranked by how much real code they block
 
@@ -271,6 +276,86 @@ passes. Phases A and B start now; C and D can overlap B once the IR types land.
 * G2. Homomorphism cards: language → IR and IR → language as maps with the product law checked and the GCD
   condition computed; the translation gap as the residual factor.
 * G3. The physics set: SI base units as primes, dimensional analysis as a witness.
+
+### Phase H (later): the math language designs and optimizes languages
+
+Recorded 2026-11-04, to be done after the phases above. In the user's words: *the math language should also be able
+to design and optimize any card model language, so language → math/systems logic system → optimization → output
+language / language package / binary, depending on the desired output.*
+
+So far, languages are inputs and outputs that the model translates between. The math language
+([MATH_LANGUAGE.md](MATH_LANGUAGE.md)) already reads equations in and emits every codegen language. In this phase it
+becomes, together with the card language and the core terms of MATH_CORE §4, the hub that a language is *made* from:
+
+* H1. **A language as a math object.** A language card's grammar, types, operational semantics and codegen are
+  described as terms in the math language, with laws (type soundness, determinism, evaluation order) as theorem
+  cards. The 23 existing language cards are the first corpus.
+* H2. **The pipeline as one path.** Source language → core terms (math / systems logic) → optimization (e-graph,
+  measured costs, Phase E) → the output the user asks for: source in another language, a **language package**
+  (a language's own toolchain artifacts: a frontend, codegen, runtime library and tests generated from its card),
+  or a **binary** for a platform card (Phase F).
+* H3. **Designing a language.** Given goals (target platform, performance, safety properties, the domain's
+  operations), the model proposes a language card: syntax, types and ops chosen from the math, with its laws
+  witnessed and its codegen conformance-checked like any other language card.
+* H4. **Optimizing a language.** Measure an existing language card (emitted code cost, lift rate, gaps per
+  construct) and propose changes to its ops, types or lowering, each with a certificate that existing programs
+  keep their meaning.
+* H5. **Self-application.** The card language itself is optimized by the same pipeline, and the change reaches
+  main as a PR with its evidence (§7).
+
+Precondition: Phases B–E (a wide IR, frontends, the pair matrix and optimization from truth), since a generated
+language is only as good as the core it is built from.
+
+### Phase I: everything runs natively on the target device
+
+Recorded 2026-11-04. In the user's words: *no program should ever rely on a program outside the device. If the
+arcade runs one of the games, it can't run a secondary program to run it: it must run the whole program and the
+software it requires natively, purely in cards, all contained in the one full card model structure. The arcade
+runs things in the emulator, which keeps it from running on an iPad, since the whole program doesn't run
+natively.*
+
+The goal: a program the model ships is **one native binary for its target device**. Its logic, data, the machine it
+needs and its shell are all compiled from cards. At run time it starts no helper process, compiles nothing, needs
+no service on localhost, no interpreter of another CPU, no browser and no Python. The only thing outside the cards
+is the device's own operating system, reached through the platform card's boundary cards (CM21, CM34). An iPad
+allows exactly this, and nothing more, so the iPad is the test.
+
+**Audit: what a shipped program depends on today** (from `cards/platform/macos`, `cards/app/arcade`,
+`cardmodel/arcade/`, docs/ARCADE.md):
+
+| dependency | used by | when | why an iPad can't use it | what replaces it |
+|---|---|---|---|---|
+| the Python `cardmodel arcade serve` service on 127.0.0.1:8770 | the launcher (catalog, builds, depots, pages) | run time | no Python, no background local server | the launcher's logic in the card language, compiled into the app; the catalogue and depots as card data shipped with it or fetched over HTTPS |
+| the launcher's pages run by WebKit (`WKWebView`, HTML/JS in `cards/app/arcade/ui`) | the launcher UI | run time | WebKit exists, but the UI is code the cards don't describe | UI as cards drawn by the same software renderer the games use (or a declared boundary card for native widgets) |
+| hand-written Swift shells (`GameShell.swift`, `Launcher.swift`) with AppKit, AVFoundation, GameController | every game and the launcher | build + run | AppKit is macOS only | a platform card per OS whose shell is generated from boundary cards (window, audio, input, files, clock), with UIKit on iPadOS |
+| the Game Boy Player's interpreter of the LR35902 cards | every cartridge played from the library | run time | it runs (it's compiled cards), but it's emulation, not the program itself | ahead-of-time lifting of the whole cartridge (`arcade app`, already at 100 % for Pokemon Crystal) for every shipped cartridge, with the interpreter kept only as the witness |
+| `relift` after quitting (background build of what the interpreter ran) | cartridge apps | run time | needs `cc` on the device; iOS forbids generating code | all lifting before shipping, on the build host; a cartridge isn't shipped until a walk shows purity 1.0 |
+| the C compiler (`cc`/`clang`, the C card → `game.dylib`) | every build | build time | not on the device | the model's own backend: IR → ARM64/x86-64 through ISA cards, plus a Mach-O/ELF writer as cards (Phase F2) |
+| `swiftc`, `iconutil`, the linker's ad hoc signing | every macOS build | build time | not on the device | the generated shell (above); icons and bundles written by the model; signing stays the platform's own step |
+| `git` and worktrees (branch versions, Work tab) | the launcher | run time | no git on the device | branch builds made on the build host and served as depots like any version |
+| the browser page of `cardmodel emu` | the emulator front end | run time | a second program | the arcade's native player |
+| Python 3 running `cardmodel` itself | the model | build + run of the model | no Python | self-hosting: the kernel's own logic as cards, emitted to a native binary (I6) |
+
+Toolchains for verification (go, rustc, javac, node, ruby, lua, lean, z3, clang for the Unreal scan) are
+different: they're the witnesses that check an emission against a real compiler, not part of any shipped program,
+and they stay optional (CM01, probed and never required).
+
+**Milestones:**
+
+* I1. A platform card for iPadOS/iOS (UIKit shell, touch and controllers, the app sandbox's files), checked by
+  building Vector Duel for it. (An iPhone/iPad platform is being built in its own session, docs/ARCADE.md §7.)
+* I2. Shells generated from boundary cards instead of hand-written Swift, one per platform card.
+* I3. The launcher without the service: catalogue, install, verify and play in the card language inside the app;
+  the service remains only as the build host's publisher.
+* I4. Ship only fully lifted programs: every cartridge app reaches purity 1.0 on a walk its profile didn't see
+  before it is packed; no `relift` on the device.
+* I5. The model's own native backend (IR → machine code → a loadable binary), so a build needs no `cc`; the C card
+  stays as a witness.
+* I6. Self-hosting: the kernel, store and runtime parts of CardModel itself expressed in cards and emitted, so the
+  model runs on a device with no Python.
+
+Honest limit: the device's OS (window system, audio, input, file system, network) is always outside the cards.
+It's reached only through boundary cards, which is what "natively" can mean on a real device.
 
 ## 6. Workstreams running now and what each owns
 

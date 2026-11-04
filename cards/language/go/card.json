@@ -105,6 +105,33 @@
     ".go"
   ],
   "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "arg_cast": "{type}({v})",
+    "ensure": [
+      [
+        "^package\\s",
+        "package cardmodel\n"
+      ]
+    ],
+    "main": "func main() {{\n{calls}}}\n\nvar _ = cm_fmt.Sprint\n",
+    "prelude": "",
+    "print": {
+      "bool": "cm_fmt.Printf(\"b:%v\\n\", {e})",
+      "float": "cm_fmt.Printf(\"f:%v\\n\", {e})",
+      "int": "cm_fmt.Printf(\"i:%d\\n\", {e})"
+    },
+    "replace": [
+      [
+        "^package\\s+\\w+",
+        "package main\n\nimport cm_fmt \"fmt\"\n"
+      ],
+      [
+        "\\bfunc\\s+main\\s*\\(",
+        "func cm_user_main("
+      ]
+    ]
+  },
   "int_bits": 64,
   "metadata": {
     "version": "1.0.0"

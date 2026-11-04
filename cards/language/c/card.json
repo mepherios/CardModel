@@ -200,6 +200,15 @@
     ".h"
   ],
   "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "replace": [
+      [
+        "\\bint\\s+main\\s*\\(",
+        "int cm_user_main("
+      ]
+    ]
+  },
   "int_bits": 64,
   "metadata": {
     "previous_content_hash": "f8d0a742dc57a56c17bc5b0e23bc763cf07c117f36d1bde418d99d6bd0cf4515",

@@ -12,6 +12,7 @@
   "extensions": [
     ".zig"
   ],
+  "frontend": "cardmodel.engines.frontend_text",
   "metadata": {
     "version": "1.0.0"
   },

@@ -103,6 +103,10 @@
     ".swift"
   ],
   "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "arg_cast": "{type}({v})"
+  },
   "int_bits": 64,
   "metadata": {
     "version": "1.0.0"

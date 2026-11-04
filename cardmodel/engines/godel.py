@@ -361,7 +361,18 @@ def structural(t, ops, index, max_digits: int | None = STRUCTURAL_MAX_DIGITS) ->
     n = 1
     for i, code in enumerate(toks, start=1):
         n *= nth_prime(i) ** code
-    return n, varnames, len(str(n))
+    return n, varnames, decimal_digits(n)
+
+
+def decimal_digits(n: int) -> int:
+    """len(str(n)) for n >= 1, without str(): CPython refuses to print integers past 4300 digits, and an atom with a
+    late ledger index (3k+1 for k in the thousands) makes even a small term's number that long."""
+    k = max(1, int(n.bit_length() * 0.30102999566398120))
+    while 10 ** k <= n:
+        k += 1
+    while k > 1 and 10 ** (k - 1) > n:
+        k -= 1
+    return k
 
 
 def decode(n: int, ops, entries: list[dict], varnames: list[str]):

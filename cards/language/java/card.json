@@ -95,6 +95,28 @@
     ".java"
   ],
   "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "arg_cast": "(({type})({v}))",
+    "hoist": "^\\s*import\\s",
+    "order": "main_first",
+    "prelude": "public class Main {\n",
+    "qualify": "class\\s+(\\w+)",
+    "replace": [
+      [
+        "^\\s*package\\s+[\\w.]+\\s*;",
+        ""
+      ],
+      [
+        "\\bpublic\\s+(final\\s+)?class\\b",
+        "class"
+      ],
+      [
+        "\\bstatic\\s+void\\s+main\\s*\\(",
+        "static void cm_user_main("
+      ]
+    ]
+  },
   "int_bits": 64,
   "metadata": {
     "version": "1.0.0"

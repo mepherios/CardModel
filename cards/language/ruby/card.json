@@ -89,6 +89,7 @@
     ".rb"
   ],
   "family": "ruby",
+  "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
     "version": "1.0.0"

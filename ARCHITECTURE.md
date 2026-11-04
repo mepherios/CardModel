@@ -21,6 +21,10 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── probes.py           capability probes as data (rea-cards lesson)
 │   │   ├── ir.py               the card IR: functions as trees of op cards + reference interpreter
 │   │   ├── frontend_python.py  Python -> IR (precise unsupported-construct reports)
+│   │   ├── frontend_text.py    C, C++, C#, Java, Kotlin, Go, Rust, Swift, Zig, JS, TS, PHP, Ruby, Lua, Julia -> IR
+│   │   │                       (one tokenizer + Pratt parser, per-language Dialect; op templates read backwards)
+│   │   ├── frontends.py        any language in: dispatch on the card's frontend; witness each lift by running the
+│   │   │                       original source through its own toolchain (docs/FRONTENDS.md)
 │   │   ├── codegen.py          IR -> any language card (syntax as data; no per-language code)
 │   │   ├── runners.py          compile/run with cache and timeouts; call protocol (python, node)
 │   │   ├── conformance.py      op x language matrix through real toolchains
@@ -139,7 +143,7 @@ The bump records `previous_content_hash`.
               │                                                                                           │
 source tree ──► observe ──► observation card (ground truth) ──► learn ──► proposal/ ──(evidence)──► promoted cards
                   │                                               │
-                  └─► frontend_python ──► IR (op trees) ──► codegen(language card) ──► runners ──► witness
+                  └─► frontends ────────► IR (op trees) ──► codegen(language card) ──► runners ──► witness
                                                 │                                                    │
                                      interpreter (op.ir.eval) ──────── reference ───────────────────┘
 rewrite/search ◄── op costs, rule cards       optimize ──► metric cards ──► cheapest(cost="measured")
