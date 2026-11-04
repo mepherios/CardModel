@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import re
 
-from .ir import LEAVES
+from .ir import LEAVES, elem_type
 
 
 class EmitGap(Exception):
@@ -112,6 +112,15 @@ class Emitter:
         return t.format(**kw)
 
     def lit(self, kind: str, v) -> str:
+        if elem_type(kind) is not None:
+            t = (self.cg.get("list_lit") or {}).get(kind)
+            if t is None:
+                raise EmitGap(f"{self.lang_name}: no list literal for {kind}")
+            items = [self.lit(elem_type(kind), x) for x in v]
+            # raw: the bare values, comma-separated (for a target that parses a long literal from one string)
+            raw = ",".join(repr(float(x)) if elem_type(kind) == "float" else str(int(x)) for x in v)
+            return t.format(items=", ".join(items), items_z=", ".join([*items, self.lit(elem_type(kind), 0)]),
+                            n=len(items), n_lit=self.lit("int", len(items)), raw=raw)
         lits = self.cg.get("lit") or {}
         if kind == "bool":
             return lits.get("true" if v else "false", "true" if v else "false")
@@ -187,7 +196,7 @@ class Emitter:
         return self.cg.get("var", "{name}").format(name=self.ident(name))
 
     # -- expressions -----------------------------------------------------------
-    def op_template(self, op: str, arg_types: list[str]) -> str:
+    def op_template(self, op: str, arg_types: list[str], rtype: str | None = None) -> str:
         spec = self.ops.get(op)
         emit = (spec.card.get("emit") if spec else None) or {}
         if op in ("AND", "OR", "NOT", "IF_EXPR") and not emit:
@@ -197,7 +206,7 @@ class Emitter:
             if t is None:
                 continue
             if isinstance(t, dict):
-                t = t.get(arg_types[0] if arg_types else "int") or t.get("any")
+                t = (rtype and t.get("->" + rtype)) or t.get(arg_types[0] if arg_types else "int") or t.get("any")
                 if t is None:
                     continue
             if t == "UNSUPPORTED":
@@ -230,7 +239,7 @@ class Emitter:
             subs = [self.expr(a, types)[0] for a in e[4:]]
             return e[2].format(*subs), e[3]
         if head == "CALL":
-            args = [self.expr(a, types)[0] for a in e[2:]]
+            args = [self.arg(*self.expr(a, types)) for a in e[2:]]
             sep = self.cg.get("call_sep", ", ")
             text = self.cg.get("call", "{name}({args})").format(name=self.ident(e[1]), args=sep.join(args))
             return text, self.fn_returns[e[1]]
@@ -246,7 +255,7 @@ class Emitter:
         subs = [self.expr(a, types) for a in e[1:]]
         arg_types = [t for _, t in subs]
         rtype = self.result_type(head, arg_types)
-        tpl = self.op_template(head, arg_types)
+        tpl = self.op_template(head, arg_types, rtype)
         fields = {"type": self.T(rtype), "tc": (arg_types[0][0] if arg_types else "i")}
         for i, (code, t) in enumerate(subs):
             fields[f"t{i}"] = self.T(t)
@@ -255,6 +264,16 @@ class Emitter:
         except (IndexError, KeyError) as exc:
             raise EmitGap(f"{self.lang_name}: bad template for {head}: {exc}") from exc
         return text, rtype
+
+    def arg(self, text: str, t: str) -> str:
+        """A call argument: a list passes through the card's ``list_arg`` template (Rust borrows: ``&{e}``)."""
+        if elem_type(t) is not None and self.cg.get("list_arg"):
+            return self.cg["list_arg"].format(e=text)
+        return text
+
+    def PT(self, ir_type: str) -> str:
+        """A parameter's type: the card's ``param_types`` entry (Rust: ``&[f64]``) or the plain type."""
+        return (self.cg.get("param_types") or {}).get(ir_type) or self.T(ir_type)
 
     def result_type(self, op: str, arg_types: list[str]) -> str:
         if op in ("AND", "OR", "NOT"):
@@ -295,6 +314,16 @@ class Emitter:
             elif k == "do":
                 v, _ = self.expr(s["value"], types)
                 out.append(ind + self.tmpl("do", value=v))
+            elif k == "set":
+                lt = types.get(s["target"])
+                t = self.cg.get("set")
+                if isinstance(t, dict):
+                    t = t.get(lt) or t.get("any")
+                if t is None or elem_type(lt or "") is None:
+                    raise EmitGap(f"{self.lang_name}: no set template for {lt}")
+                idx, _ = self.expr(s["index"], types)
+                v, _ = self.expr(s["value"], types)
+                out.append(ind + t.format(name=self.var(s["target"]), idx=idx, value=v))
             elif k == "switch":
                 out += self.switch(s, types, depth, loop)
             elif k == "if":
@@ -430,7 +459,7 @@ class Emitter:
         if not body_lines and self.cg.get("empty"):
             lines.append(ind + self.cg["empty"].format())
         sep = self.cg.get("param_sep", ", ")
-        params = sep.join(self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
+        params = sep.join(self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.PT(p["type"]))
                           for p in fn["params"])
         body = "\n".join(lines) + "\n"
         key = "func_export" if fn.get("export") and "func_export" in self.cg else "func"
@@ -466,7 +495,7 @@ class Emitter:
                 text = self.lit(p["type"], a)
                 if p["type"] in opaque:
                     text = opaque[p["type"]].format(v=text)
-                parts.append(text)
+                parts.append(self.arg(text, p["type"]))
             text = call_tpl.format(name=self.ident(name), args=sep.join(parts))
             rt = fn["returns"]
             if mode == "test":
@@ -505,7 +534,7 @@ class Emitter:
                 continue
             key = "prototype_export" if f.get("export") and "prototype_export" in self.cg else "prototype"
             out.append(self.tmpl(key, name=self.ident(f["name"]), ret=self.T(f["returns"]), params=sep0.join(
-                self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.T(p["type"]))
+                self.cg.get("param", "{type} {name}").format(name=self.var(p["name"]), type=self.PT(p["type"]))
                 for p in f["params"])) + "\n")
         return "".join(out) + "\n"
 

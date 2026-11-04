@@ -1,0 +1,120 @@
+name: Self-optimize
+
+# The model runs itself in the cloud (docs/AUTONOMY.md, CM38): one full self cycle with every toolchain
+# installed (capabilities, integrity, verify, learning, laws, algebra, arena, law witnesses, measurements,
+# goals), then what it learned is adopted into cards/ and proposed as a pull request. The PR is only opened
+# when cards/ changed and the adopted cards still pass verify and the unit suite. One rolling branch, so a
+# newer cycle updates the open PR instead of opening another.
+#
+# Needs: Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
+# PRs opened with the default GITHUB_TOKEN do not start CI; add a SELF_OPTIMIZE_TOKEN secret (a fine-grained
+# token with contents and pull-requests write) to have CI run on them.
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # daily, 03:17 UTC
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Run every step, due or not
+        type: boolean
+        default: true
+
+concurrency:
+  group: self-optimize
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  cycle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the projects section reads each project's history (CM41)
+      - uses: ./.github/actions/toolchains
+      - name: Every codegen language is runnable
+        run: python -B tools/require_toolchains.py
+
+      - name: One self cycle
+        run: |
+          cardmodel self auto off            # no detached background cycles on the runner
+          cardmodel self run ${{ (github.event_name == 'schedule' || inputs.force) && '--force' || '' }}
+          cardmodel self report | tee "$RUNNER_TEMP/self-report.md"
+
+      - name: Adopt what the cycle learned
+        run: cardmodel self adopt
+
+      - name: Regenerate the generated docs
+        env:
+          CARDMODEL_SELF: "0"
+        run: |
+          cardmodel docs
+          cardmodel cover --write COVERAGE.md
+          cardmodel self report --write SELF.md || true
+
+      - name: Did the cards change?
+        id: diff
+        run: |
+          git status --porcelain -- cards/
+          if [ -n "$(git status --porcelain -- cards/)" ]; then echo "changed=true" >> "$GITHUB_OUTPUT"; else echo "changed=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: The adopted cards still verify
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          CARDMODEL_SELF: "0"
+        run: |
+          cardmodel verify
+          cardmodel docs --check
+          cd tests && python -B -m unittest
+
+      - name: Body of the pull request
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          {
+            echo "The scheduled self cycle learned and verified new cards. They pass \`cardmodel verify\`,"
+            echo "\`cardmodel docs --check\` and the unit suite on a runner with every toolchain installed."
+            echo
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo '<details><summary>Self report (plan, flaws, weaknesses, goals)</summary>'
+            echo
+            head -c 60000 "$RUNNER_TEMP/self-report.md"
+            echo
+            echo '</details>'
+          } > "$RUNNER_TEMP/pr-body.md"
+
+      - name: Open or update the pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.SELF_OPTIMIZE_TOKEN || github.token }}
+          branch: self-optimize/cycle
+          delete-branch: true
+          add-paths: |
+            cards/**
+            LAWS.md
+            COVERAGE.md
+            SELF.md
+          commit-message: "Self cycle: adopt learned cards (run ${{ github.run_id }})"
+          title: "Self cycle: adopt learned and verified cards"
+          body-path: ${{ runner.temp }}/pr-body.md
+          labels: self-optimize
+
+      - name: Keep the cycle's record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-cycle-${{ github.run_id }}
+          path: |
+            state/self/last.json
+            state/self/SELF.md
+            state/last_verify.json
+          if-no-files-found: ignore

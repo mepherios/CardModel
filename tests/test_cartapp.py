@@ -10,12 +10,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from helpers import model_ctx
+from helpers import MAC_SHELL, model_ctx
 
 from cardmodel.arcade import build as B
 from cardmodel.arcade import cartapp as C
 from cardmodel.arcade import system as S
-from cardmodel.engines import probes
 from cardmodel.machine import asm, gb as G
 
 ROUTINE = bytes([0x3E, 0x28, 0x3D, 0x20, 0xFD, 0xC9])    # LD A,40; .w: DEC A; JR NZ,.w; RET (an OAM-DMA-like wait)
@@ -41,7 +40,7 @@ def hram_cart(ctx, title: str = "HRAMCODE") -> bytes:
     return asm.rom(ctx.store, prog, title=title, cart_type=0x00, extra={0x40: vblank})
 
 
-@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+@unittest.skipUnless(MAC_SHELL, "needs swiftc on macOS (the shells use AppKit)")
 class CartridgeApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

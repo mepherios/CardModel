@@ -123,6 +123,23 @@ def _conv(n, pv):
     raise ParseError(f"unsupported syntax {type(n).__name__}")
 
 
+def resolve_ops(tree, ops):
+    """Calls of named functions that are op cards become those ops (FOUNDATIONS.md rule A1): ``gcd(a, b)`` is
+    ``["GCD", a, b]`` when an op card GCD of arity 2 exists, as in the math language. ``ops`` is ``ir.op_table``;
+    other calls stay ``FN``."""
+    if not isinstance(tree, list) or not tree:
+        return tree
+    if tree[0] == "FN" and len(tree) >= 2 and isinstance(tree[1], str):
+        args = [resolve_ops(a, ops) for a in tree[2:]]
+        spec = (ops or {}).get(tree[1].upper())
+        if spec is not None and getattr(spec, "fn", None) is not None and spec.arity == len(args):
+            return [tree[1].upper(), *args]
+        return ["FN", tree[1], *args]
+    if tree[0] in ("var", "int", "float", "bool", "const"):
+        return tree
+    return [tree[0], *[resolve_ops(a, ops) for a in tree[1:]]]
+
+
 def variables(tree) -> set[str]:
     out: set[str] = set()
     if isinstance(tree, list):

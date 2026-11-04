@@ -202,3 +202,40 @@ class EngineCards(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TargetModel(unittest.TestCase):
+    def test_ieee_evaluator_is_the_model_on_its_domain(self):
+        # FOUNDATIONS.md D14 and rule A2: the witness's IEEE/C evaluator is a target model. On every op card's own
+        # domain it must give the op card's value; it may only extend the model where the model is undefined
+        # (a float divided by zero is ±inf there, an error in the model).
+        import math
+        import random
+        ctx = model_ctx()
+        rng = random.Random(SEED)
+        compared = 0
+        for name, spec in sorted(ctx.ops.items()):
+            if spec.fn is None:
+                continue
+            for dom in ((spec.card.get("ir") or {}).get("domain") or {}).values():
+                if not all("int" in g or "float" in g for g in dom):
+                    continue
+                for _ in range(30):
+                    args = [rng.randint(*g["int"]) if "int" in g else rng.uniform(*g["float"]) for g in dom]
+                    try:
+                        want = spec.fn(*args)
+                    except (ArithmeticError, ValueError):
+                        continue
+                    try:
+                        got = W.evaluate([name, *[["int", a] if isinstance(a, int) else ["float", a] for a in args]], {})
+                    except W.Undefined:
+                        continue
+                    except ValueError as exc:
+                        if str(exc).startswith("no evaluation for"):
+                            break                   # an op the engine's terms never use: not a disagreement
+                        raise
+                    nan = isinstance(got, float) and isinstance(want, float) and math.isnan(got) and math.isnan(want)
+                    self.assertTrue(got == want or nan, (name, args, got, want, seed_note(self)))
+                    compared += 1
+        self.assertGreater(compared, 1000)
+        self.assertEqual(W.evaluate(["DIV", ["float", 1.0], ["float", 0.0]], {}), math.inf)

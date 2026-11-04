@@ -17,7 +17,9 @@
       "print": {
         "bool": "System.out.println(\"b:\" + ({e}));",
         "float": "System.out.println(\"f:\" + Double.toString({e}));",
-        "int": "System.out.println(\"i:\" + ({e}));"
+        "int": "System.out.println(\"i:\" + ({e}));",
+        "list[float]": "cm_lf_print({e});",
+        "list[int]": "cm_li_print({e});"
       },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
@@ -28,6 +30,12 @@
     "helpers": {
       "cm_gcd": "    static long cm_gcd(long a, long b) { a = Math.abs(a); b = Math.abs(b); while (b != 0) { long t = a % b; a = b; b = t; } return a; }",
       "cm_ipow": "    static long cm_ipow(long a, long b) { long r = 1; while (b > 0) { if ((b & 1) == 1) r *= a; b >>= 1; if (b > 0) a *= a; } return r; }",
+      "cm_lf_new": "    static double[] cm_lf_new(long n, double v) { if (n < 0) throw new IllegalArgumentException(\"negative length\"); double[] r = new double[(int) n]; java.util.Arrays.fill(r, v); return r; }",
+      "cm_lf_parse": "    static double[] cm_lf_parse(String s) { if (s.isEmpty()) return new double[0]; String[] p = s.split(\",\"); double[] r = new double[p.length]; for (int i = 0; i < p.length; i++) r[i] = Double.parseDouble(p[i]); return r; }",
+      "cm_lf_print": "    static void cm_lf_print(double[] xs) { System.out.println(\"l:\" + xs.length); for (double v : xs) System.out.println(\"f:\" + Double.toString(v)); }",
+      "cm_li_new": "    static long[] cm_li_new(long n, long v) { if (n < 0) throw new IllegalArgumentException(\"negative length\"); long[] r = new long[(int) n]; java.util.Arrays.fill(r, v); return r; }",
+      "cm_li_parse": "    static long[] cm_li_parse(String s) { if (s.isEmpty()) return new long[0]; String[] p = s.split(\",\"); long[] r = new long[p.length]; for (int i = 0; i < p.length; i++) r[i] = Long.parseLong(p[i]); return r; }",
+      "cm_li_print": "    static void cm_li_print(long[] xs) { System.out.println(\"l:\" + xs.length); for (long v : xs) System.out.println(\"i:\" + v); }",
       "cm_max_f": "    static double cm_max_f(double a, double b) { return b > a ? b : a; }",
       "cm_min_f": "    static double cm_min_f(double a, double b) { return b < a ? b : a; }",
       "cm_powmod": "    static long cm_powmod(long a, long b, long m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } long r = Math.floorMod(1L, m); a = Math.floorMod(a, m); while (b > 0) { if ((b & 1) == 1) r = Math.floorMod(r * a, m); a = Math.floorMod(a * a, m); b >>= 1; } return r; }",
@@ -38,6 +46,10 @@
     "indent": "    ",
     "lib_epilogue": "}\n",
     "lib_prelude": "@imports@public class CardModule {\n",
+    "list_lit": {
+      "list[float]": "cm_lf_parse(\"{raw}\")",
+      "list[int]": "cm_li_parse(\"{raw}\")"
+    },
     "lit": {
       "false": "false",
       "float": "({v})",
@@ -47,17 +59,22 @@
     "param": "{type} {name}",
     "prelude": "@imports@public class Main {\n",
     "return": "return {value};",
+    "set": "{name}[(int) ({idx})] = {value};",
     "style": "braces",
     "types": {
       "bool": "boolean",
       "float": "double",
-      "int": "long"
+      "int": "long",
+      "list[float]": "double[]",
+      "list[int]": "long[]"
     },
     "while": "while ({cond}) {{",
     "zero": {
       "bool": "false",
       "float": "0.0",
-      "int": "0L"
+      "int": "0L",
+      "list[float]": "new double[0]",
+      "list[int]": "new long[0]"
     }
   },
   "comments": {

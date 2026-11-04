@@ -8,12 +8,11 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from helpers import model_ctx
+from helpers import MAC_SHELL, model_ctx
 
 from cardmodel.arcade import build as B
 from cardmodel.arcade import library as L
 from cardmodel.arcade import system as S
-from cardmodel.engines import probes
 from cardmodel.machine import asm, gb as G, native as N
 
 
@@ -249,7 +248,7 @@ class NoCartridgeInTheRepository(unittest.TestCase):
             self.assertEqual(p.returncode, 0, f"{rel} is not ignored by git")
 
 
-@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+@unittest.skipUnless(MAC_SHELL, "needs swiftc on macOS (the shells use AppKit)")
 class PlayerPackage(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -347,7 +346,7 @@ class PlayerPackage(unittest.TestCase):
 
 
 
-@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+@unittest.skipUnless(MAC_SHELL, "needs swiftc on macOS (the shells use AppKit)")
 class CartridgesThroughTheStore(unittest.TestCase):
     """Every cartridge the store's library lists launches through the store as Launcher.playRom launches it: the
     Game Boy Player installed from its depot, the cartridge where it is (a plain file, a zip), its title, a save

@@ -16,6 +16,10 @@ Where the shipped build is not bit-exact (or cannot be compiled), the engine's s
 the headers and from every ``.cpp`` file the term reaches (the function's own and those of what it calls across
 units), so no part of the term runs as the shipped library's NEON code.
 
+This evaluator is a target model in the sense of docs/FOUNDATIONS.md D14, not a second meaning of the IR: on every
+op card's own domain it gives the op card's value (tests/test_unreal.py pins it), and it extends the model only
+where the model is undefined, as C does (a float divided by zero is ±inf, libm's edge values).
+
 Verdict per function: ``witnessed`` (every output bit-exact on every case), ``witnessed_ulp`` (all within a few
 ulps: a C library function computed in another precision, or a NEON path the scalar term rounds differently;
 the largest distance is recorded), ``refuted`` (a counterexample: the inputs, the engine's value, the term's), or
