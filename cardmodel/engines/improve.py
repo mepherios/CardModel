@@ -372,19 +372,19 @@ def _int_typed(e, types: dict[str, str]) -> bool:
     return all(_int_typed(a, types) for a in e[1:])
 
 
-def cheapest_rewrite(e, rules, costs, egraph_rules=None) -> tuple | None:
+def cheapest_rewrite(e, rules, costs, egraph_rules=None, var_sorts=None, ops=None) -> tuple | None:
     """The cheapest equivalent of ``e`` found by the bounded rewrite search and, when ``egraph_rules`` are given,
     by equality saturation (which reaches forms the depth-3 search does not, such as Horner-like regroupings and
     chains of identities). Returns (input text, best text, best tree, steps) or None when nothing is cheaper.
     Both searches use the same op costs; ties go to the smaller term, then to the search result."""
     from .exprs import size, to_text
-    res = optimize(e, rules, costs, max_depth=3, max_nodes=300)
+    res = optimize(e, rules, costs, max_depth=3, max_nodes=300, var_sorts=var_sorts, ops=ops)
     start = expr_cost(e, costs)
     best = (res["best_cost"], size(res["best_tree"]), res["best_tree"], [s for s, _ in res["steps"][1:]])
     if egraph_rules:
         from . import egraph as E
         try:
-            got = E.canonical(e, egraph_rules, costs, max_iter=6, max_nodes=800)
+            got = E.canonical(e, egraph_rules, costs, var_sorts, ops, max_iter=6, max_nodes=800)
         except (ValueError, KeyError, TypeError):
             got = None
         if got and got["term"] is not None:
@@ -411,7 +411,7 @@ def rewrite_candidate(ctx: Ctx, fn_ir: dict, rules, costs, egraph_rules=None) ->
         if not isinstance(e, list) or not e or e[0] in ("var", "int", "float", "bool"):
             return e
         if _int_typed(e, types) and 3 <= len(repr(e)) and e[0] not in ("CALL",):
-            got = cheapest_rewrite(e, rules, costs, egraph_rules)
+            got = cheapest_rewrite(e, rules, costs, egraph_rules, types, ctx.ops)
             if got is not None:
                 changes.append((got[0], got[1], got[3]))
                 return got[2]
