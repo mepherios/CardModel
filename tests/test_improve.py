@@ -128,3 +128,28 @@ class Improve(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EGraphRewrites(unittest.TestCase):
+    """The e-graph reaches cheaper forms than the depth-3 rule search, and improve offers both as candidates."""
+
+    def test_egraph_finds_what_the_bounded_search_misses(self):
+        from cardmodel.engines.egraph import rules_from_cards
+        from cardmodel.engines.exprs import parse
+        from cardmodel.engines.improve import cheapest_rewrite
+        from cardmodel.engines.search import load_rules, op_costs
+        ctx = model_ctx()
+        rules, costs, eg = load_rules(ctx.store), op_costs(ctx.store), rules_from_cards(ctx.store)
+        e = parse("((-(-n)) * 1) + 0")
+        alone = cheapest_rewrite(e, rules, costs)
+        both = cheapest_rewrite(e, rules, costs, eg)
+        self.assertEqual(both[2], ["var", "n"])
+        self.assertNotEqual(alone[2], ["var", "n"], "the bounded search alone stops short (depth 3)")
+        self.assertTrue(any(s.startswith("egraph:") for s in both[3]))
+        self.assertIsNone(cheapest_rewrite(parse("n"), rules, costs, eg), "nothing cheaper than a variable")
+
+    def test_improve_offers_the_egraph_candidate(self):
+        src = "def f(n: int) -> int:\n    return ((-(-n)) * 1) + 0\n"
+        rep = improve.improve_source(model_ctx(), src, seed=SEED, native=False)
+        forms = {c.get("form") for c in rep["functions"]["f"].get("candidates", []) if c["kind"] == "rewrite"}
+        self.assertIn("egraph", forms, rep["functions"]["f"])
