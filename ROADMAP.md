@@ -198,6 +198,10 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 
 ## Now
 
+* 🔵 (2026-11-04) `cardmodel analyse`: the REA method on lifted programs (docs/ANALYSE.md, docs/ROADMAP.md Phase J):
+  structure facts, logic obligations, divergence laws in math, witnessed across languages, optimization levels
+  and runners; `cardmodel matrix` failures are explained by the law that fires.
+
 * 🟢 **Native path inside improved modules.** Optionally call the C/Rust form of a pure function through
   `ctypes` (stdlib), guarded by the int-width domain the witness established; keep the Python form as the
   fallback.

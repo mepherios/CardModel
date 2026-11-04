@@ -31,6 +31,8 @@
   cardmodel lean import F.lean | --core  Lean theorems as cards: faithful reading, witness, re-proof
   cardmodel repl                         interactive card language
   cardmodel math emit|lift|run|translate|roundtrip SOURCE   mathematical notation (Unicode or LaTeX) as a source
+  cardmodel analyse FILE... [--no-run] [--to c,rust@debug] [--all] [--laws]   structure, logic obligations and
+                                        behaviour differences across languages, optimization levels and runners
                                            and a target: equations in, every language out; any function out as math
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel godel ledger|vector|gcd|lcm CARD...   the expanding Gödel model: primes, sparse content vectors (CM43, CM45)
@@ -490,6 +492,28 @@ def cmd_matrix(args) -> int:
     return 1 if rep["failures"] else 0
 
 
+def cmd_analyse(args) -> int:
+    from .engines import analyse as A
+    from .engines import matrix as M
+    if args.laws:
+        print(A.laws_text())
+        return 0
+    ctx = _ctx(args)
+    files = []
+    for f in map(Path, args.files):
+        files += sorted(x for x in f.iterdir() if M.frontend_for(x)) if f.is_dir() else [f]
+    missing = [str(f) for f in files if not f.exists()]
+    if missing or not files:
+        print(f"error: {'no such file: ' + ', '.join(missing) if missing else 'give a source file'}", file=sys.stderr)
+        return 2
+    rep = A.analyse_files(ctx, files, run=not args.no_run, langs=args.to.split(",") if args.to else None,
+                          seed=args.seed, only=args.function.split(",") if args.function else None,
+                          progress=None if args.json else (lambda s: print(f"  {s}", file=sys.stderr, flush=True)))
+    ctx.save_state("last_analyse", rep)
+    _out(args, rep, A.report_text(rep, show_all=args.all))
+    return 1 if rep["summary"]["latent"] and args.strict else 0
+
+
 def cmd_improve(args) -> int:
     from .engines import improve
     from .engines import values as V
@@ -847,6 +871,16 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--to", help="comma-separated targets (default: every codegen language)")
     s.add_argument("--seed", type=int); s.add_argument("--write", metavar="FILE", help="also write the matrix as Markdown")
     s.set_defaults(fn=cmd_matrix)
+    s = sub.add_parser("analyse",
+                       help="the REA method on lifted programs: structure, logic obligations, and behaviour "
+                            "differences across languages, optimization levels and runners, witnessed by running")
+    s.add_argument("files", nargs="*"); s.add_argument("--to", help="runners, e.g. c,c@O0,rust@debug (default: all)")
+    s.add_argument("--function", help="only these functions (comma-separated)")
+    s.add_argument("--no-run", action="store_true", help="reference and laws only; no runner is started")
+    s.add_argument("--all", action="store_true", help="also list guarded and predicted findings")
+    s.add_argument("--laws", action="store_true", help="print the divergence laws and exit")
+    s.add_argument("--strict", action="store_true", help="exit 1 when a latent flaw is witnessed")
+    s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_analyse)
     s = sub.add_parser("arena"); s.add_argument("--count", type=int, default=60); s.add_argument("--seed", type=int)
     s.add_argument("--samples", type=int, default=24); s.add_argument("--out")
     s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_arena)
