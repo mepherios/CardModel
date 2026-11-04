@@ -18,6 +18,8 @@ Methodology (docs/METHODOLOGY.md), per top-level function of a Python module:
                    equality saturation (egraph) over the unconditional rules and discovered laws;
                    one candidate from the rule search alone, one from the cheaper of the two per
                    expression (both verified and measured); the function is re-emitted from IR.
+       native      (native_call) the function's C form compiled to a shared library and called
+                   through ctypes inside the box of verified inputs, the original outside it (native.py).
   4. verify    each candidate against the original on seeded inputs (plus edges); any
                mismatch rejects it.
   5. measure   the original and every verified candidate, in-process, on the same inputs
@@ -426,7 +428,10 @@ def rewrite_candidate(ctx: Ctx, fn_ir: dict, rules, costs, egraph_rules=None) ->
 
 # -- the engine ----------------------------------------------------------------------------------
 def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | None = None, samples: int = 32,
-                   native: bool = True) -> dict:
+                   native: bool = True, native_call: bool | None = None) -> dict:
+    """``native`` emits the result in every codegen language; ``native_call`` (default: as ``native``) adds a
+    candidate per function that calls its compiled C form through ctypes inside the verified domain (native.py)."""
+    native_call = native if native_call is None else native_call
     seed = V.fresh_seed() if seed is None else seed
     tree = ast.parse(source)
     lines = source.splitlines(keepends=True)
@@ -501,6 +506,13 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
             seen_src.add(rw_src)
             cands.append({"kind": "rewrite", "card": "rewrite_rule/*", "form": form, "src": rw_src,
                           "changes": changes, "needs_math": "math." in rw_src})
+        if native_call:
+            from . import native as NV
+            nc, why = NV.candidate(ctx, fn_ir, module, inputs, orig_src, rename)
+            if nc is not None:
+                cands.append(nc)
+            else:
+                entry["native_gap"] = why
         verified = []
         for c in cands:
             ns = _load(source)
@@ -528,12 +540,14 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
                 best, best_t = c, c["seconds"]
         entry["candidates"] = [{k: v for k, v in c.items() if k in ("kind", "card", "form", "complexity", "checks",
                                                                     "seconds", "rejected", "changes", "scale",
-                                                                    "shift", "canonical")}
+                                                                    "shift", "canonical", "box")}
                                for c in cands]
         entry["original_seconds"] = t_orig
         if best is not None and t_orig / best_t > 1 + NOISE:
             entry.update(action=f"{best['kind']}:{best['card']}#{best['form']}", speedup=round(t_orig / best_t, 2),
                          checks=best["checks"], new_source=best["src"])
+            if best.get("lib"):
+                entry.update(native_lib=best["lib"], native_domain=best["box"])
             replacements[node.name] = best["src"]
             needs_math = needs_math or best.get("needs_math", False)
         else:
@@ -677,6 +691,13 @@ def write_outputs(report: dict, out_dir: Path, stem: str) -> list[Path]:
             q = out_dir / "native" / lang / f"{stem}{exts.get(lang, '.' + lang)}"
             q.parent.mkdir(parents=True, exist_ok=True)
             q.write_text(nat["source"], encoding="utf-8")
+            written.append(q)
+    import shutil
+    for f in report["functions"].values():      # the libraries the module calls, next to it (it looks there first)
+        if f.get("native_lib") and Path(f["native_lib"]).is_file():
+            q = out_dir / "native" / "c" / Path(f["native_lib"]).name
+            q.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f["native_lib"], q)
             written.append(q)
     slim = {k: v for k, v in report.items() if k not in ("optimized_source", "native")}
     slim["native_gaps"] = {lang: nat["gaps"] for lang, nat in (report.get("native") or {}).items()}

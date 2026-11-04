@@ -1,0 +1,60 @@
+{
+  "category": "algorithm",
+  "filter": "lambda n: n >= 0",
+  "forms": [
+    {
+      "code": "def popsum_loop(n: int) -> int:\n    total = 0\n    for i in range(n + 1):\n        x = i\n        while x > 0:\n            total += x & 1\n            x = x >> 1\n    return total\n",
+      "complexity": "O(n log n)",
+      "cost": 100.0,
+      "domain": "any",
+      "entry": "popsum_loop",
+      "lang": "python",
+      "name": "count_each",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def popsum_bits(n: int) -> int:\n    total = 0\n    bit = 1\n    while bit <= n:\n        period = bit * 2\n        total += (n + 1) // period * bit\n        rest = (n + 1) % period - bit\n        if rest > 0:\n            total += rest\n        bit = period\n    return total\n",
+      "complexity": "O(log n)",
+      "cost": 3.0,
+      "domain": "any",
+      "entry": "popsum_bits",
+      "lang": "python",
+      "name": "per_bit",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        0,
+        100000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "popcount_prefix",
+  "precondition": "n >= 0",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "per_bit",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "total number of 1 bits in 0, 1, ..., n",
+  "tags": [
+    "bits",
+    "counting"
+  ],
+  "tier": 1
+}
