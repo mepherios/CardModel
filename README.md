@@ -63,6 +63,10 @@ cardmodel self run
 ```
 
 ```bash
+./bin/cardmodel matrix --write docs/MATRIX.md
+```
+
+```bash
 ./bin/cardmodel improve arena/slowframework --out /tmp/fast
 ```
 
