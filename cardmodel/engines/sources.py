@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import random
 
+from . import equivalence as EQ
 from . import values as V
 
 REGISTRIES = ("definition", "action", "transformation", "method")
@@ -62,10 +63,10 @@ def identity(canon: dict, term, whole) -> dict:
     """A definition's identity: the hash of its structure, the canonical term's when distillation reached one."""
     from .egraph import semantic_hash
     if canon.get("status") == "canonical":
-        return {"hash": canon["hash"], "of": "canonical term"}
+        return {"hash": canon["hash"], "of": "canonical term", "under": "laws"}
     if term is not None:
-        return {"hash": semantic_hash(term), "of": "lifted term"}
-    return {"hash": semantic_hash(whole), "of": "lifted function"}
+        return {"hash": semantic_hash(term), "of": "lifted term", "under": "syntax"}
+    return {"hash": semantic_hash(whole), "of": "lifted function", "under": "syntax"}
 
 
 def _var_sorts(fn) -> dict:
@@ -257,6 +258,8 @@ def check(ctx) -> dict:
             problems += [f"{q}: {x}" for x in G.vector_problems(d.get("godel") or {}, entries)]
         if not str((d.get("identity") or {}).get("hash", "")).startswith("sha256:"):
             problems.append(f"{q}: no identity (the hash of its structure, CM45)")
+        elif (d.get("identity") or {}).get("under") not in EQ.RELATIONS:
+            problems.append(f"{q}: its identity names no equivalence it was taken under (FOUNDATIONS.md A4)")
         for a in d.get("actions") or []:
             if a not in acts:
                 problems.append(f"{q}: action {a} does not exist")

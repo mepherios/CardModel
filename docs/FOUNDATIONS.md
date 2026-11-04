@@ -69,15 +69,17 @@ laws that fired, which is its *certificate*. A substitution that no law justifie
 called through ctypes) is a separate kind of claim. It is witnessed and labelled with its tier (CM46), and it is
 never presented as a rewrite.
 
-**D9. Other equivalences, each named.** The model uses four equivalence relations, and each one must say which it
-is:
+**D9. Other equivalences, each named.** The model uses these equivalence relations. Each identity record names
+the one it was taken under in `identity.under`, using the key in the first column (`engines/equivalence.py`), and
+`sources check` refuses an identity that names none:
 
-| relation | decided by | what it identifies |
-|---|---|---|
-| ≈_E (laws) | e-graph saturation, `search.prove` chains | terms equal under the sorted laws |
-| ≡_ℝ (polynomial identity over a field) | `realnorm.canonical` | terms equal as real rational functions. This is sound for `int` polynomials (the finite-grid theorem in `tiers`), but **not** for `float` |
-| ≡_beh (behaviour) | `funcalg` (Berlekamp–Massey, checked on unused terms) and the `tiers` finite witnesses | functions ℕ → ℤ with the same recurrence and initial terms |
-| ≡_α (renaming) | `numbering.canonical` | terms equal up to the names of their variables |
+| key | relation | decided by | what it identifies |
+|---|---|---|---|
+| `laws` | ≈_E | e-graph saturation, `search.prove` chains | terms equal under the sorted laws |
+| `real` | ≡_ℝ (polynomial identity over a field) | `realnorm.canonical` | terms equal as real rational functions. This is sound for `int` polynomials (the finite-grid theorem in `tiers`), but **not** for `float` |
+| `behaviour` | ≡_beh | `funcalg` (Berlekamp–Massey, checked on unused terms) and the `tiers` finite witnesses | functions ℕ → ℤ with the same recurrence and initial terms |
+| `alpha` | ≡_α (renaming) | `numbering.canonical` | terms equal up to the names of their variables |
+| `syntax` | = | nothing | the same term, with no reasoning applied |
 
 **D10. Tiers.** The evidence for a claim is one of proof (Lean's kernel, or a finite witness whose size a theorem
 fixes for the claim's class), probabilistic, bounded or sample (CM46). A step's conclusion inherits the weakest
@@ -150,7 +152,7 @@ These are the rules the audit checks. They are proposed as laws to be numbered f
 | **exprs** | a second evaluator | none | **F2: a private semantics table.** `exprs.evaluate` defines ADD, DIV, MOD and the rest by hand. Its `DIV` is exact over ℚ, where M's is binary64. Rule witnesses (`witness.verify_rule`), `egraph.witness`, redefinitions and `learn`'s rewrite checks are evaluated there and not in M Also **A1**: `exprs.parse` read `gcd(a, b)` in a rule card as a call `FN gcd`, not as the op GCD, so the five GCD rules never matched an IR term | fixed: `verify` and the capability checks witness rules in M (`verify_rule(ops=...)`, `egraph.witness(ops=...)`); `exprs.resolve_ops` turns a call of an op card's name into that op, and `load_rules` applies it; a test pins `exprs`'s integer mode to the op cards on their domains. The ℚ and ℝ modes stay, as the named model for redefinitions (D9) |
 | search vs egraph | two rewrite engines over one E | same rules | F3: two engines. `search` finds explicit chains (proofs) and `egraph` finds classes (canon). That division is legitimate, but both must apply A3 | A3 in both (done) |
 | godel content (`godel.card_content`, `sources`) | γ (D11) | ledger and storage laws | **F4: content is read from the raw lifted term**, not canon_E, so equal functions written differently have different content, and GCD measures syntax | fixed: a definition whose canonical term is the whole definition reads content and structure from it (`read_from: its canonical term`); `distance_sq`'s content is now that of `(a-b)·(a-b)` |
-| realnorm, funcalg, numbering, tiers | named equivalences (D9) | each states its limits | F5: `realnorm`'s ≡_ℝ is applied to unreal's float32 math, where it is an approximation. It is labelled there as such. Its hash carries no tag naming the relation | A4: tag the hashes |
+| realnorm, funcalg, numbering, tiers | named equivalences (D9) | each states its limits | F5: `realnorm`'s ≡_ℝ is applied to unreal's float32 math, where it is an approximation. It is labelled there as such. Its hash carried no tag naming the relation | fixed: every identity names its relation (`identity.under`), and `sources check` enforces it |
 | unreal/witness | an f32 model | declares IEEE semantics | F6: a private evaluator for float32 (A2). F32 should be a sort, with op cards (D1) | open, next after BV(w) |
 | improve | D8 | rewrites are verified and re-verified; substitutions are tiered | rewrites are restricted to int-typed expressions, which is the right workaround for F1 | ok after F1 |
 | learn, observe | evidence gathering | CM04, CM15 | statistics, not semantics, which is acceptable for observation. Its rewrite proposals go through F2's evaluator | F2 |
