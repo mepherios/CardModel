@@ -1371,6 +1371,9 @@ class _Emit:
     MAX_DUP = 6           # an `if` whose continuation is bigger than this many statements gets its own equation
 
     def __init__(self, fn: dict, module: dict):
+        if any(str(t).startswith("list[") for t in [fn.get("returns"), *(p["type"] for p in fn["params"])]) \
+                or any(s["k"] == "set" for s in _stmts(fn["body"])):
+            raise EmitGap("math: lists have no notation yet (the IR has them; the equations do not)")
         bad = [s["k"] for s in _stmts(fn["body"]) if s["k"] in ("store", "do", "switch")]
         if fn.get("returns") == "void" or bad or module.get("globals") or module.get("arrays"):
             raise EmitGap("math: machine state (globals, arrays, stores, switch, void functions) is not emitted "

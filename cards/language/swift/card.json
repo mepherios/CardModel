@@ -17,7 +17,9 @@
       "print": {
         "bool": "print(\"b:\\({e})\")",
         "float": "print(\"f:\\({e})\")",
-        "int": "print(\"i:\\({e})\")"
+        "int": "print(\"i:\\({e})\")",
+        "list[float]": "cm_print_list_f({e})",
+        "list[int]": "cm_print_list_i({e})"
       },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
@@ -38,11 +40,17 @@
       "cm_opaque_b": "@inline(never) func cm_opaque_b(_ x: Bool) -> Bool { return x }",
       "cm_opaque_f": "@inline(never) func cm_opaque_f(_ x: Double) -> Double { return x }",
       "cm_opaque_i": "@inline(never) func cm_opaque_i(_ x: Int) -> Int { return x }",
-      "cm_powmod": "func cm_powmod(_ a0: Int, _ b0: Int, _ m: Int) -> Int { var r = cm_floormod(1, m); var a = cm_floormod(a0, m); var b = b0; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m) }; a = cm_floormod(a * a, m); b >>= 1 }; return r }"
+      "cm_powmod": "func cm_powmod(_ a0: Int, _ b0: Int, _ m: Int) -> Int { var r = cm_floormod(1, m); var a = cm_floormod(a0, m); var b = b0; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m) }; a = cm_floormod(a * a, m); b >>= 1 }; return r }",
+      "cm_print_list_f": "func cm_print_list_f(_ xs: [Double]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"f:\\(v)\") } }",
+      "cm_print_list_i": "func cm_print_list_i(_ xs: [Int]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"i:\\(v)\") } }"
     },
     "if": "if {cond} {{",
     "indent": "    ",
     "lib_prelude": "import Foundation\n@imports@\n",
+    "list_lit": {
+      "list[float]": "[{items}]",
+      "list[int]": "[{items}]"
+    },
     "lit": {
       "false": "false",
       "float": "({v})",
@@ -58,17 +66,22 @@
     "param_rebind": "var {name}: {type} = {name}",
     "prelude": "import Foundation\n@imports@\n",
     "return": "return {value}",
+    "set": "{name}[Int({idx})] = {value}",
     "style": "braces",
     "types": {
       "bool": "Bool",
       "float": "Double",
-      "int": "Int"
+      "int": "Int",
+      "list[float]": "[Double]",
+      "list[int]": "[Int]"
     },
     "while": "while {cond} {{",
     "zero": {
       "bool": "false",
       "float": "0.0",
-      "int": "0"
+      "int": "0",
+      "list[float]": "[]",
+      "list[int]": "[]"
     }
   },
   "comments": {

@@ -2,6 +2,10 @@
 
 Generator specs (data on cards):
   {"int": [lo, hi], "edges": [...]}   {"float": [lo, hi]}   {"choice": [v, ...]}   {"bool": true}
+  {"list": <element spec>, "len": [lo, hi]}   a list of random length
+  {"list": <element spec>, "len_of": [i, j]}  a list whose length is the product of the int arguments at
+                                              positions i, j (a matrix with dimensions passed beside it)
+  {"list": <element spec>, "len_like": i}     a list as long as the list argument at position i
 Int generators always include the edge values 0, 1, -1, lo and hi that lie
 in range; a card may add a ``filter`` lambda (rejection sampling).
 
@@ -30,7 +34,7 @@ def specials(spec: dict) -> list:
         return list(spec["choice"])
     if "bool" in spec:
         return [True, False]
-    return []
+    return []           # lists: drawn, never edge-enumerated (their length may depend on other arguments)
 
 
 def draw(spec: dict, rng: random.Random):
@@ -44,7 +48,30 @@ def draw(spec: dict, rng: random.Random):
         return rng.choice(spec["choice"])
     if "bool" in spec:
         return rng.random() < 0.5
+    if "list" in spec:
+        if "len_of" in spec or "len_like" in spec:
+            return None                     # filled by _lists once the other arguments are drawn
+        lo, hi = spec.get("len", [0, 6])
+        return [draw(spec["list"], rng) for _ in range(rng.randint(int(lo), int(hi)))]
     raise ValueError(f"unknown generator {spec!r}")
+
+
+def _lists(t: tuple, gens: list[dict], rng: random.Random) -> tuple:
+    """Fill the lists whose length is a product of other (int) arguments."""
+    if not any("len_of" in g or "len_like" in g for g in gens):
+        return t
+    out = list(t)
+    for i, g in enumerate(gens):
+        if "len_of" in g:
+            n = 1
+            for j in g["len_of"]:
+                n *= out[j] if isinstance(out[j], int) else 0
+            out[i] = [draw(g["list"], rng) for _ in range(max(0, min(n, 4096)))]
+    for i, g in enumerate(gens):
+        if "len_like" in g:
+            other = out[g["len_like"]]
+            out[i] = [draw(g["list"], rng) for _ in range(len(other) if isinstance(other, list) else 0)]
+    return tuple(out)
 
 
 def inputs(gens: list[dict], n: int, rng: random.Random, filt=None, edge: bool = True,
@@ -70,12 +97,12 @@ def inputs(gens: list[dict], n: int, rng: random.Random, filt=None, edge: bool =
         edges = [specials(g) for g in gens]
         width = max(len(e) for e in edges)
         for i in range(width):
-            add(tuple(e[i % len(e)] if e else draw(g, rng) for e, g in zip(edges, gens)))
+            add(_lists(tuple(e[i % len(e)] if e else draw(g, rng) for e, g in zip(edges, gens)), gens, rng))
     tries = 0
     target = len(out) + n
     while len(out) < target and tries < max_tries:
         tries += 1
-        add(tuple(draw(g, rng) for g in gens))
+        add(_lists(tuple(draw(g, rng) for g in gens), gens, rng))
     return out
 
 
@@ -97,10 +124,14 @@ def same(a, b) -> bool:
 
 
 def finite(v) -> bool:
+    if isinstance(v, (list, tuple)):
+        return all(finite(x) for x in v)
     return not (isinstance(v, float) and (math.isnan(v) or math.isinf(v)))
 
 
 def fits(v, bits: int | None) -> bool:
+    if isinstance(v, (list, tuple)):
+        return all(fits(x, bits) for x in v)
     if bits is None or isinstance(v, bool) or not isinstance(v, int):
         return True
     return -(2 ** (bits - 1)) <= v < 2 ** (bits - 1)

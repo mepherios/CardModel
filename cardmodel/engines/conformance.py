@@ -30,6 +30,7 @@ from .ir import Interpreter
 from .runners import run_program
 
 DEFAULT_SAMPLES = 12
+TYPE_CODE = {"list[int]": "li", "list[float]": "lf"}
 
 
 def _domain_key(sig: list[str]) -> str:
@@ -45,7 +46,7 @@ def op_functions(ops) -> list[dict]:
     for name, spec in sorted(ops.items()):
         for sig in spec.types:
             args = sig[:-1]
-            fname = f"t_{name.lower()}_{'_'.join(t[0] for t in args)}"
+            fname = f"t_{name.lower()}_{'_'.join(TYPE_CODE.get(t, t[0]) for t in args)}"
             params = [{"name": f"a{i}", "type": t} for i, t in enumerate(args)]
             fns.append({"op": name, "sig": sig, "fn": {
                 "name": fname, "params": params, "returns": sig[-1], "locals": {},
@@ -60,7 +61,7 @@ def _cases(ops, fns, rng, samples):
         spec = ops[item["op"]]
         dom = (spec.card.get("ir") or {}).get("domain") or {}
         key = _domain_key(item["sig"])
-        gens = dom.get(key) or [V.DEFAULT_GEN[t] for t in item["sig"][:-1]]
+        gens = dom.get(",".join(item["sig"][:-1])) or dom.get(key) or [V.DEFAULT_GEN[t] for t in item["sig"][:-1]]
         interp = Interpreter({"functions": [item["fn"]]}, ops)
         rows = []
         for args in V.inputs(gens, samples, rng):

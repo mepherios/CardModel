@@ -75,8 +75,9 @@ collatz_steps_loop1(n, steps) = let n = { ⌊n / 2⌋ if n mod 2 = 0; 3 · n + 1
 
 ## Limits
 
-* No lists or strings: the IR does not have them yet (ROADMAP §2.2). Transformer math (matrices, softmax,
-  attention) waits on `list[float]` in the IR.
+* No lists or strings in the notation yet. The IR has `list[int]` and `list[float]` ([LISTS.md](LISTS.md)), and
+  the transformer kernels (matrices, softmax, layernorm, attention) lift from Python and verify in every target, but a
+  function with a list parameter is not emitted as equations: it is reported as an `EmitGap`.
 * Machine state (globals, arrays, stores, switch, void functions) is not emitted as math. It is reported as an
   `EmitGap`.
 * A Σ of floats adds left to right, as the IR does. Binary64 addition is not associative, so a reordered sum is

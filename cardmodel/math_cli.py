@@ -145,9 +145,11 @@ def cmd_math(args) -> int:
                 lines.append(f"  {entry:<24} {rt['status']}" + (f" ({rt['checked']} inputs)" if "checked" in rt else
                                                                 f": {rt.get('reason', '')}"))
             ok = sum(1 for r in rows.values() if r["status"] in ("pass", "no_inputs"))
-            lines.append(f"{ok}/{len(rows)} round trips agree; {len(gaps)} functions not lifted by the source frontend")
+            gap = sum(1 for r in rows.values() if r["status"] == "gap")
+            lines.append(f"{ok}/{len(rows) - gap} round trips agree; {gap} functions have no notation (gap); "
+                         f"{len(gaps)} functions not lifted by the source frontend")
             cli._out(args, {"seed": seed, "functions": rows, "not_lifted": gaps}, "\n".join(lines))
-            return 0 if ok == len(rows) else 1
+            return 0 if ok == len(rows) - gap else 1
     except mathlang.MathError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

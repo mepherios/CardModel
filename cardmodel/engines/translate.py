@@ -32,15 +32,21 @@ from . import values as V
 from .codegen import EmitGap, Emitter, emit_module
 from .context import Ctx
 from .frontend_python import Lifted, lift_source, module_for
-from .ir import Interpreter, StepLimit
+from .ir import Interpreter, StepLimit, elem_type
 from .runners import run_program
 
 COUNT_LIKE = {"n", "k", "m", "count", "size", "length", "steps", "depth", "times", "exp", "e", "i", "j",
-              "num", "limit", "rounds", "iterations", "power", "places", "digits", "width", "height"}
+              "num", "limit", "rounds", "iterations", "power", "places", "digits", "width", "height",
+              "d", "rows", "cols", "dim", "seq", "heads"}
 STEP_BUDGET = 200_000
 
 
 def _gen_for(name: str, typ: str, narrow: int = 0) -> dict:
+    et = elem_type(typ)
+    if et is not None:
+        elem = {"float": [-10.0, 10.0] if not narrow else [-3.0, 3.0]} if et == "float" else \
+            {"int": [-50, 50] if not narrow else [-12, 12]}
+        return {"list": elem, "len": [0, (8, 6, 4)[min(narrow, 2)]]}
     if typ == "bool":
         return {"bool": True}
     if typ == "float":
@@ -67,8 +73,14 @@ def infer_domain(ctx: Ctx, module: dict, ref, want: int = 24, seed: int = 0) -> 
     rng = random.Random(seed)
     interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
     best: tuple[list[dict], list] = ([], [])
-    for narrow in range(3):
+    shapes = _list_shapes(entry["params"])
+    # without lists, half the inputs running is enough; with lists a wrong shape still runs on its degenerate
+    # inputs (a matrix as a vector when a dimension is 1), so keep looking for a shape that nearly always runs
+    enough = want // 2 if shapes == [{}] else want * 9 // 10
+    for narrow, shape in ((n, sh) for sh in shapes for n in range(3)):
         gens = [_gen_for(p["name"], p["type"], narrow) for p in entry["params"]]
+        for i, spec in shape.items():
+            gens[i] = {**{k: v for k, v in gens[i].items() if k != "len"}, **spec}
         ok = []
         for args in V.inputs(gens, want, rng):
             try:
@@ -80,11 +92,37 @@ def infer_domain(ctx: Ctx, module: dict, ref, want: int = 24, seed: int = 0) -> 
                 continue
             if V.finite(out):
                 ok.append(list(args))
-        if len(ok) >= want // 2:
+        if len(ok) >= enough:
             return gens, ok
         if len(ok) > len(best[1]):
             best = (gens, ok)
     return best
+
+
+def _list_shapes(params: list[dict], cap: int = 48) -> list[dict]:
+    """Candidate lengths for the list parameters: free, or the product of one or two int parameters (a vector of
+    length n, an n x k matrix passed with its dimensions). The first shape under which the function runs wins."""
+    lists = [i for i, p in enumerate(params) if elem_type(p["type"]) is not None]
+    if not lists:
+        return [{}]
+    ints = [i for i, p in enumerate(params) if p["type"] == "int"]
+    options = [{"len": [0, 8]}] + [{"len_of": [j]} for j in ints] + \
+        [{"len_of": [j, k]} for a, j in enumerate(ints) for k in ints[a:]]
+    shapes: list[dict] = [{}]
+    for n_, i in enumerate(lists):
+        mine = options + [{"len_like": j} for j in lists[:n_]]
+        shapes = [{**sh, i: o} for sh in shapes for o in mine]
+        if len(shapes) > cap * 8:
+            break
+    # dimension-tied shapes first: a function that indexes a matrix fails on random lengths
+    # then two-dimension products (matrices passed with their sizes), then shapes where the lists agree
+    def rank(sh):
+        tied = sum("len" not in o for o in sh.values())
+        dims2 = sum(len(o.get("len_of", ())) == 2 for o in sh.values())
+        kinds = len({repr(o) for o in sh.values() if "len_like" not in o})
+        return (-tied, -dims2, kinds) if len(lists) > 1 else (0, 0, 0)
+    shapes.sort(key=rank)
+    return shapes[:cap]
 
 
 def reference_rows(ctx: Ctx, module: dict, ref, inputs: list) -> list[dict]:

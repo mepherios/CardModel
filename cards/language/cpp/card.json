@@ -1,6 +1,15 @@
 {
   "category": "language",
-  "codegen": {},
+  "codegen": {
+    "helpers": {
+      "cm_lf": "#include <stdio.h>\n#include <stdlib.h>\n#include <vector>\ntypedef struct { int64_t n; double *d; } cm_lf;",
+      "cm_li": "#include <stdio.h>\n#include <stdlib.h>\n#include <vector>\ntypedef struct { int64_t n; int64_t *d; } cm_li;"
+    },
+    "list_lit": {
+      "list[float]": "cm_lf_of({n}, std::vector<double>{{{items_z}}}.data())",
+      "list[int]": "cm_li_of({n}, std::vector<int64_t>{{{items_z}}}.data())"
+    }
+  },
   "comments": {
     "block": [
       [

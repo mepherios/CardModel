@@ -29,7 +29,9 @@
       "print": {
         "bool": "print('b:' + ('true' if {e} else 'false'))",
         "float": "print('f:' + repr({e}))",
-        "int": "print('i:' + str({e}))"
+        "int": "print('i:' + str({e}))",
+        "list[float]": "cm_print_list({e}, 'f')",
+        "list[int]": "cm_print_list({e}, 'i')"
       },
       "truthy": {
         "bool": "(1 if ({e}) else 0)",
@@ -37,11 +39,18 @@
         "int": "(1 if ({e}) != 0 else 0)"
       }
     },
+    "helpers": {
+      "cm_print_list": "def cm_print_list(xs, tag):\n    print('l:' + str(len(xs)))\n    for v in xs:\n        print(tag + ':' + (repr(v) if tag == 'f' else str(v)))\n"
+    },
     "hoist": false,
     "if": "if {cond}:",
     "import": "import @name@\n",
     "indent": "    ",
     "lib_prelude": "@imports@",
+    "list_lit": {
+      "list[float]": "[{items}]",
+      "list[int]": "[{items}]"
+    },
     "lit": {
       "false": "False",
       "float": "{v}",
@@ -57,6 +66,7 @@
     "prelude": "@imports@",
     "return": "return {value}",
     "return_void": "return",
+    "set": "{name}[{idx}] = {value}",
     "store": {
       "int": "{arr}[{idx}] = {value}",
       "u8": "{arr}[{idx}] = ({value}) & 255"
@@ -66,6 +76,8 @@
       "bool": "bool",
       "float": "float",
       "int": "int",
+      "list[float]": "list[float]",
+      "list[int]": "list[int]",
       "void": "None"
     },
     "underscore_ok": true,
@@ -73,7 +85,9 @@
     "zero": {
       "bool": "False",
       "float": "0.0",
-      "int": "0"
+      "int": "0",
+      "list[float]": "[]",
+      "list[int]": "[]"
     }
   },
   "comments": {
