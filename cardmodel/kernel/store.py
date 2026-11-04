@@ -22,6 +22,7 @@ from pathlib import Path
 
 from . import paths, versioning
 from .card import CARD_FILE, Card
+from .index import LOCK, get_index
 from .registry import CATEGORY_FILE, CardLoadError, Registry, View
 
 
@@ -115,18 +116,29 @@ class Store:
             self._index = idx
         return self._index
 
+    def _find(self, name: str) -> list[str]:
+        """The registries holding a card of this bare name: one index query when every registry is indexed."""
+        if self._index is None:
+            idx = get_index()
+            regs = [(v.name, r) for v in self.views.values() for r in v.regs]
+            if idx is not None and all(r._index_ready() for _, r in regs):
+                with LOCK:
+                    hits = set(idx.where(name))
+                return list(dict.fromkeys(v for v, r in regs if r._key in hits))
+        return self._name_index().get(name, [])
+
     def get(self, name: str) -> Card | None:
         if "/" in name:
             cat, _, short = name.rpartition("/")
             v = self.registry(cat)
             return v.get(short) if v else None
-        cats = self._name_index().get(name, [])
+        cats = self._find(name)
         if len(cats) > 1:
             raise AmbiguousName(f"{name!r} is in {len(cats)} registries: {', '.join(cats)} -- use category/name")
         return self.views[cats[0]].get(name) if cats else None
 
     def all_names(self) -> list[str]:
-        return list(self.ALL)
+        return [f"{v.name}/{n}" for v in self.views.values() for n in v.all_names()]
 
     def load_errors(self) -> list[str]:
         out = list(self.errors)

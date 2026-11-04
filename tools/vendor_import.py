@@ -639,7 +639,7 @@ def import_rea(report: dict) -> None:
     reg = write_registry("re_operation", "Reverse-engineering operations whose backends are forms (lesson from "
                                          "rea-cards): a card-native Python form and a host-tool form of the same "
                                          "operation, checked equal on real files.", prov, tier=1)
-    files = ["/bin/ls", "/usr/bin/true", "/bin/cat", "/usr/lib/dyld"]
+    files = ["/bin/ls", "/usr/bin/true", "/bin/cat"]  # present on macOS and Linux
     write_card(reg, {
         "name": "list_strings", "category": "re_operation", "tier": 1,
         "statement": "List the printable-ASCII strings of a file with their byte offsets.",
@@ -647,8 +647,10 @@ def import_rea(report: dict) -> None:
                    "domain": "any", "runnable": True, "notes": "card-native, no external process"},
                   {"name": "host_strings", "lang": "python", "file": "python.py", "entry": "host_strings",
                    "cost": 60.0, "domain": "any", "runnable": True,
-                   "probe": {"kind": "executable", "name": "strings"},
-                   "notes": "Apple cctools strings under LC_ALL=C"},
+                   "probe": {"kind": "all", "of": [{"kind": "platform", "system": "Darwin"},
+                                                   {"kind": "executable", "name": "strings"}]},
+                   "notes": "Apple cctools strings under LC_ALL=C (macOS only: GNU binutils strings scans other "
+                            "sections and pads differently)"},
                   {"name": "rea_ghidra", "domain": "native_binary", "runnable": False, "cost": 60000,
                    "notes": "rea's Ghidra provider (form kept as documentation; see rea-cards)"}],
         "generators": [{"choice": files}, {"choice": [4, 6, 8]}],
@@ -659,7 +661,7 @@ def import_rea(report: dict) -> None:
         "statement": "Name the most specific format card whose magic bytes / predicates match a file.",
         "forms": [{"name": "format_cards", "lang": "python", "file": "python.py", "entry": "detect_format",
                    "cost": 1.0, "domain": "any", "runnable": True}],
-        "vectors": [{"name": "ls_is_macho", "args": ["/bin/ls"], "out_one_of": ["macho", "macho_fat"]}],
+        "vectors": [{"name": "ls_is_native_binary", "args": ["/bin/ls"], "out_one_of": ["macho", "macho_fat", "elf"]}],
         "provenance": {**prov, "rea_card": "cards/re_operation/detect_format"}}, {"python.py": DETECT_PY})
     report["rea"] = {"commit": head, "format_cards": n, "operations": ["list_strings", "detect_format"]}
 

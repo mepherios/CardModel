@@ -8,12 +8,11 @@ import threading
 import unittest
 import urllib.request
 
-from helpers import model_ctx
+from helpers import MAC_SHELL, model_ctx
 
 from cardmodel.arcade import build as B
 from cardmodel.arcade import game as G
 from cardmodel.arcade import gen
-from cardmodel.engines import probes
 
 
 def to_versus(g):
@@ -209,7 +208,7 @@ class Pages(unittest.TestCase):
         self.assertEqual(server.ui_hash(None), "")
 
 
-@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+@unittest.skipUnless(MAC_SHELL, "needs swiftc on macOS (the shells use AppKit)")
 class Depot(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -356,7 +355,7 @@ class BuildWait(unittest.TestCase):
             self.C.wait_build(self.base, "no_such_program", timeout=60)
 
 
-@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+@unittest.skipUnless(MAC_SHELL, "needs swiftc on macOS (the shells use AppKit)")
 class LauncherRecord(unittest.TestCase):
     def test_the_record_follows_the_library_folder(self):
         """The launcher compiles, and at start what it records as installed is what its library folder holds: an
