@@ -40,6 +40,7 @@ Made precise, CardModel is done when, for any program in any language card it kn
 | machines | LR35902 512/512 and ARMv5TE 167/167 instruction cards agree in IR, Python and C; Game Boy/Color run lifted; DS prototype | `verify --quick` machine section |
 | optimization | `improve` with algorithm cards and rule rewrites; arena sound, recall 0.91, ×16.9 speedup | SELF.md |
 | autonomy | the self-run cycle exists and is bounded, but is tuned for one Mac (macOS QoS, libproc memory caps, `sandbox-exec`); no CI, no cloud schedule | `kernel/resources.py`, `engines/selfcheck.py` |
+| tests | 364 unit tests on Linux: 3 failures, 2 errors, 31 skipped (506 s). `test_cli` fails through the same verify sections; `test_gb_mappers` (Sachen header) and `test_witness` (builtin forms) fail too | `cd tests && python3 -B -m unittest` |
 | portability | `verify --quick` fails 2 sections on Linux: `forms` (`re_operation/list_strings` expects macOS `ls` strings) and `vectors` (`re_operation/detect_format` expects `/bin/ls` to be Mach-O) | `verify --quick` |
 
 The headline: the core is sound and verified, but it is **deep and narrow**. It proves and translates small integer
@@ -208,6 +209,9 @@ passes. Phases A and B start now; C and D can overlap B once the IR types land.
 
 * A1. Make `forms` and `vectors` host-independent: the `list_strings` and `detect_format` vectors pick their
   expected binary by platform (ELF on Linux, Mach-O on macOS) or use a checked-in fixture.
+* A1b. The `projects` verify section fails on every cloud session branch (`claude/...` with unmerged work that no
+  project card lists in `branches`), so parallel sessions trip it by existing. Session branches should be listed
+  automatically, or the check should count only branches older than their PR.
 * A2. Resources on Linux: memory accounting from `/proc` instead of libproc; `nice`/`ionice` instead of
   `taskpolicy`; the self-containment check through a Linux sandbox (bubblewrap or a read-only mount namespace when
   present, honest "unavailable" otherwise).
