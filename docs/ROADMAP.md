@@ -133,6 +133,9 @@ this plan adds. They get their `G_` numbers from the registry when adopted.
 | self-run in the cloud | days since the last scheduled cloud cycle | never | ≤ 1 |
 | adoption through PRs | self-run findings that reach main as a PR with evidence | 0 | every adoption |
 | optimization coverage | fraction of lifted functions with a measured cheapest form and target | not measured | 0.9 |
+| self-contained on the device | external programs a shipped program starts or needs at run time (service, interpreter, compiler, browser, git) | Arcade: 5 (§5 Phase I audit) | 0 |
+| lifted purity of shipped programs | share of executed instructions that run as lifted, natively compiled card code, not an interpreter | per cartridge app (Pokemon Crystal 1.0); the Game Boy Player 0 | 1.0 for every shipped program |
+| target devices | platform cards on which the whole program runs with no host toolchain | 0 (macOS needs cc and swiftc) | macOS, iPadOS/iOS, Linux, Windows |
 
 ## 4. Gaps, ranked by how much real code they block
 
@@ -300,6 +303,57 @@ becomes, together with the card language and the core terms of MATH_CORE §4, th
 
 Precondition: Phases B–E (a wide IR, frontends, the pair matrix and optimization from truth), since a generated
 language is only as good as the core it is built from.
+
+### Phase I: everything runs natively on the target device
+
+Recorded 2026-11-04. In the user's words: *no program should ever rely on a program outside the device. If the
+arcade runs one of the games, it can't run a secondary program to run it: it must run the whole program and the
+software it requires natively, purely in cards, all contained in the one full card model structure. The arcade
+runs things in the emulator, which keeps it from running on an iPad, since the whole program doesn't run
+natively.*
+
+The goal: a program the model ships is **one native binary for its target device**. Its logic, data, the machine it
+needs and its shell are all compiled from cards. At run time it starts no helper process, compiles nothing, needs
+no service on localhost, no interpreter of another CPU, no browser and no Python. The only thing outside the cards
+is the device's own operating system, reached through the platform card's boundary cards (CM21, CM34). An iPad
+allows exactly this, and nothing more, so the iPad is the test.
+
+**Audit: what a shipped program depends on today** (from `cards/platform/macos`, `cards/app/arcade`,
+`cardmodel/arcade/`, docs/ARCADE.md):
+
+| dependency | used by | when | why an iPad can't use it | what replaces it |
+|---|---|---|---|---|
+| the Python `cardmodel arcade serve` service on 127.0.0.1:8770 | the launcher (catalog, builds, depots, pages) | run time | no Python, no background local server | the launcher's logic in the card language, compiled into the app; the catalogue and depots as card data shipped with it or fetched over HTTPS |
+| the launcher's pages run by WebKit (`WKWebView`, HTML/JS in `cards/app/arcade/ui`) | the launcher UI | run time | WebKit exists, but the UI is code the cards don't describe | UI as cards drawn by the same software renderer the games use (or a declared boundary card for native widgets) |
+| hand-written Swift shells (`GameShell.swift`, `Launcher.swift`) with AppKit, AVFoundation, GameController | every game and the launcher | build + run | AppKit is macOS only | a platform card per OS whose shell is generated from boundary cards (window, audio, input, files, clock), with UIKit on iPadOS |
+| the Game Boy Player's interpreter of the LR35902 cards | every cartridge played from the library | run time | it runs (it's compiled cards), but it's emulation, not the program itself | ahead-of-time lifting of the whole cartridge (`arcade app`, already at 100 % for Pokemon Crystal) for every shipped cartridge, with the interpreter kept only as the witness |
+| `relift` after quitting (background build of what the interpreter ran) | cartridge apps | run time | needs `cc` on the device; iOS forbids generating code | all lifting before shipping, on the build host; a cartridge isn't shipped until a walk shows purity 1.0 |
+| the C compiler (`cc`/`clang`, the C card → `game.dylib`) | every build | build time | not on the device | the model's own backend: IR → ARM64/x86-64 through ISA cards, plus a Mach-O/ELF writer as cards (Phase F2) |
+| `swiftc`, `iconutil`, the linker's ad hoc signing | every macOS build | build time | not on the device | the generated shell (above); icons and bundles written by the model; signing stays the platform's own step |
+| `git` and worktrees (branch versions, Work tab) | the launcher | run time | no git on the device | branch builds made on the build host and served as depots like any version |
+| the browser page of `cardmodel emu` | the emulator front end | run time | a second program | the arcade's native player |
+| Python 3 running `cardmodel` itself | the model | build + run of the model | no Python | self-hosting: the kernel's own logic as cards, emitted to a native binary (I6) |
+
+Toolchains for verification (go, rustc, javac, node, ruby, lua, lean, z3, clang for the Unreal scan) are
+different: they're the witnesses that check an emission against a real compiler, not part of any shipped program,
+and they stay optional (CM01, probed and never required).
+
+**Milestones:**
+
+* I1. A platform card for iPadOS/iOS (UIKit shell, touch and controllers, the app sandbox's files), checked by
+  building Vector Duel for it. (An iPhone/iPad platform is being built in its own session, docs/ARCADE.md §7.)
+* I2. Shells generated from boundary cards instead of hand-written Swift, one per platform card.
+* I3. The launcher without the service: catalogue, install, verify and play in the card language inside the app;
+  the service remains only as the build host's publisher.
+* I4. Ship only fully lifted programs: every cartridge app reaches purity 1.0 on a walk its profile didn't see
+  before it is packed; no `relift` on the device.
+* I5. The model's own native backend (IR → machine code → a loadable binary), so a build needs no `cc`; the C card
+  stays as a witness.
+* I6. Self-hosting: the kernel, store and runtime parts of CardModel itself expressed in cards and emitted, so the
+  model runs on a device with no Python.
+
+Honest limit: the device's OS (window system, audio, input, file system, network) is always outside the cards.
+It's reached only through boundary cards, which is what "natively" can mean on a real device.
 
 ## 6. Workstreams running now and what each owns
 
