@@ -3413,3 +3413,5 @@
 {"atom": "op/LEN", "category": "godel", "index": 3413, "name": "p3413__op__LEN", "prime": 31729, "set": "B0", "since": "2026-11-04"}
 {"atom": "op/LIST_COPY", "category": "godel", "index": 3414, "name": "p3414__op__LIST_COPY", "prime": 31741, "set": "B0", "since": "2026-11-04"}
 {"atom": "op/LIST_NEW", "category": "godel", "index": 3415, "name": "p3415__op__LIST_NEW", "prime": 31751, "set": "B0", "since": "2026-11-04"}
+{"atom": "op/WRAPS", "category": "godel", "index": 3416, "name": "p3416__op__WRAPS", "prime": 31769, "set": "B0", "since": "2026-11-04"}
+{"atom": "op/WRAPU", "category": "godel", "index": 3417, "name": "p3417__op__WRAPU", "prime": 31771, "set": "B0", "since": "2026-11-04"}

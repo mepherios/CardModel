@@ -14,10 +14,10 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from helpers import ROOT, SEED, TempProject, model_ctx
+from helpers import MAC_SHELL, ROOT, SEED, TempProject, model_ctx
 from test_self import IsolatedSelf
 
-from cardmodel.engines import probes, selfrun, verify
+from cardmodel.engines import selfrun, verify
 from cardmodel.kernel import resources
 
 
@@ -72,7 +72,7 @@ class ObserveSelf(unittest.TestCase):
             self.assertNotIn("a new observation", again["summary"], "one observation per content hash (CM15)")
 
 
-@unittest.skipUnless(probes.probe({"kind": "executable", "name": "swiftc"})[0], "needs swiftc (macOS)")
+@unittest.skipUnless(MAC_SHELL, "needs swiftc on macOS (the shells use AppKit)")
 class Store(unittest.TestCase):
     def test_the_store_step_launches_the_catalogue(self):
         from cardmodel.arcade import build as B

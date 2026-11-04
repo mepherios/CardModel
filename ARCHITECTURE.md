@@ -8,6 +8,7 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── card.py             Card = dict + load facts (path, registry, layer, source)
 │   │   ├── registry.py         a directory with _category.json is a registry; ALL/get/all_names
 │   │   ├── store.py            layers (model < extra read-only < local < self read-only < project), merged
+│   │   ├── index.py            SQLite index over registries: a lookup reads one card; rebuilt when files change
 │   │   │                       views, writes (the local layer only when a writer names it)
 │   │   ├── schema.py           dependency-free JSON-Schema subset validator
 │   │   ├── types.py            card types are cards; validation; closure (L45)

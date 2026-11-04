@@ -21,7 +21,8 @@
     "the Wi-Fi hardware as a card (nds_wifi): the register file the wireless driver tests, the baseband and RF chips, power-up and its interrupt, the microsecond counter and beacon interrupts, TX slots; Diamond's main menu starts its wireless driver, scans three channels and continues a save",
     "the DS player's check cartridge for arcade check: a DS image (nds.check_image) whose ARM9 words come off the ARM instruction cards (asm.arm_word), drawing on both screens and writing a byte to the save chip",
     "Pokemon Diamond: copyright and ESRB screens, intro, title screen, a new game's first dialogue",
-    "tests/test_nds.py: a synthetic image drawn by ARM9 code, every device, the player, Diamond's first screens when present"
+    "tests/test_nds.py: a synthetic image drawn by ARM9 code, every device, the player, Diamond's first screens when present",
+    "the Pokemon Diamond tests skip when the ROM is absent (the skip decorator sat on player_ready, not on the class), so the suite passes on machines and CI runners without it"
   ],
   "goal": "Nintendo DS games running on the ARM instruction cards, lifted like the Game Boy.",
   "in_progress": [],
@@ -33,8 +34,8 @@
     "the RTC in local time: the shell's offset from UTC (player_clock_offset)"
   ],
   "metadata": {
-    "previous_content_hash": "85f6e01face50aa65f075ea1c045f175af82a6e595bb8bf86f1cd4352478130a",
-    "version": "2.5.2",
+    "previous_content_hash": "d345c7307b608b1f661ba5a9e8cf46a6bf7aacb3a79397a94821e63c02a7211d",
+    "version": "2.5.3",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -95,6 +96,6 @@
   "statement": "Both DS CPUs direct-booted on the ARM instruction cards with VRAM, both 2D engines, the 3D engine, the sound mixer, the save chip, SPI devices, the clock and the Wi-Fi hardware as cards, and booted by a card: Pokemon Diamond plays in the DS player (system/nds) for Cardmodel Arcade, new game and continue.",
   "tier": 1,
   "title": "Nintendo DS prototype",
-  "updated": "2026-10-22T16:39:44+02:00",
+  "updated": "2026-11-04T21:20:00+01:00",
   "user_actions": []
 }
