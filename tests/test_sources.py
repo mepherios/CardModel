@@ -38,6 +38,13 @@ class Sources(unittest.TestCase):
         self.assertNotIn("number", tri["godel"])
         self.assertTrue(tri["identity"]["hash"].startswith("sha256:"))
         self.assertIn(tri["canonical"]["status"], ("canonical", "recurrence"))
+        # FOUNDATIONS.md D11/A4: content is read from the canonical term when there is one, so it follows meaning
+        from cardmodel.engines import godel as G
+        canonical = [d for d in built["definitions"] if d["godel"]["read_from"].startswith("its canonical term")]
+        self.assertTrue(canonical)
+        for d in canonical:
+            self.assertEqual(d["canonical"]["status"], "canonical")
+            self.assertEqual(d["godel"]["content"], dict(G.term_content(d["canonical"]["term"], self.ctx.ops)))
         # an action that names no definition, or whose witness refutes it, breaks the law
         from cardmodel.kernel.store import Store
         import shutil
