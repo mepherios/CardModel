@@ -80,6 +80,7 @@
   ],
   "family": "c_like",
   "frontend": "cardmodel.engines.frontend_text",
+  "frontend_link": "class_per_file",
   "frontend_harness": {
     "arg_cast": "(({type})({v}))",
     "hoist": "^\\s*import\\s",

@@ -230,10 +230,29 @@ def run(ctx: Ctx, files: list[Path], targets: list[str] | None = None, seed: int
             by_source.setdefault(fe.lang, {})[name] = card
             ports.setdefault(str(path.with_suffix("")), {}).setdefault(fe.lang, {})[name] = card
     cross = cross_source(ctx, ports, seed)
+    fails = failures(functions, cross)
+    explain_failures(ctx, fails, by_source)
     return {"seed": seed, "targets": targets,
             "unavailable": {t: why for t, (ok, why) in avail.items() if not ok},
             "sources": sorted(by_source), "functions": functions, "not_lifted": not_lifted,
-            "cross_source": cross, "pairs": pair_table(functions, targets), "failures": failures(functions, cross)}
+            "cross_source": cross, "pairs": pair_table(functions, targets), "failures": fails}
+
+
+def explain_failures(ctx: Ctx, fails: list[dict], by_source: dict[str, dict[str, dict]]) -> None:
+    """Name the divergence law (engines/analyse.py) that fires at a failing pair's first input, when one does:
+    a wrong answer from a target is then explained in math (overflow at a + b, a float exception …), not just shown."""
+    from .analyse import explain
+    for f in fails:
+        args = (f.get("detail") or {}).get("args") if isinstance(f.get("detail"), dict) else None
+        card = by_source.get(f.get("source"), {}).get(f["function"])
+        if args is None or card is None:
+            continue
+        try:
+            why = explain(ctx, card["ir"], list(args))
+        except Exception:        # noqa: BLE001 -- an explanation is extra; the failure stands without one
+            continue
+        if why:
+            f["explanation"] = [f"{w['law']} at {w['term']}" for w in why]
 
 
 def pair_table(functions: list[dict], targets: list[str]) -> dict:
@@ -330,6 +349,8 @@ def report_text(rep: dict) -> str:
         for f in rep["failures"][:20]:
             lines.append(f"  {f['kind']:<12} {f.get('source', '')}->{f.get('target', '')} {f['function']}: "
                          f"{str(f['detail'])[:200]}")
+            if f.get("explanation"):
+                lines.append(f"  {'':<12} explained by: {'; '.join(f['explanation'])} (cardmodel analyse)")
     else:
         lines.append("no failures")
     return "\n".join(lines)

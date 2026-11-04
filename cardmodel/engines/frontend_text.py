@@ -2002,6 +2002,7 @@ class Lowerer:
         self.loop_steps: list = []          # per enclosing loop: statements a `continue` must run first
         self.line = fn.line
         self.untyped_params: set[str] = set()
+        self.externs: dict = {}
         self.cur_type: str | None = None
         self.signed_cast = 0
 
@@ -2610,6 +2611,17 @@ class Lowerer:
                 self.inferred = True
                 ret = INT
             return ["CALL", path, *fixed], ret
+        ext = self.externs.get(path) if path not in self.env else None
+        if ext is not None:                      # a function of another file (lift_project resolves it)
+            args = [self.expr(a) for a in arg_nodes]
+            if len(args) != len(ext["params"]):
+                self.err(f"{path}() arity mismatch")
+            fixed = []
+            for (e, t), want in zip(args, ext["params"]):
+                fixed.append(self.coerce(e, t, want or t))
+            if ext.get("returns") is None:
+                self.inferred = True
+            return ["CALL", ext["qual"], *fixed], ext.get("returns") or INT
         parts = path.split(".")
         if len(parts) > 1 and parts[0] in self.env:
             e = ("name", parts[0])
@@ -2930,7 +2942,8 @@ def dialect(lang: str) -> Dialect:
 
 
 def lift_source(source: str, ops: dict[str, OpSpec], lang: str, only: list[str] | None = None,
-                param_hints: dict[str, dict[str, str]] | None = None) -> list[Lifted]:
+                param_hints: dict[str, dict[str, str]] | None = None, externs: dict[str, dict] | None = None,
+                close: bool = True) -> list[Lifted]:
     """Lift every function of ``source`` (written in ``lang``). Same contract as frontend_python.lift_source:
     calls between lifted functions resolve, and a function that calls one that did not lift fails too."""
     d = dialect(lang)
@@ -2955,14 +2968,35 @@ def lift_source(source: str, ops: dict[str, OpSpec], lang: str, only: list[str] 
     results: dict[str, Lifted] = {}
     for _round in range(3):                   # untyped callees: their inferred result types feed the callers
         before = {n: dict(s) for n, s in sigs.items()}
-        results = _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hints)
+        results = _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hints, externs)
         if before == sigs:
             break
-    _close(results)
+    if close:
+        from .frontend_python import close_calls
+        external = {e["qual"] for e in (externs or {}).values()}
+        close_calls(results, lambda c: c in external)
     return [lf for lf in results.values() if not only or lf.name in only]
 
 
-def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hints) -> dict:
+def signatures(source: str, ops: dict[str, OpSpec], lang: str) -> dict[str, dict]:
+    """Each function's declared signature {name: {"params": [type|None], "returns": type|None}} without lifting
+    bodies (lift_project gives them to the other files of a project)."""
+    d = dialect(lang)
+    out = {}
+    for f in find_functions(source, d):
+        if f.body is None or f.name == "main":
+            continue
+        low = Lowerer(f, d, ops, {}, {}, {}, None)
+        try:
+            out[f.name] = {"params": [low.ir_type(t) if t else (d.untyped if d.untyped in (INT, FLOAT) else INT)
+                                      for _, t in f.params],
+                           "returns": low.ir_type(f.ret) if f.ret else None}
+        except Unsupported:
+            continue
+    return out
+
+
+def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hints, externs=None) -> dict:
     results: dict[str, Lifted] = {}
     for f in fns:
         if f.name in helper_names and f.name.startswith("cm_"):
@@ -2976,6 +3010,7 @@ def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hint
         widened: dict = {}
         for _ in range(8 + 2 * len(f.params)):
             low = Lowerer(f, d, ops, sigs, patterns, widened, (param_hints or {}).get(f.name))
+            low.externs = externs or {}
             try:
                 ir = low.lower()
                 sig = sigs.setdefault(f.name, {"params": [], "returns": None})
@@ -2996,19 +3031,3 @@ def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hint
         else:
             results[f.name] = Lifted(f.name, False, None, src, ["type inference did not settle"], True, f.line, lang)
     return results
-
-
-def _close(results: dict[str, Lifted]) -> None:
-    from .frontend_python import _exprs_of, _stmts
-    changed = True
-    while changed:
-        changed = False
-        for name, lf in results.items():
-            if not lf.ok:
-                continue
-            callees = {e[1] for s in _stmts(lf.ir["body"]) for e in _exprs_of(s) if e[0] == "CALL"}
-            bad = [c for c in callees if c not in results or not results[c].ok]
-            if bad:
-                lf.ok = False
-                lf.reasons.append(f"calls {', '.join(sorted(bad))} which did not lift")
-                changed = True

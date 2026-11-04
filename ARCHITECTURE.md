@@ -25,6 +25,9 @@ cardmodel/                      the repository IS the model (its home)
 │   │   │                       (one tokenizer + Pratt parser, per-language Dialect; op templates read backwards)
 │   │   ├── frontends.py        any language in: dispatch on the card's frontend; witness each lift by running the
 │   │   │                       original source through its own toolchain (docs/FRONTENDS.md)
+│   │   ├── lift_project.py     lift a whole tree: calls across files and modules resolve (Python imports, text
+│   │   │                       languages link by name), Python methods lift as Class_method; linear closure
+│   │   ├── sweep.py            `cardmodel lift-sweep PATH`: lift rate per language + histogram of first reasons
 │   │   ├── codegen.py          IR -> any language card (syntax as data; no per-language code)
 │   │   ├── runners.py          compile/run with cache and timeouts; call protocol (python, node)
 │   │   ├── conformance.py      op x language matrix through real toolchains

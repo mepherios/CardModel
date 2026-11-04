@@ -235,7 +235,10 @@ passes. Phases A and B start now; C and D can overlap B once the IR types land.
 * B4. `for x in seq`, comprehensions, `len`, `enumerate`, `zip`, `min/max/sum` over lists.
 * B5. Methods: lift classes as records plus functions over a receiver; `self.x` reads and writes.
 * B6. The sweep as a tool and a goal: `cardmodel lift-sweep PATH` prints the rate and the reason histogram, and the
-  self-run measures it on the stdlib and on the user's corpora.
+  self-run measures it on the stdlib and on the user's corpora. *Tool done (engines/sweep.py, project lift with
+  methods and calls across modules); measured 2026-11-04 on the Python 3.13 stdlib without tests: 110 of 11,999
+  top-level functions one file at a time, 113 with calls across modules, 296 of 49,743 with methods. 23,968 methods
+  stop at `self.x` (B5), 5,495 at non-scalar annotations, 4,611 at defaults/varargs (B1). The self-run goal is still to wire.*
 
 ### Phase C: any language in
 
@@ -357,6 +360,44 @@ and they stay optional (CM01, probed and never required).
 Honest limit: the device's OS (window system, audio, input, file system, network) is always outside the cards.
 It's reached only through boundary cards, which is what "natively" can mean on a real device.
 
+### Phase J: understand a program the REA way, in the math language
+
+Recorded 2026-11-04. In the user's words: bring the REA way of understanding (rea-cards: facts with provenance,
+witnessed flaws, refuse rather than guess, name the first diverging input) into the math language as a structural
+analyser that models a program's structure and interaction semantics, checks its logic and math, and detects and
+explains behaviour differences across languages, optimization levels and device runners. A latent flaw in the
+original code that only shows up after translating or optimizing (integer division, overflow, float or NaN
+handling, timing) must be *defined* by the math model and caught, never silently introduced.
+
+The principle: the IR's reference semantics is the program's mathematics (ℤ, binary64, partial ops undefined off
+their domain). Every target language, optimization level and device runner is a model of that mathematics that
+agrees with it on part of the domain only. The analyser states that part as math and witnesses its edge.
+
+* J1 🔵 (2026-11-04, `cardmodel analyse`, [ANALYSE.md](ANALYSE.md)). Structure facts with provenance (signature
+  in math notation, calls, recursion none/tail/general/mutual, loops, partial ops, effects); logic obligations
+  for every partial op under its path condition (proved by a guard, implied by the declared domain, sampled, or
+  open with the counterexample); 12 divergence laws (`int_width`, `int_div_zero`, `float_div_zero`,
+  `float_exception`, `float_to_int`, `shift_count`, `int_pow_negative`, `nan_result`, `deep_recursion`,
+  `step_budget`, `eval_order`, `float_assoc`) fired by an instrumented reference on boundary and in-domain
+  inputs; every firing run in every available runner, including optimization and checking variants (C at
+  -O0/-O2/-ffast-math/UBSan, Rust debug/release, Swift -Onone/-Ounchecked). `cardmodel matrix` failures name the
+  law that fires at their first input.
+* J2. Laws as cards (`cards/divergence_law/<id>`): the condition in the math language, the per-runner models
+  as data, and each runner's prediction checked against its witness (a law whose prediction a runner contradicts
+  is itself a flaw, as rea-cards' `re_flaw` cards are).
+* J3. Fixed-width semantics as math: BV(w) (MATH_CORE F3) so `int_width` is decided, not sampled: interval
+  analysis over the IR proves the domain on which every intermediate fits, and the analyser emits it as a
+  `requires` the user can adopt.
+* J4. Device runners (with Phase I): the same function run on the iPad/iOS platform card, on ARM64 and x86-64,
+  and through the model's own backend (I5), so a difference between devices (division by zero is a trap on x86-64
+  and a silent 0 on ARM64) is witnessed per device, not predicted.
+* J5. Interaction semantics: effects (globals, arrays, I/O at the boundary cards) as a trace model, so two
+  programs that agree on values but differ in the order or number of effects are told apart; event and timing
+  models for the arcade's machines. ([SCALING.md](SCALING.md) §4.7's interaction model is what the model itself can
+  reach; J5 is what a program does at its boundary.)
+* J6. The analyser on itself and on the self-run: every function the cycle adopts carries its analysis, and a
+  latent flaw blocks adoption until the domain is declared or the code is changed (Phase A5's PRs carry it).
+
 ## 6. Workstreams running now and what each owns
 
 Four sessions work in parallel from this plan. Each owns its files (docs/INTEGRATION.md rule: one owner per file
@@ -367,6 +408,7 @@ area) and lands through a PR into main.
 | Lift every language | B, C | `engines/frontend_*.py`, new frontends, `cards/language/*/frontend`, the new IR types in `engines/ir.py` | codegen templates (coordinate with verification) |
 | Verify all language pairs | D, A3 | `engines/conformance.py`, `engines/translate.py`, `engines/runners.py`, the stdin harness templates in `cards/language/*/codegen` | the IR's types (owned by lifting) |
 | Optimization gaps | E | `engines/improve.py`, `engines/egraph.py`, `engines/optimize.py`, `engines/rewrite.py`, algorithm and metric cards | the frontend |
+| Understand the REA way | J | `engines/analyse.py`, `docs/ANALYSE.md`, `tests/test_analyse.py`, the explanation hook in `engines/matrix.py` | runner semantics (`engines/runners.py`, owned by verification) |
 | Run fully in the cloud | A | `.github/workflows/`, `kernel/resources.py`, `engines/selfcheck.py`, `engines/selfrun.py` cloud scheduling, the `re_operation` vectors, the environment setup script | verify section semantics |
 
 Shared rules for all four:
