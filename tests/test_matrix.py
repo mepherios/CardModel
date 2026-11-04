@@ -81,6 +81,27 @@ class MatrixTest(unittest.TestCase):
         files = M.default_corpus(ROOT)
         self.assertIn(ROOT / "examples/matrix/corpus.card", files)
         self.assertIn(ROOT / "examples/matrix/corpus.py", files)
+        self.assertIn(ROOT / "tests/frontends/algos.go", files)
+
+    def test_same_name_in_unrelated_files_is_not_a_port(self):
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_matrix_"))
+        (d / "one.py").write_text("def k(a: int) -> int:\n    return a + 1\n", encoding="utf-8")
+        (d / "two.card").write_text("module two\nfn k(a: Int) -> Int = a * 2\n", encoding="utf-8")
+        rep = M.run(self.ctx, [d / "one.py", d / "two.card"], targets=["python"], seed=SEED)
+        self.assertEqual(rep["cross_source"], [])
+
+    def test_domain_edges_give_nan_not_a_crash(self):
+        # sqrt/acos/asin outside their domain and fmod by 0: the IR says NaN; Python's math and Ruby's Math raise
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_matrix_"))
+        (d / "edge.card").write_text(
+            "module edge\nfn s(x: Float) -> Float = op.FSQRT(x)\nfn c(x: Float) -> Float = op.ACOS(x)\n"
+            "fn m(x: Float) -> Float = op.FMOD(x, 0.0)\n", encoding="utf-8")
+        targets = [t for t in ("python", "ruby") if self.ctx.available(t)[0]]
+        rep = M.run(self.ctx, [d / "edge.card"], targets=targets, seed=SEED)
+        self.assertEqual([f for f in rep["failures"] if f["kind"] == "pair"], [], seed_note(self))
+        for f in rep["functions"]:
+            for t in targets:
+                self.assertEqual(f["targets"][t]["status"], "pass", (f["function"], t, f["targets"][t]))
 
 
 if __name__ == "__main__":

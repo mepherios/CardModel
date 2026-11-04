@@ -8,8 +8,8 @@
     "javascript": "Math.sqrt({0})",
     "lean": "UNSUPPORTED",
     "lua": "math.sqrt({0})",
-    "python": "math.sqrt({0})",
-    "ruby": "Math.sqrt({0})",
+    "python": "cm_fsqrt({0})",
+    "ruby": "cm_fsqrt({0})",
     "rust": "(({0}).sqrt())",
     "swift": "sqrt({0})"
   },
