@@ -1,7 +1,7 @@
 """Observe and the learning loop: proposals carry evidence; promotion needs it (CM04, CM15)."""
 import unittest
 
-from helpers import SEED, TempProject
+from helpers import SEED, TempProject, seed_note
 
 from cardmodel.engines.learn import MIN_EVIDENCE, learn
 from cardmodel.engines.observe import observe
@@ -105,3 +105,44 @@ class Learn(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RewriteSuggestions(unittest.TestCase):
+    """A rewrite suggestion is ready only when it keeps the source's behaviour on every input checked, errors
+    included: a rule that holds under a side condition (a != 0, 0 <= a) must not become an established
+    suggestion for code that can reach the excluded inputs."""
+
+    SRC = {"m.py": "def f(x):\n    return x // x\n\n"
+                   "def g(x):\n    return x >> x\n\n"
+                   "def h(x):\n    return (x * 2) + (x * 2)\n"}
+
+    def test_domain_changing_rewrites_are_not_ready(self):
+        from pathlib import Path
+        from cardmodel.engines.learn import propose_rewrites
+        p = TempProject(self.SRC)
+        try:
+            out = {s["candidate"]["from"]: s for s in propose_rewrites(p.ctx(), Path(p.dir), SEED)}
+        finally:
+            p.cleanup()
+        for src in ("(x // x)", "(x >> x)"):
+            self.assertIn(src, out, seed_note(self))
+            self.assertFalse(out[src]["ready"], f"{src} -> {out[src]['candidate']['to']}: {out[src]['reason']}")
+            self.assertIn("MISMATCH", out[src]["reason"])
+            self.assertTrue(out[src]["candidate"]["valid_when"], "the rule's side condition travels with it")
+        sound = out["((x * 2) + (x * 2))"]
+        self.assertTrue(sound["ready"], sound["reason"])
+        self.assertEqual(sound["candidate"]["valid_when"], [])
+
+    def test_check_rewrite_counts_one_sided_errors(self):
+        import random
+        from cardmodel.engines.exprs import parse
+        from cardmodel.engines.learn import check_rewrite
+        rng = random.Random(SEED)
+        checks, bad = check_rewrite(parse("x // x"), parse("1"), rng)
+        self.assertEqual(bad["env"], {"x": 0})
+        checks, bad = check_rewrite(parse("x * 2"), parse("x << 1"), rng)
+        self.assertIsNone(bad)
+        self.assertGreaterEqual(checks, MIN_EVIDENCE)
+        # both sides raise on x = 0: not a check, not a counterexample
+        checks, bad = check_rewrite(parse("1 // x"), parse("1 // x"), rng)
+        self.assertIsNone(bad)
