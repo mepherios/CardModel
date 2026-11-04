@@ -56,7 +56,7 @@ def python_reference(module: dict, lifted: list[Lifted]):
     # the frontend lifts bare gcd(a, b) as math.gcd, so the reference must define it too (else every input
     # raises NameError, is dropped as "outside the domain" and the function is verified on nothing)
     entry = by[module["entry"]]
-    src = "import math\nfrom math import gcd\n" + entry.preamble + "\n" + \
+    src = "import math\nfrom math import gcd\n" + getattr(entry, "preamble", "") + "\n" + \
         "\n\n".join(by[f["name"]].source for f in module["functions"])
     ns: dict = {"__name__": "cardmodel_reference"}
     exec(compile(src, "<reference>", "exec"), ns)  # noqa: S102 -- the user's own source, being observed
