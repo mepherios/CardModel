@@ -25,9 +25,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from . import godel as G
 from . import translate
 from . import values as V
-from .codegen import EmitGap, emit_module
+from .codegen import EmitGap, emit_module, predicted_gap
 from .context import Ctx
 from .ir import Interpreter, IRError, StepLimit
 
@@ -168,6 +169,10 @@ def round_trip(ctx: Ctx, card: dict, target: str) -> dict:
     fe = FRONTENDS.get(target)
     if fe is None or fe.lift_text is None:
         return {"status": "no_frontend"}
+    missing = predicted_gap(G.module_content(card["ir"], ctx.ops), ctx.language_gap(target)) \
+        if translate.PREDICT_GAPS else []
+    if missing:
+        return {"status": "gap", "reason": f"{target}: no template for {', '.join(missing)} (predicted from the content)"}
     try:
         code = emit_module(ctx.store, ctx.ops, target, card["ir"])
     except EmitGap as exc:

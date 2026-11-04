@@ -28,8 +28,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 from ..kernel import resources
 
+from . import godel as G
 from . import values as V
-from .codegen import EmitGap, Emitter, emit_module
+from .codegen import EmitGap, Emitter, emit_module, predicted_gap
 from .context import Ctx
 from .frontend_python import Lifted, lift_source, module_for
 from .ir import Interpreter, StepLimit, elem_type
@@ -39,6 +40,7 @@ COUNT_LIKE = {"n", "k", "m", "count", "size", "length", "steps", "depth", "times
               "num", "limit", "rounds", "iterations", "power", "places", "digits", "width", "height",
               "d", "rows", "cols", "dim", "seq", "heads"}
 STEP_BUDGET = 200_000
+PREDICT_GAPS = True      # refuse a language from the term's content (its gap, GODEL_TARGET G11) before emitting
 
 
 def _gen_for(name: str, typ: str, narrow: int = 0) -> dict:
@@ -189,8 +191,14 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
               "code": ref_src, "notes": "the observed original"}] if lang == "python" else \
         [{"name": f"{lang}_source", "lang": lang, "entry": name, "cost": 1.0, "runnable": True, "original": True,
           "code": ref_src, "notes": "the observed original (witnessed by frontends.witness_source)"}]
-    gaps = {}
+    content = G.module_content(module, ctx.ops)
+    gaps, predicted = {}, {}
     for lang in ctx.codegen_languages():
+        missing = predicted_gap(content, ctx.language_gap(lang)) if PREDICT_GAPS else []
+        if missing:                        # known from the content: the language has no template for these atoms
+            predicted[lang] = missing
+            gaps[lang] = f"{lang}: no template for {', '.join(missing)} (predicted from the content)"
+            continue
         try:
             code = emit_module(ctx.store, ctx.ops, lang, module)
             forms.append({"name": lang, "lang": lang, "entry": name, "cost": 1.0, "runnable": True,
@@ -205,18 +213,14 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
         "signature": {"params": entry["params"], "returns": entry["returns"]},
         "ir": module, "generators": gens,
         "vectors": [{"args": r["args"], "out": r["out"]} for r in rows if V.same(r["out"], r["ir_out"])],
-        "forms": forms, "emit_gaps": gaps,
-        "depends_on": sorted({f"op/{o}" for f in module["functions"] for o in _ops_in(f)}),
+        "forms": forms, "emit_gaps": gaps, "predicted_gaps": predicted,
+        "godel": {"content": dict(content), "read_from": "its IR"},
+        "depends_on": sorted(G.support(content)),
         "status": "suspect",
         "verification": {"lift_fidelity": {"checked": len(rows), "mismatched": len(mismatched),
                                            **({"example": mismatched[0]} if mismatched else {})}},
         "provenance": {"origin": source_label, "source_sha256_12": digest, "seed": seed, "source_lang": lang},
     }
-
-
-def _ops_in(fn) -> set[str]:
-    from .ir import ops_used
-    return {o for o in ops_used(fn) if o not in ("CALL",)}
 
 
 def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: int | None = None,
@@ -225,6 +229,7 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
     seed = V.fresh_seed() if seed is None else seed
     module = card["ir"]
     entry = module["entry"]
+    content = G.module_content(module, ctx.ops)
     ref_form = next((f for f in card["forms"] if f["name"] == "python_source"), None)
     if ref_form is None:                      # card-language functions: the IR itself is the reference
         interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
@@ -256,6 +261,10 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
         skipped = len(rows) - len(usable)
         if not usable:
             return lang, {"status": "no_inputs", "out_of_width": skipped}
+        missing = predicted_gap(content, ctx.language_gap(lang)) if PREDICT_GAPS else []
+        if missing:
+            return lang, {"status": "gap", "reason": f"{lang}: no template for {', '.join(missing)} (predicted "
+                                                     f"from the content)"}
         try:
             src = Emitter(ctx.store, lang, ctx.ops).program(module, [r["args"] for r in usable])
         except EmitGap as exc:
