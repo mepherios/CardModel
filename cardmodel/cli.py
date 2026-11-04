@@ -1,5 +1,6 @@
 """cardmodel — the card model as one program. Run it from any project folder.
 
+  cardmodel install [--dir D] [--uninstall]  put cardmodel on PATH (symlink in ~/.local/bin)
   cardmodel init [PATH]                 make PATH a project (.cardmodel/ with its own cards)
   cardmodel status                      registries, languages on this host, goals
   cardmodel observe PATH [--save]       express a source tree as cards (named vs fallback, liftable functions)
@@ -709,6 +710,36 @@ def cmd_self(args) -> int:
     return 0
 
 
+def cmd_install(args) -> int:
+    """Put `cardmodel` on PATH: a symlink to this checkout's bin/cardmodel in a bin directory (default
+    ~/.local/bin). Idempotent; --uninstall removes only a link that points here."""
+    home = Path(__file__).resolve().parents[1]
+    target = home / "bin" / "cardmodel"
+    bindir = Path(args.dir).expanduser() if args.dir else Path.home() / ".local" / "bin"
+    link = bindir / "cardmodel"
+    ours = link.is_symlink() and link.resolve() == target.resolve()
+    if args.uninstall:
+        if ours:
+            link.unlink()
+            print(f"removed {link}")
+            return 0
+        print(f"nothing to remove: {link} is not a link to {target}", file=sys.stderr)
+        return 1
+    if link.exists() or link.is_symlink():
+        if not ours:
+            print(f"refusing to replace {link}: it is not a link to {target}", file=sys.stderr)
+            return 1
+    else:
+        bindir.mkdir(parents=True, exist_ok=True)
+        link.symlink_to(target)
+    on_path = str(bindir) in os.environ.get("PATH", "").split(os.pathsep)
+    _out(args, {"link": str(link), "target": str(target), "on_path": on_path},
+         f"cardmodel -> {target}\ninstalled at {link}" +
+         ("" if on_path else f"\n{bindir} is not on PATH; add this to your shell profile:\n"
+                             f"  export PATH=\"{bindir}:$PATH\""))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="cardmodel", description=__doc__.splitlines()[0],
                                 formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
@@ -761,6 +792,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_new)
     s = sub.add_parser("docs"); s.add_argument("--check", action="store_true"); s.set_defaults(fn=cmd_docs)
     s = sub.add_parser("clean"); s.set_defaults(fn=cmd_clean)
+    s = sub.add_parser("install", help="put cardmodel on PATH (a symlink in ~/.local/bin or --dir)")
+    s.add_argument("--dir"); s.add_argument("--uninstall", action="store_true"); s.set_defaults(fn=cmd_install)
     s = sub.add_parser("self", help="the model runs itself: a cycle of checks, learning and optimization, a ranked plan")
     s.add_argument("action", choices=["run", "status", "report", "capabilities", "auto", "corpus", "adopt"])
     s.add_argument("target", nargs="*"); s.add_argument("--only"); s.add_argument("--force", action="store_true")

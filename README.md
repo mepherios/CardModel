@@ -17,6 +17,39 @@ observations, learned functions and measurements. Each card lives in a filesyste
 It uses only Python's standard library, plus whatever toolchains the machine has (it probes them). It never needs
 another folder at runtime.
 
+## Install
+
+No dependencies beyond Python 3.9+. From this checkout:
+
+```bash
+./bin/cardmodel install
+```
+
+That links `cardmodel` into `~/.local/bin` (use `--dir` for another bin directory, `--uninstall` to remove it) and
+tells you if that directory is not on PATH. `pip install -e .` also works and gives the same `cardmodel` command.
+
+## The main loop
+
+```bash
+cardmodel translate examples/algorithms/algos.py
+```
+
+```bash
+cardmodel optimize
+```
+
+```bash
+cardmodel run examples/lang/math.card
+```
+
+```bash
+cardmodel self run
+```
+
+`cardmodel --help` lists every command.
+
+## More examples
+
 ```bash
 ./bin/cardmodel probe
 ```

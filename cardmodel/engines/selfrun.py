@@ -69,7 +69,7 @@ DEFAULT_CONFIG = {"auto": True, "interval_hours": 6, "budget_minutes": 45, "corp
                   "arena_count": 24, "store_cartridges": None}
 KEEP_RUNS = 60
 KEEP_LOGS = 20
-QUIET = {"self", "clean", "verify", "cover", "docs", "learn", "laws", "arena", "optimize", "improve", "lean"}
+QUIET = {"self", "install", "clean", "verify", "cover", "docs", "learn", "laws", "arena", "optimize", "improve", "lean"}
 DEFAULT_CORPORA = ("examples", "arena/slowframework")
 # what measures an unmeasured goal metric: the command a finding proposes
 MEASURED_BY = {
