@@ -323,46 +323,26 @@ def _power_x_minus_1(k: int) -> Poly:
     return p
 
 
-# -- Gödel numbering ------------------------------------------------------------------------------------------------
-def _primes(n: int) -> list[int]:
-    out, k = [], 2
-    while len(out) < n:
-        if all(k % p for p in out if p * p <= k):
-            out.append(k)
-        k += 1
-    return out
-
-
-def _zig(v: int) -> int:
-    return 2 * v if v >= 0 else -2 * v - 1
-
-
-def _unzig(z: int) -> int:
-    return z // 2 if z % 2 == 0 else -(z + 1) // 2
-
-
+# -- Gödel numbering (the primes and the zigzag are engines/godel's) ---------------------------------------------------
 def godel_encode(seq: list[int]) -> int:
     """Gödel's numbering of an integer sequence: prod p_i ** (zig(a_i) + 1). Exact; decodes back."""
+    from . import godel as G
     if len(seq) > 256 or any(abs(int(a)) > 10**6 for a in seq):
         raise ValueError("too large to number (keep Gödel numbers for canonical forms, not raw data)")
     n = 1
-    for p, a in zip(_primes(len(seq)), seq):
-        n *= p ** (_zig(int(a)) + 1)
+    for p, a in zip(G.primes(len(seq)), seq):
+        n *= p ** (G.zig(int(a)) + 1)
     return n
 
 
 def godel_decode(n: int) -> list[int]:
-    out, k = [], 2
-    while n > 1:
-        if all(k % p for p in range(2, int(k ** 0.5) + 1)):
-            e = 0
-            while n % k == 0:
-                n //= k
-                e += 1
-            if e == 0:
-                break
-            out.append(_unzig(e - 1))
-        k += 1
+    """The sequence back: the exponents of the consecutive primes, up to the first prime that is absent."""
+    from . import godel as G
+    out = []
+    for e in G.exponents(n):
+        if e == 0:
+            break
+        out.append(G.unzig(e - 1))
     return out
 
 
