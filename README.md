@@ -185,6 +185,7 @@ command runs the test suite.
 | [docs/PROVENANCE.md](docs/PROVENANCE.md) | sources, commits, and what the witnesses found in them |
 | [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | pure core / effect shell, the optimization pipeline, guarantees, online play |
 | [docs/TRANSLATE_REAL_PROGRAMS.md](docs/TRANSLATE_REAL_PROGRAMS.md) | translating real programs: where it fell short, what was fixed, the remaining gaps |
+| [docs/FRONTENDS.md](docs/FRONTENDS.md) | the text frontends: reading source in other languages, witnessed against their own toolchains |
 | [arena/](arena/README.md) | the optimization test environment (hand-written slow framework + generator) |
 | [docs/LANGUAGE.md](docs/LANGUAGE.md) | the card language: functions, logic, theorems, tests and cards in one file |
 | [docs/MATH_LANGUAGE.md](docs/MATH_LANGUAGE.md) | mathematics as a language: Unicode or LaTeX equations in, every language out; any function out as equations |
