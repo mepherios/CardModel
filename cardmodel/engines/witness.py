@@ -68,7 +68,7 @@ def time_limit(seconds: float):
 
 
 def lib_namespace(ctx: Ctx, libs: list[str]) -> dict:
-    ns: dict = {"math": math}
+    ns: dict = {math.__name__: math}           # the Python module, named by itself (not the math language card)
     for name in libs or []:
         if name not in _LIB_CACHE:
             card = ctx.store.get(f"lib/{name}")
@@ -219,7 +219,7 @@ def verify_forms(ctx: Ctx, card, seed: int | None = None, samples: int = 64, inc
         return {"seed": seed, "reference": None, "forms": {}, "note": "no runnable python reference form"}
     ref_fn = python_callable(ctx, ref, card)
     arity = _arity(card, ref_fn)
-    filt = eval(card["filter"], {"math": math, "__builtins__": {}}) if card.get("filter") else None  # noqa: S307
+    filt = eval(card["filter"], {math.__name__: math, "__builtins__": {}}) if card.get("filter") else None  # noqa: S307
     ir = card.get("ir") or {}
     sig = (ir.get("types") or [["int"] * arity + ["int"]])[0]
     out = {"seed": seed, "reference": ref["name"], "forms": {}}
