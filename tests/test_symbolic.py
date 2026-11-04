@@ -51,5 +51,39 @@ class Symbolic(unittest.TestCase):
         self.assertNotEqual(SY.evaluate(wrong, init, out["_ram_in"])["regs"]["A"], out["A"])
 
 
+    def test_canonical_terms_keep_the_meaning(self):
+        # FOUNDATIONS.md D1/D7: registers at their widths (u8, u16) and bus bytes as u8 let the sorted laws simplify
+        # the terms; the canonical terms must still agree with the executable semantics on the bench
+        import random
+        from cardmodel.machine import bench as BN
+        from cardmodel.machine import build as Bd
+        from cardmodel.machine import native as N
+        self.assertEqual(SY.register_sorts(self.ctx, "lr35902")["A"], "u8")
+        self.assertEqual(SY.register_sorts(self.ctx, "lr35902")["SP"], "u16")
+        add = self.ex.run("LR35902_80")
+        canon = SY.distill(self.ctx, "lr35902", add["state"])
+        self.assertEqual(canon["state"]["A"], ["BIT_AND", ["ADD", ["var", "A"], ["var", "B"]], ["int", 255]])
+        m = N.load(self.ctx, Bd.module(self.ctx, "lr35902_bench"), N.resolve_engine(self.ctx, "host"))
+        cards = {c.name: c for c in self.ctx.store.cards("isa")}
+        rng = random.Random(SEED)
+        names = rng.sample(sorted(n for n in cards if n.startswith("LR35902_") and n != "LR35902_CB"), 40)
+        checked = 0
+        for name in names:
+            try:
+                res = self.ex.run(name)
+            except SY.Unsupported:
+                continue
+            d = {**res, "state": SY.distill(self.ctx, "lr35902", res["state"])["state"]}
+            for _ in range(3):
+                st = BN._case_state(rng, cards[name], None)
+                out = BN.run_case(m, cards[name], st, rng.randbytes(0x10000))
+                init = {k: st[k] for k in self.ex.globals}
+                init["PC"] = (st["PC"] + 1) & 0xFFFF
+                got = SY.evaluate(d, init, out["_ram_in"], self.ctx.ops)
+                for reg, v in got["regs"].items():
+                    self.assertEqual(v, out[reg], (name, reg, seed_note(self)))
+                checked += 1
+        self.assertGreater(checked, 60)
+
 if __name__ == "__main__":
     unittest.main()

@@ -152,9 +152,15 @@ class Executor:
             env["returned"] = True
 
 
-def evaluate(result: dict, init: dict, ram: bytes) -> dict:
-    """The terms on one concrete state: final registers, bytes written, M-cycles, halt/stop/hang effects."""
+def evaluate(result: dict, init: dict, ram: bytes, ops: dict | None = None) -> dict:
+    """The terms on one concrete state: final registers, bytes written, M-cycles, halt/stop/hang effects. With
+    ``ops`` (``ir.op_table``) the terms are evaluated in the model M, the op cards' semantics (FOUNDATIONS.md A2)."""
     from ..engines.exprs import evaluate as ev
+    if ops is not None:
+        from ..engines.logic import eval_expr
+
+        def ev(t, env):                 # noqa: F811
+            return eval_expr(t, env, ops)
     env = dict(init)
     env.update({f"rd{i}": 0 for i in range(result["reads"])})
     writes, cycles, counts = {}, 0, {"halt": 0, "stop": 0, "hang": 0}
@@ -207,7 +213,7 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
                 out = BN.run_case(m, card, st, rng.randbytes(0x10000))
                 init = {k: st[k] for k in ex.globals}
                 init["PC"] = (st["PC"] + fetches) & 0xFFFF
-                got = evaluate(res, init, out["_ram_in"])
+                got = evaluate(res, init, out["_ram_in"], ctx.ops)
                 runs += 1
                 for k in ex.globals:
                     want = out[k] if k in out else st[k]
@@ -246,21 +252,61 @@ def content(res: dict, ops) -> dict:
     return dict(+c)
 
 
+def register_sorts(ctx, isa: str) -> dict:
+    """Each register's sort from the ISA card's widths (``u8``, ``u16``): the laws of those subsorts apply to it."""
+    from ..engines import sorts as S
+    regs = I.isa_card(ctx.store, isa).get("registers") or {}
+    return {r: f"u{w}" for r, w in regs.items() if f"u{w}" in S.SORTS}
+
+
+def _reads(t, out: set) -> set:
+    if isinstance(t, list) and t[:1] == ["var"] and isinstance(t[1], str) and t[1].startswith("rd"):
+        out.add(t[1])
+    elif isinstance(t, list):
+        for x in t:
+            _reads(x, out)
+    return out
+
+
+def distill(ctx, isa: str, state: dict, rules=None, costs=None) -> dict:
+    """Each register's term canonicalized by the e-graph under the sorted laws, with the registers at their widths
+    and every byte read from the bus a u8 (docs/FOUNDATIONS.md D1, D7): ``(A + B + 0) & 255`` becomes
+    ``(A + B) & 255``, and a mask of a byte register vanishes."""
+    from ..engines import egraph as E
+    from ..engines import search
+    rules = E.rules_from_cards(ctx.store) if rules is None else rules
+    costs = search.op_costs(ctx.store) if costs is None else costs
+    sorts = register_sorts(ctx, isa)
+    out, fired, saturated = {}, Counter(), True
+    for reg, t in sorted(state.items()):
+        r = E.canonical(t, rules, costs, {**sorts, **{x: "u8" for x in _reads(t, set())}}, ctx.ops, max_iter=5,
+                        max_nodes=1500)
+        out[reg] = r["term"] if r["term"] is not None else t
+        fired.update(r["fired"])
+        saturated = saturated and r["saturated"]
+    return {"state": out, "fired": dict(fired.most_common(12)), "saturated": saturated}
+
+
 def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
     """Definition and action cards for every instruction with terms: the terms are the truth, the card's executable
     semantics is the action, linked by the check's witness."""
     from ..engines import godel as G
     from ..engines.egraph import semantic_hash
+    from ..engines import egraph as E
+    from ..engines import search
     entries = G.ledger(ctx.store)
+    rules, costs = E.rules_from_cards(ctx.store), search.op_costs(ctx.store)
     cards = {c.name: c for c in I.instructions(ctx.store, isa)}
     defs, acts = [], []
     for name, res in sorted(checked["results"].items()):
         row = checked["cards"].get(name) or {}
         card = cards[name]
         dname, aname = f"isa__{name}", f"isa__{name}__semantics"
-        cont = content(res, ctx.ops)
         status = {"pass": "witnessed", "fail": "refuted"}.get(row.get("status"), row.get("status", "pending"))
         term = {"state": res["state"], "effects": res["effects"]}
+        d = distill(ctx, isa, res["state"], rules, costs)
+        canon = {"state": d["state"], "effects": res["effects"]}
+        cont = content({"state": d["state"], "effects": res["effects"]}, ctx.ops)
         defs.append({"name": dname, "category": "definition", "subject": card.qualified,
                      "math": {"text": f"{card.get('mnemonic')}: {', '.join(sorted(res['state'])) or 'no register'} "
                                       f"changed, {len(res['effects'])} bus effects",
@@ -268,10 +314,12 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
                      "explanation": f"{card.get('mnemonic')} as mathematics: each register it changes as a term over "
                                     f"the registers and bytes it reads, and its bus activity in order with the "
                                     f"conditions under which it happens.",
-                     "canonical": {"status": "symbolic", "hash": semantic_hash(term), "by": "method/symbolic_execution",
-                                   "note": "exact terms; the e-graph's canonical form is a later step"},
-                     "identity": {"hash": semantic_hash(term), "of": "symbolic terms", "under": "syntax"},
-                     "godel": G.stored(Counter(cont), "its symbolic terms", entries),
+                     "canonical": {"status": "canonical", "term": canon, "hash": semantic_hash(canon),
+                                   "by": "method/saturate",
+                                   "certificate": {"equalities": list(d["fired"]), "saturated": d["saturated"],
+                                                   "sorts": register_sorts(ctx, isa)}},
+                     "identity": {"hash": semantic_hash(canon), "of": "canonical terms", "under": "laws"},
+                     "godel": G.stored(Counter(cont), "its canonical terms", entries),
                      "proof_obligations": [{"claim": "the terms equal the executable semantics", "status": status,
                                             "tier": "sample",
                                             "evidence": {"seed": checked["seed"], "runs": row.get("runs"),
@@ -288,4 +336,5 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
     return defs, acts
 
 
-__all__ = ["Executor", "Unsupported", "check", "content", "definitions", "evaluate", "module"]
+__all__ = ["Executor", "Unsupported", "check", "content", "definitions", "distill", "evaluate", "module",
+           "register_sorts"]
