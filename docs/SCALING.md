@@ -234,6 +234,13 @@ and peak memory per function, so the slope is a goal card.
 * **S-B: the indexed store and summaries (S2 ready).** A SQLite index, lazy loading, a content-addressed corpus
   store. Summary cards and the SCC-ordered analyses. Logic per shard. Goal: start-up time independent of store size;
   the whole Python stdlib swept (methods included) in under an hour on 4 cores.
+  *Status (2026-11-04):* the SQLite index and lazy loading are in (`kernel/index.py`). A lookup by name, a
+  registry's names and its size come from the index and read one card or none. Each registry's entry is keyed by
+  a fingerprint of its files, so an edit re-indexes that registry and nothing is ever served stale. Measured with
+  `tools/bench_store.py` on a Mac: `cardmodel show ADD` (a bare name) took 0.42 s with the 24k model cards,
+  0.84 s with 10⁵ more and 4.23 s with 10⁶ more; with the index it takes 0.19, 0.23 and 0.23 s. Building the index
+  once for 10⁶ new cards costs 6.7 s. Enumerating a whole registry (`ALL`) still reads it.
+  The content-addressed corpus store, summaries and logic per shard are still to do.
 * **S-C: the work queue and distributed workers.** Work cards, timers as cards, leases, checkpoints, cloud and CI
   workers, packs merged deterministically. Goal: the same cards from 1 and from N workers; an interrupted sweep
   resumes.

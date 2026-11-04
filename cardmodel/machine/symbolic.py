@@ -270,7 +270,7 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
                                     f"conditions under which it happens.",
                      "canonical": {"status": "symbolic", "hash": semantic_hash(term), "by": "method/symbolic_execution",
                                    "note": "exact terms; the e-graph's canonical form is a later step"},
-                     "identity": {"hash": semantic_hash(term), "of": "symbolic terms"},
+                     "identity": {"hash": semantic_hash(term), "of": "symbolic terms", "under": "syntax"},
                      "godel": G.stored(Counter(cont), "its symbolic terms", entries),
                      "proof_obligations": [{"claim": "the terms equal the executable semantics", "status": status,
                                             "tier": "sample",

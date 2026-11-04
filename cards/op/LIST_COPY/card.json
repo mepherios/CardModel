@@ -1,0 +1,75 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": {
+      "list[float]": "cm_lf_copy({0})",
+      "list[int]": "cm_li_copy({0})"
+    },
+    "go": {
+      "list[float]": "append([]float64(nil), {0}...)",
+      "list[int]": "append([]int64(nil), {0}...)"
+    },
+    "java": "({0}).clone()",
+    "javascript": "({0}).slice()",
+    "lua": "cm_list_copy({0})",
+    "python": "list({0})",
+    "ruby": "({0}).dup",
+    "rust": "({0}).to_vec()",
+    "swift": "Array({0})"
+  },
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "list[float]": [
+        {
+          "len": [
+            0,
+            6
+          ],
+          "list": {
+            "float": [
+              -100.0,
+              100.0
+            ]
+          }
+        }
+      ],
+      "list[int]": [
+        {
+          "len": [
+            0,
+            6
+          ],
+          "list": {
+            "int": [
+              -1000,
+              1000
+            ]
+          }
+        }
+      ]
+    },
+    "eval": "lambda xs: list(xs)",
+    "types": [
+      [
+        "list[int]",
+        "list[int]"
+      ],
+      [
+        "list[float]",
+        "list[float]"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "LIST_COPY",
+  "provenance": {
+    "origin": "cardmodel lists (transformer math)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "an independent copy of a list (value semantics)",
+  "tier": 1
+}

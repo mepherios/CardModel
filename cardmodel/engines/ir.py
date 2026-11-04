@@ -35,6 +35,16 @@ Types: ``int`` (mathematical integer: Python semantics), ``float`` (IEEE
 binary64), ``bool``. Fixed-width targets are equivalent only where no value
 exceeds their width; the interpreter reports the widest intermediate so
 mismatches can be classified as overflow rather than as wrong semantics.
+
+Lists ``list[int]`` and ``list[float]`` have value semantics, so every target
+may copy or share them as it likes: ``["LIST_NEW", n, fill]`` (n copies of fill;
+n < 0 is an error), ``["LEN", xs]``, ``["GET", xs, i]`` (0 <= i < len, else an
+error: no negative indexing), ``["LIST_COPY", xs]`` (op cards), and the
+statement ``set {target, index, value}`` that writes one element of a local
+list. ``check_lists`` enforces what keeps value semantics in languages that
+share lists by reference: a list parameter is never written or re-bound, and a
+bare list variable is never assigned to another name or returned from a
+parameter (copy it with LIST_COPY).
 """
 from __future__ import annotations
 
@@ -43,13 +53,33 @@ from dataclasses import dataclass, field
 LEAVES = ("var", "int", "float", "bool")
 MAX_INT_BITS = 1 << 22          # 4 Mbit (512 KiB) per integer: far beyond any real input, far below a crash
 SPECIAL = ("AND", "OR", "IF_EXPR", "CALL", "LOAD")
-TYPES = ("int", "float", "bool")
+LIST_TYPES = ("list[int]", "list[float]")
+TYPES = ("int", "float", "bool", *LIST_TYPES)
 ELEMS = ("u8", "int")
 NESTED = ("then", "else", "body", "default")
 
 
 class IRError(Exception):
     pass
+
+
+def elem_type(t: str) -> str | None:
+    """``list[float]`` -> ``float``; None for a scalar type."""
+    return t[5:-1] if isinstance(t, str) and t.startswith("list[") and t.endswith("]") else None
+
+
+def _list_get(xs, i):
+    if not isinstance(i, int) or not 0 <= i < len(xs):
+        raise IRError(f"index {i} outside 0..{len(xs) - 1}")
+    return xs[i]
+
+
+def _list_new(n, v):
+    if n < 0:
+        raise IRError(f"a list of negative length {n}")
+    if n > 1 << 24:
+        raise IRError(f"a list of {n} elements (cap {1 << 24})")
+    return [v] * n
 
 
 class StepLimit(IRError):
@@ -103,7 +133,8 @@ def _floor_div(a, b):
 _EVAL_NS = {"__builtins__": {"abs": abs, "min": min, "max": max, "pow": pow, "float": float, "int": int,
                              "bool": bool, "round": round, "divmod": divmod, "ZeroDivisionError": ZeroDivisionError,
                              "ValueError": ValueError},
-            "math": __import__("math"), "struct": __import__("struct")}   # struct: binary32 rounding, float bits
+            "math": __import__("math"), "struct": __import__("struct"),
+            "list_get": _list_get, "list_new": _list_new, "len": len, "list": list}   # struct: binary32 rounding, float bits
 
 
 def walk_expr(e):
@@ -238,6 +269,15 @@ class Interpreter:
                 if not 0 <= i < len(arr):
                     raise IRError(f"store {s['array']}[{i}] outside 0..{len(arr) - 1}")
                 arr[i] = v & 0xFF if self.elems[s["array"]] == "u8" else self._note(v)
+            elif k == "set":
+                xs = env.get(s["target"]) if s["target"] in env["\0locals"] else None
+                if not isinstance(xs, list):
+                    raise IRError(f"set {s['target']}[...]: not a local list")
+                i = self._expr(s["index"], env, depth)
+                v = self._expr(s["value"], env, depth)
+                if not 0 <= i < len(xs):
+                    raise IRError(f"set {s['target']}[{i}] outside 0..{len(xs) - 1}")
+                xs[i] = self._note(v)
             elif k == "do":
                 self._expr(s["value"], env, depth)
             elif k == "switch":
@@ -343,3 +383,26 @@ def to_python_text(e) -> str:
     if isinstance(e, list) and e:
         return f"{head}({', '.join(to_python_text(a) for a in e[1:])})"
     return repr(e)
+
+
+def check_lists(fn: dict) -> list[str]:
+    """Why ``fn`` would break list value semantics in a target that shares lists by reference (empty: it holds)."""
+    params = {p["name"]: p["type"] for p in fn["params"]}
+    types = {**params, **(fn.get("locals") or {})}
+    out = []
+    for s in walk_stmts(fn["body"]):
+        k = s["k"]
+        if k == "set" and s["target"] in params:
+            out.append(f"writes an element of the parameter {s['target']!r} (copy it first: list(...))")
+        if k == "assign" and elem_type(types.get(s["target"], "")) is not None:
+            if s["target"] in params:
+                out.append(f"re-binds the list parameter {s['target']!r}")
+            v = s["value"]
+            if isinstance(v, list) and v and v[0] == "var":
+                out.append(f"{s['target']} = {v[1]} would share one list under two names (copy it: list(...))")
+        if k == "return" and isinstance(s.get("value"), list) and s["value"][:1] == ["var"] \
+                and s["value"][1] in params and elem_type(params[s["value"][1]]) is not None:
+            out.append(f"returns the parameter {s['value'][1]!r} itself (return a copy)")
+        if k == "for_range" and elem_type(types.get(s["var"], "")) is not None:
+            out.append("a list as a loop variable")
+    return out

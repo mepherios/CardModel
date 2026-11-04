@@ -1,0 +1,86 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": {
+      "list[float]": "cm_lf_get({0}, {1})",
+      "list[int]": "cm_li_get({0}, {1})"
+    },
+    "go": "{0}[{1}]",
+    "java": "{0}[(int)({1})]",
+    "javascript": "cm_get({0}, {1})",
+    "lua": "cm_get({0}, {1})",
+    "python": "{0}[{1}]",
+    "ruby": "cm_get({0}, {1})",
+    "rust": "{0}[({1}) as usize]",
+    "swift": "{0}[Int({1})]"
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "list[float]": [
+        {
+          "len": [
+            1,
+            6
+          ],
+          "list": {
+            "float": [
+              -100.0,
+              100.0
+            ]
+          }
+        },
+        {
+          "int": [
+            0,
+            5
+          ]
+        }
+      ],
+      "list[int]": [
+        {
+          "len": [
+            1,
+            6
+          ],
+          "list": {
+            "int": [
+              -1000,
+              1000
+            ]
+          }
+        },
+        {
+          "int": [
+            0,
+            5
+          ]
+        }
+      ]
+    },
+    "eval": "lambda xs, i: list_get(xs, i)",
+    "types": [
+      [
+        "list[int]",
+        "int",
+        "int"
+      ],
+      [
+        "list[float]",
+        "int",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "GET",
+  "provenance": {
+    "origin": "cardmodel lists (transformer math)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the element at index i of a list, 0 <= i < len (no negative indexing; outside the range is an error)",
+  "tier": 1
+}

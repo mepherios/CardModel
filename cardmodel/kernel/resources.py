@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import os
 import resource
+import shutil
 import signal
 import subprocess
 import sys
@@ -186,6 +187,8 @@ def _group_rss_mb(pgid: int) -> float:
             if lib.proc_pidinfo(pid, 4, 0, info, ctypes.sizeof(info)) > 0:   # PROC_PIDTASKINFO
                 total += info[1]
         return total / (1 << 20)
+    if os.path.isdir("/proc/self"):
+        return _proc_group_rss_mb(pgid)
     try:
         out = subprocess.run(["ps", "-A", "-o", "pgid=,rss="], capture_output=True, text=True, timeout=5).stdout
     except (OSError, subprocess.SubprocessError):
@@ -196,6 +199,24 @@ def _group_rss_mb(pgid: int) -> float:
         if len(parts) == 2 and parts[0].isdigit() and int(parts[0]) == pgid:
             total += int(parts[1])
     return total / 1024
+
+
+def _proc_group_rss_mb(pgid: int) -> float:
+    """Linux: a process group's resident size from /proc/<pid>/stat, without spawning ``ps`` on every poll."""
+    page = os.sysconf("SC_PAGE_SIZE") if hasattr(os, "sysconf") else 4096
+    total = 0
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            with open(f"/proc/{entry}/stat", "rb") as f:
+                stat = f.read()
+        except OSError:
+            continue                                        # the process ended between listdir and open
+        fields = stat[stat.rfind(b")") + 2:].split()       # after "pid (comm) ": state ppid pgrp ... rss is 22nd
+        if len(fields) > 21 and int(fields[2]) == pgid:
+            total += int(fields[21]) * page
+    return total / (1 << 20)
 
 
 def _wait_for_memory() -> None:
@@ -304,7 +325,7 @@ def spawn_background(args, *, log_path, env: dict | None = None, cwd=None) -> in
     """Start a detached, low-priority process that may outlive this one (the self-run's automatic cycles).
 
     It gets its own session (no terminal), background QoS where the system has it (``taskpolicy -b`` on macOS:
-    efficiency cores and throttled I/O), the policy's niceness plus 5, no stdin, and its output appended to
+    efficiency cores and throttled I/O; ``ionice -c 3`` on Linux: idle I/O), the policy's niceness plus 5, no stdin, and its output appended to
     ``log_path``. Nothing here watches it: the child bounds itself (``guard`` under its own CARDMODEL_SELF_MB, the
     machine-wide slots for its children). A thread reaps it if this process is still alive when it ends. Returns
     its pid, or None (nothing started) while available memory is below twice the policy's floor."""
@@ -314,6 +335,8 @@ def spawn_background(args, *, log_path, env: dict | None = None, cwd=None) -> in
     cmd = [str(a) for a in args]
     if os.path.exists("/usr/sbin/taskpolicy"):
         cmd = ["/usr/sbin/taskpolicy", "-b", *cmd]
+    elif sys.platform.startswith("linux") and shutil.which("ionice"):
+        cmd = [shutil.which("ionice"), "-c", "3", *cmd]       # Linux: idle I/O class, the nearest to taskpolicy -b
     with open(log_path, "ab") as log:
         p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                              start_new_session=True, close_fds=True, env=env, cwd=cwd)

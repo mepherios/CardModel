@@ -4,3 +4,7 @@ __pycache__/
 .cardmodel/state/
 saves/
 .DS_Store
+.venv/
+*.egg-info/
+build/
+uv.lock

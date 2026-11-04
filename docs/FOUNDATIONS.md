@@ -24,10 +24,15 @@ condition it needs.
 
 ## 2. Definitions
 
-**D1. Sorts.** S = {`int`, `float`, `bool`} today: ℤ unbounded, IEEE binary64, and the booleans. Fixed-width
-bit-vectors BV(w), arrays BV(a) → BV(8) and tuples are the planned extension (MATH_CORE §4). `nat` is not a sort.
-It is `int` with the hypothesis n ≥ 0. ℝ appears only as the declared model of `realnorm` (D9), never as a sort of
-the IR.
+**D1. Sorts.** The base sorts are `int`, `float` and `bool`: ℤ unbounded, IEEE binary64, and the booleans. The
+sorts are *order-sorted* (`engines/sorts.py`). The fixed-width integers `u8`, `u16`, `u32`, `i8`, `i16` and `i32`
+are subsorts of `int`, each the set of integers in its range. `f32`, the values a binary32 holds, is a subsort of
+`float`. s ≤ t when every value of s is a value of t, so u8 ≤ u16 ≤ u32 ≤ int and u8 ≤ i16. The op cards WRAPU and
+WRAPS (x mod 2^w, unsigned and two's complement) and F32 (rounding to binary32) produce these subsorts. Each card
+names the sort of its result (`"sort": "u{w}"`). An operation keeps the ranks of its base sorts, and a law that
+holds on a sort holds on all its subsorts (D6). Arrays BV(a) → BV(8) and tuples are the planned extension
+(MATH_CORE §4). `nat` is not a sort. It is `int` with the hypothesis n ≥ 0. ℝ appears only as the declared model of
+`realnorm` (D9), never as a sort of the IR.
 
 **D2. Signature.** Σ is the set of op cards with an `ir` block. The rank of an op is its `ir.types` list: each
 entry `[s₁, …, sₙ, s]` says the op takes sorts s₁ … sₙ to sort s. An op can have several ranks (ADD on int and on
@@ -69,15 +74,17 @@ laws that fired, which is its *certificate*. A substitution that no law justifie
 called through ctypes) is a separate kind of claim. It is witnessed and labelled with its tier (CM46), and it is
 never presented as a rewrite.
 
-**D9. Other equivalences, each named.** The model uses four equivalence relations, and each one must say which it
-is:
+**D9. Other equivalences, each named.** The model uses these equivalence relations. Each identity record names
+the one it was taken under in `identity.under`, using the key in the first column (`engines/equivalence.py`), and
+`sources check` refuses an identity that names none:
 
-| relation | decided by | what it identifies |
-|---|---|---|
-| ≈_E (laws) | e-graph saturation, `search.prove` chains | terms equal under the sorted laws |
-| ≡_ℝ (polynomial identity over a field) | `realnorm.canonical` | terms equal as real rational functions. This is sound for `int` polynomials (the finite-grid theorem in `tiers`), but **not** for `float` |
-| ≡_beh (behaviour) | `funcalg` (Berlekamp–Massey, checked on unused terms) and the `tiers` finite witnesses | functions ℕ → ℤ with the same recurrence and initial terms |
-| ≡_α (renaming) | `numbering.canonical` | terms equal up to the names of their variables |
+| key | relation | decided by | what it identifies |
+|---|---|---|---|
+| `laws` | ≈_E | e-graph saturation, `search.prove` chains | terms equal under the sorted laws |
+| `real` | ≡_ℝ (polynomial identity over a field) | `realnorm.canonical` | terms equal as real rational functions. This is sound for `int` polynomials (the finite-grid theorem in `tiers`), but **not** for `float` |
+| `behaviour` | ≡_beh | `funcalg` (Berlekamp–Massey, checked on unused terms) and the `tiers` finite witnesses | functions ℕ → ℤ with the same recurrence and initial terms |
+| `alpha` | ≡_α (renaming) | `numbering.canonical` | terms equal up to the names of their variables |
+| `syntax` | = | nothing | the same term, with no reasoning applied |
 
 **D10. Tiers.** The evidence for a claim is one of proof (Lean's kernel, or a finite witness whose size a theorem
 fixes for the claim's class), probabilistic, bounded or sample (CM46). A step's conclusion inherits the weakest
@@ -146,12 +153,12 @@ These are the rules the audit checks. They are proposed as laws to be numbered f
 | frontends (`frontend_python`, `frontend_text`, `lang`, `mathlang`) | concrete syntaxes onto T_Σ(X) (D3) | each language's `/` and `%` map to distinct ops (TRUNCDIV, REM, FLOORDIV, MOD), so meaning is kept | none found | ok |
 | codegen, translate, matrix | homomorphisms into M_L, checked by sampling (D14) | A1, A6: templates live on cards | the matrix checks behaviour by sampling and not by a law. This is honest and labelled (tier sample) | ok |
 | analyse | divergence laws M_L ≠ M (D14) | A6 | none | ok |
-| **egraph** | ≈_E and canon_E (D6, D7) | congruence closure, extraction | **F1: laws are applied without sorts.** `rules_from_cards` drops each rule's `domain` and each theorem's variable types. Saturation therefore merges `(x+y)+z` with `x+(y+z)` when x, y, z are binary64, which is a false equality (0.1+0.2+0.3). The identities that `sources` builds for float terms inherit this | fixed by the PR "sorted e-graph" |
-| **exprs** | a second evaluator | none | **F2: a private semantics table.** `exprs.evaluate` defines ADD, DIV, MOD and the rest by hand. Its `DIV` is exact over ℚ, where M's is binary64. Rule witnesses (`witness.verify_rule`), `egraph.witness`, redefinitions and `learn`'s rewrite checks are evaluated there and not in M | int-sorted witnesses go through op cards in the PR "one model"; the ℚ and ℝ modes remain as the named model for redefinitions (D9) |
-| search vs egraph | two rewrite engines over one E | same rules | F3: two engines. `search` finds explicit chains (proofs) and `egraph` finds classes (canon). That division is legitimate, but both must apply A3 | A3 in both |
-| godel content (`godel.card_content`, `sources`) | γ (D11) | ledger and storage laws | **F4: content is read from the raw lifted term**, not canon_E, so equal functions written differently have different content, and GCD measures syntax | the PR "canonical content" |
-| realnorm, funcalg, numbering, tiers | named equivalences (D9) | each states its limits | F5: `realnorm`'s ≡_ℝ is applied to unreal's float32 math, where it is an approximation. It is labelled there as such. Its hash carries no tag naming the relation | A4: tag the hashes |
-| unreal/witness | an f32 model | declares IEEE semantics | F6: a private evaluator for float32 (A2). F32 should be a sort, with op cards (D1) | open, next after BV(w) |
+| **egraph** | ≈_E and canon_E (D6, D7) | congruence closure, extraction | **F1: laws are applied without sorts.** `rules_from_cards` drops each rule's `domain` and each theorem's variable types. Saturation therefore merges `(x+y)+z` with `x+(y+z)` when x, y, z are binary64, which is a false equality (0.1+0.2+0.3). The identities that `sources` builds for float terms inherited this: `lerp`'s identity came from distributing MUL over SUB on binary64, and `mean3`'s from reassociating a float sum | fixed: `engines/sorts.py`; the e-graph and `search` instantiate a law only at its sorts. Float laws that do hold (commutativity of ADD and MUL) are left to be stated as float-sorted theorems |
+| **exprs** | a second evaluator | none | **F2: a private semantics table.** `exprs.evaluate` defines ADD, DIV, MOD and the rest by hand. Its `DIV` is exact over ℚ, where M's is binary64. Rule witnesses (`witness.verify_rule`), `egraph.witness`, redefinitions and `learn`'s rewrite checks are evaluated there and not in M Also **A1**: `exprs.parse` read `gcd(a, b)` in a rule card as a call `FN gcd`, not as the op GCD, so the five GCD rules never matched an IR term | fixed: `verify` and the capability checks witness rules in M (`verify_rule(ops=...)`, `egraph.witness(ops=...)`); `exprs.resolve_ops` turns a call of an op card's name into that op, and `load_rules` applies it; a test pins `exprs`'s integer mode to the op cards on their domains. The ℚ and ℝ modes stay, as the named model for redefinitions (D9) |
+| search vs egraph | two rewrite engines over one E | same rules | F3: two engines. `search` finds explicit chains (proofs) and `egraph` finds classes (canon). That division is legitimate, but both must apply A3 | A3 in both (done) |
+| godel content (`godel.card_content`, `sources`) | γ (D11) | ledger and storage laws | **F4: content is read from the raw lifted term**, not canon_E, so equal functions written differently have different content, and GCD measures syntax | fixed: a definition whose canonical term is the whole definition reads content and structure from it (`read_from: its canonical term`); `distance_sq`'s content is now that of `(a-b)·(a-b)` |
+| realnorm, funcalg, numbering, tiers | named equivalences (D9) | each states its limits | F5: `realnorm`'s ≡_ℝ is applied to unreal's float32 math, where it is an approximation. It is labelled there as such. Its hash carried no tag naming the relation | fixed: every identity names its relation (`identity.under`), and `sources check` enforces it |
+| unreal/witness | the C/IEEE target model M_C (D14): binary64 and binary32 arithmetic, the platform's libm, a float divided by zero is ±inf | declares IEEE semantics | F6: it had its own evaluator, never compared with M | resolved as a target model: a test pins it to every op card's value on that card's domain (55 ops, no disagreement), and it differs from M only where M is undefined. `f32` is now a subsort of `float` (D1), the sort of F32's results, with its laws (`f32(a) = a` for a of sort f32) |
 | improve | D8 | rewrites are verified and re-verified; substitutions are tiered | rewrites are restricted to int-typed expressions, which is the right workaround for F1 | ok after F1 |
 | learn, observe | evidence gathering | CM04, CM15 | statistics, not semantics, which is acceptable for observation. Its rewrite proposals go through F2's evaluator | F2 |
 | machine (lift, symbolic, absint) | instruction cards as terms (MATH_CORE F5) | `symbolic` produces terms checked against the executable semantics | `lift.py` constant-folds with its own small op table (A2) | open |

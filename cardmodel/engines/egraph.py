@@ -7,6 +7,11 @@ that is proved or witnessed, in both directions. ``saturate`` applies them until
 spent. ``extract`` picks a class's cheapest term under the op costs, ties broken by size and then by a fixed order,
 so it is the class's canonical term, and ``semantic_hash`` names it.
 
+The e-graph is many-sorted (docs/FOUNDATIONS.md D6, rule A3): every class carries the sort of its terms (``sorts``:
+the op cards' ranks and the variables' sorts), and every rule the sorts its pattern variables must have (a rule
+card's ``domain``, a theorem's ``vars[].type``). A rule fires only where each pattern variable binds a class of its
+sort, so a law proved on ``int`` never reaches a ``float`` term, and saturation stays sound.
+
 Two terms are proved equal when they land in one class. The certificate is the equalities that fired, plus a seeded
 numeric witness of the two original terms.
 
@@ -23,14 +28,17 @@ import json
 import random
 from collections import Counter, defaultdict
 
+from . import sorts as S
+
 LEAVES = ("var", "int", "float", "bool", "const")
 
 
 class Rule:
-    __slots__ = ("name", "lhs", "rhs", "origin")
+    __slots__ = ("name", "lhs", "rhs", "origin", "sorts")
 
-    def __init__(self, name, lhs, rhs, origin):
+    def __init__(self, name, lhs, rhs, origin, sorts=None):
         self.name, self.lhs, self.rhs, self.origin = name, lhs, rhs, origin
+        self.sorts = sorts          # pattern variable -> sort it must bind (None: the law states no sort)
 
 
 def _norm(t):
@@ -74,8 +82,8 @@ def rules_from_cards(store) -> list[Rule]:
     whose left side is a bare variable, or whose right side needs a variable the left side does not bind, is left
     out: it would match everything or invent terms."""
     from .search import load_rules
-    out = [Rule(r.name, _norm(r.lhs), _norm(r.rhs), f"rewrite_rule/{r.card}") for r in load_rules(store)
-           if not r.condition]
+    out = [Rule(r.name, _norm(r.lhs), _norm(r.rhs), f"rewrite_rule/{r.card}",
+                S.law_sorts(_pvars(r.lhs) | _pvars(r.rhs), r.domain)) for r in load_rules(store) if not r.condition]
     for card in store.cards("theorem"):
         if card.get("hyps") or (card.get("origin") or {}).get("kind") != "discovered":
             continue
@@ -89,15 +97,20 @@ def rules_from_cards(store) -> list[Rule]:
             l, r = concl[1][1], concl[1][2]
         else:
             continue
-        names = {v["name"] for v in card.get("vars") or []}
-        lhs, rhs = _norm(_to_pattern(l, names)), _norm(_to_pattern(r, names))
-        out.append(Rule(card.name, lhs, rhs, f"theorem/{card.name}"))
-        out.append(Rule(card.name + "~rev", rhs, lhs, f"theorem/{card.name}"))
+        types = {v["name"]: v.get("type") for v in card.get("vars") or []}
+        lhs, rhs = _norm(_to_pattern(l, set(types))), _norm(_to_pattern(r, set(types)))
+        sorts = S.law_sorts(_pvars(lhs) | _pvars(rhs), types=types)
+        out.append(Rule(card.name, lhs, rhs, f"theorem/{card.name}", sorts))
+        out.append(Rule(card.name + "~rev", rhs, lhs, f"theorem/{card.name}", sorts))
     return [r for r in out if not (isinstance(r.lhs, str) and r.lhs.startswith("?")) and _pvars(r.rhs) <= _pvars(r.lhs)]
 
 
 class EGraph:
-    def __init__(self):
+    def __init__(self, var_sorts: dict | None = None, ops: dict | None = None):
+        """``var_sorts``: variable name -> sort (an untyped variable is int); ``ops``: the op table (ir.op_table),
+        whose ranks give each application's sort."""
+        self.var_sorts, self.ops = var_sorts or {}, ops
+        self.sort: dict[int, str | None] = {}
         self.parent: list[int] = []
         self.nodes: dict[int, set] = {}
         self.hashcons: dict = {}
@@ -122,8 +135,23 @@ class EGraph:
         self.nodes[cid] = {node}
         self.hashcons[node] = cid
         self.by_head[node[0]].add(cid)
+        self.sort[cid] = self._node_sort(node)
         self.count += 1
         return cid
+
+    def _node_sort(self, node) -> str | None:
+        if node[0] in LEAVES:
+            return S.leaf_sort([node[0], *json.loads(node[1])], self.var_sorts)
+        got = S.result_sort(node[0], [self.sort.get(self.find(c)) for c in node[1]], self.ops)
+        width = self._literal(node[1][1]) if len(node[1]) > 1 else None
+        sub = S.refine(node[0], width, self.ops) if got is not None else None
+        return sub if sub is not None and S.base(sub) == got else got
+
+    def _literal(self, cid):
+        for n in self.nodes.get(self.find(cid), ()):
+            if n[0] == "int":
+                return json.loads(n[1])[0]
+        return None
 
     def add_node(self, node) -> int:
         node = self._canon(node)
@@ -146,6 +174,10 @@ class EGraph:
             a, b = b, a
         self.parent[b] = a
         self.nodes[a] |= self.nodes.pop(b)
+        sa, sb = self.sort.get(a), self.sort.pop(b, None)
+        # one class, two sorts proved for it: it has the more specific (an int term equal to WRAPU(x, 8) is a u8);
+        # sorts that cannot meet (int and float) make it unknown, so no law fires on it
+        self.sort[a] = S.meet(sa, sb) if sa is not None and sb is not None else (sa if sb is None else sb)
         for head, cls in self.by_head.items():
             if b in cls:
                 cls.discard(b)
@@ -211,7 +243,8 @@ class EGraph:
                 head = r.lhs[0] if isinstance(r.lhs, list) and r.lhs else None
                 for cid in list(self.by_head.get(head, ())):
                     for b in self.ematch(r.lhs, cid, {}):
-                        matches.append((r, cid, b))
+                        if S.admits(r.sorts, b, lambda c: self.sort.get(self.find(c))):
+                            matches.append((r, cid, b))
             changed = False
             for r, cid, b in matches:
                 if self.count > max_nodes:
@@ -259,8 +292,9 @@ def semantic_hash(term) -> str:
     return "sha256:" + hashlib.sha256(json.dumps(term, sort_keys=True).encode()).hexdigest()[:24]
 
 
-def canonical(term, rules: list[Rule], costs: dict[str, float], **budget) -> dict:
-    g = EGraph()
+def canonical(term, rules: list[Rule], costs: dict[str, float], var_sorts: dict | None = None,
+              ops: dict | None = None, **budget) -> dict:
+    g = EGraph(var_sorts, ops)
     root = g.add(_norm(term))
     info = g.saturate(rules, **budget)
     best, cost = g.extract(root, costs)
@@ -268,16 +302,26 @@ def canonical(term, rules: list[Rule], costs: dict[str, float], **budget) -> dic
     return {"term": best, "cost": cost, "hash": semantic_hash(best), **info}
 
 
-def equal(a, b, rules: list[Rule], **budget) -> dict:
-    g = EGraph()
+def equal(a, b, rules: list[Rule], var_sorts: dict | None = None, ops: dict | None = None, **budget) -> dict:
+    g = EGraph(var_sorts, ops)
     ra, rb = g.add(_norm(a)), g.add(_norm(b))
     info = g.saturate(rules, **budget)
     return {"equal": g.find(ra) == g.find(rb), **info}
 
 
-def witness(a, b, seed: int, samples: int = 64) -> dict:
-    """The two terms agree on seeded integers (values where either side is undefined are skipped)."""
-    from .exprs import evaluate, variables
+def witness(a, b, seed: int, samples: int = 64, ops: dict | None = None) -> dict:
+    """The two terms agree on seeded integers (values where either side is undefined are skipped). With ``ops``
+    (``ir.op_table``) they are evaluated in the model M, the op cards' semantics (FOUNDATIONS.md rule A2)."""
+    from .exprs import evaluate, resolve_ops, variables
+    if ops is not None:
+        from .logic import LogicError, eval_expr
+        a, b = resolve_ops(a, ops), resolve_ops(b, ops)
+
+        def evaluate(t, env):          # noqa: F811
+            try:
+                return eval_expr(t, env, ops)
+            except LogicError as exc:
+                raise ValueError(str(exc)) from exc
     rng = random.Random(seed)
     names = sorted(variables(a) | variables(b))
     checked = 0

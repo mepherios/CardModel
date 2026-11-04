@@ -69,11 +69,50 @@ class Rules(unittest.TestCase):
     def test_rules_pass_and_false_rule_fails(self):
         ctx = model_ctx()
         for card in ctx.store.cards("rewrite_rule"):
-            r = witness.verify_rule(card, seed=SEED)
+            r = witness.verify_rule(card, seed=SEED, ops=ctx.ops)
             self.assertEqual(r["status"], "pass", (card.name, r, seed_note(self)))
             self.assertTrue(r["witness_can_fail"])
         bad = {"name": "bad", "lhs": "(a + b) ** 2", "rhs": "a ** 2 + b ** 2", "vars": ["a", "b"]}
         self.assertEqual(witness.verify_rule(bad, seed=SEED)["status"], "fail")
+
+    def test_rules_hold_in_the_model(self):
+        # FOUNDATIONS.md rule A2: a rule is witnessed in the semantics it is applied in, the op cards' own
+        ctx = model_ctx()
+        for card in ctx.store.cards("rewrite_rule"):
+            r = witness.verify_rule(card, seed=SEED, ops=ctx.ops)
+            self.assertEqual(r["status"], "pass", (card.name, r, seed_note(self)))
+        bad = {"name": "bad", "lhs": "gcd(a, b)", "rhs": "a", "vars": ["a", "b"]}
+        self.assertEqual(witness.verify_rule(bad, seed=SEED, ops=ctx.ops)["status"], "fail")
+
+    def test_rule_calls_are_op_cards(self):
+        # rule A1: gcd(a, b) in a rule card is the op GCD, so the rule matches the IR's terms
+        from cardmodel.engines import search
+        ctx = model_ctx()
+        rules = {r.name: r for r in search.load_rules(ctx.store)}
+        self.assertEqual(rules["rule_absorb_left_GCD_1"].lhs, ["GCD", ["int", 1], "?a"])
+
+    def test_exprs_agrees_with_the_op_cards(self):
+        # exprs.evaluate's exact-integer mode is a second reading of the ops; it must not drift from the model
+        ctx = model_ctx()
+        rng = random.Random(SEED)
+        compared = 0
+        for name, spec in sorted(ctx.ops.items()):
+            dom = ((spec.card.get("ir") or {}).get("domain") or {}).get("int")
+            if spec.fn is None or not dom or ["int"] * spec.arity not in [s[:-1] for s in spec.types]:
+                continue
+            for _ in range(40):
+                args = [rng.randint(*g["int"]) for g in dom]
+                try:
+                    want = spec.fn(*args)
+                except (ArithmeticError, ValueError):
+                    continue
+                try:
+                    got = evaluate([name, *[["int", a] for a in args]], {})
+                except Exception:  # noqa: BLE001 -- an op exprs does not read is not a disagreement
+                    break
+                self.assertEqual(got, want, (name, args, seed_note(self)))
+                compared += 1
+        self.assertGreater(compared, 400)
 
 
 class Redefinitions(unittest.TestCase):

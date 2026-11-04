@@ -1,0 +1,69 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "(({0}).n)",
+    "go": "int64(len({0}))",
+    "java": "((long)({0}).length)",
+    "javascript": "BigInt(({0}).length)",
+    "lua": "(#{0})",
+    "python": "len({0})",
+    "ruby": "(({0}).length)",
+    "rust": "(({0}).len() as i64)",
+    "swift": "({0}).count"
+  },
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "list[float]": [
+        {
+          "len": [
+            0,
+            6
+          ],
+          "list": {
+            "float": [
+              -100.0,
+              100.0
+            ]
+          }
+        }
+      ],
+      "list[int]": [
+        {
+          "len": [
+            0,
+            6
+          ],
+          "list": {
+            "int": [
+              -1000,
+              1000
+            ]
+          }
+        }
+      ]
+    },
+    "eval": "lambda xs: len(xs)",
+    "types": [
+      [
+        "list[int]",
+        "int"
+      ],
+      [
+        "list[float]",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "LEN",
+  "provenance": {
+    "origin": "cardmodel lists (transformer math)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the number of elements of a list",
+  "tier": 1
+}

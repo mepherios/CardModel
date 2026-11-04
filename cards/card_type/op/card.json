@@ -35,7 +35,9 @@
                 "enum": [
                   "int",
                   "float",
-                  "bool"
+                  "bool",
+                  "list[int]",
+                  "list[float]"
                 ]
               },
               "type": "array"

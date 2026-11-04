@@ -1,0 +1,55 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c_like": "(({0}) & ((((int64_t)1) << ({1})) - 1))",
+    "go": "(({0}) & ((int64(1) << uint64({1})) - 1))",
+    "java": "(({0}) & ((1L << ({1})) - 1L))",
+    "javascript": "(({0}) & ((1n << ({1})) - 1n))",
+    "lean": "UNSUPPORTED",
+    "lua": "(({0}) & ((1 << ({1})) - 1))",
+    "python": "(({0}) & ((1 << ({1})) - 1))",
+    "ruby": "(({0}) & ((1 << ({1})) - 1))",
+    "rust": "(({0}) & ((1i64 << ({1})) - 1))",
+    "swift": "(({0}) & ((1 << ({1})) - 1))"
+  },
+  "godel_set": "bits",
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000000000,
+            1000000000000
+          ]
+        },
+        {
+          "int": [
+            1,
+            62
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, w: a & ((1 << w) - 1) if 0 <= w <= 64 else (_ for _ in ()).throw(ValueError('width outside 0..64'))",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "WRAPU",
+  "provenance": {
+    "origin": "cardmodel",
+    "why": "docs/FOUNDATIONS.md D1: fixed-width bit-vectors BV(w) as subsorts of int"
+  },
+  "sort": "u{w}",
+  "statement": "a reduced to an unsigned w-bit value: a mod 2^w, in [0, 2^w). Its sort is u<w> when w is a literal",
+  "tier": 1
+}

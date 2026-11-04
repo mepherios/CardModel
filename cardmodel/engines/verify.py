@@ -119,7 +119,7 @@ def _vectors(ctx: Ctx) -> dict:
 
 
 def _rules(ctx: Ctx, seed: int) -> dict:
-    out = {c.qualified: witness.verify_rule(c, seed=seed) for c in ctx.store.cards("rewrite_rule")}
+    out = {c.qualified: witness.verify_rule(c, seed=seed, ops=ctx.ops) for c in ctx.store.cards("rewrite_rule")}
     st = [r["status"] for r in out.values()]
     return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"),
             "counts": {s: st.count(s) for s in sorted(set(st))}, "cards": out}

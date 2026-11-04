@@ -15,7 +15,8 @@
     "the new atoms as op cards in sets analysis and bits, conformant in every language card that spells them; law CM49, goals G_U10-G_U12, capability unreal_math, verify section unreal",
     "the witness against the engine's compiled code: the shipped (NEON) build first, then the scalar build with every .cpp file the term reaches compiled in; access opened, inputs where C++ is undefined never run, the platform's own C library for the atoms (Apple's acosf(-1) is the float below pi); 2708 of 2852 lifted functions witnessed (2680 bit-exact), none refuted",
     "reads through an index the inputs choose (an index outside the object is undefined: the term says so), shifts guarded by the operand's width, compound assignments that return *this witnessed by address",
-    "the engine-derived cards kept on this machine (state/local/cards, the local layer of every store; docs/INTEGRATION.md rule 8); the ledger keeps the engine's atom names and the set card their arities"
+    "the engine-derived cards kept on this machine (state/local/cards, the local layer of every store; docs/INTEGRATION.md rule 8); the ledger keeps the engine's atom names and the set card their arities",
+    "unreal/witness.evaluate is a target model pinned to the op cards: checked against every op card's value on its own domain (55 ops agree), extending the model only where it is undefined (0ddfb27, FOUNDATIONS.md F6)"
   ],
   "goal": "Unreal Engine's math distilled into the card model: every function understood as mathematics (a definition), organised by its use, numbered in the Gödel model, and checked against the engine itself.",
   "in_progress": [],
@@ -26,6 +27,11 @@
     "the other engine modules with math: GeometryCore, Chaos, AnimationCore, the Kismet math library (lift_source already reads any C++)",
     "emission of the definitions to other languages through the language cards (act from truth)"
   ],
+  "metadata": {
+    "previous_content_hash": "c4c2d38ee1d69b159fe7ad4175405cbfe11df787160ba9719ce3e473381cb338",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
   "metrics": [
     {
       "goal": "G_U10_engine_math_lifted",
@@ -68,7 +74,7 @@
   "statement": "Unreal Engine's math as cards (law CM49).",
   "tier": 1,
   "title": "Unreal Engine's math as cards",
-  "updated": "2026-10-22T17:55:00+02:00",
+  "updated": "2026-11-04T23:55:00+01:00",
   "user_actions": [
     {
       "action": "Accept the Xcode license (sudo xcodebuild -license accept), or select the Command Line Tools again (sudo xcode-select -s /Library/Developer/CommandLineTools)",

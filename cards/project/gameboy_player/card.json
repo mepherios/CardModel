@@ -35,7 +35,8 @@
     "an app build lifts what its witness interpreted and witnesses again on a new seed (up to three rounds)",
     "the nine Pokemon apps rebuilt and installed: Red, Blue, Yellow, Gold, Silver, Crystal, Puzzle Challenge 100.00 % with 0 instructions interpreted on an unseen walk; Trading Card Game 100.00 % (0 interpreted, after a second round); Pinball 100.00 % (0 interpreted, after a second round); every witness frame-identical",
     "the Game Boy Player picks colour through the board (a Sachen board scrambles the header page), as the host does",
-    "for the DS player: game.json's clockOffset (the shell keeps the local time's offset) and DS rows playable once the DS card has a machine and a player"
+    "for the DS player: game.json's clockOffset (the shell keeps the local time's offset) and DS rows playable once the DS card has a machine and a player",
+    "the system module's cache key includes the cards its constants read (card.registry.name.field), so a test's stand-in gb_cartridge card no longer poisons the build the Sachen header test uses"
   ],
   "games": [
     "gameboy_player"
@@ -47,8 +48,8 @@
     "the GameSharks: a pass-through model (a cartridge from the library in their slot) and Datel's registers, which are not documented; the GameShark (USA) file also lacks its font bank"
   ],
   "metadata": {
-    "previous_content_hash": "3c179159ea2c4250f92ce622ffc8fe4b0274836657b2010b95b1a3877d42ceed",
-    "version": "2.1.3",
+    "previous_content_hash": "a862e9d0a716bf31620ee495a1ca32da4d9e0dcda8c894383b9f71b6e99765c4",
+    "version": "2.1.4",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -103,6 +104,6 @@
   "statement": "Game Boy and Game Boy Color games through the lifted card IR, with the cartridges and players as cards; the store installs the player and launches every cartridge it lists.",
   "tier": 1,
   "title": "Game Boy Player",
-  "updated": "2026-10-22T18:05:15+02:00",
+  "updated": "2026-11-04T21:20:00+01:00",
   "user_actions": []
 }
