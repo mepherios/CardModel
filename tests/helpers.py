@@ -29,6 +29,11 @@ SEED = int(os.environ.get("CARDMODEL_TEST_SEED", random.SystemRandom().randrange
 SLOW = os.environ.get("CARDMODEL_SLOW") == "1"
 CLI = [sys.executable, "-B", "-m", "cardmodel"]
 
+# the native game shells and the launcher are Swift on AppKit: they build on macOS only (Linux has swiftc, not AppKit)
+from cardmodel.engines import probes as _probes  # noqa: E402
+MAC_SHELL = _probes.probe({"kind": "all", "of": [{"kind": "platform", "system": "Darwin"},
+                                                 {"kind": "executable", "name": "swiftc"}]})[0]
+
 
 def model_ctx() -> Ctx:
     return Ctx(open_store(project=False))
