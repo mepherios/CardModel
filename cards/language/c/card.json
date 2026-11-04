@@ -39,7 +39,9 @@
       "print": {
         "bool": "printf(\"b:%s\\n\", ({e}) ? \"true\" : \"false\");",
         "float": "printf(\"f:%.17g\\n\", (double)({e}));",
-        "int": "printf(\"i:%\" PRId64 \"\\n\", (int64_t)({e}));"
+        "int": "printf(\"i:%\" PRId64 \"\\n\", (int64_t)({e}));",
+        "list[float]": "cm_lf_print({e});",
+        "list[int]": "cm_li_print({e});"
       },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
@@ -53,6 +55,21 @@
       "cm_floormod": "static @int@ cm_floormod(@int@ a, @int@ b) { @int@ r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }",
       "cm_gcd": "static @int@ cm_gcd(@int@ a, @int@ b) { a = a < 0 ? -a : a; b = b < 0 ? -b : b; while (b != 0) { @int@ t = a % b; a = b; b = t; } return a; }",
       "cm_ipow": "static @int@ cm_ipow(@int@ a, @int@ b) { @int@ r = 1; while (b > 0) { if (b & 1) r *= a; b >>= 1; if (b) a *= a; } return r; }",
+      "cm_lf": "#include <stdio.h>\n#include <stdlib.h>\ntypedef struct { int64_t n; double *d; } cm_lf;",
+      "cm_lf_copy": "static cm_lf cm_lf_copy(cm_lf a) { return cm_lf_of(a.n, a.d); }",
+      "cm_lf_get": "static double cm_lf_get(cm_lf a, int64_t i) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); return a.d[i]; }",
+      "cm_lf_new": "static cm_lf cm_lf_new(int64_t n, double v) { if (n < 0) cm_list_fail(\"negative length\"); cm_lf r; r.n = n; r.d = (double *)malloc(sizeof(double) * (size_t)(n > 0 ? n : 1)); for (int64_t i = 0; i < n; i++) r.d[i] = v; return r; }",
+      "cm_lf_of": "static cm_lf cm_lf_of(int64_t n, const double *v) { cm_lf r = cm_lf_new(n, 0); for (int64_t i = 0; i < n; i++) r.d[i] = v[i]; return r; }",
+      "cm_lf_print": "static void cm_lf_print(cm_lf a) { printf(\"l:%\" PRId64 \"\\n\", a.n); for (int64_t i = 0; i < a.n; i++) printf(\"f:%.17g\\n\", a.d[i]); }",
+      "cm_lf_set": "static void cm_lf_set(cm_lf a, int64_t i, double v) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); a.d[i] = v; }",
+      "cm_li": "#include <stdio.h>\n#include <stdlib.h>\ntypedef struct { int64_t n; int64_t *d; } cm_li;",
+      "cm_li_copy": "static cm_li cm_li_copy(cm_li a) { return cm_li_of(a.n, a.d); }",
+      "cm_li_get": "static int64_t cm_li_get(cm_li a, int64_t i) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); return a.d[i]; }",
+      "cm_li_new": "static cm_li cm_li_new(int64_t n, int64_t v) { if (n < 0) cm_list_fail(\"negative length\"); cm_li r; r.n = n; r.d = (int64_t *)malloc(sizeof(int64_t) * (size_t)(n > 0 ? n : 1)); for (int64_t i = 0; i < n; i++) r.d[i] = v; return r; }",
+      "cm_li_of": "static cm_li cm_li_of(int64_t n, const int64_t *v) { cm_li r = cm_li_new(n, 0); for (int64_t i = 0; i < n; i++) r.d[i] = v[i]; return r; }",
+      "cm_li_print": "static void cm_li_print(cm_li a) { printf(\"l:%\" PRId64 \"\\n\", a.n); for (int64_t i = 0; i < a.n; i++) printf(\"i:%\" PRId64 \"\\n\", a.d[i]); }",
+      "cm_li_set": "static void cm_li_set(cm_li a, int64_t i, int64_t v) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); a.d[i] = v; }",
+      "cm_list_fail": "static void cm_list_fail(const char *why) { fputs(why, stderr); fputs(\"\\n\", stderr); exit(3); }",
       "cm_max_f": "static @float@ cm_max_f(@float@ a, @float@ b) { return b > a ? b : a; }",
       "cm_max_i": "static @int@ cm_max_i(@int@ a, @int@ b) { return b > a ? b : a; }",
       "cm_min_f": "static @float@ cm_min_f(@float@ a, @float@ b) { return b < a ? b : a; }",
@@ -67,6 +84,10 @@
     "import": "#include <@name@>\n",
     "indent": "    ",
     "lib_prelude": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n@imports@\n",
+    "list_lit": {
+      "list[float]": "cm_lf_of({n}, (const double[]){{{items_z}}})",
+      "list[int]": "cm_li_of({n}, (const int64_t[]){{{items_z}}})"
+    },
     "lit": {
       "false": "false",
       "float": "{v}",
@@ -88,6 +109,10 @@
     "prototype_export": "{ret} {name}({params});",
     "return": "return {value};",
     "return_void": "return;",
+    "set": {
+      "list[float]": "cm_lf_set({name}, {idx}, {value});",
+      "list[int]": "cm_li_set({name}, {idx}, {value});"
+    },
     "store": {
       "int": "{arr}[{idx}] = {value};",
       "u8": "{arr}[{idx}] = (uint8_t)({value});"
@@ -105,13 +130,17 @@
       "bool": "bool",
       "float": "double",
       "int": "int64_t",
+      "list[float]": "cm_lf",
+      "list[int]": "cm_li",
       "void": "void"
     },
     "while": "while ({cond}) {{",
     "zero": {
       "bool": "false",
       "float": "0.0",
-      "int": "0"
+      "int": "0",
+      "list[float]": "cm_lf_new(0, 0.0)",
+      "list[int]": "cm_li_new(0, 0)"
     }
   },
   "comments": {
