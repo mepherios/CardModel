@@ -364,8 +364,9 @@ def _logical_lines(text: str) -> list[tuple[int, str]]:
 
 
 class Parser:
-    def __init__(self, toks: list[Tok], functions: set[str]):
+    def __init__(self, toks: list[Tok], functions: set[str], op_names: set[str] = frozenset()):
         self.t = toks
+        self.op_names = op_names
         self.i = 0
         self.functions = functions
         self.bound: list[set[str]] = [set()]
@@ -723,7 +724,7 @@ class Parser:
         return e
 
     def is_function(self, name: str) -> bool:
-        return name in self.functions or name.lower() in BUILTINS or name.upper() in OP_LOWER_OK
+        return name in self.functions or name.lower() in BUILTINS or name.upper() in self.op_names
 
     def brace_cases(self):
         self.eat("{")
@@ -752,10 +753,7 @@ class Parser:
         return cases[0][0] if len(cases) == 1 and cases[0][1] is None else ("cases", cases)
 
 
-OP_LOWER_OK: set[str] = set()          # filled from the op table when a module is lowered
-
-
-def parse(text: str, name: str = "math") -> MathModule:
+def parse(text: str, name: str = "math", op_names=frozenset()) -> MathModule:
     """Text (Unicode and/or the LaTeX subset) -> a MathModule of signatures, definitions and tests."""
     mod = MathModule(name)
     lines = _logical_lines(text)
@@ -769,7 +767,7 @@ def parse(text: str, name: str = "math") -> MathModule:
         toks = tokenize(text1, no)
         while toks and toks[-1].kind == "nl":
             toks.pop()
-        p = Parser(toks, functions)
+        p = Parser(toks, functions, set(op_names))
         first = p.cur
         if first.kind == "end":            # a line of LaTeX layout only (\begin{gathered}, \\[1ex])
             continue
@@ -1118,7 +1116,6 @@ class Lowerer:
     def __init__(self, mod: MathModule, ops: dict[str, OpSpec]):
         self.mod = mod
         self.ops = ops
-        OP_LOWER_OK.update(ops)
         self.defs: dict[str, list[Definition]] = {}
         for d in mod.definitions:
             self.defs.setdefault(d.name, []).append(d)
@@ -1233,12 +1230,18 @@ class Lowerer:
             for n in self.defs:
                 if n in self.mod.signatures:
                     continue
-                try:
-                    r = self.function(n)["returns"]
-                except MathError:
-                    continue
-                if self.ret_guess.get(n, "int") != r:
-                    self.ret_guess[n] = r
+                before = self.ret_guess.get(n, "int")
+                for guess in dict.fromkeys((before, "int", "float", "bool")):
+                    self.ret_guess[n] = guess
+                    try:
+                        r = self.function(n)["returns"]
+                    except MathError:
+                        continue
+                    if r == guess:          # a consistent guess: recursive calls and cases agree
+                        break
+                else:
+                    self.ret_guess[n] = before
+                if self.ret_guess[n] != before:
                     changed = True
             if not changed:
                 break
@@ -1326,7 +1329,7 @@ def _walk(e):
 
 def lift_text(text: str, ops: dict[str, OpSpec], name: str = "math") -> dict:
     """Math text -> an IR module {"entry", "functions", "tests"}."""
-    mod = parse(text, name)
+    mod = parse(text, name, set(ops))
     low = Lowerer(mod, ops)
     module = low.module()
     module["name"] = mod.name
