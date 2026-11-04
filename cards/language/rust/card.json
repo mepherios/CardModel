@@ -42,7 +42,8 @@
       "cm_opaque_b": "fn cm_opaque_b(x: bool) -> bool { std::hint::black_box(x) }",
       "cm_opaque_f": "fn cm_opaque_f(x: f64) -> f64 { std::hint::black_box(x) }",
       "cm_opaque_i": "fn cm_opaque_i(x: i64) -> i64 { std::hint::black_box(x) }",
-      "cm_powmod": "fn cm_powmod(a: i64, b: i64, m: i64) -> i64 { let mut r = cm_floormod(1, m); let mut a = cm_floormod(a, m); let mut b = b; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m); } a = cm_floormod(a * a, m); b >>= 1; } r }"
+      "cm_powmod": "fn cm_powmod(a: i64, b: i64, m: i64) -> i64 { let (a, b) = if b < 0 { (cm_modinv(a, m), -b) } else { (a, b) }; let mut r = cm_floormod(1, m); let mut a = cm_floormod(a, m); let mut b = b; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m); } a = cm_floormod(a * a, m); b >>= 1; } r }",
+      "cm_modinv": "fn cm_modinv(a: i64, m: i64) -> i64 { let n = if m < 0 { -m } else { m }; let (mut r0, mut r1) = (cm_floormod(a, n), n); let (mut s0, mut s1) = (1i64, 0i64); while r1 != 0 { let q = r0 / r1; let t = r0 - q * r1; r0 = r1; r1 = t; let t = s0 - q * s1; s0 = s1; s1 = t; } if r0 != 1 { panic!(\"base is not invertible\"); } cm_floormod(s0, n) }"
     },
     "if": "if {cond} {{",
     "indent": "    ",

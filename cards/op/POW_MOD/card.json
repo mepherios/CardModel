@@ -6,7 +6,7 @@
     "lean": "(cm_powmod {0} {1} {2})",
     "lua": "cm_powmod({0}, {1}, {2})",
     "python": "pow({0}, {1}, {2})",
-    "ruby": "(({0}).pow({1}, {2}))"
+    "ruby": "cm_powmod({0}, {1}, {2})"
   },
   "forms": [
     {

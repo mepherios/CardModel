@@ -2,14 +2,19 @@
 
 Supported subset (everything else is reported, never pasted through):
 
-  def f(a: int, b: float, ...) -> int        params int/float/bool, no defaults
+  def f(a: int, b: float = 1.0, ...) -> int  params int/float/bool; numeric defaults
+  @functools.cache / @lru_cache(...)          pure memoization, dropped
+  module constants  P = 2**61 - 1             inlined (assigned once, never `global`)
   x = e · x += e · a, b = b, a % b            locals keep one type
   if/elif/else · while · for i in range(a[, b[, step]]) with a constant step
   return e · break · continue · pass · docstrings
   + - * / // % ** (constant exponent >= 0) & | ^ << >> ~ unary - not and or
   == != < <= > >= (chains) · x if c else y
   abs min max (2 args) pow(a, b[, m]) float(x) int(x) math.gcd(a, b)
-  calls to other lifted functions of the same module (L45: the callee must lift)
+  math.sqrt exp log(x) sin cos tan asin acos atan atan2 sinh cosh tanh fabs
+  floor ceil trunc (-> int) fmod copysign isnan · math.pi math.e math.tau
+  calls to other lifted functions of the same module, positional or by keyword,
+  missing arguments filled from numeric defaults (L45: the callee must lift)
 
 Each unsupported construct is reported with its line, so a translation gap
 is a precise list, not a percentage guess.
@@ -21,6 +26,7 @@ fixed-width targets agree only inside the declared input domain.
 from __future__ import annotations
 
 import ast
+import math
 from dataclasses import dataclass, field
 
 from .ir import OpSpec, check_lists, elem_type
@@ -31,13 +37,14 @@ BINOPS = {ast.Add: "ADD", ast.Sub: "SUB", ast.Mult: "MUL", ast.Div: "DIV", ast.F
 CMPOPS = {ast.Eq: "CMP_EQ", ast.NotEq: "CMP_NE", ast.Lt: "CMP_LT", ast.LtE: "CMP_LE", ast.Gt: "CMP_GT",
           ast.GtE: "CMP_GE"}
 CALLS = {"abs": ("ABS", 1), "min": ("MIN", 2), "max": ("MAX", 2), "float": ("TO_FLOAT", 1),
-         "int": ("TRUNC_INT", 1), "math.gcd": ("GCD", 2), "gcd": ("GCD", 2), "len": ("LEN", 1),
-         "math.sqrt": ("FSQRT", 1), "math.exp": ("EXP", 1), "math.log": ("LOG", 1), "math.tanh": ("TANH", 1),
-         "math.sin": ("SIN", 1), "math.cos": ("COS", 1), "math.tan": ("TAN", 1), "math.atan": ("ATAN", 1),
-         "math.atan2": ("ATAN2", 2), "math.sinh": ("SINH", 1), "math.cosh": ("COSH", 1),
-         "math.asin": ("ASIN", 1), "math.acos": ("ACOS", 1), "math.fabs": ("ABS", 1)}
-# functions whose arguments are promoted to float (math.sqrt(4) is 2.0)
-FLOAT_ARGS = {"FSQRT", "EXP", "LOG", "TANH", "SIN", "COS", "TAN", "ATAN", "ATAN2", "SINH", "COSH", "ASIN", "ACOS"}
+         "int": ("TRUNC_INT", 1), "math.gcd": ("GCD", 2), "gcd": ("GCD", 2), "len": ("LEN", 1)}
+# math.f(x) -> op card; every one takes and returns float (an int argument is promoted, as Python does)
+MATH_FLOAT = {"sqrt": "FSQRT", "exp": "EXP", "log": "LOG", "sin": "SIN", "cos": "COS", "tan": "TAN",
+              "asin": "ASIN", "acos": "ACOS", "atan": "ATAN", "sinh": "SINH", "cosh": "COSH", "tanh": "TANH",
+              "fabs": "ABS", "atan2": "ATAN2", "fmod": "FMOD", "copysign": "COPYSIGN", "isnan": "ISNAN"}
+MATH_TO_INT = {"floor": "FLOOR", "ceil": "CEIL", "trunc": "TRUNC"}   # float -> int in Python 3
+MATH_CONSTS = {"pi": math.pi, "e": math.e, "tau": math.tau}
+PURE_DECORATORS = {"cache", "lru_cache", "functools.cache", "functools.lru_cache"}
 
 
 class Unsupported(Exception):
@@ -56,6 +63,7 @@ class Lifted:
     reasons: list[str] = field(default_factory=list)
     inferred_types: bool = False
     lineno: int = 0
+    preamble: str = ""     # what the source needs around it to run alone: module constants, functools
 
 
 def _ann_type(node) -> str | None:
@@ -76,10 +84,95 @@ def _ann_type(node) -> str | None:
     raise Unsupported(f"type annotation {ast.unparse(node)!r} (only int/float/bool, list[int], list[float])", node)
 
 
+def _literal(v):
+    if isinstance(v, bool):
+        return ["bool", v], "bool"
+    if isinstance(v, int):
+        return ["int", v], "int"
+    return ["float", float(v)], "float"
+
+
+def _lit_type(v) -> str | None:
+    return None if v is None else _literal(v)[1]
+
+
+def _decorator_name(dec) -> str:
+    return ast.unparse(dec.func if isinstance(dec, ast.Call) else dec)
+
+
+def _const_eval(node, consts: dict):
+    """The value of a numeric constant expression (literals, earlier constants, math.pi, arithmetic), or None."""
+    ops = {ast.Add: lambda a, b: a + b, ast.Sub: lambda a, b: a - b, ast.Mult: lambda a, b: a * b,
+           ast.Div: lambda a, b: a / b, ast.FloorDiv: lambda a, b: a // b, ast.Mod: lambda a, b: a % b,
+           ast.Pow: lambda a, b: a ** b, ast.LShift: lambda a, b: a << b, ast.RShift: lambda a, b: a >> b,
+           ast.BitAnd: lambda a, b: a & b, ast.BitOr: lambda a, b: a | b, ast.BitXor: lambda a, b: a ^ b}
+    if isinstance(node, ast.Constant) and isinstance(node.value, (bool, int, float)):
+        return node.value
+    if isinstance(node, ast.Name):
+        return consts.get(node.id)
+    if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "math":
+        return MATH_CONSTS.get(node.attr)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd, ast.Invert)):
+        v = _const_eval(node.operand, consts)
+        if v is None or isinstance(v, bool) or (isinstance(node.op, ast.Invert) and not isinstance(v, int)):
+            return None
+        return -v if isinstance(node.op, ast.USub) else (~v if isinstance(node.op, ast.Invert) else v)
+    if isinstance(node, ast.BinOp) and type(node.op) in ops:
+        a, b = _const_eval(node.left, consts), _const_eval(node.right, consts)
+        if a is None or b is None or isinstance(a, bool) or isinstance(b, bool):
+            return None
+        if isinstance(node.op, (ast.Pow, ast.LShift)) and isinstance(b, int) and abs(b) > 4096:
+            return None
+        try:
+            v = ops[type(node.op)](a, b)
+        except (ArithmeticError, ValueError, TypeError):
+            return None
+        return v if isinstance(v, (int, float)) and not isinstance(v, complex) else None
+    return None
+
+
+def _default_value(node, consts: dict):
+    v = _const_eval(node, consts)
+    if isinstance(v, float) and not math.isfinite(v):
+        return None
+    return v
+
+
+def module_constants(tree: ast.Module) -> dict:
+    """Top-level names bound exactly once to a finite numeric constant and never declared ``global``."""
+    counts: dict[str, int] = {}
+    for n in tree.body:
+        targets = n.targets if isinstance(n, ast.Assign) else [n.target] if isinstance(n, (ast.AnnAssign, ast.AugAssign)) else []
+        for t in targets:
+            for x in ast.walk(t):
+                if isinstance(x, ast.Name):
+                    counts[x.id] = counts.get(x.id, 0) + 1
+        if isinstance(n, (ast.For, ast.With, ast.Import, ast.ImportFrom, ast.FunctionDef, ast.ClassDef)):
+            for x in ast.walk(n) if isinstance(n, (ast.For, ast.With)) else []:
+                if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Store):
+                    counts[x.id] = counts.get(x.id, 0) + 2
+    declared_global = {name for x in ast.walk(tree) if isinstance(x, ast.Global) for name in x.names}
+    consts: dict = {}
+    for n in tree.body:
+        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name):
+            name, value = n.targets[0].id, n.value
+        elif isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name) and n.value is not None:
+            name, value = n.target.id, n.value
+        else:
+            continue
+        if counts.get(name) != 1 or name in declared_global:
+            continue
+        v = _default_value(value, consts)
+        if v is not None:
+            consts[name] = v
+    return consts
+
+
 class _FnLifter:
     def __init__(self, fdef: ast.FunctionDef, ops: dict[str, OpSpec], sigs: dict[str, dict],
-                 param_hint: dict[str, str] | None):
+                 param_hint: dict[str, str] | None, consts: dict | None = None):
         self.f = fdef
+        self.consts = consts or {}
         self.ops = ops
         self.sigs = sigs                      # name -> {"params": [types], "returns": type|None}
         self.hint = param_hint or {}
@@ -99,15 +192,22 @@ class _FnLifter:
     def lift(self) -> dict:
         f = self.f
         a = f.args
-        if a.vararg or a.kwarg or a.kwonlyargs or a.defaults or a.kw_defaults or a.posonlyargs:
-            raise Unsupported("varargs, defaults or keyword-only parameters", f)
-        if f.decorator_list:
-            raise Unsupported("decorators", f)
+        if a.vararg or a.kwarg or a.kwonlyargs or a.kw_defaults or a.posonlyargs:
+            raise Unsupported("varargs or keyword-only parameters", f)
+        defaults = dict(zip([x.arg for x in a.args[len(a.args) - len(a.defaults):]], a.defaults))
+        for d in defaults.values():
+            if _default_value(d, self.consts) is None:
+                raise Unsupported(f"default {ast.unparse(d)!r} (only numeric constants)", d)
+        for dec in f.decorator_list:
+            if _decorator_name(dec) not in PURE_DECORATORS:
+                raise Unsupported(f"decorator @{ast.unparse(dec)}", f)
         if isinstance(f, ast.AsyncFunctionDef):
             raise Unsupported("async def", f)
         params = []
         for arg in a.args:
             t = _ann_type(arg.annotation) or self.hint.get(arg.arg)
+            if t is None and arg.arg in defaults:
+                t = _lit_type(_default_value(defaults[arg.arg], self.consts))
             if t is None:
                 t = "int"
                 self.inferred = True
@@ -440,11 +540,12 @@ class _FnLifter:
                 return ["float", v], "float"
             raise Unsupported(f"constant {v!r}", n)
         if isinstance(n, ast.Name):
+            if n.id not in self.env and n.id in self.consts:
+                return _literal(self.consts[n.id])
             return ["var", n.id], self.var_type(n.id, n)
         if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == "math" \
-                and n.attr in ("pi", "e", "tau"):
-            import math
-            return ["float", getattr(math, n.attr)], "float"
+                and n.attr in MATH_CONSTS:
+            return _literal(MATH_CONSTS[n.attr])
         if isinstance(n, ast.BinOp):
             l, lt = self.expr(n.left)
             return self.binop(type(n.op), l, lt, n.right, n)
@@ -517,9 +618,13 @@ class _FnLifter:
         raise Unsupported(f"expression {type(n).__name__}", n)
 
     def call(self, n: ast.Call):
+        fname = ast.unparse(n.func)
+        if isinstance(n.func, ast.Name) and n.func.id in self.sigs and n.func.id not in self.env:
+            return self.call_lifted(n)
         if n.keywords:
             raise Unsupported("keyword arguments in call", n)
-        fname = ast.unparse(n.func)
+        if any(isinstance(a, ast.Starred) for a in n.args):
+            raise Unsupported("*args in call", n)
         if isinstance(n.func, ast.Attribute) and n.func.attr == "copy" and not n.args:
             xs, lt = self.expr(n.func.value)
             if elem_type(lt) is not None:
@@ -533,6 +638,19 @@ class _FnLifter:
             raise Unsupported(f"{fname}() over a list (write the loop: Python's float sum is compensated "
                               "since 3.12, so a plain loop is a different function)", n)
         args = [self.expr(a) for a in n.args]
+        short = fname[5:] if fname.startswith("math.") else None
+        if short in MATH_FLOAT or short in MATH_TO_INT:
+            op = MATH_FLOAT.get(short) or MATH_TO_INT[short]
+            arity = self.spec(op, n).arity
+            if len(args) != arity:
+                raise Unsupported(f"{fname}() with {len(args)} arguments", n)
+            if short in MATH_TO_INT and args[0][1] == "int":
+                return args[0]
+            e, t = self.apply(op, [(["TO_FLOAT", x] if xt == "int" else x, "float" if xt == "int" else xt)
+                                   for x, xt in args], n)
+            if short in MATH_TO_INT:
+                return ["TRUNC_INT", e], "int"
+            return e, t
         if fname == "pow":
             if len(args) == 3:
                 return self.apply("POW_MOD", args, n)
@@ -548,13 +666,32 @@ class _FnLifter:
                 return args[0]
             if op == "TRUNC_INT" and args[0][1] == "int":
                 return args[0]
-            if op in FLOAT_ARGS:
-                args = [(["TO_FLOAT", e], "float") if t == "int" else (e, t) for e, t in args]
             return self.apply(op, args, n)
-        if isinstance(n.func, ast.Name) and n.func.id in self.sigs:
-            sig = self.sigs[n.func.id]
-            if len(args) != len(sig["params"]):
-                raise Unsupported(f"{fname}() arity mismatch", n)
+        raise Unsupported(f"call to {fname}() (no op card or lifted function)", n)
+
+    def call_lifted(self, n: ast.Call):
+        """A call to another function of the module: keywords bound by name, missing ones from defaults."""
+        fname = n.func.id
+        sig = self.sigs[fname]
+        names = sig.get("names") or []
+        if any(isinstance(a, ast.Starred) for a in n.args) or any(k.arg is None for k in n.keywords):
+            raise Unsupported(f"{fname}() called with * or ** arguments", n)
+        slots: list = list(n.args) + [None] * (len(sig["params"]) - len(n.args))
+        if len(slots) != len(sig["params"]):
+            raise Unsupported(f"{fname}() arity mismatch", n)
+        for k in n.keywords:
+            if k.arg not in names or slots[names.index(k.arg)] is not None:
+                raise Unsupported(f"{fname}() keyword {k.arg!r} does not match a free parameter", n)
+            slots[names.index(k.arg)] = k.value
+        args = []
+        for pname, node in zip(names, slots):
+            if node is None:
+                if pname not in sig.get("defaults", {}):
+                    raise Unsupported(f"{fname}() arity mismatch (no value for {pname!r})", n)
+                args.append(_literal(sig["defaults"][pname]))
+            else:
+                args.append(self.expr(node))
+        if True:
             fixed = []
             for (e, t), want in zip(args, sig["params"]):
                 if t != want:
@@ -567,7 +704,6 @@ class _FnLifter:
             if sig.get("returns") is None:
                 self.inferred = True
             return ["CALL", n.func.id, *fixed], ret
-        raise Unsupported(f"call to {fname}() (no op card or lifted function)", n)
 
 
 def _always_returns(body: list[dict]) -> bool:
@@ -587,25 +723,32 @@ def lift_source(source: str, ops: dict[str, OpSpec], only: list[str] | None = No
     a function that calls a non-liftable one fails with that reason (closure, L45)."""
     tree = ast.parse(source)
     lines = source.splitlines()
+    consts = module_constants(tree)
     fdefs = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
     sigs: dict[str, dict] = {}
     for f in fdefs:
         try:
-            ptypes = [(_ann_type(a.annotation) or (param_hints or {}).get(f.name, {}).get(a.arg) or "int")
-                      for a in f.args.args]
-            sigs[f.name] = {"params": ptypes, "returns": _ann_type(f.returns)}
+            a = f.args
+            defaults = {x.arg: _default_value(d, consts)
+                        for x, d in zip(a.args[len(a.args) - len(a.defaults):], a.defaults)}
+            ptypes = [(_ann_type(x.annotation) or (param_hints or {}).get(f.name, {}).get(x.arg)
+                       or _lit_type(defaults.get(x.arg)) or "int") for x in a.args]
+            sigs[f.name] = {"params": ptypes, "returns": _ann_type(f.returns), "names": [x.arg for x in a.args],
+                            "defaults": {k: v for k, v in defaults.items() if v is not None}}
         except Unsupported:
             continue
     results: dict[str, Lifted] = {}
+    preamble = "import functools\nfrom functools import cache, lru_cache\n" + \
+        "".join(f"{k} = {v!r}\n" for k, v in consts.items())
     for f in fdefs:
         src = "\n".join(lines[f.lineno - 1 - len(f.decorator_list): f.end_lineno])
-        lifter = _FnLifter(f, ops, sigs, (param_hints or {}).get(f.name))
+        lifter = _FnLifter(f, ops, sigs, (param_hints or {}).get(f.name), consts)
         try:
             ir = lifter.lift()
             sigs[f.name]["returns"] = ir["returns"]
-            results[f.name] = Lifted(f.name, True, ir, src, [], lifter.inferred, f.lineno)
+            results[f.name] = Lifted(f.name, True, ir, src, [], lifter.inferred, f.lineno, preamble)
         except Unsupported as exc:
-            results[f.name] = Lifted(f.name, False, None, src, [str(exc)], lifter.inferred, f.lineno)
+            results[f.name] = Lifted(f.name, False, None, src, [str(exc)], lifter.inferred, f.lineno, preamble)
     # closure: a lifted function calling a failed one fails too (iterate to a fixed point)
     changed = True
     while changed:

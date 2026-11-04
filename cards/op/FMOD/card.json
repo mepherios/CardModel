@@ -8,8 +8,8 @@
     "javascript": "({0} % {1})",
     "lean": "UNSUPPORTED",
     "lua": "math.fmod({0}, {1})",
-    "python": "math.fmod({0}, {1})",
-    "ruby": "(({0}).remainder({1}))",
+    "python": "cm_fmod({0}, {1})",
+    "ruby": "cm_fmod({0}, {1})",
     "rust": "({0} % {1})",
     "swift": "fmod({0}, {1})"
   },

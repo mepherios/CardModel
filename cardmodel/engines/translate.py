@@ -61,7 +61,9 @@ def python_reference(module: dict, lifted: list[Lifted]):
     by = {lf.name: lf for lf in lifted}
     # the frontend lifts bare gcd(a, b) as math.gcd, so the reference must define it too (else every input
     # raises NameError, is dropped as "outside the domain" and the function is verified on nothing)
-    src = "import math\nfrom math import gcd\n\n" + "\n\n".join(by[f["name"]].source for f in module["functions"])
+    entry = by[module["entry"]]
+    src = "import math\nfrom math import gcd\n" + getattr(entry, "preamble", "") + "\n" + \
+        "\n\n".join(by[f["name"]].source for f in module["functions"])
     ns: dict = {"__name__": "cardmodel_reference"}
     exec(compile(src, "<reference>", "exec"), ns)  # noqa: S102 -- the user's own source, being observed
     return ns[module["entry"]], src
@@ -144,6 +146,8 @@ def reference_rows(ctx: Ctx, module: dict, ref, inputs: list) -> list[dict]:
         try:
             out = ref(*args)
         except Exception:  # noqa: BLE001 -- not in the reference domain
+            continue
+        if isinstance(out, complex):   # left the reals (negative base ** fraction): outside the real domain
             continue
         if failed is not None:
             raise failed

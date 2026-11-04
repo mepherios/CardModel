@@ -270,6 +270,10 @@ RUBY_HELPERS = {
     "cm_max_i": "def cm_max_i(a, b)\n  b > a ? b : a\nend",
     "cm_min_f": "def cm_min_f(a, b)\n  b < a ? b : a\nend",
     "cm_max_f": "def cm_max_f(a, b)\n  b > a ? b : a\nend",
+    "cm_fsqrt": "def cm_fsqrt(a)\n  a >= 0.0 ? Math.sqrt(a) : Float::NAN\nend",
+    "cm_acos": "def cm_acos(a)\n  (a >= -1.0 && a <= 1.0) ? Math.acos(a) : Float::NAN\nend",
+    "cm_asin": "def cm_asin(a)\n  (a >= -1.0 && a <= 1.0) ? Math.asin(a) : Float::NAN\nend",
+    "cm_fmod": "def cm_fmod(a, b)\n  b != 0.0 ? a.remainder(b) : Float::NAN\nend",
 }
 
 RUBY_CODEGEN = {
@@ -378,6 +382,13 @@ PY_CODEGEN = {
     "break": "break", "continue": "continue", "empty": "pass",
     "prelude": "@imports@", "lib_prelude": "@imports@",
     "import": "import @name@\n",
+    # domain edges: the IR returns NaN where Python's math raises (sqrt/acos/asin outside their domain, fmod by 0)
+    "helpers": {
+        "cm_fsqrt": "def cm_fsqrt(a):\n    return math.sqrt(a) if a >= 0.0 else math.nan",
+        "cm_acos": "def cm_acos(a):\n    return math.acos(a) if -1.0 <= a <= 1.0 else math.nan",
+        "cm_asin": "def cm_asin(a):\n    return math.asin(a) if -1.0 <= a <= 1.0 else math.nan",
+        "cm_fmod": "def cm_fmod(a, b):\n    return math.fmod(a, b) if b != 0.0 else math.nan",
+    },
     "harness": {
         "main": "def _cm_main():\n{calls}    pass\n\n_cm_main()\n",
         "print": {"int": "print('i:' + str({e}))", "float": "print('f:' + repr({e}))",
