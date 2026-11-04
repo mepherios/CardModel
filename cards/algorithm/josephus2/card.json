@@ -1,0 +1,60 @@
+{
+  "category": "algorithm",
+  "filter": "lambda n: n >= 1",
+  "forms": [
+    {
+      "code": "def jos_loop(n: int) -> int:\n    j = 0\n    for m in range(2, n + 1):\n        j = (j + 2) % m\n    return j + 1\n",
+      "complexity": "O(n)",
+      "cost": 20.0,
+      "domain": "any",
+      "entry": "jos_loop",
+      "lang": "python",
+      "name": "recurrence",
+      "role": "suboptimal",
+      "runnable": true
+    },
+    {
+      "code": "def jos_closed(n: int) -> int:\n    p = 1\n    while p * 2 <= n:\n        p = p * 2\n    return 2 * (n - p) + 1\n",
+      "complexity": "O(log n)",
+      "cost": 2.0,
+      "domain": "any",
+      "entry": "jos_closed",
+      "lang": "python",
+      "name": "closed_form",
+      "runnable": true
+    }
+  ],
+  "generators": [
+    {
+      "int": [
+        1,
+        100000
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "josephus2",
+  "precondition": "n >= 1",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "closed_form",
+  "signature": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "statement": "survivor of n people when every second one leaves (Josephus, k = 2), 1-based",
+  "tags": [
+    "recurrence",
+    "puzzle"
+  ],
+  "tier": 1
+}

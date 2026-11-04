@@ -189,3 +189,20 @@ class NativeCall(unittest.TestCase):
         ns = improve._load(src)
         self.assertEqual(ns["collatz"](27), 111)
         self.assertIsNone(ns["_cm_native_collatz"]())
+
+
+class RecurrenceCards(unittest.TestCase):
+    """E4: recurrences become matrix powers or closed forms (tribonacci, Josephus k = 2, prefix popcount)."""
+
+    SRC = ("def survivors(n: int) -> int:\n    j = 0\n    for m in range(2, n + 1):\n        j = (j + 2) % m\n"
+           "    return j + 1\n\n\n"
+           "def trib(n: int) -> int:\n    a = 0\n    b = 0\n    c = 1\n    if n < 2:\n        return 0\n"
+           "    for _ in range(n - 2):\n        a, b, c = b, c, a + b + c\n    return c\n")
+
+    def test_recurrences_are_substituted(self):
+        rep = improve.improve_source(model_ctx(), self.SRC, seed=SEED, native=False, native_call=False)
+        cards = {n: f.get("action", "") for n, f in rep["functions"].items()}
+        self.assertIn("algorithm/josephus2", cards["survivors"], seed_note(self))
+        # the tribonacci card's matrix power, or the generic recurrence algebra's: either is a substitution
+        self.assertTrue(cards["trib"].endswith("#matrix_power"), (cards["trib"], seed_note(self)))
+        self.assertEqual(rep["end_to_end"]["status"], "pass")
