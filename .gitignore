@@ -4,3 +4,4 @@ __pycache__/
 .cardmodel/state/
 saves/
 .DS_Store
+*.egg-info/

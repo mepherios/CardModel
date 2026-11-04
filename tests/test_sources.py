@@ -40,6 +40,10 @@ class Sources(unittest.TestCase):
         self.assertIn(tri["canonical"]["status"], ("canonical", "recurrence"))
         # FOUNDATIONS.md D11/A4: content is read from the canonical term when there is one, so it follows meaning
         from cardmodel.engines import godel as G
+        from cardmodel.engines.equivalence import RELATIONS
+        self.assertTrue(all(d["identity"]["under"] in RELATIONS for d in built["definitions"]))
+        self.assertEqual({d["identity"]["under"] for d in built["definitions"] if d["canonical"].get("status") == "canonical"},
+                         {"laws"})
         canonical = [d for d in built["definitions"] if d["godel"]["read_from"].startswith("its canonical term")]
         self.assertTrue(canonical)
         for d in canonical:
