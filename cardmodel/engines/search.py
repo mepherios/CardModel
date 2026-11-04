@@ -34,13 +34,18 @@ class Rule:
 
 
 def load_rules(store, names: list[str] | None = None) -> list[Rule]:
+    """The rule cards as patterns. A call of a function that is an op card (``gcd(a, b)``) is that op, so the rule
+    matches the IR's terms (FOUNDATIONS.md rule A1)."""
+    from .ir import op_table
+    from .exprs import resolve_ops
+    ops = op_table(store)
     out = []
     for card in store.cards("rewrite_rule"):
         if names and card.name not in names:
             continue
         pv = card.get("vars") or []
         try:
-            lhs, rhs = parse(card["lhs"], pv), parse(card["rhs"], pv)
+            lhs, rhs = resolve_ops(parse(card["lhs"], pv), ops), resolve_ops(parse(card["rhs"], pv), ops)
         except Exception as exc:  # noqa: BLE001 -- a malformed rule card is reported, not fatal
             raise ValueError(f"rewrite_rule/{card.name}: {exc}") from exc
         out.append(Rule(card.name, lhs, rhs, card.name, card.get("condition"), card.get("domain")))

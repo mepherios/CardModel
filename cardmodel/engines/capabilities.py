@@ -103,7 +103,7 @@ def witnesses(ctx: Ctx, seed: int) -> str:
     rules = sorted(ctx.store.cards("rewrite_rule"), key=lambda c: c.name)
     _need(rules, "no rewrite rule cards to witness")
     rule = rules[seed % len(rules)]
-    a, b = witness.verify_rule(rule, seed=seed), witness.verify_rule(rule, seed=seed)
+    a, b = witness.verify_rule(rule, seed=seed, ops=ctx.ops), witness.verify_rule(rule, seed=seed, ops=ctx.ops)
     _need(a == b, f"{rule.qualified}: the same seed gave two different witness runs (CM06)")
     _need(a["status"] != "fail", f"{rule.qualified} failed its witness: {a}")
     return f"a planted off-by-one is caught at its input; {rule.qualified} witnessed twice alike with seed {seed}"
@@ -575,7 +575,7 @@ def distillation(ctx: Ctx, seed: int) -> str:
     c1 = E.canonical(parse("b * a + c"), rules, costs)
     c2 = E.canonical(parse("c + a * b"), rules, costs)
     _need(c1["hash"] == c2["hash"], "two equal terms got different canonical forms")
-    w = E.witness(parse("max(a, b) + min(b, a)"), parse("a + b"), seed)
+    w = E.witness(parse("max(a, b) + min(b, a)"), parse("a + b"), seed, ops=ctx.ops)
     _need(w["status"] == "witnessed", f"the witness disagrees: {w}")
     return (f"{len(rules)} equalities saturate; a law-level identity is proved; equal terms share one canonical term "
             f"({c1['hash'][:19]})")
