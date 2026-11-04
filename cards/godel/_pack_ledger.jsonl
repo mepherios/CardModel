@@ -3409,3 +3409,7 @@
 {"atom": "unreal/FScopedFTZFloatMode._FScopedFTZFloatMode-d2fd6cef", "category": "godel", "index": 3409, "name": "p3409__unreal__FScopedFTZFloatMode._FScopedFTZFloatMode-d2fd6cef", "prime": 31699, "set": "unreal", "since": "2026-10-22"}
 {"atom": "op/TRUNCDIV", "category": "godel", "index": 3410, "name": "p3410__op__TRUNCDIV", "prime": 31721, "set": "B0", "since": "2026-11-04"}
 {"atom": "op/REM", "category": "godel", "index": 3411, "name": "p3411__op__REM", "prime": 31723, "set": "B0", "since": "2026-11-04"}
+{"atom": "op/GET", "category": "godel", "index": 3412, "name": "p3412__op__GET", "prime": 31727, "set": "B0", "since": "2026-11-04"}
+{"atom": "op/LEN", "category": "godel", "index": 3413, "name": "p3413__op__LEN", "prime": 31729, "set": "B0", "since": "2026-11-04"}
+{"atom": "op/LIST_COPY", "category": "godel", "index": 3414, "name": "p3414__op__LIST_COPY", "prime": 31741, "set": "B0", "since": "2026-11-04"}
+{"atom": "op/LIST_NEW", "category": "godel", "index": 3415, "name": "p3415__op__LIST_NEW", "prime": 31751, "set": "B0", "since": "2026-11-04"}
