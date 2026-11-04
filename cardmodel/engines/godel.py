@@ -730,6 +730,8 @@ def valuation(n: int, p: int) -> tuple[int, int]:
     """The p-adic valuation e of n, and n / p^e, by repeated squaring: O(log e) divisions of n instead of e. A
     token code is an exponent of a prime, and a late atom's code is in the thousands (3k + 1 for ledger index k),
     so dividing e times made decoding 98 % of the godel verify section."""
+    if n == 0 or p < 2:
+        raise ValueError(f"valuation is defined for n != 0 and p >= 2, got n={n}, p={p}")
     if n % p:
         return 0, n
     powers = [p]                                     # p, p^2, p^4, ... while the next square still divides n

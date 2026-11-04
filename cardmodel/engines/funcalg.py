@@ -338,11 +338,13 @@ def godel_encode(seq: list[int]) -> int:
 def godel_decode(n: int) -> list[int]:
     """The sequence back: the exponents of the consecutive primes, up to the first prime that is absent."""
     from . import godel as G
-    out = []
-    for e in G.exponents(n):
+    out, i = [], 1
+    while n > 1:                                    # stop at the first absent prime: never factor past it
+        e, n = G.valuation(n, G.nth_prime(i))
         if e == 0:
             break
         out.append(G.unzig(e - 1))
+        i += 1
     return out
 
 

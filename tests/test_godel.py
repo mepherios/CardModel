@@ -103,6 +103,10 @@ class Structure(unittest.TestCase):
         self.assertIsNotNone(n)
 
     def test_structural_numbers_decode_exactly(self):
+        # valuation is defined only for n != 0 (0 is divisible by every power: it would never return)
+        with self.assertRaises(ValueError):
+            G.valuation(0, 2)
+        self.assertEqual(G.valuation(-24, 2), (3, -3))
         ctx = model_ctx()
         idx, entries = G.index_of(ctx.store), G.ledger(ctx.store)
         rng = random.Random(SEED)
