@@ -69,7 +69,7 @@ class Rules(unittest.TestCase):
     def test_rules_pass_and_false_rule_fails(self):
         ctx = model_ctx()
         for card in ctx.store.cards("rewrite_rule"):
-            r = witness.verify_rule(card, seed=SEED)
+            r = witness.verify_rule(card, seed=SEED, ops=ctx.ops)
             self.assertEqual(r["status"], "pass", (card.name, r, seed_note(self)))
             self.assertTrue(r["witness_can_fail"])
         bad = {"name": "bad", "lhs": "(a + b) ** 2", "rhs": "a ** 2 + b ** 2", "vars": ["a", "b"]}

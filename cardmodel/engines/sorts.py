@@ -19,7 +19,13 @@ conservative: it can miss a rewrite, but it cannot make a false one.
 """
 from __future__ import annotations
 
-SORTS = ("int", "float", "bool")
+BASE = ("int", "float", "bool")
+# subsorts (order-sorted, FOUNDATIONS.md D1): a fixed-width integer sort is the set of ints in its range, binary32 the
+# floats a binary32 holds. A law that holds on a sort holds on its subsorts, never the other way round.
+RANGES = {"u8": (0, 2 ** 8 - 1), "u16": (0, 2 ** 16 - 1), "u32": (0, 2 ** 32 - 1),
+          "i8": (-2 ** 7, 2 ** 7 - 1), "i16": (-2 ** 15, 2 ** 15 - 1), "i32": (-2 ** 31, 2 ** 31 - 1)}
+SUPER = {**{s: "int" for s in RANGES}, "f32": "float"}
+SORTS = (*BASE, *SUPER)
 ALIASES = {"nat": "int", "Int": "int", "Nat": "int", "real": "float", "Bool": "bool"}
 LOGIC = ("AND", "OR", "NOT")
 FLOAT_RESULT = ("DIV", "TO_FLOAT")       # fallback only: the op cards say this when an op table is given
@@ -29,6 +35,52 @@ DEFAULT = "int"                         # an untyped variable reads as int, the 
 def sort_name(s) -> str | None:
     s = ALIASES.get(s, s)
     return s if s in SORTS else None
+
+
+def base(s):
+    return SUPER.get(s, s)
+
+
+def leq(s, t) -> bool:
+    """s is a subsort of t (or equal): every value of s is a value of t."""
+    if s is None or t is None:
+        return False
+    if s == t or base(s) == t:
+        return True
+    if s in RANGES and t in RANGES:
+        return RANGES[t][0] <= RANGES[s][0] and RANGES[s][1] <= RANGES[t][1]
+    return False
+
+
+def meet(s, t):
+    """The sort of a class known to have both sorts: the more specific one; None when they cannot meet."""
+    if s is None or t is None:
+        return s if t is None else t
+    if leq(s, t):
+        return s
+    if leq(t, s):
+        return t
+    if base(s) == base(t):
+        return s if s in RANGES and t not in RANGES else t if t in RANGES and s not in RANGES else \
+            min((s, t), key=lambda x: RANGES[x][1] - RANGES[x][0])   # both proved: the narrower is as true
+    return None
+
+
+def refine(head: str, width, ops: dict | None = None) -> str | None:
+    """The subsort an op's card names for its result (``"sort": "u{w}"``, ``"f32"``), given its width argument's
+    literal value where the template needs one; None when the card names none or the subsort does not exist."""
+    spec = (ops or {}).get(head)
+    tmpl = (getattr(spec, "card", None) or {}).get("sort") if spec is not None else FALLBACK_REFINE.get(head)
+    if not tmpl:
+        return None
+    if "{w}" in tmpl:
+        if not isinstance(width, int) or isinstance(width, bool):
+            return None
+        tmpl = tmpl.replace("{w}", str(width))
+    return tmpl if tmpl in SUPER else None
+
+
+FALLBACK_REFINE = {"WRAPU": "u{w}", "WRAPS": "i{w}", "F32": "f32"}     # without an op table only
 
 
 def leaf_sort(term, var_sorts: dict | None = None, default: str | None = DEFAULT) -> str | None:
@@ -50,6 +102,7 @@ def result_sort(head: str, args: list, ops: dict | None = None) -> str | None:
         return args[1] if len(args) == 3 and args[1] == args[2] else None
     if head in ("FN", "CALL") or ":" in head or any(a is None for a in args):
         return None
+    args = [base(a) for a in args]          # an op's ranks are stated on base sorts; subsorts inherit them
     spec = (ops or {}).get(head)
     if spec is not None and getattr(spec, "types", None):
         got = spec.result_type(list(args))
@@ -69,7 +122,10 @@ def term_sort(t, var_sorts: dict | None = None, ops: dict | None = None, default
     if t[0] in ("var", "int", "float", "bool", "const"):
         return leaf_sort(t, var_sorts, default)
     start = 2 if t[0] in ("FN", "CALL") else 1
-    return result_sort(t[0], [term_sort(a, var_sorts, ops, default) for a in t[start:]], ops)
+    got = result_sort(t[0], [term_sort(a, var_sorts, ops, default) for a in t[start:]], ops)
+    width = t[2][1] if len(t) > 2 and isinstance(t[2], list) and t[2][:1] == ["int"] else None
+    sub = refine(t[0], width, ops) if got is not None else None
+    return sub if sub is not None and base(sub) == got else got
 
 
 def law_sorts(pvars, domain=None, types: dict | None = None) -> dict | None:
@@ -85,7 +141,7 @@ def admits(sorts: dict | None, binding: dict, sort_of) -> bool:
     """Every pattern variable is bound to something of its sort (``sort_of`` maps a bound value to its sort)."""
     if not sorts:
         return True
-    return all(v not in binding or (s is not None and sort_of(binding[v]) == s) for v, s in sorts.items())
+    return all(v not in binding or (s is not None and leq(sort_of(binding[v]), s)) for v, s in sorts.items())
 
 
-__all__ = ["SORTS", "admits", "law_sorts", "leaf_sort", "result_sort", "sort_name", "term_sort"]
+__all__ = ["RANGES", "SORTS", "SUPER", "admits", "base", "leq", "meet", "refine", "law_sorts", "leaf_sort", "result_sort", "sort_name", "term_sort"]

@@ -376,7 +376,9 @@ def verify_rule(card, seed: int | None = None, samples: int = 64, ops: dict | No
                 return eval_expr(t, env, ops)
             except LogicError as exc:
                 raise ValueError(str(exc)) from exc
-    gens = [{"int": [0, 24]} if v in ("k", "n", "e") else {"int": [-60, 60]} for v in vars_]
+    from . import sorts as S
+    lo, hi = S.RANGES.get(card.get("domain"), (-60, 60))   # a law of a subsort is witnessed on that subsort's values
+    gens = [{"int": [0, 24]} if v in ("k", "n", "e") else {"int": [lo, hi]} for v in vars_]
     checks, bad, perturbed_caught = 0, None, False
     for args in V.inputs(gens, samples, rng):
         env = dict(zip(vars_, args))
