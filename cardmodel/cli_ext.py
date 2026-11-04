@@ -614,7 +614,7 @@ def cmd_distill(args) -> int:
                           f"equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")
         return 0
     r = E.equal(terms[0], terms[1], rules, **budget)
-    w = E.witness(terms[0], terms[1], V.fresh_seed() if args.seed is None else args.seed)
+    w = E.witness(terms[0], terms[1], V.fresh_seed() if args.seed is None else args.seed, ops=ctx.ops)
     verdict = "equal" if r["equal"] else "not shown equal (within the budget; not a disproof)"
     cli._out(args, {**r, "witness": w}, f"{verdict}; witness {w['status']} on {w['checks']} inputs "
                                         f"(seed {w.get('seed')}); equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")

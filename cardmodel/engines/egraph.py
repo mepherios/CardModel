@@ -298,9 +298,19 @@ def equal(a, b, rules: list[Rule], var_sorts: dict | None = None, ops: dict | No
     return {"equal": g.find(ra) == g.find(rb), **info}
 
 
-def witness(a, b, seed: int, samples: int = 64) -> dict:
-    """The two terms agree on seeded integers (values where either side is undefined are skipped)."""
-    from .exprs import evaluate, variables
+def witness(a, b, seed: int, samples: int = 64, ops: dict | None = None) -> dict:
+    """The two terms agree on seeded integers (values where either side is undefined are skipped). With ``ops``
+    (``ir.op_table``) they are evaluated in the model M, the op cards' semantics (FOUNDATIONS.md rule A2)."""
+    from .exprs import evaluate, resolve_ops, variables
+    if ops is not None:
+        from .logic import LogicError, eval_expr
+        a, b = resolve_ops(a, ops), resolve_ops(b, ops)
+
+        def evaluate(t, env):          # noqa: F811
+            try:
+                return eval_expr(t, env, ops)
+            except LogicError as exc:
+                raise ValueError(str(exc)) from exc
     rng = random.Random(seed)
     names = sorted(variables(a) | variables(b))
     checked = 0
