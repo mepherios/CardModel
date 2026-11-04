@@ -340,18 +340,28 @@ def corpora(cfg: dict) -> list[Path]:
     return [p.resolve() for p in out if p.exists()]
 
 
+LEARN_INPUTS = ("rewrite_rule", "op", "language")
+
+
 def _learn(c: Cycle) -> dict:
+    """Learn from every corpus whose files, or whose learning inputs (the rules, ops and languages the
+    proposals are derived and checked with), changed since it was last learned from. A function is promoted
+    only when no language it ran in disagreed (``strict``): verify checks every function card in every
+    language, so a card that fails one would make the next cycle's verify fail and quarantine the whole self
+    layer. Cards the store already has are left as they are (``skip_existing``), so an unchanged card is not
+    rewritten with a new seed."""
     from .learn import learn
     seen = c.state.setdefault("corpora", {})
     done, skipped = {}, []
+    inputs = "".join(registry_hash(c.ctx, r) for r in LEARN_INPUTS)
     for root in corpora(c.cfg):
-        h = tree_hash(root)
+        h = tree_hash(root) + ":" + hashlib.sha256(inputs.encode()).hexdigest()[:16]
         if seen.get(str(root)) == h and not c.cfg.get("_force"):
             skipped.append(str(root))
             continue
         c.say(f"learning from {root}")
         rep = learn(c.wctx, root, promote=True, layer="self", seed=c.seed,
-                    max_functions=int(c.cfg.get("learn_max_functions", 12)))
+                    max_functions=int(c.cfg.get("learn_max_functions", 12)), skip_existing=True, strict=True)
         done[str(root)] = {"observation": rep["observation"], "proposals": dict(rep["proposals"]),
                            "ready": dict(rep["ready"]), "promoted": rep["promoted"], "pending": rep["pending"]}
         seen[str(root)] = h
