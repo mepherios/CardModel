@@ -383,7 +383,11 @@ def cmd_emit(args) -> int:
         src_lang = _source_lang(ctx, args, args.source)
         if src_lang is None:
             return 2
-        lifted = frontends.lift(ctx, src, src_lang)
+        try:
+            lifted = frontends.lift(ctx, src, src_lang)
+        except SyntaxError as exc:
+            print(f"error: {args.source} is not valid {src_lang} (line {exc.lineno}: {exc.msg})", file=sys.stderr)
+            return 2
         names = [args.function] if args.function else [lf.name for lf in lifted if lf.ok]
         for lf in lifted:
             if not lf.ok and (not args.function or lf.name == args.function):
@@ -423,7 +427,11 @@ def cmd_translate(args) -> int:
     lang = _source_lang(ctx, args, args.file)
     if lang is None:
         return 2
-    lifted = frontends.lift(ctx, src, lang)
+    try:
+        lifted = frontends.lift(ctx, src, lang)
+    except SyntaxError as exc:
+        print(f"error: {args.file} is not valid {lang} (line {exc.lineno}: {exc.msg})", file=sys.stderr)
+        return 2
     langs = args.to.split(",") if args.to else None
     seed = args.seed
     from .engines import values as V

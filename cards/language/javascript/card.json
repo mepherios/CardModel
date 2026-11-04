@@ -35,8 +35,9 @@
       "cm_max_i": "function cm_max_i(a, b) { return b > a ? b : a; }",
       "cm_min_f": "function cm_min_f(a, b) { return b < a ? b : a; }",
       "cm_min_i": "function cm_min_i(a, b) { return b < a ? b : a; }",
-      "cm_powmod": "function cm_powmod(a, b, m) { let r = cm_floormod(1n, m); a = cm_floormod(a, m); while (b > 0n) { if ((b & 1n) === 1n) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1n; } return r; }",
-      "cm_trunc_int": "function cm_trunc_int(x) { return BigInt(Math.trunc(x)); }"
+      "cm_powmod": "function cm_powmod(a, b, m) { if (b < 0n) { a = cm_modinv(a, m); b = -b; } let r = cm_floormod(1n, m); a = cm_floormod(a, m); while (b > 0n) { if ((b & 1n) === 1n) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1n; } return r; }",
+      "cm_trunc_int": "function cm_trunc_int(x) { return BigInt(Math.trunc(x)); }",
+      "cm_modinv": "function cm_modinv(a, m) { const n = m < 0n ? -m : m; let r0 = cm_floormod(a, n), r1 = n, s0 = 1n, s1 = 0n; while (r1 !== 0n) { const q = r0 / r1; [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; } if (r0 !== 1n) throw new RangeError(\"base is not invertible\"); return cm_floormod(s0, n); }"
     },
     "if": "if ({cond}) {{",
     "indent": "    ",

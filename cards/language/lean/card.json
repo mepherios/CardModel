@@ -21,7 +21,8 @@
     },
     "harness_call": "(CM.{name} {args})",
     "helpers": {
-      "cm_powmod": "partial def cm_powmod (a0 : Int) (b0 : Int) (m : Int) : Int := Id.run do\n  let mut r : Int := Int.fmod 1 m\n  let mut a : Int := Int.fmod a0 m\n  let mut b : Int := b0\n  while b > 0 do\n    if Int.fmod b 2 == 1 then\n      r := Int.fmod (r * a) m\n    a := Int.fmod (a * a) m\n    b := Int.fdiv b 2\n  return r"
+      "cm_powmod": "partial def cm_powmod (a0 : Int) (b0 : Int) (m : Int) : Int := Id.run do\n  let mut r : Int := Int.fmod 1 m\n  let mut a : Int := Int.fmod (if b0 < 0 then cm_modinv a0 m else a0) m\n  let mut b : Int := if b0 < 0 then -b0 else b0\n  while b > 0 do\n    if Int.fmod b 2 == 1 then\n      r := Int.fmod (r * a) m\n    a := Int.fmod (a * a) m\n    b := Int.fdiv b 2\n  return r",
+      "cm_modinv": "partial def cm_modinv (a : Int) (m : Int) : Int := Id.run do\n  let n : Int := if m < 0 then -m else m\n  let mut r0 : Int := Int.fmod a n\n  let mut r1 : Int := n\n  let mut s0 : Int := 1\n  let mut s1 : Int := 0\n  while r1 != 0 do\n    let q := Int.fdiv r0 r1\n    (r0, r1) := (r1, r0 - q * r1)\n    (s0, s1) := (s1, s0 - q * s1)\n  return Int.fmod s0 n"
     },
     "if": "if {cond} then",
     "indent": "  ",
