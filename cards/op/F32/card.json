@@ -52,6 +52,7 @@
       "struct"
     ]
   },
+  "sort": "f32",
   "statement": "x rounded to the nearest binary32 (ties to even): float precision",
   "tier": 1
 }

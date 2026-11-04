@@ -56,6 +56,27 @@ class EGraph(unittest.TestCase):
                               ops=ops)
         self.assertEqual(got["best_tree"], parse("x"))
 
+    def test_fixed_width_and_binary32_subsorts(self):
+        # FOUNDATIONS.md D1: u8 ... i32 are subsorts of int, f32 of float; a subsort's laws fire only on its terms
+        ops = self.ctx.ops
+        x, y = ["var", "x"], ["var", "y"]
+        wrapped = ["WRAPU", ["ADD", ["WRAPU", x, ["int", 8]], y], ["int", 8]]
+        got = E.canonical(wrapped, self.rules, self.costs, {"x": "int", "y": "int"}, ops)
+        self.assertEqual(got["term"], ["WRAPU", ["ADD", x, y], ["int", 8]])
+        masked = ["BIT_AND", x, ["int", 255]]
+        self.assertEqual(E.canonical(masked, self.rules, self.costs, {"x": "u8"}, ops)["term"], x)   # a byte's mask
+        self.assertNotEqual(E.canonical(masked, self.rules, self.costs, {"x": "int"}, ops)["term"], x)
+        self.assertEqual(E.canonical(["WRAPU", x, ["int", 16]], self.rules, self.costs, {"x": "u8"}, ops)["term"], x)
+        self.assertNotEqual(E.canonical(["WRAPU", x, ["int", 8]], self.rules, self.costs, {"x": "u16"}, ops)["term"], x)
+        self.assertEqual(E.canonical(["F32", ["F32", y]], self.rules, self.costs, {"y": "float"}, ops)["term"],
+                         ["F32", y])
+        self.assertEqual(E.canonical(["F32", y], self.rules, self.costs, {"y": "f32"}, ops)["term"], y)
+        # the sort of a WRAPU term is read from its card: an int term proved equal to it is a u8
+        from cardmodel.engines import sorts as S
+        self.assertEqual(S.term_sort(["WRAPU", x, ["int", 8]], {"x": "int"}, ops), "u8")
+        self.assertEqual(S.term_sort(["WRAPS", x, ["int", 32]], {"x": "int"}, ops), "i32")
+        self.assertTrue(S.leq("u8", "i16") and not S.leq("i8", "u16") and S.leq("f32", "float"))
+
     def test_not_shown_is_not_a_disproof(self):
         # no rule cancels (a + b) - b, so this stays unproved within the budget, and the witness still agrees
         r = E.equal(parse("(a + b) * c - c * b"), parse("a * c"), self.rules, max_iter=4, max_nodes=800)
