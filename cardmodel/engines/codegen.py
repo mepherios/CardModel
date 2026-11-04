@@ -140,14 +140,16 @@ class Emitter:
         return name
 
     def platform_names(self) -> set[str]:
-        """Names the op cards' emit templates call (``tanh``, ``Math.floor``'s ``floor``, ``cm_powmod``...): a
-        user function or variable with one of these names would shadow or clash with the platform's own."""
+        """Names this language's op templates call (``tanh`` in C, ``cm_powmod``...) and its helpers: a user
+        function or variable with one of these names would shadow or clash with the platform's own."""
         if getattr(self, "_platform", None) is None:
             names: set[str] = set()
+            keys = (*self.lineage, self.family, "default")
             for spec in self.ops.values():
-                for tmpl in ((spec.card or {}).get("emit") or {}).values():
+                emit = (spec.card or {}).get("emit") or {}
+                for tmpl in (emit.get(k) for k in keys):   # this language's templates only
                     if isinstance(tmpl, str):
-                        names.update(re.findall(r"([A-Za-z_]\w*)\s*\(", tmpl))
+                        names.update(re.findall(r"(?<![.\w:])([A-Za-z_]\w*)\s*\(", tmpl))   # free functions, not methods
             names.update(self.cg.get("helpers") or {})
             self._platform = names
         return self._platform
