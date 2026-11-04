@@ -118,20 +118,7 @@ class Numbering:
 
     def _codes(self, n: int) -> list[int] | None:
         """The exponents of 2, 3, 5, ... in order, when n is a product of the first m primes each to at least 1."""
-        if n < 2:
-            return None
-        out, i = [], 1
-        while n > 1:
-            p = G.nth_prime(i)
-            e = 0
-            while n % p == 0:
-                n //= p
-                e += 1
-            if e == 0:
-                return None                                     # a skipped prime, or a factor no position has
-            out.append(e)
-            i += 1
-        return out
+        return G.exponents(n, gaps=False) if n >= 2 else None    # None on a skipped prime: no position has it
 
     def decode(self, n: int):
         """The object n codes (variables named x0, x1, ... by first appearance), or None."""

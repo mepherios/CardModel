@@ -726,14 +726,35 @@ def decimal_digits(n: int) -> int:
     return k
 
 
-def exponents(n: int) -> list[int]:
-    """The exponents of 2, 3, 5, ... in n, up to the last prime that divides it: the tokens of a positional code."""
+def valuation(n: int, p: int) -> tuple[int, int]:
+    """The p-adic valuation e of n, and n / p^e, by repeated squaring: O(log e) divisions of n instead of e. A
+    token code is an exponent of a prime, and a late atom's code is in the thousands (3k + 1 for ledger index k),
+    so dividing e times made decoding 98 % of the godel verify section."""
+    if n % p:
+        return 0, n
+    powers = [p]                                     # p, p^2, p^4, ... while the next square still divides n
+    while True:
+        sq = powers[-1] * powers[-1]
+        if n % sq:
+            break
+        powers.append(sq)
+    e = 0
+    for i in range(len(powers) - 1, -1, -1):
+        if n % powers[i] == 0:
+            n //= powers[i]
+            e += 1 << i
+    return e, n
+
+
+def exponents(n: int, gaps: bool = True) -> list[int] | None:
+    """The exponents of 2, 3, 5, ... in n, up to the last prime that divides it: the tokens of a positional code,
+    each by its valuation. With ``gaps`` False, None as soon as a prime is skipped while n > 1, which no positional
+    code does (every token code is at least 1, Rule-3), so a number that codes nothing is refused early."""
     toks, i = [], 1
     while n > 1:
-        p, e = nth_prime(i), 0
-        while n % p == 0:
-            n //= p
-            e += 1
+        e, n = valuation(n, nth_prime(i))
+        if e == 0 and not gaps:
+            return None
         toks.append(e)
         i += 1
     return toks
@@ -838,4 +859,4 @@ __all__ = ["ContentIndex", "EVENT_KINDS", "LEAVES", "LOGIC", "SPECIAL", "STRUCTU
            "decode", "deprecate", "divides", "events", "expand", "exponents", "factor", "from_tokens", "from_vector",
            "gcd", "index_of", "jaccard", "lcm", "ledger", "match", "merge", "module_content", "norm", "nth_prime",
            "preserves_gcd", "primes", "problems", "resolve", "scale", "stored", "structural", "sub", "substitute",
-           "support", "sync", "term_content", "to_vector", "tokens", "unzig", "variables", "vector_problems", "zig"]
+           "support", "sync", "term_content", "to_vector", "tokens", "unzig", "valuation", "variables", "vector_problems", "zig"]
