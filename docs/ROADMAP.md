@@ -3,7 +3,9 @@
 Written 2026-11-04, from the code on `main` (8bfe8af) and measurements taken in the Linux cloud container that
 day. This is the reference the parallel workstreams align with. The dated record of what shipped stays in the
 root [ROADMAP.md](../ROADMAP.md); goals live as goal cards and in [GOALS.md](../GOALS.md); the mathematical target
-is [MATH_CORE.md](MATH_CORE.md). When this plan and a goal card disagree, the goal card is the measurement and this
+is [MATH_CORE.md](MATH_CORE.md); how big it has to get (up to a whole distribution such as Ubuntu with its drivers),
+with multi-core and distributed work, the math spectrum and the interaction model, is [SCALING.md](SCALING.md), a
+living plan every workstream checks its design against. When this plan and a goal card disagree, the goal card is the measurement and this
 plan is updated.
 
 ## 0. The goal, in the user's words
@@ -388,7 +390,8 @@ agrees with it on part of the domain only. The analyser states that part as math
   and a silent 0 on ARM64) is witnessed per device, not predicted.
 * J5. Interaction semantics: effects (globals, arrays, I/O at the boundary cards) as a trace model, so two
   programs that agree on values but differ in the order or number of effects are told apart; event and timing
-  models for the arcade's machines.
+  models for the arcade's machines. ([SCALING.md](SCALING.md) §4.7's interaction model is what the model itself can
+  reach; J5 is what a program does at its boundary.)
 * J6. The analyser on itself and on the self-run: every function the cycle adopts carries its analysis, and a
   latent flaw blocks adoption until the domain is declared or the code is changed (Phase A5's PRs carry it).
 

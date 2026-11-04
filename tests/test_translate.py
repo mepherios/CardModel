@@ -104,5 +104,90 @@ class Translate(unittest.TestCase):
             self.assertGreaterEqual(len(rep["agreeing_languages"]), 3, (name, rep["languages"]))
 
 
+# Constructs found in real programs (firstlaw, rea-cards' pheros configs): module constants, numeric defaults,
+# keyword calls, math.*, a memoizing decorator, pow with a negative exponent, capitalized parameter names.
+REAL = '''
+import math
+from functools import lru_cache
+
+P = 2**31 - 1
+SCALE = 2.5
+
+def addmod(a: int, b: int, m: int = P) -> int:
+    return (a + b) % m
+
+def hyp(x: float, y: float) -> float:
+    return math.sqrt(x * x + y * y) + math.pi
+
+def floors(x: float) -> int:
+    return math.floor(x) + math.ceil(x * SCALE)
+
+@lru_cache(maxsize=None)
+def fibm(n: int) -> int:
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, addmod(a, b)
+    return a
+
+def damp(x: float, k: float = 0.5) -> float:
+    return math.exp(-k * x) * math.cos(x)
+
+def caller(x: float) -> float:
+    return damp(x) + damp(x, k=2.0) + damp(k=1.0, x=x)
+
+def inv_pow(a: int, b: int, m: int) -> int:
+    return pow(a, b, m)
+
+def attack_rate(R_final: float, N: float) -> float:
+    return R_final / N if N > 0 else 0.0
+
+def lifetime(M: float) -> float:
+    return 1e10 * (1.0 / M) ** 2.5
+
+BIG = 2**255 - 19
+
+def red(a: int) -> int:
+    return a % BIG
+'''
+
+
+class RealPrograms(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+        cls.lifted = lift_source(REAL, cls.ctx.ops)
+
+    def test_everything_lifts(self):
+        bad = {lf.name: lf.reasons for lf in self.lifted if not lf.ok}
+        self.assertEqual(bad, {})
+
+    def test_defaults_and_keywords_bind_by_name(self):
+        ns = {}
+        exec(REAL, ns)
+        mod = module_for("caller", self.lifted)
+        self.assertAlmostEqual(Interpreter(mod, self.ctx.ops).call("caller", [1.5]), ns["caller"](1.5))
+
+    def test_reassigned_or_global_names_are_not_constants(self):
+        src = "K = 1\nK = 2\nJ = 3\ndef f(x: int) -> int:\n    return x + K\n" \
+              "def g(x: int) -> int:\n    return x + J\ndef h() -> int:\n    global J\n    J = 4\n    return J\n"
+        by = {lf.name: lf for lf in lift_source(src, self.ctx.ops)}
+        self.assertFalse(by["f"].ok)
+        self.assertFalse(by["g"].ok)
+
+    def test_too_wide_constant_is_a_gap_not_a_compile_error(self):
+        with self.assertRaises(EmitGap):
+            emit_module(self.ctx.store, self.ctx.ops, "c", module_for("red", self.lifted))
+
+    def test_agree_across_languages(self):
+        ctx = self.ctx
+        langs = None if SLOW else [l for l in ("python", "javascript", "c", "ruby") if ctx.available(l)[0]]
+        for name in ("addmod", "hyp", "floors", "fibm", "caller", "inv_pow", "attack_rate", "lifetime"):
+            card = translate.function_card(ctx, name, self.lifted, "real.py", seed=SEED)
+            self.assertEqual(card["verification"]["lift_fidelity"]["mismatched"], 0, name)
+            rep = translate.verify_function(ctx, card, langs=langs, seed=SEED)
+            bad = {l: r for l, r in rep["languages"].items() if r["status"] in ("fail", "error")}
+            self.assertEqual(bad, {}, f"{name} {seed_note(self)}")
+
+
 if __name__ == "__main__":
     unittest.main()

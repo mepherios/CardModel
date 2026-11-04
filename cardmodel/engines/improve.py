@@ -14,8 +14,10 @@ Methodology (docs/METHODOLOGY.md), per top-level function of a Python module:
                    function matches nothing. Every non-suboptimal form of a matched card is a
                    candidate, guarded by the card's precondition; the original code still runs
                    for every input outside it.
-       rewrite     search.optimize over every int-typed expression with the rule cards;
-                   the function is re-emitted from IR.
+       rewrite     search.optimize over every int-typed expression with the rule cards, and
+                   equality saturation (egraph) over the unconditional rules and discovered laws;
+                   one candidate from the rule search alone, one from the cheaper of the two per
+                   expression (both verified and measured); the function is re-emitted from IR.
   4. verify    each candidate against the original on seeded inputs (plus edges); any
                mismatch rejects it.
   5. measure   the original and every verified candidate, in-process, on the same inputs
@@ -368,8 +370,35 @@ def _int_typed(e, types: dict[str, str]) -> bool:
     return all(_int_typed(a, types) for a in e[1:])
 
 
-def rewrite_candidate(ctx: Ctx, fn_ir: dict, rules, costs) -> tuple[dict | None, list]:
-    """The function with every int-typed expression replaced by its cheapest equivalent under the rule cards."""
+def cheapest_rewrite(e, rules, costs, egraph_rules=None) -> tuple | None:
+    """The cheapest equivalent of ``e`` found by the bounded rewrite search and, when ``egraph_rules`` are given,
+    by equality saturation (which reaches forms the depth-3 search does not, such as Horner-like regroupings and
+    chains of identities). Returns (input text, best text, best tree, steps) or None when nothing is cheaper.
+    Both searches use the same op costs; ties go to the smaller term, then to the search result."""
+    from .exprs import size, to_text
+    res = optimize(e, rules, costs, max_depth=3, max_nodes=300)
+    start = expr_cost(e, costs)
+    best = (res["best_cost"], size(res["best_tree"]), res["best_tree"], [s for s, _ in res["steps"][1:]])
+    if egraph_rules:
+        from . import egraph as E
+        try:
+            got = E.canonical(e, egraph_rules, costs, max_iter=6, max_nodes=800)
+        except (ValueError, KeyError, TypeError):
+            got = None
+        if got and got["term"] is not None:
+            cand = (expr_cost(got["term"], costs), size(got["term"]), got["term"],
+                    ["egraph:" + o for o in got["fired"]])
+            if cand[:2] < best[:2]:
+                best = cand
+    if best[0] >= start:
+        return None
+    return res["input"], to_text(best[2]), best[2], best[3]
+
+
+def rewrite_candidate(ctx: Ctx, fn_ir: dict, rules, costs, egraph_rules=None) -> tuple[dict | None, list]:
+    """The function with every int-typed expression replaced by its cheapest equivalent under the rule cards
+    (and the e-graph's equalities when ``egraph_rules`` are given). Every candidate is still verified against
+    the original before it can be chosen."""
     import copy
     fn = copy.deepcopy(fn_ir)
     types = {p["name"]: p["type"] for p in fn["params"]}
@@ -380,10 +409,10 @@ def rewrite_candidate(ctx: Ctx, fn_ir: dict, rules, costs) -> tuple[dict | None,
         if not isinstance(e, list) or not e or e[0] in ("var", "int", "float", "bool"):
             return e
         if _int_typed(e, types) and 3 <= len(repr(e)) and e[0] not in ("CALL",):
-            res = optimize(e, rules, costs, max_depth=3, max_nodes=300)
-            if res["best_cost"] < expr_cost(e, costs):
-                changes.append((res["input"], res["best"], [s for s, _ in res["steps"][1:]]))
-                return res["best_tree"]
+            got = cheapest_rewrite(e, rules, costs, egraph_rules)
+            if got is not None:
+                changes.append((got[0], got[1], got[3]))
+                return got[2]
         start = 2 if e[0] == "CALL" else 1
         return [e[0], *e[1:start], *[visit(a) for a in e[start:]]][: len(e)] if start == 2 else \
             [e[0], *[visit(a) for a in e[1:]]]
@@ -405,6 +434,8 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
     by_name = {lf.name: lf for lf in lifted}
     rules = load_rules(ctx.store)
     costs = op_costs(ctx.store)
+    from .egraph import rules_from_cards
+    egraph_rules = rules_from_cards(ctx.store)
     original_ns = _load(source)
     report: dict = {"label": label, "seed": seed, "functions": {}, "effect_shell": []}
     replacements: dict[str, str] = {}
@@ -451,16 +482,25 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
                 src = (f"def {node.name}({params}) -> {fn_ir['returns']}:\n"
                        f"    return {fast_call}\n\n\n{c['fast_src']}\n")
             cands.append({**c, "src": src})
-        rw_ir, changes = rewrite_candidate(ctx, fn_ir, rules, costs)
-        if rw_ir is not None:
+        # two rewrite candidates: the rule search alone, and the cheaper of it and the e-graph per expression;
+        # cost units are estimates, so both are verified and measured and the faster one wins
+        seen_src = set()
+        for form, eg in (("rules", None), ("egraph", egraph_rules)):
+            rw_ir, changes = rewrite_candidate(ctx, fn_ir, rules, costs, eg)
+            if rw_ir is None:
+                continue
             try:
                 callees = [f for f in module["functions"] if f["name"] != node.name]
                 rw_src = emit_module(ctx.store, ctx.ops, "python",
                                      {"entry": node.name, "functions": [rw_ir, *callees]}, only=[node.name])
-                cands.append({"kind": "rewrite", "card": "rewrite_rule/*", "form": "rules", "src": rw_src,
-                              "changes": changes, "needs_math": "math." in rw_src})
             except EmitGap as exc:
                 entry["rewrite_gap"] = str(exc)
+                continue
+            if rw_src in seen_src:
+                continue
+            seen_src.add(rw_src)
+            cands.append({"kind": "rewrite", "card": "rewrite_rule/*", "form": form, "src": rw_src,
+                          "changes": changes, "needs_math": "math." in rw_src})
         verified = []
         for c in cands:
             ns = _load(source)

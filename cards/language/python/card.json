@@ -37,6 +37,12 @@
         "int": "(1 if ({e}) != 0 else 0)"
       }
     },
+    "helpers": {
+      "cm_acos": "def cm_acos(a):\n    return math.acos(a) if -1.0 <= a <= 1.0 else math.nan",
+      "cm_asin": "def cm_asin(a):\n    return math.asin(a) if -1.0 <= a <= 1.0 else math.nan",
+      "cm_fmod": "def cm_fmod(a, b):\n    return math.fmod(a, b) if b != 0.0 else math.nan",
+      "cm_fsqrt": "def cm_fsqrt(a):\n    return math.sqrt(a) if a >= 0.0 else math.nan"
+    },
     "hoist": false,
     "if": "if {cond}:",
     "import": "import @name@\n",
