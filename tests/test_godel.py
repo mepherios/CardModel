@@ -528,6 +528,42 @@ class Commands(unittest.TestCase):
         finally:
             proj.cleanup()
 
+    def test_a_source_function_is_a_target(self):
+        """FILE.py:FUNC lifts and canonicalizes like a definition card, and agrees with --expr on that term."""
+        import json
+        from helpers import TempProject
+        from cardmodel.engines.exprs import to_text
+        proj = TempProject()
+        d = Path(tempfile.mkdtemp())
+        try:
+            src = d / "poly.py"
+            src.write_text("def f(x, y):\n    return x * x * y + 3 * x * y + 1\n\n"
+                           "def g(n):\n    s = 0\n    while n > 0:\n        s += n\n        n -= 1\n    return s\n",
+                           encoding="utf-8")
+            from cardmodel import cli_ext as X
+            ctx = model_ctx()
+            name, term, why = X._source_term(ctx, f"{src}:f")
+            self.assertTrue(why.startswith("canonical term"), why)
+            expr = to_text(term)
+            a = proj.cli("--json", "godel", "similar", f"{src}:f", "--limit", "3")
+            b = proj.cli("--json", "godel", "similar", "--expr", expr, "--limit", "3")
+            self.assertEqual(a.returncode, 0, a.stderr)
+            self.assertEqual(b.returncode, 0, b.stderr)
+            self.assertEqual(json.loads(a.stdout)[f"{src}:f"], json.loads(b.stdout)[expr])
+            a = proj.cli("--json", "godel", "cofactor", f"{src}:f", "--expr", "x*y+1")
+            self.assertEqual(a.returncode, 0, a.stderr)
+            r = json.loads(a.stdout)
+            self.assertEqual(r["whole"], dict(G.term_content(term, ctx.ops)))
+            self.assertIsNotNone(r["cofactor"])
+            r = proj.cli("godel", "similar", f"{src}:g")
+            self.assertEqual(r.returncode, 1, r.stderr)
+            self.assertIn("no closed term", r.stderr)
+            r = proj.cli("godel", "similar", f"{src}:nope")
+            self.assertIn("no function 'nope'", r.stderr)
+        finally:
+            proj.cleanup()
+            shutil.rmtree(d, ignore_errors=True)
+
 
 def _leaves(t):
     stack = [t]

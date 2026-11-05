@@ -546,12 +546,45 @@ def _library(ctx) -> tuple[dict, dict]:
     return lib, read
 
 
+def _source_term(ctx, spec: str) -> tuple[str, list, str]:
+    """(name, term, read_from) for FILE.py:FUNC: lift it with the frontend translate uses, then canonicalize its
+    single return the way definition cards' canonical terms are made (engines/sources.py), so content is read
+    from canon_E(t) (F4); the lifted term only when distillation does not reach a canonical one."""
+    from .engines import egraph as E
+    from .engines import frontends, search
+    from .engines.sources import _canonical, _single_return
+    path, _, fn = spec.rpartition(":")
+    try:
+        src = Path(path).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SystemExit(f"error: {spec}: cannot read {path} ({exc.strerror or exc})")
+    try:
+        lifted = frontends.lift(ctx, src, "python")
+    except SyntaxError as exc:
+        raise SystemExit(f"error: {path} is not valid python (line {exc.lineno}: {exc.msg})")
+    lf = next((x for x in lifted if x.name == fn), None)
+    if lf is None:
+        raise SystemExit(f"error: no function {fn!r} in {path}")
+    if not lf.ok:
+        raise SystemExit(f"error: {spec} does not lift: {'; '.join(lf.reasons)}")
+    term = _single_return(lf.ir)
+    if term is None:
+        raise SystemExit(f"error: {spec}: no closed term (a loop, several statements, or an instruction)")
+    canon = _canonical(term, E.rules_from_cards(ctx.store), search.op_costs(ctx.store), lf.ir, ctx.ops)
+    if canon.get("status") == "canonical" and canon.get("term") is not None:
+        return spec, canon["term"], "canonical term (method/saturate)"
+    return spec, term, f"lifted term ({canon.get('why', 'not canonicalized')})"
+
+
 def _godel_targets(ctx, args) -> list[tuple[str, list, str]]:
     """(name, term, read_from) for each card named, then for --expr (so cofactor's part can be an expression)."""
     from .engines.exprs import parse
     out = []
     for q in args.cards:
         card = ctx.store.get(q)
+        if card is None and q.rpartition(":")[0].endswith(".py"):
+            out.append(_source_term(ctx, q))
+            continue
         if card is None:
             raise SystemExit(f"error: no card {q!r}")
         t, why = _closed_term(card)
