@@ -22,6 +22,13 @@
         "list[float]": "cm_print_list({e}, 'f');",
         "list[int]": "cm_print_list({e}, 'i');"
       },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
       "truthy": {
         "bool": "(({e}) ? 1n : 0n)",
         "float": "((({e}) > 0) ? 1n : 0n)",
@@ -34,6 +41,7 @@
       "cm_floormod": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }",
       "cm_gcd": "function cm_gcd(a, b) { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b !== 0n) { const t = a % b; a = b; b = t; } return a; }",
       "cm_get": "function cm_get(xs, i) { const k = Number(i); if (!(k >= 0 && k < xs.length)) throw new RangeError('index out of range'); return xs[k]; }",
+      "cm_in": "const cm_in = { lines: (await import('node:fs')).readFileSync(0, 'utf8').split('\\n'), pos: 0 };",
       "cm_list_new": "function cm_list_new(n, v) { if (n < 0n) throw new RangeError('negative length'); return new Array(Number(n)).fill(v); }",
       "cm_max_f": "function cm_max_f(a, b) { return b > a ? b : a; }",
       "cm_max_i": "function cm_max_i(a, b) { return b > a ? b : a; }",
@@ -42,6 +50,11 @@
       "cm_modinv": "function cm_modinv(a, m) { const n = m < 0n ? -m : m; let r0 = cm_floormod(a, n), r1 = n, s0 = 1n, s1 = 0n; while (r1 !== 0n) { const q = r0 / r1; [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; } if (r0 !== 1n) throw new RangeError(\"base is not invertible\"); return cm_floormod(s0, n); }",
       "cm_powmod": "function cm_powmod(a, b, m) { if (b < 0n) { a = cm_modinv(a, m); b = -b; } let r = cm_floormod(1n, m); a = cm_floormod(a, m); while (b > 0n) { if ((b & 1n) === 1n) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1n; } return r; }",
       "cm_print_list": "function cm_print_list(xs, tag) { console.log('l:' + xs.length); for (const v of xs) console.log(tag + ':' + (tag === 'f' ? String(v) : v.toString())); }",
+      "cm_read_bool": "function cm_read_bool() { return cm_read_int() !== 0n; }",
+      "cm_read_float": "function cm_read_float() { return Number(cm_in.lines[cm_in.pos++].trim()); }",
+      "cm_read_int": "function cm_read_int() { return BigInt(cm_in.lines[cm_in.pos++].trim()); }",
+      "cm_read_lf": "function cm_read_lf() { const n = Number(cm_read_int()); const r = []; for (let i = 0; i < n; i++) r.push(cm_read_float()); return r; }",
+      "cm_read_li": "function cm_read_li() { const n = Number(cm_read_int()); const r = []; for (let i = 0; i < n; i++) r.push(cm_read_int()); return r; }",
       "cm_set": "function cm_set(xs, i, v) { const k = Number(i); if (!(k >= 0 && k < xs.length)) throw new RangeError('index out of range'); xs[k] = v; }",
       "cm_trunc_int": "function cm_trunc_int(x) { return BigInt(Math.trunc(x)); }"
     },
@@ -104,7 +117,9 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "864adeb31727d86b7d831883d36a62ffaf67fdd5629e4dda3d6b2d892526bbe3",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "javascript",
   "probe": {

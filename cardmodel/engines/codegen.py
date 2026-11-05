@@ -474,13 +474,7 @@ class Emitter:
         mode "bench": loop ``reps`` times over the calls, print one checksum;
                       arguments pass through the language's ``opaque``
                       template so the compiler cannot constant-fold the calls."""
-        self.requires = set()
-        self.state(module)
-        fns = {f["name"]: f for f in module["functions"]}
-        self.fn_returns = {n: f["returns"] for n, f in fns.items()}
-        protos = self.state_source(module) + self.prototypes(module)
-        funcs = [self.function(f) for f in reversed(module["functions"])]
-        entry_name = module.get("entry", module["functions"][0]["name"])
+        fns, entry_name, head = self._program_head(module)
         sep = self.cg.get("call_sep", ", ")
         call_tpl = self.cg.get("harness_call", self.cg.get("call", "{name}({args})"))
         opaque = (self.cg.get("opaque") or {}) if mode == "bench" else {}
@@ -512,9 +506,96 @@ class Emitter:
             raise EmitGap(f"{self.lang_name}: no test harness")
         main = harness["main"].format(calls="".join(lines)) if mode == "test" else \
             harness["bench_main"].format(calls="".join(lines), reps=reps)
-        code_body = protos + "\n".join(funcs) + "\n" + main
+        return self._program_tail(head, main)
+
+    def _program_head(self, module: dict):
+        """Reset per-program state; return (functions by name, entry name, state + prototypes + functions)."""
+        self.requires = set()
+        self.state(module)
+        fns = {f["name"]: f for f in module["functions"]}
+        self.fn_returns = {n: f["returns"] for n, f in fns.items()}
+        protos = self.state_source(module) + self.prototypes(module)
+        funcs = [self.function(f) for f in reversed(module["functions"])]
+        return fns, module.get("entry", module["functions"][0]["name"]), protos + "\n".join(funcs) + "\n"
+
+    def _program_tail(self, head: str, main: str) -> str:
+        code_body = head + main
         helpers = self.helpers_for(code_body)
         return self._prelude("prelude") + helpers + code_body
+
+    def program_stdin(self, module: dict, calls: list, entries: list[str] | None = None):
+        """A test program that reads its inputs from stdin: ``(source, input_text, order)``, or None when the
+        language card has no ``harness.read`` template for a parameter type (the caller bakes the inputs instead).
+
+        The source holds no argument value: one block per function (``entries`` first, in order, then any other
+        called function; an uncalled entry the card cannot read or print is left out) reads a count and then that
+        many argument rows, so every seed of the same functions is the same source and one cached build serves
+        them all. Input: one value per line (int: decimal; float:
+        Python's ``repr``, which round-trips exactly; bool: 1/0; list: its length, then its elements). Output
+        lines come grouped by function; ``order[i]`` is the index in ``calls`` of the i-th printed value.
+        Argument checks match ``program`` (an integer wider than ``int_bits`` or a non-finite float is an
+        ``EmitGap``)."""
+        harness = self.cg.get("harness") or {}
+        reads = harness.get("read") or {}
+        if not reads or "main" not in harness:
+            return None
+        names = [f["name"] for f in module["functions"]]
+        entry_name = module.get("entry", names[0])
+        groups: dict[str, list[int]] = {}
+        for i, item in enumerate(calls):
+            groups.setdefault(item[0] if isinstance(item, tuple) else entry_name, []).append(i)
+        fdefs = {f["name"]: f for f in module["functions"]}
+        prints = harness.get("print") or {}
+
+        def readable(n: str) -> bool:
+            return all(p["type"] in reads for p in fdefs[n]["params"]) and fdefs[n]["returns"] in prints
+        blocks = [n for n in (entries or []) if n in names and (n in groups or readable(n))]
+        blocks += [n for n in groups if n not in blocks]
+        for n in groups:
+            if fdefs[n]["returns"] not in prints:
+                raise EmitGap(f"{self.lang_name}: no print template for {fdefs[n]['returns']}")
+            if not readable(n):
+                return None
+        data: list[str] = []
+        for n in blocks:
+            idxs = groups.get(n, [])
+            data.append(str(len(idxs)))
+            for i in idxs:
+                args = calls[i][1] if isinstance(calls[i], tuple) else calls[i]
+                for p, a in zip(fdefs[n]["params"], args):
+                    self.lit(p["type"], a)              # the same checks (and gaps) as a baked literal
+                    data += _stdin_lines(p["type"], a)
+        fns, _, head = self._program_head(module)
+        sep = self.cg.get("call_sep", ", ")
+        call_tpl = self.cg.get("harness_call", self.cg.get("call", "{name}({args})"))
+        ind = self.cg.get("indent", "    ")
+        lines: list[str] = []
+
+        def declare(name: str, t: str, value: str, depth: int) -> None:
+            lines.append(ind * depth + self.tmpl("declare", name=self.var(name), type=self.T(t), value=value) + "\n")
+
+        for j, n in enumerate(blocks):
+            fn = fns[n]
+            k, cnt = f"cm_k{j}", f"cm_n{j}"
+            types = {k: "int", cnt: "int"}
+            declare(cnt, "int", reads["int"], 1)
+            declare(k, "int", self.lit("int", 0), 1)
+            cond, _ = self.expr(["CMP_LT", ["var", k], ["var", cnt]], types)
+            lines.append(ind + self.tmpl("while", cond=cond) + "\n")
+            args = []
+            for i, p in enumerate(fn["params"]):
+                a = f"cm_a{j}_{i}"
+                declare(a, p["type"], reads[p["type"]], 2)
+                args.append(self.arg(self.var(a), p["type"]))
+            text = call_tpl.format(name=self.ident(n), args=sep.join(args))
+            lines.append(ind * 2 + prints[fn["returns"]].format(e=text) + "\n")
+            inc, _ = self.expr(["ADD", ["var", k], ["int", 1]], types)
+            lines.append(ind * 2 + self.tmpl("assign", name=self.var(k), value=inc) + "\n")
+            if self.cg.get("end_while"):
+                lines.append(ind + self.tmpl("end_while") + "\n")
+        source = self._program_tail(head, harness["main"].format(calls="".join(lines)))
+        order = [i for n in blocks for i in groups.get(n, [])]
+        return source, "\n".join(data) + "\n", order
 
     def _prelude(self, key: str) -> str:
         """Prelude text with ``@imports@`` replaced by the import lines the emitted ops require."""
@@ -619,6 +700,8 @@ class Emitter:
         for n in helpers:
             if uses(code, n):
                 visit(n)
+        for n in ordered:     # a helper's own imports (Go: the stdin reader needs bufio and os)
+            self.requires.update((self.cg.get("helper_requires") or {}).get(n) or ())
         types = self.cg.get("types") or {}
         out = []
         for n in ordered:
@@ -627,6 +710,18 @@ class Emitter:
                 text = text.replace(f"@{t}@", types.get(t, t))
             out.append(text if text.endswith("\n") else text + "\n")
         return "".join(out)
+
+
+def _stdin_lines(t: str, v) -> list[str]:
+    """One argument as the input lines a ``harness.read`` template consumes."""
+    et = elem_type(t)
+    if et is not None:
+        return [str(len(v))] + [x for e in v for x in _stdin_lines(et, e)]
+    if t == "bool":
+        return ["1" if v else "0"]
+    if t == "float":
+        return [repr(float(v))]
+    return [str(int(v))]
 
 
 def _stmts(body):

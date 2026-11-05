@@ -11,7 +11,8 @@
     "claude/project-thread-*",
     "self-optimize/*",
     "claude/docs-bundle-0505",
-    "claude/ci-*"
+    "claude/ci-*",
+    "claude/stdin-harness"
   ],
   "category": "project",
   "docs": [
@@ -29,7 +30,8 @@
     "the merges of 2026-10-22 afternoon (the user's yes in the games session): the DS player 0fcb468 (9269eee), the last bank controllers ea14439 (593fe5c), the lifted STOP fix 73e6220 (16ea9fc), the Vector Duel card 85909ec (c1bf07f)",
     "2026-11-03: the installed Cardmodel Arcade starts its own service again (the launcher ran the shell script bin/cardmodel with Python; it now runs python -m cardmodel and logs to service.log)",
     "in the cloud: GitHub Actions CI with every codegen toolchain (verify, translate, unit suite) and a weekly self cycle that proposes adopted cards as a pull request; verify passes on Linux (docs/AUTONOMY.md section 6)",
-    "CI minutes budgeted: a pull request runs once, the full job waits for ready-for-review, pushes run only on main, the self cycle runs weekly (.github/workflows)"
+    "CI minutes budgeted: a pull request runs once, the full job waits for ready-for-review, pushes run only on main, the self cycle runs weekly (.github/workflows)",
+    "2026-11-05 (branch claude/stdin-harness): stdin harnesses (HANDOVER section 8 item 1): every codegen language card reads test inputs from stdin, so one cached build serves every seed; Java compiles once with javac"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [],
@@ -40,8 +42,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "6e254da8c82681d0b1b30d30c9b456dbbc0fa75194deb712de89dc490aab8fd7",
-    "version": "2.0.19",
+    "previous_content_hash": "51f975cf28365a8beb928ee1e9f63b756a7b3977f8f3f7cc1594226cfcb21889",
+    "version": "2.0.20",
     "version_bump_reason": "patch"
   },
   "metrics": [

@@ -208,10 +208,13 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **More algorithm cards** (each one raises arena recall): sorting/searching once lists exist, matrix kernels,
   geometry (lattice counts), DP recurrences (linear recurrences → matrix power), modular inverses.
 
-* 🟢 **stdin-driven test harness per language.** Today inputs are baked into the program, so every new seed costs one
-  compile per language (the full matrix takes 30–250 s, depending on machine load). Read inputs from stdin instead;
-  the build cache then hits across seeds. Each language card needs one more template: `read_int` / `read_float` /
-  `read_bool`.
+* 🔵 (2026-11-05) **stdin-driven test harness per language.** Every codegen language card has `harness.read`
+  templates (int, float, bool, and lists where the card has lists; helpers `cm_read_*`), and the conformance
+  matrix, function cards, hint forms and `analyse` runners read their arguments from stdin (`runners.run_calls`,
+  `Emitter.program_stdin`), so one cached build serves every seed. Floats cross as Python's `repr` and are parsed
+  exactly (bit-identical round trip). Java now compiles once with `javac` instead of the source launcher. On a
+  loaded 4-core box `verify --only conformance,functions` went from about 97 s per seed to 84 s on a cold cache
+  and 17 s for every later seed. `CARDMODEL_STDIN=0` bakes the inputs again (to compare); bench mode still bakes.
 * 🟢 **Second frontend: C (or JavaScript) → IR**, reusing the conformance matrix as its witness. Lift-and-run makes
   translation two-way (C → Python and C → Rust, …). The Pheros `translation_gap` cards list which constructs matter
   first.

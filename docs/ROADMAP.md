@@ -185,8 +185,8 @@ source language and the IR's emission must agree on seeded inputs.
 
 * The matrix is per op × language and per function × language, with Python as the only source. It must become
   per **pair**, plus a round-trip check by semantic hash.
-* Every new seed costs a compile per language (inputs are baked in). The stdin harness (root ROADMAP "Now") makes
-  the build cache hit across seeds and is a precondition for an N × N matrix in CI time.
+* Inputs are read from stdin (the stdin harness, D1, done 2026-11-05), so the build cache hits across seeds: a new
+  seed costs no compile. Benchmarks (`optimize`) still bake their inputs so the compiler cannot see through them.
 * Emission is witnessed by running, never proved (MATH_CORE §3). IR-level transformations should carry Lean
   proofs; emission stays witnessed (MATH_CORE §8 says why).
 
@@ -250,7 +250,9 @@ passes. Phases A and B start now; C and D can overlap B once the IR types land.
 
 ### Phase D: every pair verified
 
-* D1. The stdin harness (one template per language: `read_int`, `read_float`, `read_bool`, then `read_str`).
+* D1. The stdin harness (one template per language: `read_int`, `read_float`, `read_bool`, then `read_str`). Done
+  (2026-11-05) for int, float, bool and lists in every codegen language card (`harness.read`); `read_str` waits for
+  strings in the IR.
 * D2. A pair matrix: every frontend × every target on a shared corpus written once in the card language and
   hand-ported to each source language, results as cards.
 * D3. Round-trip by semantic hash: lift(emit_B(f)) canonicalises to the same term as f.

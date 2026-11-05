@@ -33,7 +33,7 @@ from .codegen import EmitGap, Emitter, emit_module
 from .context import Ctx
 from .frontend_python import Lifted, lift_source, module_for
 from .ir import Interpreter, StepLimit, elem_type
-from .runners import run_program
+from .runners import run_calls
 
 COUNT_LIKE = {"n", "k", "m", "count", "size", "length", "steps", "depth", "times", "exp", "e", "i", "j",
               "num", "limit", "rounds", "iterations", "power", "places", "digits", "width", "height",
@@ -257,10 +257,10 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
         if not usable:
             return lang, {"status": "no_inputs", "out_of_width": skipped}
         try:
-            src = Emitter(ctx.store, lang, ctx.ops).program(module, [r["args"] for r in usable])
+            run = run_calls(Emitter(ctx.store, lang, ctx.ops), lang_card, module, [r["args"] for r in usable],
+                            ctx.state_root)
         except EmitGap as exc:
             return lang, {"status": "gap", "reason": str(exc)}
-        run = run_program(lang_card, src, ctx.state_root)
         if run.status != "ok" or len(run.values) != len(usable):
             return lang, {"status": "error", "run": run.status,
                           "detail": (run.detail or run.stderr or f"{len(run.values)}/{len(usable)} values")[-600:]}

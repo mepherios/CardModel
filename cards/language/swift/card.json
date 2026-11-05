@@ -21,6 +21,13 @@
         "list[float]": "cm_print_list_f({e})",
         "list[int]": "cm_print_list_i({e})"
       },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
         "float": "((({e}) > 0.0) ? 1 : 0)",
@@ -43,7 +50,13 @@
       "cm_opaque_i": "@inline(never) func cm_opaque_i(_ x: Int) -> Int { return x }",
       "cm_powmod": "func cm_powmod(_ a0: Int, _ b0: Int, _ m: Int) -> Int { var r = cm_floormod(1, m); var a = cm_floormod(b0 < 0 ? cm_modinv(a0, m) : a0, m); var b = b0 < 0 ? -b0 : b0; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m) }; a = cm_floormod(a * a, m); b >>= 1 }; return r }",
       "cm_print_list_f": "func cm_print_list_f(_ xs: [Double]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"f:\\(v)\") } }",
-      "cm_print_list_i": "func cm_print_list_i(_ xs: [Int]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"i:\\(v)\") } }"
+      "cm_print_list_i": "func cm_print_list_i(_ xs: [Int]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"i:\\(v)\") } }",
+      "cm_read_bool": "func cm_read_bool() -> Bool { return cm_read_int() != 0 }",
+      "cm_read_float": "func cm_read_float() -> Double { return Double(cm_read_line())! }",
+      "cm_read_int": "func cm_read_int() -> Int { return Int(cm_read_line())! }",
+      "cm_read_lf": "func cm_read_lf() -> [Double] { let n = cm_read_int(); var r: [Double] = []; for _ in 0..<n { r.append(cm_read_float()) }; return r }",
+      "cm_read_li": "func cm_read_li() -> [Int] { let n = cm_read_int(); var r: [Int] = []; for _ in 0..<n { r.append(cm_read_int()) }; return r }",
+      "cm_read_line": "func cm_read_line() -> String { return (readLine() ?? \"\").trimmingCharacters(in: .whitespaces) }"
     },
     "if": "if {cond} {{",
     "indent": "    ",
@@ -110,7 +123,9 @@
   },
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "89e188c7140a14eff3aa757fa938dad36d25ff7150d95da9b75323c42bda94d3",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "swift",
   "probe": {

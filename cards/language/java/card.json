@@ -21,6 +21,13 @@
         "list[float]": "cm_lf_print({e});",
         "list[int]": "cm_li_print({e});"
       },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
         "float": "((({e}) > 0.0) ? 1 : 0)",
@@ -29,6 +36,7 @@
     },
     "helpers": {
       "cm_gcd": "    static long cm_gcd(long a, long b) { a = Math.abs(a); b = Math.abs(b); while (b != 0) { long t = a % b; a = b; b = t; } return a; }",
+      "cm_in": "    static java.io.BufferedReader cm_in = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));",
       "cm_ipow": "    static long cm_ipow(long a, long b) { long r = 1; while (b > 0) { if ((b & 1) == 1) r *= a; b >>= 1; if (b > 0) a *= a; } return r; }",
       "cm_lf_new": "    static double[] cm_lf_new(long n, double v) { if (n < 0) throw new IllegalArgumentException(\"negative length\"); double[] r = new double[(int) n]; java.util.Arrays.fill(r, v); return r; }",
       "cm_lf_parse": "    static double[] cm_lf_parse(String s) { if (s.isEmpty()) return new double[0]; String[] p = s.split(\",\"); double[] r = new double[p.length]; for (int i = 0; i < p.length; i++) r[i] = Double.parseDouble(p[i]); return r; }",
@@ -38,8 +46,14 @@
       "cm_li_print": "    static void cm_li_print(long[] xs) { System.out.println(\"l:\" + xs.length); for (long v : xs) System.out.println(\"i:\" + v); }",
       "cm_max_f": "    static double cm_max_f(double a, double b) { return b > a ? b : a; }",
       "cm_min_f": "    static double cm_min_f(double a, double b) { return b < a ? b : a; }",
+      "cm_modinv": "    static long cm_modinv(long a, long m) { long n = Math.abs(m); long r0 = Math.floorMod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { long q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) throw new ArithmeticException(\"base is not invertible\"); return Math.floorMod(s0, n); }",
       "cm_powmod": "    static long cm_powmod(long a, long b, long m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } long r = Math.floorMod(1L, m); a = Math.floorMod(a, m); while (b > 0) { if ((b & 1) == 1) r = Math.floorMod(r * a, m); a = Math.floorMod(a * a, m); b >>= 1; } return r; }",
-      "cm_modinv": "    static long cm_modinv(long a, long m) { long n = Math.abs(m); long r0 = Math.floorMod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { long q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) throw new ArithmeticException(\"base is not invertible\"); return Math.floorMod(s0, n); }"
+      "cm_read_bool": "    static boolean cm_read_bool() { return cm_read_int() != 0; }",
+      "cm_read_float": "    static double cm_read_float() { return Double.parseDouble(cm_read_line()); }",
+      "cm_read_int": "    static long cm_read_int() { return Long.parseLong(cm_read_line()); }",
+      "cm_read_lf": "    static double[] cm_read_lf() { double[] r = new double[(int) cm_read_int()]; for (int i = 0; i < r.length; i++) r[i] = cm_read_float(); return r; }",
+      "cm_read_li": "    static long[] cm_read_li() { long[] r = new long[(int) cm_read_int()]; for (int i = 0; i < r.length; i++) r[i] = cm_read_int(); return r; }",
+      "cm_read_line": "    static String cm_read_line() { try { String s = cm_in.readLine(); return s == null ? \"\" : s.trim(); } catch (java.io.IOException e) { throw new RuntimeException(e); } }"
     },
     "if": "if ({cond}) {{",
     "import": "import @name@;\n",
@@ -97,7 +111,6 @@
   ],
   "family": "c_like",
   "frontend": "cardmodel.engines.frontend_text",
-  "frontend_link": "class_per_file",
   "frontend_harness": {
     "arg_cast": "(({type})({v}))",
     "hoist": "^\\s*import\\s",
@@ -119,9 +132,12 @@
       ]
     ]
   },
+  "frontend_link": "class_per_file",
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "a5dc4cc1970d8ae9719c96d959010dbd3c043d4046d41a7172f4e79940f08a7c",
+    "version": "1.0.2",
+    "version_bump_reason": "patch"
   },
   "name": "java",
   "probe": {
@@ -196,11 +212,29 @@
     "Main"
   ],
   "runner": {
+    "compile": [
+      "{javac}",
+      "-nowarn",
+      "-d",
+      "{dir}",
+      "{src}"
+    ],
     "file": "Main.java",
     "run": [
       "{exe}",
-      "{src}"
-    ]
+      "-cp",
+      "{dir}",
+      "Main"
+    ],
+    "tools": {
+      "javac": {
+        "kind": "executable",
+        "name": "javac",
+        "version_args": [
+          "-version"
+        ]
+      }
+    }
   },
   "statement": "Java with long / double, run with the single-file source launcher (java Main.java).",
   "tier": 1

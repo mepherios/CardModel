@@ -3,13 +3,18 @@
 Default run: python, javascript, c (fast). CARDMODEL_SLOW=1 runs every codegen language on this host.
 """
 import copy
+import math
+import random
+import struct
 import unittest
 
 from helpers import SEED, SLOW, model_ctx, seed_note
 
 from cardmodel.engines import conformance
+from cardmodel.engines.codegen import EmitGap, Emitter
 from cardmodel.engines.context import Ctx
 from cardmodel.engines.ir import op_table
+from cardmodel.engines.runners import run_calls, run_program
 
 
 class Conformance(unittest.TestCase):
@@ -52,3 +57,57 @@ class Conformance(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StdinHarness(unittest.TestCase):
+    """Test programs read their arguments from stdin: the values printed are those of baked inputs, bit for bit,
+    and a new seed reuses the build (ROADMAP Now, the stdin harness)."""
+
+    def test_stdin_matches_baked_and_reuses_the_build(self):
+        ctx = model_ctx()
+        langs = [l for l in (ctx.codegen_languages() if SLOW else ("python", "javascript", "c"))
+                 if ctx.available(l)[0]]
+        fns = {f["fn"]["name"]: f["fn"] for f in conformance.op_functions(ctx.ops)}
+
+        def calls_for(seed):
+            rng = random.Random(seed)
+            floats = [struct.unpack("<d", struct.pack("<Q", rng.getrandbits(64)))[0] for _ in range(60)]
+            floats = [x for x in floats if math.isfinite(x)] + [5e-324, -0.0, 0.1, 1.7976931348623157e308]
+            out = []
+            for i, x in enumerate(floats):           # interleaved: the harness groups by function, run_calls reorders
+                out.append(("t_neg_f", [x]))
+                out.append(("t_add_i_i", [rng.randint(-2 ** 62, 2 ** 62), -i]))
+            out += [("t_and_b_b", [a, b]) for a in (False, True) for b in (False, True)]
+            out += [("t_len_li", [[rng.randint(-9, 9) for _ in range(n)]]) for n in (0, 1, 5)]
+            out += [("t_add_i_i", [2 ** 63 - 1, 0]), ("t_add_i_i", [-2 ** 63, 0])]
+            return out
+
+        for lang in langs:
+            em = Emitter(ctx.store, lang, ctx.ops)
+            usable = []
+            for n in ("t_neg_f", "t_add_i_i", "t_and_b_b", "t_len_li"):
+                try:
+                    em.program({"entry": n, "functions": [fns[n]]}, [])
+                    usable.append(n)
+                except EmitGap:
+                    continue
+            module = {"entry": usable[0], "functions": [fns[n] for n in usable]}
+            card = ctx.language(lang)
+            runs = []
+            for seed in (SEED, SEED + 1):
+                calls = [c for c in calls_for(seed) if c[0] in usable]
+                self.assertIsNotNone(em.program_stdin(module, calls, usable), f"{lang} has no read templates")
+                got = run_calls(em, card, module, calls, ctx.state_root, entries=usable)
+                baked = run_program(card, em.program(module, calls), ctx.state_root)
+                self.assertEqual((got.status, len(got.values)), ("ok", len(calls)), f"{lang} {got.stderr[-300:]}")
+                key = lambda v: (type(v), repr(v))     # noqa: E731 -- bit-exact for floats, -0.0 included
+                ref = [-a[0] if n == "t_neg_f" else a[0] + a[1] if n == "t_add_i_i" else
+                       (a[0] and a[1]) if n == "t_and_b_b" else len(a[0]) for n, a in calls]
+                # exact, or what baked inputs print too (JavaScript prints -0 as 0); Go's baked literal -0.0 is +0
+                bad = [(c, r, g, b) for c, r, g, b in zip(calls, ref, got.values, baked.values)
+                       if key(g) != key(r) and key(g) != key(b)]
+                self.assertEqual(bad, [], f"{lang} {seed_note(self)}")
+                runs.append(got)
+            if (card.get("runner") or {}).get("compile"):
+                self.assertTrue(runs[1].cached, f"{lang}: a new seed recompiled")
+
