@@ -9,7 +9,7 @@ from pathlib import Path
 from ..kernel import paths
 from ..kernel.store import Store, default_store
 from . import probes
-from .codegen import resolve_language
+from .codegen import language_gap, resolve_language
 from .ir import op_table
 
 
@@ -36,6 +36,14 @@ class Ctx:
             if card.get("codegen") is not None:
                 out.append(card.name)
         return sorted(out, key=lambda n: (self.store.get(f"language/{n}").get("tier", 1), n))
+
+    def language_gap(self, lang: str) -> set[str]:
+        """The atoms ``lang`` has no emit template for at any rank (codegen.language_gap), computed once per
+        language: translate and matrix refuse a term from its content before trying to emit it."""
+        cache = self.__dict__.setdefault("_language_gaps", {})
+        if lang not in cache:
+            cache[lang] = language_gap(self.store, self.ops, lang)
+        return cache[lang]
 
     def available(self, lang: str) -> tuple[bool, str]:
         return probes.probe(self.language(lang).get("probe"))

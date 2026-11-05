@@ -89,6 +89,76 @@ class Lift(unittest.TestCase):
             emit_module(self.ctx.store, self.ctx.ops, "lean", mod)
 
 
+class CarryMap(unittest.TestCase):
+    """A language is a carry map on the atoms (FOUNDATIONS D13, D14): its gap is known from a term's content before
+    anything is emitted, and the prediction never refuses what the emitter would write."""
+
+    def test_the_gap_is_predicted_from_content_without_false_positives(self):
+        import random
+        from cardmodel.engines import godel as G
+        from cardmodel.engines.codegen import carry_map, language_gap, predicted_gap, supported_ops
+        ctx = model_ctx()
+        cards = [c for c in ctx.store.cards("function") if isinstance(c.get("ir"), dict)]
+        self.assertTrue(cards)
+        rng = random.Random(SEED)
+        sample = rng.sample(cards, min(120, len(cards)))
+        hits = misses = emitted = 0
+        for lang in ctx.codegen_languages():
+            gap = ctx.language_gap(lang)
+            self.assertEqual(gap, language_gap(ctx.store, ctx.ops, lang))
+            self.assertEqual(gap, {f"op/{o}" for o, ok in supported_ops(ctx.store, ctx.ops, lang).items() if not ok})
+            self.assertEqual(set(carry_map(ctx.store, ctx.ops, lang)), set(ctx.ops))
+            for card in sample:
+                predicted = predicted_gap(G.module_content(card["ir"], ctx.ops), gap)
+                try:
+                    emit_module(ctx.store, ctx.ops, lang, card["ir"])
+                    failed = None
+                except EmitGap as exc:
+                    failed = str(exc)
+                if predicted:
+                    self.assertIsNotNone(failed, (lang, card.name, predicted, seed_note(self)))
+                    hits += 1
+                elif failed:
+                    misses += 1
+                else:
+                    emitted += 1
+        self.assertGreater(hits, 0, seed_note(self))
+        self.assertGreater(emitted, 0, seed_note(self))
+        print(f"\n  gaps predicted from content: {hits}; found only by emitting (a rank-level gap): {misses}; "
+              f"emitted: {emitted}", end=" ")
+
+    def test_translation_is_the_same_with_and_without_the_prediction(self):
+        from cardmodel.engines import godel as G
+        ctx = model_ctx()
+        lifted = lift_source(SRC, ctx.ops)
+        cards = {}
+        for name in ("mean3", "gcd"):
+            translate.PREDICT_GAPS = False
+            try:
+                without = translate.function_card(ctx, name, lifted, "test_translate.py", seed=SEED)
+            finally:
+                translate.PREDICT_GAPS = True
+            with_ = cards[name] = translate.function_card(ctx, name, lifted, "test_translate.py", seed=SEED)
+            self.assertEqual(set(with_["emit_gaps"]), set(without["emit_gaps"]), name)
+            self.assertEqual([f["code"] for f in with_["forms"]], [f["code"] for f in without["forms"]], name)
+            self.assertEqual(with_["depends_on"], without["depends_on"], name)
+            self.assertEqual(with_["godel"]["content"], dict(G.module_content(with_["ir"], ctx.ops)), name)
+            self.assertEqual(without["predicted_gaps"], {}, name)
+        # mean3 computes with floats, which Lean has no templates for: a gap at one rank only, which content (rank-
+        # blind today) cannot predict; it is found by emitting. Rank-level content waits for the sort analysis.
+        self.assertIn("lean", cards["mean3"]["emit_gaps"])
+        self.assertNotIn("lean", cards["gcd"]["emit_gaps"])
+
+    def test_the_support_of_content_is_the_ops_used(self):
+        from cardmodel.engines import godel as G
+        from cardmodel.engines.ir import ops_used
+        ctx = model_ctx()
+        for lf in lift_source(SRC, ctx.ops):
+            if lf.ok:
+                self.assertEqual(G.support(G.term_content(lf.ir["body"], ctx.ops)),
+                                 {f"op/{o}" for o in ops_used(lf.ir) if o in ctx.ops}, lf.name)
+
+
 class Translate(unittest.TestCase):
     def test_functions_agree_across_languages(self):
         ctx = model_ctx()

@@ -811,20 +811,40 @@ def emit_program(store, ops, lang: str, module: dict, calls: list[list], mode: s
     return Emitter(store, lang, ops).program(module, calls, mode, reps)
 
 
-def supported_ops(store, ops, lang: str) -> dict[str, bool]:
+def carry_map(store, ops, lang: str) -> dict[str, dict[str, str | None]]:
+    """The language as a carry map on the atoms (FOUNDATIONS D13, D14; docs/GODEL_TARGET.md G11): for each op of
+    the signature, its template at each rank, keyed by the first operand's sort as the emit blocks are, and None
+    where the language has none."""
     em = Emitter(store, lang, ops)
-    out = {}
+    out: dict[str, dict[str, str | None]] = {}
     for name, spec in ops.items():
-        ok = False
+        ranks: dict[str, str | None] = {}
         for sig in spec.types or [["int", "int"]]:
+            key = sig[0] if len(sig) > 1 else "any"
             try:
-                em.op_template(name, list(sig[:-1]))
-                ok = True
-                break
+                ranks[key] = em.op_template(name, list(sig[:-1]), sig[-1])   # resolved as expr() resolves it
             except EmitGap:
-                continue
-        out[name] = ok
+                ranks[key] = None
+        out[name] = ranks
     return out
 
 
-__all__ = ["EmitGap", "Emitter", "emit_module", "emit_program", "resolve_language", "supported_ops", "LEAVES"]
+def language_gap(store, ops, lang: str) -> set[str]:
+    """The atoms the language cannot write at any rank: the gap of its carry map. A term whose content has one of
+    them cannot be emitted, and that is known from the content alone, before anything is emitted. A gap at one
+    rank only (a template for int but not for float) is still found by emitting, since content is rank-blind."""
+    return {f"op/{name}" for name, ranks in carry_map(store, ops, lang).items() if not any(ranks.values())}
+
+
+def predicted_gap(content, gap: set[str]) -> list[str]:
+    """support(γ) ∩ gap: the atoms of a content that the language has no template for, sorted."""
+    return sorted(a for a, e in content.items() if e and a in gap)
+
+
+def supported_ops(store, ops, lang: str) -> dict[str, bool]:
+    """Which ops the language has a template for, at some rank (the complement of its gap)."""
+    return {name: any(ranks.values()) for name, ranks in carry_map(store, ops, lang).items()}
+
+
+__all__ = ["EmitGap", "Emitter", "carry_map", "emit_module", "emit_program", "language_gap", "predicted_gap",
+           "resolve_language", "supported_ops", "LEAVES"]
