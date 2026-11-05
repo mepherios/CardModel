@@ -15,6 +15,12 @@ sort, so a law proved on ``int`` never reaches a ``float`` term, and saturation 
 Two terms are proved equal when they land in one class. The certificate is the equalities that fired, plus a seeded
 numeric witness of the two original terms.
 
+The equalities are keyed by identity (docs/GODEL_AUDIT.md §4.2): a rule is its two sides up to the names of its
+pattern variables, with the sorts they must bind (``rule_key``), and ``rules_from_cards`` keeps one rule per key (the
+store states many laws twice, as a rewrite rule and as a discovered theorem: 89 of 262); the matching is done once
+per law and the classes unioned are the same. ``canonical`` is memoized by its input (the term, its variables'
+sorts, the rules, costs, ops and budget), so a term canonicalised once is not saturated again.
+
 Honest limits (L1): saturation is bounded (iterations and nodes), so two terms in different classes are "not
 shown equal", never unequal. Conditional rules are left out: their side conditions are not checked here. A
 canonical term is canonical only within what the equalities reach. The certificate names the equalities but not yet
@@ -23,6 +29,7 @@ short distances).
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import random
@@ -34,11 +41,44 @@ LEAVES = ("var", "int", "float", "bool", "const")
 
 
 class Rule:
-    __slots__ = ("name", "lhs", "rhs", "origin", "sorts")
+    __slots__ = ("name", "lhs", "rhs", "origin", "sorts", "also")
 
-    def __init__(self, name, lhs, rhs, origin, sorts=None):
+    def __init__(self, name, lhs, rhs, origin, sorts=None, also=None):
         self.name, self.lhs, self.rhs, self.origin = name, lhs, rhs, origin
         self.sorts = sorts          # pattern variable -> sort it must bind (None: the law states no sort)
+        self.also = list(also or [])    # origins of the same equality stated again elsewhere (``dedupe``)
+
+
+def rule_key(lhs, rhs, sorts: dict | None = None) -> str:
+    """The identity of an equality: its two sides with the pattern variables renamed by first appearance, and the
+    sorts they must bind (FOUNDATIONS D7 for a law). Two rules with one key state one law, whatever their names."""
+    names: dict = {}
+
+    def walk(p):
+        if isinstance(p, str) and p.startswith("?"):
+            names.setdefault(p, f"?{len(names)}")
+            return names[p]
+        if isinstance(p, list):
+            return [walk(x) for x in p]
+        return p
+    l, r = walk(lhs), walk(rhs)
+    return semantic_hash([l, r, None if sorts is None else sorted((names.get(v, v), t) for v, t in sorts.items())])
+
+
+def dedupe(rules: list[Rule]) -> list[Rule]:
+    """One rule per identity: the first stands for the others and records their origins in ``also``. The duplicates
+    would match where it matches and union the classes it unions, so saturation reaches the same classes with the
+    matching done once per law."""
+    out: list[Rule] = []
+    by_key: dict[str, Rule] = {}
+    for r in rules:
+        first = by_key.get(rule_key(r.lhs, r.rhs, r.sorts))
+        if first is None:
+            by_key[rule_key(r.lhs, r.rhs, r.sorts)] = r
+            out.append(r)
+        elif r.origin != first.origin and r.origin not in first.also:
+            first.also.append(r.origin)
+    return out
 
 
 def _norm(t):
@@ -77,10 +117,11 @@ def _to_pattern(t, names: set):
     return t
 
 
-def rules_from_cards(store) -> list[Rule]:
-    """Unconditional rewrite rules (with their reverses when bidirectional) and discovered laws, both ways. A rule
-    whose left side is a bare variable, or whose right side needs a variable the left side does not bind, is left
-    out: it would match everything or invent terms."""
+def rules_from_cards(store, deduped: bool = True) -> list[Rule]:
+    """Unconditional rewrite rules (with their reverses when bidirectional) and discovered laws, both ways, one rule
+    per identity (``dedupe``; ``deduped=False`` keeps every statement). A rule whose left side is a bare variable,
+    or whose right side needs a variable the left side does not bind, is left out: it would match everything or
+    invent terms."""
     from .search import load_rules
     out = [Rule(r.name, _norm(r.lhs), _norm(r.rhs), f"rewrite_rule/{r.card}",
                 S.law_sorts(_pvars(r.lhs) | _pvars(r.rhs), r.domain)) for r in load_rules(store) if not r.condition]
@@ -102,7 +143,8 @@ def rules_from_cards(store) -> list[Rule]:
         sorts = S.law_sorts(_pvars(lhs) | _pvars(rhs), types=types)
         out.append(Rule(card.name, lhs, rhs, f"theorem/{card.name}", sorts))
         out.append(Rule(card.name + "~rev", rhs, lhs, f"theorem/{card.name}", sorts))
-    return [r for r in out if not (isinstance(r.lhs, str) and r.lhs.startswith("?")) and _pvars(r.rhs) <= _pvars(r.lhs)]
+    out = [r for r in out if not (isinstance(r.lhs, str) and r.lhs.startswith("?")) and _pvars(r.rhs) <= _pvars(r.lhs)]
+    return dedupe(out) if deduped else out
 
 
 class EGraph:
@@ -292,14 +334,58 @@ def semantic_hash(term) -> str:
     return "sha256:" + hashlib.sha256(json.dumps(term, sort_keys=True).encode()).hexdigest()[:24]
 
 
+_MEMO: dict[str, dict] = {}
+MEMO_CAP = 50_000
+STATS: Counter = Counter()      # hits and misses of the memo, for measurement
+
+
+def _variables(term, out: set) -> set:
+    if isinstance(term, list) and term:
+        if term[0] == "var":
+            out.add(term[1])
+        elif term[0] not in LEAVES:
+            for a in term[1:]:
+                _variables(a, out)
+    return out
+
+
+def _memo_key(term, rules, costs, var_sorts, ops, budget) -> str:
+    """Everything the canonical form depends on: the term, the sorts of its variables, the rules (by origin and
+    name, in order), the costs, the op table's names and ranks, and the budget."""
+    used = sorted(_variables(term, set()))
+    return semantic_hash([term, [(v, (var_sorts or {}).get(v)) for v in used], [[r.origin, r.name] for r in rules],
+                          sorted(costs.items()), None if ops is None else sorted((n, getattr(o, "types", None))
+                                                                                  for n, o in ops.items()),
+                          sorted(budget.items())])
+
+
+def clear_memo() -> None:
+    _MEMO.clear()
+    STATS.clear()
+
+
 def canonical(term, rules: list[Rule], costs: dict[str, float], var_sorts: dict | None = None,
-              ops: dict | None = None, **budget) -> dict:
+              ops: dict | None = None, memo: bool = True, **budget) -> dict:
+    """The class's cheapest term, its cost, its hash and the saturation's record. Memoized by ``_memo_key`` (the
+    result is a copy, so a caller may change it); ``memo=False`` always saturates."""
+    key = _memo_key(term, rules, costs, var_sorts, ops, budget) if memo else None
+    if key is not None:
+        got = _MEMO.get(key)
+        if got is not None:
+            STATS["hits"] += 1
+            return copy.deepcopy(got)
+        STATS["misses"] += 1
     g = EGraph(var_sorts, ops)
     root = g.add(_norm(term))
     info = g.saturate(rules, **budget)
     best, cost = g.extract(root, costs)
     best = _denorm(best)
-    return {"term": best, "cost": cost, "hash": semantic_hash(best), **info}
+    out = {"term": best, "cost": cost, "hash": semantic_hash(best), **info}
+    if key is not None:
+        if len(_MEMO) >= MEMO_CAP:
+            _MEMO.clear()
+        _MEMO[key] = copy.deepcopy(out)
+    return out
 
 
 def equal(a, b, rules: list[Rule], var_sorts: dict | None = None, ops: dict | None = None, **budget) -> dict:
@@ -367,4 +453,5 @@ def measure(ctx, seed: int = 0) -> dict:
             "shared": {h: cs for h, cs in groups.items() if len(cs) > 1}, "rows": rows}
 
 
-__all__ = ["EGraph", "Rule", "canonical", "equal", "measure", "rules_from_cards", "semantic_hash", "witness"]
+__all__ = ["EGraph", "Rule", "canonical", "clear_memo", "dedupe", "equal", "measure", "rule_key", "rules_from_cards",
+           "semantic_hash", "witness"]
