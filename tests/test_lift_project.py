@@ -269,6 +269,14 @@ class Identity(unittest.TestCase):
         self.assertEqual(LP.alpha(self.res.functions["py.game::in_range"].ir, {"py.game::distance_sq": "ID"})
                          ["body"][0]["value"][1][1], "ID")
 
+    def test_a_module_has_the_identity_of_its_entry(self):
+        # the identity of one IR module (what a function card carries) is the project identity of its entry function:
+        # module_for renames the callees to bare names, and names are not structure
+        for q in ("py.game::in_range", "c/game.c::ping", "py.game::acc"):
+            self.assertEqual(LP.module_identity(self.res.module_for(q)), self.ids[q], q)
+        self.assertEqual(LP.identity_record(self.res.module_for("py.game::in_range")),
+                         {"hash": self.ids["py.game::in_range"], "of": "lifted function", "under": "alpha"})
+
     def test_sccs_are_callees_first(self):
         graph = {"a": ["b"], "b": ["c", "a"], "c": [], "d": ["d"], "e": []}
         comps = LP._sccs(graph)

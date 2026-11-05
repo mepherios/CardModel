@@ -67,6 +67,16 @@ class MatrixTest(unittest.TestCase):
         for f in rep["functions"]:
             self.assertGreater(f["inputs"], 0)
         self.assertEqual({(c["function"], c["status"]) for c in rep["cross_source"]}, {("g", "pass"), ("h", "pass")})
+        # the ports are the same function up to names: one identity decides each pair with no run (FOUNDATIONS D7),
+        # and the second port of each takes the cells and round trips of the first; its own lift is still checked
+        self.assertEqual({c["function"]: c.get("by") for c in rep["cross_source"]}, {"g": "identity", "h": "identity"})
+        self.assertEqual({f["function"]: f["same_as"] for f in rep["functions"] if f["same_as"]},
+                         {"g": "python:g", "h": "python:h"})
+        self.assertEqual(M.by_identity(rep), {"functions": 2, "cells": 2 * len(rep["targets"]), "cross_source": 2})
+        self.assertTrue(all(c.get("by") == "identity" for f in rep["functions"] if f["same_as"]
+                            for c in [*f["targets"].values(), *f["round_trip"].values()]))
+        self.assertIn("by identity", M.report_text(rep))
+        self.assertIn("2 by identity", M.markdown(rep))
         if "python" in (self.targets or ["python"]):
             self.assertTrue(all(c["status"] == "pass" for f in rep["functions"] for c in f["round_trip"].values()))
         self.assertIn("python", M.report_text(rep))
@@ -76,6 +86,9 @@ class MatrixTest(unittest.TestCase):
         rep = M.run(self.ctx, _files(WRONG), targets=["python"], seed=SEED)
         kinds = {(f["kind"], f["function"]) for f in rep["failures"]}
         self.assertIn(("cross_source", "g"), kinds, seed_note(self))
+        g = next(c for c in rep["cross_source"] if c["function"] == "g")   # different identities: run, not decided
+        self.assertEqual((g["status"], g.get("by")), ("fail", None))
+        self.assertEqual([f["same_as"] for f in rep["functions"]], [None] * len(rep["functions"]))
 
     def test_shared_corpus_lifts_in_both_sources(self):
         files = M.default_corpus(ROOT)

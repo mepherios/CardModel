@@ -225,6 +225,57 @@ class Ranks(unittest.TestCase):
         self.assertGreater(checked, 0, seed_note(self))
 
 
+class Identity(unittest.TestCase):
+    """A function card carries one identity (FOUNDATIONS D7; docs/GODEL_AUDIT.md §4.1): the same function up to the
+    names of its parameters, locals and callees, the same record from every builder of function cards."""
+
+    def test_cards_carry_the_identity_of_their_function(self):
+        from cardmodel.engines import equivalence as EQ
+        from cardmodel.engines import lift_project as LP
+        ctx = model_ctx()
+        src = ("def f(a: int, b: int) -> int:\n    s = a * b\n    return s + 3\n\n"
+               "def f2(x: int, y: int) -> int:\n    t = x * y\n    return t + 3\n\n"
+               "def f3(x: int, y: int) -> int:\n    t = y * x\n    return t + 3\n")
+        lifted = lift_source(src, ctx.ops)
+        cards = {n: translate.function_card(ctx, n, lifted, "t.py", seed=SEED) for n in ("f", "f2", "f3")}
+        for c in cards.values():
+            self.assertEqual(c["identity"], {"hash": LP.module_identity(c["ir"]), "of": "lifted function",
+                                             "under": "alpha"})
+            self.assertIn(c["identity"]["under"], EQ.RELATIONS)
+        self.assertEqual(cards["f"]["identity"], cards["f2"]["identity"])            # names are not structure
+        self.assertNotEqual(cards["f"]["identity"]["hash"], cards["f3"]["identity"]["hash"])   # the operand order is
+        self.assertEqual(cards["f"]["godel"], cards["f2"]["godel"])
+
+    def test_the_card_language_builds_the_same_record(self):
+        from cardmodel.engines import godel as G
+        from cardmodel.lang import run as R
+        from cardmodel.lang.compile import compile_source
+        ctx = model_ctx()
+        mod = compile_source("module demo\nfn sq(a: Int) -> Int = a * a\n"
+                             "fn pick(a: Int, b: Int) -> Int = if a < b and a > 0 then sq(a) else sq(b)\n",
+                             ctx.ops, ctx.store)
+        by = {c["name"]: c for c in R.function_cards(ctx, mod, SEED)}
+        pick = by["demo.pick"]
+        content = G.module_content(pick["ir"], ctx.ops)
+        self.assertEqual(pick["identity"]["under"], "alpha")
+        self.assertEqual(pick["godel"]["content"], dict(content))
+        self.assertEqual(pick["depends_on"], sorted(G.support(content)))
+        self.assertIn("op/IF_EXPR", pick["depends_on"])
+        # the same function written in Python has the same identity: the two builders agree
+        lifted = lift_source("def sq(a: int) -> int:\n    return a * a\n", ctx.ops)
+        self.assertEqual(translate.function_card(ctx, "sq", lifted, "t.py", seed=SEED)["identity"],
+                         by["demo.sq"]["identity"])
+
+    def test_no_language_verifies_the_lift_alone(self):
+        ctx = model_ctx()
+        lifted = lift_source(SRC, ctx.ops)
+        card = translate.function_card(ctx, "gcd", lifted, "t.py", seed=SEED)
+        r = translate.verify_function(ctx, card, langs=[], seed=SEED)
+        self.assertEqual(r["languages"], {})
+        self.assertGreater(r["inputs"], 0)
+        self.assertEqual(r["agreeing_languages"], ["python_source"])
+
+
 class Translate(unittest.TestCase):
     def test_functions_agree_across_languages(self):
         ctx = model_ctx()

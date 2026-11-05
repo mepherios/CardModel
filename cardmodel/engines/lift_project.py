@@ -229,20 +229,25 @@ def identities(res: ProjectLift) -> dict[str, str]:
     unrelated recursive functions never share an identity and the same recursion in two languages does. Every function
     whose own body lifted has one, closed or partial (frontend_python.lift_status); a call to a boundary (a callee
     that did not lift) keeps its name: that call is a gap of the lift (``Lifted.gaps``), and the identity says so."""
+    return identities_of({q: lf.ir for q, lf in res.functions.items() if lifted_body(lf)})
+
+
+def identities_of(irs: dict[str, dict]) -> dict[str, str]:
+    """name -> identity for IR functions whose ``CALL`` targets name each other by the keys of ``irs`` (a project's
+    qualified names, or the bare names of one module); see :func:`identities`."""
     from .egraph import semantic_hash
-    ok = {q: lf for q, lf in res.functions.items() if lifted_body(lf)}
-    graph = {q: sorted(c for c in _callees(lf.ir) if c in ok) for q, lf in ok.items()}
+    graph = {q: sorted(c for c in _callees(ir) if c in irs) for q, ir in irs.items()}
     out: dict[str, str] = {}
     for comp in _sccs(graph):
         members = sorted(comp)
         inside = set(members)
         ext = {c: out[c] for m in members for c in graph[m] if c not in inside}
         if len(members) == 1 and members[0] not in graph[members[0]]:
-            out[members[0]] = semantic_hash(alpha(ok[members[0]].ir, ext))
+            out[members[0]] = semantic_hash(alpha(irs[members[0]], ext))
             continue
-        colours = {m: semantic_hash(alpha(ok[m].ir, {**ext, **{c: "#rec" for c in inside}})) for m in members}
+        colours = {m: semantic_hash(alpha(irs[m], {**ext, **{c: "#rec" for c in inside}})) for m in members}
         for _ in range(len(members)):
-            new = {m: semantic_hash(alpha(ok[m].ir, {**ext, **{c: colours[c] for c in inside}})) for m in members}
+            new = {m: semantic_hash(alpha(irs[m], {**ext, **{c: colours[c] for c in inside}})) for m in members}
             stable = len(set(new.values())) == len(set(colours.values()))
             colours = new
             if stable:
@@ -256,6 +261,20 @@ def identities(res: ProjectLift) -> dict[str, str]:
 def lifted_body(lf) -> bool:
     """The function's own body lifted (it is closed or partial, not a boundary), so it has an IR and an identity."""
     return isinstance(lf.ir, dict) and (lf.ok or getattr(lf, "boundary", None) is None)
+
+
+def module_identity(module: dict) -> str:
+    """The identity of an IR module's entry function; its callees are the module's other functions, by name."""
+    fns = {f["name"]: f for f in module.get("functions") or [module] if isinstance(f, dict) and f.get("name")}
+    entry = module.get("entry") or next(iter(fns))
+    return identities_of(fns)[entry]
+
+
+def identity_record(module: dict) -> dict:
+    """The identity as a card records it (as ``sources.identity`` does for definitions): the hash, what it is of, and
+    the relation it was taken under (FOUNDATIONS A4): ≡_α, the same function up to the names of its parameters,
+    locals and callees, each callee by its own identity."""
+    return {"hash": module_identity(module), "of": "lifted function", "under": "alpha"}
 
 
 def _callees(ir: dict) -> set[str]:

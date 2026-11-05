@@ -221,6 +221,7 @@ def _bounds(fn: dict) -> list[dict]:
 def function_cards(ctx, mod: Module, seed: int, samples: int = 24) -> list[dict]:
     """One function card per module function (callees included in its IR module), verified forms generated."""
     from ..engines.frontend_python import _exprs_of, _stmts
+    from ..engines.translate import structure
     out = []
     rng = random.Random(seed)
     for name, fn in mod.functions.items():
@@ -267,14 +268,13 @@ def function_cards(ctx, mod: Module, seed: int, samples: int = 24) -> list[dict]
                 gaps[lang] = str(exc)
         digest = hashlib.sha256(json.dumps(module, sort_keys=True).encode()).hexdigest()[:12]
         sig = ", ".join(f"{p['name']}: {p['type']}" for p in fn["params"])
+        st = structure(ctx, module)            # identity, content and depends_on: the record translate's cards carry
         out.append({
             "name": f"{mod.name}.{name}", "category": "function", "tier": 2,
             "statement": f"{name}({sig}) -> {fn['returns']} from the card language ({Path(mod.path or 'source').name})",
             "signature": {"params": fn["params"], "returns": fn["returns"]}, "ir": module, "generators": gens,
             "vectors": vectors, "forms": forms, "emit_gaps": gaps, "reference": "ir",
-            "depends_on": sorted({f"op/{e[0]}" for f2 in module["functions"] for s in _stmts(f2["body"])
-                                  for e in _exprs_of(s) if e[0] not in ("CALL", "var", "int", "float", "bool",
-                                                                       "AND", "OR", "IF_EXPR")}),
+            "identity": st["identity"], "godel": st["godel"], "depends_on": st["depends_on"],
             "status": "suspect",
             "provenance": {"origin": f"card source {Path(mod.path or 'source').name}", "module": mod.name,
                            "ir_sha256_12": digest, "seed": seed},

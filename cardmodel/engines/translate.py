@@ -180,6 +180,20 @@ def ir_reference(ctx: Ctx, module: dict, lifted: list):
     return ref, src
 
 
+def structure(ctx: Ctx, module: dict) -> dict:
+    """What the structure says about a function, read once by every builder of function cards (this module, the card
+    language's ``lang/run.function_cards`` and so mathematical notation; docs/GODEL_AUDIT.md §4.1): its identity
+    (``lift_project.identity_record``: one hash per function up to the names of its parameters, locals and callees,
+    each callee by its own identity, FOUNDATIONS D7), its content γ with the same content at rank level (a gap at one
+    rank is seen too), and the atoms it depends on."""
+    from .lift_project import identity_record
+    content = G.module_content(module, ctx.ops)
+    ranked = ranked_content(ctx.ops, module)
+    return {"identity": identity_record(module),
+            "godel": {"content": dict(content), "ranks": dict(ranked), "read_from": "its IR"},
+            "depends_on": sorted(G.support(content))}
+
+
 def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, seed: int,
                   samples: int = 24, lang: str = "python") -> dict:
     module = module_for(name, lifted)
@@ -196,8 +210,8 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
               "code": ref_src, "notes": "the observed original"}] if lang == "python" else \
         [{"name": f"{lang}_source", "lang": lang, "entry": name, "cost": 1.0, "runnable": True, "original": True,
           "code": ref_src, "notes": "the observed original (witnessed by frontends.witness_source)"}]
-    content = G.module_content(module, ctx.ops)
-    ranked = ranked_content(ctx.ops, module)        # the same content at rank level: a gap at one rank is seen too
+    st = structure(ctx, module)                     # identity, content and ranks: the same record on every builder
+    ranked = st["godel"]["ranks"]
     gaps, predicted = {}, {}
     for lang in ctx.codegen_languages():
         missing = predicted_gap(ranked, ctx.language_gap(lang)) if PREDICT_GAPS else []
@@ -220,8 +234,7 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
         "ir": module, "generators": gens,
         "vectors": [{"args": r["args"], "out": r["out"]} for r in rows if V.same(r["out"], r["ir_out"])],
         "forms": forms, "emit_gaps": gaps, "predicted_gaps": predicted,
-        "godel": {"content": dict(content), "ranks": dict(ranked), "read_from": "its IR"},
-        "depends_on": sorted(G.support(content)),
+        "identity": st["identity"], "godel": st["godel"], "depends_on": st["depends_on"],
         "status": "suspect",
         "verification": {"lift_fidelity": {"checked": len(rows), "mismatched": len(mismatched),
                                            **({"example": mismatched[0]} if mismatched else {})}},
@@ -231,11 +244,11 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
 
 def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: int | None = None,
                     samples: int = 16) -> dict:
-    """Run every generated form on the vectors plus fresh seeded inputs; compare with the reference."""
+    """Run every generated form on the vectors plus fresh seeded inputs; compare with the reference. ``langs``: the
+    languages to run (None: every generated form; empty: none, so only the lift is checked against the reference)."""
     seed = V.fresh_seed() if seed is None else seed
     module = card["ir"]
     entry = module["entry"]
-    content = G.module_content(module, ctx.ops)
     ranked = ranked_content(ctx.ops, module)        # the same content at rank level: a gap at one rank is seen too
     ref_form = next((f for f in card["forms"] if f["name"] == "python_source"), None)
     if ref_form is None:                      # card-language functions: the IR itself is the reference
@@ -252,7 +265,8 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
     inputs = [v["args"] for v in card.get("vectors", [])] + [list(a) for a in fresh]
     rows = reference_rows(ctx, module, ref, inputs)
     lift_bad = [r for r in rows if not V.same(r["out"], r["ir_out"])]
-    langs = langs or [f["lang"] for f in card["forms"] if f.get("generated")]
+    if langs is None:
+        langs = [f["lang"] for f in card["forms"] if f.get("generated")]
     results = {"seed": seed, "inputs": len(rows), "lift_mismatches": len(lift_bad), "languages": {}}
     if lift_bad:
         results["lift_example"] = lift_bad[0]
