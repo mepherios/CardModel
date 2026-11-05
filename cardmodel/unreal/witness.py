@@ -189,6 +189,8 @@ def _evaluate(t, env: dict, memo: dict):
         return -a[0]
     if head == "F32":
         return f32(a[0])
+    if head == "POW" and all(type(x) is int for x in a) and a[1] >= 0:
+        return a[0] ** a[1]     # integer operands: the exact power (C's pow takes doubles; those casts lift to TO_FLOAT)
     if head in C_DOUBLE:
         return C_DOUBLE[head](*[float(x) for x in a])
     if head == "TO_FLOAT":

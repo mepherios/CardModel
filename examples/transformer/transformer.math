@@ -1,0 +1,53 @@
+-- Transformer kernels in mathematical notation (docs/LISTS.md, docs/MATH_LANGUAGE.md).
+-- Matrices are flat row-major lists passed with their sizes: A[i·m + j] is row i, column j of an n × m matrix.
+-- cardmodel math translate examples/transformer/transformer.math   (every codegen language, and the round trip)
+
+dot : [ℝ] × [ℝ] → ℝ
+dot(a, b) = Σ_{i=0}^{len(a) − 1} a[i] · b[i]
+
+matvec : [ℝ] × [ℝ] × ℤ × ℤ → [ℝ]
+matvec(w, x, rows, cols) = [Σ_{j=0}^{cols − 1} w[i · cols + j] · x[j] | i < rows]
+
+matmul : [ℝ] × [ℝ] × ℤ × ℤ × ℤ → [ℝ]
+matmul(a, b, n, k, m) = [Σ_{p=0}^{k − 1} a[⌊r / m⌋ · k + p] · b[p · m + r mod m] | r < n · m]
+
+transpose : [ℝ] × ℤ × ℤ → [ℝ]
+transpose(a, n, m) = [a[(r mod n) · m + ⌊r / n⌋] | r < n · m]
+
+softmax : [ℝ] → [ℝ]
+softmax(x) = [z[i] / total | i < len(x)]
+  where hi = maxof(x, 1, x[0]),
+        z = [exp(x[i] − hi) | i < len(x)],
+        total = Σ_{i=0}^{len(x) − 1} z[i]
+  for len(x) ≥ 1
+
+maxof : [ℝ] × ℤ × ℝ → ℝ                    -- the largest of hi and x[i], x[i+1], …
+maxof(x, i, hi) = hi                                         if i ≥ len(x)
+                = maxof(x, i + 1, { x[i] if x[i] > hi; hi otherwise })   otherwise
+
+layernorm : [ℝ] × [ℝ] × [ℝ] → [ℝ]
+layernorm(x, γ, β) = [(x[i] − μ) · s · γ[i] + β[i] | i < n]
+  where n = len(x),
+        μ = (Σ_{i=0}^{n − 1} x[i]) / n,
+        ν = Σ_{i=0}^{n − 1} (x[i] − μ) · (x[i] − μ),
+        s = 1.0 / √(ν / n + 1e-5)
+  for len(x) ≥ 1
+
+gelu : [ℝ] → [ℝ]
+gelu(x) = [0.5 · x[i] · (1.0 + tanh(√(2.0 / π) · (x[i] + 0.044715 · x[i] · x[i] · x[i]))) | i < len(x)]
+
+relu : [ℝ] → [ℝ]
+relu(x) = [max(x[i], 0.0) | i < len(x)]
+
+argmax : [ℝ] → ℤ
+argmax(x) = best(x, 1, 0)
+  for len(x) ≥ 1
+
+best : [ℝ] × ℤ × ℤ → ℤ
+best(x, i, b) = b                                           if i ≥ len(x)
+              = best(x, i + 1, { i if x[i] > x[b]; b otherwise })   otherwise
+
+test dot([1.0, 2.0, 3.0], [4.0, 5.0, 6.0]) = 32.0
+test relu([−1.0, 2.0])[0] = 0.0
+test argmax([0.5, 3.0, −1.0, 2.0]) = 1
+test matmul([1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0], 2, 2, 2)[3] = 50.0
