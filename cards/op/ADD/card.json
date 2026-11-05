@@ -198,6 +198,26 @@
         "f32",
         "f32",
         "f32"
+      ],
+      [
+        "u16",
+        "u16",
+        "u16"
+      ],
+      [
+        "u32",
+        "u32",
+        "u32"
+      ],
+      [
+        "i16",
+        "i16",
+        "i16"
+      ],
+      [
+        "i32",
+        "i32",
+        "i32"
       ]
     ]
   },
@@ -210,8 +230,8 @@
   },
   "metadata": {
     "hub_kind": "binop",
-    "previous_content_hash": "e8edbd11d909bcee7e631f95567f683761b0db0727791abe1196a32a2db2c7c5",
-    "version": "1.2.0",
+    "previous_content_hash": "619609ae497f3010757c769285e8ba2c4ff2956d59a1fedf67e39e210e504ca0",
+    "version": "1.3.0",
     "version_bump_reason": "minor"
   },
   "name": "ADD",

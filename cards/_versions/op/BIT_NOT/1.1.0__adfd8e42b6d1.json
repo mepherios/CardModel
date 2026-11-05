@@ -1,0 +1,190 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "domain_generators": {
+    "int": [
+      {
+        "edges": [
+          2147483648,
+          2147483649,
+          4294967295,
+          4294967296,
+          -2147483649,
+          -4294967296
+        ],
+        "int": [
+          -1099511627776,
+          1099511627776
+        ]
+      }
+    ],
+    "u32": [
+      {
+        "edges": [
+          2147483647,
+          2147483648,
+          4294967294
+        ],
+        "int": [
+          0,
+          4294967295
+        ]
+      }
+    ]
+  },
+  "emit": {
+    "c_like": "(~{0})",
+    "go": "(^{0})",
+    "lean": "UNSUPPORTED",
+    "lua": "(~{0})",
+    "python": "(~{0})",
+    "ruby": "(~{0})",
+    "rust": "(!{0})"
+  },
+  "forms": [
+    {
+      "code": "lambda a: ~a",
+      "cost": 1.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "python",
+      "notes": "IR semantics (unbounded two's complement)",
+      "runnable": true
+    },
+    {
+      "code": "lambda a: (~a) & bp._MASK",
+      "cost": 1.0,
+      "domain": "u32",
+      "hub_domain": "int",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "native",
+      "notes": "the hub's native form is 32-bit masked",
+      "runnable": true
+    },
+    {
+      "code": "bp.nand_not",
+      "cost": 1.0,
+      "domain": "u32",
+      "hub_domain": "int",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "nand",
+      "notes": "NAND(a, a) -- 1 gate",
+      "runnable": true
+    },
+    {
+      "code": "lambda a: a ^ bp._MASK",
+      "cost": 1.0,
+      "domain": "u32",
+      "hub_domain": "int",
+      "lang": "python",
+      "libs": [
+        "bit_primitives"
+      ],
+      "name": "xor_mask",
+      "notes": "NOT = XOR with all-1s (32-bit)",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000,
+            1000000
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: ~a",
+    "types": [
+      [
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "unaryop": [
+        "Invert"
+      ]
+    }
+  },
+  "metadata": {
+    "previous_content_hash": "a60cf0dfc85f5ac8359f026c8fe6be362eb00cd71c864fd5b353faffeb4a7799",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "BIT_NOT",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "reference_form": "python",
+  "statement": "bitwise NOT (Python: ~a == -a - 1 on unbounded ints)",
+  "tier": 0,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "nand": {
+        "checks": 54,
+        "domain": "u32",
+        "hub_claim": {
+          "args": [
+            0
+          ],
+          "checks": 1,
+          "domain": "int",
+          "expected": -1,
+          "got": 4294967295,
+          "status": "fail"
+        },
+        "status": "pass"
+      },
+      "native": {
+        "checks": 54,
+        "domain": "u32",
+        "hub_claim": {
+          "args": [
+            0
+          ],
+          "checks": 1,
+          "domain": "int",
+          "expected": -1,
+          "got": 4294967295,
+          "status": "fail"
+        },
+        "status": "pass"
+      },
+      "xor_mask": {
+        "checks": 54,
+        "domain": "u32",
+        "hub_claim": {
+          "args": [
+            0
+          ],
+          "checks": 1,
+          "domain": "int",
+          "expected": -1,
+          "got": 4294967295,
+          "status": "fail"
+        },
+        "status": "pass"
+      }
+    }
+  }
+}

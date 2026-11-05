@@ -84,6 +84,41 @@
         "float",
         "float",
         "float"
+      ],
+      [
+        "u8",
+        "u8",
+        "u8"
+      ],
+      [
+        "u16",
+        "u16",
+        "u16"
+      ],
+      [
+        "u32",
+        "u32",
+        "u32"
+      ],
+      [
+        "i8",
+        "i8",
+        "i8"
+      ],
+      [
+        "i16",
+        "i16",
+        "i16"
+      ],
+      [
+        "i32",
+        "i32",
+        "i32"
+      ],
+      [
+        "f32",
+        "f32",
+        "f32"
       ]
     ]
   },
@@ -95,8 +130,8 @@
     }
   },
   "metadata": {
-    "previous_content_hash": "c67196d52e30fd24b7968ce682297e64a814089c5f496f5ca420095a9620b8a2",
-    "version": "1.1.0",
+    "previous_content_hash": "e19a2da3d51e6671b45a409399492e820ee1139009be1022d975c7a2ca4ea576",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "MIN",

@@ -58,6 +58,47 @@ class Conformance(unittest.TestCase):
         self.assertEqual(run("t_add_f32_f32", x, x), struct.unpack("f", struct.pack("f", x + x))[0])
         self.assertNotEqual(run("t_mul_f32_f32", 1.0 + 2 ** -20, 1.0 + 2 ** -20), (1.0 + 2 ** -20) ** 2)
 
+    def test_fixed_width_more_ops(self):
+        """SUB underflow at u8/u16, i16/i32 overflow, a u32 shift and f32 SUB/DIV rounding pass (wrap-on-store)."""
+        ctx = model_ctx()
+        langs = None if SLOW else [l for l in ("python", "javascript", "c") if ctx.available(l)[0]]
+        rep = conformance.matrix(ctx, langs=langs, seed=SEED, samples=8,
+                                 ops=["ADD", "SUB", "DIV", "SHIFT_LEFT", "SHIFT_RIGHT", "NEG", "BIT_NOT", "CMP_LT"])
+        want = ("t_sub_u8_u8", "t_sub_u16_u16", "t_sub_i16_i16", "t_sub_i32_i32", "t_neg_i32", "t_bit_not_u32",
+                "t_shift_left_u32_i", "t_shift_right_u32_i", "t_cmp_lt_u8_u8", "t_sub_f32_f32", "t_div_f32_f32",
+                "t_add_i16_i16", "t_add_i32_i32")
+        for lang, r in rep["languages"].items():
+            if not r["available"]:
+                continue
+            for n in want:
+                self.assertEqual(r["cells"][n]["status"], "pass", f"{lang} {n} {r['cells'][n]} {seed_note(self)}")
+                self.assertGreater(r["cells"][n]["checks"], 0, f"{lang} {n}")
+
+    def test_fixed_width_more_reference(self):
+        import struct
+        from cardmodel.engines.ir import Interpreter
+        ops = op_table(model_ctx().store)
+        fns = {f["fn"]["name"]: f["fn"] for f in conformance.op_functions(ops)}
+
+        def run(name, *args):
+            return Interpreter({"functions": [fns[name]]}, ops).call(name, list(args))
+
+        def f32(v):
+            return struct.unpack("f", struct.pack("f", v))[0]
+        self.assertEqual(run("t_sub_u8_u8", 3, 5), 254)
+        self.assertEqual(run("t_sub_u16_u16", 0, 1), 65535)
+        self.assertEqual(run("t_sub_i16_i16", -32768, 1), 32767)
+        self.assertEqual(run("t_add_i16_i16", 32767, 1), -32768)
+        self.assertEqual(run("t_add_i32_i32", 2 ** 31 - 1, 1), -2 ** 31)
+        self.assertEqual(run("t_sub_i32_i32", 2 ** 31 - 1, -1), -2 ** 31)
+        self.assertEqual(run("t_neg_i32", -2 ** 31), -2 ** 31)
+        self.assertEqual(run("t_shift_left_u32_i", 0xFFFFFFFF, 4), 0xFFFFFFF0)
+        self.assertEqual(run("t_bit_not_u8", 0), 255)
+        x, y = f32(0.1), f32(0.3)
+        self.assertEqual(run("t_sub_f32_f32", y, x), f32(y - x))
+        self.assertEqual(run("t_div_f32_f32", f32(1.0), f32(3.0)), f32(1.0 / 3.0))
+        self.assertNotEqual(run("t_div_f32_f32", f32(1.0), f32(3.0)), 1.0 / 3.0)
+
     def test_wrong_template_is_caught(self):
         """C's % truncates; a card that used it for MOD must fail the matrix on negative operands."""
         ctx = model_ctx()

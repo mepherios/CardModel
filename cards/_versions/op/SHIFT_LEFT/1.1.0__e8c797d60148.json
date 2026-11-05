@@ -1,0 +1,113 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "((int64_t)((uint64_t)({0}) << ({1})))",
+    "c_like": "({0} << {1})",
+    "lean": "UNSUPPORTED",
+    "lua": "({0} << {1})",
+    "python": "({0} << {1})",
+    "ruby": "({0} << {1})"
+  },
+  "forms": [
+    {
+      "code": "lambda x, k: x << k",
+      "cost": 1.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda x, k: x * (1 << k)",
+      "cost": 3.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "mul_pow2",
+      "notes": "x * 2^k; inverse of the CONST_MUL_POW2 rewrite",
+      "runnable": true
+    }
+  ],
+  "hints": {
+    "c": {
+      "notes": "shift count >= bit_width is UB",
+      "snippet": "x << k"
+    },
+    "go": {
+      "snippet": "x << k"
+    },
+    "js": {
+      "notes": "operates on 32-bit signed",
+      "snippet": "x << k"
+    },
+    "python": {
+      "snippet": "x << k"
+    },
+    "rust": {
+      "snippet": "x.wrapping_shl(k)"
+    }
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000,
+            1000
+          ]
+        },
+        {
+          "int": [
+            0,
+            40
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a << b",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "binop": [
+        "LShift"
+      ]
+    }
+  },
+  "metadata": {
+    "hub_description": "x 2^k, cheap",
+    "previous_content_hash": "9d3ac6457ec61b35db770ae8f7be95c34daeab6c040a28c9f283691bd2de62d0",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "SHIFT_LEFT",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "x << k",
+  "tier": 0,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "mul_pow2": {
+        "checks": 53,
+        "domain": "int",
+        "status": "pass"
+      }
+    }
+  }
+}

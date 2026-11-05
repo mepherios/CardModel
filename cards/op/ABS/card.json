@@ -102,6 +102,34 @@
       [
         "float",
         "float"
+      ],
+      [
+        "u8",
+        "u8"
+      ],
+      [
+        "u16",
+        "u16"
+      ],
+      [
+        "u32",
+        "u32"
+      ],
+      [
+        "i8",
+        "i8"
+      ],
+      [
+        "i16",
+        "i16"
+      ],
+      [
+        "i32",
+        "i32"
+      ],
+      [
+        "f32",
+        "f32"
       ]
     ]
   },
@@ -113,8 +141,8 @@
     }
   },
   "metadata": {
-    "previous_content_hash": "af2fce6d1360038dad20294b362104e2e00e9d519eea78714a4a8715f3509507",
-    "version": "1.1.0",
+    "previous_content_hash": "b1a7329447ca30da6803b8275a0200db061d435bf7890073ed75efe98d40bc12",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "ABS",

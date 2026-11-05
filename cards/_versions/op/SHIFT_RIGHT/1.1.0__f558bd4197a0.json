@@ -1,0 +1,114 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "domain_generators": {
+    "nonneg_int": [
+      {
+        "int": [
+          0,
+          1000000000
+        ]
+      },
+      {
+        "int": [
+          0,
+          40
+        ]
+      }
+    ]
+  },
+  "emit": {
+    "c_like": "({0} >> {1})",
+    "lean": "UNSUPPORTED",
+    "lua": "({0} // (1 << {1}))",
+    "python": "({0} >> {1})",
+    "ruby": "({0} >> {1})"
+  },
+  "forms": [
+    {
+      "code": "lambda x, k: x >> k",
+      "cost": 1.0,
+      "domain": "int",
+      "lang": "python",
+      "name": "native",
+      "runnable": true
+    },
+    {
+      "code": "lambda x, k: x // (1 << k)",
+      "cost": 4.0,
+      "domain": "int",
+      "hub_domain": "nonneg_int",
+      "lang": "python",
+      "name": "floordiv",
+      "notes": "the hub said 'only equal for x >= 0'; floor division by 2**k equals the arithmetic shift for every Python int, which the witness checks on negative x too",
+      "runnable": true
+    }
+  ],
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "int": [
+        {
+          "int": [
+            -1000000000,
+            1000000000
+          ]
+        },
+        {
+          "int": [
+            0,
+            40
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a >> b",
+    "types": [
+      [
+        "int",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "match": {
+    "python": {
+      "binop": [
+        "RShift"
+      ]
+    }
+  },
+  "metadata": {
+    "previous_content_hash": "7e21c934a3268e827a7ab73a0d3fd389270d7438b0452c0226c5e6f8b4520f9d",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "SHIFT_RIGHT",
+  "provenance": {
+    "files": [
+      "config/card_redefinitions.py",
+      "config/card_catalog.py",
+      "config/language_hints.py"
+    ],
+    "origin": "cardmodel bootstrap",
+    "read_on": "2026-10-21",
+    "tool": "tools/bootstrap.py"
+  },
+  "statement": "x >> k (arithmetic: rounds toward -inf)",
+  "tier": 0,
+  "verification": {
+    "date": "2026-10-21",
+    "forms": {
+      "floordiv": {
+        "checks": 53,
+        "domain": "int",
+        "hub_claim": {
+          "checks": 51,
+          "domain": "nonneg_int",
+          "status": "pass"
+        },
+        "status": "pass"
+      }
+    }
+  }
+}

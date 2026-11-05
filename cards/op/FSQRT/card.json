@@ -17,6 +17,14 @@
   "ir": {
     "arity": 1,
     "domain": {
+      "f32": [
+        {
+          "float": [
+            0.0,
+            1000.0
+          ]
+        }
+      ],
       "float": [
         {
           "float": [
@@ -31,11 +39,17 @@
       [
         "float",
         "float"
+      ],
+      [
+        "f32",
+        "f32"
       ]
     ]
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "b268c971e239e1a765aa33fcea99ca15c01c15c69c041681268300d3b00e689f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "FSQRT",
   "provenance": {
