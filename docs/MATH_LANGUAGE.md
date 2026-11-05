@@ -46,6 +46,9 @@ test dot([1.0, 2.0], [3.0, 4.0]) = 11.0              -- literals; list_new(n, v)
 [examples/transformer/transformer.math](../examples/transformer/transformer.math) writes matmul, softmax, layernorm,
 GELU and the rest this way.
 
+A list parameter needs a signature (`s : [ℤ] → ℤ`): without one every parameter is read as ℤ, and
+`len(xs)` or `xs[i]` is rejected with a message that names the signature to add.
+
 LaTeX works too, and can be mixed with Unicode: `\frac{a}{b}`, `\sqrt{x}`, `\cdot`, `\le`, `\sum_{i=1}^{n}`,
 `\lfloor … \rfloor`, `\begin{cases} 1 & n = 0 \\ n \cdot q(n-1) & \text{otherwise} \end{cases}`,
 `\operatorname{name}`, `\mathbb{N}`, `\bmod`, `\pi`. The emitter's own LaTeX output reads back exactly.

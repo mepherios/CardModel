@@ -938,6 +938,20 @@ class _FnLower:
         return None
 
     # -- typing helpers
+    def untyped_hint(self, irs: list) -> str:
+        """When a rejected operand is a parameter typed only by default (no signature), say how to type it."""
+        if self.low.mod.signatures.get(self.name):
+            return ""
+        inv = {v: k for k, v in self.pid.items()}
+        for ir in irs:
+            if isinstance(ir, list) and len(ir) == 2 and ir[0] == "var" and ir[1] in self.ptypes \
+                    and self.types.get(ir[1]) == self.ptypes[ir[1]]:
+                n = len(self.params)
+                sig = " × ".join("[ℤ]" if p == inv[ir[1]] else "ℤ" for p in self.params) if n else "[ℤ]"
+                return (f"; {inv[ir[1]]} has no signature, so it is read as ℤ. A list parameter needs a signature"
+                        f" line before the definition, e.g. `{self.name} : {sig} → ℤ` (or [ℝ] for a list of reals)")
+        return ""
+
     def apply(self, op: str, args: list, line=None) -> tuple[list, str]:
         """``[op, *args]`` with int->float promotion where only a float signature accepts the arguments."""
         spec: OpSpec | None = self.low.ops.get(op)
@@ -949,7 +963,8 @@ class _FnLower:
             want = spec.promoted(ts) or (["float"] * len(ts) if all(t in ("int", "float") for t in ts) and
                                          spec.result_type(["float"] * len(ts)) else None)
             if want is None:
-                raise MathError(f"{op.lower()} does not apply to ({', '.join(TYPE_SYMBOL[t] for t in ts)})", line)
+                raise MathError(f"{op.lower()} does not apply to ({', '.join(TYPE_SYMBOL[t] for t in ts)})"
+                                + self.untyped_hint([e for e, _ in args]), line)
             args = [((["float", float(e[1])] if e[0] == "int" else ["TO_FLOAT", e]), "float")
                     if t == "int" and w == "float" else (e, t) for (e, t), w in zip(args, want)]
             ts = want
@@ -1117,14 +1132,15 @@ class _FnLower:
             sa, a, ta = self.expr(e[1], line)
             si, i, ti = self.expr(e[2], line)
             if elem_type(ta) is None:
-                raise MathError(f"indexing a {TYPE_SYMBOL[ta]} (only lists have elements)", line)
+                raise MathError(f"indexing a {TYPE_SYMBOL[ta]} (only lists have elements)" + self.untyped_hint([a]),
+                                line)
             if ti != "int":
                 raise MathError(f"a list index must be ℤ, found {TYPE_SYMBOL[ti]}", line)
             return sa + si, ["GET", a, i], elem_type(ta)
         if k == "update":                        # a new list: a copy with one element replaced
             sa, a, ta = self.expr(e[1], line)
             if elem_type(ta) is None:
-                raise MathError(f"updating an element of a {TYPE_SYMBOL[ta]}", line)
+                raise MathError(f"updating an element of a {TYPE_SYMBOL[ta]}" + self.untyped_hint([a]), line)
             tmp = self.fresh("upd", ta)
             return sa + [{"k": "assign", "target": tmp, "value": ["LIST_COPY", a]}] + \
                 self.set_elem(tmp, e[2], e[3], line), ["var", tmp], ta
