@@ -11,7 +11,10 @@ in range; a card may add a ``filter`` lambda (rejection sampling).
 
 Comparison: ints and bools exactly (and never equal to each other), floats
 with ``math.isclose(rel_tol=1e-12, abs_tol=1e-12)`` with NaN equal to NaN,
-bytes/lists/dicts structurally.
+bytes/lists/dicts structurally. ``signed_zero=True`` also tells -0.0 from +0.0
+when both sides are zero (they differ observably: 1/x, atan2, copysign); the op
+x language matrix compares that way, so a target that drops the sign of a zero
+(Go's constant -0.0 is +0) fails a cell instead of passing unnoticed.
 """
 from __future__ import annotations
 
@@ -106,7 +109,7 @@ def inputs(gens: list[dict], n: int, rng: random.Random, filt=None, edge: bool =
     return out
 
 
-def same(a, b) -> bool:
+def same(a, b, signed_zero: bool = False) -> bool:
     if isinstance(a, bool) or isinstance(b, bool):
         return isinstance(a, bool) and isinstance(b, bool) and a == b
     if type(a) is int and isinstance(b, float):
@@ -117,11 +120,13 @@ def same(a, b) -> bool:
         a, b = float(a), float(b)
         if math.isnan(a) or math.isnan(b):
             return math.isnan(a) and math.isnan(b)
+        if signed_zero and a == 0 and b == 0:
+            return math.copysign(1.0, a) == math.copysign(1.0, b)
         return math.isclose(a, b, rel_tol=REL_TOL, abs_tol=REL_TOL)
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
-        return len(a) == len(b) and all(same(x, y) for x, y in zip(a, b))
+        return len(a) == len(b) and all(same(x, y, signed_zero) for x, y in zip(a, b))
     if isinstance(a, dict) and isinstance(b, dict):
-        return a.keys() == b.keys() and all(same(a[k], b[k]) for k in a)
+        return a.keys() == b.keys() and all(same(a[k], b[k], signed_zero) for k in a)
     return a == b
 
 

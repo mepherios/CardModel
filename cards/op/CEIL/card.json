@@ -7,9 +7,9 @@
     "java": "Math.ceil({0})",
     "javascript": "Math.ceil({0})",
     "lean": "UNSUPPORTED",
-    "lua": "(math.ceil({0}) + 0.0)",
-    "python": "float(math.ceil({0}))",
-    "ruby": "(({0}).ceil.to_f)",
+    "lua": "(math.abs(math.ceil({0}) + 0.0) * (1 / ({0}) < 0 and -1.0 or 1.0))",
+    "python": "math.copysign(float(math.ceil({0})), {0})",
+    "ruby": "(({0}).ceil.to_f.abs * (1.0 / ({0}) < 0 ? -1.0 : 1.0))",
     "rust": "(({0}).ceil())",
     "swift": "ceil({0})"
   },
@@ -26,7 +26,7 @@
         }
       ]
     },
-    "eval": "lambda a: float(math.ceil(a))",
+    "eval": "lambda a: math.copysign(float(math.ceil(a)), a)",
     "types": [
       [
         "float",
@@ -35,7 +35,9 @@
     ]
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "572d9788b7e5aa5dda36a7fc0ee421c7d8ae3471a6ad6b99fbd620059b840ae6",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "CEIL",
   "provenance": {
