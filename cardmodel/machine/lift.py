@@ -60,7 +60,7 @@ REGS = ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC")
 ENDS = ("jump", "call", "ret")                 # groups that end a block
 EXCLUDED = {0x76, 0x10, 0xFB}                  # HALT, STOP, EI: each a block of its own (one instruction)
 STOP = 0x10                                    # one opcode byte, and it skips the next byte (PC + 2)
-LIFTER = 7                                     # the lifted blocks' shape (in the cache key)
+LIFTER = 8                                     # the lifted blocks' shape (in the cache key)
 PART_STATEMENTS = 120000                       # at most this many IR statements in one compile unit
 RAM_LIFTED = ((0xC000, 0xFE00), (0xFF80, 0xFFFF))   # work RAM and its echo, HRAM (not video or cartridge RAM)
 RAM_BASE = 0xC000                              # the RAM profile's first address (32 bytes, 256 bits, per address)
@@ -649,21 +649,91 @@ class Lifter:
         return self.fold_block(ins, dict(consts), locals_)
 
     # ---- sorted canonical forms of the register assignments ----
-    def sort_registers(self, body: list) -> list:
-        """Each assignment to a register canonicalized by the e-graph under the sorted laws, as symbolic.distill
-        does: the registers at their widths, every byte read a u8 (its read stays one call, in place). So ``x & 255``
-        on a u8 register folds away through ``wrapu8_of_u8``; a term is kept unless its canonical form is cheaper,
-        reads each byte exactly once and uses no op the term did not (the emitters know it)."""
+    def sort_registers(self, body: list, locals_: dict | None = None) -> list:
+        """Each assignment canonicalized by the e-graph under the sorted laws, as symbolic.distill does: the registers
+        at their widths, every byte read a u8 (its read stays one call, in place), and each block local at the sort
+        local_sorts infers for it. So ``x & 255`` on a u8 register or a u8 local folds away through ``wrapu8_of_u8``;
+        a term is kept unless its canonical form is cheaper, reads each byte exactly once and uses no op the term
+        did not (the emitters know it). The arguments of an effect call (``do``) are canonicalized the same way."""
+        if locals_ is not None:
+            self._local_sorts = self.local_sorts(body, locals_)
         out = []
         for s in body:
             s = dict(s)
-            if s["k"] == "assign" and s["target"] in self.reg_sorts:
-                s["value"] = self.sorted_canonical(s["value"])
+            if s["k"] in ("assign", "do") and isinstance(s.get("value"), list):
+                s["value"] = self._canon_args(s["value"])
             for key in ("then", "else"):
                 if key in s:
                     s[key] = self.sort_registers(s[key])
             out.append(s)
+        if locals_ is not None:
+            self._local_sorts = {}
         return out
+
+    def _canon_args(self, e):
+        if isinstance(e, list) and e and e[0] == "CALL" and e[1] not in READS:
+            return [e[0], e[1], *[self._canon_args(a) for a in e[2:]]]
+        return self.sorted_canonical(e)
+
+    def sort_of(self, e, sorts: dict):
+        """The sort of a term with every byte read a u8 (an other call: unknown)."""
+        if not isinstance(e, list) or not e:
+            return None
+        if e[0] == "CALL":
+            return "u8" if e[1] in READS else None
+        if e[0] in LEAVES or e[0] == "LOAD":
+            return S.term_sort(e, sorts, self.ops) if e[0] in ("var", "int") else None
+        got = S.term_sort(self._abstract_reads(e), {**sorts, "rd_": "u8"}, self.ops)
+        if S.sort_name(got) in ("u8", "u16"):
+            return got
+        # the ops' ranks give int at the subsorts; their value ranges do not leave them: x & m in [0, m] for any
+        # int x and literal m >= 0, x >> k and x | y, x ^ y, x & y within the wider of their arguments' ranges
+        rank = {"u8": 0, "u16": 1}
+        if e[0] == "BIT_AND":
+            lits = [a[1] for a in e[1:] if isinstance(a, list) and a[:1] == ["int"] and isinstance(a[1], int)]
+            if any(0 <= m <= 255 for m in lits):
+                return "u8"
+            if any(0 <= m <= 65535 for m in lits):
+                return "u16"
+        if e[0] == "SHIFT_RIGHT" and isinstance(e[2], list) and e[2][:1] == ["int"] and e[2][1] >= 0:
+            return self.sort_of(e[1], sorts)
+        if e[0] in ("BIT_AND", "BIT_OR", "BIT_XOR") and len(e) == 3:
+            ss = [S.sort_name(self.sort_of(a, sorts)) for a in e[1:]]
+            if all(x in rank for x in ss):
+                return max(ss, key=rank.get)
+        return got
+
+    def _abstract_reads(self, e):
+        if not isinstance(e, list) or not e or e[0] in LEAVES:
+            return e
+        if e[0] == "CALL":
+            return ["var", "rd_"] if e[1] in READS else ["CALL", "?"]
+        return [e[0], *[self._abstract_reads(a) for a in e[1:]]]
+
+    def local_sorts(self, body: list, locals_: dict) -> dict:
+        """The block locals' sorts, propagated through the block's assignments: a local all of whose definitions
+        are u8-sorted terms (a register, a byte read, a term the sorts type u8) is a u8, likewise u16; a local with
+        any definition of sort int (or unknown), or that is not a block local, has no sort. A fixed point from no
+        sorts, so a sort is only ever given on the evidence of every definition (FOUNDATIONS.md A3)."""
+        defs: dict = {}
+        for s in _stmts(body):
+            if s["k"] == "assign":
+                defs.setdefault(s["target"], []).append(s.get("value"))
+            elif "target" in s or s["k"] in ("for_range",):
+                defs.setdefault(s.get("target") or s.get("var"), []).append(None)
+        cands = {v: d for v, d in defs.items() if v in locals_ and v not in self.reg_sorts and v not in self.gnames}
+        got: dict = {}
+        for _ in range(len(cands) + 1):
+            sorts = {**self.reg_sorts, **got}
+            new = {}
+            for v, ds in cands.items():
+                ss = {S.sort_name(self.sort_of(d, sorts)) if d is not None else None for d in ds}
+                if ss and ss <= {"u8", "u16"}:
+                    new[v] = "u16" if "u16" in ss else "u8"
+            if new == got:
+                return got
+            got = new
+        return {}
 
     def sorted_canonical(self, t):
         if not isinstance(t, list) or t[0] in LEAVES:
@@ -691,7 +761,7 @@ class Lifter:
             return t
         if len(reads) > 1:                      # the e-graph could reorder two reads
             return t
-        sorts = {**self.reg_sorts, **{v: "u8" for v in reads}}
+        sorts = {**self.reg_sorts, **getattr(self, "_local_sorts", {}), **{v: "u8" for v in reads}}
         before = E.canonical(a, self._rules, self._costs, sorts, self.ops, max_iter=0, max_nodes=1500)
         r = E.canonical(a, self._rules, self._costs, sorts, self.ops, max_iter=5, max_nodes=1500)
         new = r["term"]
@@ -708,7 +778,7 @@ class Lifter:
         body = self.fold_block(body, {}, locals_)
         if cache_regs:
             body = self.cache_registers(body, locals_)
-        body = self.sort_registers(body)
+        body = self.sort_registers(body, locals_)
         self._locals = set(locals_)
         self._exit_live = set()
         body, _ = self.dce(body, set())
@@ -802,7 +872,7 @@ class Lifter:
         if addr < 0xFF80:
             body = [{"k": "if", "cond": ["CMP_NE", ["var", "dma_active"], ["int", 0]],
                      "then": [{"k": "return", "value": ["int", 0]}], "else": []}] + body
-        body = self.sort_registers(self.fold_block(body, {}, locals_))
+        body = self.sort_registers(self.fold_block(body, {}, locals_), locals_)
         self._locals = set(locals_)
         self._exit_live = set()
         body, _ = self.dce(body, set())
