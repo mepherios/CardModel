@@ -91,6 +91,9 @@ class Physics(unittest.TestCase):
                 self.assertTrue(probs and probs[0].startswith("ADD:"), probs)
         self.assertEqual(D.of(["MUL", ["quantity/mass"], ["int", 2]], {}, model), Counter({"quantity/mass": 1}))
         self.assertEqual(D.of(["FSQRT", ["quantity/time"]], {}, model), Counter({"quantity/time": Fraction(1, 2)}))
+        for d in (Counter({"quantity/length": 1, "quantity/time": -2}), Counter({"quantity/mass": 3}),
+                  Counter({"quantity/length": Fraction(1, 2)}), Counter()):      # halving via G.scale: same answer as before
+            self.assertEqual(D._norm(G.scale(d, Fraction(1, 2))), D._norm(Counter({k: Fraction(e, 2) for k, e in d.items()})))
         probs = []
         self.assertIsNone(D.of(["EXP", ["quantity/time"]], {}, model, probs))
         self.assertIn("EXP needs dimensionless", probs[0])
