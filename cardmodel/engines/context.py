@@ -9,7 +9,7 @@ from pathlib import Path
 from ..kernel import paths
 from ..kernel.store import Store, default_store
 from . import probes
-from .codegen import language_gap, resolve_language
+from .codegen import carry_map, map_gap, resolve_language
 from .ir import op_table
 
 
@@ -37,12 +37,20 @@ class Ctx:
                 out.append(card.name)
         return sorted(out, key=lambda n: (self.store.get(f"language/{n}").get("tier", 1), n))
 
+    def carry_map(self, lang: str) -> dict[str, dict[str, str | None]]:
+        """The language as a carry map on the atoms at every rank (codegen.carry_map), computed once per language:
+        conformance reads its gap cells from it, translate and matrix refuse a term from its content before trying
+        to emit it."""
+        cache = self.__dict__.setdefault("_carry_maps", {})
+        if lang not in cache:
+            cache[lang] = carry_map(self.store, self.ops, lang)
+        return cache[lang]
+
     def language_gap(self, lang: str) -> set[str]:
-        """The atoms ``lang`` has no emit template for at any rank (codegen.language_gap), computed once per
-        language: translate and matrix refuse a term from its content before trying to emit it."""
+        """The atoms ``lang`` has no emit template for (codegen.map_gap of its carry map)."""
         cache = self.__dict__.setdefault("_language_gaps", {})
         if lang not in cache:
-            cache[lang] = language_gap(self.store, self.ops, lang)
+            cache[lang] = map_gap(self.carry_map(lang))
         return cache[lang]
 
     def available(self, lang: str) -> tuple[bool, str]:

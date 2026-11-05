@@ -30,7 +30,7 @@ from ..kernel import resources
 
 from . import godel as G
 from . import values as V
-from .codegen import EmitGap, Emitter, emit_module, predicted_gap, ranked_content
+from .codegen import EmitGap, Emitter, emission_content, emit_module, predicted_gap, ranked_content
 from .context import Ctx
 from .frontend_python import Lifted, lift_source, module_for
 from .ir import Interpreter, StepLimit, elem_type
@@ -211,10 +211,10 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
         [{"name": f"{lang}_source", "lang": lang, "entry": name, "cost": 1.0, "runnable": True, "original": True,
           "code": ref_src, "notes": "the observed original (witnessed by frontends.witness_source)"}]
     st = structure(ctx, module)                     # identity, content and ranks: the same record on every builder
-    ranked = st["godel"]["ranks"]
+    needed = emission_content(ctx.ops, module)      # the ranks plus the wrap of every fixed-width store
     gaps, predicted = {}, {}
     for lang in ctx.codegen_languages():
-        missing = predicted_gap(ranked, ctx.language_gap(lang)) if PREDICT_GAPS else []
+        missing = predicted_gap(needed, ctx.language_gap(lang)) if PREDICT_GAPS else []
         if missing:                        # known from the content: the language has no template for these atoms
             predicted[lang] = missing
             gaps[lang] = f"{lang}: no template for {', '.join(missing)} (predicted from the content)"
@@ -249,7 +249,7 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
     seed = V.fresh_seed() if seed is None else seed
     module = card["ir"]
     entry = module["entry"]
-    ranked = ranked_content(ctx.ops, module)        # the same content at rank level: a gap at one rank is seen too
+    needed = emission_content(ctx.ops, module)      # the content at rank level, with the wrap of fixed-width stores
     ref_form = next((f for f in card["forms"] if f["name"] == "python_source"), None)
     if ref_form is None:                      # card-language functions: the IR itself is the reference
         interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
@@ -282,7 +282,7 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
         skipped = len(rows) - len(usable)
         if not usable:
             return lang, {"status": "no_inputs", "out_of_width": skipped}
-        missing = predicted_gap(ranked, ctx.language_gap(lang)) if PREDICT_GAPS else []
+        missing = predicted_gap(needed, ctx.language_gap(lang)) if PREDICT_GAPS else []
         if missing:
             return lang, {"status": "gap", "reason": f"{lang}: no template for {', '.join(missing)} (predicted "
                                                      f"from the content)"}
