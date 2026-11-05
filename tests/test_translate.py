@@ -50,7 +50,7 @@ def tri(n: int) -> int:
 def mean3(a: float, b: float, c: float) -> float:
     return (a + b + c) / 3
 
-def uses_list(xs: list) -> int:
+def uses_list(xs: dict) -> int:
     return len(xs)
 
 def calls_bad(n: int) -> int:
@@ -71,7 +71,7 @@ class Lift(unittest.TestCase):
     def test_unsupported_is_reported_precisely(self):
         lf = self.lifted["uses_list"]
         self.assertFalse(lf.ok)
-        self.assertIn("type annotation 'list'", lf.reasons[0])
+        self.assertIn("type annotation 'dict'", lf.reasons[0])
         self.assertIn("line", lf.reasons[0])
         self.assertFalse(self.lifted["calls_bad"].ok)       # closure: calls a function that did not lift
 

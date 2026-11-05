@@ -83,7 +83,27 @@ def _ann_type(node) -> str | None:
     if isinstance(node, ast.Subscript) and ast.unparse(node.value) in ("list", "List", "typing.List") and \
             isinstance(node.slice, ast.Name) and node.slice.id in ("int", "float"):
         return f"list[{node.slice.id}]"
+    if _is_bare_list(node):
+        raise Unsupported(f"type annotation {ast.unparse(node)!r} (element type not inferred from the body: "
+                          f"annotate as list[int] or list[float])", node)
     raise Unsupported(f"type annotation {ast.unparse(node)!r} (only int/float/bool, list[int], list[float])", node)
+
+
+BARE_LISTS = ("list", "List", "typing.List")
+
+
+def _is_bare_list(node) -> bool:
+    """A bare ``list`` annotation (no element type): the lifter infers the element from the body (_infer_bare)."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value.strip() in BARE_LISTS
+    return isinstance(node, (ast.Name, ast.Attribute)) and ast.unparse(node) in BARE_LISTS
+
+
+def _param_ann(arg, hint: dict | None) -> str | None:
+    """A parameter's annotated type; a bare ``list`` takes the element type ``hint`` gives it (inference)."""
+    if _is_bare_list(arg.annotation) and (hint or {}).get(arg.arg) in ("list[int]", "list[float]"):
+        return hint[arg.arg]
+    return _ann_type(arg.annotation)
 
 
 def _literal(v):
@@ -209,7 +229,7 @@ class _FnLifter:
             raise Unsupported("async def", f)
         params = []
         for arg in a.args:
-            t = _ann_type(arg.annotation) or self.hint.get(arg.arg)
+            t = _param_ann(arg, self.hint) or self.hint.get(arg.arg)
             if t is None and arg.arg in defaults:
                 t = _lit_type(_default_value(defaults[arg.arg], self.consts))
             if t is None:
@@ -759,7 +779,7 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
             a = f.args
             defaults = {x.arg: _default_value(d, consts)
                         for x, d in zip(a.args[len(a.args) - len(a.defaults):], a.defaults)}
-            ptypes = [(_ann_type(x.annotation) or (param_hints or {}).get(f.name, {}).get(x.arg)
+            ptypes = [(_param_ann(x, (param_hints or {}).get(f.name)) or (param_hints or {}).get(f.name, {}).get(x.arg)
                        or _lit_type(defaults.get(x.arg)) or "int") for x in a.args]
             sigs[f.name] = {"params": ptypes, "returns": _ann_type(f.returns), "names": [x.arg for x in a.args],
                             "defaults": {k: v for k, v in defaults.items() if v is not None},
@@ -771,7 +791,19 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
         "".join(f"{k} = {v!r}\n" for k, v in consts.items())
     for f in fdefs:
         src = "\n".join(lines[f.lineno - 1 - len(f.decorator_list): f.end_lineno])
-        lifter = _FnLifter(f, ops, sigs, (param_hints or {}).get(f.name), consts, externs)
+        hint = (param_hints or {}).get(f.name)
+        bare = [x.arg for x in f.args.args if _is_bare_list(x.annotation) and (hint or {}).get(x.arg) is None]
+        if bare:
+            got = _infer_bare(f, bare, ops, sigs, hint, consts, externs, src, preamble, results)
+            if isinstance(got, str):
+                results[f.name] = Lifted(f.name, False, None, src, [got], False, f.lineno, preamble)
+                continue
+            if got is not None:
+                lf, hint = got
+                sigs[f.name] = _sig_with(sigs.get(f.name), f, hint, consts)
+                results[f.name] = lf
+                continue
+        lifter = _FnLifter(f, ops, sigs, hint, consts, externs)
         try:
             ir = lifter.lift()
             sigs[f.name]["returns"] = ir["returns"]
@@ -782,6 +814,86 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
         external = {e["qual"] for e in (externs or {}).values()}
         close_calls(results, lambda c: c in external, sigs)
     return [lf for lf in results.values() if not only or lf.name in only]
+
+
+def _sig_with(sig: dict | None, f, hint: dict, consts: dict) -> dict:
+    """The call signature of ``f`` once its bare ``list`` parameters have inferred element types."""
+    a = f.args
+    defaults = {x.arg: _default_value(d, consts) for x, d in zip(a.args[len(a.args) - len(a.defaults):], a.defaults)}
+    ptypes = [(_param_ann(x, hint) or hint.get(x.arg) or _lit_type(defaults.get(x.arg)) or "int") for x in a.args]
+    return {**(sig or {}), "params": ptypes, "names": [x.arg for x in a.args],
+            "defaults": {k: v for k, v in defaults.items() if v is not None},
+            "typed": False, "returns": (sig or {}).get("returns")}
+
+
+def _infer_bare(f, bare: list[str], ops, sigs, hint, consts, externs, src, preamble, results):
+    """Element types for bare ``list`` parameters, inferred from the body as unannotated parameters are: each
+    candidate (list[int] first, then list[float]) is lifted and witnessed against the source itself on seeded
+    inputs; the first whose lift agrees with Python on every input that runs is kept, and the lift is marked
+    ``inferred_types``. When no candidate lifts and witnesses, the reason (annotate it), naming why."""
+    import itertools
+    why: list[str] = []
+    for combo in itertools.product(("list[int]", "list[float]"), repeat=len(bare)):
+        h = {**(hint or {}), **dict(zip(bare, combo))}
+        sigs2 = {**sigs, f.name: _sig_with(sigs.get(f.name), f, h, consts)}
+        lifter = _FnLifter(f, ops, sigs2, h, consts, externs)
+        label = ", ".join(f"{b}: {t}" for b, t in zip(bare, combo))
+        try:
+            ir = lifter.lift()
+        except Unsupported as exc:
+            why.append(f"as {label}: {exc.what}")
+            continue
+        if _witness_bare(f.name, ir, src, preamble, results, ops):
+            sigs2[f.name]["returns"] = ir["returns"]
+            return Lifted(f.name, True, ir, src, [], True, f.lineno, preamble), h
+        why.append(f"as {label}: the lift does not agree with the source on its inputs")
+    args = [x for x in f.args.args if x.arg in bare]
+    return (f"line {args[0].lineno}: type annotation {ast.unparse(args[0].annotation)!r} (element type not inferred "
+            f"from the body; {'; '.join(why[:2])}): annotate as list[int] or list[float]")
+
+
+def _witness_bare(name: str, ir: dict, src: str, preamble: str, results: dict, ops, n: int = 24) -> bool:
+    """The candidate lift runs like the source: equal results on every seeded input the source accepts (and at
+    least a few accepted), with callees taken from functions already lifted."""
+    import random
+    from . import values as V
+    from .ir import Interpreter
+    from .translate import _gen_for
+    funcs, srcs, need = [ir], [src], [c for c in callees_of(ir) if c != name]
+    seen = {name}
+    while need:
+        c = need.pop()
+        if c in seen:
+            continue
+        seen.add(c)
+        lf = results.get(c)
+        if lf is None or not lf.ok:
+            return False
+        funcs.append(lf.ir)
+        srcs.append(lf.source)
+        need.extend(callees_of(lf.ir))
+    ns: dict = {"__name__": "cardmodel_infer"}
+    try:
+        exec(compile("import math\nfrom math import gcd\n" + preamble + "\n" + "\n\n".join(srcs), "<infer>", "exec"),
+             ns)  # noqa: S102 -- the user's own source, being observed
+    except Exception:  # noqa: BLE001
+        return False
+    ref = ns.get(name)
+    gens = [_gen_for(p["name"], p["type"], 1) for p in ir["params"]]
+    agreed = 0
+    for args in V.inputs(gens, n, random.Random(0)):
+        try:
+            want = ref(*[list(a) if isinstance(a, list) else a for a in args])
+        except Exception:  # noqa: BLE001 -- outside the source's domain
+            continue
+        try:
+            got = Interpreter({"entry": name, "functions": funcs}, ops, step_limit=200_000).call(name, list(args))
+        except Exception:  # noqa: BLE001
+            return False
+        if not V.same(got, want):
+            return False
+        agreed += 1
+    return agreed >= 3
 
 
 def _declared(f, param_hints: dict | None, defaults: dict) -> bool:
