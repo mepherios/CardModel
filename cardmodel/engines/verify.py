@@ -282,7 +282,9 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         samples: int = 48, record: bool = False, save: bool = True) -> dict:
     seed = V.fresh_seed() if seed is None else seed
     only = list(only or SECTIONS)
-    report = {"seed": seed, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "sections": {}}
+    from .environment import card_name
+    report = {"seed": seed, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+              "env": card_name(), "sections": {}}
     timings = {}
     for sec in SECTIONS:
         if sec not in only:

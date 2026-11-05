@@ -84,5 +84,49 @@ class EnvironmentTest(unittest.TestCase):
         self.assertFalse(E._stale({"measured_at": "2026-11-01"}, today))
 
 
+    def test_metric_host_block_names_the_environment(self):
+        from cardmodel.engines import optimize
+        h = optimize.host()
+        self.assertEqual(h["env"], f"env_{E.fingerprint(E.static())}")
+        self.assertEqual(h["env"], E.card_name())
+
+
+class BudgetsTest(unittest.TestCase):
+    def _run(self, home, extra=""):
+        import os
+        import subprocess
+        import sys
+        env = dict(os.environ, CARDMODEL_HOME=str(home), PYTHONPATH=str(ROOT))
+        env.pop("CARDMODEL_CPU_WORKERS", None)
+        code = ("import json; from cardmodel.kernel import resources as R; from cardmodel.engines import environment as E\n"
+                + extra + "print(json.dumps(R.budgets()))")
+        out = subprocess.run([sys.executable, "-B", "-c", code], capture_output=True, text=True, env=env, timeout=60)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        import json
+        return json.loads(out.stdout.strip().splitlines()[-1])
+
+    def test_budgets_without_a_card_come_from_the_os(self):
+        import tempfile
+        b = self._run(tempfile.mkdtemp(prefix="cardmodel_envhome_"))
+        self.assertEqual(b["source"], "os")
+        self.assertGreaterEqual(b["cpu_workers"], 1)
+        self.assertGreaterEqual(b["compile_slots"], 1)
+        self.assertIsNone(b["copy_gb_s"])
+
+    def test_budgets_read_the_environment_card(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        home = Path(tempfile.mkdtemp(prefix="cardmodel_envhome_"))
+        card = E.build_card(measured={"chase": CURVE, "copy_gb_s": 9.5}, today="2026-11-05")
+        card["capabilities"]["cores_physical"] = {"value": 3, "evidence": "declared"}
+        d = home / "state" / "local" / "cards" / "environment" / card["name"]
+        d.mkdir(parents=True)
+        (d / "card.json").write_text(json.dumps(card), encoding="utf-8")
+        b = self._run(home)
+        self.assertEqual((b["source"], b["cpu_workers"], b["copy_gb_s"], b["memory_ns"]),
+                         (card["name"], 3, 9.5, 130.0))
+
+
 if __name__ == "__main__":
     unittest.main()
