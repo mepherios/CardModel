@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "scale_peak_memory_mb",
+  "name": "G_A12_scale_memory_bound",
+  "provenance": {
+    "origin": "docs/SCALING.md §6 (proposed goal: memory bound)",
+    "tool": "cardmodel scale bench"
+  },
+  "statement": "Peak memory in MB of the child process that measured the largest size of the newest `cardmodel scale bench --record` (SCALING.md §6: at most 2 GiB at 10^6 functions).",
+  "target": 2048,
+  "tier": 0
+}

@@ -37,8 +37,7 @@ BUILD_BITS = 1 << 16
 ALPHABET = "0123456789 ()vc-"
 
 
-def _zig(v: int) -> int:
-    return 2 * v if v >= 0 else -2 * v - 1
+_zig = G.zig
 
 
 class Reader:
