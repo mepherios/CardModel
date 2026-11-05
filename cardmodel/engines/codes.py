@@ -37,8 +37,6 @@ BUILD_BITS = 1 << 16
 ALPHABET = "0123456789 ()vc-"
 
 
-_zig = G.zig
-
 
 class Reader:
     """Tokens and a tree of one term, over the ledger's index."""
@@ -71,23 +69,25 @@ class Reader:
         return None
 
     def codes(self, node, varnames: list) -> list[int]:
-        """Prefix token codes (Def-27); a tuple node contributes its children only."""
-        out = []
-
-        def walk(n):
-            (kind, *val), kids = n
-            if kind == "atom":
-                out.append(3 * self.index[val[0]]["index"] + 1)
-            elif kind == "int":
-                out.append(3 * _zig(val[0]) + 2)
-            elif kind == "var":
-                if val[0] not in varnames:
-                    varnames.append(val[0])
-                out.append(3 * varnames.index(val[0]) + 3)
-            for k in kids:
-                walk(k)
-        walk(node)
+        """Prefix token codes (Def-27), by the core: ``G.tokens`` over the node's core terms (a tuple node contributes
+        its children only)."""
+        out: list[int] = []
+        for t in core_terms(node):
+            out.extend(G.tokens(t, self.index, varnames))
         return out
+
+
+def core_terms(node) -> list:
+    """The node as the core's terms: an atom node is ``[atom, *args]`` (its tuple children spliced into the
+    arguments, which leaves the prefix order unchanged), a constant ``["int", c]``, a variable ``["var", name]``; a
+    tuple node is the forest of its children."""
+    (kind, *val), kids = node
+    if kind == "int":
+        return [["int", val[0]]]
+    if kind == "var":
+        return [["var", val[0]]]
+    args = [t for k in kids for t in core_terms(k)]
+    return [[val[0], *args]] if kind == "atom" else args
 
 
 def depth(node) -> int:
@@ -112,10 +112,15 @@ def _pair_szudzik(x: int, y: int) -> int:
     return y * y + x if x < y else x * x + x + y
 
 
-def built_positional_bits(codes: list[int]) -> int:
-    """The structural number's bit length, by building it (only for small codes)."""
+def built_positional_bits(node, reader: "Reader") -> int:
+    """The structural number's bit length, by building it with the core (``G.structural``; only for small codes).
+    A tuple node (a theorem's statement list, a rule's two sides) is a forest, not one term; its number is the
+    prime-power code of the concatenated tokens, built from ``G.tokens``' output (the core has no forest form)."""
+    terms = core_terms(node)
+    if len(terms) == 1:
+        return G.structural(terms[0], None, reader.index, max_digits=None)[0].bit_length()
     n = 1
-    for i, c in enumerate(codes, start=1):
+    for i, c in enumerate(reader.codes(node, []), start=1):
         n *= G.nth_prime(i) ** c
     return n.bit_length()
 
@@ -154,14 +159,11 @@ def _prefix_vars(node, out: list) -> list:
 
 
 def _head_code(n, reader: Reader, varnames: list) -> int:
+    """The node's own token (by the core, ``G.tokens`` of its head alone); 0 for a tuple."""
     (kind, *val), _ = n
     if kind == "tuple":
         return 0
-    if kind == "atom":
-        return 3 * reader.index[val[0]]["index"] + 1
-    if kind == "int":
-        return 3 * _zig(val[0]) + 2
-    return 3 * varnames.index(val[0]) + 3
+    return G.tokens(core_terms((n[0], []))[0], reader.index, varnames)[0]
 
 
 def tree_code_bits(node, reader: Reader, pair, varnames: list | None = None) -> tuple[float, bool]:
@@ -221,7 +223,7 @@ def sizes(term, reader: Reader, entries: list[dict]) -> dict | None:
             "cantor_exact": exact_c, "szudzik": szudzik if exact_s else None, "szudzik_exact": exact_s,
             "base_k": base_k_bits(text), "hash": 256.0, "missing_atoms": missing,
             "sha256": hashlib.sha256(text.encode()).hexdigest()[:16], "cantor_estimate": cantor_est,
-            "positional_built": built_positional_bits(codes) if positional_bits(codes) <= BUILD_BITS else None,
+            "positional_built": built_positional_bits(node, reader) if positional_bits(codes) <= BUILD_BITS else None,
             "content_built": built_content_bits(vec, entries) if content_bits(vec, entries) <= BUILD_BITS else None}
 
 
