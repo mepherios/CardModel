@@ -41,8 +41,11 @@ or helper it takes that type. Such lifts are marked `inferred_types`.
 
 `frontends.witness_source` runs the **original** source through its own toolchain on seeded inputs, in a harness
 built from the language card (`frontend_harness`: renaming the source's `main`, Go's package line, Java's class,
-argument casts), and compares each output with the IR interpreter. `translate` prints it as `<lang> source: pass (N
-checks)`. A language with no toolchain on the host reports `unavailable` or `no_harness`, never pass.
+C#'s private statics, argument casts), and compares each output with the IR interpreter. `translate` prints it as
+`<lang> source: pass (N checks)`. A language with no toolchain on the host reports `unavailable` or `no_harness`,
+never pass. With `CARDMODEL_SLOW=1` the test witnesses every language whose toolchain probes available, so a frontend
+language that CI's runner image has (C#, Kotlin and Julia are preinstalled there) needs a `frontend_harness` and a
+`runner`.
 `tests/test_frontends.py` also checks that a wrong lift (C's `/` read as floor division) fails the witness.
 
 ## Measured (Linux cloud container, 2026-11-04)
@@ -83,4 +86,5 @@ reasons are `self.x` (23,968 methods), non-scalar annotations (5,495) and defaul
   values fit the card's `int_bits`.
 * A hand parser covers the IR subset of each language, not the whole grammar. The roadmap's per-language parsers
   (`go/parser`, the JDK tree API, Prism) can replace a dialect later without changing the IR it produces.
-* C#, Kotlin, Zig and Julia have no runner card yet, so their lifts are checked only by the spot values in the tests.
+* C# (`dotnet build`), Kotlin (`kotlinc`, run on `java`) and Julia are runners for the witness only, with no codegen
+  block; Zig has no runner yet, so its lifts are checked only by the spot values in the tests.

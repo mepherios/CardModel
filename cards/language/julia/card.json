@@ -18,6 +18,22 @@
     ".jl"
   ],
   "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v})",
+      "true": "true"
+    },
+    "main": "{calls}",
+    "prelude": "",
+    "print": {
+      "bool": "println(\"b:\", ({e}))",
+      "float": "println(\"f:\", repr(Float64({e})))",
+      "int": "println(\"i:\", ({e}))"
+    }
+  },
+  "int_bits": 64,
   "metadata": {
     "version": "1.0.0"
   },
@@ -32,6 +48,15 @@
   "provenance": {
     "origin": "cardmodel bootstrap",
     "tool": "tools/bootstrap.py"
+  },
+  "runner": {
+    "file": "main.jl",
+    "run": [
+      "{exe}",
+      "--startup-file=no",
+      "--history-file=no",
+      "{src}"
+    ]
   },
   "statement": "julia: recognised by the observer; no codegen block yet.",
   "tier": 2

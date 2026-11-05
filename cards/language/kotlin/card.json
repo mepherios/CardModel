@@ -20,7 +20,29 @@
     ".kts"
   ],
   "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v})",
+      "true": "true"
+    },
+    "main": "fun main() {{\n{calls}}}\n",
+    "prelude": "",
+    "print": {
+      "bool": "println(\"b:\" + ({e}))",
+      "float": "println(\"f:\" + ({e}).toDouble().toString())",
+      "int": "println(\"i:\" + ({e}))"
+    },
+    "replace": [
+      [
+        "\\bfun\\s+main\\s*\\(",
+        "fun cm_user_main("
+      ]
+    ]
+  },
   "frontend_link": "class_per_file",
+  "int_bits": 64,
   "metadata": {
     "version": "1.0.0"
   },
@@ -35,6 +57,32 @@
   "provenance": {
     "origin": "cardmodel bootstrap",
     "tool": "tools/bootstrap.py"
+  },
+  "runner": {
+    "compile": [
+      "{exe}",
+      "{src}",
+      "-include-runtime",
+      "-nowarn",
+      "-d",
+      "{dir}/prog.jar"
+    ],
+    "file": "main.kt",
+    "output": "{dir}/prog.jar",
+    "run": [
+      "{java}",
+      "-jar",
+      "{dir}/prog.jar"
+    ],
+    "tools": {
+      "java": {
+        "kind": "executable",
+        "name": "java",
+        "version_args": [
+          "-version"
+        ]
+      }
+    }
   },
   "statement": "kotlin: recognised by the observer; no codegen block yet.",
   "tier": 2

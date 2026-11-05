@@ -19,7 +19,43 @@
     ".cs"
   ],
   "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "arg_cast": "(({type})({v}))",
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v}L)",
+      "true": "true"
+    },
+    "main": "static class CmMain {{\n    static void Main() {{\n{calls}    }}\n}}\n",
+    "prelude": "",
+    "print": {
+      "bool": "System.Console.WriteLine(\"b:\" + (({e}) ? \"true\" : \"false\"));",
+      "float": "System.Console.WriteLine(\"f:\" + ((double)({e})).ToString(\"R\", System.Globalization.CultureInfo.InvariantCulture));",
+      "int": "System.Console.WriteLine(\"i:\" + ({e}).ToString(System.Globalization.CultureInfo.InvariantCulture));"
+    },
+    "qualify": "class\\s+(\\w+)",
+    "replace": [
+      [
+        "^\\s*namespace\\s+[\\w.]+\\s*;",
+        ""
+      ],
+      [
+        "\\bstatic(\\s+async)?\\s+(void|int|Task|Task<int>)\\s+Main\\s*\\(",
+        "static\\1 \\2 cm_user_Main("
+      ],
+      [
+        "\\bprivate\\s+static\\b",
+        "internal static"
+      ],
+      [
+        "^(\\s*)static\\s+(?!class\\b)",
+        "\\1internal static "
+      ]
+    ]
+  },
   "frontend_link": "class_per_file",
+  "int_bits": 64,
   "metadata": {
     "version": "1.0.0"
   },
@@ -34,6 +70,27 @@
   "provenance": {
     "origin": "cardmodel bootstrap",
     "tool": "tools/bootstrap.py"
+  },
+  "runner": {
+    "compile": [
+      "sh",
+      "-c",
+      "printf '%s' '<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net$(NETCoreAppMaximumVersion)</TargetFramework><AssemblyName>cm</AssemblyName><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable><InvariantGlobalization>true</InvariantGlobalization><UseSharedCompilation>false</UseSharedCompilation></PropertyGroup></Project>' > cm.csproj && exec \"$0\" build cm.csproj -c Release -o out -nologo -v:q -nodeReuse:false",
+      "{exe}"
+    ],
+    "env": {
+      "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+      "DOTNET_CLI_USE_MSBUILD_SERVER": "0",
+      "DOTNET_NOLOGO": "1",
+      "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+      "MSBUILDDISABLENODEREUSE": "1"
+    },
+    "file": "Program.cs",
+    "output": "{dir}/out/cm.dll",
+    "run": [
+      "{exe}",
+      "{dir}/out/cm.dll"
+    ]
   },
   "statement": "csharp: recognised by the observer; no codegen block yet.",
   "tier": 2
