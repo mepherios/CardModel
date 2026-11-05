@@ -685,11 +685,14 @@ def self_run(ctx: Ctx, seed: int) -> str:
 
 
 def integration(ctx: Ctx, seed: int) -> str:
-    from . import integrity
+    from . import integrity, pipeline
     r = integrity.check(ctx)
     _need(not r["problems"], f"the program is not one piece: {r['problems'][:4]} (CM39)")
+    p = pipeline.check(ctx)
+    _need(not p["problems"], f"a capability is not in the main pipeline: {p['problems'][:3]} (CM50)")
     return (f"{r['laws']} laws and {r['goals']} goals with unique numbers, {r['commands']} commands and "
-            f"{r['sections']} verify sections documented, generated docs in sync")
+            f"{r['sections']} verify sections documented, generated docs in sync; {p['running']} of "
+            f"{p['capabilities']} capabilities run in the pipeline, {p['gap_count']} recorded gaps")
 
 
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,

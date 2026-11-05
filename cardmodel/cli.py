@@ -42,6 +42,8 @@
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
   cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics
   cardmodel tiers census|prove ALGORITHM    each claim's tier; prove an algorithm's forms by sized witnesses (CM46)
+  cardmodel pipeline                       every capability's evidence tier and the verify sections or self-run
+                                           steps that run it; the recorded gaps with their goal (CM50)
   cardmodel difficulty                     the rank of what each method decides; the questions left open (W-15)
   cardmodel game check|matrix|sensitivity|balance|duel|tournament|play|world|kernel   the combat design (game/)
   cardmodel anyps5 scan|cover|gaps|why|blocks|witness   AnyPS5 as cards: the real coverage, every gap's cause
@@ -230,6 +232,13 @@ def cmd_verify(args) -> int:
         if sec == "integrity" and "laws" in r:
             extra = (f"{r['laws']} laws, {r['goals']} goals, {r['capabilities']} capabilities, {r['commands']} commands, "
                      f"{r['sections']} sections, {r['docs']} docs; {len(r['problems'])} problems")
+        if sec == "pipeline" and "capabilities" in r:
+            extra = (f"{r['running']} of {r['capabilities']} capabilities run in the pipeline, {r['gap_count']} "
+                     f"recorded gaps; {len(r['problems'])} problems")
+        if sec == "machine" and "isas" in r:
+            sym = {k: (v.get("symbolic") or {}).get("counts") for k, v in r["isas"].items() if v.get("symbolic")}
+            if sym:
+                extra = f"{r.get('summary')}; symbolic terms {sym}"
         if sec == "forms" and r.get("hub_claims"):
             extra = f"{r['counts']} · hub's original domain claims: {r['hub_claims']}"
         lines.append(f"  {sec:<14} {r.get('status', '?'):<8} {extra}  [{rep['timings_s'].get(sec)}s]")
@@ -245,8 +254,9 @@ def _failures(sec: str, r: dict):
     if sec == "kernel":
         return {k: r[k] for k in ("load_errors", "schema_errors", "unresolved_references", "registry_errors") if r[k]}
     if sec == "machine":
-        return {k: {"drifted": v.get("drifted"), "failing": v.get("failing")} for k, v in r["isas"].items()
-                if v["status"] == "fail"}
+        return {k: {"drifted": v.get("drifted"), "failing": v.get("failing"),
+                    "symbolic": (v.get("symbolic") or {}).get("failing") or (v.get("symbolic") or {}).get("reason")}
+                for k, v in r["isas"].items() if v["status"] == "fail"}
     if sec == "conformance":
         return {lang: {n: c for n, c in lr["cells"].items() if c["status"] in ("fail", "error")}
                 for lang, lr in r["languages"].items()}
@@ -256,7 +266,7 @@ def _failures(sec: str, r: dict):
         return {n: p for n, p in r["programs"].items() if p["status"] != "pass"}
     if sec == "theorems":
         return r.get("problems")
-    if sec in ("anyps5", "integrity", "projects", "godel", "sources", "tiers", "formal"):
+    if sec in ("anyps5", "integrity", "pipeline", "projects", "godel", "sources", "tiers", "formal", "unreal"):
         return r.get("problems")
     if sec == "capabilities":
         return {n: c.get("reason") for n, c in r["capabilities"].items() if c["status"] == "fail"}

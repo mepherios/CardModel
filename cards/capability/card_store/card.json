@@ -19,7 +19,9 @@
     "law/CM14_versioned_writes"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "ba261895e401f868c3a81041019054db77fb70cc51eeed52167c1784366f3fd7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/kernel/store.py",
@@ -28,6 +30,15 @@
   ],
   "name": "card_store",
   "order": 1,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "kernel"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the kernel section validates every card of the store against its type's schema, every load error and every reference: exhaustive over the store as loaded"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

@@ -13,7 +13,9 @@
     "law/CM45_content_is_a_sparse_vector"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "40544ea0c16c572ad70caa63480bb840e5005e1a05e7e2d79370c513775cacdb",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/formal.py",
@@ -21,6 +23,15 @@
   ],
   "name": "formal_core",
   "order": 30,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "formal"
+      }
+    ],
+    "tier": "proof",
+    "tier_reason": "formal/GodelCore is built by Lean's kernel with no sorry and only the standard axioms (skipped, with its reason, on a host with no Lean toolchain)"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

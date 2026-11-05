@@ -6,6 +6,11 @@
       "metric": "law_witnesses_failing",
       "target": 0
     },
+    "G_A13_pipeline_gaps": {
+      "direction": "lower",
+      "metric": "pipeline_gaps",
+      "target": 0
+    },
     "G_A1_self_contained": {
       "direction": "lower",
       "metric": "external_dependencies",
@@ -264,8 +269,8 @@
   },
   "history": [],
   "metadata": {
-    "previous_content_hash": "9b4612a15b3ad9921a7f36f8bf81fde748720b20eb9d8eb61e9fcf10f6cd89cc",
-    "version": "1.0.2",
+    "previous_content_hash": "bf9df04b45dd4f3abdbedf21a28ffb1702d9f650f90b632f27b23443999fb6ee",
+    "version": "1.0.3",
     "version_bump_reason": "patch"
   },
   "name": "goals",

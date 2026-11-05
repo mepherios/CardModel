@@ -1,0 +1,40 @@
+{
+  "category": "capability",
+  "check": "live_hub",
+  "commands": [
+    "cardmodel arcade serve (the In progress page)"
+  ],
+  "core": true,
+  "docs": [
+    "docs/STORE.md"
+  ],
+  "laws": [
+    "law/CM01_honest_limits",
+    "law/CM35_games_are_cards",
+    "law/CM41_projects_keep_their_cards_current"
+  ],
+  "metadata": {
+    "previous_content_hash": "d4710f3487055a6a29825dafd7dee1c771a1f3ad0cf0a1b8160fbcf9baf7aa81",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/arcade/hub.py"
+  ],
+  "name": "live_hub",
+  "order": 24,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The store follows everything in progress: project cards say what to watch and keep their owner's detail current (CM41); the hub computes each one's phase, branches, uncommitted work, metrics and builds from git and the model's records, read-only, gathers what waits on the user, and pushes changes to the launcher as they happen; early access is a program's version on a branch, installed from its store page like a beta (one mechanism with the store's branches).",
+  "tests": [
+    "tests/test_hub.py::test_status_is_computed_from_git_and_state",
+    "tests/test_hub.py::test_git_reads_never_write",
+    "tests/test_hub.py::test_changes_are_pushed",
+    "tests/test_hub.py::test_early_access_is_the_branch_version",
+    "tests/test_projects.py::test_missing_or_stale_project_cards_fail"
+  ],
+  "tier": 0,
+  "usefulness": "One live page shows what is being built, where, by which branch, how far along, and lets you play it early."
+}

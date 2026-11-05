@@ -3,7 +3,8 @@
   "check": "integration",
   "commands": [
     "cardmodel verify --only integrity",
-    "cardmodel docs"
+    "cardmodel docs",
+    "cardmodel pipeline"
   ],
   "core": true,
   "docs": [
@@ -11,16 +12,32 @@
   ],
   "laws": [
     "law/CM20_laws_are_cards",
-    "law/CM39_one_program"
+    "law/CM39_one_program",
+    "law/CM50_every_capability_runs_in_the_pipeline"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "c322ee27734070f65cc6967db97d123bc2875e6a06e8f47d22f11ed5e0a85038",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
-    "cardmodel/engines/integrity.py"
+    "cardmodel/engines/integrity.py",
+    "cardmodel/engines/pipeline.py"
   ],
   "name": "integration",
   "order": 26,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "integrity"
+      },
+      {
+        "verify": "pipeline"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the integrity and pipeline checks read every law, goal, capability, command, section and doc: exhaustive over names and text, blind to meaning"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"
@@ -29,7 +46,8 @@
   "tests": [
     "tests/test_laws.py::test_laws_md_in_sync",
     "tests/test_self.py::test_one_program_integrity",
-    "tests/test_self_steps.py::test_a_goal_target_never_drops_silently"
+    "tests/test_self_steps.py::test_a_goal_target_never_drops_silently",
+    "tests/test_pipeline.py::test_a_capability_never_run_fails"
   ],
   "tier": 0,
   "usefulness": "Parallel work lands as one working program, never as pieces."

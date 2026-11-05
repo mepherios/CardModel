@@ -12,13 +12,24 @@
     "law/CM31_behaviour_is_numbered"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "d46a7d16f549ae8f181bdebd6d6e9de7a69f500bfe6b051b8704f3493443d6f4",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/funcalg.py"
   ],
   "name": "function_algebra",
   "order": 15,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "algebra"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "canonical forms and identities are found from and checked on computed terms of each algorithm; no order bound turns them into a proof here"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

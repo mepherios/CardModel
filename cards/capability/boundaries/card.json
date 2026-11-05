@@ -13,7 +13,9 @@
     "law/CM19_never_publish_unasked"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "f80bf0708a09ae49eaf6db266341572206aa97393831949b031deeeed7608997",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/selfcheck.py",
@@ -21,6 +23,18 @@
   ],
   "name": "boundaries",
   "order": 5,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "integrity"
+      },
+      {
+        "verify": "selfcheck"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the program's text is scanned whole for source-folder references and publishing calls: exhaustive over the files, blind to what they compute"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

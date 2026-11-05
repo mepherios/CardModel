@@ -1,0 +1,17 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM50_every_capability_runs_in_the_pipeline",
+  "origins": [
+    "user requirement 2026-11-05 (every capability in the main pipeline, with its tier and a coverage check)"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "statement": "Every capability runs in the main pipeline: its card declares the tier of the evidence that run gives (CM46) and the verify sections or self-run steps that exercise its engine, and the pipeline check holds each declared stage to the code (it must reach the capability's modules). A capability that no stage runs, or part of one, is a recorded gap with its reason, what would close it and the goal that counts it; a capability with neither a run nor a gap fails verify. The smoke check (CM37) does not count as running.",
+  "tier": 0,
+  "witness": "tests/test_pipeline.py::test_a_capability_never_run_fails"
+}

@@ -1,0 +1,33 @@
+{
+  "category": "capability",
+  "check": "redefinitions",
+  "commands": [
+    "cardmodel verify --only redefinitions"
+  ],
+  "core": true,
+  "docs": [
+    "docs/PROVENANCE.md"
+  ],
+  "laws": [
+    "law/CM08_executable_claims_have_witnesses"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/redefs.py"
+  ],
+  "name": "redefinitions",
+  "order": 16,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Redefinitions (identities carried from the Pheros work) are verified numerically or symbolically; none is refuted.",
+  "tests": [
+    "tests/test_witness.py::test_vendored_redefinitions_hold",
+    "tests/test_witness.py::test_planted_false_identities_are_still_refuted"
+  ],
+  "tier": 0,
+  "usefulness": "Every alternative definition of a function is checked to mean the same thing."
+}

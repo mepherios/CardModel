@@ -12,13 +12,24 @@
     "law/CM08_executable_claims_have_witnesses"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "eaccf2d133fc4860cc51e18a8082bc422e6fc4fc861dd7741dd2a2190fc47b3c",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/redefs.py"
   ],
   "name": "redefinitions",
   "order": 16,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "redefinitions"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "executable identities are checked numerically on seeded points (symbolically when sympy is present)"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

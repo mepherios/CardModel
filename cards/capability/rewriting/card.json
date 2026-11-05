@@ -13,13 +13,27 @@
     "law/CM25_laws_carry_into_optimization"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "f0d435f3f3efbed18c7b6b6d1363bc73765296c8045c37b15025d0cae6b9eede",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/search.py"
   ],
   "name": "rewriting",
   "order": 8,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "learn"
+      },
+      {
+        "self_step": "arena"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "rewrites are justified by rules witnessed on seeded inputs; the arena checks each optimized program by running it"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

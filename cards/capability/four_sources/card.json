@@ -12,13 +12,24 @@
     "law/CM44_everything_traces_to_truth"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "ba1893fcbeeb53bf13f9b355da7795ce658a8e4b08d078b0b1ab5e0b5cf9a41f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/sources.py"
   ],
   "name": "four_sources",
   "order": 27,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "sources"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "every definition, action, transformation and method is traced: exhaustive over the four registries; the links themselves carry their own tiers"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

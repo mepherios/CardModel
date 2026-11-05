@@ -15,8 +15,8 @@
     "law/CM45_content_is_a_sparse_vector"
   ],
   "metadata": {
-    "previous_content_hash": "aeb75439e9adfec5164fae7a8e83c400c9d29d2e643a3d3f027d7a0c5542faa4",
-    "version": "1.1.0",
+    "previous_content_hash": "8ac8ab1154335d4a11073a0c60822ea29875d5b7932d1b6c58a289a80fa1592d",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [
@@ -24,6 +24,18 @@
   ],
   "name": "godel_model",
   "order": 25,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "godel"
+      },
+      {
+        "verify": "sources"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the prime ledger and every content vector are checked whole against the storage rules and the last commit"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

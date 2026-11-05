@@ -14,7 +14,9 @@
     "law/CM09_measure_before_claiming"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "6f0839528ae4d55328d405c8103ab549f4f1e28389468a02c0d822a24bdd5fb7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/rewrite.py",
@@ -22,6 +24,18 @@
   ],
   "name": "form_selection",
   "order": 4,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "forms"
+      },
+      {
+        "self_step": "optimize"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the forms chosen are the available ones, witnessed and timed on seeded inputs on this host; costs are measurements, not bounds"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

@@ -8,7 +8,9 @@
 ``check`` is the verify section ``unreal``: the cards hold together (every lifted subject has its definition and
 action, every atom is in the ledger with the prime the subject card names), the canonical hashes re-derive from the
 stored terms (the mathematics is reproducible from the cards alone), and, when the engine and clang are on this
-host, a seeded sample is witnessed again against the engine's compiled code.
+host, a seeded sample is witnessed again against the engine's compiled code. With no scan saved (every checkout
+but the machine that holds the engine, docs/INTEGRATION.md rule 8), ``fixture`` runs the same pipeline on the fixture
+header, so the section exercises the code on every host with clang (CM50).
 
 Honest limits (L1): definitions whose terms are kept in the cache (past cards.TERM_LIMIT) are counted but their
 hashes are not re-derived here; the re-witness is a sample.
@@ -59,7 +61,7 @@ def check(ctx, seed: int, rewitness: int = 12) -> dict:
     st = ctx.store
     subs = st.cards("unreal_math")
     if not subs:
-        return {"status": "skipped", "reason": "no engine scan saved (cardmodel unreal scan --save)"}
+        return fixture(seed)
     problems = []
     idx = G.index_of(st)
     defs = {d.name: d for d in _engine_defs(st)}
@@ -98,6 +100,52 @@ def check(ctx, seed: int, rewitness: int = 12) -> dict:
     return out
 
 
+def fixture(seed: int) -> dict:
+    """The pipeline on the fixture header (examples/engine_math, not engine code) when no engine scan is saved, so the
+    section exercises the engine-math pipeline on every host with clang: every function lifted through clang's AST
+    (or its gap's cause), two spellings of the dot product sharing one canonical form, every lifted function
+    witnessed against the compiled header. A refuted term or a lost identification fails."""
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    from ..kernel import paths
+    from . import distill as D
+    from . import engine as E
+    from . import scan as S
+    from . import witness as W
+    src = paths.home() / "examples" / "engine_math" / "mini_math.h"
+    if E.clang()[0] is None:
+        return {"status": "skipped", "mode": "fixture",
+                "reason": "no engine scan saved (cardmodel unreal scan --save) and no clang++ for the fixture"}
+    if not src.is_file():
+        return {"status": "skipped", "mode": "fixture", "reason": f"no engine scan saved and no fixture at {src}"}
+    d = Path(tempfile.mkdtemp(prefix="cardmodel_unreal_fixture_"))
+    try:
+        fns = S.lift_source(src, ["-std=c++20", "-ffp-contract=off", "-x", "c++", f"-I{src.parent}"], d)
+        lifted = [f for f in fns if f["status"] == "lifted" and f.get("outputs")]
+        hashes = {f["qual"]: D.distill_function(f, {})["hash"] for f in lifted}
+        problems = []
+        dots = [hashes.get(q) for q in ("Mini::TVec<double>::Dot", "Mini::TVec<double>::DotSwapped")]
+        if None in dots or dots[0] != dots[1]:
+            problems.append("two spellings of the dot product do not share one canonical form")
+        target = W.Target([f'#include "{src.name}"'], ["-std=c++20", "-ffp-contract=off", f"-I{src.parent}"], [], d)
+        v = W.run(target, lifted, seed, log=lambda m: None, cases=8)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    c = Counter(x["status"] for x in v.values())
+    byk = {f["key"]: f["qual"] for f in lifted}
+    refuted = sorted(byk.get(k, k) for k, x in v.items() if x["status"] == "refuted")
+    if refuted:
+        problems.append(f"the compiled header refutes: {refuted[:3]}")
+    if not c["witnessed"]:
+        problems.append("no lifted function of the fixture was witnessed")
+    return {"status": "fail" if problems else "pass", "mode": "fixture", "problems": problems, "seed": seed,
+            "functions": len(fns), "counts": dict(Counter(f["status"] for f in fns)),
+            "canonical_forms": len(set(hashes.values())), "witness": dict(c),
+            "gaps": {f["qual"]: f.get("cause") for f in fns if f["status"] != "lifted"}}
+
+
 def _rewitness(ctx, seed: int, n: int) -> dict:
     """A seeded sample of the lifted functions witnessed again against the engine (when it is on this host)."""
     from . import engine as E
@@ -128,4 +176,4 @@ def _rewitness(ctx, seed: int, n: int) -> dict:
                           "refuted": [byk[k]["qual"] for k, x in v.items() if x["status"] == "refuted"]}}
 
 
-__all__ = ["check", "goal", "rederive"]
+__all__ = ["check", "fixture", "goal", "rederive"]

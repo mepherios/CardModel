@@ -14,13 +14,27 @@
     "law/CM12_capabilities_are_probed"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "e2636ae2b9b38a28b4de8eebf5f6c4cb5b2309320724cb1e5250f3cc776aaccc",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/probes.py"
   ],
   "name": "honest_limits",
   "order": 2,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "redefinitions"
+      },
+      {
+        "verify": "conformance"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "a probe is a direct observation of this host; the sections that depend on one report unavailable or inconclusive with its reason: exhaustive over the tools this host has"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

@@ -641,6 +641,15 @@ def cmd_sources(args) -> int:
     return 1 if r["status"] == "fail" else 0
 
 
+def cmd_pipeline(args) -> int:
+    from .engines import pipeline as P
+    cli = _cli()
+    ctx = cli._ctx(args)
+    r = P.check(ctx)
+    cli._out(args, r, P.table(r))
+    return 1 if r["status"] == "fail" else 0
+
+
 def cmd_tiers(args) -> int:
     from .engines import tiers as T
     from .engines.frontend_python import lift_source
@@ -776,6 +785,9 @@ def register(sub) -> None:
     s = sub.add_parser("difficulty", help="the arithmetical rank of every method and question: what the product "
                                           "can decide and what it must leave open (Gödel method W-15)")
     s.set_defaults(fn=cmd_difficulty)
+    s = sub.add_parser("pipeline", help="every capability's evidence tier and where the main pipeline runs it; the "
+                                        "recorded gaps (CM50)")
+    s.set_defaults(fn=cmd_pipeline)
     s = sub.add_parser("tiers", help="what each claim's evidence is worth: census, or prove an algorithm's forms "
                                      "by sized witnesses")
     s.add_argument("action", choices=["census", "prove"]); s.add_argument("algorithm", nargs="?")

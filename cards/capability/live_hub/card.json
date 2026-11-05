@@ -14,8 +14,8 @@
     "law/CM41_projects_keep_their_cards_current"
   ],
   "metadata": {
-    "previous_content_hash": "d4710f3487055a6a29825dafd7dee1c771a1f3ad0cf0a1b8160fbcf9baf7aa81",
-    "version": "1.2.0",
+    "previous_content_hash": "832d0d3ab4df132bde0d359feb34f36ad2c96ef1687c66327d46b58fdcfc4d69",
+    "version": "1.3.0",
     "version_bump_reason": "minor"
   },
   "modules": [
@@ -23,6 +23,18 @@
   ],
   "name": "live_hub",
   "order": 24,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "projects"
+      },
+      {
+        "self_step": "store"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the projects section computes every project card's status through the hub: exhaustive over the project cards"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

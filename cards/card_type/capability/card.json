@@ -4,7 +4,9 @@
   ],
   "category": "card_type",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "e07bc411ab38785bb4ef7d78aa6ebd49e7b55fa211665c4b76c53aa3b62aee8d",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "capability",
   "provenance": {
@@ -46,6 +48,53 @@
       "order": {
         "type": "integer"
       },
+      "pipeline": {
+        "properties": {
+          "gap": {
+            "properties": {
+              "closes_by": {
+                "type": "string"
+              },
+              "goal": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reason",
+              "closes_by",
+              "goal"
+            ],
+            "type": "object"
+          },
+          "runs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "tier": {
+            "enum": [
+              "proof",
+              "probabilistic",
+              "bounded",
+              "sample"
+            ],
+            "type": "string"
+          },
+          "tier_reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tier",
+          "tier_reason",
+          "runs"
+        ],
+        "type": "object"
+      },
       "tests": {
         "items": {
           "type": "string"
@@ -61,10 +110,11 @@
       "check",
       "laws",
       "tests",
-      "core"
+      "core",
+      "pipeline"
     ],
     "type": "object"
   },
-  "statement": "A core capability: its smoke check must pass in every verify and self-run (CM37).",
+  "statement": "A core capability: its smoke check must pass in every verify and self-run (CM37), and it declares its evidence tier and where the main pipeline runs it (CM50).",
   "tier": 0
 }

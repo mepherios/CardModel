@@ -34,10 +34,16 @@ Sections (all on by default; ``only`` selects):
                 recorded witnesses agree and belong to the current scan, the badge reproduced (CM36)
   unreal        a game engine's math (unreal/, CM45): every lifted subject has its definition and action, every atom
                 its prime in the ledger, the canonical forms re-derive from the stored terms, and a seeded sample is
-                witnessed again against the engine's compiled code when the engine is on this host
+                witnessed again against the engine's compiled code when the engine is on this host; with no engine
+                scan saved, the same pipeline on the fixture header (examples/engine_math): lifted through clang,
+                canonical forms twice alike, every lifted function witnessed against the compiled header
   machine       every ISA's instruction cards: stored IR in sync with their semantics, and per-instruction
                 conformance on the ISA's bench in every engine (reference interpreter, host, native), with their
-                cycle and flag data checked (CM32)
+                cycle and flag data checked; every instruction's symbolic terms held to its semantics on seeded
+                states (machine/symbolic.py; unsupported ones counted with their reason) (CM32)
+  pipeline      every capability card declares its evidence tier and the verify sections or self-run steps that
+                exercise its engine, each checked against the code; one that nothing runs is a recorded gap with
+                its goal, never silent (CM50, engines/pipeline.py)
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
 it). A run of some sections keeps the other sections of the saved report,
@@ -60,10 +66,10 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "unreal", "machine",
+SECTIONS = ("kernel", "integrity", "capabilities", "pipeline", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "unreal", "machine",
             "forms", "vectors", "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck",
             "portability")
-QUICK = ["kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
+QUICK = ["kernel", "integrity", "capabilities", "pipeline", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
          "forms", "vectors", "rules", "redefinitions"]
 
 
@@ -245,6 +251,10 @@ def _machine(ctx: Ctx, seed: int) -> dict:
                         "failing": {k: v["problems"][:3] for k, v in conf["per_card"].items()
                                     if v["status"] != "pass"}})
             res["status"] = "fail" if sync["drifted"] or conf["status"] == "fail" else conf["status"]
+            sym = _symbolic(ctx, card.name, seed)
+            res["symbolic"] = sym
+            if sym["status"] == "fail":
+                res["status"] = "fail"
         else:
             res["status"] = "fail" if sync["drifted"] else "pass"
         out[card.name] = res
@@ -252,6 +262,19 @@ def _machine(ctx: Ctx, seed: int) -> dict:
     return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"), "isas": out,
             "summary": {k: f"{v.get('passed', v['cards'])}/{v['cards']} in {','.join(v.get('engines', []))}"
                         for k, v in out.items()}}
+
+
+def _symbolic(ctx: Ctx, isa: str, seed: int) -> dict:
+    """Every instruction card of one ISA as terms by symbolic execution, held to its executable semantics on seeded
+    states by the bench (CM32, machine/symbolic.py). An instruction the executor does not handle is ``unsupported``
+    with its reason, never a pass; a term that disagrees with the semantics fails the section."""
+    from ..machine import symbolic as SY
+    try:
+        r = SY.check(ctx, isa, seed=seed, samples=2)
+    except Exception as exc:  # noqa: BLE001 -- a crash of the executor is a failure, reported with its cause
+        return {"status": "fail", "reason": f"{type(exc).__name__}: {exc}"}
+    bad = {k: v.get("problems") for k, v in r["cards"].items() if v["status"] == "fail"}
+    return {"status": r["status"], "counts": r["counts"], "failing": dict(list(bad.items())[:10])}
 
 
 def _redefinitions(ctx: Ctx, seed: int) -> dict:
@@ -296,6 +319,9 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         elif sec == "capabilities":
             from . import capabilities
             res = capabilities.run(ctx, seed)
+        elif sec == "pipeline":
+            from . import pipeline
+            res = pipeline.check(ctx)
         elif sec == "projects":
             from . import projects
             res = projects.check(ctx)

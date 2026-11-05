@@ -12,13 +12,24 @@
     "law/CM25_laws_carry_into_optimization"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "27616ee69d1ac1738a0780873d670e642c881cd1c5c9be99b9ab314030725af1",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/laws.py"
   ],
   "name": "law_discovery",
   "order": 9,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "laws"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "candidates are witnessed on seeded inputs; those Lean proves are at tier proof, the rest stay samples, so the step guarantees sample"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

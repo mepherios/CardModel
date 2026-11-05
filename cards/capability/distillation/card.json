@@ -12,13 +12,24 @@
     "law/CM25_laws_carry_into_optimization"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "1df6c2035ee9a3cf80d09ecec143ee66e1698512305f98def2089a8714d2bc3c",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/egraph.py"
   ],
   "name": "distillation",
   "order": 26,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "arena"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the arena's rewrites go through equality saturation over witnessed rules; the result is run against the original"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

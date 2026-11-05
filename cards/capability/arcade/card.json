@@ -15,8 +15,8 @@
     "law/CM42_the_store_runs_what_it_lists"
   ],
   "metadata": {
-    "previous_content_hash": "8de89843e71668465145176a626b040937778ed4f1d191553c84fd51f87ae5f1",
-    "version": "1.1.0",
+    "previous_content_hash": "a5be09cfac882ae2ae3f8e35714c7f71a0f03c0f9e063eed810c152c5d4b674e",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [
@@ -24,6 +24,15 @@
   ],
   "name": "arcade",
   "order": 23,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "store"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every catalogue item is installed, verified, repaired and played through the store for a fixed number of frames"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

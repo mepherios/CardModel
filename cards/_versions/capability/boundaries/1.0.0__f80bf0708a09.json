@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "boundaries",
+  "commands": [
+    "cardmodel verify --only selfcheck"
+  ],
+  "core": true,
+  "docs": [
+    "ARCHITECTURE.md"
+  ],
+  "laws": [
+    "law/CM13_self_contained",
+    "law/CM19_never_publish_unasked"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/selfcheck.py",
+    "cardmodel/engines/integrity.py"
+  ],
+  "name": "boundaries",
+  "order": 5,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Self-contained and private by default: the runtime needs no source folder, and nothing publishes (no push, no upload) unless asked.",
+  "tests": [
+    "tests/test_self_contained.py::test_sources_unreachable",
+    "tests/test_laws.py::test_no_publishing_calls"
+  ],
+  "tier": 0,
+  "usefulness": "The program is one folder you own; it never sends your work anywhere by itself."
+}

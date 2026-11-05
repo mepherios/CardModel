@@ -15,7 +15,9 @@
     "law/CM24_logic_carries"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "e805df871a635527a9fe6b5fe6f01db99ab334022a5587ac396c75a05d836121",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/emit/lean.py",
@@ -24,6 +26,18 @@
   ],
   "name": "lean",
   "order": 11,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "theorems"
+      },
+      {
+        "verify": "proofs"
+      }
+    ],
+    "tier": "proof",
+    "tier_reason": "the proofs section has Lean's kernel check every rule theorem it emits (skipped, with its reason, on a host with no Lean toolchain); the theorems section holds Lean-imported cards to it"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

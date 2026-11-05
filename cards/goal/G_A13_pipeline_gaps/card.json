@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "pipeline_gaps",
+  "name": "G_A13_pipeline_gaps",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "statement": "Recorded pipeline gaps: capabilities, or parts of them, that no verify section or self-run step exercises (CM50; `cardmodel pipeline` lists them with their reasons).",
+  "target": 0,
+  "tier": 0
+}

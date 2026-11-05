@@ -13,13 +13,24 @@
     "law/CM23_crystallised_knowledge"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "969bccf92eb31610fca3f1f21895e235fc7acb5dea425c29d385522a17302a04",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/theorems.py"
   ],
   "name": "theorems",
   "order": 10,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "theorems"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every theorem card is re-witnessed with the run's seed; Lean-imported ones are proofs, the rest samples"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

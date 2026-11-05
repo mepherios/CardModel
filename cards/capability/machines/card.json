@@ -12,7 +12,9 @@
     "law/CM32_machines_are_cards"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "6e5be3ceaf83cb13a9f6d004aadd71ff7349f0356920eaa065d356ffab42e8a1",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/machine/isa.py",
@@ -20,6 +22,15 @@
   ],
   "name": "machines",
   "order": 21,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "machine"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every instruction card runs on seeded states in every engine and the results agree"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

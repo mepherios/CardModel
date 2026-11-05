@@ -13,7 +13,9 @@
     "law/CM08_executable_claims_have_witnesses"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "ab28a7121cabd0720bfe34c15b8e2b1fad3d32b5aabf3e4fe264512addbff811",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/witness.py",
@@ -21,6 +23,21 @@
   ],
   "name": "witnesses",
   "order": 3,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "forms"
+      },
+      {
+        "verify": "vectors"
+      },
+      {
+        "verify": "rules"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every op, call and rule card is witnessed on seeded inputs (the known-answer vectors are fixed samples): agreement on the inputs run, not for all inputs"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

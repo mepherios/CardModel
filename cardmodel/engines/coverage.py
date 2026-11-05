@@ -286,6 +286,12 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name in ("unreal_lifted_fraction", "unreal_witnessed_fraction", "unreal_refuted"):
         from ..unreal import metrics
         return metrics.goal(st, name)
+    if name == "pipeline_gaps":
+        pi = secs.get("pipeline")
+        if pi and "gap_count" in pi:
+            return pi["gap_count"]
+        from . import pipeline
+        return pipeline.check(ctx)["gap_count"]
     if name == "project_card_problems":
         pr = secs.get("projects")
         return len(pr.get("problems", [])) if pr and "problems" in pr else None

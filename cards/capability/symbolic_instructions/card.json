@@ -13,13 +13,24 @@
     "law/CM32_machines_are_cards"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "c5b26f1dfb511571521a1094891db932d750f60d549863b89a36240426be077f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/machine/symbolic.py"
   ],
   "name": "symbolic_instructions",
   "order": 27,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "machine"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "each instruction's terms are evaluated against the bench's run of its executable semantics on seeded states (MATH_CORE phase 0 names the proof as next)"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

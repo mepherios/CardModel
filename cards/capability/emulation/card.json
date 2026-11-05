@@ -14,7 +14,9 @@
     "law/CM34_emulation_effects_are_the_shell"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "76b9dc16cce345fa1ad3ae489eecca8b4e7321fc3023bf56ca6012ef24bc9f33",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/machine/lift.py",
@@ -23,6 +25,20 @@
   ],
   "name": "emulation",
   "order": 22,
+  "pipeline": {
+    "gap": {
+      "closes_by": "the machine section (or the store step) runs the lifted engine on each system's check cartridge and requires its frames to equal the interpreter's",
+      "goal": "goal/G_A13_pipeline_gaps",
+      "reason": "the pipeline runs cartridges interpreted or native; lifted ROM code (machine/lift.py, CM33: lifted code is the cards) runs only in the smoke check (8 frames of an assembled ROM) and in `cardmodel machine diff`, never on the library's cartridges"
+    },
+    "runs": [
+      {
+        "self_step": "store"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the store step runs every listed cartridge in its player and compares the picture with what the system's cards compute for the same bytes, frame by frame"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

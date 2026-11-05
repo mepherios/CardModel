@@ -12,7 +12,9 @@
     "law/CM27_the_model_checks_itself"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "e2874bbb45878d0a8b600232f89f5e9c84a0a0517f1a459929bf99f592f9584b",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/selflogic.py",
@@ -20,6 +22,15 @@
   ],
   "name": "self_theory",
   "order": 14,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "logic"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the model's laws as logic (stdlib/self.card) evaluated over the whole store: zero violations is exhaustive over the store"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

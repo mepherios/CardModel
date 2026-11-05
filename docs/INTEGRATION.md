@@ -59,12 +59,13 @@ range to this table in the same commit.
 | CM47 | world game (`claude/heuristic-ptolemy-2e6700`), reserved | written as CM45 on that branch; renumber before merging |
 | CM48 | universalization (`worktree-universal-domains`), reserved | "every domain is a Gödel set", written as CM45 on that branch; renumber before merging |
 | CM49 | unreal-distill (`claude/unreal-math`, merged daf4923) | a game engine's math is distilled (Unreal Engine as cards, docs/UNREAL.md); written as CM47 on the branch, renumbered before merging |
-| **CM50 onward** | free | take the next one |
+| CM50 | pipeline coverage (`claude/pipeline-coverage`) | every capability runs in the main pipeline (engines/pipeline.py, the `pipeline` verify section) |
+| **CM51 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U12 (G_U10–U12: unreal-distill), G_L1, G_O1–O4, G_A1–A10, G_K1–K6, G_D1–D2, G_P1–P5
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U12 (G_U10–U12: unreal-distill), G_L1, G_O1–O4, G_A1–A10, G_A13 (pipeline gaps, `claude/pipeline-coverage`; G_A11–A12 are written on `claude/project-thread-c60pvh`), G_K1–K6, G_D1–D2, G_P1–P5
 (AnyPS5), G_M1–M6 (machines; G_M6 is MATH_CORE's), G_S1 (products: the store, `claude/jolly-liskov-2d97a8`).
 G_A10 is that branch's law-witness goal, written G_A9 there and renumbered where it met MATH_CORE's G_A9
-(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A11, G_U13, G_C6, G_K7, G_M7,
+(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A14, G_U13, G_C6, G_K7, G_M7,
 G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
@@ -75,7 +76,11 @@ G_A4–G_A6. That session was told to move to CM41+ and G_A8+.
 Verify sections (`engines/verify.py` SECTIONS; each is described in its docstring): kernel, integrity,
 capabilities, logic, lang, theorems, game (main); anyps5 (AnyPS5); machine (games); forms, vectors, rules,
 redefinitions, conformance, functions, proofs, selfcheck, portability (main); projects, godel, sources, tiers, formal
-(main).
+(main); pipeline (`claude/pipeline-coverage`).
+
+A new capability card declares `pipeline`: its evidence tier (CM46), the verify sections or self-run steps that run
+its engine, and any part no stage runs as a `gap` with its reason, what closes it and its goal (CM50). The
+`pipeline` section checks each declared stage against the code; `cardmodel pipeline` prints the table.
 
 ## 3. Who works where
 

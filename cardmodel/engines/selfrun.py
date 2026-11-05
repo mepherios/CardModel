@@ -83,6 +83,7 @@ MEASURED_BY = {
     "ds_undecodable_executed": "cardmodel machine nds ROM", "lean_imported": "cardmodel lean import --core",
     "law_witnesses_failing": "cardmodel self run --only law_witnesses",
     "store_items_failing": "cardmodel self run --only store (or cardmodel arcade check)",
+    "pipeline_gaps": "cardmodel verify --only pipeline",
 }
 # what moves an unmet goal: the command or place a finding proposes
 IMPROVED_BY = {
@@ -101,6 +102,7 @@ IMPROVED_BY = {
     "capabilities_failing": "cardmodel self capabilities",
     "project_card_problems": "revise the project cards verify names (docs/INTEGRATION.md: project cards)",
     "integrity_problems": "cardmodel verify --only integrity",
+    "pipeline_gaps": "cardmodel pipeline (each gap names what would wire it in)",
     "law_witnesses_failing": "cardmodel self run --only law_witnesses (each failing law names its witness test)",
     "store_items_failing": "cardmodel arcade check GAME (it says which step of the launch fails)",
 }

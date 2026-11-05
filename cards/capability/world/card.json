@@ -12,13 +12,24 @@
     "law/CM29_everything_carries"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "865c4be95107316abab8431f83f5db25c71e874c3df5696af8488b5fd1eb6b07",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/game/world.py"
   ],
   "name": "world",
   "order": 20,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "game"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the world is run for a fixed number of ticks from fixed seeds and its carry, cause and impact rules checked on that run"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

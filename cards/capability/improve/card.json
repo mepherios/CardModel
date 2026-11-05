@@ -14,7 +14,9 @@
     "law/CM22_optimizations_self_correct"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "6408b14cb7cd76f1449422677a087064f01b4c08136d8891333631bd892393fa",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/improve.py",
@@ -22,6 +24,15 @@
   ],
   "name": "improve",
   "order": 17,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "arena"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the arena's optimized programs are run against the originals on seeded inputs"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

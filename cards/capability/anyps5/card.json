@@ -12,13 +12,24 @@
     "law/CM36_unknowns_are_observation_obligations"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "014f64528ce1dc56db148158d19e03853c077b1a501e64dcc9762bae6d96d5ff",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/anyps5"
   ],
   "name": "anyps5",
   "order": 24,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "anyps5"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "every gap of the saved scan is classified and its semantics programs run (skipped, with its reason, when no scan is in the store)"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

@@ -16,7 +16,9 @@
     "law/CM15_observations_are_ground_truth"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "7490a3b660530e75465a03de74051b8e510a2c4bdaf36ddb04091e68d0862037",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/observe.py",
@@ -24,6 +26,18 @@
   ],
   "name": "learning",
   "order": 6,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "learn"
+      },
+      {
+        "self_step": "observe_self"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "learned functions are promoted only when every language they ran in agreed on seeded inputs"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

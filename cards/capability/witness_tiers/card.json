@@ -12,13 +12,24 @@
     "law/CM46_every_claim_carries_its_tier"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "cc7c1665ca34d471c52479929f6d1e0d9c6e4fd16eb9a5255fdb40379be08613",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/engines/tiers.py"
   ],
   "name": "witness_tiers",
   "order": 29,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "tiers"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the census reads the tier of every claim in the store and fails on one without: exhaustive over the store"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

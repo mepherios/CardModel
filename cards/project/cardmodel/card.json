@@ -9,7 +9,8 @@
     "claude/gracious-kirch-*",
     "claude/heuristic-ptolemy-*",
     "claude/project-thread-*",
-    "self-optimize/*"
+    "self-optimize/*",
+    "claude/pipeline-coverage"
   ],
   "category": "project",
   "docs": [
@@ -29,7 +30,9 @@
     "in the cloud: GitHub Actions CI with every codegen toolchain (verify, translate, unit suite) and a daily self cycle that proposes adopted cards as a pull request; verify passes on Linux (docs/AUTONOMY.md section 6)"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
-  "in_progress": [],
+  "in_progress": [
+    "Every capability in the main pipeline (CM50, branch claude/pipeline-coverage): tiers and runs on the capability cards, the `pipeline` verify section, `cardmodel pipeline`; one recorded gap (emulation's lifted engine, G_A13)"
+  ],
   "kind": "program",
   "left": [
     "W-2 on Mathlib after the user's yes; wave 2 (W-4, W-10, W-11, W-13, W-16)",
@@ -37,8 +40,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "f3ff28264d01fe86dd40db23eaf0732e63b5635972b521f39fb47e9e7838ed8e",
-    "version": "2.0.17",
+    "previous_content_hash": "d8ae063db3f21ac402388dc8e147e5fa56616062afcb3792a25de32cdb9b2347",
+    "version": "2.0.18",
     "version_bump_reason": "patch"
   },
   "metrics": [

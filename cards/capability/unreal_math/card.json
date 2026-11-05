@@ -12,7 +12,9 @@
     "law/CM49_engine_math_is_distilled"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "fa7615dc7dc6e6de77c440e00fe9d97d2ca78380e9856bb932bae156a1a18c49",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/unreal",
@@ -20,6 +22,15 @@
   ],
   "name": "unreal_math",
   "order": 31,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "unreal"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "lifted terms are witnessed against the compiled code on seeded cases (the engine's sample where its scan is saved, every fixture function otherwise)"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"

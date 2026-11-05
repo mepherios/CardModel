@@ -13,13 +13,27 @@
     "law/CM30_resources_are_bounded"
   ],
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "1a040a3c528518ec9b626bef108c42ea76ef338e9c8ea4b0061dc76fc628f7a7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "modules": [
     "cardmodel/kernel/resources.py"
   ],
   "name": "resources",
   "order": 18,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "conformance"
+      },
+      {
+        "self_step": "store"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the governor's limits are what the runs under it measured on this host"
+  },
   "provenance": {
     "origin": "cardmodel",
     "tool": "tools/seed_self.py"
