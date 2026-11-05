@@ -520,7 +520,9 @@ frontend should map Python syntax to it, add a line in `frontend_python.py` (`BI
 * `probe`: never resolve through an installer proxy (see Lean in troubleshooting);
 * `runner` (`file`, `compile`, `run` with `{exe}`, `{src}`, `{bin}`, `{dir}`);
 * `codegen` (copy the closest existing card; `extends` inherits a whole card), `int_bits`, and optionally
-  `call_runner`.
+  `call_runner`. Its `harness.read` templates (one expression per IR type, usually `cm_read_int()` and friends
+  from `codegen.helpers`; `helper_requires` names a helper's imports) let a test program read its arguments
+  from stdin, so one build serves every seed; without them the inputs are baked into the source.
 
 Then run the conformance matrix for it and fix templates until its row passes. No engine file changes; a test fails
 if an engine names a language.
@@ -671,8 +673,8 @@ each. The mathematics has its own plan: docs/MATH_CORE.md (phases and progress) 
 reused (CM45); every claim carries its tier (CM46, `cardmodel tiers census`); the formal core in `formal/` builds
 with no `sorry` (`cardmodel verify --only formal`). Beyond that:
 
-1. **stdin harnesses** (ROADMAP Now): add `read_*` templates to every language card, switch the harness, and confirm
-   the build cache hits across seeds. Verify then gets several times faster.
+1. **stdin harnesses**: done (2026-11-05, ROADMAP Now). A new seed reuses every cached build; a new language card
+   should carry `harness.read` templates from the start (see the C or Python card).
 2. **Strings and lists in the IR.** Start with `len`, indexing and a `for x in xs` loop on `list[int]`. Each op is a
    card, and the conformance matrix tells you when a language row is green. AnyPS5's standard data functions and
    the game's text both wait on this.
@@ -715,8 +717,8 @@ with no `sorry` (`cardmodel verify --only formal`). Beyond that:
   `[cardmodel] killed: … over the … MB cap`; this process stops with `MemoryBudget` past `CARDMODEL_SELF_MB`.
 * **Lean batches** set `maxErrors` high and attribute errors by line. A declaration counts as checked only if Lean
   reached it without error (see `emit/lean.check_batch`).
-* **A slow full verify** comes from the baked-input compiles (see Now). Use `--quick` or `--langs python,javascript,c`
-  while iterating.
+* **A slow full verify** comes from the first compile of each program (later seeds reuse the build in
+  `state/build`) and from busy shared slots. Use `--quick` or `--langs python,javascript,c` while iterating.
 * **A conformance cell fails for one language.** The report has the arguments, expected and got. Fix the op card's
   `emit` entry or the language card's helper, never the engine.
 * **The sandbox test is skipped:** `sandbox-exec` only exists on macOS. The static self-containment check still runs.

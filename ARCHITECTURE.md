@@ -167,9 +167,11 @@ verify ──► state/last_verify.json ──► coverage / goals ──► COV
   with fixed-width integers are compared only where every intermediate fits (the interpreter reports the widest
   value), so an overflow is reported as out-of-width rather than as a semantic bug. *Reconsider* when a second
   frontend lands (for example C as a source), since that brings C semantics.
-* **Inputs baked into programs.** Every language needs only a print template, not a parser. The cost: a new seed
-  means a new compile (about 30–250 s for the full matrix, depending on load). *Reconsider*: stdin-driven harnesses
-  (ROADMAP).
+* **Inputs read from stdin.** A test program holds no argument value: per function it reads a count and then the
+  argument rows (`harness.read` templates and `cm_read_*` helpers on each language card), so a new seed reuses the
+  cached build. Floats cross as Python's `repr`, which every target parses back to the same bits. A card without
+  read templates, and bench mode (where the compiler must not see the inputs either way), still bake the inputs
+  into the source.
 * **The hub's "any" request semantics kept.** A request for domain `any` accepts every form, as in the hub
   `rewrite_engine.cheapest` and rea-cards. Forms with `role: hint` (another language's spelling) are excluded unless
   asked for, so `cheapest()` never returns code the caller cannot run.

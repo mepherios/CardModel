@@ -37,7 +37,7 @@ from .codegen import EmitGap, Emitter
 from .context import Ctx
 from .exprs import evaluate, parse
 from .rewrite import available, forms_of
-from .runners import call_node, call_python, run_program
+from .runners import call_node, call_python, run_calls
 
 _LIB_CACHE: dict[str, dict] = {}
 FORM_TIME_LIMIT_S = 20
@@ -207,8 +207,8 @@ def _raw_form_run(ctx: Ctx, card, form: dict, rows, arg_types: list[str], ret_ty
     lang_card = ctx.language(lang)
     bits = lang_card.get("int_bits")
     usable = [(a, e) for a, e in rows if all(V.fits(x, bits) for x in a) and V.fits(e, bits)]
-    src = Emitter(ctx.store, lang, ctx.ops).program({"entry": "hint_form", "functions": [fn]}, [list(a) for a, _ in usable])
-    run = run_program(lang_card, src, ctx.state_root)
+    run = run_calls(Emitter(ctx.store, lang, ctx.ops), lang_card, {"entry": "hint_form", "functions": [fn]},
+                    [list(a) for a, _ in usable], ctx.state_root)
     if run.status != "ok" or len(run.values) != len(usable):
         return usable, None, (run.detail or run.stderr or run.status)[-500:]
     return usable, [("ok", v) for v in run.values], None

@@ -2,7 +2,8 @@
 
 For every op card with ``ir`` and every signature in ``ir.types`` a one-line
 test function ``return OP(a0, a1, ...)`` is generated; per language, all of
-them go into ONE program (one compile), are called on seeded inputs drawn
+them go into ONE program (one compile, which reads its inputs from stdin, so
+the build is reused by every later seed), are called on seeded inputs drawn
 from the op's ``ir.domain``, and every printed value is compared with the
 op's reference semantics (``ir.eval``). This is how translation coverage
 is measured rather than claimed (Pheros L115; hub L21 sampling caveat).
@@ -27,7 +28,7 @@ from . import values as V
 from .codegen import EmitGap, Emitter
 from .context import Ctx
 from .ir import Interpreter
-from .runners import run_program
+from .runners import run_calls
 
 DEFAULT_SAMPLES = 12
 TYPE_CODE = {"list[int]": "li", "list[float]": "lf"}
@@ -100,8 +101,8 @@ def run_language(ctx: Ctx, lang: str, fns: list[dict], cases: dict) -> dict:
 
     def execute(items, calls_):
         module = {"entry": items[0]["fn"]["name"], "functions": [i["fn"] for i in items]}
-        src = Emitter(ctx.store, lang, ctx.ops).program(module, calls_)
-        return run_program(lang_card, src, ctx.state_root)
+        return run_calls(Emitter(ctx.store, lang, ctx.ops), lang_card, module, calls_, ctx.state_root,
+                         entries=[i["fn"]["name"] for i in items])
 
     if emittable:
         res = execute(emittable, calls)

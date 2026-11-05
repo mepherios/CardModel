@@ -21,6 +21,13 @@
         "list[float]": "cm_print_list({e}, 'f')",
         "list[int]": "cm_print_list({e}, 'i')"
       },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
       "truthy": {
         "bool": "(({e}) and 1 or 0)",
         "float": "((({e}) > 0.0) and 1 or 0)",
@@ -40,6 +47,11 @@
       "cm_modinv": "function cm_modinv(a, m)\n  local n = math.abs(m)\n  local r0, r1 = a % n, n\n  local s0, s1 = 1, 0\n  while r1 ~= 0 do\n    local q = r0 // r1\n    r0, r1 = r1, r0 - q * r1\n    s0, s1 = s1, s0 - q * s1\n  end\n  if r0 ~= 1 then error(\"base is not invertible\") end\n  return s0 % n\nend",
       "cm_powmod": "function cm_powmod(a, b, m)\n  if b < 0 then\n    a = cm_modinv(a, m)\n    b = -b\n  end\n  local r = 1 % m\n  a = a % m\n  while b > 0 do\n    if b % 2 == 1 then r = (r * a) % m end\n    a = (a * a) % m\n    b = b // 2\n  end\n  return r\nend",
       "cm_print_list": "function cm_print_list(xs, tag)\n  print('l:' .. #xs)\n  for i = 1, #xs do\n    if tag == 'f' then print('f:' .. string.format('%.17g', xs[i])) else print('i:' .. string.format('%d', xs[i])) end\n  end\nend",
+      "cm_read_bool": "function cm_read_bool()\n  return cm_read_int() ~= 0\nend",
+      "cm_read_float": "function cm_read_float()\n  return tonumber(io.read('*l'))\nend",
+      "cm_read_int": "function cm_read_int()\n  return math.tointeger(tonumber(io.read('*l')))\nend",
+      "cm_read_lf": "function cm_read_lf()\n  local r = {}\n  for i = 1, cm_read_int() do r[i] = cm_read_float() end\n  return r\nend",
+      "cm_read_li": "function cm_read_li()\n  local r = {}\n  for i = 1, cm_read_int() do r[i] = cm_read_int() end\n  return r\nend",
       "cm_set": "function cm_set(xs, i, v)\n  if i < 0 or i >= #xs then error('index out of range') end\n  xs[i + 1] = v\nend"
     },
     "if": "if {cond} then",
@@ -100,7 +112,9 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "169f0338d4f05d474d4310d0250d6dec2889c8a28378172d5b01373b7faa4f36",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "lua",
   "probe": {

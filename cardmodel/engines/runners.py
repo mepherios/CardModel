@@ -7,18 +7,21 @@ Two protocols:
   JavaScript forms run in one Node process per batch (``node:`` built-ins
   only, imported from a ``data:`` URL). Values cross the boundary as JSON
   with two tags: {"$bytes": hex} and {"$int": "decimal"} (|x| >= 2**53).
-* ``program`` protocol (IR-generated programs, int/float/bool): codegen
-  bakes the inputs into a program; the runner compiles it (cached by source
-  hash under the store's state/build directory), runs it with a timeout and
-  parses one tagged line per call: ``i:<int>`` ``f:<float>`` ``b:true|false``, or ``l:<n>`` followed by
-  the n element lines of a list.
+* ``program`` protocol (IR-generated programs, int/float/bool and lists): codegen
+  writes a program whose harness reads the arguments from stdin (``run_calls``,
+  ``Emitter.program_stdin``; a language card without ``harness.read`` templates
+  gets the inputs baked into the source instead); the runner compiles it (cached
+  by source hash under the store's state/build directory), runs it with a
+  timeout and parses one tagged line per call: ``i:<int>`` ``f:<float>``
+  ``b:true|false``, or ``l:<n>`` followed by the n element lines of a list.
 
 Every subprocess has a timeout; failures come back as data (status, stderr),
 never as silent empties (L36/L39).
 
 Honest limits (L1): forms run with the user's privileges (no sandbox): only
-run card code you trust; the build cache is keyed by source text, so a new
-seed (new baked inputs) means a new compile.
+run card code you trust; the build cache is keyed by source text: with stdin
+inputs a new seed reuses the build, while baked inputs (bench mode, a language
+without read templates, ``CARDMODEL_STDIN=0``) still mean one compile per seed.
 """
 from __future__ import annotations
 
@@ -29,6 +32,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -201,9 +205,38 @@ def build_dir(state_root: Path, lang: str, source: str) -> Path:
     return state_root / "build" / lang / h
 
 
+_BUILD_LOCKS: dict[str, threading.Lock] = {}
+_BUILD_LOCKS_GUARD = threading.Lock()
+
+
+def _build_lock(d: Path) -> threading.Lock:
+    """One lock per build directory: with stdin inputs, threads share builds, so one compiles while others wait."""
+    with _BUILD_LOCKS_GUARD:
+        return _BUILD_LOCKS.setdefault(str(d), threading.Lock())
+
+
+def run_calls(em, lang_card: dict, module: dict, calls: list, state_root: Path, entries: list[str] | None = None,
+              timeout: float = RUN_TIMEOUT_S) -> ProgramRun:
+    """Run ``calls`` (as for ``Emitter.program``) through the emitter ``em``: inputs on stdin when the language
+    card can read them (one build for every seed), else baked into the source. Values come back in call order.
+    ``entries``: functions that get a reading block even when no call names them (so the source does not
+    depend on which functions this seed's inputs happen to reach). ``CARDMODEL_STDIN=0`` bakes (to compare)."""
+    built = None if os.environ.get("CARDMODEL_STDIN") == "0" else em.program_stdin(module, calls, entries)
+    if built is None:
+        return run_program(lang_card, em.program(module, calls), state_root, timeout=timeout)
+    source, data, order = built
+    run = run_program(lang_card, source, state_root, timeout=timeout, input=data)
+    if len(run.values) == len(order) and order != sorted(order):
+        values = [None] * len(order)
+        for pos, i in enumerate(order):
+            values[i] = run.values[pos]
+        run.values = values
+    return run
+
+
 def run_program(lang_card: dict, source: str, state_root: Path, timeout: float = RUN_TIMEOUT_S,
-                parse: bool = True) -> ProgramRun:
-    """Compile (cached) and run a generated program; parse tagged output lines."""
+                parse: bool = True, input: str | None = None) -> ProgramRun:  # noqa: A002
+    """Compile (cached) and run a generated program (``input``: its stdin); parse tagged output lines."""
     name = lang_card["name"]
     runner = lang_card.get("runner") or {}
     ok, exe = probes.probe(lang_card.get("probe"))
@@ -220,31 +253,18 @@ def run_program(lang_card: dict, source: str, state_root: Path, timeout: float =
     src = d / runner.get("file", "main.txt")
     binp = d / "prog"
     kw = {"dir": str(d), "src": str(src), "bin": str(binp), **tools}
-    if not src.exists() or src.read_text(encoding="utf-8") != source:
-        src.write_text(source, encoding="utf-8")
     env = dict(os.environ)
     env.update({k: v.format(**kw) for k, v in (runner.get("env") or {}).items()})
     res = ProgramRun(name, "ok")
-    if runner.get("compile"):
-        stamp = d / ".compiled"
-        if stamp.exists() and (not runner.get("output") or Path(runner["output"].format(**kw)).exists()):
-            res.cached = True
-        else:
-            t0 = time.perf_counter()
-            try:
-                p = resources.run(_fill(runner["compile"], **kw), cwd=d, timeout=COMPILE_TIMEOUT_S, env=env,
-                                  stdin=subprocess.DEVNULL)
-            except subprocess.TimeoutExpired:
-                res.status, res.detail = "timeout", "compile timed out"
-                return res
-            res.compile_ms = (time.perf_counter() - t0) * 1000
-            if p.returncode != 0:
-                res.status, res.stderr = "compile_error", (p.stderr + p.stdout)[-4000:]
-                return res
-            stamp.write_text("ok")
+    with _build_lock(d):
+        if not src.exists() or src.read_text(encoding="utf-8") != source:
+            src.write_text(source, encoding="utf-8")
+        if runner.get("compile") and not _compile(runner, d, kw, env, res):
+            return res
     t0 = time.perf_counter()
     try:
-        p = resources.run(_fill(runner["run"], **kw), cwd=d, timeout=timeout, env=env, stdin=subprocess.DEVNULL)
+        p = resources.run(_fill(runner["run"], **kw), cwd=d, timeout=timeout, env=env, input=input,
+                          **({} if input is not None else {"stdin": subprocess.DEVNULL}))
     except subprocess.TimeoutExpired:
         res.status, res.detail = "timeout", f"run exceeded {timeout}s"
         return res
@@ -263,6 +283,27 @@ def run_program(lang_card: dict, source: str, state_root: Path, timeout: float =
         res.status = "runtime_error"
         res.detail = f"exit {p.returncode}"
     return res
+
+
+def _compile(runner: dict, d: Path, kw: dict, env: dict, res: ProgramRun) -> bool:
+    """Compile into ``d`` unless a finished build is there (``res.cached``); False (``res`` says why) on failure."""
+    stamp = d / ".compiled"
+    if stamp.exists() and (not runner.get("output") or Path(runner["output"].format(**kw)).exists()):
+        res.cached = True
+        return True
+    t0 = time.perf_counter()
+    try:
+        p = resources.run(_fill(runner["compile"], **kw), cwd=d, timeout=COMPILE_TIMEOUT_S, env=env,
+                          stdin=subprocess.DEVNULL)
+    except subprocess.TimeoutExpired:
+        res.status, res.detail = "timeout", "compile timed out"
+        return False
+    res.compile_ms = (time.perf_counter() - t0) * 1000
+    if p.returncode != 0:
+        res.status, res.stderr = "compile_error", (p.stderr + p.stdout)[-4000:]
+        return False
+    stamp.write_text("ok")
+    return True
 
 
 def clean_build(state_root: Path) -> int:

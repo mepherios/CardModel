@@ -21,6 +21,13 @@
         "list[float]": "cm_print_list({e}, 'f')",
         "list[int]": "cm_print_list({e}, 'i')"
       },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
         "float": "((({e}) > 0.0) ? 1 : 0)",
@@ -40,6 +47,11 @@
       "cm_modinv": "def cm_modinv(a, m)\n  n = m.abs\n  r0, r1 = a % n, n\n  s0, s1 = 1, 0\n  while r1 != 0\n    q = r0 / r1\n    r0, r1 = r1, r0 - q * r1\n    s0, s1 = s1, s0 - q * s1\n  end\n  raise ZeroDivisionError, \"base is not invertible\" if r0 != 1\n  s0 % n\nend",
       "cm_powmod": "def cm_powmod(a, b, m)\n  if b < 0\n    a = cm_modinv(a, m)\n    b = -b\n  end\n  a.pow(b, m)\nend",
       "cm_print_list": "def cm_print_list(xs, tag)\n  puts('l:' + xs.length.to_s)\n  xs.each { |v| puts(tag + ':' + v.to_s) }\nend",
+      "cm_read_bool": "def cm_read_bool\n  cm_read_int != 0\nend",
+      "cm_read_float": "def cm_read_float\n  Float($stdin.gets.strip)\nend",
+      "cm_read_int": "def cm_read_int\n  Integer($stdin.gets.strip, 10)\nend",
+      "cm_read_lf": "def cm_read_lf\n  Array.new(cm_read_int) { cm_read_float }\nend",
+      "cm_read_li": "def cm_read_li\n  Array.new(cm_read_int) { cm_read_int }\nend",
       "cm_set": "def cm_set(xs, i, v)\n  raise IndexError, 'index out of range' unless i >= 0 && i < xs.length\n  xs[i] = v\nend"
     },
     "if": "if {cond}",
@@ -99,7 +111,9 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "6db86f34359b3edadb797b7e7111cacb4904896ceb333e66929e84090d345109",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "ruby",
   "probe": {

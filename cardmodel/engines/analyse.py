@@ -44,7 +44,7 @@ from dataclasses import dataclass, field
 from . import values as V
 from .codegen import EmitGap, Emitter
 from .ir import LEAVES, MAX_INT_BITS, SPECIAL, Interpreter, IRError, StepLimit, to_python_text
-from .runners import run_program
+from .runners import run_calls
 
 STEP_LIMIT = 300_000
 DEEP = 400                      # recursion frames: half of Python's default limit, far above a small device stack
@@ -671,27 +671,27 @@ def _run_one(ctx, runner: tuple[str, str, dict], module: dict, inputs: list[list
     except EmitGap as exc:
         return [{"gap": str(exc)}] * len(inputs)
 
-    def program(calls):
-        return em.program(module, calls)
+    def run(calls, timeout):     # inputs on stdin when the card can read them: one build serves every batch
+        return run_calls(em, card, module, calls, ctx.state_root, timeout=timeout)
     try:
-        src = program(inputs)
+        em.program(module, inputs)
     except EmitGap as exc:
         return [{"gap": str(exc)}] * len(inputs)
     if slow:                     # each on its own, with a short clock: whether it finishes is the finding
         out = []
         for args in inputs:
-            r = run_program(card, program([args]), ctx.state_root, timeout=SLOW_TIMEOUT)
+            r = run([args], SLOW_TIMEOUT)
             out.append({"value": r.values[0]} if r.status == "ok" and len(r.values) == 1 else
                        {"error": _first_line(r)})
         return out
-    run = run_program(card, src, ctx.state_root, timeout=20)
-    if run.status == "ok" and len(run.values) == len(inputs):
-        return [{"value": v} for v in run.values]
-    if run.status in ("compile_error", "unavailable"):
-        return [{"gap": f"{run.status}: {(run.stderr or run.detail)[-160:]}"}] * len(inputs)
+    res = run(inputs, 20)
+    if res.status == "ok" and len(res.values) == len(inputs):
+        return [{"value": v} for v in res.values]
+    if res.status in ("compile_error", "unavailable"):
+        return [{"gap": f"{res.status}: {(res.stderr or res.detail)[-160:]}"}] * len(inputs)
     out = []
     for args in inputs:
-        r = run_program(card, program([args]), ctx.state_root, timeout=10)
+        r = run([args], 10)
         if r.status == "ok" and len(r.values) == 1:
             out.append({"value": r.values[0]})
         else:
