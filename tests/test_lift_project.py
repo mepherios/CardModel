@@ -49,11 +49,12 @@ class LinearClosure(unittest.TestCase):
         # (quadratic: 2,000 functions took ~3 s); the worklist visits each call once
         n = 2000
         src = "".join(f"def f{i}(x: int) -> int:\n    return f{i - 1}(x) + 1\n" for i in range(n - 1, 0, -1))
-        src += "def f0(x: int) -> int:\n    return open(x)\n"
+        # f0 declares its result, so it is an opaque boundary: every caller lifts as partial (SCALING.md §3.3)
         t = time.perf_counter()
-        lifted = lift_source(src, model_ctx().ops)
+        lifted = lift_source(src + "def f0(x: int) -> int:\n    return open(x)\n", model_ctx().ops)
         took = time.perf_counter() - t
         self.assertEqual(sum(lf.ok for lf in lifted), 0)
+        self.assertEqual(sum(lf.partial for lf in lifted), n - 1)
         self.assertLess(took, 1.5, f"closure over a {n}-deep chain took {took:.2f} s")
         f1 = next(lf for lf in lifted if lf.name == "f1")
         self.assertIn("calls f0 which did not lift", f1.reasons)
@@ -64,6 +65,19 @@ class LinearClosure(unittest.TestCase):
         self.assertIn("open()", f1.gaps[0]["cause"])
         f2 = next(lf for lf in lifted if lf.name == "f2")
         self.assertEqual([(g["callee"], g["kind"]) for g in f2.gaps], [("f1", "partial")])
+        # on top of the gaps (#52): f0 is host-callable, so f1 is partial with an opaque edge to it
+        self.assertEqual(list(f1.opaque), ["f0"])
+        self.assertEqual(f1.opaque["f0"]["id"], next(lf for lf in lifted if lf.name == "f0").boundary["id"])
+        # f0 without a declared result is still a boundary card, but the host cannot be typed against it: no
+        # caller is partial (each keeps its gap)
+        t = time.perf_counter()
+        lifted = lift_source(src + "def f0(x: int):\n    return open(x)\n", model_ctx().ops)
+        took = time.perf_counter() - t
+        self.assertLess(took, 1.5, f"closure over a {n}-deep chain took {took:.2f} s")
+        by = {lf.name: lf for lf in lifted}
+        self.assertNotIn("host", by["f0"].boundary)
+        self.assertEqual(sum(lf.partial for lf in lifted), 0)
+        self.assertEqual(lift_status(by["f1"]), "partial")
 
 
 class BoundaryCards(unittest.TestCase):

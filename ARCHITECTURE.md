@@ -28,6 +28,8 @@ cardmodel/                      the repository IS the model (its home)
 │   │   │                       original source through its own toolchain (docs/FRONTENDS.md)
 │   │   ├── lift_project.py     lift a whole tree: calls across files and modules resolve (Python imports, text
 │   │   │                       languages link by name), Python methods lift as Class_method; linear closure
+│   │   ├── opaque.py           partial lifts: a failed callee is an opaque boundary card; the caller's IR runs
+│   │   │                       with that call made to the original Python function (the witness; no target)
 │   │   ├── sweep.py            `cardmodel lift-sweep PATH`: lift rate per language + histogram of first reasons
 │   │   ├── codegen.py          IR -> any language card (syntax as data; no per-language code)
 │   │   ├── runners.py          compile/run with cache and timeouts; call protocol (python, node)

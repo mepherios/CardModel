@@ -1,0 +1,117 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/jolly-liskov-*",
+    "claude/compassionate-margulis-*",
+    "claude/elated-mestorf-*",
+    "worktree-universal-domains",
+    "claude/unreal-distill",
+    "claude/gracious-kirch-*",
+    "claude/heuristic-ptolemy-*",
+    "claude/project-thread-*",
+    "self-optimize/*",
+    "claude/docs-bundle-0505",
+    "claude/ci-*",
+    "claude/stdin-harness",
+    "claude/go-negzero",
+    "claude/strings-ir",
+    "claude/self-report-*"
+  ],
+  "category": "project",
+  "docs": [
+    "README.md",
+    "docs/AUTONOMY.md",
+    "docs/INTEGRATION.md"
+  ],
+  "done": [
+    "consolidation, knowledge layer, card language, Lean bridge; self-run, capabilities, one program",
+    "the live In progress page; law CM41; one store mechanism for work in progress (a5ed2d5)",
+    "MATH_CORE phases 0 and 1; the research handover's storage rules (CM45), witness tiers (CM46), the formal core T1-T6",
+    "Gödel method wave 1: difficulty census, code sizes and the GM-2 decision record, admissible numberings, Gödel's 46 definitions with a proof checker, arithmetized instruction terms",
+    "the self-running-improvement merge (984fc7a): law witnesses, the store's end-to-end check (CM42), goal floors on floor/goals",
+    "the merges of 2026-10-22: festive-margulis up to 11284a6 (f25e82a), jolly-liskov 984fc7a (e72fa77), frosty-lumiere b15b527 (32f5f58)",
+    "the merges of 2026-10-22 afternoon (the user's yes in the games session): the DS player 0fcb468 (9269eee), the last bank controllers ea14439 (593fe5c), the lifted STOP fix 73e6220 (16ea9fc), the Vector Duel card 85909ec (c1bf07f)",
+    "2026-11-03: the installed Cardmodel Arcade starts its own service again (the launcher ran the shell script bin/cardmodel with Python; it now runs python -m cardmodel and logs to service.log)",
+    "in the cloud: GitHub Actions CI with every codegen toolchain (verify, translate, unit suite) and a weekly self cycle that proposes adopted cards as a pull request; verify passes on Linux (docs/AUTONOMY.md section 6)",
+    "CI minutes budgeted: a pull request runs once, the full job waits for ready-for-review, pushes run only on main, the self cycle runs weekly (.github/workflows)",
+    "2026-11-05 (branch claude/stdin-harness): stdin harnesses (HANDOVER section 8 item 1): every codegen language card reads test inputs from stdin, so one cached build serves every seed; Java compiles once with javac",
+    "2026-11-05 (branch claude/strings-ir): strings in the IR (HANDOVER section 8 item 2): `str` as Unicode code points, eleven op cards (len, index, chr/ord, concat, equality, order, slice, find, int/str conversion) green in the conformance matrix in every installed codegen language, Python `str` functions lifted (examples/strings, docs/STRINGS.md); Lean has no string templates yet"
+  ],
+  "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
+  "in_progress": [
+    "signed zero in every target: Go's -0.0 literal, C's (--x), JS printing -0, ceil/floor/trunc and Ruby sqrt of zeros; the matrix compares zeros by sign (claude/go-negzero, local until CI billing is fixed)",
+    "strings in the IR (HANDOVER 8.2; claude/strings-ir, local until CI billing is fixed)",
+    "claude/self-report-next (draft PR): the self-report's top fixable item, G_C4: the four inconclusive redefinitions get exact forms (exprs: fibonacci, multiplicity, bounded Sum), 107 -> 111 verified"
+  ],
+  "kind": "program",
+  "left": [
+    "W-2 on Mathlib after the user's yes; wave 2 (W-4, W-10, W-11, W-13, W-16)",
+    "the ARM instruction cards as terms (G_M6)",
+    "canonical forms for more definitions (G_U7)"
+  ],
+  "metadata": {
+    "previous_content_hash": "caab575d7996f52277a0d977ebeacbf2c37022a80e80b39a94e2ed0aea15e30d",
+    "version": "2.0.23",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "label": "last self-run",
+      "self": "status"
+    },
+    {
+      "label": "last verify",
+      "verify": "*"
+    },
+    {
+      "goal": "G_A4_capabilities_failing",
+      "label": "core capabilities failing"
+    },
+    {
+      "goal": "G_U9_algorithm_forms_proved",
+      "label": "algorithm forms proved, not sampled"
+    },
+    {
+      "goal": "G_U8_formal_core",
+      "label": "formal core problems"
+    }
+  ],
+  "name": "cardmodel",
+  "next_steps": [
+    "wave 2 of the Gödel method: W-4 (the Gödel record on every card) first",
+    "W-2 once Mathlib is allowed"
+  ],
+  "order": 6,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "On main 32f5f58: MATH_CORE phases 0 and 1, Gödel method wave 1, and the merges of festive-margulis (11284a6), jolly-liskov (984fc7a) and frosty-lumiere (b15b527). 290 tests pass (1 skipped); the full verify passes 23 of 23 sections (seed 2992561134).",
+  "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
+  "tier": 1,
+  "title": "The card model",
+  "updated": "2026-11-05T04:45:00+01:00",
+  "user_actions": [
+    {
+      "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",
+      "unblocks": [
+        "wave 3's enforcement of the Gödel record"
+      ],
+      "why": "wave 1 produced the evidence; adopting a law is the user's decision"
+    },
+    {
+      "action": "Approve merging claude/heuristic-ptolemy-2e6700 (defd4f0): the card-model world game, phase 0 (49 rendering definitions) and phase 1 (first light)",
+      "unblocks": [
+        "law CM47 (observed implementations are named)",
+        "cardmodel render frame",
+        "project/world_game on main"
+      ],
+      "why": "its session merged main up to e72fa77 and asks for the merge; it merges into 32f5f58 without conflicts; the user decides merges"
+    }
+  ]
+}

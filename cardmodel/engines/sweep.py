@@ -7,7 +7,9 @@ become placeholders) so they group. The self-run can track the rate as a goal.
 
 A function lifts when its own body does (SCALING.md §3.3: partial, not poisoned); it is *closed* when everything it
 calls lifted too, so it runs and translates alone. A function that does not lift is a boundary card; the call edges
-it leaves as gaps in its callers are counted by the boundary's cause.
+it leaves as gaps in its callers are counted by the boundary's cause. Of the functions with gaps, the
+*host-partial* ones (``host_partial``; frontend_python.Lifted.partial) reach only boundaries the host can call, so
+they are witnessed through the original Python (engines/opaque.py), never run in a target.
 
 Honest limits (L1): a function counts once, by its first reason; methods count as functions; a file that does not
 parse counts as one failure of the file, not of its functions.
@@ -72,8 +74,11 @@ def sweep(ctx: Ctx, root: str | Path, exclude: list[str] | None = None, langs: l
     reasons: Counter = Counter()
     blockers: Counter = Counter()
     per_lang: dict[str, list[int]] = {}
-    total = lifted = closed = 0
+    total = lifted = closed = host_partial = opaque_edges = 0
+    reached: set = set()
     kinds = Counter()
+    boundary_causes: Counter = Counter()
+    reached: set = set()
     for lf in res.functions.values():
         lang = lf.lang
         c = per_lang.setdefault(lang, [0, 0, 0])
@@ -87,6 +92,10 @@ def sweep(ctx: Ctx, root: str | Path, exclude: list[str] | None = None, langs: l
         if status == "closed":
             c[2] += 1
             closed += 1
+        if getattr(lf, "partial", False):
+            host_partial += 1
+            opaque_edges += len(lf.opaque)
+            reached.update(lf.opaque)
         if status == "boundary":
             reasons[normalise(lf.reasons[0] if lf.reasons else "unknown")] += 1
         for g in lf.gaps:
@@ -99,6 +108,9 @@ def sweep(ctx: Ctx, root: str | Path, exclude: list[str] | None = None, langs: l
         "closed": closed, "closed_rate": round(closed / total, 4) if total else 0.0, "partial": lifted - closed,
         "boundaries": len(bounds), "typed_boundaries": sum(1 for b in bounds.values() if b["signature"]),
         "gap_edges": sum(b["gap_edges"] for b in bounds.values()), "kinds": dict(kinds),
+        "host_partial": host_partial, "closed_with_boundaries": closed + host_partial,
+        "rate_with_boundaries": round((closed + host_partial) / total, 4) if total else 0.0,
+        "opaque_edges": opaque_edges, "boundaries_reached": len(reached),
         "cross_module_calls": res.cross_calls, "seconds": round(seconds, 2),
         "languages": {k: {"functions": v[0], "lifted": v[1], "closed": v[2],
                           "rate": round(v[1] / v[0], 4) if v[0] else 0.0} for k, v in sorted(per_lang.items())},
@@ -111,7 +123,8 @@ def report_text(rep: dict) -> str:
     lines = [f"{rep['root']}: {rep['lifted']} of {rep['functions']} functions lift ({100 * rep['rate']:.2f} %), "
              f"{rep['closed']} closed ({100 * rep['closed_rate']:.2f} %) and {rep['partial']} with gaps · "
              f"{rep['boundaries']} boundary cards ({rep['typed_boundaries']} typed) leave {rep['gap_edges']} call "
-             f"edges as gaps · {rep['files']} files ({len(rep['unparsed_files'])} unparsed) · {rep['kinds']} · "
+             f"edges as gaps · {rep.get('host_partial', 0)} host-partial (witness only), {rep.get('opaque_edges', 0)} "
+             f"opaque edges to {rep.get('boundaries_reached', 0)} host-callable boundaries · {rep['files']} files ({len(rep['unparsed_files'])} unparsed) · {rep['kinds']} · "
              f"{rep['cross_module_calls']} calls across files · {rep['seconds']} s"]
     for lang, r in rep["languages"].items():
         lines.append(f"  {lang:<12} {r['lifted']:>7} / {r['functions']:<7} {100 * r['rate']:6.2f} %"

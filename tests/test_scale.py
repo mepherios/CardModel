@@ -39,7 +39,11 @@ class Generate(unittest.TestCase):
             ok = lifted.functions[q].ok
             if k["kind"] == "fail":
                 self.assertFalse(ok, q)                # the deliberate failure stays a failure
-            elif k["kind"] != "fail_caller":           # fail_caller: whatever the closure decides (measured)
+            elif k["kind"] == "fail_caller":           # lifts against the failed callee's opaque boundary
+                self.assertFalse(ok, q)
+                self.assertTrue(lifted.functions[q].partial, (q, lifted.functions[q].reasons))
+                self.assertEqual(list(lifted.functions[q].opaque), [k["calls"]])
+            else:
                 self.assertTrue(ok, (q, k, lifted.functions[q].reasons))
 
     def test_call_depth_is_bounded(self):
@@ -60,6 +64,8 @@ class Bench(unittest.TestCase):
         self.assertEqual(r["reference_errors"], 0)
         self.assertGreater(r["lift_rate"], 0.5)
         self.assertLess(r["lift_rate"], 1)
+        self.assertGreater(r["lift_rate_with_boundaries"], r["lift_rate"])
+        self.assertEqual(r["partial"], r["by_kind"].get("fail_caller", {}).get("partial", 0))
         self.assertGreater(r["peak_mb"], 0)
 
     def test_child_bench_record_and_goals(self):

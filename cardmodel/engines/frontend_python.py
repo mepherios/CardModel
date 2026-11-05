@@ -13,11 +13,22 @@ Supported subset (everything else is reported, never pasted through):
   abs min max (2 args) pow(a, b[, m]) float(x) int(x) math.gcd(a, b)
   math.sqrt exp log(x) sin cos tan asin acos atan atan2 sinh cosh tanh fabs
   floor ceil trunc (-> int) fmod copysign isnan · math.pi math.e math.tau
-  calls to other lifted functions of the same module, positional or by keyword,
-  missing arguments filled from numeric defaults (L45: the callee must lift)
+  calls to other functions of the same module, positional or by keyword,
+  missing arguments filled from numeric defaults
   list[int] list[float] (docs/LISTS.md) · str (docs/STRINGS.md): literals, len(s),
   s[i], s[a:b], s + t, == != < <= > >=, sub in s, s.find(sub[, start]),
   s.startswith(p), s.endswith(p), str(n), int(s), ord(c), chr(n), for c in s
+
+A call to a function that did not lift is not a failure of the caller (SCALING.md §3.3, "partial, not
+poisoned"): the callee becomes an *opaque boundary* (``Lifted.boundary``: its signature, its cause, the
+Python callable that implements it) and the caller lifts with that call edge recorded as a gap
+(``Lifted.partial``; ``Lifted.opaque`` names each edge's call line and the boundary card's identity
+hash, egraph.semantic_hash; close_calls). A partial function is never
+``ok``: no target can run it, so translate, improve and the matrix keep skipping it; its IR runs only in
+the reference interpreter with each opaque call made to the original Python function (engines/opaque.py,
+the witness). A callee is a boundary only when callers can be typed against it: a declared (or lifted)
+numeric return type, and not an instance method (the host would need its receiver); otherwise the caller
+fails as before (L45).
 
 Each unsupported construct is reported with its line, so a translation gap
 is a precise list, not a percentage guess.
@@ -67,8 +78,14 @@ class Lifted:
     inferred_types: bool = False
     lineno: int = 0
     preamble: str = ""     # what the source needs around it to run alone: module constants, functools
+    signature: dict | None = None   # what callers are typed against: {"params", "names", "returns" (declared)}
+    host: str | None = None         # the Python attribute path that calls the original ("f", "C.m"); None: none
+    host_module: str | None = None  # the module the host path is in (lift_project); None: the file's own namespace
+    call_lines: dict = field(default_factory=dict)   # callee -> line of its first call here
     gaps: list = field(default_factory=list)       # call edges to callees that are not closed (close_calls)
     boundary: dict | None = None                   # the opaque boundary card of a function that did not lift
+    partial: bool = False           # body lifted, every gap reaches a host-callable boundary: witness only, no target
+    opaque: dict = field(default_factory=dict)       # partial: direct gap edges, callee -> {line, id of its card}
 
 
 def _ann_type(node) -> str | None:
@@ -208,6 +225,7 @@ class _FnLifter:
         self.tmp = 0
         self.inferred = False
         self.return_types: set[str] = set()
+        self.calls: dict[str, int] = {}       # callee -> line of the first call (the gap's reference site, CM11)
 
     def fresh(self, base: str, typ: str) -> str:
         self.tmp += 1
@@ -834,6 +852,7 @@ class _FnLifter:
                 fixed.append(e)
             if ext.get("returns") is None:
                 self.inferred = True
+            self.calls.setdefault(ext["qual"], n.lineno)
             return ["CALL", ext["qual"], *fixed], ext.get("returns") or "int"
         raise Unsupported(f"call to {fname}() (no op card or lifted function)", n)
 
@@ -871,6 +890,7 @@ class _FnLifter:
             ret = sig.get("returns") or "int"
             if sig.get("returns") is None:
                 self.inferred = True
+            self.calls.setdefault(fname, n.lineno)
             return ["CALL", n.func.id, *fixed], ret
 
 
@@ -887,8 +907,9 @@ def _always_returns(body: list[dict]) -> bool:
 
 def lift_source(source: str, ops: dict[str, OpSpec], only: list[str] | None = None,
                 param_hints: dict[str, dict[str, str]] | None = None) -> list[Lifted]:
-    """Lift every top-level function in ``source``. Calls between lifted functions resolve;
-    a function that calls a non-liftable one fails with that reason (closure, L45)."""
+    """Lift every top-level function in ``source``. Calls between lifted functions resolve; a function that
+    calls one that did not lift lifts against its opaque boundary (``partial``, close_calls), or fails with that
+    reason when the callee cannot be a boundary (L45)."""
     tree = ast.parse(source)
     fdefs = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
     return lift_defs(fdefs, source.splitlines(), ops, only, param_hints, consts=module_constants(tree))
@@ -930,15 +951,19 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
             if got is not None:
                 lf, hint = got
                 sigs[f.name] = _sig_with(sigs.get(f.name), f, hint, consts)
+                lf.signature, lf.host = dict(sigs[f.name]), f.name
                 results[f.name] = lf
                 continue
         lifter = _FnLifter(f, ops, sigs, hint, consts, externs)
+        declared = dict(sigs[f.name]) if f.name in sigs else None
         try:
             ir = lifter.lift()
             sigs[f.name]["returns"] = ir["returns"]
-            results[f.name] = Lifted(f.name, True, ir, src, [], lifter.inferred, f.lineno, preamble)
+            lf = Lifted(f.name, True, ir, src, [], lifter.inferred, f.lineno, preamble)
         except Unsupported as exc:
-            results[f.name] = Lifted(f.name, False, None, src, [str(exc)], lifter.inferred, f.lineno, preamble)
+            lf = Lifted(f.name, False, None, src, [str(exc)], lifter.inferred, f.lineno, preamble)
+        lf.signature, lf.host, lf.call_lines = declared, f.name, lifter.calls
+        results[f.name] = lf
     if close:
         external = {e["qual"] for e in (externs or {}).values()}
         close_calls(results, lambda c: c in external, sigs)
@@ -1037,6 +1062,38 @@ def callees_of(ir: dict) -> set[str]:
     return {e[1] for s in _stmts(ir["body"]) for e in _exprs_of(s) if e[0] == "CALL"}
 
 
+def boundary_card(lf) -> dict | None:
+    """The opaque boundary card of a function that is not ``ok``: its signature, the cause, and the Python callable
+    that implements it (``host``); None when callers cannot be typed against it or nothing could call it (a text
+    language's function, an instance method, a return type neither declared nor lifted)."""
+    sig = getattr(lf, "signature", None)
+    host = getattr(lf, "host", None)
+    if sig is None or host is None:
+        return None
+    returns = lf.ir["returns"] if lf.ir is not None else sig.get("returns")
+    if returns is None:
+        return None
+    names = sig.get("names") or [f"a{i}" for i in range(len(sig["params"]))]
+    if lf.ir is not None:
+        params = [dict(p) for p in lf.ir["params"]]
+    else:
+        params = [{"name": n, "type": t} for n, t in zip(names, sig["params"])]
+    from .egraph import semantic_hash
+    qual = getattr(lf, "qual", None) or lf.name
+    # the permanent name is the core's identity hash (egraph.semantic_hash) of the boundary's own term: what it is
+    # called, what callers are typed against, and the source text that implements it. It has no canonical term, so
+    # it has no Gödel content: its only reading is syntax (GODEL_TARGET F4), which the card says.
+    ident = semantic_hash(["OPAQUE", qual, [p["type"] for p in params], returns, lf.source])
+    return {"name": qual, "category": "opaque_boundary", "id": ident,
+            "identity": {"hash": ident, "of": "opaque boundary (name, signature, source)", "under": "syntax"},
+            "params": params,
+            "returns": returns, "cause": lf.reasons[0] if lf.reasons else "unknown", "line": lf.lineno,
+            "host": host, "module": getattr(lf, "host_module", None),
+            "body_lifted": lf.ir is not None, "content": None,
+            "content_read_from": "syntax: no canonical term (F4); the identity hashes the signature and source",
+            "targets": "none: only the original Python function implements it"}
+
+
 def lift_status(lf) -> str:
     """'closed': lifted with every callee lifted (runs and translates on its own); 'partial': its own body lifted,
     and every call edge to a callee that did not lift is a recorded gap; 'boundary': its own body did not lift, so
@@ -1096,22 +1153,81 @@ def close_calls(results: dict, known_ok=lambda name: False, sigs: dict | None = 
                 lf.ok = False
                 lf.reasons.append(f"calls {bad} which did not lift")
                 work.append(name)
+    _mark_partial(results, callers)
 
 
-def module_for(name: str, lifted: list[Lifted]) -> dict:
-    """The IR module containing ``name`` and every function it (transitively) calls."""
-    by = {lf.name: lf for lf in lifted if lf.ok}
-    need, order = [name], []
+def _mark_partial(results: dict, callers: dict) -> None:
+    """On top of the gaps: a boundary whose function the host can call (boundary_card) gets the full card (Gödel
+    identity under syntax, ``host``); a function whose body lifted and whose every gap reaches such a boundary,
+    directly or through other partial functions, is ``partial`` (witness only through engines/opaque.py, never ok,
+    never a target), with its direct boundary edges in ``opaque``. A gap to a missing function, to a boundary the
+    host cannot call (an instance method, no result type) or to a non-partial callee leaves it a plain failure.
+    Greatest fixpoint, linear in gap edges: every lifted, non-ok function starts as a candidate, and a worklist
+    over the reverse call graph removes those with a bad gap."""
+    for lf in results.values():
+        if lf.boundary is not None and "host" not in lf.boundary:
+            card = boundary_card(lf) if lf.ir is None else None
+            if card is not None:
+                lf.boundary = {**lf.boundary, **card}
+    cand = {n for n, lf in results.items() if not lf.ok and lf.ir is not None and lf.gaps}
+
+    def good(g) -> bool:
+        c = results.get(g["callee"])
+        if c is None:
+            return False
+        if g["kind"] == "boundary":
+            return c.boundary is not None and c.boundary.get("host") is not None
+        return g["callee"] in cand
+    drop = [n for n in cand if not all(good(g) for g in results[n].gaps)]
+    while drop:
+        n = drop.pop()
+        if n not in cand:
+            continue
+        cand.discard(n)
+        drop.extend(c for c in callers.get(n, ()) if c in cand)
+    for n in cand:
+        lf = results[n]
+        lf.partial = True
+        for g in lf.gaps:
+            if g["kind"] != "boundary":
+                continue
+            card = results[g["callee"]].boundary
+            line = (getattr(lf, "call_lines", None) or {}).get(g["callee"])
+            lf.opaque[g["callee"]] = {"line": line, "id": card["id"]}
+            why = f"{f'line {line}: ' if line else ''}calls {g['callee']}, an opaque boundary ({card['cause']})"
+            if why not in lf.reasons:
+                lf.reasons.append(why)
+        for g in lf.gaps:
+            why = f"calls {g['callee']}, which reaches an opaque boundary"
+            if g["kind"] == "partial" and why not in lf.reasons:
+                lf.reasons.append(why)
+
+def module_for(name: str, lifted: list[Lifted], opaque: bool = False) -> dict:
+    """The IR module containing ``name`` and every function it (transitively) calls. With ``opaque``, ``name`` may
+    be partial: lifted functions (ok or partial) come with their IR, and every function that did not lift is listed
+    under ``"opaque"`` as its boundary card (run through the host, engines/opaque.py; no target can emit it)."""
+    every = {lf.name: lf for lf in lifted}
+    by = {n: lf for n, lf in every.items() if lf.ok or (opaque and getattr(lf, "partial", False))}
+    need, order, cards = [name], [], {}
     while need:
         n = need.pop()
-        if n in order:
+        if n in order or n in cards:
+            continue
+        if n not in by:
+            lf = every.get(n)
+            if not opaque or lf is None or getattr(lf, "boundary", None) is None or n == name:
+                raise KeyError(f"{n} did not lift: {lf.reasons if lf else 'unknown'}")
+            cards[n] = lf.boundary
             continue
         order.append(n)
         for s in _stmts(by[n].ir["body"]):
             for e in _exprs_of(s):
                 if e[0] == "CALL" and e[1] not in order:
                     need.append(e[1])
-    return {"entry": name, "functions": [by[n].ir for n in order]}
+    module = {"entry": name, "functions": [by[n].ir for n in order]}
+    if opaque:
+        module["opaque"] = [dict(c, name=n) for n, c in cards.items()]
+    return module
 
 
 def _rename(x, old: str, new: str):

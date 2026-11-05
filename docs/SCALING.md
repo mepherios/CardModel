@@ -72,7 +72,12 @@ then loop". That design ends at S2.
    "loop until nothing changes over all functions".
 3. **Partial, not poisoned.** A function that doesn't lift becomes an *opaque boundary card* with its signature and
    observed behaviour. Its callers still lift, and only the edge is a gap (built: `frontend_python.close_calls`,
-   `ProjectLift.boundaries`; observed behaviour is not recorded yet).
+   `ProjectLift.boundaries`; observed behaviour is not recorded yet). *Witness for Python (2026-11-05):* a boundary
+   the host can call gets the full card (the Python callable; its id is `egraph.semantic_hash` of name, signature
+   and source, under syntax, no content); a caller whose every gap reaches such boundaries is `Lifted.partial`
+   (never `ok`, so no target is claimed), and `engines/opaque.py` witnesses it by running the IR with each opaque
+   call made to the original function; a boundary the inputs never exercise is not a pass. An instance method or a
+   callee without a declared or lifted result is not host-callable (its callers keep the gap but are not partial).
 4. **Content addressing everywhere.** Every result card names the hashes of its inputs (source, cards, rules, tool
    versions), the way arcade build ids already do. Equal inputs mean equal results, so a result computed once on any
    machine is reused everywhere.
@@ -210,7 +215,7 @@ row is a recommendation for that workstream, not a change made here.
 | component (workstream) | concern at scale | recommendation | urgency |
 |---|---|---|---|
 | `frontend_python.lift_source` closure (lifting) | done: worklist over a reverse call graph, linear (2,000-deep chain: 3.06 s → 0.21 s) | — | done |
-| failure propagation (lifting) | one unliftable callee fails every caller | opaque boundary cards for the failed callee (§3.3) | high: it hides most of the lift rate |
+| failure propagation (lifting) | one unliftable callee failed every caller | opaque boundary cards for the failed callee (§3.3): done for Python; callers lift as partial | done: synthetic 0.864 closed → 0.923 with boundaries at 10³ |
 | `frontend_text` call resolution (lifting) | same-file only, no includes or preprocessor | module/link resolution from build-system cards, `compile_commands.json` for C (§4.2) | before S2 |
 | new IR types such as lists and strings (lifting) | must not assume in-memory, single-threaded semantics | element types generic; length symbolic; aliasing and mutation explicit, so the memory model (§4.5) can attach later | design now |
 | `translate`, `conformance`, `matrix` (verification) | one compile per function per language; at most 4 parallel | batch per module, stdin harness, content-hash build cache, shard the matrix across CI jobs (§4.4) | before the matrix grows past S1 |
@@ -239,7 +244,8 @@ and peak memory per function, so the slope is a goal card.
   child process. First run (Linux, Xeon 2.8 GHz, Python 3.13, seed 0; `cards/metric/scale__n*`): 518, 572 and
   931 µs per function at 10³, 10⁴ and 10⁵ (slope 1.80, nearly all of it in `lift`: 469 → 860 µs); 20 KB per
   function, peak 1,988 MB at 10⁵, so 10⁶ would need about 20 GB and G_A12 fails there today. The lift rate is
-  0.86: every deliberate failure's callers fail with it until opaque boundary cards land. Summarize, verify across
+  0.86 closed; with opaque boundary cards the failing-callers lift as partial, and the rate with boundaries is
+  0.923 at 10³ and 0.922 at 3·10³ (seed 0, measured 2026-11-05 by lifting the generated project, not a full bench run). Summarize, verify across
   languages and optimize are not timed yet.
 * **S-B: the indexed store and summaries (S2 ready).** A SQLite index, lazy loading, a content-addressed corpus
   store. Summary cards and the SCC-ordered analyses. Logic per shard. Goal: start-up time independent of store size;
