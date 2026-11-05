@@ -215,6 +215,25 @@ class Structure(unittest.TestCase):
             if digits < 4000:
                 self.assertEqual(digits, len(str(n)))
 
+    def test_number_of_a_terms_tokens_is_its_structural_number(self):
+        """G.number over G.tokens is G.structural's number; over a forest (two terms' tokens, one variable order) it
+        is the token list's number, which decodes back to that token list."""
+        ctx = model_ctx()
+        idx = G.index_of(ctx.store)
+        rng = random.Random(SEED)
+        self.assertEqual(G.number([]), 1)
+        for _ in range(40):
+            t, u = _random_term(ctx, rng), _random_term(ctx, rng)
+            self.assertEqual(G.number(G.tokens(t, idx, [], ops=ctx.ops)),
+                             G.structural(t, ctx.ops, idx, max_digits=None)[0], seed_note(self))
+            varnames: list[str] = []
+            toks = G.tokens(t, idx, varnames, ops=ctx.ops) + G.tokens(u, idx, varnames, ops=ctx.ops)
+            n = G.number(toks)
+            for i, c in enumerate(toks, start=1):
+                e, n = G.valuation(n, G.nth_prime(i))
+                self.assertEqual(e, c, seed_note(self))
+            self.assertEqual(n, 1, seed_note(self))
+
     def test_large_terms_keep_only_their_hash(self):
         ctx = model_ctx()
         idx = G.index_of(ctx.store)

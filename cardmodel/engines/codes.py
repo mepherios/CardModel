@@ -115,14 +115,12 @@ def _pair_szudzik(x: int, y: int) -> int:
 def built_positional_bits(node, reader: "Reader") -> int:
     """The structural number's bit length, by building it with the core (``G.structural``; only for small codes).
     A tuple node (a theorem's statement list, a rule's two sides) is a forest, not one term; its number is the
-    prime-power code of the concatenated tokens, built from ``G.tokens``' output (the core has no forest form)."""
+    prime-power code of the concatenated tokens (``G.tokens`` per term, one shared variable order), built by
+    ``G.number``."""
     terms = core_terms(node)
     if len(terms) == 1:
         return G.structural(terms[0], None, reader.index, max_digits=None)[0].bit_length()
-    n = 1
-    for i, c in enumerate(reader.codes(node, []), start=1):
-        n *= G.nth_prime(i) ** c
-    return n.bit_length()
+    return G.number(reader.codes(node, [])).bit_length()
 
 
 def built_content_bits(vec: dict[str, int], entries: list[dict]) -> int:
