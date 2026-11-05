@@ -183,3 +183,91 @@ class StdinHarness(unittest.TestCase):
             if (card.get("runner") or {}).get("compile"):
                 self.assertTrue(runs[1].cached, f"{lang}: a new seed recompiled")
 
+
+class CarryImage(unittest.TestCase):
+    """The cells are the carry map's verified image (docs/GODEL_AUDIT.md §4.1, step 3): a gap cell is read from the
+    map with nothing emitted, and the map refuses exactly what the emitter refuses, at every op, rank and language."""
+
+    def test_the_map_refuses_exactly_what_the_emitter_refuses(self):
+        from cardmodel.engines.codegen import emission_content, predicted_gap
+        ctx = model_ctx()
+        fns = conformance.op_functions(ctx.ops)
+        self.assertTrue(fns)
+        self.assertTrue(all(f["atom"] == f"op/{f['op']}@{f['rank']}" for f in fns))
+        cells = gaps = 0
+        for lang in ctx.codegen_languages():
+            gap = ctx.language_gap(lang)
+            for item in fns:
+                predicted = predicted_gap(emission_content(ctx.ops, {"functions": [item["fn"]]}), gap)
+                try:
+                    Emitter(ctx.store, lang, ctx.ops).program({"entry": item["fn"]["name"], "functions": [item["fn"]]}, [])
+                    refused = None
+                except EmitGap as exc:
+                    refused = str(exc)
+                self.assertEqual(bool(predicted), refused is not None, (lang, item["atom"], predicted, refused))
+                cells += 1
+                gaps += bool(predicted)
+        self.assertGreater(gaps, 0)
+        print(f"\n  {cells} cells over {len(ctx.codegen_languages())} languages: the map and the emitter agree on every "
+              f"one; {gaps} gaps known with nothing emitted", end=" ")
+
+    def test_a_fixed_width_cell_needs_the_wrap_of_its_store(self):
+        """FOUNDATIONS §7.3: a u8 result is stored wrapped, so the cell at a fixed-width rank needs WRAPU's template
+        too. The content of the term (ranked_content) does not see the wrap; the emission content does, and the
+        rank-blind content is still what forgetting the ranks gives."""
+        from cardmodel.engines import godel as G
+        from cardmodel.engines.codegen import emission_content, predicted_gap, ranked_content
+        ctx = model_ctx()
+        item = next(i for i in conformance.op_functions(ctx.ops) if i["fn"]["name"] == "t_add_u8_u8")
+        module = {"functions": [item["fn"]]}
+        self.assertEqual(set(ranked_content(ctx.ops, module)), {"op/ADD@u8,u8->u8"})
+        self.assertEqual(set(emission_content(ctx.ops, module)), {"op/ADD@u8,u8->u8", "op/WRAPU@u8,int->int"})
+        self.assertEqual(G.forget_ranks(ranked_content(ctx.ops, module)), G.module_content(module, ctx.ops))
+        lean = ctx.language_gap("lean")
+        self.assertIn("op/WRAPU", lean)                                  # Lean has no wrap-on-store template
+        self.assertNotIn("op/ADD@u8,u8->u8", lean)                       # but it adds a u8 (held in its Int)
+        self.assertEqual(predicted_gap(ranked_content(ctx.ops, module), lean), [])
+        self.assertEqual(predicted_gap(emission_content(ctx.ops, module), lean), ["op/WRAPU@u8,int->int"])
+        self.assertEqual(predicted_gap(emission_content(ctx.ops, module), ctx.language_gap("c")), [])
+
+    def test_cells_are_atoms_and_the_readers_read_them(self):
+        from collections import Counter
+        ctx = model_ctx()
+        rep = conformance.matrix(ctx, langs=["python", "lean"], seed=SEED, samples=2, ops=["ADD", "REM"])
+        self.assertEqual(rep["tier"], "sample")
+        self.assertEqual(rep["atoms"]["t_rem_i_i"], "op/REM@int,int->int")
+        py, lean = rep["languages"]["python"], rep["languages"]["lean"]
+        self.assertTrue(all(c["atom"] == rep["atoms"][n] for r in (py, lean) for n, c in r["cells"].items()))
+        self.assertEqual(py["cells"]["t_rem_i_i"]["status"], "pass", seed_note(self))
+        self.assertEqual(py["cells"]["t_add_u8_u8"]["status"], "pass", seed_note(self))
+        # Lean's gaps are known with no toolchain: REM has no Lean template, nor ADD on floats (no float type),
+        # nor a u8 store (no WRAPU); the cells Lean could run are unavailable here, or pass where it is installed
+        self.assertEqual(lean["cells"]["t_rem_i_i"]["status"], "gap")
+        self.assertEqual(lean["cells"]["t_rem_i_i"]["missing"], ["op/REM@int,int->int"])
+        self.assertEqual(lean["cells"]["t_add_f_f"]["status"], "gap")
+        self.assertEqual(lean["cells"]["t_add_u8_u8"]["missing"], ["op/WRAPU@u8,int->int"])
+        self.assertIn(lean["cells"]["t_add_i_i"]["status"], ("unavailable", "pass"))
+        # ADD on floats and f32, on the six fixed-width ints (their stores wrap), and REM: all from the map
+        self.assertEqual(rep["summary"]["lean"]["gap"], 9)
+        im = conformance.image(rep)
+        self.assertEqual(im["lean"]["op/REM@int,int->int"], "gap")
+        self.assertEqual(im["python"]["op/ADD@int,int->int"], "pass")
+        risk = conformance.risk(rep, Counter({"op/ADD@int,int->int": 2, "op/REM@int,int->int": 1}))
+        self.assertEqual(risk["python"], {})
+        self.assertEqual(risk["lean"].get("op/REM@int,int->int"), "gap")
+        blind = conformance.risk(rep, Counter({"op/REM": 1, "op/MUL": 1}))
+        self.assertEqual(blind["python"], {"op/MUL": "unchecked"})
+        self.assertEqual(blind["lean"], {"op/MUL": "unchecked", "op/REM@int,int->int": "gap"})
+        self.assertEqual(conformance.semantic_gap(rep), {"python": [], "lean": []})
+
+    def test_the_semantic_gap_is_the_failing_atoms(self):
+        from collections import Counter
+        rep = {"languages": {"c": {"available": True, "cells": {
+            "t_mod_i_i": {"status": "fail", "atom": "op/MOD@int,int->int", "args": [-7, 3], "expected": 2, "got": -1},
+            "t_add_i_i": {"status": "pass", "atom": "op/ADD@int,int->int", "checks": 8},
+            "t_rem_i_i": {"status": "error", "atom": "op/REM@int,int->int"}}}}}
+        self.assertEqual(conformance.semantic_gap(rep), {"c": ["op/MOD@int,int->int", "op/REM@int,int->int"]})
+        self.assertEqual(conformance.risk(rep, Counter({"op/MOD@int,int->int": 1, "op/ADD@int,int->int": 3}))["c"],
+                         {"op/MOD@int,int->int": "fail"})
+        self.assertEqual(conformance.risk(rep, Counter({"op/ADD": 3}))["c"], {})
+

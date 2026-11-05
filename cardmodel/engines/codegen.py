@@ -880,10 +880,24 @@ def ranked_content(ops, module: dict) -> Counter:
     return out
 
 
+def emission_content(ops, module: dict) -> Counter:
+    """The ranked content of a module as the emitter writes it: ``ranked_content`` of its functions with every
+    store into a fixed-width sort wrapped (``ir.lower_stores``; FOUNDATIONS §7.3: a store of a u8 is WRAPU(v, 8),
+    of an f32 is F32(v)), so the wrap ops count at their ranks. γ of the term is ``ranked_content``; this is what
+    an emission needs a template for, and what ``predicted_gap`` reads for a function (translate, matrix) and for a
+    conformance cell: the prediction then refuses exactly what the emitter refuses."""
+    if module.get("functions"):
+        return ranked_content(ops, {**module, "functions": [lower_stores(fn) for fn in module["functions"]]})
+    return ranked_content(ops, lower_stores(module))
+
+
 def carry_map(store, ops, lang: str) -> dict[str, dict[str, str | None]]:
     """The language as a carry map on the atoms at every rank (FOUNDATIONS D1, D13, D14; docs/GODEL_TARGET.md
     G11): for each op of the signature and each of its ranks (``int,int->int``), the template the emitter resolves
-    for it, provided the language names the rank's sorts, and None where it has none."""
+    for it, provided the language names the rank's sorts, and None where it has none. Resolved exactly as
+    ``Emitter.expr`` resolves an application: the sorts named by ``T``, the template keyed by their carriers (a u8
+    is held in the language's int, an f32 in its float), so the map refuses nothing the emitter would write
+    (tests/test_conformance.py, ``CarryImage``: every op at every rank in every language)."""
     em = Emitter(store, lang, ops)
     out: dict[str, dict[str, str | None]] = {}
     for name, spec in ops.items():
@@ -893,23 +907,28 @@ def carry_map(store, ops, lang: str) -> dict[str, dict[str, str | None]]:
             try:
                 for t in sig:                                      # expr() names every sort of the application
                     em.T(t)
-                ranks[key] = em.op_template(name, list(sig[:-1]), sig[-1])   # resolved as expr() resolves it
+                ranks[key] = em.op_template(name, [carrier(t) for t in sig[:-1]], carrier(sig[-1]))
             except EmitGap:
                 ranks[key] = None
         out[name] = ranks
     return out
 
 
-def language_gap(store, ops, lang: str) -> set[str]:
-    """The gap of the carry map: every rank the language has no template for, as ``op/NAME@rank``, and ``op/NAME``
-    itself when it has none at any rank. A term whose ranked content has one of them cannot be emitted, and that is
-    known from the content alone, before anything is emitted."""
+def map_gap(cmap: dict[str, dict[str, str | None]]) -> set[str]:
+    """The gap of a carry map: every rank with no template, as ``op/NAME@rank``, and ``op/NAME`` itself when the op
+    has none at any rank."""
     gap: set[str] = set()
-    for name, ranks in carry_map(store, ops, lang).items():
+    for name, ranks in cmap.items():
         gap.update(G.ranked_atom(f"op/{name}", r) for r, t in ranks.items() if t is None)
         if not any(ranks.values()):
             gap.add(f"op/{name}")
     return gap
+
+
+def language_gap(store, ops, lang: str) -> set[str]:
+    """The gap of the language's carry map (``map_gap``): a term whose ranked content has one of its atoms cannot be
+    emitted, and that is known from the content alone, before anything is emitted."""
+    return map_gap(carry_map(store, ops, lang))
 
 
 def predicted_gap(content, gap: set[str]) -> list[str]:
@@ -923,5 +942,5 @@ def supported_ops(store, ops, lang: str) -> dict[str, bool]:
     return {name: any(ranks.values()) for name, ranks in carry_map(store, ops, lang).items()}
 
 
-__all__ = ["EmitGap", "Emitter", "carry_map", "emit_module", "emit_program", "language_gap", "predicted_gap",
-           "rank_key", "ranked_content", "resolve_language", "supported_ops", "LEAVES"]
+__all__ = ["EmitGap", "Emitter", "carry_map", "emission_content", "emit_module", "emit_program", "language_gap",
+           "map_gap", "predicted_gap", "rank_key", "ranked_content", "resolve_language", "supported_ops", "LEAVES"]
