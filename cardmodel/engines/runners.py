@@ -158,6 +158,8 @@ class ProgramRun:
 
 
 def parse_line(line: str):
+    """One tagged value. ``s:`` is a string written as its code points in decimal, space-separated (``s:`` alone
+    is the empty string), so no target's console encoding or escaping is involved."""
     tag, _, text = line.partition(":")
     text = text.strip()
     if tag == "i":
@@ -173,6 +175,8 @@ def parse_line(line: str):
         return float(text)
     if tag == "b":
         return text.lower() == "true"
+    if tag == "s":
+        return "".join(chr(int(c)) for c in text.split())
     raise ValueError(f"untagged output line {line!r}")
 
 
@@ -253,7 +257,7 @@ def run_program(lang_card: dict, source: str, state_root: Path, timeout: float =
     lines = [ln for ln in p.stdout.splitlines() if ln.strip()]
     if parse:
         try:
-            res.values = parse_values([ln for ln in lines if ln[:2] in ("i:", "f:", "b:", "l:")])
+            res.values = parse_values([ln for ln in lines if ln[:2] in ("i:", "f:", "b:", "s:", "l:")])
         except ValueError as exc:
             res.status, res.detail = "runtime_error", str(exc)
             return res

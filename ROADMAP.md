@@ -215,9 +215,10 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
 * 🟢 **Second frontend: C (or JavaScript) → IR**, reusing the conformance matrix as its witness. Lift-and-run makes
   translation two-way (C → Python and C → Rust, …). The Pheros `translation_gap` cards list which constructs matter
   first.
-* 🟢 **Strings and lists in the IR.** Types `str` and `list[int]`, plus op cards for len/index/slice/concat. Each new
-  op needs per-language templates and conformance cells. This is the biggest coverage gain for real code; Pheros
-  `string_ops` gives the vocabulary.
+* 🔵 **Strings and lists in the IR.** Lists landed with #13 (docs/LISTS.md). `str` landed on `claude/strings-ir`
+  (docs/STRINGS.md): code-point semantics, eleven op cards (len, index, chr/ord, concat, equality, order, slice,
+  find, int/str conversion) with templates and green conformance cells in every installed codegen language. Next:
+  formatting, split/join, a `bytes` sort for C's `char *`, and Lean templates.
 * 🟡 **Recorded verification in CI form.** The self-run now verifies on every cycle (a full verify daily) and keeps
   the record in `state/self/`; what is left is writing verdicts into the cards (`verify --record`) as part of an
   adoption, so the history of evidence lives in git (hub L18: autonomous by default).

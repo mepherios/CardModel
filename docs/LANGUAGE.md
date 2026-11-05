@@ -101,6 +101,7 @@ layer on top.
 
 ## Limits
 
-* No strings, lists, user types or closures inside functions. The IR is int/float/bool (see ROADMAP).
+* No strings, lists, user types or closures inside functions. The card language's IR functions are int/float/bool;
+  the Python frontend lifts lists and strings (docs/LISTS.md, docs/STRINGS.md).
 * Logic terms are constants: there are no function symbols.
 * Rule evaluation has a fact budget.

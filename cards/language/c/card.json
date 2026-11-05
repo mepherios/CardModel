@@ -41,7 +41,8 @@
         "float": "printf(\"f:%.17g\\n\", (double)({e}));",
         "int": "printf(\"i:%\" PRId64 \"\\n\", (int64_t)({e}));",
         "list[float]": "cm_lf_print({e});",
-        "list[int]": "cm_li_print({e});"
+        "list[int]": "cm_li_print({e});",
+        "str": "cm_s_print({e});"
       },
       "truthy": {
         "bool": "(({e}) ? 1 : 0)",
@@ -74,11 +75,26 @@
       "cm_max_i": "static @int@ cm_max_i(@int@ a, @int@ b) { return b > a ? b : a; }",
       "cm_min_f": "static @float@ cm_min_f(@float@ a, @float@ b) { return b < a ? b : a; }",
       "cm_min_i": "static @int@ cm_min_i(@int@ a, @int@ b) { return b < a ? b : a; }",
+      "cm_modinv": "static @int@ cm_modinv(@int@ a, @int@ m) { @int@ n = m < 0 ? -m : m; @int@ r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { @int@ q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) __builtin_trap(); return cm_floormod(s0, n); }",
       "cm_opaque_b": "static @bool@ cm_opaque_b(@bool@ x) { volatile @bool@ v = x; return v; }",
       "cm_opaque_f": "static @float@ cm_opaque_f(@float@ x) { volatile @float@ v = x; return v; }",
       "cm_opaque_i": "static @int@ cm_opaque_i(@int@ x) { volatile @int@ v = x; return v; }",
       "cm_powmod": "static @int@ cm_powmod(@int@ a, @int@ b, @int@ m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } @int@ r = cm_floormod(1, m); a = cm_floormod(a, m); while (b > 0) { if (b & 1) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1; } return r; }",
-      "cm_modinv": "static @int@ cm_modinv(@int@ a, @int@ m) { @int@ n = m < 0 ? -m : m; @int@ r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { @int@ q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) __builtin_trap(); return cm_floormod(s0, n); }"
+      "cm_s": "#include <stdio.h>\n#include <stdlib.h>\n#include <inttypes.h>\ntypedef struct { int64_t n; uint32_t *d; } cm_s;",
+      "cm_s_at": "static int64_t cm_s_at(cm_s a, int64_t i) { if (i < 0 || i >= a.n) cm_list_fail(\"string index out of range\"); return (int64_t)a.d[i]; }",
+      "cm_s_chr": "static cm_s cm_s_chr(int64_t c) { if (c < 0 || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF)) cm_list_fail(\"not a Unicode scalar value\"); cm_s r = cm_s_new(1); r.d[0] = (uint32_t)c; return r; }",
+      "cm_s_clamp": "static int64_t cm_s_clamp(int64_t i, int64_t n) { if (i < 0) { i += n; if (i < 0) i = 0; } else if (i > n) i = n; return i; }",
+      "cm_s_cmp": "static int64_t cm_s_cmp(cm_s a, cm_s b) { int64_t n = a.n < b.n ? a.n : b.n; for (int64_t i = 0; i < n; i++) if (a.d[i] != b.d[i]) return a.d[i] < b.d[i] ? -1 : 1; return a.n == b.n ? 0 : (a.n < b.n ? -1 : 1); }",
+      "cm_s_concat": "static cm_s cm_s_concat(cm_s a, cm_s b) { cm_s r = cm_s_new(a.n + b.n); for (int64_t i = 0; i < a.n; i++) r.d[i] = a.d[i]; for (int64_t i = 0; i < b.n; i++) r.d[a.n + i] = b.d[i]; return r; }",
+      "cm_s_find": "static int64_t cm_s_find(cm_s a, cm_s b, int64_t i) { if (i < 0) { i += a.n; if (i < 0) i = 0; } if (i > a.n) return -1; for (; i + b.n <= a.n; i++) { int64_t k = 0; while (k < b.n && a.d[i + k] == b.d[k]) k++; if (k == b.n) return i; } return -1; }",
+      "cm_s_from_int": "static cm_s cm_s_from_int(int64_t v) { char b[24]; int m = snprintf(b, sizeof b, \"%\" PRId64, v); cm_s r = cm_s_new(m); for (int i = 0; i < m; i++) r.d[i] = (uint32_t)(unsigned char)b[i]; return r; }",
+      "cm_s_new": "static cm_s cm_s_new(int64_t n) { cm_s r; r.n = n; r.d = (uint32_t *)malloc(sizeof(uint32_t) * (size_t)(n > 0 ? n : 1)); return r; }",
+      "cm_s_of": "static cm_s cm_s_of(int64_t n, const uint32_t *v) { cm_s r = cm_s_new(n); for (int64_t i = 0; i < n; i++) r.d[i] = v[i]; return r; }",
+      "cm_s_ord": "static int64_t cm_s_ord(cm_s a) { if (a.n != 1) cm_list_fail(\"ord of a string whose length is not 1\"); return (int64_t)a.d[0]; }",
+      "cm_s_print": "static void cm_s_print(cm_s a) { printf(\"s:\"); for (int64_t i = 0; i < a.n; i++) printf(i ? \" %\" PRIu32 : \"%\" PRIu32, a.d[i]); printf(\"\\n\"); }",
+      "cm_s_slice": "static cm_s cm_s_slice(cm_s a, int64_t lo, int64_t hi) { lo = cm_s_clamp(lo, a.n); hi = cm_s_clamp(hi, a.n); return lo < hi ? cm_s_of(hi - lo, a.d + lo) : cm_s_new(0); }",
+      "cm_s_to_int": "static int64_t cm_s_to_int(cm_s a) { int64_t i = 0, j = a.n; while (i < j && cm_s_ws(a.d[i])) i++; while (j > i && cm_s_ws(a.d[j - 1])) j--; int neg = 0; if (i < j && (a.d[i] == 43 || a.d[i] == 45)) { neg = a.d[i] == 45; i++; } if (i >= j) cm_list_fail(\"not a decimal integer\"); uint64_t v = 0; for (; i < j; i++) { if (a.d[i] < 48 || a.d[i] > 57) cm_list_fail(\"not a decimal integer\"); v = v * 10 + (a.d[i] - 48); } return neg ? (int64_t)(0 - v) : (int64_t)v; }",
+      "cm_s_ws": "static int cm_s_ws(uint32_t c) { return c == 32 || (c >= 9 && c <= 13); }"
     },
     "if": "if ({cond}) {{",
     "import": "#include <@name@>\n",
@@ -117,6 +133,9 @@
       "int": "{arr}[{idx}] = {value};",
       "u8": "{arr}[{idx}] = (uint8_t)({value});"
     },
+    "str_lit": {
+      "codes": "cm_s_of({n}, (const uint32_t[]){{{items_z}}})"
+    },
     "style": "braces",
     "switch": {
       "body_close": "}} break;",
@@ -132,6 +151,7 @@
       "int": "int64_t",
       "list[float]": "cm_lf",
       "list[int]": "cm_li",
+      "str": "cm_s",
       "void": "void"
     },
     "while": "while ({cond}) {{",
@@ -140,7 +160,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "cm_lf_new(0, 0.0)",
-      "list[int]": "cm_li_new(0, 0)"
+      "list[int]": "cm_li_new(0, 0)",
+      "str": "cm_s_new(0)"
     }
   },
   "comments": {
@@ -212,8 +233,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "f8d0a742dc57a56c17bc5b0e23bc763cf07c117f36d1bde418d99d6bd0cf4515",
-    "version": "1.1.1",
+    "previous_content_hash": "c01de084dd6583b83cabb6128c52fa66e31619683f5c3c81ebf8bf3c46586945",
+    "version": "1.1.2",
     "version_bump_reason": "patch"
   },
   "name": "c",

@@ -1,0 +1,66 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "(cm_s_cmp({0}, {1}) == 0)",
+    "go": "({0} == {1})",
+    "java": "({0}).equals({1})",
+    "javascript": "({0} === {1})",
+    "lua": "({0} == {1})",
+    "python": "({0} == {1})",
+    "ruby": "({0} == {1})",
+    "rust": "cm_s_eq(&{0}, &{1})",
+    "swift": "cm_s_eq({0}, {1})"
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "str,str": [
+        {
+          "alphabet": "aé～😀",
+          "edges": [
+            "～",
+            "😀",
+            "é",
+            "a"
+          ],
+          "str": [
+            0,
+            2
+          ]
+        },
+        {
+          "alphabet": "aé～😀",
+          "edges": [
+            "😀",
+            "～",
+            "é",
+            "a"
+          ],
+          "str": [
+            0,
+            2
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a == b",
+    "types": [
+      [
+        "str",
+        "str",
+        "bool"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_EQ",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "two strings are equal: the same code points in the same order (no normalization: U+00E9 is not e followed by U+0301)",
+  "tier": 1
+}

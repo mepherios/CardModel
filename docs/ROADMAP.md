@@ -85,7 +85,7 @@ So of 23 language cards: **2 full frontends, 12 targets, 0 language pairs that d
 | int (unbounded), float (binary64), bool | ✅ | — |
 | fixed-width bit-vectors BV(w) | implicit in machine code | first-class type (MATH_CORE F3) |
 | globals, byte/int arrays, void functions, switch | ✅ (machine extension) | — |
-| strings | ❌ | `str` + op cards len/index/slice/concat/find/format, per-language templates |
+| strings | ✅ `str` as code points: len, index, slice, concat, compare, find, int/str conversion, `for c in s` ([STRINGS.md](STRINGS.md)) | formatting, split/join, `bytes`, Lean templates |
 | lists / arrays of any element | ✅ `list[int]`, `list[float]` with value semantics: len, index, store, new, copy, `for x in xs`, comprehensions over `range` ([LISTS.md](LISTS.md)) | other element types, append, slicing |
 | tuples, multiple return values | ❌ | `tuple[...]` and destructuring |
 | dicts / maps, sets | ❌ | `dict[K,V]`, `set[T]` |

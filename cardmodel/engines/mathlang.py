@@ -1695,6 +1695,9 @@ class _Emit:
         if fn.get("returns") == "void" or bad or module.get("globals") or module.get("arrays"):
             raise EmitGap("math: machine state (globals, arrays, stores, switch, void functions) is not emitted "
                           "as equations")
+        typed = [fn.get("returns"), *(p["type"] for p in fn["params"]), *(fn.get("locals") or {}).values()]
+        if "str" in typed:
+            raise EmitGap("math: strings have no notation yet (docs/STRINGS.md)")
         for s in _stmts(fn["body"]):
             for key in ("value", "cond", "start", "stop", "step", "index"):
                 if isinstance(s.get(key), list):

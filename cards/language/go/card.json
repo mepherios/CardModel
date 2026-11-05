@@ -19,7 +19,8 @@
         "float": "fmt.Printf(\"f:%v\\n\", {e})",
         "int": "fmt.Printf(\"i:%d\\n\", {e})",
         "list[float]": "cm_lf_print({e})",
-        "list[int]": "cm_li_print({e})"
+        "list[int]": "cm_li_print({e})",
+        "str": "fmt.Println(\"s:\" + cm_s_codes({e}))"
       },
       "truthy": {
         "bool": "({e})",
@@ -41,11 +42,23 @@
       "cm_max_i": "func cm_max_i(a int64, b int64) int64 {\n\tif b > a {\n\t\treturn b\n\t}\n\treturn a\n}",
       "cm_min_f": "func cm_min_f(a float64, b float64) float64 {\n\tif b < a {\n\t\treturn b\n\t}\n\treturn a\n}",
       "cm_min_i": "func cm_min_i(a int64, b int64) int64 {\n\tif b < a {\n\t\treturn b\n\t}\n\treturn a\n}",
+      "cm_modinv": "func cm_modinv(a int64, m int64) int64 {\n\tn := m\n\tif n < 0 {\n\t\tn = -n\n\t}\n\tr0, r1 := cm_floormod(a, n), n\n\ts0, s1 := int64(1), int64(0)\n\tfor r1 != 0 {\n\t\tq := r0 / r1\n\t\tr0, r1 = r1, r0-q*r1\n\t\ts0, s1 = s1, s0-q*s1\n\t}\n\tif r0 != 1 {\n\t\tpanic(\"base is not invertible\")\n\t}\n\treturn cm_floormod(s0, n)\n}",
       "cm_opaque_b": "//go:noinline\nfunc cm_opaque_b(x bool) bool { return x }",
       "cm_opaque_f": "//go:noinline\nfunc cm_opaque_f(x float64) float64 { return x }",
       "cm_opaque_i": "//go:noinline\nfunc cm_opaque_i(x int64) int64 { return x }",
       "cm_powmod": "func cm_powmod(a int64, b int64, m int64) int64 {\n\tif b < 0 {\n\t\ta = cm_modinv(a, m)\n\t\tb = -b\n\t}\n\tr := cm_floormod(1, m)\n\ta = cm_floormod(a, m)\n\tfor b > 0 {\n\t\tif b&1 == 1 {\n\t\t\tr = cm_floormod(r*a, m)\n\t\t}\n\t\ta = cm_floormod(a*a, m)\n\t\tb >>= 1\n\t}\n\treturn r\n}",
-      "cm_modinv": "func cm_modinv(a int64, m int64) int64 {\n\tn := m\n\tif n < 0 {\n\t\tn = -n\n\t}\n\tr0, r1 := cm_floormod(a, n), n\n\ts0, s1 := int64(1), int64(0)\n\tfor r1 != 0 {\n\t\tq := r0 / r1\n\t\tr0, r1 = r1, r0-q*r1\n\t\ts0, s1 = s1, s0-q*s1\n\t}\n\tif r0 != 1 {\n\t\tpanic(\"base is not invertible\")\n\t}\n\treturn cm_floormod(s0, n)\n}"
+      "cm_s_at": "func cm_s_at(s string, i int64) int64 {\n\tr := []rune(s)\n\tif i < 0 || i >= int64(len(r)) {\n\t\tpanic(\"string index out of range\")\n\t}\n\treturn int64(r[i])\n}",
+      "cm_s_chr": "func cm_s_chr(c int64) string {\n\tif c < 0 || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF) {\n\t\tpanic(\"not a Unicode scalar value\")\n\t}\n\treturn string(rune(c))\n}",
+      "cm_s_clamp": "func cm_s_clamp(i int64, n int64) int64 {\n\tif i < 0 {\n\t\ti += n\n\t\tif i < 0 {\n\t\t\ti = 0\n\t\t}\n\t} else if i > n {\n\t\ti = n\n\t}\n\treturn i\n}",
+      "cm_s_cmp": "func cm_s_cmp(a string, b string) int64 {\n\tif a < b {\n\t\treturn -1\n\t}\n\tif a > b {\n\t\treturn 1\n\t}\n\treturn 0\n}",
+      "cm_s_codes": "func cm_s_codes(s string) string {\n\tout := \"\"\n\tfor i, r := range []rune(s) {\n\t\tif i > 0 {\n\t\t\tout += \" \"\n\t\t}\n\t\tout += cm_s_from_int(int64(r))\n\t}\n\treturn out\n}",
+      "cm_s_find": "func cm_s_find(s string, sub string, start int64) int64 {\n\tx, y := []rune(s), []rune(sub)\n\tn, m := int64(len(x)), int64(len(y))\n\ti := start\n\tif i < 0 {\n\t\ti += n\n\t\tif i < 0 {\n\t\t\ti = 0\n\t\t}\n\t}\n\tif i > n {\n\t\treturn -1\n\t}\n\tfor ; i+m <= n; i++ {\n\t\tk := int64(0)\n\t\tfor k < m && x[i+k] == y[k] {\n\t\t\tk++\n\t\t}\n\t\tif k == m {\n\t\t\treturn i\n\t\t}\n\t}\n\treturn -1\n}",
+      "cm_s_from_int": "func cm_s_from_int(v int64) string {\n\tif v == 0 {\n\t\treturn \"0\"\n\t}\n\tu := uint64(v)\n\tif v < 0 {\n\t\tu = uint64(-v)\n\t}\n\tvar b [24]byte\n\tp := len(b)\n\tfor u > 0 {\n\t\tp--\n\t\tb[p] = byte('0' + u%10)\n\t\tu /= 10\n\t}\n\tif v < 0 {\n\t\tp--\n\t\tb[p] = '-'\n\t}\n\treturn string(b[p:])\n}",
+      "cm_s_len": "func cm_s_len(s string) int64 { return int64(len([]rune(s))) }",
+      "cm_s_ord": "func cm_s_ord(s string) int64 {\n\tr := []rune(s)\n\tif len(r) != 1 {\n\t\tpanic(\"ord of a string whose length is not 1\")\n\t}\n\treturn int64(r[0])\n}",
+      "cm_s_slice": "func cm_s_slice(s string, a int64, b int64) string {\n\tr := []rune(s)\n\tn := int64(len(r))\n\tlo, hi := cm_s_clamp(a, n), cm_s_clamp(b, n)\n\tif lo >= hi {\n\t\treturn \"\"\n\t}\n\treturn string(r[lo:hi])\n}",
+      "cm_s_to_int": "func cm_s_to_int(s string) int64 {\n\ti, j := 0, len(s)\n\tfor i < j && cm_s_ws(s[i]) {\n\t\ti++\n\t}\n\tfor j > i && cm_s_ws(s[j-1]) {\n\t\tj--\n\t}\n\tt := s[i:j]\n\tneg := false\n\tif len(t) > 0 && (t[0] == '+' || t[0] == '-') {\n\t\tneg = t[0] == '-'\n\t\tt = t[1:]\n\t}\n\tif len(t) == 0 {\n\t\tpanic(\"not a decimal integer\")\n\t}\n\tvar v uint64\n\tfor k := 0; k < len(t); k++ {\n\t\tif t[k] < '0' || t[k] > '9' {\n\t\t\tpanic(\"not a decimal integer\")\n\t\t}\n\t\tv = v*10 + uint64(t[k]-'0')\n\t}\n\tif neg {\n\t\treturn int64(0 - v)\n\t}\n\treturn int64(v)\n}",
+      "cm_s_ws": "func cm_s_ws(c byte) bool { return c == ' ' || (c >= 9 && c <= 13) }"
     },
     "if": "if {cond} {{",
     "import": "\t\"@name@\"\n",
@@ -70,13 +83,18 @@
     "prelude": "package main\n\nimport (\n\t\"fmt\"\n@imports@)\n\nvar _ = fmt.Sprint\n\n",
     "return": "return {value}",
     "set": "{name}[{idx}] = {value}",
+    "str_lit": {
+      "escape": "\\U{x8}",
+      "quote": "\"{s}\""
+    },
     "style": "braces",
     "types": {
       "bool": "bool",
       "float": "float64",
       "int": "int64",
       "list[float]": "[]float64",
-      "list[int]": "[]int64"
+      "list[int]": "[]int64",
+      "str": "string"
     },
     "while": "for {cond} {{",
     "zero": {
@@ -84,7 +102,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "[]float64{}",
-      "list[int]": "[]int64{}"
+      "list[int]": "[]int64{}",
+      "str": "\"\""
     }
   },
   "comments": {
@@ -135,7 +154,9 @@
   },
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "b648c8faeb42ddaa6295e37f494fadbeb615542515ece1a2a61642d314703126",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "go",
   "probe": {

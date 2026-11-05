@@ -121,6 +121,8 @@ class Emitter:
             raw = ",".join(repr(float(x)) if elem_type(kind) == "float" else str(int(x)) for x in v)
             return t.format(items=", ".join(items), items_z=", ".join([*items, self.lit(elem_type(kind), 0)]),
                             n=len(items), n_lit=self.lit("int", len(items)), raw=raw)
+        if kind == "str":
+            return self.str_lit(v)
         lits = self.cg.get("lit") or {}
         if kind == "bool":
             return lits.get("true" if v else "false", "true" if v else "false")
@@ -133,6 +135,34 @@ class Emitter:
         if bits and not -(2 ** (bits - 1)) <= int(v) < 2 ** (bits - 1):
             raise EmitGap(f"{self.lang_name}: integer constant {int(v)} does not fit {bits}-bit int")
         return lits.get("int", "{v}").format(v=int(v))
+
+    def str_lit(self, v: str) -> str:
+        """A string literal from the card's ``str_lit``: either ``codes`` (a template over the code points:
+        {n} {items} {items_z}) or ``quote`` around the text, where printable ASCII other than quote, backslash and
+        ``escape_also`` stays as it is and every other code point is written with ``escape`` (``escape_ascii``
+        below U+0080, ``escape_astral`` above U+FFFF when given). Escape fields: {x} {x4} {x8} hex, {o3} octal,
+        {d} decimal, {hi4} {lo4} the UTF-16 surrogate pair."""
+        spec = self.cg.get("str_lit")
+        if not spec:
+            raise EmitGap(f"{self.lang_name}: no string literal (str_lit)")
+        cps = [ord(c) for c in v]
+        if any(0xD800 <= c <= 0xDFFF for c in cps):
+            raise EmitGap("a lone surrogate is not a Unicode scalar value")
+        if "codes" in spec:
+            items = [str(c) for c in cps]
+            return spec["codes"].format(n=len(cps), items=", ".join(items), items_z=", ".join([*items, "0"]))
+        also = spec.get("escape_also", "")
+        out = []
+        for c in cps:
+            ch = chr(c)
+            if 0x20 <= c < 0x7F and ch not in '"\\' and ch not in also:
+                out.append(ch)
+                continue
+            t = spec.get("escape_ascii") if c < 0x80 else spec.get("escape_astral") if c > 0xFFFF else None
+            hi, lo = 0xD800 + ((c - 0x10000) >> 10), 0xDC00 + ((c - 0x10000) & 0x3FF)
+            out.append((t or spec["escape"]).format(x=f"{c:x}", x4=f"{c:04x}", x8=f"{c:08x}", o3=f"{c:03o}", d=c,
+                                                    hi4=f"{hi:04x}", lo4=f"{lo:04x}"))
+        return spec["quote"].format(s="".join(out))
 
     def ident(self, name: str) -> str:
         """A safe identifier: "_" and the language card's ``reserved`` words get a suffix; exported names get the
@@ -226,11 +256,13 @@ class Emitter:
         head = e[0]
         if head == "var":
             if e[1] in types:
-                return self.var(e[1]), types[e[1]]
+                # ``var_read``: how a value of this type is read (Rust: a String is copied, never moved)
+                rd = (self.cg.get("var_read") or {}).get(types[e[1]])
+                return (rd.format(name=self.var(e[1])) if rd else self.var(e[1])), types[e[1]]
             if e[1] in self.global_names:
                 return self.var(e[1]), self.global_types[e[1]]
             raise EmitGap(f"unknown variable {e[1]!r}")
-        if head in ("int", "float", "bool"):
+        if head in ("int", "float", "bool", "str"):
             return self.lit(head, e[1]), head
         if head == "RAW":
             # ["RAW", lang, template, result_type, *args]: one language's own spelling (a hint form under test)
@@ -266,7 +298,11 @@ class Emitter:
         return text, rtype
 
     def arg(self, text: str, t: str) -> str:
-        """A call argument: a list passes through the card's ``list_arg`` template (Rust borrows: ``&{e}``)."""
+        """A call argument: the card's ``arg_types`` entry for its type, else a list passes through ``list_arg``
+        (Rust borrows both: ``&{e}``)."""
+        tpl = (self.cg.get("arg_types") or {}).get(t)
+        if tpl:
+            return tpl.format(e=text)
         if elem_type(t) is not None and self.cg.get("list_arg"):
             return self.cg["list_arg"].format(e=text)
         return text
@@ -448,7 +484,12 @@ class Emitter:
         if self.cg.get("param_rebind"):
             for p in fn["params"]:
                 if p["name"] in assigned:
-                    lines.append(ind + self.cg["param_rebind"].format(name=self.var(p["name"]), type=self.T(p["type"])))
+                    rb = self.cg["param_rebind"]          # one template, or one per type with "any"
+                    if isinstance(rb, dict):
+                        rb = rb.get(p["type"]) or rb.get("any")
+                    if rb is None:
+                        raise EmitGap(f"{self.lang_name}: no param_rebind for a {p['type']} parameter")
+                    lines.append(ind + rb.format(name=self.var(p["name"]), type=self.T(p["type"])))
         if self.cg.get("hoist", True):
             for name, t in {**(fn.get("locals") or {}), **self.extra_locals}.items():
                 if self.cg.get("native_for_range") and name.startswith(("cm_it", "cm_stop")):

@@ -1,0 +1,45 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_ord({0})",
+    "go": "cm_s_ord({0})",
+    "java": "cm_s_ord({0})",
+    "javascript": "cm_s_ord({0})",
+    "lua": "cm_s_ord({0})",
+    "python": "cm_s_ord({0})",
+    "ruby": "cm_s_ord({0})",
+    "rust": "cm_s_ord(&{0})",
+    "swift": "cm_s_ord({0})"
+  },
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "str": [
+        {
+          "str": [
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    "eval": "lambda s: s_ord(s)",
+    "types": [
+      [
+        "str",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_ORD",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the code point of a one-character string (Python's ord); any other length is an error",
+  "tier": 1
+}

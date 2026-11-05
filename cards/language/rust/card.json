@@ -1,6 +1,9 @@
 {
   "category": "language",
   "codegen": {
+    "arg_types": {
+      "str": "&{e}"
+    },
     "assign": "{name} = {value};",
     "break": "break;",
     "continue": "continue;",
@@ -19,7 +22,8 @@
         "float": "println!(\"f:{{:?}}\", {e});",
         "int": "println!(\"i:{{}}\", {e});",
         "list[float]": "cm_lf_print(&{e});",
-        "list[int]": "cm_li_print(&{e});"
+        "list[int]": "cm_li_print(&{e});",
+        "str": "println!(\"s:{{}}\", cm_s_codes(&{e}));"
       },
       "truthy": {
         "bool": "(if {e} {{ 1 }} else {{ 0 }})",
@@ -39,11 +43,23 @@
       "cm_max_i": "fn cm_max_i(a: i64, b: i64) -> i64 { if b > a { b } else { a } }",
       "cm_min_f": "fn cm_min_f(a: f64, b: f64) -> f64 { if b < a { b } else { a } }",
       "cm_min_i": "fn cm_min_i(a: i64, b: i64) -> i64 { if b < a { b } else { a } }",
+      "cm_modinv": "fn cm_modinv(a: i64, m: i64) -> i64 { let n = if m < 0 { -m } else { m }; let (mut r0, mut r1) = (cm_floormod(a, n), n); let (mut s0, mut s1) = (1i64, 0i64); while r1 != 0 { let q = r0 / r1; let t = r0 - q * r1; r0 = r1; r1 = t; let t = s0 - q * s1; s0 = s1; s1 = t; } if r0 != 1 { panic!(\"base is not invertible\"); } cm_floormod(s0, n) }",
       "cm_opaque_b": "fn cm_opaque_b(x: bool) -> bool { std::hint::black_box(x) }",
       "cm_opaque_f": "fn cm_opaque_f(x: f64) -> f64 { std::hint::black_box(x) }",
       "cm_opaque_i": "fn cm_opaque_i(x: i64) -> i64 { std::hint::black_box(x) }",
       "cm_powmod": "fn cm_powmod(a: i64, b: i64, m: i64) -> i64 { let (a, b) = if b < 0 { (cm_modinv(a, m), -b) } else { (a, b) }; let mut r = cm_floormod(1, m); let mut a = cm_floormod(a, m); let mut b = b; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m); } a = cm_floormod(a * a, m); b >>= 1; } r }",
-      "cm_modinv": "fn cm_modinv(a: i64, m: i64) -> i64 { let n = if m < 0 { -m } else { m }; let (mut r0, mut r1) = (cm_floormod(a, n), n); let (mut s0, mut s1) = (1i64, 0i64); while r1 != 0 { let q = r0 / r1; let t = r0 - q * r1; r0 = r1; r1 = t; let t = s0 - q * s1; s0 = s1; s1 = t; } if r0 != 1 { panic!(\"base is not invertible\"); } cm_floormod(s0, n) }"
+      "cm_s_at": "fn cm_s_at(s: &str, i: i64) -> i64 { if i < 0 { panic!(\"string index out of range\"); } match s.chars().nth(i as usize) { Some(c) => c as i64, None => panic!(\"string index out of range\") } }",
+      "cm_s_chr": "fn cm_s_chr(c: i64) -> String { if c < 0 || c > 0x10FFFF { panic!(\"not a Unicode scalar value\"); } match char::from_u32(c as u32) { Some(ch) => ch.to_string(), None => panic!(\"not a Unicode scalar value\") } }",
+      "cm_s_clamp": "fn cm_s_clamp(i: i64, n: i64) -> i64 { if i < 0 { let j = i.saturating_add(n); if j < 0 { 0 } else { j } } else if i > n { n } else { i } }",
+      "cm_s_cmp": "fn cm_s_cmp(a: &str, b: &str) -> i64 { match a.cmp(b) { std::cmp::Ordering::Less => -1, std::cmp::Ordering::Equal => 0, std::cmp::Ordering::Greater => 1 } }",
+      "cm_s_codes": "fn cm_s_codes(s: &str) -> String { s.chars().map(|c| (c as u32).to_string()).collect::<Vec<String>>().join(\" \") }",
+      "cm_s_concat": "fn cm_s_concat(a: &str, b: &str) -> String { let mut r = String::with_capacity(a.len() + b.len()); r.push_str(a); r.push_str(b); r }",
+      "cm_s_eq": "fn cm_s_eq(a: &str, b: &str) -> bool { a == b }",
+      "cm_s_find": "fn cm_s_find(s: &str, sub: &str, start: i64) -> i64 { let x: Vec<char> = s.chars().collect(); let y: Vec<char> = sub.chars().collect(); let n = x.len() as i64; let m = y.len() as i64; let mut i = start; if i < 0 { i = i.saturating_add(n); if i < 0 { i = 0; } } if i > n { return -1; } while i + m <= n { if x[i as usize..(i + m) as usize] == y[..] { return i; } i += 1; } -1 }",
+      "cm_s_len": "fn cm_s_len(s: &str) -> i64 { s.chars().count() as i64 }",
+      "cm_s_ord": "fn cm_s_ord(s: &str) -> i64 { let mut it = s.chars(); match (it.next(), it.next()) { (Some(c), None) => c as i64, _ => panic!(\"ord of a string whose length is not 1\") } }",
+      "cm_s_slice": "fn cm_s_slice(s: &str, a: i64, b: i64) -> String { let x: Vec<char> = s.chars().collect(); let n = x.len() as i64; let lo = cm_s_clamp(a, n); let hi = cm_s_clamp(b, n); if lo >= hi { String::new() } else { x[lo as usize..hi as usize].iter().collect() } }",
+      "cm_s_to_int": "fn cm_s_to_int(s: &str) -> i64 { let t = s.trim_matches(|c: char| c == ' ' || (c >= '\\t' && c <= '\\r')); let u = t.strip_prefix('+').or_else(|| t.strip_prefix('-')).unwrap_or(t); if u.is_empty() || !u.bytes().all(|b| b.is_ascii_digit()) { panic!(\"not a decimal integer\"); } t.parse::<i64>().expect(\"not a decimal integer\") }"
     },
     "if": "if {cond} {{",
     "indent": "    ",
@@ -65,21 +81,33 @@
       "int": "cm_opaque_i({v})"
     },
     "param": "{name}: {type}",
-    "param_rebind": "let mut {name}: {type} = {name};",
+    "param_rebind": {
+      "any": "let mut {name}: {type} = {name};",
+      "str": "let mut {name}: String = {name}.to_string();"
+    },
     "param_types": {
       "list[float]": "&[f64]",
-      "list[int]": "&[i64]"
+      "list[int]": "&[i64]",
+      "str": "&str"
     },
     "prelude": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case, unused_imports, unused_braces)]\n@imports@\n",
     "return": "return {value};",
     "set": "{name}[({idx}) as usize] = {value};",
+    "str_lit": {
+      "escape": "\\u{{{x}}}",
+      "quote": "String::from(\"{s}\")"
+    },
     "style": "braces",
     "types": {
       "bool": "bool",
       "float": "f64",
       "int": "i64",
       "list[float]": "Vec<f64>",
-      "list[int]": "Vec<i64>"
+      "list[int]": "Vec<i64>",
+      "str": "String"
+    },
+    "var_read": {
+      "str": "{name}.to_string()"
     },
     "while": "while {cond} {{",
     "zero": {
@@ -87,7 +115,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "Vec::new()",
-      "list[int]": "Vec::new()"
+      "list[int]": "Vec::new()",
+      "str": "String::new()"
     }
   },
   "comments": {
@@ -121,7 +150,9 @@
   },
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "085e6b70e903454aa2d6977bde0fc2c8131a73b47d5feceb993600a33956d4ac",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "rust",
   "probe": {

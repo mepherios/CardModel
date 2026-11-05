@@ -1,0 +1,52 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_at({0}, {1})",
+    "go": "cm_s_at({0}, {1})",
+    "java": "cm_s_at({0}, {1})",
+    "javascript": "cm_s_at({0}, {1})",
+    "lua": "cm_s_at({0}, {1})",
+    "python": "cm_s_at({0}, {1})",
+    "ruby": "cm_s_at({0}, {1})",
+    "rust": "cm_s_at(&{0}, {1})",
+    "swift": "cm_s_at({0}, {1})"
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "str,int": [
+        {
+          "str": [
+            1,
+            6
+          ]
+        },
+        {
+          "int": [
+            0,
+            5
+          ]
+        }
+      ]
+    },
+    "eval": "lambda s, i: s_at(s, i)",
+    "types": [
+      [
+        "str",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_AT",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the code point at index i of a string, as an int; 0 <= i < len (no negative indexing; outside the range is an error). Python's s[i] is STR_FROM_CODE(STR_AT(s, i)); ord(s[i]) is STR_AT(s, i)",
+  "tier": 1
+}

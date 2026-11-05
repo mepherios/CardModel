@@ -1,0 +1,59 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_slice({0}, {1}, {2})",
+    "go": "cm_s_slice({0}, {1}, {2})",
+    "java": "cm_s_slice({0}, {1}, {2})",
+    "javascript": "cm_s_slice({0}, {1}, {2})",
+    "lua": "cm_s_slice({0}, {1}, {2})",
+    "python": "{0}[{1}:{2}]",
+    "ruby": "cm_s_slice({0}, {1}, {2})",
+    "rust": "cm_s_slice(&{0}, {1}, {2})",
+    "swift": "cm_s_slice({0}, {1}, {2})"
+  },
+  "ir": {
+    "arity": 3,
+    "domain": {
+      "str,int,int": [
+        {
+          "str": [
+            0,
+            6
+          ]
+        },
+        {
+          "int": [
+            -8,
+            8
+          ]
+        },
+        {
+          "int": [
+            -8,
+            8
+          ]
+        }
+      ]
+    },
+    "eval": "lambda s, a, b: s[a:b]",
+    "types": [
+      [
+        "str",
+        "int",
+        "int",
+        "str"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_SLICE",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the code points of s from a up to b, as Python's s[a:b]: a negative bound counts from the end, bounds are clamped to 0..len, and a >= b gives the empty string (total: never an error)",
+  "tier": 1
+}

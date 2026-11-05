@@ -47,6 +47,11 @@ def _gen_for(name: str, typ: str, narrow: int = 0) -> dict:
         elem = {"float": [-10.0, 10.0] if not narrow else [-3.0, 3.0]} if et == "float" else \
             {"int": [-50, 50] if not narrow else [-12, 12]}
         return {"list": elem, "len": [0, (8, 6, 4)[min(narrow, 2)]]}
+    if typ == "str":
+        # the full alphabet first (non-ASCII, escapes), then a small one where equal pieces are likely, then
+        # decimal digits (a function that parses its argument runs on nothing else)
+        return ({"str": [0, 8]}, {"str": [0, 5], "alphabet": "ab ,-1\u00e9\U0001f600"},
+                {"str": [1, 6], "alphabet": "0123456789"})[min(narrow, 2)]
     if typ == "bool":
         return {"bool": True}
     if typ == "float":

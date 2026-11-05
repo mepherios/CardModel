@@ -20,7 +20,8 @@
         "float": "console.log('f:' + String({e}));",
         "int": "console.log('i:' + ({e}).toString());",
         "list[float]": "cm_print_list({e}, 'f');",
-        "list[int]": "cm_print_list({e}, 'i');"
+        "list[int]": "cm_print_list({e}, 'i');",
+        "str": "console.log('s:' + Array.from({e}, (c) => c.codePointAt(0)).join(' '));"
       },
       "truthy": {
         "bool": "(({e}) ? 1n : 0n)",
@@ -42,6 +43,16 @@
       "cm_modinv": "function cm_modinv(a, m) { const n = m < 0n ? -m : m; let r0 = cm_floormod(a, n), r1 = n, s0 = 1n, s1 = 0n; while (r1 !== 0n) { const q = r0 / r1; [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; } if (r0 !== 1n) throw new RangeError(\"base is not invertible\"); return cm_floormod(s0, n); }",
       "cm_powmod": "function cm_powmod(a, b, m) { if (b < 0n) { a = cm_modinv(a, m); b = -b; } let r = cm_floormod(1n, m); a = cm_floormod(a, m); while (b > 0n) { if ((b & 1n) === 1n) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1n; } return r; }",
       "cm_print_list": "function cm_print_list(xs, tag) { console.log('l:' + xs.length); for (const v of xs) console.log(tag + ':' + (tag === 'f' ? String(v) : v.toString())); }",
+      "cm_s_at": "function cm_s_at(s, i) { const a = cm_s_cps(s); if (i < 0n || i >= BigInt(a.length)) throw new RangeError('string index out of range'); return BigInt(a[Number(i)]); }",
+      "cm_s_chr": "function cm_s_chr(c) { if (c < 0n || c > 0x10FFFFn || (c >= 0xD800n && c <= 0xDFFFn)) throw new RangeError('not a Unicode scalar value'); return String.fromCodePoint(Number(c)); }",
+      "cm_s_clamp": "function cm_s_clamp(i, n) { if (i < 0) { i += n; if (i < 0) i = 0; } else if (i > n) i = n; return i; }",
+      "cm_s_cmp": "function cm_s_cmp(a, b) { const x = cm_s_cps(a), y = cm_s_cps(b); const n = Math.min(x.length, y.length); for (let i = 0; i < n; i++) { if (x[i] !== y[i]) return x[i] < y[i] ? -1n : 1n; } return x.length === y.length ? 0n : (x.length < y.length ? -1n : 1n); }",
+      "cm_s_cps": "function cm_s_cps(s) { return Array.from(s, (c) => c.codePointAt(0)); }",
+      "cm_s_find": "function cm_s_find(s, sub, start) { const x = cm_s_cps(s), y = cm_s_cps(sub); const n = x.length; let i = Number(start); if (i < 0) { i += n; if (i < 0) i = 0; } if (i > n) return -1n; for (; i + y.length <= n; i++) { let k = 0; while (k < y.length && x[i + k] === y[k]) k++; if (k === y.length) return BigInt(i); } return -1n; }",
+      "cm_s_len": "function cm_s_len(s) { let n = 0; for (const _ of s) n++; return BigInt(n); }",
+      "cm_s_ord": "function cm_s_ord(s) { const a = cm_s_cps(s); if (a.length !== 1) throw new TypeError('ord of a string whose length is not 1'); return BigInt(a[0]); }",
+      "cm_s_slice": "function cm_s_slice(s, a, b) { const x = cm_s_cps(s); const lo = cm_s_clamp(Number(a), x.length), hi = cm_s_clamp(Number(b), x.length); return lo < hi ? String.fromCodePoint(...x.slice(lo, hi)) : ''; }",
+      "cm_s_to_int": "function cm_s_to_int(s) { const t = s.replace(/^[ \\t\\n\\r\\v\\f]+|[ \\t\\n\\r\\v\\f]+$/g, ''); if (!/^[+-]?[0-9]+$/.test(t)) throw new SyntaxError('not a decimal integer'); return BigInt(t); }",
       "cm_set": "function cm_set(xs, i, v) { const k = Number(i); if (!(k >= 0 && k < xs.length)) throw new RangeError('index out of range'); xs[k] = v; }",
       "cm_trunc_int": "function cm_trunc_int(x) { return BigInt(Math.trunc(x)); }"
     },
@@ -63,13 +74,18 @@
     "prelude": "@imports@",
     "return": "return {value};",
     "set": "cm_set({name}, {idx}, {value});",
+    "str_lit": {
+      "escape": "\\u{{{x}}}",
+      "quote": "\"{s}\""
+    },
     "style": "braces",
     "types": {
       "bool": "boolean",
       "float": "number",
       "int": "bigint",
       "list[float]": "number[]",
-      "list[int]": "bigint[]"
+      "list[int]": "bigint[]",
+      "str": "string"
     },
     "while": "while ({cond}) {{",
     "zero": {
@@ -77,7 +93,8 @@
       "float": "0.0",
       "int": "0n",
       "list[float]": "[]",
-      "list[int]": "[]"
+      "list[int]": "[]",
+      "str": "''"
     }
   },
   "comments": {
@@ -104,7 +121,9 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "864adeb31727d86b7d831883d36a62ffaf67fdd5629e4dda3d6b2d892526bbe3",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "javascript",
   "probe": {

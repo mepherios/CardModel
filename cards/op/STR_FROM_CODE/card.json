@@ -1,0 +1,66 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_chr({0})",
+    "go": "cm_s_chr({0})",
+    "java": "cm_s_chr({0})",
+    "javascript": "cm_s_chr({0})",
+    "lua": "cm_s_chr({0})",
+    "python": "cm_s_chr({0})",
+    "ruby": "cm_s_chr({0})",
+    "rust": "cm_s_chr({0})",
+    "swift": "cm_s_chr({0})"
+  },
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "int": [
+        {
+          "edges": [
+            9,
+            10,
+            34,
+            35,
+            36,
+            39,
+            92,
+            127,
+            128,
+            255,
+            2047,
+            2048,
+            55295,
+            57344,
+            65279,
+            65535,
+            65536,
+            128512,
+            1114111
+          ],
+          "int": [
+            0,
+            1114111
+          ]
+        }
+      ]
+    },
+    "eval": "lambda c: s_chr(c)",
+    "types": [
+      [
+        "int",
+        "str"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_FROM_CODE",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the one-character string of a code point (Python's chr); a surrogate (U+D800..U+DFFF) or a value outside 0..U+10FFFF is an error, because no target can hold it as text",
+  "tier": 1
+}

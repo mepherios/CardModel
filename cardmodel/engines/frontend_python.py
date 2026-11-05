@@ -15,11 +15,14 @@ Supported subset (everything else is reported, never pasted through):
   floor ceil trunc (-> int) fmod copysign isnan · math.pi math.e math.tau
   calls to other lifted functions of the same module, positional or by keyword,
   missing arguments filled from numeric defaults (L45: the callee must lift)
+  list[int] list[float] (docs/LISTS.md) · str (docs/STRINGS.md): literals, len(s),
+  s[i], s[a:b], s + t, == != < <= > >=, sub in s, s.find(sub[, start]),
+  s.startswith(p), s.endswith(p), str(n), int(s), ord(c), chr(n), for c in s
 
 Each unsupported construct is reported with its line, so a translation gap
 is a precise list, not a percentage guess.
 
-Honest limits (L1): no strings, lists, dicts, classes, exceptions, globals,
+Honest limits (L1): no dicts, tuples as values, classes, exceptions, globals,
 closures or side effects; ``int`` follows Python's unbounded semantics, so
 fixed-width targets agree only inside the declared input domain.
 """
@@ -29,7 +32,7 @@ import ast
 import math
 from dataclasses import dataclass, field
 
-from .ir import OpSpec, check_lists, elem_type
+from .ir import OpSpec, check_lists, elem_type, is_scalar_text
 
 BINOPS = {ast.Add: "ADD", ast.Sub: "SUB", ast.Mult: "MUL", ast.Div: "DIV", ast.FloorDiv: "FLOORDIV",
           ast.Mod: "MOD", ast.Pow: "POW", ast.BitAnd: "BIT_AND", ast.BitOr: "BIT_OR", ast.BitXor: "BIT_XOR",
@@ -69,9 +72,9 @@ class Lifted:
 def _ann_type(node) -> str | None:
     if node is None:
         return None
-    if isinstance(node, ast.Name) and node.id in ("int", "float", "bool"):
+    if isinstance(node, ast.Name) and node.id in ("int", "float", "bool", "str"):
         return node.id
-    if isinstance(node, ast.Constant) and node.value in ("int", "float", "bool"):
+    if isinstance(node, ast.Constant) and node.value in ("int", "float", "bool", "str"):
         return node.value
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         try:
@@ -81,7 +84,7 @@ def _ann_type(node) -> str | None:
     if isinstance(node, ast.Subscript) and ast.unparse(node.value) in ("list", "List", "typing.List") and \
             isinstance(node.slice, ast.Name) and node.slice.id in ("int", "float"):
         return f"list[{node.slice.id}]"
-    raise Unsupported(f"type annotation {ast.unparse(node)!r} (only int/float/bool, list[int], list[float])", node)
+    raise Unsupported(f"type annotation {ast.unparse(node)!r} (only int/float/bool/str, list[int], list[float])", node)
 
 
 def _literal(v):
@@ -330,7 +333,8 @@ class _FnLifter:
             if isinstance(s.target, ast.Name) and not s.orelse and not (
                     isinstance(s.iter, ast.Call) and isinstance(s.iter.func, ast.Name) and s.iter.func.id == "range"):
                 try:
-                    is_list = elem_type(self.expr(s.iter)[1]) is not None
+                    it_t = self.expr(s.iter)[1]
+                    is_list = elem_type(it_t) is not None or it_t == "str"
                 except Unsupported:
                     is_list = False
                 if is_list:
@@ -412,9 +416,12 @@ class _FnLifter:
                  loop], ["var", tmp], lt)
 
     def for_each(self, s: ast.For) -> list[dict]:
-        """``for x in xs`` -> a loop over the indices (xs keeps its length: the IR lists have no append)."""
+        """``for x in xs`` -> a loop over the indices (xs keeps its length: the IR lists have no append).
+        ``for c in s`` over a string: c is each code point as a one-character string, from a copy of s taken
+        before the loop (the body may re-bind s; Python iterates the string it started with)."""
         lst, lt = self.expr(s.iter)
-        et = elem_type(lt)
+        is_str = lt == "str"
+        et = "str" if is_str else elem_type(lt)
         var = s.target.id
         if self.env.get(var, et) != et:
             raise Unsupported(f"loop variable {var!r} changes type", s)
@@ -422,13 +429,15 @@ class _FnLifter:
         self.locals.setdefault(var, et)
         src = lst
         out = []
-        if lst[0] != "var":
+        if lst[0] != "var" or is_str:
             tmp = self.fresh("l", lt)
             out.append({"k": "assign", "target": tmp, "value": lst})
             src = ["var", tmp]
         idx = self.fresh("i", "int")
-        body = [{"k": "assign", "target": var, "value": ["GET", src, ["var", idx]]}, *self.block(s.body)]
-        out.append({"k": "for_range", "var": idx, "start": ["int", 0], "stop": ["LEN", src], "step": ["int", 1],
+        elem = ["STR_FROM_CODE", ["STR_AT", src, ["var", idx]]] if is_str else ["GET", src, ["var", idx]]
+        body = [{"k": "assign", "target": var, "value": elem}, *self.block(s.body)]
+        out.append({"k": "for_range", "var": idx, "start": ["int", 0], "stop": ["STR_LEN" if is_str else "LEN", src],
+                    "step": ["int", 1],
                     "counter": self.fresh("it", "int"), "stop_var": self.fresh("stop", "int"), "body": body})
         return out
 
@@ -477,7 +486,8 @@ class _FnLifter:
     def cond(self, node):
         e, t = self.expr(node)
         if t != "bool":
-            raise Unsupported(f"condition of type {t} (truthiness of numbers is not lifted; compare explicitly)", node)
+            raise Unsupported(f"condition of type {t} (truthiness of numbers and strings is not lifted; compare "
+                              "explicitly)", node)
         return e
 
     def spec(self, op: str, node) -> OpSpec:
@@ -517,6 +527,12 @@ class _FnLifter:
         if op is None:
             raise Unsupported(f"operator {optype.__name__}", node)
         r, rt = self.expr(right_node)
+        if "str" in (left_t, rt):
+            if optype is ast.Add and left_t == rt == "str":
+                return ["STR_CONCAT", left_ir, r], "str"
+            if optype is ast.Mod:
+                raise Unsupported("%-formatting of a string", node)
+            raise Unsupported(f"{op} on ({left_t}, {rt}) (strings: only + between two strings; no repetition)", node)
         if "bool" in (left_t, rt):
             raise Unsupported(f"arithmetic on bool ({op})", node)
         if op == "DIV" and left_t == "int" and rt == "int":
@@ -540,6 +556,10 @@ class _FnLifter:
                 return ["int", v], "int"
             if isinstance(v, float):
                 return ["float", v], "float"
+            if isinstance(v, str):
+                if not is_scalar_text(v):
+                    raise Unsupported("a string with a lone surrogate (not a Unicode scalar value)", n)
+                return ["str", v], "str"
             raise Unsupported(f"constant {v!r}", n)
         if isinstance(n, ast.Name):
             if n.id not in self.env and n.id in self.consts:
@@ -578,10 +598,15 @@ class _FnLifter:
             parts = []
             left = self.expr(n.left)
             for op, comp in zip(n.ops, n.comparators):
+                right = self.expr(comp)
+                if "str" in (left[1], right[1]) or isinstance(op, (ast.In, ast.NotIn)):
+                    e = self.str_compare(op, left, right, n)
+                    parts.append(e)
+                    left = right
+                    continue
                 name = CMPOPS.get(type(op))
                 if name is None:
                     raise Unsupported(f"comparison {type(op).__name__}", n)
-                right = self.expr(comp)
                 e, _ = self.apply(name, [left, right], n)
                 parts.append(e)
                 left = right
@@ -605,6 +630,8 @@ class _FnLifter:
             return self.call(n)
         if isinstance(n, ast.Subscript):
             xs, lt = self.expr(n.value)
+            if lt == "str":
+                return self.str_subscript(xs, n)
             if elem_type(lt) is None:
                 raise Unsupported(f"indexing a {lt}", n)
             if isinstance(n.slice, ast.Slice):
@@ -617,7 +644,95 @@ class _FnLifter:
             if i[0] == "int" and i[1] < 0:
                 raise Unsupported("negative index (the IR has no wrap-around indexing)", n)
             return ["GET", xs, i], elem_type(lt)
+        if isinstance(n, ast.JoinedStr):
+            raise Unsupported("an f-string (format the pieces with str() and +)", n)
         raise Unsupported(f"expression {type(n).__name__}", n)
+
+    # -- strings ---------------------------------------------------------------
+    def str_compare(self, op, left, right, node):
+        """== != < <= > >= between strings (code point order) and ``sub in s``."""
+        (a, at), (b, bt) = left, right
+        if at != "str" or bt != "str":
+            raise Unsupported(f"comparison {type(op).__name__} between {at} and {bt} (only str with str)", node)
+        if isinstance(op, (ast.In, ast.NotIn)):
+            e = ["CMP_GE", ["STR_FIND", b, a, ["int", 0]], ["int", 0]]
+            return ["NOT", e] if isinstance(op, ast.NotIn) else e
+        if isinstance(op, (ast.Eq, ast.NotEq)):
+            e = ["STR_EQ", a, b]
+            return ["NOT", e] if isinstance(op, ast.NotEq) else e
+        name = CMPOPS.get(type(op))
+        if name is None:
+            raise Unsupported(f"comparison {type(op).__name__} on strings", node)
+        return [name, ["STR_CMP", a, b], ["int", 0]]
+
+    def str_subscript(self, s, n):
+        """``s[i]`` (a one-character string; 0 <= i < len) and ``s[a:b]`` (Python's total slice)."""
+        if isinstance(n.slice, ast.Slice):
+            if n.slice.step is not None:
+                raise Unsupported("a string slice with a step", n)
+            lo = self.expr(n.slice.lower) if n.slice.lower is not None else (["int", 0], "int")
+            hi = self.expr(n.slice.upper) if n.slice.upper is not None else (["STR_LEN", s], "int")
+            if lo[1] != "int" or hi[1] != "int":
+                raise Unsupported("string slice bounds must be int", n)
+            return ["STR_SLICE", s, lo[0], hi[0]], "str"
+        i, it = self.expr(n.slice)
+        if it != "int":
+            raise Unsupported("a string index must be int", n)
+        if i[0] == "int" and i[1] < 0:
+            raise Unsupported("negative index (the IR has no wrap-around indexing)", n)
+        return ["STR_FROM_CODE", ["STR_AT", s, i]], "str"
+
+    def str_method(self, n: ast.Call):
+        """``s.find(sub[, start])``, ``s.startswith(p)``, ``s.endswith(p)``; any other str method is reported."""
+        meth = n.func.attr
+        if meth not in ("find", "startswith", "endswith"):
+            raise Unsupported(f"str.{meth}() (lifted: find(sub[, start]), startswith(p), endswith(p))", n)
+        s, _ = self.expr(n.func.value)
+        args = [self.expr(a) for a in n.args]
+        if n.keywords:
+            raise Unsupported(f"str.{meth}() with keyword arguments", n)
+        if meth == "find" and 1 <= len(args) <= 2 and args[0][1] == "str" and \
+                (len(args) == 1 or args[1][1] == "int"):
+            return ["STR_FIND", s, args[0][0], args[1][0] if len(args) == 2 else ["int", 0]], "int"
+        if meth in ("startswith", "endswith") and len(args) == 1 and args[0][1] == "str":
+            p = args[0][0]
+            if meth == "startswith":
+                piece = ["STR_SLICE", s, ["int", 0], ["STR_LEN", p]]
+            else:
+                piece = ["STR_SLICE", s, ["MAX", ["SUB", ["STR_LEN", s], ["STR_LEN", p]], ["int", 0]], ["STR_LEN", s]]
+            return ["STR_EQ", piece, p], "bool"
+        raise Unsupported(f"str.{meth}() with these arguments (lifted: find(sub[, start]), startswith(p), "
+                          "endswith(p))", n)
+
+    def str_call(self, fname: str, args: list, n):
+        """len/str/int/ord/chr when a string is involved; None when the call is not a string one."""
+        types = [t for _, t in args]
+        if fname == "len" and types == ["str"]:
+            return ["STR_LEN", args[0][0]], "int"
+        if fname == "str":
+            if len(args) != 1:
+                raise Unsupported("str() with other than one argument", n)
+            if types[0] == "str":
+                return args[0]
+            if types[0] == "int":
+                return ["STR_FROM_INT", args[0][0]], "str"
+            raise Unsupported(f"str() of {types[0]} (only int: a float's or bool's text differs between targets)", n)
+        if fname == "int" and types == ["str"]:
+            return ["STR_TO_INT", args[0][0]], "int"
+        if fname == "int" and len(args) == 2 and types[0] == "str":
+            raise Unsupported("int(s, base) (only base 10)", n)
+        if fname == "ord":
+            if types != ["str"]:
+                raise Unsupported(f"ord() of {types}", n)
+            e = args[0][0]
+            if e[0] == "STR_FROM_CODE" and isinstance(e[1], list) and e[1][:1] == ["STR_AT"]:
+                return e[1], "int"            # ord(s[i]) is the code point at i (chr of it is always valid)
+            return ["STR_ORD", e], "int"
+        if fname == "chr":
+            if types != ["int"]:
+                raise Unsupported(f"chr() of {types}", n)
+            return ["STR_FROM_CODE", args[0][0]], "str"
+        return None
 
     def call(self, n: ast.Call):
         fname = ast.unparse(n.func)
@@ -639,7 +754,21 @@ class _FnLifter:
         if fname in ("sum", "max", "min") and len(n.args) == 1:
             raise Unsupported(f"{fname}() over a list (write the loop: Python's float sum is compensated "
                               "since 3.12, so a plain loop is a different function)", n)
+        if isinstance(n.func, ast.Attribute) and fname not in self.externs:
+            try:
+                recv_t = self.expr(n.func.value)[1]
+            except Unsupported:
+                recv_t = None
+            if recv_t == "str":
+                return self.str_method(n)
+        if isinstance(n.func, ast.Attribute) and isinstance(n.func.value, ast.Constant) and \
+                isinstance(n.func.value.value, str):
+            raise Unsupported(f"str.{n.func.attr}() on a literal", n)
         args = [self.expr(a) for a in n.args]
+        if fname in ("len", "str", "int", "ord", "chr"):
+            got = self.str_call(fname, args, n)
+            if got is not None:
+                return got
         short = fname[5:] if fname.startswith("math.") else None
         if short in MATH_FLOAT or short in MATH_TO_INT:
             op = MATH_FLOAT.get(short) or MATH_TO_INT[short]
@@ -859,6 +988,6 @@ def _exprs_of(s):
 def _walk(e):
     if isinstance(e, list) and e:
         yield e
-        if e[0] not in ("var", "int", "float", "bool"):
+        if e[0] not in ("var", "int", "float", "bool", "str"):
             for a in e[(2 if e[0] == "CALL" else 1):]:
                 yield from _walk(a)

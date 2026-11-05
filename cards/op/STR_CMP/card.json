@@ -1,0 +1,66 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_cmp({0}, {1})",
+    "go": "cm_s_cmp({0}, {1})",
+    "java": "cm_s_cmp({0}, {1})",
+    "javascript": "cm_s_cmp({0}, {1})",
+    "lua": "cm_s_cmp({0}, {1})",
+    "python": "cm_s_cmp({0}, {1})",
+    "ruby": "cm_s_cmp({0}, {1})",
+    "rust": "cm_s_cmp(&{0}, &{1})",
+    "swift": "cm_s_cmp({0}, {1})"
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "str,str": [
+        {
+          "alphabet": "aé～😀",
+          "edges": [
+            "～",
+            "😀",
+            "é",
+            "ab"
+          ],
+          "str": [
+            0,
+            3
+          ]
+        },
+        {
+          "alphabet": "aé～😀",
+          "edges": [
+            "😀",
+            "～",
+            "é",
+            "a"
+          ],
+          "str": [
+            0,
+            3
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: s_cmp(a, b)",
+    "types": [
+      [
+        "str",
+        "str",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_CMP",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "-1, 0 or 1 as the first string orders before, equal to or after the second, lexicographically by code point (Python's order; UTF-16 unit order differs above U+FFFF)",
+  "tier": 1
+}

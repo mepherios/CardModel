@@ -67,3 +67,4 @@ tolerance as scalars.
   loop in another language would not match it. Write the loop.
 * No append, slicing other than `xs[:]`, negative indices, nested lists or other element types.
 * Lean has no list templates (an `EmitGap`).
+* Lists of strings: strings are their own type (docs/STRINGS.md), not `list[str]`.
