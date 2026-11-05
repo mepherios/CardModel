@@ -19,7 +19,8 @@
         "float": "System.out.println(\"f:\" + Double.toString({e}));",
         "int": "System.out.println(\"i:\" + ({e}));",
         "list[float]": "cm_lf_print({e});",
-        "list[int]": "cm_li_print({e});"
+        "list[int]": "cm_li_print({e});",
+        "str": "System.out.println(\"s:\" + cm_s_codes({e}));"
       },
       "read": {
         "bool": "cm_read_bool()",
@@ -53,7 +54,18 @@
       "cm_read_int": "    static long cm_read_int() { return Long.parseLong(cm_read_line()); }",
       "cm_read_lf": "    static double[] cm_read_lf() { double[] r = new double[(int) cm_read_int()]; for (int i = 0; i < r.length; i++) r[i] = cm_read_float(); return r; }",
       "cm_read_li": "    static long[] cm_read_li() { long[] r = new long[(int) cm_read_int()]; for (int i = 0; i < r.length; i++) r[i] = cm_read_int(); return r; }",
-      "cm_read_line": "    static String cm_read_line() { try { String s = cm_in.readLine(); return s == null ? \"\" : s.trim(); } catch (java.io.IOException e) { throw new RuntimeException(e); } }"
+      "cm_read_line": "    static String cm_read_line() { try { String s = cm_in.readLine(); return s == null ? \"\" : s.trim(); } catch (java.io.IOException e) { throw new RuntimeException(e); } }",
+      "cm_s_at": "    static long cm_s_at(String s, long i) { int n = s.codePointCount(0, s.length()); if (i < 0 || i >= n) throw new IndexOutOfBoundsException(\"string index out of range\"); return s.codePointAt(s.offsetByCodePoints(0, (int) i)); }",
+      "cm_s_chr": "    static String cm_s_chr(long c) { if (c < 0 || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF)) throw new IllegalArgumentException(\"not a Unicode scalar value\"); return new String(Character.toChars((int) c)); }",
+      "cm_s_clamp": "    static long cm_s_clamp(long i, long n) { if (i < 0) { i += n; if (i < 0) i = 0; } else if (i > n) i = n; return i; }",
+      "cm_s_cmp": "    static long cm_s_cmp(String a, String b) { int c = java.util.Arrays.compare(a.codePoints().toArray(), b.codePoints().toArray()); return c < 0 ? -1 : (c > 0 ? 1 : 0); }",
+      "cm_s_codes": "    static String cm_s_codes(String s) { StringBuilder b = new StringBuilder(); int[] x = s.codePoints().toArray(); for (int i = 0; i < x.length; i++) { if (i > 0) b.append(' '); b.append(x[i]); } return b.toString(); }",
+      "cm_s_find": "    static long cm_s_find(String s, String sub, long start) { int[] x = s.codePoints().toArray(), y = sub.codePoints().toArray(); long n = x.length, i = start; if (i < 0) { i += n; if (i < 0) i = 0; } if (i > n) return -1; for (; i + y.length <= n; i++) { int k = 0; while (k < y.length && x[(int) i + k] == y[k]) k++; if (k == y.length) return i; } return -1; }",
+      "cm_s_len": "    static long cm_s_len(String s) { return s.codePointCount(0, s.length()); }",
+      "cm_s_ord": "    static long cm_s_ord(String s) { if (s.codePointCount(0, s.length()) != 1) throw new IllegalArgumentException(\"ord of a string whose length is not 1\"); return s.codePointAt(0); }",
+      "cm_s_slice": "    static String cm_s_slice(String s, long a, long b) { int[] x = s.codePoints().toArray(); long lo = cm_s_clamp(a, x.length), hi = cm_s_clamp(b, x.length); return lo < hi ? new String(x, (int) lo, (int) (hi - lo)) : \"\"; }",
+      "cm_s_to_int": "    static long cm_s_to_int(String s) { int i = 0, j = s.length(); while (i < j && cm_s_ws(s.charAt(i))) i++; while (j > i && cm_s_ws(s.charAt(j - 1))) j--; String t = s.substring(i, j); if (!t.matches(\"[+-]?[0-9]+\")) throw new NumberFormatException(\"not a decimal integer\"); return Long.parseLong(t); }",
+      "cm_s_ws": "    static boolean cm_s_ws(char c) { return c == ' ' || (c >= 9 && c <= 13); }"
     },
     "if": "if ({cond}) {{",
     "import": "import @name@;\n",
@@ -74,6 +86,12 @@
     "prelude": "@imports@public class Main {\n",
     "return": "return {value};",
     "set": "{name}[(int) ({idx})] = {value};",
+    "str_lit": {
+      "escape": "\\u{x4}",
+      "escape_ascii": "\\{o3}",
+      "escape_astral": "\\u{hi4}\\u{lo4}",
+      "quote": "\"{s}\""
+    },
     "style": "braces",
     "types": {
       "bool": "boolean",
@@ -85,6 +103,7 @@
       "int": "long",
       "list[float]": "double[]",
       "list[int]": "long[]",
+      "str": "String",
       "u16": "long",
       "u32": "long",
       "u8": "long"
@@ -95,7 +114,8 @@
       "float": "0.0",
       "int": "0L",
       "list[float]": "new double[0]",
-      "list[int]": "new long[0]"
+      "list[int]": "new long[0]",
+      "str": "\"\""
     }
   },
   "comments": {
@@ -142,8 +162,8 @@
   "frontend_link": "class_per_file",
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "aacb05f6e6c86967365f0dc5748d6a4a45554c101d4b5d19c979b45aa7611b52",
-    "version": "1.0.3",
+    "previous_content_hash": "8a97addcea784d35ff937e83d8235225bc085c6aa96c39b5db1f8465fd6d8f89",
+    "version": "1.0.4",
     "version_bump_reason": "patch"
   },
   "name": "java",

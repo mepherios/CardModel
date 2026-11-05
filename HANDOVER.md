@@ -585,7 +585,8 @@ and `bidirectional`. `verify` witnesses it numerically and tries Lean (`grind`, 
 * learning with evidence, measured costs, the self-containment sandbox test.
 
 **Partial:**
-* the Python frontend covers int/float/bool functions with control flow, not strings, lists, objects or exceptions;
+* the Python frontend covers int/float/bool/str functions and int/float lists with control flow, not objects,
+  dicts or exceptions;
 * observation of non-Python files is token-level;
 * learned call cards are names with evidence, not semantics;
 * domains for translated functions are inferred heuristically;
@@ -675,9 +676,12 @@ with no `sorry` (`cardmodel verify --only formal`). Beyond that:
 
 1. **stdin harnesses**: done (2026-11-05, ROADMAP Now). A new seed reuses every cached build; a new language card
    should carry `harness.read` templates from the start (see the C or Python card).
-2. **Strings and lists in the IR.** Start with `len`, indexing and a `for x in xs` loop on `list[int]`. Each op is a
-   card, and the conformance matrix tells you when a language row is green. AnyPS5's standard data functions and
-   the game's text both wait on this.
+2. **Strings and lists in the IR.** Lists are in (docs/LISTS.md), and so is `str` (docs/STRINGS.md): code points,
+   eleven op cards (len, index, chr/ord, concat, equality, order, slice, find, int/str conversion), green in the
+   conformance matrix in every installed codegen language. Python's `str` functions lift
+   (`cardmodel translate examples/strings/strings.py`). Next: AnyPS5's standard data functions (`vsscanf`,
+   `vfscanf`) on these scanning primitives (`scan_int` in the example is `%d`), then the game's text; Lean string
+   templates, formatting and a `bytes` sort for C's `char *`.
 3. **A C frontend** (lift C functions into the same IR), which gives C -> Python/Rust/Go translation with the same
    witness, and lets the learning step learn from C trees, not only observe them.
 4. **Learn from your real projects**: `cardmodel self corpus add ~/Programmering/ting` (and the others you want);

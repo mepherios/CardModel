@@ -1,0 +1,52 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "(({0}).n)",
+    "go": "cm_s_len({0})",
+    "java": "cm_s_len({0})",
+    "javascript": "cm_s_len({0})",
+    "lua": "utf8.len({0})",
+    "python": "len({0})",
+    "ruby": "(({0}).length)",
+    "rust": "cm_s_len(&{0})",
+    "swift": "cm_s_len({0})"
+  },
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "str": [
+        {
+          "edges": [
+            "😀",
+            "é",
+            "🇸🇪",
+            "\r\n",
+            "\u0000"
+          ],
+          "str": [
+            0,
+            8
+          ]
+        }
+      ]
+    },
+    "eval": "lambda s: len(s)",
+    "types": [
+      [
+        "str",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_LEN",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the number of code points of a string (Unicode scalar values; not bytes, not UTF-16 units)",
+  "tier": 1
+}

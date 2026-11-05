@@ -45,19 +45,30 @@ list. ``check_lists`` enforces what keeps value semantics in languages that
 share lists by reference: a list parameter is never written or re-bound, and a
 bare list variable is never assigned to another name or returned from a
 parameter (copy it with LIST_COPY).
+
+Strings ``str`` are immutable values: sequences of Unicode scalar values (code
+points other than the surrogates U+D800..U+DFFF). Length and indices count code
+points, never bytes or UTF-16 units, so every target agrees with Python's
+``len``, ``s[i]`` and ``s[a:b]`` (docs/STRINGS.md says how each target realizes
+it). Leaf ``["str", text]``; op cards STR_LEN, STR_AT (the code point at i, an
+int; 0 <= i < len else an error), STR_FROM_CODE (chr), STR_ORD (ord),
+STR_CONCAT, STR_EQ, STR_CMP (-1/0/1 by code points), STR_SLICE (Python's
+``s[a:b]``: total, negative bounds count from the end), STR_FIND (Python's
+``s.find(sub, start)``), STR_FROM_INT (``str(n)``) and STR_TO_INT (a strict
+decimal: optional ASCII whitespace, an optional sign, ASCII digits).
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-LEAVES = ("var", "int", "float", "bool")
+LEAVES = ("var", "int", "float", "bool", "str")
 MAX_INT_BITS = 1 << 22          # 4 Mbit (512 KiB) per integer: far beyond any real input, far below a crash
 SPECIAL = ("AND", "OR", "IF_EXPR", "CALL", "LOAD")
 LIST_TYPES = ("list[int]", "list[float]")
 FIXED_INTS = {"u8": ("WRAPU", 8), "u16": ("WRAPU", 16), "u32": ("WRAPU", 32),
               "i8": ("WRAPS", 8), "i16": ("WRAPS", 16), "i32": ("WRAPS", 32)}
 FIXED = (*FIXED_INTS, "f32")    # the subsorts of engines/sorts.py (u8..i32 <= int, f32 <= float)
-TYPES = ("int", "float", "bool", *FIXED, *LIST_TYPES)
+TYPES = ("int", "float", "bool", "str", *FIXED, *LIST_TYPES)
 ELEMS = ("u8", "int")
 NESTED = ("then", "else", "body", "default")
 
@@ -131,6 +142,44 @@ def _list_new(n, v):
     return [v] * n
 
 
+ASCII_SPACE = " \t\n\r\x0b\x0c"
+
+
+def _s_at(s, i):
+    if not isinstance(i, int) or not 0 <= i < len(s):
+        raise IRError(f"string index {i} outside 0..{len(s) - 1}")
+    return ord(s[i])
+
+
+def _s_chr(c):
+    if not 0 <= c <= 0x10FFFF or 0xD800 <= c <= 0xDFFF:
+        raise IRError(f"{c} is not a Unicode scalar value")
+    return chr(c)
+
+
+def _s_ord(s):
+    if len(s) != 1:
+        raise IRError(f"ord of a string of length {len(s)}")
+    return ord(s)
+
+
+def _s_cmp(a, b):
+    return (a > b) - (a < b)          # Python orders str by code points
+
+
+def _s_to_int(s):
+    t = s.strip(ASCII_SPACE)
+    digits = t[1:] if t[:1] in ("+", "-") else t
+    if not digits or any(c not in "0123456789" for c in digits):
+        raise IRError(f"not a decimal integer: {s!r}")
+    return int(t)
+
+
+def is_scalar_text(s: str) -> bool:
+    """True when every code point of ``s`` is a Unicode scalar value (no lone surrogates)."""
+    return not any(0xD800 <= ord(c) <= 0xDFFF for c in s)
+
+
 class StepLimit(IRError):
     pass
 
@@ -188,7 +237,8 @@ _EVAL_NS = {"__builtins__": {"abs": abs, "min": min, "max": max, "pow": pow, "fl
                              "bool": bool, "round": round, "divmod": divmod, "ZeroDivisionError": ZeroDivisionError,
                              "ValueError": ValueError},
             "math": __import__("math"), "struct": __import__("struct"),
-            "list_get": _list_get, "list_new": _list_new, "len": len, "list": list}   # struct: binary32 rounding, float bits
+            "list_get": _list_get, "list_new": _list_new, "len": len, "list": list, "str": str,
+            "s_at": _s_at, "s_chr": _s_chr, "s_ord": _s_ord, "s_cmp": _s_cmp, "s_to_int": _s_to_int}   # struct: binary32 rounding, float bits
 
 
 def walk_expr(e):
@@ -389,7 +439,7 @@ class Interpreter:
             if not 0 <= i < len(arr):
                 raise IRError(f"load {e[1]}[{i}] outside 0..{len(arr) - 1}")
             return arr[i]
-        if head in ("int", "float", "bool"):
+        if head in ("int", "float", "bool", "str"):
             return e[1]
         if head == "AND":
             return bool(self._expr(e[1], env, depth)) and bool(self._expr(e[2], env, depth))
@@ -416,6 +466,8 @@ def to_python_text(e) -> str:
         return repr(e[1])
     if head == "bool":
         return "True" if e[1] else "False"
+    if head == "str":
+        return repr(e[1])
     infix = {"ADD": "+", "SUB": "-", "MUL": "*", "DIV": "/", "FLOORDIV": "//", "MOD": "%", "POW": "**",
              "BIT_AND": "&", "BIT_OR": "|", "BIT_XOR": "^", "SHIFT_LEFT": "<<", "SHIFT_RIGHT": ">>",
              "CMP_EQ": "==", "CMP_NE": "!=", "CMP_LT": "<", "CMP_LE": "<=", "CMP_GT": ">", "CMP_GE": ">=",

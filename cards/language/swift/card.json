@@ -19,7 +19,8 @@
         "float": "print(\"f:\\({e})\")",
         "int": "print(\"i:\\({e})\")",
         "list[float]": "cm_print_list_f({e})",
-        "list[int]": "cm_print_list_i({e})"
+        "list[int]": "cm_print_list_i({e})",
+        "str": "print(\"s:\" + cm_s_codes({e}))"
       },
       "read": {
         "bool": "cm_read_bool()",
@@ -56,7 +57,20 @@
       "cm_read_int": "func cm_read_int() -> Int { return Int(cm_read_line())! }",
       "cm_read_lf": "func cm_read_lf() -> [Double] { let n = cm_read_int(); var r: [Double] = []; for _ in 0..<n { r.append(cm_read_float()) }; return r }",
       "cm_read_li": "func cm_read_li() -> [Int] { let n = cm_read_int(); var r: [Int] = []; for _ in 0..<n { r.append(cm_read_int()) }; return r }",
-      "cm_read_line": "func cm_read_line() -> String { return (readLine() ?? \"\").trimmingCharacters(in: .whitespaces) }"
+      "cm_read_line": "func cm_read_line() -> String { return (readLine() ?? \"\").trimmingCharacters(in: .whitespaces) }",
+      "cm_s_at": "func cm_s_at(_ s: String, _ i: Int) -> Int { let x = cm_s_cps(s); if i < 0 || i >= x.count { fatalError(\"string index out of range\") }; return x[i] }",
+      "cm_s_chr": "func cm_s_chr(_ c: Int) -> String { if c < 0 || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF) { fatalError(\"not a Unicode scalar value\") }; return cm_s_of([c]) }",
+      "cm_s_clamp": "func cm_s_clamp(_ i: Int, _ n: Int) -> Int { if i < 0 { let j = i + n; return j < 0 ? 0 : j }; return i > n ? n : i }",
+      "cm_s_cmp": "func cm_s_cmp(_ a: String, _ b: String) -> Int { let x = cm_s_cps(a), y = cm_s_cps(b); for i in 0..<min(x.count, y.count) { if x[i] != y[i] { return x[i] < y[i] ? -1 : 1 } }; return x.count == y.count ? 0 : (x.count < y.count ? -1 : 1) }",
+      "cm_s_codes": "func cm_s_codes(_ s: String) -> String { return cm_s_cps(s).map { String($0) }.joined(separator: \" \") }",
+      "cm_s_cps": "func cm_s_cps(_ s: String) -> [Int] { return s.unicodeScalars.map { Int($0.value) } }",
+      "cm_s_eq": "func cm_s_eq(_ a: String, _ b: String) -> Bool { return cm_s_cps(a) == cm_s_cps(b) }",
+      "cm_s_find": "func cm_s_find(_ s: String, _ sub: String, _ start: Int) -> Int { let x = cm_s_cps(s), y = cm_s_cps(sub); let n = x.count, m = y.count; var i = start; if i < 0 { i += n; if i < 0 { i = 0 } }; if i > n { return -1 }; while i + m <= n { if Array(x[i..<(i + m)]) == y { return i }; i += 1 }; return -1 }",
+      "cm_s_len": "func cm_s_len(_ s: String) -> Int { return s.unicodeScalars.count }",
+      "cm_s_of": "func cm_s_of(_ x: [Int]) -> String { var r = String.UnicodeScalarView(); for c in x { r.append(Unicode.Scalar(UInt32(c))!) }; return String(r) }",
+      "cm_s_ord": "func cm_s_ord(_ s: String) -> Int { let x = cm_s_cps(s); if x.count != 1 { fatalError(\"ord of a string whose length is not 1\") }; return x[0] }",
+      "cm_s_slice": "func cm_s_slice(_ s: String, _ a: Int, _ b: Int) -> String { let x = cm_s_cps(s); let lo = cm_s_clamp(a, x.count), hi = cm_s_clamp(b, x.count); return lo < hi ? cm_s_of(Array(x[lo..<hi])) : \"\" }",
+      "cm_s_to_int": "func cm_s_to_int(_ s: String) -> Int { var x = cm_s_cps(s); func ws(_ c: Int) -> Bool { return c == 32 || (c >= 9 && c <= 13) }; while let f = x.first, ws(f) { x.removeFirst() }; while let l = x.last, ws(l) { x.removeLast() }; var neg = false; if let f = x.first, f == 43 || f == 45 { neg = f == 45; x.removeFirst() }; if x.isEmpty || !x.allSatisfy({ $0 >= 48 && $0 <= 57 }) { fatalError(\"not a decimal integer\") }; var v = 0; for c in x { v = v &* 10 &+ (c - 48) }; return neg ? 0 &- v : v }"
     },
     "if": "if {cond} {{",
     "indent": "    ",
@@ -81,6 +95,10 @@
     "prelude": "import Foundation\n@imports@\n",
     "return": "return {value}",
     "set": "{name}[Int({idx})] = {value}",
+    "str_lit": {
+      "escape": "\\u{{{x}}}",
+      "quote": "\"{s}\""
+    },
     "style": "braces",
     "types": {
       "bool": "Bool",
@@ -92,6 +110,7 @@
       "int": "Int",
       "list[float]": "[Double]",
       "list[int]": "[Int]",
+      "str": "String",
       "u16": "Int",
       "u32": "Int",
       "u8": "Int"
@@ -102,7 +121,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "[]",
-      "list[int]": "[]"
+      "list[int]": "[]",
+      "str": "\"\""
     }
   },
   "comments": {
@@ -130,8 +150,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "89e188c7140a14eff3aa757fa938dad36d25ff7150d95da9b75323c42bda94d3",
-    "version": "1.0.1",
+    "previous_content_hash": "b211a0012ebf74e8a3ce849af71d5cff5f422c9df7cb2dee4b236e5579f39653",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "name": "swift",

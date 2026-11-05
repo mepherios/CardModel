@@ -34,7 +34,8 @@
     "2026-11-03: the installed Cardmodel Arcade starts its own service again (the launcher ran the shell script bin/cardmodel with Python; it now runs python -m cardmodel and logs to service.log)",
     "in the cloud: GitHub Actions CI with every codegen toolchain (verify, translate, unit suite) and a weekly self cycle that proposes adopted cards as a pull request; verify passes on Linux (docs/AUTONOMY.md section 6)",
     "CI minutes budgeted: a pull request runs once, the full job waits for ready-for-review, pushes run only on main, the self cycle runs weekly (.github/workflows)",
-    "2026-11-05 (branch claude/stdin-harness): stdin harnesses (HANDOVER section 8 item 1): every codegen language card reads test inputs from stdin, so one cached build serves every seed; Java compiles once with javac"
+    "2026-11-05 (branch claude/stdin-harness): stdin harnesses (HANDOVER section 8 item 1): every codegen language card reads test inputs from stdin, so one cached build serves every seed; Java compiles once with javac",
+    "2026-11-05 (branch claude/strings-ir): strings in the IR (HANDOVER section 8 item 2): `str` as Unicode code points, eleven op cards (len, index, chr/ord, concat, equality, order, slice, find, int/str conversion) green in the conformance matrix in every installed codegen language, Python `str` functions lifted (examples/strings, docs/STRINGS.md); Lean has no string templates yet"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
@@ -49,8 +50,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "8a5a03260b2d0d71574e698ee224e3d059f9f6c07ec9b3fcb1a23f84d573e4e1",
-    "version": "2.0.22",
+    "previous_content_hash": "caab575d7996f52277a0d977ebeacbf2c37022a80e80b39a94e2ed0aea15e30d",
+    "version": "2.0.23",
     "version_bump_reason": "patch"
   },
   "metrics": [

@@ -31,7 +31,8 @@
         "float": "print('f:' + repr({e}))",
         "int": "print('i:' + str({e}))",
         "list[float]": "cm_print_list({e}, 'f')",
-        "list[int]": "cm_print_list({e}, 'i')"
+        "list[int]": "cm_print_list({e}, 'i')",
+        "str": "print('s:' + ' '.join(str(ord(c)) for c in {e}))"
       },
       "read": {
         "bool": "cm_read_bool()",
@@ -56,7 +57,12 @@
       "cm_read_float": "def cm_read_float():\n    return float(input())",
       "cm_read_int": "def cm_read_int():\n    return int(input())",
       "cm_read_lf": "def cm_read_lf():\n    return [cm_read_float() for _ in range(cm_read_int())]",
-      "cm_read_li": "def cm_read_li():\n    return [cm_read_int() for _ in range(cm_read_int())]"
+      "cm_read_li": "def cm_read_li():\n    return [cm_read_int() for _ in range(cm_read_int())]",
+      "cm_s_at": "def cm_s_at(s, i):\n    if not 0 <= i < len(s):\n        raise IndexError('string index out of range')\n    return ord(s[i])",
+      "cm_s_chr": "def cm_s_chr(c):\n    if not 0 <= c <= 0x10FFFF or 0xD800 <= c <= 0xDFFF:\n        raise ValueError('not a Unicode scalar value')\n    return chr(c)",
+      "cm_s_cmp": "def cm_s_cmp(a, b):\n    return (a > b) - (a < b)",
+      "cm_s_ord": "def cm_s_ord(s):\n    if len(s) != 1:\n        raise TypeError('ord of a string whose length is not 1')\n    return ord(s)",
+      "cm_s_to_int": "def cm_s_to_int(s):\n    t = s.strip(' \\t\\n\\r\\x0b\\x0c')\n    u = t[1:] if t[:1] in ('+', '-') else t\n    if not u or any(c not in '0123456789' for c in u):\n        raise ValueError('not a decimal integer')\n    return int(t)"
     },
     "hoist": false,
     "if": "if {cond}:",
@@ -87,6 +93,10 @@
       "int": "{arr}[{idx}] = {value}",
       "u8": "{arr}[{idx}] = ({value}) & 255"
     },
+    "str_lit": {
+      "escape": "\\U{x8}",
+      "quote": "\"{s}\""
+    },
     "style": "indent",
     "types": {
       "bool": "bool",
@@ -98,6 +108,7 @@
       "int": "int",
       "list[float]": "list[float]",
       "list[int]": "list[int]",
+      "str": "str",
       "u16": "int",
       "u32": "int",
       "u8": "int",
@@ -110,7 +121,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "[]",
-      "list[int]": "[]"
+      "list[int]": "[]",
+      "str": "''"
     }
   },
   "comments": {
@@ -136,8 +148,8 @@
   "frontend": "cardmodel.engines.frontend_python",
   "int_bits": null,
   "metadata": {
-    "previous_content_hash": "c1b8ad828ef688484c09dac2fd06585c12f26846eae9b92bb8cf187b5ae155f5",
-    "version": "1.1.1",
+    "previous_content_hash": "efc199a61a5db13f697b399e80fd6e820a5a663786b63d4f71200981d574b330",
+    "version": "1.1.2",
     "version_bump_reason": "patch"
   },
   "name": "python",

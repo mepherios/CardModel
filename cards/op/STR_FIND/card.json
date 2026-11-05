@@ -1,0 +1,61 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_find({0}, {1}, {2})",
+    "go": "cm_s_find({0}, {1}, {2})",
+    "java": "cm_s_find({0}, {1}, {2})",
+    "javascript": "cm_s_find({0}, {1}, {2})",
+    "lua": "cm_s_find({0}, {1}, {2})",
+    "python": "({0}).find({1}, {2})",
+    "ruby": "cm_s_find({0}, {1}, {2})",
+    "rust": "cm_s_find(&{0}, &{1}, {2})",
+    "swift": "cm_s_find({0}, {1}, {2})"
+  },
+  "ir": {
+    "arity": 3,
+    "domain": {
+      "str,str,int": [
+        {
+          "alphabet": "ab😀",
+          "str": [
+            0,
+            7
+          ]
+        },
+        {
+          "alphabet": "ab😀",
+          "str": [
+            0,
+            2
+          ]
+        },
+        {
+          "int": [
+            -4,
+            9
+          ]
+        }
+      ]
+    },
+    "eval": "lambda s, sub, start: s.find(sub, start)",
+    "types": [
+      [
+        "str",
+        "str",
+        "int",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_FIND",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the lowest code point index >= start where sub occurs in s, or -1, as Python's s.find(sub, start): a negative start counts from the end; a start past the end finds nothing, not even the empty string",
+  "tier": 1
+}

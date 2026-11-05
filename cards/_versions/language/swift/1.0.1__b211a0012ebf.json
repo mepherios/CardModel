@@ -1,0 +1,219 @@
+{
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value}",
+    "break": "break",
+    "continue": "continue",
+    "declare": "var {name}: {type} = {value}",
+    "else": "}} else {{",
+    "empty": "",
+    "end_if": "}}",
+    "end_while": "}}",
+    "func": "func {name}({params}) -> {ret} {{\n{body}}}\n",
+    "harness": {
+      "bench_call": "cm_acc += {truthy}",
+      "bench_main": "var cm_acc: Int = 0\nfor _ in 0..<{reps} {{\n{calls}}}\nprint(cm_acc)\n",
+      "main": "{calls}",
+      "print": {
+        "bool": "print(\"b:\\({e})\")",
+        "float": "print(\"f:\\({e})\")",
+        "int": "print(\"i:\\({e})\")",
+        "list[float]": "cm_print_list_f({e})",
+        "list[int]": "cm_print_list_i({e})"
+      },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
+      "truthy": {
+        "bool": "(({e}) ? 1 : 0)",
+        "float": "((({e}) > 0.0) ? 1 : 0)",
+        "int": "((({e}) != 0) ? 1 : 0)"
+      }
+    },
+    "helpers": {
+      "cm_abs_i": "func cm_abs_i(_ a: Int) -> Int { return a < 0 ? -a : a }",
+      "cm_floordiv": "func cm_floordiv(_ a: Int, _ b: Int) -> Int { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { return q - 1 }; return q }",
+      "cm_floormod": "func cm_floormod(_ a: Int, _ b: Int) -> Int { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { return r + b }; return r }",
+      "cm_gcd": "func cm_gcd(_ a0: Int, _ b0: Int) -> Int { var a = a0 < 0 ? -a0 : a0; var b = b0 < 0 ? -b0 : b0; while b != 0 { let t = a % b; a = b; b = t }; return a }",
+      "cm_ipow": "func cm_ipow(_ a0: Int, _ b0: Int) -> Int { var r = 1; var a = a0; var b = b0; while b > 0 { if (b & 1) == 1 { r = r &* a }; b >>= 1; if b > 0 { a = a &* a } }; return r }",
+      "cm_max_f": "func cm_max_f(_ a: Double, _ b: Double) -> Double { return b > a ? b : a }",
+      "cm_max_i": "func cm_max_i(_ a: Int, _ b: Int) -> Int { return b > a ? b : a }",
+      "cm_min_f": "func cm_min_f(_ a: Double, _ b: Double) -> Double { return b < a ? b : a }",
+      "cm_min_i": "func cm_min_i(_ a: Int, _ b: Int) -> Int { return b < a ? b : a }",
+      "cm_modinv": "func cm_modinv(_ a: Int, _ m: Int) -> Int { let n = m < 0 ? -m : m; var r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while r1 != 0 { let q = r0 / r1; (r0, r1) = (r1, r0 - q * r1); (s0, s1) = (s1, s0 - q * s1) }; if r0 != 1 { fatalError(\"base is not invertible\") }; return cm_floormod(s0, n) }",
+      "cm_opaque_b": "@inline(never) func cm_opaque_b(_ x: Bool) -> Bool { return x }",
+      "cm_opaque_f": "@inline(never) func cm_opaque_f(_ x: Double) -> Double { return x }",
+      "cm_opaque_i": "@inline(never) func cm_opaque_i(_ x: Int) -> Int { return x }",
+      "cm_powmod": "func cm_powmod(_ a0: Int, _ b0: Int, _ m: Int) -> Int { var r = cm_floormod(1, m); var a = cm_floormod(b0 < 0 ? cm_modinv(a0, m) : a0, m); var b = b0 < 0 ? -b0 : b0; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m) }; a = cm_floormod(a * a, m); b >>= 1 }; return r }",
+      "cm_print_list_f": "func cm_print_list_f(_ xs: [Double]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"f:\\(v)\") } }",
+      "cm_print_list_i": "func cm_print_list_i(_ xs: [Int]) { print(\"l:\\(xs.count)\"); for v in xs { print(\"i:\\(v)\") } }",
+      "cm_read_bool": "func cm_read_bool() -> Bool { return cm_read_int() != 0 }",
+      "cm_read_float": "func cm_read_float() -> Double { return Double(cm_read_line())! }",
+      "cm_read_int": "func cm_read_int() -> Int { return Int(cm_read_line())! }",
+      "cm_read_lf": "func cm_read_lf() -> [Double] { let n = cm_read_int(); var r: [Double] = []; for _ in 0..<n { r.append(cm_read_float()) }; return r }",
+      "cm_read_li": "func cm_read_li() -> [Int] { let n = cm_read_int(); var r: [Int] = []; for _ in 0..<n { r.append(cm_read_int()) }; return r }",
+      "cm_read_line": "func cm_read_line() -> String { return (readLine() ?? \"\").trimmingCharacters(in: .whitespaces) }"
+    },
+    "if": "if {cond} {{",
+    "indent": "    ",
+    "lib_prelude": "import Foundation\n@imports@\n",
+    "list_lit": {
+      "list[float]": "[{items}]",
+      "list[int]": "[{items}]"
+    },
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v})",
+      "true": "true"
+    },
+    "opaque": {
+      "bool": "cm_opaque_b({v})",
+      "float": "cm_opaque_f({v})",
+      "int": "cm_opaque_i({v})"
+    },
+    "param": "_ {name}: {type}",
+    "param_rebind": "var {name}: {type} = {name}",
+    "prelude": "import Foundation\n@imports@\n",
+    "return": "return {value}",
+    "set": "{name}[Int({idx})] = {value}",
+    "style": "braces",
+    "types": {
+      "bool": "Bool",
+      "f32": "Double",
+      "float": "Double",
+      "i16": "Int",
+      "i32": "Int",
+      "i8": "Int",
+      "int": "Int",
+      "list[float]": "[Double]",
+      "list[int]": "[Int]",
+      "u16": "Int",
+      "u32": "Int",
+      "u8": "Int"
+    },
+    "while": "while {cond} {{",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0",
+      "list[float]": "[]",
+      "list[int]": "[]"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".swift"
+  ],
+  "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "arg_cast": "{type}({v})"
+  },
+  "int_bits": 64,
+  "metadata": {
+    "previous_content_hash": "89e188c7140a14eff3aa757fa938dad36d25ff7150d95da9b75323c42bda94d3",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "name": "swift",
+  "probe": {
+    "kind": "executable",
+    "name": "swiftc",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "associatedtype",
+    "class",
+    "deinit",
+    "enum",
+    "extension",
+    "fileprivate",
+    "func",
+    "import",
+    "init",
+    "inout",
+    "internal",
+    "let",
+    "open",
+    "operator",
+    "private",
+    "protocol",
+    "public",
+    "rethrows",
+    "static",
+    "struct",
+    "subscript",
+    "typealias",
+    "var",
+    "break",
+    "case",
+    "continue",
+    "default",
+    "defer",
+    "do",
+    "else",
+    "fallthrough",
+    "for",
+    "guard",
+    "if",
+    "in",
+    "repeat",
+    "return",
+    "switch",
+    "where",
+    "while",
+    "as",
+    "Any",
+    "catch",
+    "false",
+    "is",
+    "nil",
+    "super",
+    "self",
+    "Self",
+    "throw",
+    "throws",
+    "true",
+    "try"
+  ],
+  "runner": {
+    "compile": [
+      "{exe}",
+      "-O",
+      "-o",
+      "{bin}",
+      "{src}"
+    ],
+    "file": "main.swift",
+    "run": [
+      "{bin}"
+    ]
+  },
+  "statement": "Swift with Int / Double, compiled with swiftc -O (overflow traps).",
+  "tier": 1
+}

@@ -1,0 +1,52 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_concat({0}, {1})",
+    "go": "({0} + {1})",
+    "java": "({0} + {1})",
+    "javascript": "({0} + {1})",
+    "lua": "({0} .. {1})",
+    "python": "({0} + {1})",
+    "ruby": "({0} + {1})",
+    "rust": "cm_s_concat(&{0}, &{1})",
+    "swift": "({0} + {1})"
+  },
+  "ir": {
+    "arity": 2,
+    "domain": {
+      "str,str": [
+        {
+          "str": [
+            0,
+            5
+          ]
+        },
+        {
+          "str": [
+            0,
+            5
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a, b: a + b",
+    "types": [
+      [
+        "str",
+        "str",
+        "str"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_CONCAT",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the concatenation of two strings",
+  "tier": 1
+}

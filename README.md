@@ -200,6 +200,7 @@ command runs the test suite.
 | [docs/LANGUAGE.md](docs/LANGUAGE.md) | the card language: functions, logic, theorems, tests and cards in one file |
 | [docs/MATH_LANGUAGE.md](docs/MATH_LANGUAGE.md) | mathematics as a language: Unicode or LaTeX equations in, every language out; any function out as equations |
 | [docs/LISTS.md](docs/LISTS.md) | lists in the IR, and transformer math (matmul, softmax, layernorm, attention) verified in every language |
+| [docs/STRINGS.md](docs/STRINGS.md) | strings in the IR: code-point semantics, the str op cards, how each target realizes them |
 | [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md) | crystallised knowledge: logic, theorem cards, discovered laws, Lean import and re-proofs |
 | [game/DESIGN.md](game/DESIGN.md) | the game design (Vector Counter System): pillars, kernel, design laws, AIs, world |
 | [docs/ANYPS5.md](docs/ANYPS5.md) | AnyPS5 as cards: the 95 % question, the real coverage, why each gap is open, what closes it |

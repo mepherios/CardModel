@@ -19,7 +19,8 @@
         "float": "puts(\"f:\" + ({e}).to_s)",
         "int": "puts(\"i:\" + ({e}).to_s)",
         "list[float]": "cm_print_list({e}, 'f')",
-        "list[int]": "cm_print_list({e}, 'i')"
+        "list[int]": "cm_print_list({e}, 'i')",
+        "str": "puts(\"s:\" + ({e}).codepoints.join(' '))"
       },
       "read": {
         "bool": "cm_read_bool()",
@@ -52,6 +53,14 @@
       "cm_read_int": "def cm_read_int\n  Integer($stdin.gets.strip, 10)\nend",
       "cm_read_lf": "def cm_read_lf\n  Array.new(cm_read_int) { cm_read_float }\nend",
       "cm_read_li": "def cm_read_li\n  Array.new(cm_read_int) { cm_read_int }\nend",
+      "cm_s_at": "def cm_s_at(s, i)\n  raise IndexError, 'string index out of range' if i < 0 || i >= s.length\n  s[i].ord\nend",
+      "cm_s_chr": "def cm_s_chr(c)\n  raise RangeError, 'not a Unicode scalar value' if c < 0 || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF)\n  c.chr(Encoding::UTF_8)\nend",
+      "cm_s_clamp": "def cm_s_clamp(i, n)\n  i += n if i < 0\n  i < 0 ? 0 : (i > n ? n : i)\nend",
+      "cm_s_cmp": "def cm_s_cmp(a, b)\n  a.codepoints <=> b.codepoints\nend",
+      "cm_s_find": "def cm_s_find(s, sub, start)\n  n = s.length\n  i = start < 0 ? [start + n, 0].max : start\n  return -1 if i > n\n  r = s.index(sub, i)\n  r.nil? ? -1 : r\nend",
+      "cm_s_ord": "def cm_s_ord(s)\n  raise TypeError, 'ord of a string whose length is not 1' if s.length != 1\n  s.ord\nend",
+      "cm_s_slice": "def cm_s_slice(s, a, b)\n  n = s.length\n  lo = cm_s_clamp(a, n)\n  hi = cm_s_clamp(b, n)\n  lo < hi ? s[lo, hi - lo] : ''\nend",
+      "cm_s_to_int": "def cm_s_to_int(s)\n  t = s.gsub(/\\A[ \\t\\n\\r\\x0b\\x0c]+|[ \\t\\n\\r\\x0b\\x0c]+\\z/, '')\n  raise ArgumentError, 'not a decimal integer' unless t =~ /\\A[+-]?[0-9]+\\z/\n  t.to_i\nend",
       "cm_set": "def cm_set(xs, i, v)\n  raise IndexError, 'index out of range' unless i >= 0 && i < xs.length\n  xs[i] = v\nend"
     },
     "if": "if {cond}",
@@ -72,6 +81,11 @@
     "prelude": "@imports@",
     "return": "return {value}",
     "set": "cm_set({name}, {idx}, {value})",
+    "str_lit": {
+      "escape": "\\u{{{x}}}",
+      "escape_also": "#",
+      "quote": "\"{s}\""
+    },
     "style": "end",
     "types": {
       "bool": "Boolean",
@@ -83,6 +97,7 @@
       "int": "Integer",
       "list[float]": "Array",
       "list[int]": "Array",
+      "str": "String",
       "u16": "Integer",
       "u32": "Integer",
       "u8": "Integer"
@@ -93,7 +108,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "[]",
-      "list[int]": "[]"
+      "list[int]": "[]",
+      "str": "''"
     }
   },
   "comments": {
@@ -118,8 +134,8 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "previous_content_hash": "6db86f34359b3edadb797b7e7111cacb4904896ceb333e66929e84090d345109",
-    "version": "1.0.1",
+    "previous_content_hash": "e489b836e6a61a7d4a4d8ab8d71aa2a0d5b4625d7e3ec37d0c970936b10e79cb",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "name": "ruby",

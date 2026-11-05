@@ -6,6 +6,9 @@ Generator specs (data on cards):
   {"list": <element spec>, "len_of": [i, j]}  a list whose length is the product of the int arguments at
                                               positions i, j (a matrix with dimensions passed beside it)
   {"list": <element spec>, "len_like": i}     a list as long as the list argument at position i
+  {"str": [lo, hi], "alphabet": "..."}        a string of lo..hi code points drawn from the alphabet
+                                              (default ALPHABET: ASCII, quotes and escapes, 2-, 3- and
+                                              4-byte UTF-8, a UTF-16 surrogate pair); "edges" adds strings
 Int generators always include the edge values 0, 1, -1, lo and hi that lie
 in range; a card may add a ``filter`` lambda (rejection sampling).
 
@@ -21,11 +24,18 @@ from __future__ import annotations
 import math
 import random
 
+# what a string generator draws from unless a spec names its own alphabet: letters, digits, signs, space and
+# the ASCII controls, quote, backslash and the interpolation openers of several targets (# $ { }), then
+# code points needing 2 (é ß, the combining acute U+0301), 3 (中, U+FF5E) and 4 UTF-8 bytes (U+1F600, U+10348).
+# U+FF5E and U+1F600 order differently by UTF-16 unit than by code point, which STR_CMP must not; U+0301 joins
+# the letter before it into one grapheme, which a length or equality must not
+ALPHABET = "abzAZ09+- \t\n\x00\x7f\"\\'#${}%\u00e9\u00df\u0301\u4e2d\uff5e\U0001f600\U00010348"
 DEFAULT_GEN = {"int": {"int": [-1000, 1000]}, "float": {"float": [-1000.0, 1000.0]}, "bool": {"bool": True},
                # the fixed-width sorts: their whole range, so overflow is sampled at the edges
                "u8": {"int": [0, 255]}, "u16": {"int": [0, 65535]}, "u32": {"int": [0, 2 ** 32 - 1]},
                "i8": {"int": [-128, 127]}, "i16": {"int": [-32768, 32767]}, "i32": {"int": [-2 ** 31, 2 ** 31 - 1]},
-               "f32": {"float": [-1000.0, 1000.0]}}
+               "f32": {"float": [-1000.0, 1000.0]},
+               "str": {"str": [0, 8]}}
 REL_TOL = 1e-12
 
 
@@ -41,6 +51,9 @@ def specials(spec: dict) -> list:
         return list(spec["choice"])
     if "bool" in spec:
         return [True, False]
+    if "str" in spec:
+        lo, hi = spec["str"]
+        return ([""] if lo == 0 else []) + list(spec.get("edges", []))     # listed edges whatever their length
     return []           # lists: drawn, never edge-enumerated (their length may depend on other arguments)
 
 
@@ -55,6 +68,10 @@ def draw(spec: dict, rng: random.Random):
         return rng.choice(spec["choice"])
     if "bool" in spec:
         return rng.random() < 0.5
+    if "str" in spec:
+        lo, hi = spec["str"]
+        alphabet = spec.get("alphabet") or ALPHABET
+        return "".join(rng.choice(alphabet) for _ in range(rng.randint(int(lo), int(hi))))
     if "list" in spec:
         if "len_of" in spec or "len_like" in spec:
             return None                     # filled by _lists once the other arguments are drawn

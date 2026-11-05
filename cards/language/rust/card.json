@@ -1,6 +1,9 @@
 {
   "category": "language",
   "codegen": {
+    "arg_types": {
+      "str": "&{e}"
+    },
     "assign": "{name} = {value};",
     "break": "break;",
     "continue": "continue;",
@@ -19,7 +22,8 @@
         "float": "println!(\"f:{{:?}}\", {e});",
         "int": "println!(\"i:{{}}\", {e});",
         "list[float]": "cm_lf_print(&{e});",
-        "list[int]": "cm_li_print(&{e});"
+        "list[int]": "cm_li_print(&{e});",
+        "str": "println!(\"s:{{}}\", cm_s_codes(&{e}));"
       },
       "read": {
         "bool": "cm_read_bool()",
@@ -56,7 +60,19 @@
       "cm_read_int": "fn cm_read_int() -> i64 { cm_read_line().trim().parse::<i64>().unwrap() }",
       "cm_read_lf": "fn cm_read_lf() -> Vec<f64> { let n = cm_read_int(); (0..n).map(|_| cm_read_float()).collect() }",
       "cm_read_li": "fn cm_read_li() -> Vec<i64> { let n = cm_read_int(); (0..n).map(|_| cm_read_int()).collect() }",
-      "cm_read_line": "fn cm_read_line() -> String { let mut s = String::new(); std::io::stdin().read_line(&mut s).unwrap(); s }"
+      "cm_read_line": "fn cm_read_line() -> String { let mut s = String::new(); std::io::stdin().read_line(&mut s).unwrap(); s }",
+      "cm_s_at": "fn cm_s_at(s: &str, i: i64) -> i64 { if i < 0 { panic!(\"string index out of range\"); } match s.chars().nth(i as usize) { Some(c) => c as i64, None => panic!(\"string index out of range\") } }",
+      "cm_s_chr": "fn cm_s_chr(c: i64) -> String { if c < 0 || c > 0x10FFFF { panic!(\"not a Unicode scalar value\"); } match char::from_u32(c as u32) { Some(ch) => ch.to_string(), None => panic!(\"not a Unicode scalar value\") } }",
+      "cm_s_clamp": "fn cm_s_clamp(i: i64, n: i64) -> i64 { if i < 0 { let j = i.saturating_add(n); if j < 0 { 0 } else { j } } else if i > n { n } else { i } }",
+      "cm_s_cmp": "fn cm_s_cmp(a: &str, b: &str) -> i64 { match a.cmp(b) { std::cmp::Ordering::Less => -1, std::cmp::Ordering::Equal => 0, std::cmp::Ordering::Greater => 1 } }",
+      "cm_s_codes": "fn cm_s_codes(s: &str) -> String { s.chars().map(|c| (c as u32).to_string()).collect::<Vec<String>>().join(\" \") }",
+      "cm_s_concat": "fn cm_s_concat(a: &str, b: &str) -> String { let mut r = String::with_capacity(a.len() + b.len()); r.push_str(a); r.push_str(b); r }",
+      "cm_s_eq": "fn cm_s_eq(a: &str, b: &str) -> bool { a == b }",
+      "cm_s_find": "fn cm_s_find(s: &str, sub: &str, start: i64) -> i64 { let x: Vec<char> = s.chars().collect(); let y: Vec<char> = sub.chars().collect(); let n = x.len() as i64; let m = y.len() as i64; let mut i = start; if i < 0 { i = i.saturating_add(n); if i < 0 { i = 0; } } if i > n { return -1; } while i + m <= n { if x[i as usize..(i + m) as usize] == y[..] { return i; } i += 1; } -1 }",
+      "cm_s_len": "fn cm_s_len(s: &str) -> i64 { s.chars().count() as i64 }",
+      "cm_s_ord": "fn cm_s_ord(s: &str) -> i64 { let mut it = s.chars(); match (it.next(), it.next()) { (Some(c), None) => c as i64, _ => panic!(\"ord of a string whose length is not 1\") } }",
+      "cm_s_slice": "fn cm_s_slice(s: &str, a: i64, b: i64) -> String { let x: Vec<char> = s.chars().collect(); let n = x.len() as i64; let lo = cm_s_clamp(a, n); let hi = cm_s_clamp(b, n); if lo >= hi { String::new() } else { x[lo as usize..hi as usize].iter().collect() } }",
+      "cm_s_to_int": "fn cm_s_to_int(s: &str) -> i64 { let t = s.trim_matches(|c: char| c == ' ' || (c >= '\\t' && c <= '\\r')); let u = t.strip_prefix('+').or_else(|| t.strip_prefix('-')).unwrap_or(t); if u.is_empty() || !u.bytes().all(|b| b.is_ascii_digit()) { panic!(\"not a decimal integer\"); } t.parse::<i64>().expect(\"not a decimal integer\") }"
     },
     "if": "if {cond} {{",
     "indent": "    ",
@@ -78,14 +94,22 @@
       "int": "cm_opaque_i({v})"
     },
     "param": "{name}: {type}",
-    "param_rebind": "let mut {name}: {type} = {name};",
+    "param_rebind": {
+      "any": "let mut {name}: {type} = {name};",
+      "str": "let mut {name}: String = {name}.to_string();"
+    },
     "param_types": {
       "list[float]": "&[f64]",
-      "list[int]": "&[i64]"
+      "list[int]": "&[i64]",
+      "str": "&str"
     },
     "prelude": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case, unused_imports, unused_braces)]\n@imports@\n",
     "return": "return {value};",
     "set": "{name}[({idx}) as usize] = {value};",
+    "str_lit": {
+      "escape": "\\u{{{x}}}",
+      "quote": "String::from(\"{s}\")"
+    },
     "style": "braces",
     "types": {
       "bool": "bool",
@@ -97,9 +121,13 @@
       "int": "i64",
       "list[float]": "Vec<f64>",
       "list[int]": "Vec<i64>",
+      "str": "String",
       "u16": "i64",
       "u32": "i64",
       "u8": "i64"
+    },
+    "var_read": {
+      "str": "{name}.to_string()"
     },
     "while": "while {cond} {{",
     "zero": {
@@ -107,7 +135,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "Vec::new()",
-      "list[int]": "Vec::new()"
+      "list[int]": "Vec::new()",
+      "str": "String::new()"
     }
   },
   "comments": {
@@ -146,8 +175,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "c1a05230e6c5f4cde73fe6ab8f049c1ba86adfc3c710b53003d1da3e26c06ac0",
-    "version": "1.0.2",
+    "previous_content_hash": "ea9c7f606e45a2d63c37fc0a70dcdcdb932b9378bd23c042e5b07d9f6120351b",
+    "version": "1.0.3",
     "version_bump_reason": "patch"
   },
   "name": "rust",

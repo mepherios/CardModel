@@ -1,0 +1,59 @@
+{
+  "category": "op",
+  "cost": 1.0,
+  "emit": {
+    "c": "cm_s_to_int({0})",
+    "go": "cm_s_to_int({0})",
+    "java": "cm_s_to_int({0})",
+    "javascript": "cm_s_to_int({0})",
+    "lua": "cm_s_to_int({0})",
+    "python": "cm_s_to_int({0})",
+    "ruby": "cm_s_to_int({0})",
+    "rust": "cm_s_to_int(&{0})",
+    "swift": "cm_s_to_int({0})"
+  },
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "str": [
+        {
+          "alphabet": "0123456789+- \t",
+          "edges": [
+            "0",
+            "-0",
+            "+7",
+            " 12 ",
+            "007",
+            "9223372036854775807",
+            "-9223372036854775808",
+            "1 2",
+            "--1",
+            "+",
+            ""
+          ],
+          "str": [
+            0,
+            7
+          ]
+        }
+      ]
+    },
+    "eval": "lambda s: s_to_int(s)",
+    "types": [
+      [
+        "str",
+        "int"
+      ]
+    ]
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "STR_TO_INT",
+  "provenance": {
+    "origin": "cardmodel strings (docs/STRINGS.md)",
+    "tool": "cardmodel/engines/ir.py"
+  },
+  "statement": "the int a decimal string denotes: optional ASCII whitespace (space, tab, LF, VT, FF, CR), an optional + or -, one or more ASCII digits, optional ASCII whitespace; anything else is an error. Python's int(s) also accepts underscores between digits and non-ASCII digits and spaces; the frontend lifts int(s) to this op, so inputs with those are outside the lifted function's domain",
+  "tier": 1
+}

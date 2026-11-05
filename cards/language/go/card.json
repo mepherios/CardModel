@@ -19,7 +19,8 @@
         "float": "fmt.Printf(\"f:%v\\n\", {e})",
         "int": "fmt.Printf(\"i:%d\\n\", {e})",
         "list[float]": "cm_lf_print({e})",
-        "list[int]": "cm_li_print({e})"
+        "list[int]": "cm_li_print({e})",
+        "str": "fmt.Println(\"s:\" + cm_s_codes({e}))"
       },
       "read": {
         "bool": "cm_read_bool()",
@@ -64,7 +65,19 @@
       "cm_read_float": "func cm_read_float() float64 {\n\tvar v float64\n\tfmt.Fscan(cm_in, &v)\n\treturn v\n}",
       "cm_read_int": "func cm_read_int() int64 {\n\tvar v int64\n\tfmt.Fscan(cm_in, &v)\n\treturn v\n}",
       "cm_read_lf": "func cm_read_lf() []float64 {\n\tr := make([]float64, cm_read_int())\n\tfor i := range r {\n\t\tr[i] = cm_read_float()\n\t}\n\treturn r\n}",
-      "cm_read_li": "func cm_read_li() []int64 {\n\tr := make([]int64, cm_read_int())\n\tfor i := range r {\n\t\tr[i] = cm_read_int()\n\t}\n\treturn r\n}"
+      "cm_read_li": "func cm_read_li() []int64 {\n\tr := make([]int64, cm_read_int())\n\tfor i := range r {\n\t\tr[i] = cm_read_int()\n\t}\n\treturn r\n}",
+      "cm_s_at": "func cm_s_at(s string, i int64) int64 {\n\tr := []rune(s)\n\tif i < 0 || i >= int64(len(r)) {\n\t\tpanic(\"string index out of range\")\n\t}\n\treturn int64(r[i])\n}",
+      "cm_s_chr": "func cm_s_chr(c int64) string {\n\tif c < 0 || c > 0x10FFFF || (c >= 0xD800 && c <= 0xDFFF) {\n\t\tpanic(\"not a Unicode scalar value\")\n\t}\n\treturn string(rune(c))\n}",
+      "cm_s_clamp": "func cm_s_clamp(i int64, n int64) int64 {\n\tif i < 0 {\n\t\ti += n\n\t\tif i < 0 {\n\t\t\ti = 0\n\t\t}\n\t} else if i > n {\n\t\ti = n\n\t}\n\treturn i\n}",
+      "cm_s_cmp": "func cm_s_cmp(a string, b string) int64 {\n\tif a < b {\n\t\treturn -1\n\t}\n\tif a > b {\n\t\treturn 1\n\t}\n\treturn 0\n}",
+      "cm_s_codes": "func cm_s_codes(s string) string {\n\tout := \"\"\n\tfor i, r := range []rune(s) {\n\t\tif i > 0 {\n\t\t\tout += \" \"\n\t\t}\n\t\tout += cm_s_from_int(int64(r))\n\t}\n\treturn out\n}",
+      "cm_s_find": "func cm_s_find(s string, sub string, start int64) int64 {\n\tx, y := []rune(s), []rune(sub)\n\tn, m := int64(len(x)), int64(len(y))\n\ti := start\n\tif i < 0 {\n\t\ti += n\n\t\tif i < 0 {\n\t\t\ti = 0\n\t\t}\n\t}\n\tif i > n {\n\t\treturn -1\n\t}\n\tfor ; i+m <= n; i++ {\n\t\tk := int64(0)\n\t\tfor k < m && x[i+k] == y[k] {\n\t\t\tk++\n\t\t}\n\t\tif k == m {\n\t\t\treturn i\n\t\t}\n\t}\n\treturn -1\n}",
+      "cm_s_from_int": "func cm_s_from_int(v int64) string {\n\tif v == 0 {\n\t\treturn \"0\"\n\t}\n\tu := uint64(v)\n\tif v < 0 {\n\t\tu = uint64(-v)\n\t}\n\tvar b [24]byte\n\tp := len(b)\n\tfor u > 0 {\n\t\tp--\n\t\tb[p] = byte('0' + u%10)\n\t\tu /= 10\n\t}\n\tif v < 0 {\n\t\tp--\n\t\tb[p] = '-'\n\t}\n\treturn string(b[p:])\n}",
+      "cm_s_len": "func cm_s_len(s string) int64 { return int64(len([]rune(s))) }",
+      "cm_s_ord": "func cm_s_ord(s string) int64 {\n\tr := []rune(s)\n\tif len(r) != 1 {\n\t\tpanic(\"ord of a string whose length is not 1\")\n\t}\n\treturn int64(r[0])\n}",
+      "cm_s_slice": "func cm_s_slice(s string, a int64, b int64) string {\n\tr := []rune(s)\n\tn := int64(len(r))\n\tlo, hi := cm_s_clamp(a, n), cm_s_clamp(b, n)\n\tif lo >= hi {\n\t\treturn \"\"\n\t}\n\treturn string(r[lo:hi])\n}",
+      "cm_s_to_int": "func cm_s_to_int(s string) int64 {\n\ti, j := 0, len(s)\n\tfor i < j && cm_s_ws(s[i]) {\n\t\ti++\n\t}\n\tfor j > i && cm_s_ws(s[j-1]) {\n\t\tj--\n\t}\n\tt := s[i:j]\n\tneg := false\n\tif len(t) > 0 && (t[0] == '+' || t[0] == '-') {\n\t\tneg = t[0] == '-'\n\t\tt = t[1:]\n\t}\n\tif len(t) == 0 {\n\t\tpanic(\"not a decimal integer\")\n\t}\n\tvar v uint64\n\tfor k := 0; k < len(t); k++ {\n\t\tif t[k] < '0' || t[k] > '9' {\n\t\t\tpanic(\"not a decimal integer\")\n\t\t}\n\t\tv = v*10 + uint64(t[k]-'0')\n\t}\n\tif neg {\n\t\treturn int64(0 - v)\n\t}\n\treturn int64(v)\n}",
+      "cm_s_ws": "func cm_s_ws(c byte) bool { return c == ' ' || (c >= 9 && c <= 13) }"
     },
     "if": "if {cond} {{",
     "import": "\t\"@name@\"\n",
@@ -90,6 +103,10 @@
     "prelude": "package main\n\nimport (\n\t\"fmt\"\n@imports@)\n\nvar _ = fmt.Sprint\n\n",
     "return": "return {value}",
     "set": "{name}[{idx}] = {value}",
+    "str_lit": {
+      "escape": "\\U{x8}",
+      "quote": "\"{s}\""
+    },
     "style": "braces",
     "types": {
       "bool": "bool",
@@ -101,6 +118,7 @@
       "int": "int64",
       "list[float]": "[]float64",
       "list[int]": "[]int64",
+      "str": "string",
       "u16": "int64",
       "u32": "int64",
       "u8": "int64"
@@ -111,7 +129,8 @@
       "float": "0.0",
       "int": "0",
       "list[float]": "[]float64{}",
-      "list[int]": "[]int64{}"
+      "list[int]": "[]int64{}",
+      "str": "\"\""
     }
   },
   "comments": {
@@ -162,8 +181,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "74c6766162746410d00a20352069398874aad9b5e66cfcc8e7bb52bbac35d117",
-    "version": "1.0.3",
+    "previous_content_hash": "3bdf445cc50e5ceeb17090d489ac024899dbf4cfd8d0ad589847d443f1c351d9",
+    "version": "1.0.4",
     "version_bump_reason": "patch"
   },
   "name": "go",
