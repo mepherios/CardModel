@@ -16,8 +16,12 @@ Every function gets a qualified name ``<module>::<name>`` (``json.decoder::py_sc
 inside the lifted IR name callees by it, and :meth:`ProjectLift.module_for` turns one function and everything it
 calls, across files, back into an ordinary IR module (bare names, mangled only where two files collide).
 
-The closure (a caller of a function that did not lift fails too) is one pass over the reverse call graph of the
-whole project, so it is linear in calls (frontend_python.close_calls).
+The closure is one pass over the reverse call graph of the whole project, so it is linear in calls
+(frontend_python.close_calls). A function that did not lift is an opaque boundary (its signature, its cause and the
+Python callable ``module.Class.method`` that implements it); its callers lift as ``partial`` with the edge recorded as
+a gap, and :meth:`ProjectLift.module_for` with ``opaque=True`` gives their module with the boundary cards, which
+only the host witness can run (engines/opaque.py). An instance method is never a boundary (the host would need its
+receiver), so a caller of one that did not lift still fails.
 
 Honest limits (L1): Python imports resolve statically (no ``__import__``, no star imports, no re-exports through
 ``__init__`` assignments); text languages link by name, not by build system or headers (SCALING.md §4.2);
@@ -44,17 +48,22 @@ class ProjectLift:
     unparsed: list = field(default_factory=list)
     cross_calls: int = 0
 
-    def module_for(self, qual: str) -> dict:
-        """The IR module of ``qual`` and every function it calls, across files, with bare names."""
-        need, order = [qual], []
+    def module_for(self, qual: str, opaque: bool = False) -> dict:
+        """The IR module of ``qual`` and every function it calls, across files, with bare names. With ``opaque``,
+        ``qual`` may be partial, and every callee that did not lift is listed under ``"opaque"`` as its boundary
+        card (named as its CALLs name it), not followed."""
+        need, order, cards = [qual], [], {}
         while need:
             q = need.pop()
-            if q in order:
+            if q in order or q in cards:
                 continue
-            order.append(q)
             lf = self.functions[q]
-            if not lf.ok:
+            if not (lf.ok or (opaque and getattr(lf, "partial", False))):
+                if opaque and q != qual and getattr(lf, "boundary", None) is not None:
+                    cards[q] = lf.boundary
+                    continue
                 raise KeyError(f"{q} did not lift: {lf.reasons}")
+            order.append(q)
             for c in _callees(lf.ir):
                 if c not in order:
                     need.append(c)
@@ -65,8 +74,13 @@ class ProjectLift:
         for q in order:
             name = self.functions[q].ir["name"]
             bare[q] = name if counts[name] == 1 or q == qual else _mangle(q)
+        for q in cards:
+            bare[q] = _mangle(q)
         fns = [_renamed(self.functions[q].ir, bare[q], bare) for q in order]
-        return {"entry": bare[qual], "functions": fns}
+        module = {"entry": bare[qual], "functions": fns}
+        if opaque:
+            module["opaque"] = [dict(c, name=bare[q]) for q, c in cards.items()]
+        return module
 
     def by_name(self, name: str) -> list[str]:
         return [q for q in self.functions if q.rsplit("::", 1)[-1] == name]
@@ -149,6 +163,7 @@ class _PyFile:
     lines: list
     defs: list = field(default_factory=list)            # prepared FunctionDefs (methods renamed Class_m)
     method_of: dict = field(default_factory=dict)        # irname -> class name
+    method_kind: dict = field(default_factory=dict)      # irname -> static | class | instance
     pre_fail: dict = field(default_factory=dict)         # irname -> reason found before lifting (self state)
     classes: set = field(default_factory=set)
 
@@ -228,6 +243,7 @@ def _prepare_python(pf: _PyFile, methods: bool) -> None:
                 f = _MethodCalls(node.name, {recv} if recv else set(), methods_of).visit(f)
                 f.name = irname
                 pf.method_of[irname] = node.name
+                pf.method_kind[irname] = kind
                 pf.defs.append(f)
 
 
@@ -318,6 +334,12 @@ def _lift_python(ctx: Ctx, lang: str, files: list[Path], root: Path, methods: bo
             for lf in lifted:
                 qual = local[lf.name]
                 lf.qual, lf.lang, lf.method = qual, lang, lf.name in pf.method_of
+                lf.host_module = pf.mod
+                if lf.method:              # the host calls Class.method; an instance method needs its receiver
+                    kind = pf.method_kind[lf.name]
+                    meth = lf.name[len(pf.method_of[lf.name]) + 1:]
+                    lf.host = None if kind == "instance" else f"{pf.method_of[lf.name]}.{meth}"
+                lf.call_lines = {local.get(c, c): line for c, line in lf.call_lines.items()}
                 if lf.name in pf.pre_fail:
                     lf.ok, lf.ir, lf.reasons = False, None, [pf.pre_fail[lf.name]]
                 if lf.ok:

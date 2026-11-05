@@ -162,7 +162,8 @@ def cmd_observe(args) -> int:
     t = obs["totals"]
     lines = [f"observed {t['files']} files {t['by_language']}",
              f"cards fired {t['cards_fired']}, named {t['named']} ({t['named_fraction']:.1%}), "
-             f"functions {t['functions']} (liftable to IR: {t['functions_liftable']})",
+             f"functions {t['functions']} (liftable to IR: {t['functions_liftable']}, "
+             f"+{t.get('functions_partial', 0)} partial: lifted up to an opaque boundary)",
              "top cards: " + ", ".join(f"{k}×{v}" for k, v in list(obs["top_cards"].items())[:10]),
              "top fallback calls: " + ", ".join(f"{k}×{v}" for k, v in list(obs["top_fallback_calls"].items())[:10])]
     if args.save:

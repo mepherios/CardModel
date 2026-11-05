@@ -48,11 +48,20 @@ class LinearClosure(unittest.TestCase):
         # (quadratic: 2,000 functions took ~3 s); the worklist visits each call once
         n = 2000
         src = "".join(f"def f{i}(x: int) -> int:\n    return f{i - 1}(x) + 1\n" for i in range(n - 1, 0, -1))
-        src += "def f0(x: int) -> int:\n    return open(x)\n"
+        # f0 declares its result, so it is an opaque boundary: every caller lifts as partial (SCALING.md §3.3)
         t = time.perf_counter()
-        lifted = lift_source(src, model_ctx().ops)
+        lifted = lift_source(src + "def f0(x: int) -> int:\n    return open(x)\n", model_ctx().ops)
         took = time.perf_counter() - t
         self.assertEqual(sum(lf.ok for lf in lifted), 0)
+        self.assertEqual(sum(lf.partial for lf in lifted), n - 1)
+        self.assertLess(took, 1.5, f"closure over a {n}-deep chain took {took:.2f} s")
+        f1 = next(lf for lf in lifted if lf.name == "f1")
+        self.assertEqual(list(f1.opaque), ["f0"])
+        # f0 without a declared result cannot be a boundary (callers could not be typed): the failure spreads, linearly
+        t = time.perf_counter()
+        lifted = lift_source(src + "def f0(x: int):\n    return open(x)\n", model_ctx().ops)
+        took = time.perf_counter() - t
+        self.assertEqual(sum(lf.ok or lf.partial for lf in lifted), 0)
         self.assertLess(took, 1.5, f"closure over a {n}-deep chain took {took:.2f} s")
         f1 = next(lf for lf in lifted if lf.name == "f1")
         self.assertIn("calls f0 which did not lift", f1.reasons)

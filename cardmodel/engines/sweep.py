@@ -5,6 +5,12 @@ between files and modules resolve, engines/lift_project.py) and prints the lift 
 histogram of the first reason each function failed, with the reasons normalised (names, numbers and line numbers
 become placeholders) so they group. The self-run can track the rate as a goal.
 
+Two rates, never mixed: ``rate`` counts the *closed* functions (``ok``: the function and everything it calls lifted,
+so targets can run it), ``rate_with_boundaries`` adds the *partial* ones (their own body lifted; some call reaches a
+function that did not lift, which is an opaque boundary: a gap, witnessed through the host only, engines/opaque.py).
+A partial function is not in the failure histogram; the boundaries its callers reach are counted by cause
+(``boundary_causes``), each boundary once.
+
 Honest limits (L1): a function counts once, by its first reason; methods count as functions; a file that does not
 parse counts as one failure of the file, not of its functions.
 """
@@ -66,36 +72,58 @@ def sweep(ctx: Ctx, root: str | Path, exclude: list[str] | None = None, langs: l
     seconds = time.perf_counter() - t0
     reasons: Counter = Counter()
     per_lang: dict[str, list[int]] = {}
-    total = lifted = 0
+    total = lifted = partial = opaque_edges = 0
     kinds = Counter()
+    boundary_causes: Counter = Counter()
+    reached: set = set()
     for lf in res.functions.values():
         lang = lf.lang
-        c = per_lang.setdefault(lang, [0, 0])
+        c = per_lang.setdefault(lang, [0, 0, 0])
         c[0] += 1
         total += 1
         kinds["method" if getattr(lf, "method", False) else "function"] += 1
         if lf.ok:
             c[1] += 1
             lifted += 1
+        elif getattr(lf, "partial", False):
+            c[2] += 1
+            partial += 1
+            opaque_edges += len(lf.opaque)
+            reached.update(lf.opaque)
         else:
             reasons[normalise(lf.reasons[0] if lf.reasons else "unknown")] += 1
+    for q in reached:
+        b = res.functions[q].boundary
+        boundary_causes[normalise(b["cause"] if b else "unknown")] += 1
     return {
         "root": str(root), "files": len(files), "unparsed_files": res.unparsed, "functions": total,
         "lifted": lifted, "rate": round(lifted / total, 4) if total else 0.0, "kinds": dict(kinds),
+        "partial": partial, "lifted_with_boundaries": lifted + partial,
+        "rate_with_boundaries": round((lifted + partial) / total, 4) if total else 0.0,
+        "opaque_edges": opaque_edges, "boundaries_reached": len(reached),
         "cross_module_calls": res.cross_calls, "seconds": round(seconds, 2),
-        "languages": {k: {"functions": v[0], "lifted": v[1], "rate": round(v[1] / v[0], 4) if v[0] else 0.0}
+        "languages": {k: {"functions": v[0], "lifted": v[1], "rate": round(v[1] / v[0], 4) if v[0] else 0.0,
+                          "partial": v[2]}
                       for k, v in sorted(per_lang.items())},
         "reasons": reasons.most_common(top),
+        "boundary_causes": boundary_causes.most_common(top),
     }
 
 
 def report_text(rep: dict) -> str:
-    lines = [f"{rep['root']}: {rep['lifted']} of {rep['functions']} functions lift ({100 * rep['rate']:.2f} %) "
+    lines = [f"{rep['root']}: {rep['lifted']} of {rep['functions']} functions lift closed ({100 * rep['rate']:.2f} %), "
+             f"{rep['lifted_with_boundaries']} with opaque boundaries ({100 * rep['rate_with_boundaries']:.2f} %: "
+             f"{rep['partial']} partial, {rep['opaque_edges']} gap edges to {rep['boundaries_reached']} boundaries) "
              f"· {rep['files']} files ({len(rep['unparsed_files'])} unparsed) · {rep['kinds']} · "
              f"{rep['cross_module_calls']} calls across files · {rep['seconds']} s"]
     for lang, r in rep["languages"].items():
-        lines.append(f"  {lang:<12} {r['lifted']:>7} / {r['functions']:<7} {100 * r['rate']:6.2f} %")
+        lines.append(f"  {lang:<12} {r['lifted']:>7} / {r['functions']:<7} {100 * r['rate']:6.2f} %"
+                     f"  (+{r['partial']} partial)")
     lines.append("first reasons:")
     for reason, n in rep["reasons"]:
         lines.append(f"  {n:>7}  {reason}")
+    if rep.get("boundary_causes"):
+        lines.append("opaque boundaries callers reach, by cause:")
+        for reason, n in rep["boundary_causes"]:
+            lines.append(f"  {n:>7}  {reason}")
     return "\n".join(lines)

@@ -293,7 +293,8 @@ def observe(ctx: Ctx, root: str | os.PathLike, lift: bool = True) -> dict:
                 if lift:
                     for lf in lift_source(text, ctx.ops):
                         functions.append({"file": relp, "name": lf.name, "line": lf.lineno, "liftable": lf.ok,
-                                          "reasons": lf.reasons[:3], "inferred_types": lf.inferred_types})
+                                          "partial": lf.partial, "reasons": lf.reasons[:3],
+                                          "inferred_types": lf.inferred_types})
             else:
                 res = walk_tokens(text, lang, stdlib.get(lang["name"], set()), t.lang_calls.get(lang["name"]))
                 entry["method"] = "token-level"
@@ -323,7 +324,8 @@ def observe(ctx: Ctx, root: str | os.PathLike, lift: bool = True) -> dict:
         "totals": {"files": len(files), "by_language": dict(by_lang), "cards_fired": all_fired,
                    "named": named_all, "named_fraction": round(named_all / all_fired, 4) if all_fired else 0.0,
                    "named_calls_and_ops": op_like,
-                   "functions": len(functions), "functions_liftable": sum(f["liftable"] for f in functions)},
+                   "functions": len(functions), "functions_liftable": sum(f["liftable"] for f in functions),
+                   "functions_partial": sum(f.get("partial", False) for f in functions)},
         "top_cards": dict(totals.most_common(25)),
         "top_fallback_calls": dict(fallbacks.most_common(40)),
         "fallback_calls_by_language": {lg: dict(c.most_common(200)) for lg, c in fallback_by_lang.items()},
