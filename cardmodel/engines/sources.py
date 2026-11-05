@@ -85,7 +85,7 @@ def _canonical(term, rules, costs, fn=None, ops=None) -> dict:
     except ValueError as exc:
         return {"status": "pending", "why": str(exc)}
     return {"status": "canonical", "term": r["term"], "hash": r["hash"], "cost": r["cost"], "by": "method/saturate",
-            "certificate": {"equalities": list(r["fired"])[:12], "saturated": r["saturated"],
+            "certificate": {"equalities": sorted(r["fired"]), "saturated": r["saturated"],
                             "iterations": r["iterations"]}}
 
 
