@@ -17,7 +17,14 @@ template cannot hide the other cells.
 Floats compare with ``values.same(signed_zero=True)`` and every float +0.0 input is also tried as -0.0, so a
 target that loses the sign of a zero (in a literal, an argument or a result) fails its cell.
 
-Honest limits (L1): sampling, not proof; inputs stay inside each op's
+Each cell is one atom of the language's carry map at one rank (``op/ADD@int,int->int``; FOUNDATIONS D13, D14,
+docs/GODEL_AUDIT.md §4.1): a gap cell is read from the map (``codegen.carry_map``) with nothing emitted, and the run
+verifies the rest, so the report is the map's **verified image** (``image``). Emission is a homomorphism, so a
+function built from atoms whose cells pass is checked by those cells, and what it would meet in a language is
+support(γ) ∩ the atoms whose cells did not pass (``risk``), with no run of the function; the atoms whose template
+is there but wrong are the language's semantic gap (``semantic_gap``), beside the syntactic gap the map states.
+
+Honest limits (L1): sampling, not proof (the report says ``tier: sample``); inputs stay inside each op's
 declared domain and, for fixed-width languages, inside the int width.
 """
 from __future__ import annotations
@@ -28,8 +35,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 from ..kernel import resources
 
+from . import godel as G
 from . import values as V
-from .codegen import EmitGap, Emitter
+from .codegen import EmitGap, Emitter, emission_content, predicted_gap, rank_key
 from .context import Ctx
 from .ir import FIXED, Interpreter, wrap_store
 from .runners import run_calls
@@ -47,13 +55,16 @@ def _domain_key(sig: list[str]) -> str:
 
 
 def op_functions(ops) -> list[dict]:
+    """One test function per op and rank, ``return OP(a0, a1, ...)``; each carries the atom its cell verifies,
+    ``op/NAME@rank`` as ``codegen.ranked_content`` and ``codegen.carry_map`` name it."""
     fns = []
     for name, spec in sorted(ops.items()):
         for sig in spec.types:
             args = sig[:-1]
             fname = f"t_{name.lower()}_{'_'.join(TYPE_CODE.get(t, t[0]) for t in args)}"
             params = [{"name": f"a{i}", "type": t} for i, t in enumerate(args)]
-            fns.append({"op": name, "sig": sig, "fn": {
+            rank = rank_key(args, sig[-1])
+            fns.append({"op": name, "sig": sig, "rank": rank, "atom": G.ranked_atom(f"op/{name}", rank), "fn": {
                 "name": fname, "params": params, "returns": sig[-1], "locals": {},
                 "body": [{"k": "return", "value": [name, *[["var", p["name"]] for p in params]]}]}})
     return fns
@@ -105,20 +116,35 @@ def _with_negative_zero(arg_sets: list[tuple]) -> list[tuple]:
 
 
 def run_language(ctx: Ctx, lang: str, fns: list[dict], cases: dict) -> dict:
+    """The cells of one language. A gap cell is read from the language's carry map (no template for the op at the
+    cell's rank or for the wrap of a store at a fixed-width rank, or no name for one of its sorts;
+    ``codegen.carry_map``, ``emission_content``) and nothing is emitted for it, toolchain or not. The rest are
+    emitted together, run and compared with the reference. Should the emitter refuse a function the map did not
+    (it never has: tests/test_conformance.py, ``CarryImage``), the cell is a gap marked ``unpredicted``, found one
+    function at a time."""
     lang_card = ctx.language(lang)
-    ok, why = ctx.available(lang)
     cells: dict[str, dict] = {}
-    if not ok:
-        return {"available": False, "reason": why, "cells": {f["fn"]["name"]: {"status": "unavailable"} for f in fns}}
-    bits = lang_card.get("int_bits")
+    try:
+        gap = ctx.language_gap(lang)
+    except EmitGap as exc:                          # no codegen block: every atom is a gap
+        return {"available": False, "reason": str(exc),
+                "cells": {i["fn"]["name"]: {"status": "gap", "atom": i["atom"], "reason": str(exc)} for i in fns}}
     emittable = []
     for item in fns:
-        name = item["fn"]["name"]
-        try:
-            Emitter(ctx.store, lang, ctx.ops).program({"entry": name, "functions": [item["fn"]]}, [])
+        name, atom = item["fn"]["name"], item["atom"]
+        # the cell needs its op at its rank and, at a fixed-width rank, the wrap of the store (FOUNDATIONS §7.3)
+        missing = predicted_gap(emission_content(ctx.ops, {"functions": [item["fn"]]}), gap)
+        if missing:
+            cells[name] = {"status": "gap", "atom": atom, "missing": missing,
+                           "reason": f"{lang}: no template for {', '.join(missing)} (its carry map)"}
+        else:
             emittable.append(item)
-        except EmitGap as exc:
-            cells[name] = {"status": "gap", "reason": str(exc)}
+    ok, why = ctx.available(lang)
+    if not ok:
+        cells.update({i["fn"]["name"]: {"status": "unavailable", "atom": i["atom"]} for i in emittable})
+        return {"available": False, "reason": why, "cells": cells}
+    bits = lang_card.get("int_bits")
+    atoms = {i["fn"]["name"]: i["atom"] for i in fns}
     calls, index = [], []
     for item in emittable:
         name = item["fn"]["name"]
@@ -133,31 +159,39 @@ def run_language(ctx: Ctx, lang: str, fns: list[dict], cases: dict) -> dict:
                          entries=[i["fn"]["name"] for i in items])
 
     if emittable:
-        res = execute(emittable, calls)
-        if res.status == "ok" and len(res.values) == len(index):
+        try:
+            res = execute(emittable, calls)
+        except EmitGap:
+            res = None                              # a refusal the map did not predict: isolated below
+        if res is not None and res.status == "ok" and len(res.values) == len(index):
             per: dict[str, dict] = {}
             for (name, args, exp), got in zip(index, res.values):
-                c = per.setdefault(name, {"status": "pass", "checks": 0})
+                c = per.setdefault(name, {"status": "pass", "atom": atoms[name], "checks": 0})
                 c["checks"] += 1
                 if c["status"] == "pass" and not V.same(exp, got, signed_zero=True):
                     c.update(status="fail", args=args, expected=exp, got=got)
             for item in emittable:
                 n = item["fn"]["name"]
-                cells[n] = per.get(n, {"status": "pass", "checks": 0, "note": "no in-domain inputs"})
+                cells[n] = per.get(n, {"status": "pass", "atom": atoms[n], "checks": 0, "note": "no in-domain inputs"})
         else:
             # isolate: one program per function, so a single bad template cannot hide the rest
             for item in emittable:
                 n = item["fn"]["name"]
                 my = [(nm, a) for nm, a in calls if nm == n]
                 exp = [e for nm, a, e in index if nm == n]
-                r = execute([item], my)
+                try:
+                    r = execute([item], my)
+                except EmitGap as exc:
+                    cells[n] = {"status": "gap", "atom": atoms[n], "reason": str(exc), "unpredicted": True}
+                    continue
                 if r.status != "ok" or len(r.values) != len(exp):
-                    cells[n] = {"status": "error", "run": r.status,
+                    cells[n] = {"status": "error", "atom": atoms[n], "run": r.status,
                                 "detail": (r.detail or r.stderr or f"{len(r.values)}/{len(exp)} values")[-600:]}
                     continue
                 bad = next(((a, e, g) for (_, a), e, g in zip(my, exp, r.values) if not V.same(e, g, signed_zero=True)), None)
-                cells[n] = {"status": "pass", "checks": len(exp)} if bad is None else \
-                    {"status": "fail", "checks": len(exp), "args": bad[0], "expected": bad[1], "got": bad[2]}
+                cells[n] = {"status": "pass", "atom": atoms[n], "checks": len(exp)} if bad is None else \
+                    {"status": "fail", "atom": atoms[n], "checks": len(exp), "args": bad[0], "expected": bad[1],
+                     "got": bad[2]}
     return {"available": True, "probe": why, "cells": cells}
 
 
@@ -174,7 +208,8 @@ def matrix(ctx: Ctx, langs: list[str] | None = None, seed: int | None = None,
     for lang, r in results.items():
         st = [c["status"] for c in r["cells"].values()]
         summary[lang] = {k: st.count(k) for k in ("pass", "fail", "gap", "error", "unavailable")}
-    rep = {"seed": seed, "samples": samples, "functions": [f["fn"]["name"] for f in fns],
+    rep = {"seed": seed, "samples": samples, "tier": "sample", "functions": [f["fn"]["name"] for f in fns],
+           "atoms": {f["fn"]["name"]: f["atom"] for f in fns},
            "ops": sorted({f["op"] for f in fns}), "languages": results, "summary": summary}
     return rep
 
@@ -190,3 +225,41 @@ def rate(report: dict) -> tuple[int, int]:
                 total += 1
                 good += c["status"] == "pass"
     return good, total
+
+
+def image(rep: dict) -> dict[str, dict[str, str]]:
+    """The carry map's verified image, per language: {atom at its rank: the status of its cell}. A pass is the op's
+    template checked against the reference on this run's samples (sample tier); a fail is a template that computes
+    something else; a gap is no template, read from the map with nothing emitted; an error is a template the
+    toolchain rejected; unavailable is no toolchain on this host."""
+    return {lang: {c["atom"]: c["status"] for c in r["cells"].values() if c.get("atom")}
+            for lang, r in rep["languages"].items()}
+
+
+def semantic_gap(rep: dict) -> dict[str, list[str]]:
+    """Per language, the atoms whose template is there but wrong or rejected (cells that fail or error): the
+    language's semantic gap, beside the syntactic gap its carry map states."""
+    return {lang: sorted(a for a, st in im.items() if st in ("fail", "error")) for lang, im in image(rep).items()}
+
+
+def risk(rep: dict, content) -> dict[str, dict[str, str]]:
+    """What a function with this content would meet in each language, with no run of the function: its atoms whose
+    cell did not pass, {lang: {atom: status}}. Emission is a homomorphism (FOUNDATIONS D14), so a function built
+    from atoms whose cells pass is checked by those cells, on their samples. ``content`` is ranked
+    (``codegen.ranked_content``: its cells exactly) or rank-blind (an op counts at every rank that did not pass);
+    an atom with no cell is ``unchecked``."""
+    out: dict[str, dict[str, str]] = {}
+    atoms = G.support(content)
+    for lang, im in image(rep).items():
+        bad: dict[str, str] = {}
+        for a in sorted(atoms):
+            if G.RANK in a:
+                if im.get(a, "unchecked") != "pass":
+                    bad[a] = im.get(a, "unchecked")
+                continue
+            ranks = {k: st for k, st in im.items() if G.base_atom(k) == a}
+            if not ranks:
+                bad[a] = "unchecked"
+            bad.update({k: st for k, st in sorted(ranks.items()) if st != "pass"})
+        out[lang] = bad
+    return out

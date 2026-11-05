@@ -81,6 +81,29 @@ class MatrixTest(unittest.TestCase):
             self.assertTrue(all(c["status"] == "pass" for f in rep["functions"] for c in f["round_trip"].values()))
         self.assertIn("python", M.report_text(rep))
         self.assertIn("| source \\ target |", M.markdown(rep))
+        # every function records the atoms each target has no template for, read from the carry maps: a target
+        # with such atoms is a gap cell, never run (docs/GODEL_AUDIT.md §4.1, step 3)
+        for f in rep["functions"]:
+            self.assertIn("gaps", f)
+            for t, atoms in f["gaps"].items():
+                self.assertTrue(atoms and f["targets"][t]["status"] == "gap", (f["function"], t, atoms))
+
+    def test_translation_gaps_are_atoms_of_the_carry_map(self):
+        """The gaps are counted by atom from the functions' records (no emission); a gap found only by emitting
+        keeps its reason in words."""
+        rep = {"functions": [
+            {"targets": {"lean": {"status": "gap", "reason": "lean: no template for op/ADD@float,float->float "
+                                                            "(predicted from the content)"},
+                         "c": {"status": "pass"}},
+             "gaps": {"lean": ["op/ADD@float,float->float"]}},
+            {"targets": {"lean": {"status": "gap", "reason": "lean: no template for op/ADD@float,float->float, "
+                                                            "op/REM@int,int->int (predicted from the content)"},
+                         "c": {"status": "gap", "reason": "c: integer constant 1267650600228229401496703205376 does "
+                                                         "not fit 64-bit int"}},
+             "gaps": {"lean": ["op/ADD@float,float->float", "op/REM@int,int->int"]}}]}
+        self.assertEqual(M.translation_gaps(rep), {
+            "c": {"integer constant 1267650600228229401496703205376 does not fit 64-bit int": 1},
+            "lean": {"op/ADD@float,float->float": 2, "op/REM@int,int->int": 1}})
 
     def test_ports_that_differ_are_caught(self):
         rep = M.run(self.ctx, _files(WRONG), targets=["python"], seed=SEED)

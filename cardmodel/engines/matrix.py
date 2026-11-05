@@ -33,7 +33,7 @@ from . import equivalence as EQ
 from . import godel as G
 from . import translate
 from . import values as V
-from .codegen import EmitGap, emit_module, predicted_gap, ranked_content
+from .codegen import EmitGap, emission_content, emit_module, predicted_gap
 from .context import Ctx
 from .ir import Interpreter, IRError, StepLimit
 
@@ -181,7 +181,7 @@ def round_trip(ctx: Ctx, card: dict, target: str) -> dict:
     fe = FRONTENDS.get(target)
     if fe is None or fe.lift_text is None:
         return {"status": "no_frontend"}
-    missing = predicted_gap(ranked_content(ctx.ops, card["ir"]), ctx.language_gap(target)) \
+    missing = predicted_gap(emission_content(ctx.ops, card["ir"]), ctx.language_gap(target)) \
         if translate.PREDICT_GAPS else []
     if missing:
         return {"status": "gap", "reason": f"{target}: no template for {', '.join(missing)} (predicted from the content)"}
@@ -254,8 +254,14 @@ def run(ctx: Ctx, files: list[Path], targets: list[str] | None = None, seed: int
                 rt["math"] = math_round_trip(ctx, card)      # mathematical notation as a target (engines/mathlang.py)
                 if ident:
                     classes[ident] = {"label": label, "cells": cells, "round_trip": rt}
+            # the atoms of the function's content each target has no template for: its translation gaps, read from
+            # the carry maps with nothing emitted, toolchain or not (the same record for a copy, whose content is the
+            # same up to names)
+            needed = emission_content(ctx.ops, card["ir"])
+            gaps = {t: predicted_gap(needed, ctx.language_gap(t)) for t in targets}
             functions.append({"file": str(path), "source": fe.lang, "function": name, "inputs": rep["inputs"],
                               "lift_mismatches": rep["lift_mismatches"], "targets": cells, "round_trip": rt,
+                              "gaps": {t: a for t, a in gaps.items() if a},
                               "identity": ident, "same_as": first["label"] if first else None,
                               "source_witness": (card.get("verification") or {}).get("source_witness")})
             by_source.setdefault(fe.lang, {})[name] = card
@@ -335,14 +341,20 @@ def by_identity(rep: dict) -> dict[str, int]:
 
 
 def translation_gaps(rep: dict) -> dict[str, dict[str, int]]:
-    """D4: every construct a target cannot emit, counted over the corpus: {target: {reason: functions}}."""
+    """D4: every construct a target cannot carry, counted over the corpus, {target: {atom: functions}}: the atoms of
+    the functions' content the target has no template for, ``op/NAME@rank``, read from its carry map
+    (``codegen.predicted_gap``, recorded per function as ``gaps``) with nothing emitted; and, by its reason in words,
+    a gap found only by emitting (a gap cell on a target the map did not refuse)."""
     out: dict[str, dict[str, int]] = {}
     for f in rep["functions"]:
+        predicted = f.get("gaps") or {}
+        for t, atoms in predicted.items():
+            for a in atoms:
+                out.setdefault(t, {})[a] = out.setdefault(t, {}).get(a, 0) + 1
         for t, c in f["targets"].items():
-            if c["status"] == "gap":
+            if c["status"] == "gap" and t not in predicted:
                 why = c.get("reason", "?").split(": ", 1)[-1]
-                out.setdefault(t, {}).setdefault(why, 0)
-                out[t][why] += 1
+                out.setdefault(t, {})[why] = out.setdefault(t, {}).get(why, 0) + 1
     return {t: dict(sorted(rs.items(), key=lambda kv: -kv[1])) for t, rs in sorted(out.items())}
 
 
@@ -386,7 +398,7 @@ def report_text(rep: dict) -> str:
             for x in rep["not_lifted"][:8]))
     gaps = translation_gaps(rep)
     if gaps:
-        lines.append("translation gaps (constructs a target cannot carry yet): " + "; ".join(
+        lines.append("translation gaps (atoms a target has no template for, from its carry map): " + "; ".join(
             f"{t}: {', '.join(f'{r} ×{n}' for r, n in rs.items())}" for t, rs in gaps.items()))
     if rep["failures"]:
         lines.append(f"FAILURES ({len(rep['failures'])}):")
@@ -432,7 +444,8 @@ def markdown(rep: dict) -> str:
         out.append("* Unavailable here: " + "; ".join(f"{k} ({v})" for k, v in sorted(rep["unavailable"].items())))
     gaps = translation_gaps(rep)
     if gaps:
-        out.append("* Translation gaps (constructs a target cannot emit yet; the function is not run there):")
+        out.append("* Translation gaps (atoms a target has no template for, read from its carry map before anything "
+                   "is emitted; the function is not run there):")
         out += [f"  * {t}: " + "; ".join(f"{r} (×{n})" for r, n in rs.items()) for t, rs in gaps.items()]
     out.append(f"* Failures: {len(rep['failures'])}.")
     out += [f"  * {f['kind']} {f.get('source', '')} → {f.get('target', '')} `{f['function']}`" for f in rep["failures"]]
