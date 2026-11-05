@@ -16,11 +16,14 @@ on part of the domain. The analyser makes that part explicit:
                  differs from ℤ / binary64: fixed-width overflow, division by zero, a float exception the
                  reference raises and IEEE turns into ±∞/NaN, float→int of a non-finite value, shift counts,
                  negative integer powers, NaN flowing into a result, deep recursion, a step budget (timing),
-                 evaluation order of effects, and reassociation under fast-math. The instrumented reference
+                 evaluation order of effects, reassociation under fast-math, and the numeric-model laws (contraction
+                 into a fused multiply-add, flushing subnormals, the order of a loop's float sum; engines/numeric.py). The instrumented reference
                  run on boundary and in-domain inputs finds which laws *fire* where, with the first input;
   4. witness     every firing is run in every available runner (each codegen language, and optimization or
                  checking variants: C at -O0/-O2/-ffast-math/UBSan, Rust debug/release, Swift -Onone/-Ounchecked)
-                 and compared with the reference. A finding is ``witnessed`` (some runner differs: the
+                 and compared with the reference: bit for bit where the two numeric models say they must agree
+                 exactly (numeric.agreement), within values.same's tolerance otherwise, and bit for bit for the
+                 numeric-model laws on every runner whose float text shows every bit. A finding is ``witnessed`` (some runner differs: the
                  difference is real and named), ``guarded`` (every runner agrees: the codegen handles it), or
                  ``predicted`` (no runner could run it here).
 
@@ -41,6 +44,7 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
+from . import numeric
 from . import values as V
 from .codegen import EmitGap, Emitter
 from .ir import LEAVES, MAX_INT_BITS, SPECIAL, Interpreter, IRError, StepLimit, to_python_text
@@ -433,7 +437,33 @@ LAWS: dict[str, Law] = {law.id: law for law in [
         {"c_fast": "-ffast-math reassociates and vectorizes, so the low bits (and NaN handling) change",
          "*": "evaluated left to right as written; agrees"},
         "keep strict IEEE (no -ffast-math) where the order matters, or sum compensated (Kahan)", static=True),
+    # the numeric-model laws (ENVIRONMENTS.md V-B, E12–E14; engines/numeric.py states when two runners must agree
+    # bit for bit and the bound otherwise, and measures each runner's model on this host)
+    Law("fp_contract", "a float a·b ± c that a compiler may round once (fused) instead of twice",
+        "{term}: a·b ± c is two roundings in binary64; a fused multiply-add is one",
+        {"c": "gcc in ISO mode (-std=c11, the C card's flag) does not contract; clang contracts inside one "
+              "expression by default; either fuses only when the target ISA has an FMA instruction (x86-64's "
+              "baseline has none, ARM64's has one)",
+         "c_fast": "-ffast-math permits contraction; it happens when the target has FMA (-march with FMA, ARM64)",
+         "go": "the gc compiler fuses x·y + z on arm64, ppc64le, s390x and riscv64 (the Go spec allows it)",
+         "*": "two roundings, as written; agrees"},
+        "write fma(a, b, c) where one rounding is meant, or compile with -ffp-contract=off where two are",
+        static=True),
+    Law("denormal_flush", "a subnormal binary64 operand or result",
+        "an operand or the result of {term} is subnormal: 0 < |x| < 2⁻¹⁰²²",
+        {"c_fast": "-ffast-math's start-up code sets FTZ and DAZ for the whole process (x86-64 MXCSR; FPCR.FZ on "
+                   "ARM64): a subnormal is written and read as 0",
+         "*": "IEEE gradual underflow, as the reference; agrees"},
+        "keep magnitudes above 2⁻¹⁰²² (rescale), or keep fast-math out of a program that needs subnormals"),
+    Law("reduction_order", "a float sum accumulated in a loop",
+        "{term} accumulates a binary64 sum in a loop: its value depends on the summation tree",
+        {"c_fast": "-ffast-math (-fassociative-math) lets the vectorizer sum interleaved partial sums (gcc -O3, or "
+                   "-O2 when its cheap cost model takes the loop): the low bits change with the lane count",
+         "*": "summed sequentially as written; agrees"},
+        "keep strict IEEE where the sum must be reproducible, or fix the tree (pairwise or compensated sum) so "
+        "every runner computes the same one", static=True),
 ]}
+NUMERIC_LAWS = ("fp_contract", "denormal_flush", "reduction_order")
 
 
 def family(runner: str) -> str:
@@ -505,14 +535,31 @@ class Instrumented(Interpreter):
             self._fire("int_width", e, args, r)
         if isinstance(r, float) and r != r and not any(isinstance(a, float) and a != a for a in args):
             self._fire("nan_result", e, args, r)
+        if isinstance(r, float) and (_subnormal(r) or any(_subnormal(a) for a in args)):
+            self._fire("denormal_flush", e, args, r)
         return self._note(r)
 
 
+def _subnormal(x) -> bool:
+    return isinstance(x, float) and 0.0 < abs(x) < 2.0 ** -1022
+
+
 def _static_findings(module: dict, struct: dict) -> list[dict]:
-    """Laws decided by the program's shape: effect order, float reassociation."""
+    """Laws decided by the program's shape: effect order, float reassociation, contraction, loop reductions."""
     out = []
     pure = {n: f["pure"]["value"] for n, f in struct["functions"].items()}
     for fn in module["functions"]:
+        seen = set()
+        for s, p in _stmts(fn["body"]):
+            if s["k"] not in ("while", "for_range"):
+                continue
+            for t, tp in _stmts(s["body"], f"{p}.body"):
+                v = t.get("value")
+                if (tp not in seen and t["k"] == "assign" and isinstance(v, list) and v and v[0] in ("ADD", "SUB")
+                        and ["var", t["target"]] in v[1:] and _floaty(v, fn)):
+                    seen.add(tp)
+                    out.append({"law": "reduction_order", "function": fn["name"], "at": f"{tp}.value",
+                                "term": show(v), "expr_id": id(v)})
         for s, p in _stmts(fn["body"]):
             for key, e in _exprs(s):
                 for sub, sp in _walk(e, f"{p}.{key}"):
@@ -528,6 +575,10 @@ def _static_findings(module: dict, struct: dict) -> list[dict]:
                     if sub[0] in ("ADD", "MUL") and any(isinstance(a, list) and a and a[0] == sub[0]
                                                          for a in sub[1:]) and _floaty(sub, fn):
                         out.append({"law": "float_assoc", "function": fn["name"], "at": sp, "term": show(sub),
+                                    "expr_id": id(sub)})
+                    if sub[0] in ("ADD", "SUB") and any(isinstance(a, list) and a and a[0] == "MUL"
+                                                         for a in sub[1:3]) and _floaty(sub, fn):
+                        out.append({"law": "fp_contract", "function": fn["name"], "at": sp, "term": show(sub),
                                     "expr_id": id(sub)})
     return out
 
@@ -709,12 +760,33 @@ def _first_line(r) -> str:
     return f"{r.status}: {pick[:90]}" if pick else r.status
 
 
-def _agree(ref: dict, got: dict) -> bool | None:
+def _agree(ref: dict, got: dict, exact: bool = False) -> bool | None:
+    """Does a runner's outcome agree with the reference's? ``exact``: bit for bit (the numeric models say the two
+    must agree exactly, engines/numeric.py), else within values.same's tolerance."""
     if "gap" in got or ref.get("error") == "step budget":     # no reference value to compare with
         return None
     if "error" in ref:
         return "error" in got
-    return "value" in got and V.same(ref["value"], got["value"])
+    if "value" not in got:
+        return False
+    # the sign of a zero is compared by values.same(signed_zero=True) on its own branch (claude/go-negzero): left
+    # out here so that a lost -0.0 is not reported under a numeric-model law
+    return numeric.same_bits(ref["value"], got["value"], signed_zero=False) if exact else \
+        V.same(ref["value"], got["value"])
+
+
+def comparisons(ctx, rs: list, module: dict) -> dict[str, dict]:
+    """For each runner, how it must agree with the reference on ``module`` (numeric.agreement of their numeric
+    models: ``exact`` or ``bounded``), and whether its float text shows every bit (so the numeric laws, whose
+    differences live in the last bits or below the blanket tolerance, are compared bit for bit)."""
+    from .environment import cached
+    env = cached()
+    out = {}
+    for name, _base, card in rs:
+        m = numeric.model_of(ctx, name, card, env)
+        ag = numeric.agreement(numeric.REFERENCE, m, module, ctx.ops)
+        out[name] = {**ag, "bits_visible": m.get("float_text") == "roundtrip"}
+    return out
 
 
 # ---- the analysis ------------------------------------------------------------------------------------------------
@@ -729,6 +801,7 @@ class Analysis:
     runners: list = field(default_factory=list)
     inputs: int = 0
     math: str = ""
+    numeric: dict = field(default_factory=dict)      # runner -> how it must agree with the reference (exact/bounded)
 
 
 def analyse_card(ctx, card: dict, run: bool = True, langs: list[str] | None = None, seed: int = 0,
@@ -827,9 +900,12 @@ def analyse_card(ctx, card: dict, run: bool = True, langs: list[str] | None = No
     budget = {repr(r["args"]) for r in rows if r["ref"].get("error") == "step budget"}
     machine = bool(module.get("globals") or module.get("arrays") or fn.get("returns") == "void")
     results: dict[str, dict[str, dict]] = {}
+    modes: dict[str, dict] = {}
     if run and chosen and not machine:
         rs = pool if pool is not None else runners(ctx, langs)
         a.runners = [r[0] for r in rs]
+        modes = comparisons(ctx, rs, module)
+        a.numeric = {n: {k: m[k] for k in ("mode", "laws", "tier", "gap")} for n, m in modes.items()}
 
         def one(r):
             bits = r[2].get("int_bits")
@@ -846,7 +922,9 @@ def analyse_card(ctx, card: dict, run: bool = True, langs: list[str] | None = No
         a.control = {"args": control, "disagree": sorted(n for n, res in results.items()
                                                          if repr(control) in res and
                                                          _agree(_outcome(ctx, module, control)[0],
-                                                                res[repr(control)]) is False)}
+                                                                res[repr(control)],
+                                                                modes.get(n, {}).get("mode") == "exact")
+                                                         is False)}
     for key, g in sorted(groups.items()):
         law = LAWS[g["law"]]
         runs = []
@@ -856,8 +934,13 @@ def analyse_card(ctx, card: dict, run: bool = True, langs: list[str] | None = No
                 got = res.get(repr(t["args"]))
                 if got is None:
                     continue
-                ag = _agree(t["ref"], got)
+                md = modes.get(name, {})
+                exact = md.get("bits_visible", False) if law.id in NUMERIC_LAWS else md.get("mode") == "exact"
+                ag = _agree(t["ref"], got, exact)
                 per[name] = {**got, "agrees": ag}
+                x, y = t["ref"].get("value"), got.get("value")
+                if ag is False and isinstance(x, float) and isinstance(y, float):
+                    per[name]["ulps"] = numeric.ulps(x, y)
             runs.append({**t, "runners": per})
         if law.id == "step_budget":          # timing: the runners split into those that finish and those that don't
             for r in runs:
@@ -1027,5 +1110,5 @@ def laws_text() -> str:
     return "\n".join(out)
 
 
-__all__ = ["LAWS", "VARIANTS", "Analysis", "analyse_card", "analyse_files", "explain", "laws_text", "obligations",
+__all__ = ["LAWS", "NUMERIC_LAWS", "VARIANTS", "Analysis", "analyse_card", "analyse_files", "explain", "laws_text", "obligations",
            "report_text", "runners", "structure"]
