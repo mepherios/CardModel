@@ -2,7 +2,8 @@
   "blockers": [],
   "branches": [
     "claude/search-uses-godel-match",
-    "claude/godel-number-tokens"
+    "claude/godel-number-tokens",
+    "claude/godel-followups"
   ],
   "category": "project",
   "docs": [
@@ -26,8 +27,8 @@
     "content from canonical terms instead of reference forms"
   ],
   "metadata": {
-    "previous_content_hash": "3b1de1cc60da765c1c6e61f6464373eeb29ecf676eb002bc7482597ac37e1df2",
-    "version": "2.0.5",
+    "previous_content_hash": "79c0b3eb6f20ea4d4e0af133ffdb5a5ab6ae0ad8bb59c2e2b8d56e66a4c624d1",
+    "version": "2.0.6",
     "version_bump_reason": "patch"
   },
   "metrics": [

@@ -88,3 +88,47 @@ class Deviant(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _tokens_before_core(nb, t, varnames):
+    """Numbering.tokens as it was before it called godel.tokens: the reference the core call must reproduce."""
+    from cardmodel.engines import godel as G
+    if isinstance(t, list) and t and t[0] == "var":
+        if t[1] not in varnames:
+            varnames.append(t[1])
+        return [3 * varnames.index(t[1]) + 3]
+    if isinstance(t, list) and t and t[0] == "int":
+        return [3 * G.zig(int(t[1])) + 2]
+    if isinstance(t, list) and t:
+        atom = t[0] if "/" in str(t[0]) else f"op/{t[0]}"
+        if atom not in nb.by_atom or len(t) - 1 != nb.arity.get(atom, 0):
+            raise ValueError(atom)
+        out = [3 * nb.by_atom[atom]["index"] + 1]
+        for a in t[1:]:
+            out += _tokens_before_core(nb, a, varnames)
+        return out
+    raise ValueError(t)
+
+
+class TokensAreTheCore(unittest.TestCase):
+    def test_same_tokens_on_every_sets_objects(self):
+        ctx = model_ctx()
+        rng = random.Random(SEED)
+        n = 0
+        for c in ctx.store.cards("godel_set"):
+            nb = N.Numbering(ctx, c.name)
+            for _ in range(60):
+                try:
+                    t = nb.generate(rng)
+                except ValueError:
+                    continue
+                v_old, v_new = [], []
+                self.assertEqual(nb.tokens(t, v_new), _tokens_before_core(nb, t, v_old), seed_note(self))
+                self.assertEqual(v_new, v_old)
+                n += 1
+            for bad in (["no/such_atom"], [next(iter(nb.by_atom)), *[["int", 0]] * 9]):
+                with self.assertRaises(ValueError):
+                    _tokens_before_core(nb, bad, [])
+                with self.assertRaises(ValueError):
+                    nb.tokens(bad, [])
+        self.assertGreater(n, 0)

@@ -337,6 +337,23 @@ class Algebra(unittest.TestCase):
         self.assertEqual(G.support(ratio), {"m", "s"})
         self.assertIsNone(G.cofactor(Counter({"x": 1}), Counter({"y": 1})))
 
+    def test_rational_scale_is_exact_and_keeps_the_group_laws(self):
+        from fractions import Fraction
+        rng = random.Random(SEED)
+        half, third = Fraction(1, 2), Fraction(1, 3)
+        for _ in range(60):
+            a, b = _random_vector(rng), _random_vector(rng)
+            self.assertEqual(G.scale(a, 2), G.scale(a, Fraction(2)), seed_note(self))       # integer k: same answer
+            self.assertEqual(G.scale(G.scale(a, half), 2), a, seed_note(self))               # halving undoes doubling
+            self.assertEqual(G.add(G.scale(a, half), G.scale(a, half)), a, seed_note(self))
+            self.assertEqual(G.scale(G.add(a, b), half), G.add(G.scale(a, half), G.scale(b, half)), seed_note(self))
+            self.assertEqual(G.scale(G.scale(a, half), third), G.scale(a, half * third), seed_note(self))
+            self.assertEqual(G.add(G.scale(a, half), G.scale(a, third)), G.scale(a, half + third), seed_note(self))
+            self.assertEqual(G.scale(a, Fraction(0)), Counter(), seed_note(self))
+            self.assertEqual({k: Fraction(e, 2) for k, e in a.items() if e}, dict(G.scale(a, half)), seed_note(self))
+        with self.assertRaises(TypeError):
+            G.scale(Counter({"m": 1}), 0.5)
+
     def test_substitution_only_adds_content(self):
         """An instance of a pattern is divisible by the pattern, with the exact cofactor Σ m_v·γ(σ(v)): what lets
         a divisibility test refute a match before it is tried."""

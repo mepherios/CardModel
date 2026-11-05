@@ -167,7 +167,7 @@ def of(term, env: dict, model: dict, problems: list[str] | None = None, derived:
                 return Counter()                        # a dimensionless base: any exponent keeps it so
             return fail(f"{head}: a variable exponent needs a dimensionless base, not {text(args[0])}")
         if action == "half":
-            return _norm(Counter({k: Fraction(e, 2) for k, e in args[0].items()}))
+            return _norm(G.scale(args[0], Fraction(1, 2)))
         if action == "none":
             bad = [text(a) for a in args if a]
             if bad:
