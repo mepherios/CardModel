@@ -50,6 +50,12 @@ OUTSIDE = {
     E + "difficulty.py": "difficulty of a whole card set for the self-run's choice of work; no step of one input's path",
     E + "docs.py": "generates LAWS.md, GOALS.md and the floors from the cards (`cardmodel docs`): documentation of "
                    "the model, not a transformation of an input",
+    E + "environment.py": "the machine the model runs on as a card (`cardmodel env`, ENVIRONMENTS.md V-A): a probe "
+                          "of the host written once into the local layer; the stages read the host through their "
+                          "`host:` facts, they do not describe it",
+    E + "scale.py": "the scale benchmark (`cardmodel scale bench`, SCALING.md): generates synthetic projects of n "
+                    "functions and times the model on them; a measurement of the pipeline over many inputs, not "
+                    "a step of one input's path",
     E + "formal.py": "the formal core in Lean (T1-T6) checks the theory's own theorems; the proofs are of the model, "
                      "not of one input",
     E + "godel1931.py": "the historical construction (Gödel 1931) as a card set, read by `cardmodel godel`; the "

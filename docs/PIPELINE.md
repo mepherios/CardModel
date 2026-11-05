@@ -65,6 +65,7 @@ granted.
 - `coverage.py`: the goals' metrics read from the latest verify and self-run; it reads the pipeline's coverage, it is not a stage of it
 - `difficulty.py`: difficulty of a whole card set for the self-run's choice of work; no step of one input's path
 - `docs.py`: generates LAWS.md, GOALS.md and the floors from the cards (`cardmodel docs`): documentation of the model, not a transformation of an input
+- `environment.py`: the machine the model runs on as a card (`cardmodel env`, ENVIRONMENTS.md V-A): a probe of the host written once into the local layer; the stages read the host through their `host:` facts, they do not describe it
 - `formal.py`: the formal core in Lean (T1-T6) checks the theory's own theorems; the proofs are of the model, not of one input
 - `godel1931.py`: the historical construction (Gödel 1931) as a card set, read by `cardmodel godel`; the content stage uses the model's own ledger (godel.py)
 - `integrity.py`: the integrity check of the model's own files and cards (`verify --only integrity`): it checks the registry, it is not a stage of it
@@ -76,6 +77,7 @@ granted.
 - `observe.py`: observes a code base for named cards against fallbacks (`cardmodel observe`): a corpus reading for learning
 - `projects.py`: project cards and their layering (`cardmodel status`): where the outputs go, not how an input is transformed
 - `redefs.py`: redefinition cards (what a definition was redefined to and why) for `rewrite` over cards, not over functions
+- `scale.py`: the scale benchmark (`cardmodel scale bench`, SCALING.md): generates synthetic projects of n functions and times the model on them; a measurement of the pipeline over many inputs, not a step of one input's path
 - `selfcheck.py`: the self-containment check (CM13, `verify --only selfcheck`): the program's own files
 - `selflogic.py`: the model's own card logic (the self layer) for the self-run; no step of one input's path
 - `selfrun.py`: the self-run cycle (CM38) schedules steps over the model, `translate` among them; it calls the pipeline, the pipeline does not call it
