@@ -1,0 +1,58 @@
+{
+  "category": "op",
+  "cost": 4.0,
+  "emit": {
+    "c": "sqrt({0})",
+    "go": "math.Sqrt({0})",
+    "java": "Math.sqrt({0})",
+    "javascript": "Math.sqrt({0})",
+    "lean": "UNSUPPORTED",
+    "lua": "math.sqrt({0})",
+    "python": "cm_fsqrt({0})",
+    "ruby": "(({0}) == 0.0 ? ({0}) : cm_fsqrt({0}))",
+    "rust": "(({0}).sqrt())",
+    "swift": "sqrt({0})"
+  },
+  "godel_set": "analysis",
+  "ir": {
+    "arity": 1,
+    "domain": {
+      "float": [
+        {
+          "float": [
+            0.0,
+            1000.0
+          ]
+        }
+      ]
+    },
+    "eval": "lambda a: math.sqrt(a) if a >= 0 else float('nan')",
+    "types": [
+      [
+        "float",
+        "float"
+      ]
+    ]
+  },
+  "metadata": {
+    "previous_content_hash": "b268c971e239e1a765aa33fcea99ca15c01c15c69c041681268300d3b00e689f",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "name": "FSQRT",
+  "provenance": {
+    "observed_in": "Unreal Engine's math (cardmodel unreal scan)",
+    "origin": "cardmodel",
+    "tool": "tools/seed_unreal.py"
+  },
+  "requires": {
+    "go": [
+      "math"
+    ],
+    "python": [
+      "math"
+    ]
+  },
+  "statement": "square root of a real (IEEE: correctly rounded; NaN below 0)",
+  "tier": 1
+}

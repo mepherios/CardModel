@@ -31,11 +31,11 @@ from ..kernel import resources
 from . import values as V
 from .codegen import EmitGap, Emitter
 from .context import Ctx
-from .ir import Interpreter
+from .ir import FIXED, Interpreter, wrap_store
 from .runners import run_calls
 
 DEFAULT_SAMPLES = 12
-TYPE_CODE = {"list[int]": "li", "list[float]": "lf"}
+TYPE_CODE = {"list[int]": "li", "list[float]": "lf", **{t: t for t in FIXED}}
 
 
 def _domain_key(sig: list[str]) -> str:
@@ -59,6 +59,14 @@ def op_functions(ops) -> list[dict]:
     return fns
 
 
+def _as_sort(v, t, ops):
+    if t not in FIXED:
+        return v
+    w = wrap_store(["var", "v"], t)
+    spec = ops.get(w[0])
+    return spec.fn(v, *[x[1] for x in w[2:]]) if spec and spec.fn else v
+
+
 def _cases(ops, fns, rng, samples):
     """Reference outputs per test function: list of (args, expected)."""
     cases = {}
@@ -70,6 +78,8 @@ def _cases(ops, fns, rng, samples):
         interp = Interpreter({"functions": [item["fn"]]}, ops)
         rows = []
         for args in _with_negative_zero(V.inputs(gens, samples, rng)):
+            # an argument of a fixed-width sort is a value of that sort: stored (wrapped) like any other store
+            args = tuple(_as_sort(a, t, ops) for a, t in zip(args, item["sig"][:-1]))
             try:
                 out = interp.call(item["fn"]["name"], list(args))
             except Exception:  # noqa: BLE001 -- outside the reference domain (e.g. b == 0)

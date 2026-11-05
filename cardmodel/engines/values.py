@@ -21,7 +21,11 @@ from __future__ import annotations
 import math
 import random
 
-DEFAULT_GEN = {"int": {"int": [-1000, 1000]}, "float": {"float": [-1000.0, 1000.0]}, "bool": {"bool": True}}
+DEFAULT_GEN = {"int": {"int": [-1000, 1000]}, "float": {"float": [-1000.0, 1000.0]}, "bool": {"bool": True},
+               # the fixed-width sorts: their whole range, so overflow is sampled at the edges
+               "u8": {"int": [0, 255]}, "u16": {"int": [0, 65535]}, "u32": {"int": [0, 2 ** 32 - 1]},
+               "i8": {"int": [-128, 127]}, "i16": {"int": [-32768, 32767]}, "i32": {"int": [-2 ** 31, 2 ** 31 - 1]},
+               "f32": {"float": [-1000.0, 1000.0]}}
 REL_TOL = 1e-12
 
 

@@ -120,6 +120,36 @@
         "int",
         "int",
         "int"
+      ],
+      [
+        "u8",
+        "u8",
+        "u8"
+      ],
+      [
+        "u16",
+        "u16",
+        "u16"
+      ],
+      [
+        "u32",
+        "u32",
+        "u32"
+      ],
+      [
+        "i8",
+        "i8",
+        "i8"
+      ],
+      [
+        "i16",
+        "i16",
+        "i16"
+      ],
+      [
+        "i32",
+        "i32",
+        "i32"
       ]
     ]
   },
@@ -131,8 +161,8 @@
     }
   },
   "metadata": {
-    "previous_content_hash": "2e53fbe762e8656521fcc0d22af45631405a56d035a85ff2f160f0985bd62418",
-    "version": "1.1.0",
+    "previous_content_hash": "8b1ea99f4549f8ce3224f6ac77cd06c1c18a46c54b2dd15564a88f8ce38cb049",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "BIT_AND",

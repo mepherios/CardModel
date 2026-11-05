@@ -44,7 +44,7 @@ from __future__ import annotations
 import math
 import re
 
-from .ir import LEAVES, elem_type
+from .ir import LEAVES, carrier, elem_type, lower_stores
 
 
 class EmitGap(Exception):
@@ -118,6 +118,7 @@ class Emitter:
         return t.format(**kw)
 
     def lit(self, kind: str, v) -> str:
+        kind = carrier(kind)        # a fixed-width value is written as a literal of its carrier
         if elem_type(kind) is not None:
             t = (self.cg.get("list_lit") or {}).get(kind)
             if t is None:
@@ -263,8 +264,9 @@ class Emitter:
         subs = [self.expr(a, types) for a in e[1:]]
         arg_types = [t for _, t in subs]
         rtype = self.result_type(head, arg_types)
-        tpl = self.op_template(head, arg_types, rtype)
-        fields = {"type": self.T(rtype), "tc": (arg_types[0][0] if arg_types else "i")}
+        # templates are keyed by the carrier: a u8 is held in the language's int, an f32 in its float
+        tpl = self.op_template(head, [carrier(t) for t in arg_types], carrier(rtype))
+        fields = {"type": self.T(rtype), "tc": (carrier(arg_types[0])[0] if arg_types else "i")}
         for i, (code, t) in enumerate(subs):
             fields[f"t{i}"] = self.T(t)
         try:
@@ -442,6 +444,7 @@ class Emitter:
 
     # -- functions and programs ------------------------------------------------
     def function(self, fn: dict) -> str:
+        fn = lower_stores(fn)       # wrap-on-store for fixed-width locals and results
         types = {p["name"]: p["type"] for p in fn["params"]}
         types.update(fn.get("locals") or {})
         ind = self.cg.get("indent", "    ")
@@ -501,12 +504,12 @@ class Emitter:
             text = call_tpl.format(name=self.ident(name), args=sep.join(parts))
             rt = fn["returns"]
             if mode == "test":
-                pr = (harness.get("print") or {}).get(rt)
+                pr = (harness.get("print") or {}).get(carrier(rt))
                 if pr is None:
                     raise EmitGap(f"{self.lang_name}: no print template for {rt}")
                 lines.append(ind2 + pr.format(e=text) + "\n")
             else:
-                tr = (harness.get("truthy") or {}).get(rt)
+                tr = (harness.get("truthy") or {}).get(carrier(rt))
                 if tr is None or "bench_main" not in harness:
                     raise EmitGap(f"{self.lang_name}: no bench harness")
                 lines.append(ind2 * 2 + harness["bench_call"].format(truthy=tr.format(e=text)) + "\n")

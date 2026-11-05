@@ -90,10 +90,17 @@
     "style": "indent",
     "types": {
       "bool": "bool",
+      "f32": "float",
       "float": "float",
+      "i16": "int",
+      "i32": "int",
+      "i8": "int",
       "int": "int",
       "list[float]": "list[float]",
       "list[int]": "list[int]",
+      "u16": "int",
+      "u32": "int",
+      "u8": "int",
       "void": "None"
     },
     "underscore_ok": true,

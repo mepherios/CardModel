@@ -89,10 +89,17 @@
     "style": "braces",
     "types": {
       "bool": "bool",
+      "f32": "f64",
       "float": "f64",
+      "i16": "i64",
+      "i32": "i64",
+      "i8": "i64",
       "int": "i64",
       "list[float]": "Vec<f64>",
-      "list[int]": "Vec<i64>"
+      "list[int]": "Vec<i64>",
+      "u16": "i64",
+      "u32": "i64",
+      "u8": "i64"
     },
     "while": "while {cond} {{",
     "zero": {
@@ -134,8 +141,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "085e6b70e903454aa2d6977bde0fc2c8131a73b47d5feceb993600a33956d4ac",
-    "version": "1.0.1",
+    "previous_content_hash": "c1a05230e6c5f4cde73fe6ab8f049c1ba86adfc3c710b53003d1da3e26c06ac0",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "name": "rust",

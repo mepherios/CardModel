@@ -99,6 +99,34 @@
       [
         "float",
         "float"
+      ],
+      [
+        "u8",
+        "u8"
+      ],
+      [
+        "u16",
+        "u16"
+      ],
+      [
+        "u32",
+        "u32"
+      ],
+      [
+        "i8",
+        "i8"
+      ],
+      [
+        "i16",
+        "i16"
+      ],
+      [
+        "i32",
+        "i32"
+      ],
+      [
+        "f32",
+        "f32"
       ]
     ]
   },
@@ -110,8 +138,8 @@
     }
   },
   "metadata": {
-    "previous_content_hash": "0c12419b0f83c3147f83acfd8928f4d404f679f9d4555245d929c2e192b8bcb3",
-    "version": "1.1.0",
+    "previous_content_hash": "6cb273e451a6d8f7cb12aa16255ef2fe2143f7c7b2cb48c19ed1703184331746",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "NEG",

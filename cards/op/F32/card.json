@@ -35,7 +35,9 @@
     ]
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "a5819027974c4a950157f01dbd1071393290d3e4a8a40b348f8ecac2c6f83510",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "F32",
   "provenance": {
@@ -44,9 +46,6 @@
     "tool": "tools/seed_unreal.py"
   },
   "requires": {
-    "go": [
-      "math"
-    ],
     "python": [
       "math",
       "struct"

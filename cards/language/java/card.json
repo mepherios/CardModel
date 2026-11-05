@@ -77,10 +77,17 @@
     "style": "braces",
     "types": {
       "bool": "boolean",
+      "f32": "double",
       "float": "double",
+      "i16": "long",
+      "i32": "long",
+      "i8": "long",
       "int": "long",
       "list[float]": "double[]",
-      "list[int]": "long[]"
+      "list[int]": "long[]",
+      "u16": "long",
+      "u32": "long",
+      "u8": "long"
     },
     "while": "while ({cond}) {{",
     "zero": {
@@ -135,8 +142,8 @@
   "frontend_link": "class_per_file",
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "a5dc4cc1970d8ae9719c96d959010dbd3c043d4046d41a7172f4e79940f08a7c",
-    "version": "1.0.2",
+    "previous_content_hash": "aacb05f6e6c86967365f0dc5748d6a4a45554c101d4b5d19c979b45aa7611b52",
+    "version": "1.0.3",
     "version_bump_reason": "patch"
   },
   "name": "java",

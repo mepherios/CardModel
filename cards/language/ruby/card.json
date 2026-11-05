@@ -75,10 +75,17 @@
     "style": "end",
     "types": {
       "bool": "Boolean",
+      "f32": "Float",
       "float": "Float",
+      "i16": "Integer",
+      "i32": "Integer",
+      "i8": "Integer",
       "int": "Integer",
       "list[float]": "Array",
-      "list[int]": "Array"
+      "list[int]": "Array",
+      "u16": "Integer",
+      "u32": "Integer",
+      "u8": "Integer"
     },
     "while": "while {cond}",
     "zero": {

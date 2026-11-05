@@ -169,6 +169,41 @@
         "float",
         "float",
         "float"
+      ],
+      [
+        "u32",
+        "u32",
+        "u32"
+      ],
+      [
+        "f32",
+        "f32",
+        "f32"
+      ],
+      [
+        "u8",
+        "u8",
+        "u8"
+      ],
+      [
+        "u16",
+        "u16",
+        "u16"
+      ],
+      [
+        "i8",
+        "i8",
+        "i8"
+      ],
+      [
+        "i16",
+        "i16",
+        "i16"
+      ],
+      [
+        "i32",
+        "i32",
+        "i32"
       ]
     ]
   },
@@ -181,8 +216,8 @@
   },
   "metadata": {
     "hub_kind": "binop",
-    "previous_content_hash": "ad67d48c1e810da82130e7e26449c1bdf5a32b5401669424b16b6d53ff695c2f",
-    "version": "1.1.0",
+    "previous_content_hash": "5ae85022ee2c009711fa633cb178ac7176858dabd7c2a7ca89ad5c77af1b8e10",
+    "version": "1.3.0",
     "version_bump_reason": "minor"
   },
   "name": "MUL",

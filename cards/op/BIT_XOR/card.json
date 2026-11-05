@@ -140,6 +140,36 @@
         "int",
         "int",
         "int"
+      ],
+      [
+        "u8",
+        "u8",
+        "u8"
+      ],
+      [
+        "u16",
+        "u16",
+        "u16"
+      ],
+      [
+        "u32",
+        "u32",
+        "u32"
+      ],
+      [
+        "i8",
+        "i8",
+        "i8"
+      ],
+      [
+        "i16",
+        "i16",
+        "i16"
+      ],
+      [
+        "i32",
+        "i32",
+        "i32"
       ]
     ]
   },
@@ -151,8 +181,8 @@
     }
   },
   "metadata": {
-    "previous_content_hash": "0d1d5c2505e40b211b2b7506c35b6d1febed8bd45c98733334826aa2eac31462",
-    "version": "1.1.0",
+    "previous_content_hash": "37d8972045adb7eae09ed430919ac7e475999482b844025b25f9f9f433b36e13",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "BIT_XOR",

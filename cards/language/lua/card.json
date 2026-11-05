@@ -76,10 +76,17 @@
     "style": "end",
     "types": {
       "bool": "boolean",
+      "f32": "float",
       "float": "float",
+      "i16": "integer",
+      "i32": "integer",
+      "i8": "integer",
       "int": "integer",
       "list[float]": "table",
-      "list[int]": "table"
+      "list[int]": "table",
+      "u16": "integer",
+      "u32": "integer",
+      "u8": "integer"
     },
     "underscore_ok": true,
     "while": "while {cond} do",

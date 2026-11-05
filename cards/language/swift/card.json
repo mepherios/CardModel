@@ -84,10 +84,17 @@
     "style": "braces",
     "types": {
       "bool": "Bool",
+      "f32": "Double",
       "float": "Double",
+      "i16": "Int",
+      "i32": "Int",
+      "i8": "Int",
       "int": "Int",
       "list[float]": "[Double]",
-      "list[int]": "[Int]"
+      "list[int]": "[Int]",
+      "u16": "Int",
+      "u32": "Int",
+      "u8": "Int"
     },
     "while": "while {cond} {{",
     "zero": {

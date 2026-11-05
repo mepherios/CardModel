@@ -54,13 +54,62 @@ LEAVES = ("var", "int", "float", "bool")
 MAX_INT_BITS = 1 << 22          # 4 Mbit (512 KiB) per integer: far beyond any real input, far below a crash
 SPECIAL = ("AND", "OR", "IF_EXPR", "CALL", "LOAD")
 LIST_TYPES = ("list[int]", "list[float]")
-TYPES = ("int", "float", "bool", *LIST_TYPES)
+FIXED_INTS = {"u8": ("WRAPU", 8), "u16": ("WRAPU", 16), "u32": ("WRAPU", 32),
+              "i8": ("WRAPS", 8), "i16": ("WRAPS", 16), "i32": ("WRAPS", 32)}
+FIXED = (*FIXED_INTS, "f32")    # the subsorts of engines/sorts.py (u8..i32 <= int, f32 <= float)
+TYPES = ("int", "float", "bool", *FIXED, *LIST_TYPES)
 ELEMS = ("u8", "int")
 NESTED = ("then", "else", "body", "default")
 
 
 class IRError(Exception):
     pass
+
+
+def carrier(t: str) -> str:
+    """The wide type a fixed-width value is carried in: ``u8..i32`` -> ``int``, ``f32`` -> ``float``."""
+    return "int" if t in FIXED_INTS else "float" if t == "f32" else t
+
+
+def wrap_store(e, t: str):
+    """Wrap-on-store: the value stored into a ``t`` variable. ``u8`` -> ``WRAPU(e, 8)``, ``i8`` -> ``WRAPS(e, 8)``,
+    ``f32`` -> ``F32(e)``; any other type stores ``e`` unchanged."""
+    if t in FIXED_INTS:
+        op, w = FIXED_INTS[t]
+        return [op, e, ["int", w]]
+    return ["F32", e] if t == "f32" else e
+
+
+def lower_stores(fn: dict) -> dict:
+    """``fn`` with every store to a fixed-width local and every return of a fixed-width result wrapped
+    (``wrap_store``). Idempotent: an already wrapped value is not wrapped twice."""
+    types = {p["name"]: p["type"] for p in fn.get("params") or []}
+    types.update(fn.get("locals") or {})
+    ret = fn.get("returns")
+    if not any(t in FIXED for t in (*types.values(), ret)):
+        return fn
+
+    def done(v, t):
+        w = wrap_store(["var", "_"], t)
+        return isinstance(v, list) and isinstance(w, list) and v[:1] == w[:1] and v[2:] == w[2:]
+
+    def stmts(body):
+        out = []
+        for s in body:
+            s = dict(s)
+            if s.get("k") == "assign" and types.get(s.get("target")) in FIXED and not done(s["value"], types[s["target"]]):
+                s["value"] = wrap_store(s["value"], types[s["target"]])
+            elif s.get("k") == "return" and "value" in s and ret in FIXED and not done(s["value"], ret):
+                s["value"] = wrap_store(s["value"], ret)
+            for key in NESTED:
+                if isinstance(s.get(key), list):
+                    s[key] = stmts(s[key])
+            if isinstance(s.get("cases"), list):
+                s["cases"] = [{**c, "body": stmts(c.get("body") or [])} for c in s["cases"]]
+            out.append(s)
+        return out
+
+    return {**fn, "body": stmts(fn.get("body") or [])}
 
 
 def elem_type(t: str) -> str | None:
@@ -98,6 +147,11 @@ class OpSpec:
         for sig in self.types:
             if list(sig[:-1]) == list(arg_types):
                 return sig[-1]
+        wide = [carrier(t) for t in arg_types]     # a subsort argument fits the op's rank at its carrier (u8 <= int)
+        if wide != list(arg_types):
+            for sig in self.types:
+                if list(sig[:-1]) == wide:
+                    return sig[-1]
         return None
 
     def promoted(self, arg_types: list[str]) -> list[str] | None:
@@ -197,7 +251,7 @@ class Interpreter:
     """Reference semantics of the IR (Python semantics), with a step budget."""
 
     def __init__(self, module: dict, ops: dict[str, OpSpec], step_limit: int = 2_000_000):
-        self.funcs = {f["name"]: f for f in module["functions"]}
+        self.funcs = {f["name"]: lower_stores(f) for f in module["functions"]}
         self.ops = ops
         self.step_limit = step_limit
         self.steps = 0

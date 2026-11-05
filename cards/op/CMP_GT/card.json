@@ -74,6 +74,41 @@
         "float",
         "float",
         "bool"
+      ],
+      [
+        "u8",
+        "u8",
+        "bool"
+      ],
+      [
+        "u16",
+        "u16",
+        "bool"
+      ],
+      [
+        "u32",
+        "u32",
+        "bool"
+      ],
+      [
+        "i8",
+        "i8",
+        "bool"
+      ],
+      [
+        "i16",
+        "i16",
+        "bool"
+      ],
+      [
+        "i32",
+        "i32",
+        "bool"
+      ],
+      [
+        "f32",
+        "f32",
+        "bool"
       ]
     ]
   },
@@ -85,7 +120,9 @@
     }
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "4f5f8f59e60d2e54f09d3c137631262702c0adccf9e4281211d981d82692393c",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "CMP_GT",
   "provenance": {

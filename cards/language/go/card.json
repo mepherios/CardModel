@@ -93,10 +93,17 @@
     "style": "braces",
     "types": {
       "bool": "bool",
+      "f32": "float64",
       "float": "float64",
+      "i16": "int64",
+      "i32": "int64",
+      "i8": "int64",
       "int": "int64",
       "list[float]": "[]float64",
-      "list[int]": "[]int64"
+      "list[int]": "[]int64",
+      "u16": "int64",
+      "u32": "int64",
+      "u8": "int64"
     },
     "while": "for {cond} {{",
     "zero": {
@@ -155,8 +162,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "9fe0509520f88afca5aec805639824fa6b9a2ad57f6fdc982230c7d060f99607",
-    "version": "1.0.2",
+    "previous_content_hash": "74c6766162746410d00a20352069398874aad9b5e66cfcc8e7bb52bbac35d117",
+    "version": "1.0.3",
     "version_bump_reason": "patch"
   },
   "name": "go",

@@ -30,6 +30,20 @@
   "ir": {
     "arity": 2,
     "domain": {
+      "f32": [
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        },
+        {
+          "float": [
+            -1000.0,
+            1000.0
+          ]
+        }
+      ],
       "float": [
         {
           "float": [
@@ -51,6 +65,11 @@
         "float",
         "float",
         "float"
+      ],
+      [
+        "f32",
+        "f32",
+        "f32"
       ]
     ]
   },
@@ -62,8 +81,8 @@
     }
   },
   "metadata": {
-    "previous_content_hash": "10db932f0c444403f9d568c2e8c98f8368e11d82d873ff768353d223e53cef46",
-    "version": "1.1.0",
+    "previous_content_hash": "e67975fd4bf421b3c7c71c61a147a881794863d1b3394e14f6bd2f6388eb929a",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "DIV",
