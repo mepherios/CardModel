@@ -78,6 +78,7 @@ def _dedup(hyps):
 
 
 _GROUND_OPS: dict = {}
+SETTLED = ("proved", "witnessed", "refuted")      # a stored status that stands: not witnessed or proved again
 
 
 def _law(name, template, ops_used, concl, extra_hyps=(), vtype="int"):
@@ -230,12 +231,30 @@ def _cond_text(h) -> str:
     return T.prop_text(h)
 
 
-def discover(ctx, seed: int | None = None, samples: int = 200, lean: bool = True, deep: bool = False) -> dict:
+def discover(ctx, seed: int | None = None, samples: int = 200, lean: bool = True, deep: bool = False,
+             known: bool = True) -> dict:
+    """Every candidate law witnessed, the witnessed ones proved, the simplifying ones made rules. With ``known`` a
+    candidate whose statement the store already holds settled (the same theorem up to its names, by
+    ``theorems.identity``: proved, witnessed or refuted) takes that card's status, evidence and proofs and is not
+    witnessed or sent to Lean again (``origin.known`` names the card), so a run repeats no proof; ``known=False``
+    treats every candidate as new."""
     seed = V.fresh_seed() if seed is None else seed
     cands = candidates(ctx.ops)
-    witnessed, refuted, vacuous = [], 0, 0
+    order = {c["name"]: i for i, c in enumerate(cands)}
+    stored = T.by_identity(ctx.store) if known else {}
+    witnessed, refuted, vacuous, settled = [], 0, 0, 0
     results = []
     for card in cands:
+        same = next((c for c in stored.get(T.identity(card), []) if c.get("status") in SETTLED), None)
+        if same is not None:
+            settled += 1
+            if same["status"] == "refuted":
+                refuted += 1
+                continue
+            kept = {k: same[k] for k in ("status", "evidence", "proofs", "lean_status") if k in same}
+            results.append({**card, **kept, "origin": {**card["origin"], "known": same.qualified},
+                            "statement": T.statement(card)})
+            continue
         w = T.witness(card, ctx.ops, seed=seed, samples=samples)
         if w["status"] == "witnessed":
             witnessed.append((card, w))
@@ -245,15 +264,17 @@ def discover(ctx, seed: int | None = None, samples: int = 200, lean: bool = True
             refuted += 1
     proofs, exe = {}, None
     if lean and witnessed:
-        res = T.prove([c for c, _ in witnessed], ctx.store, ctx.ops, deep=deep)
+        res = T.prove([c for c, _ in witnessed], ctx.store, ctx.ops, deep=deep, ctx=ctx)
         proofs, exe = res["results"], res["toolchain"]
     for card, w in witnessed:
         results.append(T.settle(card, w, proofs.get(card["name"]), exe))
+    results.sort(key=lambda c: order[c["name"]])
     rules = [r for r in (rule_card(c) for c in results) if r]
     by_template: dict[str, int] = {}
     for c in results:
         by_template[c["origin"]["template"]] = by_template.get(c["origin"]["template"], 0) + 1
     return {"seed": seed, "candidates": len(cands), "refuted": refuted, "vacuous": vacuous, "laws": results,
+            "known": settled,
             "witnessed": sum(1 for c in results if c["status"] == "witnessed"),
             "proved": sum(1 for c in results if c["status"] == "proved"), "by_template": by_template,
             "rules": rules, "toolchain": T.toolchain_version(exe)}

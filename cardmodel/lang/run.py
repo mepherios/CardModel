@@ -76,7 +76,7 @@ def run(ctx, mod: Module, seed: int | None = None, lean: bool = False, samples: 
     if lean:
         provable = [c for c, w in settled if w["status"] == "witnessed"]
         if provable:
-            res = T.prove(provable, ctx.store, ctx.ops, deep=deep)
+            res = T.prove(provable, ctx.store, ctx.ops, deep=deep, ctx=ctx)
             proofs, exe = res["results"], res["toolchain"]
     for card, w in settled:
         rep["theorems"].append(T.settle(card, w, proofs.get(card["name"]), exe))

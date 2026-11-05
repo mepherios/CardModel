@@ -186,10 +186,12 @@ def _theorems(ctx: Ctx, seed: int, samples: int) -> dict:
                                "semantics": sem, "imported": T.imported(card)}
     problems = {q: r["problem"] for q, r in out.items() if r["problem"]}
     claimed = [r["claimed"] for r in out.values()]
+    groups = T.by_identity(ctx.store)                  # the same statement under several names (the audit's step 2)
     return {"status": "fail" if problems else ("pass" if out else "vacuous"), "problems": problems,
             "counts": {s: claimed.count(s) for s in sorted(set(claimed))},
             "lean_mismatches": sum(1 for r in out.values() if r["imported"] and r["witness"] == "refuted"),
-            "cards": len(out)}
+            "cards": len(out), "distinct": len(groups),
+            "stated_more_than_once": sorted([c.qualified for c in g] for g in groups.values() if len(g) > 1)}
 
 
 def _game(ctx: Ctx) -> dict:
