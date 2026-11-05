@@ -726,9 +726,31 @@ def cmd_symbolic(args) -> int:
     return 1 if r["status"] == "fail" else 0
 
 
+def cmd_env(args) -> int:
+    """The generator's environment card (docs/ENVIRONMENTS.md V-A): read it, or probe and write it."""
+    from .cli import _ctx, _out
+    from .engines import environment as E
+    ctx = _ctx(args)
+    if args.static:
+        card = E.build_card()
+    elif args.measure:
+        card, _ = E.generator(ctx.store, refresh=True)
+    else:
+        card = E.cached(ctx.store)
+        if card is None:
+            card, _ = E.generator(ctx.store)
+    _out(args, card, E.render(card))
+    return 0
+
+
 def register(sub) -> None:
     from . import math_cli
     math_cli.register(sub)
+    s = sub.add_parser("env", help="this machine as an environment card: declared identity, measured cache levels "
+                                   "and copy bandwidth (written once into the local layer)")
+    s.add_argument("--measure", action="store_true", help="probe again and rewrite the card")
+    s.add_argument("--static", action="store_true", help="only the declared identity; no compile, nothing written")
+    s.set_defaults(fn=cmd_env)
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
     s.add_argument("--deep", action="store_true"); s.add_argument("--verbose", action="store_true")
