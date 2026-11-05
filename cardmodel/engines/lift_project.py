@@ -99,9 +99,182 @@ class ProjectLift:
     def by_name(self, name: str) -> list[str]:
         return [q for q in self.functions if q.rsplit("::", 1)[-1] == name]
 
+    def identities(self) -> dict[str, str]:
+        """qual -> identity (FOUNDATIONS D7) of every function whose body lifted; see :func:`identities`."""
+        if self.__dict__.get("_identities") is None:
+            self.__dict__["_identities"] = identities(self)
+        return self.__dict__["_identities"]
+
+    def identity(self, qual: str) -> str | None:
+        return self.identities().get(qual)
+
 
 def _mangle(qual: str) -> str:
     return re.sub(r"\W", "_", qual).strip("_")
+
+
+# -- identity (FOUNDATIONS D7; docs/GODEL_AUDIT.md §4.1 (1)) ---------------------------------------------------------
+
+_EXPR_KEYS = ("cond", "value", "index", "start", "stop", "step")
+_NAME_KEYS = ("target", "var", "counter", "stop_var")
+_BODY_KEYS = ("then", "else", "body", "default")
+
+
+def alpha(ir: dict, calls: dict[str, str] | None = None) -> dict:
+    """The function α-normalised: its name dropped, its parameters ``p0, p1, …`` by position, its locals ``l0, l1, …``
+    by first appearance in a fixed walk of the body (a local never used is dropped), the statements' keys in one
+    order, and every ``CALL`` target replaced through ``calls`` (callee -> its identity, or a placeholder) when it is
+    given. Two functions that differ only in names, or in the files their callees live in, α-normalise alike; the
+    module's own state (globals, arrays) keeps its names, since it is not the function's to rename."""
+    names = {p["name"]: f"p{i}" for i, p in enumerate(ir.get("params") or [])}
+    locals_ = ir.get("locals") or {}
+    renamed_locals: dict[str, str] = {}
+
+    def name(n):
+        if n not in names:
+            if n not in locals_:
+                return n                                      # a global or an array: module state, kept
+            names[n] = f"l{len(renamed_locals)}"
+            renamed_locals[names[n]] = locals_[n]
+        return names[n]
+
+    def expr(e):
+        if not (isinstance(e, list) and e):
+            return e
+        head = e[0]
+        if head == "var":
+            return ["var", name(e[1])]
+        if head in ("int", "float", "bool", "str"):
+            return list(e)
+        if head == "CALL":
+            return ["CALL", (calls or {}).get(e[1], e[1]), *[expr(a) for a in e[2:]]]
+        if head == "LOAD":
+            return ["LOAD", e[1], *[expr(a) for a in e[2:]]]
+        return [head, *[expr(a) if isinstance(a, list) else a for a in e[1:]]]
+
+    def stmt(s):
+        out = {"k": s["k"]}
+        for key in _EXPR_KEYS:
+            if key in s:
+                out[key] = expr(s[key])
+        for key in _NAME_KEYS:
+            if key in s:
+                out[key] = name(s[key])
+        for key in _BODY_KEYS:
+            if key in s:
+                out[key] = [stmt(x) for x in s[key]]
+        if "cases" in s:
+            out["cases"] = [{"match": c.get("match"), "body": [stmt(x) for x in c["body"]]} for c in s["cases"]]
+        for key in sorted(s):
+            if key not in out and key not in ("k",):
+                out[key] = s[key]                               # anything else (an array name, a literal) as it is
+        return out
+    body = [stmt(s) for s in ir.get("body") or []]
+    return {"params": [{"name": f"p{i}", "type": p["type"]} for i, p in enumerate(ir.get("params") or [])],
+            "returns": ir.get("returns"), "locals": renamed_locals, "body": body}
+
+
+def _sccs(graph: dict[str, list[str]]) -> list[list[str]]:
+    """Tarjan's strongly connected components, iteratively (a call chain can be thousands deep), callees first."""
+    index: dict[str, int] = {}
+    low: dict[str, int] = {}
+    on: set[str] = set()
+    stack: list[str] = []
+    out: list[list[str]] = []
+    for root in graph:
+        if root in index:
+            continue
+        work = [(root, iter(graph[root]))]
+        index[root] = low[root] = len(index)
+        stack.append(root)
+        on.add(root)
+        while work:
+            v, it = work[-1]
+            advanced = False
+            for w in it:
+                if w not in index:
+                    index[w] = low[w] = len(index)
+                    stack.append(w)
+                    on.add(w)
+                    work.append((w, iter(graph[w])))
+                    advanced = True
+                    break
+                if w in on:
+                    low[v] = min(low[v], index[w])
+            if advanced:
+                continue
+            work.pop()
+            if work:
+                u = work[-1][0]
+                low[u] = min(low[u], low[v])
+            if low[v] == index[v]:
+                comp = []
+                while True:
+                    w = stack.pop()
+                    on.discard(w)
+                    comp.append(w)
+                    if w == v:
+                        break
+                out.append(comp)
+    return out
+
+
+def identities(res: ProjectLift) -> dict[str, str]:
+    """One identity for every lifted function (FOUNDATIONS D7, GM-2): ``egraph.semantic_hash`` of the α-normalised
+    function in which each ``CALL`` target is the callee's identity (a Merkle hash over the call graph, so a port
+    whose callees live in other files hashes like the original). A recursive component is coloured by refinement:
+    every member starts from its α-form with the component's calls as one placeholder, then takes its callees'
+    colours until the partition of the component is stable, and its identity is the component's signature (the
+    sorted colours) with its own colour. The placeholder is thus the callee's structure, never its name, so two
+    unrelated recursive functions never share an identity and the same recursion in two languages does. Every function
+    whose own body lifted has one, closed or partial (frontend_python.lift_status); a call to a boundary (a callee
+    that did not lift) keeps its name: that call is a gap of the lift (``Lifted.gaps``), and the identity says so."""
+    return identities_of({q: lf.ir for q, lf in res.functions.items() if lifted_body(lf)})
+
+
+def identities_of(irs: dict[str, dict]) -> dict[str, str]:
+    """name -> identity for IR functions whose ``CALL`` targets name each other by the keys of ``irs`` (a project's
+    qualified names, or the bare names of one module); see :func:`identities`."""
+    from .egraph import semantic_hash
+    graph = {q: sorted(c for c in _callees(ir) if c in irs) for q, ir in irs.items()}
+    out: dict[str, str] = {}
+    for comp in _sccs(graph):
+        members = sorted(comp)
+        inside = set(members)
+        ext = {c: out[c] for m in members for c in graph[m] if c not in inside}
+        if len(members) == 1 and members[0] not in graph[members[0]]:
+            out[members[0]] = semantic_hash(alpha(irs[members[0]], ext))
+            continue
+        colours = {m: semantic_hash(alpha(irs[m], {**ext, **{c: "#rec" for c in inside}})) for m in members}
+        for _ in range(len(members)):
+            new = {m: semantic_hash(alpha(irs[m], {**ext, **{c: colours[c] for c in inside}})) for m in members}
+            stable = len(set(new.values())) == len(set(colours.values()))
+            colours = new
+            if stable:
+                break
+        signature = semantic_hash(sorted(colours.values()))
+        for m in members:
+            out[m] = semantic_hash([signature, colours[m]])
+    return out
+
+
+def lifted_body(lf) -> bool:
+    """The function's own body lifted (it is closed or partial, not a boundary), so it has an IR and an identity."""
+    return isinstance(lf.ir, dict) and (lf.ok or getattr(lf, "boundary", None) is None)
+
+
+def module_identity(module: dict) -> str:
+    """The identity of an IR module's entry function; its callees are the module's other functions, by name."""
+    fns = {f["name"]: f for f in module.get("functions") or [module] if isinstance(f, dict) and f.get("name")}
+    entry = module.get("entry") or next(iter(fns))
+    return identities_of(fns)[entry]
+
+
+def identity_record(module: dict) -> dict:
+    """The identity as a card records it (as ``sources.identity`` does for definitions): the hash, what it is of, and
+    the relation it was taken under (FOUNDATIONS A4): ≡_α, the same function up to the names of its parameters,
+    locals and callees, each callee by its own identity."""
+    return {"hash": module_identity(module), "of": "lifted function", "under": "alpha"}
 
 
 def _callees(ir: dict) -> set[str]:

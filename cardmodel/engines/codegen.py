@@ -43,7 +43,9 @@ from __future__ import annotations
 
 import math
 import re
+from collections import Counter
 
+from . import godel as G
 from .ir import LEAVES, carrier, elem_type, lower_stores
 
 
@@ -811,17 +813,86 @@ def emit_program(store, ops, lang: str, module: dict, calls: list[list], mode: s
     return Emitter(store, lang, ops).program(module, calls, mode, reps)
 
 
+def rank_key(arg_types, rtype) -> str:
+    """An op's rank as text, ``int,int->int`` (FOUNDATIONS D1: an op card's ``ir.types`` are its ranks); ``?`` for a
+    sort that is not known."""
+    return ",".join(t or "?" for t in arg_types) + "->" + (rtype or "?")
+
+
+def _ranked_parts(x) -> list:
+    """The parts of a node as ``godel._parts`` walks them: a dict's list and dict values, a CALL's or LOAD's
+    arguments, an application's (or an unknown list's) list and dict items."""
+    if isinstance(x, dict):
+        return [v for v in x.values() if isinstance(v, (list, dict))]
+    if not (isinstance(x, list) and x):
+        return []
+    start = 2 if x[0] in ("CALL", "LOAD") else 1 if isinstance(x[0], str) else 0
+    return [v for v in x[start:] if isinstance(v, (list, dict))]
+
+
+def ranked_content(ops, module: dict) -> Counter:
+    """γ at rank level: every op application of the module counted at the rank it instantiates,
+    ``op/ADD@int,int->int``, typed as ``Emitter.expr`` types it (a parameter's or local's declared type, a global's,
+    a call's return type, LOAD is int, a RAW form states its type) and walked as ``godel.term_content`` walks a
+    body, so ``godel.forget_ranks`` of it is ``godel.module_content``. An application whose arguments fit no rank of
+    its op gets ``?`` for its result; the emitter refuses it in every language, and no carry map has that rank.
+    Iterative, like every walk of the core."""
+    out: Counter = Counter()
+    fns = module.get("functions") or [module]
+    returns = {f["name"]: f.get("returns") for f in fns if isinstance(f, dict) and f.get("name")}
+    globals_ = {g["name"]: g.get("type", "int") for g in module.get("globals") or []}
+    for fn in fns:
+        types = {p["name"]: p["type"] for p in fn.get("params") or []}
+        types.update(fn.get("locals") or {})
+        memo: dict[int, str | None] = {}
+        stack: list[tuple] = [(fn.get("body") or [], False)]
+        while stack:
+            x, done = stack.pop()
+            head = x[0] if isinstance(x, list) and x and isinstance(x[0], str) else None
+            if not done:
+                if id(x) in memo:
+                    continue
+                if head in LEAVES:
+                    memo[id(x)] = types.get(x[1], globals_.get(x[1])) if head == "var" else \
+                        head if head in ("int", "float", "bool") else None
+                    continue
+                parts = _ranked_parts(x)
+                stack.append((x, True))
+                stack.extend((p, False) for p in parts if id(p) not in memo)
+                continue
+            args = [memo.get(id(p)) for p in _ranked_parts(x)]
+            t = None
+            if head == "CALL":
+                t = returns.get(x[1]) if len(x) > 1 else None
+            elif head == "LOAD":
+                t = "int"
+            elif head == "RAW":
+                t = x[3] if len(x) > 3 else None
+            elif head in ("AND", "OR", "NOT"):
+                t = "bool"
+            elif head == "IF_EXPR":
+                t = args[1] if len(args) == 3 else None
+            elif head is not None and head in ops:
+                t = ops[head].result_type([a or "?" for a in args])
+            if head is not None and head in ops:
+                out[G.ranked_atom(f"op/{head}", rank_key(args, t))] += 1
+            memo[id(x)] = t
+    return out
+
+
 def carry_map(store, ops, lang: str) -> dict[str, dict[str, str | None]]:
-    """The language as a carry map on the atoms (FOUNDATIONS D13, D14; docs/GODEL_TARGET.md G11): for each op of
-    the signature, its template at each rank, keyed by the first operand's sort as the emit blocks are, and None
-    where the language has none."""
+    """The language as a carry map on the atoms at every rank (FOUNDATIONS D1, D13, D14; docs/GODEL_TARGET.md
+    G11): for each op of the signature and each of its ranks (``int,int->int``), the template the emitter resolves
+    for it, provided the language names the rank's sorts, and None where it has none."""
     em = Emitter(store, lang, ops)
     out: dict[str, dict[str, str | None]] = {}
     for name, spec in ops.items():
         ranks: dict[str, str | None] = {}
         for sig in spec.types or [["int", "int"]]:
-            key = sig[0] if len(sig) > 1 else "any"
+            key = rank_key(list(sig[:-1]), sig[-1])
             try:
+                for t in sig:                                      # expr() names every sort of the application
+                    em.T(t)
                 ranks[key] = em.op_template(name, list(sig[:-1]), sig[-1])   # resolved as expr() resolves it
             except EmitGap:
                 ranks[key] = None
@@ -830,15 +901,21 @@ def carry_map(store, ops, lang: str) -> dict[str, dict[str, str | None]]:
 
 
 def language_gap(store, ops, lang: str) -> set[str]:
-    """The atoms the language cannot write at any rank: the gap of its carry map. A term whose content has one of
-    them cannot be emitted, and that is known from the content alone, before anything is emitted. A gap at one
-    rank only (a template for int but not for float) is still found by emitting, since content is rank-blind."""
-    return {f"op/{name}" for name, ranks in carry_map(store, ops, lang).items() if not any(ranks.values())}
+    """The gap of the carry map: every rank the language has no template for, as ``op/NAME@rank``, and ``op/NAME``
+    itself when it has none at any rank. A term whose ranked content has one of them cannot be emitted, and that is
+    known from the content alone, before anything is emitted."""
+    gap: set[str] = set()
+    for name, ranks in carry_map(store, ops, lang).items():
+        gap.update(G.ranked_atom(f"op/{name}", r) for r, t in ranks.items() if t is None)
+        if not any(ranks.values()):
+            gap.add(f"op/{name}")
+    return gap
 
 
 def predicted_gap(content, gap: set[str]) -> list[str]:
-    """support(γ) ∩ gap: the atoms of a content that the language has no template for, sorted."""
-    return sorted(a for a, e in content.items() if e and a in gap)
+    """support(γ) ∩ gap: the atoms of a content, ranked or not, that the language has no template for, sorted. A
+    ranked atom is in the gap when its rank is, or when its op is at every rank."""
+    return sorted(a for a, e in content.items() if e and (a in gap or G.base_atom(a) in gap))
 
 
 def supported_ops(store, ops, lang: str) -> dict[str, bool]:
@@ -847,4 +924,4 @@ def supported_ops(store, ops, lang: str) -> dict[str, bool]:
 
 
 __all__ = ["EmitGap", "Emitter", "carry_map", "emit_module", "emit_program", "language_gap", "predicted_gap",
-           "resolve_language", "supported_ops", "LEAVES"]
+           "rank_key", "ranked_content", "resolve_language", "supported_ops", "LEAVES"]

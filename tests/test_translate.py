@@ -1,5 +1,6 @@
 """Observe -> card IR -> native code in other languages -> verified against the original Python."""
 import unittest
+from collections import Counter
 
 from helpers import SEED, SLOW, model_ctx, seed_note
 
@@ -96,20 +97,23 @@ class CarryMap(unittest.TestCase):
     def test_the_gap_is_predicted_from_content_without_false_positives(self):
         import random
         from cardmodel.engines import godel as G
-        from cardmodel.engines.codegen import carry_map, language_gap, predicted_gap, supported_ops
+        from cardmodel.engines.codegen import carry_map, language_gap, predicted_gap, ranked_content, supported_ops
         ctx = model_ctx()
         cards = [c for c in ctx.store.cards("function") if isinstance(c.get("ir"), dict)]
         self.assertTrue(cards)
         rng = random.Random(SEED)
         sample = rng.sample(cards, min(120, len(cards)))
-        hits = misses = emitted = 0
+        hits = rank_hits = misses = emitted = 0
         for lang in ctx.codegen_languages():
             gap = ctx.language_gap(lang)
             self.assertEqual(gap, language_gap(ctx.store, ctx.ops, lang))
-            self.assertEqual(gap, {f"op/{o}" for o, ok in supported_ops(ctx.store, ctx.ops, lang).items() if not ok})
+            self.assertEqual({a for a in gap if G.RANK not in a},
+                             {f"op/{o}" for o, ok in supported_ops(ctx.store, ctx.ops, lang).items() if not ok})
             self.assertEqual(set(carry_map(ctx.store, ctx.ops, lang)), set(ctx.ops))
             for card in sample:
-                predicted = predicted_gap(G.module_content(card["ir"], ctx.ops), gap)
+                blind = predicted_gap(G.module_content(card["ir"], ctx.ops), gap)     # rank-blind: an op at no rank
+                predicted = predicted_gap(ranked_content(ctx.ops, card["ir"]), gap)   # at the ranks the term uses
+                self.assertTrue(set(blind) <= {G.base_atom(a) for a in predicted}, (lang, card.name, blind, predicted))
                 try:
                     emit_module(ctx.store, ctx.ops, lang, card["ir"])
                     failed = None
@@ -118,17 +122,20 @@ class CarryMap(unittest.TestCase):
                 if predicted:
                     self.assertIsNotNone(failed, (lang, card.name, predicted, seed_note(self)))
                     hits += 1
+                    rank_hits += not blind
                 elif failed:
                     misses += 1
                 else:
                     emitted += 1
         self.assertGreater(hits, 0, seed_note(self))
         self.assertGreater(emitted, 0, seed_note(self))
-        print(f"\n  gaps predicted from content: {hits}; found only by emitting (a rank-level gap): {misses}; "
-              f"emitted: {emitted}", end=" ")
+        print(f"\n  gaps predicted from content: {hits}, of them at one rank only: {rank_hits}; found only by "
+              f"emitting: {misses}; emitted: {emitted}", end=" ")
 
     def test_translation_is_the_same_with_and_without_the_prediction(self):
+        from collections import Counter
         from cardmodel.engines import godel as G
+        from cardmodel.engines.codegen import ranked_content
         ctx = model_ctx()
         lifted = lift_source(SRC, ctx.ops)
         cards = {}
@@ -143,10 +150,14 @@ class CarryMap(unittest.TestCase):
             self.assertEqual([f["code"] for f in with_["forms"]], [f["code"] for f in without["forms"]], name)
             self.assertEqual(with_["depends_on"], without["depends_on"], name)
             self.assertEqual(with_["godel"]["content"], dict(G.module_content(with_["ir"], ctx.ops)), name)
+            self.assertEqual(with_["godel"]["ranks"], dict(ranked_content(ctx.ops, with_["ir"])), name)
+            self.assertEqual(G.forget_ranks(Counter(with_["godel"]["ranks"])), G.module_content(with_["ir"], ctx.ops))
             self.assertEqual(without["predicted_gaps"], {}, name)
-        # mean3 computes with floats, which Lean has no templates for: a gap at one rank only, which content (rank-
-        # blind today) cannot predict; it is found by emitting. Rank-level content waits for the sort analysis.
+        # mean3 computes with floats, which Lean has no type for: ADD is a gap at its float rank only (Lean adds
+        # ints), which the rank-blind content cannot see and the ranked content predicts before anything is emitted
         self.assertIn("lean", cards["mean3"]["emit_gaps"])
+        self.assertIn("op/ADD@float,float->float", cards["mean3"]["predicted_gaps"].get("lean", []))
+        self.assertNotIn("op/ADD", ctx.language_gap("lean"))
         self.assertNotIn("lean", cards["gcd"]["emit_gaps"])
 
     def test_the_support_of_content_is_the_ops_used(self):
@@ -157,6 +168,112 @@ class CarryMap(unittest.TestCase):
             if lf.ok:
                 self.assertEqual(G.support(G.term_content(lf.ir["body"], ctx.ops)),
                                  {f"op/{o}" for o in ops_used(lf.ir) if o in ctx.ops}, lf.name)
+
+
+class Ranks(unittest.TestCase):
+    """Content at rank level (FOUNDATIONS D1: an op card's ``ir.types`` are its ranks): every application counted at
+    the rank it instantiates, typed as the emitter types it. Forgetting the ranks is a carry map back to γ."""
+
+    def _sample(self, ctx, n=120):
+        import random
+        cards = [c for c in ctx.store.cards("function") if isinstance(c.get("ir"), dict)]
+        self.assertTrue(cards)
+        return random.Random(SEED).sample(cards, min(n, len(cards)))
+
+    def test_forgetting_the_ranks_is_the_content(self):
+        from cardmodel.engines import godel as G
+        from cardmodel.engines.codegen import ranked_content
+        ctx = model_ctx()
+        for card in self._sample(ctx):
+            ranked = ranked_content(ctx.ops, card["ir"])
+            self.assertEqual(G.forget_ranks(ranked), G.module_content(card["ir"], ctx.ops), (card.name, seed_note(self)))
+            self.assertTrue(all(G.RANK in a and "->" in a for a in ranked), card.name)
+        t = ["ADD", ["var", "x"], ["MUL", ["float", 2.0], ["TO_FLOAT", ["var", "n"]]]]
+        module = {"functions": [{"name": "f", "params": [{"name": "x", "type": "float"}, {"name": "n", "type": "int"}],
+                                 "returns": "float", "body": [{"k": "return", "value": t}]}]}
+        self.assertEqual(ranked_content(ctx.ops, module),
+                         Counter({"op/ADD@float,float->float": 1, "op/MUL@float,float->float": 1,
+                                  "op/TO_FLOAT@int->float": 1}))
+        self.assertEqual(G.forget_ranks(ranked_content(ctx.ops, module)), G.term_content(t, ctx.ops))
+
+    def test_the_ranks_are_the_ones_emission_resolves(self):
+        """What the emitter resolves while writing Python (which names every sort) is the ranked content, with the
+        comparisons it adds itself for a lowered switch (Python has no switch template) on top."""
+        from cardmodel.engines import codegen as CG
+        from cardmodel.engines import godel as G
+        ctx = model_ctx()
+        seen: Counter = Counter()
+
+        class Recording(CG.Emitter):
+            def op_template(self, op, arg_types, rtype=None):
+                seen[G.ranked_atom(f"op/{op}", CG.rank_key(arg_types, rtype))] += 1
+                return super().op_template(op, arg_types, rtype)
+        checked = 0
+        for card in self._sample(ctx):
+            seen.clear()
+            try:
+                Recording(ctx.store, "python", ctx.ops).module_source(card["ir"], None)
+            except CG.EmitGap:
+                continue
+            ranked = CG.ranked_content(ctx.ops, card["ir"])
+            lowered = any(s["k"] == "switch" for f in card["ir"]["functions"] for s in CG._stmts(f["body"]))
+            if lowered:
+                self.assertTrue(all(seen[a] >= e for a, e in ranked.items()), (card.name, seed_note(self)))
+            else:
+                self.assertEqual(seen, ranked, (card.name, seed_note(self)))
+            checked += 1
+        self.assertGreater(checked, 0, seed_note(self))
+
+
+class Identity(unittest.TestCase):
+    """A function card carries one identity (FOUNDATIONS D7; docs/GODEL_AUDIT.md §4.1): the same function up to the
+    names of its parameters, locals and callees, the same record from every builder of function cards."""
+
+    def test_cards_carry_the_identity_of_their_function(self):
+        from cardmodel.engines import equivalence as EQ
+        from cardmodel.engines import lift_project as LP
+        ctx = model_ctx()
+        src = ("def f(a: int, b: int) -> int:\n    s = a * b\n    return s + 3\n\n"
+               "def f2(x: int, y: int) -> int:\n    t = x * y\n    return t + 3\n\n"
+               "def f3(x: int, y: int) -> int:\n    t = y * x\n    return t + 3\n")
+        lifted = lift_source(src, ctx.ops)
+        cards = {n: translate.function_card(ctx, n, lifted, "t.py", seed=SEED) for n in ("f", "f2", "f3")}
+        for c in cards.values():
+            self.assertEqual(c["identity"], {"hash": LP.module_identity(c["ir"]), "of": "lifted function",
+                                             "under": "alpha"})
+            self.assertIn(c["identity"]["under"], EQ.RELATIONS)
+        self.assertEqual(cards["f"]["identity"], cards["f2"]["identity"])            # names are not structure
+        self.assertNotEqual(cards["f"]["identity"]["hash"], cards["f3"]["identity"]["hash"])   # the operand order is
+        self.assertEqual(cards["f"]["godel"], cards["f2"]["godel"])
+
+    def test_the_card_language_builds_the_same_record(self):
+        from cardmodel.engines import godel as G
+        from cardmodel.lang import run as R
+        from cardmodel.lang.compile import compile_source
+        ctx = model_ctx()
+        mod = compile_source("module demo\nfn sq(a: Int) -> Int = a * a\n"
+                             "fn pick(a: Int, b: Int) -> Int = if a < b and a > 0 then sq(a) else sq(b)\n",
+                             ctx.ops, ctx.store)
+        by = {c["name"]: c for c in R.function_cards(ctx, mod, SEED)}
+        pick = by["demo.pick"]
+        content = G.module_content(pick["ir"], ctx.ops)
+        self.assertEqual(pick["identity"]["under"], "alpha")
+        self.assertEqual(pick["godel"]["content"], dict(content))
+        self.assertEqual(pick["depends_on"], sorted(G.support(content)))
+        self.assertIn("op/IF_EXPR", pick["depends_on"])
+        # the same function written in Python has the same identity: the two builders agree
+        lifted = lift_source("def sq(a: int) -> int:\n    return a * a\n", ctx.ops)
+        self.assertEqual(translate.function_card(ctx, "sq", lifted, "t.py", seed=SEED)["identity"],
+                         by["demo.sq"]["identity"])
+
+    def test_no_language_verifies_the_lift_alone(self):
+        ctx = model_ctx()
+        lifted = lift_source(SRC, ctx.ops)
+        card = translate.function_card(ctx, "gcd", lifted, "t.py", seed=SEED)
+        r = translate.verify_function(ctx, card, langs=[], seed=SEED)
+        self.assertEqual(r["languages"], {})
+        self.assertGreater(r["inputs"], 0)
+        self.assertEqual(r["agreeing_languages"], ["python_source"])
 
 
 class Translate(unittest.TestCase):

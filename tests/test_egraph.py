@@ -90,5 +90,65 @@ class EGraph(unittest.TestCase):
         self.assertLessEqual(r["nodes"], 300 + 400)        # one iteration may overshoot by its own additions
 
 
+class Identity(unittest.TestCase):
+    """The equalities keyed by identity, and canonical forms memoized (docs/GODEL_AUDIT.md §4.2 (1, 2))."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+        cls.rules = E.rules_from_cards(cls.ctx.store)
+        cls.costs = search.op_costs(cls.ctx.store)
+
+    def test_rule_key_is_the_law_up_to_its_names(self):
+        comm = (["ADD", "?a", "?b"], ["ADD", "?b", "?a"])
+        self.assertEqual(E.rule_key(*comm), E.rule_key(["ADD", "?x", "?y"], ["ADD", "?y", "?x"]))
+        self.assertNotEqual(E.rule_key(*comm), E.rule_key(["ADD", "?a", "?b"], ["ADD", "?a", "?b"]))
+        ident = (["ADD", "?a", ["int", 0]], "?a")
+        self.assertNotEqual(E.rule_key(*ident), E.rule_key(ident[1], ident[0]))     # the direction is the rule's
+        self.assertEqual(E.rule_key(*comm), E.rule_key(comm[1], comm[0]))           # unless the law is its own reverse
+        self.assertNotEqual(E.rule_key(*comm, {"?a": "int", "?b": "int"}), E.rule_key(*comm))   # so are the sorts
+        self.assertEqual(E.rule_key(*comm, {"?a": "int", "?b": "int"}),
+                         E.rule_key(["ADD", "?x", "?y"], ["ADD", "?y", "?x"], {"?x": "int", "?y": "int"}))
+
+    def test_one_rule_per_law_and_the_same_canonical_terms(self):
+        every = E.rules_from_cards(self.ctx.store, deduped=False)
+        keys = [E.rule_key(r.lhs, r.rhs, r.sorts) for r in self.rules]
+        self.assertEqual(len(keys), len(set(keys)))
+        self.assertLess(len(self.rules), len(every))            # the store states laws twice (rule and theorem)
+        also = {o for r in self.rules for o in r.also}
+        self.assertTrue(also, "no duplicate law found in the store")
+        self.assertTrue(all(o.startswith(("rewrite_rule/", "theorem/")) for o in also))
+        self.assertEqual({r.origin for r in every}, {r.origin for r in self.rules} | also)
+        # the duplicates union what their representative unions: the canonical term is the same on every side
+        sides = []
+        for card in self.ctx.store.cards("theorem"):
+            concl = card.get("concl")
+            if not card.get("hyps") and isinstance(concl, list) and len(concl) == 3 and concl[0] == "eq":
+                sides += [concl[1], concl[2]]
+            if len(sides) >= 24:
+                break
+        for t in [*sides, parse("(a + 0) * 1 - b * 0"), parse("c + a * b")]:
+            with_ = E.canonical(t, every, self.costs, None, self.ctx.ops, memo=False, max_iter=4, max_nodes=800)
+            without = E.canonical(t, self.rules, self.costs, None, self.ctx.ops, memo=False, max_iter=4, max_nodes=800)
+            self.assertEqual(with_["hash"], without["hash"], t)
+
+    def test_canonical_is_memoized_by_its_input(self):
+        E.clear_memo()
+        t = parse("b * a + c")
+        first = E.canonical(t, self.rules, self.costs, max_iter=4, max_nodes=800)
+        again = E.canonical(parse("b * a + c"), self.rules, self.costs, max_iter=4, max_nodes=800)
+        self.assertEqual(first, again)
+        self.assertEqual((E.STATS["misses"], E.STATS["hits"]), (1, 1))
+        again["term"][0] = "changed"                                  # the caller got a copy
+        self.assertEqual(E.canonical(t, self.rules, self.costs, max_iter=4, max_nodes=800), first)
+        # another budget, another sort of a variable, another rule list: computed again
+        E.canonical(t, self.rules, self.costs, max_iter=3, max_nodes=800)
+        E.canonical(t, self.rules, self.costs, {"a": "float"}, self.ctx.ops, max_iter=4, max_nodes=800)
+        E.canonical(t, self.rules[:-1], self.costs, max_iter=4, max_nodes=800)
+        self.assertEqual(E.STATS["misses"], 4)
+        E.canonical(t, self.rules, self.costs, memo=False, max_iter=4, max_nodes=800)
+        self.assertEqual(E.STATS["misses"], 4)                        # memo=False neither reads nor counts
+
+
 if __name__ == "__main__":
     unittest.main()

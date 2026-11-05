@@ -7,7 +7,11 @@ For each corpus file the frontend registered for its extension lifts every funct
      A cell (source, target) counts functions passed / functions checked;
   2. cross-source agreement: when one function is written in several source languages (the shared corpus is
      written once in the card language and hand-ported), the lifted IRs of every pair of ports must agree on
-     the union of their vectors, so "Python's legendre" and "the card language's legendre" are one function;
+     the union of their vectors, so "Python's legendre" and "the card language's legendre" are one function.
+     Two ports with one identity (the card's ``identity``: the same function up to the names of its parameters,
+     locals and callees, FOUNDATIONS D7) are the same program, so they agree with no run, and a function whose
+     identity was verified earlier in the run takes that function's cells and round trips (``by: identity``);
+     only its own lift is checked again, since lift fidelity is the frontend's, not the function's;
   3. round trip (D3): for every target that also has a frontend, and for mathematical notation (engines/mathlang.py,
      a target without a compiler), lift(emit_T(f)) must behave like f on f's
      vectors (sampled, seed printed; the IR has loops, so the check is behavioural, not a semantic hash).
@@ -25,10 +29,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from . import equivalence as EQ
 from . import godel as G
 from . import translate
 from . import values as V
-from .codegen import EmitGap, emit_module, predicted_gap
+from .codegen import EmitGap, emit_module, predicted_gap, ranked_content
 from .context import Ctx
 from .ir import Interpreter, IRError, StepLimit
 
@@ -155,6 +160,13 @@ def cross_source(ctx: Ctx, ports: dict[str, dict[str, dict[str, dict]]], seed: i
             for i, a in enumerate(have):
                 for b in have[i + 1:]:
                     ca, cb = by_source[a][name], by_source[b][name]
+                    ida, idb = ca.get("identity") or {}, cb.get("identity") or {}
+                    if ida.get("hash") and ida.get("hash") == idb.get("hash") and EQ.comparable(ida, idb):
+                        # one identity is one function (D7): the two IRs are the same program up to names, so they
+                        # agree on every input and nothing is run
+                        out.append({"group": group, "function": name, "a": a, "b": b, "status": "pass",
+                                    "by": "identity", "identity": ida["hash"], "checked": 0})
+                        continue
                     rng = random.Random(seed)
                     gens = cb.get("generators") or ca.get("generators") or []
                     inputs = ([v["args"] for v in ca.get("vectors", [])] + [v["args"] for v in cb.get("vectors", [])]
@@ -169,7 +181,7 @@ def round_trip(ctx: Ctx, card: dict, target: str) -> dict:
     fe = FRONTENDS.get(target)
     if fe is None or fe.lift_text is None:
         return {"status": "no_frontend"}
-    missing = predicted_gap(G.module_content(card["ir"], ctx.ops), ctx.language_gap(target)) \
+    missing = predicted_gap(ranked_content(ctx.ops, card["ir"]), ctx.language_gap(target)) \
         if translate.PREDICT_GAPS else []
     if missing:
         return {"status": "gap", "reason": f"{target}: no template for {', '.join(missing)} (predicted from the content)"}
@@ -210,6 +222,7 @@ def run(ctx: Ctx, files: list[Path], targets: list[str] | None = None, seed: int
     functions, not_lifted = [], []
     by_source: dict[str, dict[str, dict]] = {}
     ports: dict[str, dict[str, dict[str, dict]]] = {}
+    classes: dict[str, dict] = {}        # identity -> the first function of its class and what its runs decided
     for path in files:
         fe = frontend_for(path)
         if fe is None:
@@ -219,18 +232,31 @@ def run(ctx: Ctx, files: list[Path], targets: list[str] | None = None, seed: int
         not_lifted += [{"file": str(path), "source": fe.lang, "function": n, "reasons": r} for n, r in gaps.items()]
         for card in cards:
             name = _entry(card)
+            label = f"{fe.lang}:{name}"
             if progress:
-                progress(f"{fe.lang}:{name}")
-            rep = translate.verify_function(ctx, card, langs=[t for t in targets if avail[t][0]], seed=seed)
-            cells = {t: (rep["languages"].get(t) or {"status": "unavailable", "reason": avail[t][1]})
-                     for t in targets}
-            for t, gap in (card.get("emit_gaps") or {}).items():
-                if t in cells and cells[t]["status"] == "unavailable":
-                    cells[t] = {"status": "gap", "reason": gap}
-            rt = {t: round_trip(ctx, card, t) for t in targets if t in FRONTENDS and FRONTENDS[t].lift_text}
-            rt["math"] = math_round_trip(ctx, card)      # mathematical notation as a target (engines/mathlang.py)
+                progress(label)
+            ident = (card.get("identity") or {}).get("hash")
+            first = classes.get(ident) if ident else None
+            if first is not None:
+                # the same function up to names was verified earlier in this run (D7): its cells and round trips are
+                # decided by identity, and only this source's lift is checked against its reference
+                rep = translate.verify_function(ctx, card, langs=[], seed=seed)
+                cells = {t: {**c, "by": "identity", "same_as": first["label"]} for t, c in first["cells"].items()}
+                rt = {t: {**r, "by": "identity", "same_as": first["label"]} for t, r in first["round_trip"].items()}
+            else:
+                rep = translate.verify_function(ctx, card, langs=[t for t in targets if avail[t][0]], seed=seed)
+                cells = {t: (rep["languages"].get(t) or {"status": "unavailable", "reason": avail[t][1]})
+                         for t in targets}
+                for t, gap in (card.get("emit_gaps") or {}).items():
+                    if t in cells and cells[t]["status"] == "unavailable":
+                        cells[t] = {"status": "gap", "reason": gap}
+                rt = {t: round_trip(ctx, card, t) for t in targets if t in FRONTENDS and FRONTENDS[t].lift_text}
+                rt["math"] = math_round_trip(ctx, card)      # mathematical notation as a target (engines/mathlang.py)
+                if ident:
+                    classes[ident] = {"label": label, "cells": cells, "round_trip": rt}
             functions.append({"file": str(path), "source": fe.lang, "function": name, "inputs": rep["inputs"],
                               "lift_mismatches": rep["lift_mismatches"], "targets": cells, "round_trip": rt,
+                              "identity": ident, "same_as": first["label"] if first else None,
                               "source_witness": (card.get("verification") or {}).get("source_witness")})
             by_source.setdefault(fe.lang, {})[name] = card
             ports.setdefault(str(path.with_suffix("")), {}).setdefault(fe.lang, {})[name] = card
@@ -300,6 +326,14 @@ def failures(functions: list[dict], cross: list[dict]) -> list[dict]:
     return out
 
 
+def by_identity(rep: dict) -> dict[str, int]:
+    """What the identity decided with no run: functions that are copies of one verified earlier in the run, their
+    target cells, and cross-source pairs equal by hash."""
+    copies = [f for f in rep["functions"] if f.get("same_as")]
+    return {"functions": len(copies), "cells": sum(len(f["targets"]) for f in copies),
+            "cross_source": sum(1 for c in rep["cross_source"] if c.get("by") == "identity")}
+
+
 def translation_gaps(rep: dict) -> dict[str, dict[str, int]]:
     """D4: every construct a target cannot emit, counted over the corpus: {target: {reason: functions}}."""
     out: dict[str, dict[str, int]] = {}
@@ -341,6 +375,11 @@ def report_text(rep: dict) -> str:
     if cr:
         ok = sum(1 for c in cr if c["status"] == "pass")
         lines.append(f"cross-source ports agree: {ok}/{len(cr)}")
+    by_id = by_identity(rep)
+    if by_id["functions"] or by_id["cross_source"]:
+        lines.append(f"by identity (one hash per function up to names, no run): {by_id['functions']} of "
+                     f"{len(rep['functions'])} functions are copies of one verified earlier ({by_id['cells']} cells), "
+                     f"{by_id['cross_source']} of {len(cr)} cross-source pairs equal by hash")
     if rep["not_lifted"]:
         lines.append(f"not lifted ({len(rep['not_lifted'])}): " + "; ".join(
             f"{x.get('source', '?')}:{x['function']} ({x['reasons'][0] if x['reasons'] else '?'})"
@@ -377,10 +416,15 @@ def markdown(rep: dict) -> str:
         out.append(f"| {src} | " + " | ".join(cells) + " |")
     rts = [s for f in rep["functions"] for s in (c["status"] for c in f["round_trip"].values())]
     cr = rep["cross_source"]
+    by_id = by_identity(rep)
     out += ["", f"* Round trip lift(emit_T(f)) behaves like f: {sum(s in ('pass', 'no_inputs') for s in rts)}"
                 f"/{len(rts)} (targets that also have a frontend).",
             f"* Ports of one function in different source languages agree: "
-            f"{sum(c['status'] == 'pass' for c in cr)}/{len(cr)}.",
+            f"{sum(c['status'] == 'pass' for c in cr)}/{len(cr)}"
+            + (f" ({by_id['cross_source']} by identity: the same function up to names, no run)." if by_id["cross_source"]
+               else "."),
+            f"* Functions that are copies, up to names, of one verified earlier in the run (their cells are decided "
+            f"by identity, FOUNDATIONS D7): {by_id['functions']}.",
             f"* Functions a frontend does not lift (gaps, not failures): {len(rep['not_lifted'])}."]
     if rep["not_lifted"]:
         out += [f"  * {x.get('source', '?')} `{x['function']}`: {'; '.join(x['reasons'])}" for x in rep["not_lifted"]]
@@ -395,5 +439,5 @@ def markdown(rep: dict) -> str:
     return "\n".join(out) + "\n"
 
 
-__all__ = ["FRONTENDS", "Frontend", "cross_source", "default_corpus", "markdown", "register", "report_text",
-           "round_trip", "run", "translation_gaps"]
+__all__ = ["FRONTENDS", "Frontend", "by_identity", "cross_source", "default_corpus", "markdown", "register",
+           "report_text", "round_trip", "run", "translation_gaps"]

@@ -151,7 +151,10 @@ class SectionCache(unittest.TestCase):
                        lambda: st.save({"name": "S", "numbering": {"conditions": ["effective"]}},
                                        category="godel_set"),                                          # a set
                        lambda: st.save({"name": "f", "ir": {"functions": []}}, category="function"),     # a card read
-                       lambda: st.save({"name": "f", "ir": {"functions": [], "note": 1}}, category="function")]
+                       lambda: st.save({"name": "f", "ir": {"functions": [], "note": 1}}, category="function"),
+                       lambda: st.save({"name": "L", "lhs": ["var", "E"], "rhs": ["var", "m"],
+                                        "dimensions": {"E": "energy", "m": "mass"}},
+                                       category="physics_law")]                                        # a law it checks
             for change in changes:
                 before = G.check_key(ctx)
                 change()

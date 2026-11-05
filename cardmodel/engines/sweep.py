@@ -102,6 +102,14 @@ def sweep(ctx: Ctx, root: str | Path, exclude: list[str] | None = None, langs: l
             if g["kind"] == "boundary":
                 blockers[normalise(g["cause"])] += 1
     bounds = res.boundaries()
+    # what lifted, by identity (FOUNDATIONS D7): a port in another file or language is the same function
+    t1 = time.perf_counter()
+    ids = res.identities()
+    by_id: dict[str, list[str]] = {}
+    for q in sorted(ids):
+        by_id.setdefault(ids[q], []).append(q)
+    clusters = sorted((len(qs), qs) for qs in by_id.values() if len(qs) > 1)
+    clusters.reverse()
     return {
         "root": str(root), "files": len(files), "unparsed_files": res.unparsed, "functions": total,
         "lifted": lifted, "rate": round(lifted / total, 4) if total else 0.0,
@@ -116,6 +124,9 @@ def sweep(ctx: Ctx, root: str | Path, exclude: list[str] | None = None, langs: l
                           "rate": round(v[1] / v[0], 4) if v[0] else 0.0} for k, v in sorted(per_lang.items())},
         "reasons": reasons.most_common(top),
         "gap_causes": blockers.most_common(top),
+        "distinct": len(by_id), "copies": lifted - len(by_id),
+        "clusters": [{"size": n, "functions": qs[:8]} for n, qs in clusters[:top]],
+        "identity_seconds": round(time.perf_counter() - t1, 3),
     }
 
 
@@ -129,6 +140,11 @@ def report_text(rep: dict) -> str:
     for lang, r in rep["languages"].items():
         lines.append(f"  {lang:<12} {r['lifted']:>7} / {r['functions']:<7} {100 * r['rate']:6.2f} %"
                      f"   closed {r['closed']}")
+    if "distinct" in rep:
+        lines.append(f"by identity: {rep['distinct']} distinct of {rep['lifted']} lifted, {rep['copies']} copies "
+                     f"({rep['identity_seconds']} s)")
+        for c in rep["clusters"][:5]:
+            lines.append(f"  {c['size']:>7}  {', '.join(c['functions'][:4])}{', …' if c['size'] > 4 else ''}")
     lines.append("why a function is a boundary (its own first reason):")
     for reason, n in rep["reasons"]:
         lines.append(f"  {n:>7}  {reason}")

@@ -204,7 +204,98 @@ class TextProject(unittest.TestCase):
         self.assertEqual(Interpreter(m, ctx.ops).call(m["entry"], [1]), 3 + 2)
 
 
+PORTS = {
+    "py/game.py": (
+        "def distance_sq(a: int, b: int) -> int:\n    return a * a + b * b\n\n"
+        "def in_range(a: int, b: int, r: int) -> int:\n    return distance_sq(a, b) + r\n\n"
+        "def fact(n: int) -> int:\n    if n <= 1:\n        return 1\n    return n * fact(n - 1)\n\n"
+        "def ping(n: int) -> int:\n    if n == 0:\n        return n\n    return pong(n - 1)\n\n"
+        "def pong(n: int) -> int:\n    if n == 0:\n        return n + 1\n    return ping(n - 1)\n\n"
+        "def acc(n: int) -> int:\n    s = 0\n    i = 0\n    while i < n:\n        s = s + i\n        i = i + 1\n    return s\n\n"
+        "def swapped(a: int, b: int) -> int:\n    return b * b + a * a\n\n"
+        "def count(n: int) -> int:\n    if n == 0:\n        return 0\n    return count(n - 1) + 2\n"),
+    "c/game.c": (
+        "long distance_sq(long x, long y) { return x * x + y * y; }\n"
+        "long in_range(long x, long y, long r) { return distance_sq(x, y) + r; }\n"
+        "long fact(long n) { if (n <= 1) { return 1; } return n * fact(n - 1); }\n"
+        "long ping(long n);\n"
+        "long pong(long n) { if (n == 0) { return n + 1; } return ping(n - 1); }\n"
+        "long ping(long n) { if (n == 0) { return n; } return pong(n - 1); }\n"
+        "long acc(long n) { long s = 0; long i = 0; while (i < n) { s = s + i; i = i + 1; } return s; }\n"
+        "long count(long n) { if (n == 0) { return 0; } return count(n - 1) + 1; }\n"),
+}
+
+
+class Identity(unittest.TestCase):
+    """One identity for lifted functions (FOUNDATIONS D7; docs/GODEL_AUDIT.md §4.1): α-normalised, with each CALL
+    target replaced by the callee's identity, so a port in another language or file hashes like the original."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.root = Path(cls.tmp.name)
+        write(cls.root, PORTS)
+        cls.res = LP.lift_tree(model_ctx(), cls.root)
+        cls.ids = cls.res.identities()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_ports_share_one_identity_through_their_calls(self):
+        self.assertTrue(all(lf.ok for lf in self.res.functions.values()), [q for q, lf in self.res.functions.items() if not lf.ok])
+        for name in ("distance_sq", "in_range", "fact", "ping", "pong", "acc"):
+            py, c = self.ids[f"py.game::{name}"], self.ids[f"c/game.c::{name}"]
+            self.assertEqual(py, c, name)                  # parameter names and the callee's file differ, nothing else
+            self.assertTrue(py.startswith("sha256:"), py)
+        # 15 functions: the 6 ports collapse to 6, swapped and the two counts stay apart: 9 distinct
+        self.assertEqual(len(set(self.ids.values())), 9, sorted(self.ids.items()))
+        # the recursion placeholder is the callee's structure, not a name: count differs between the ports (+2, +1)
+        self.assertNotEqual(self.ids["py.game::count"], self.ids["c/game.c::count"])
+        self.assertNotEqual(self.ids["py.game::ping"], self.ids["py.game::pong"])
+        self.assertNotEqual(self.ids["py.game::fact"], self.ids["py.game::count"])
+
+    def test_alpha_renames_by_position_and_first_use(self):
+        a = LP.alpha(self.res.functions["py.game::acc"].ir)
+        self.assertEqual(a["params"], [{"name": "p0", "type": "int"}])
+        self.assertEqual(a["locals"], {"l0": "int", "l1": "int"})
+        self.assertEqual(a["body"][0], {"k": "assign", "value": ["int", 0], "target": "l0"})
+        self.assertEqual(a, LP.alpha(self.res.functions["c/game.c::acc"].ir))
+        # the order of the operands is structure: swapped is not distance_sq
+        self.assertNotEqual(self.ids["py.game::swapped"], self.ids["py.game::distance_sq"])
+        # a CALL keeps its name when no identity is given for it (a callee that did not lift is a gap of the lift)
+        self.assertEqual(LP.alpha(self.res.functions["py.game::in_range"].ir)["body"][0]["value"][1][1],
+                         "py.game::distance_sq")
+        self.assertEqual(LP.alpha(self.res.functions["py.game::in_range"].ir, {"py.game::distance_sq": "ID"})
+                         ["body"][0]["value"][1][1], "ID")
+
+    def test_a_module_has_the_identity_of_its_entry(self):
+        # the identity of one IR module (what a function card carries) is the project identity of its entry function:
+        # module_for renames the callees to bare names, and names are not structure
+        for q in ("py.game::in_range", "c/game.c::ping", "py.game::acc"):
+            self.assertEqual(LP.module_identity(self.res.module_for(q)), self.ids[q], q)
+        self.assertEqual(LP.identity_record(self.res.module_for("py.game::in_range")),
+                         {"hash": self.ids["py.game::in_range"], "of": "lifted function", "under": "alpha"})
+
+    def test_sccs_are_callees_first(self):
+        graph = {"a": ["b"], "b": ["c", "a"], "c": [], "d": ["d"], "e": []}
+        comps = LP._sccs(graph)
+        self.assertEqual(sorted(sorted(c) for c in comps), [["a", "b"], ["c"], ["d"], ["e"]])
+        self.assertLess(comps.index(next(c for c in comps if c == ["c"])),
+                        comps.index(next(c for c in comps if sorted(c) == ["a", "b"])))
+        chain = {f"f{i}": [f"f{i - 1}"] if i else [] for i in range(5000)}
+        self.assertEqual(len(LP._sccs(chain)), 5000)       # iterative: a deep chain does not recurse
+
+
 class Sweep(unittest.TestCase):
+    def test_sweep_reports_distinct_functions_by_identity(self):
+        with tempfile.TemporaryDirectory() as d:
+            write(Path(d), PORTS)
+            rep = sweep.sweep(model_ctx(), d)
+        self.assertEqual((rep["lifted"], rep["distinct"], rep["copies"]), (15, 9, 6))
+        self.assertEqual([c["size"] for c in rep["clusters"]], [2] * 6)
+        self.assertIn("by identity: 9 distinct of 15 lifted, 6 copies", sweep.report_text(rep))
+
     def test_normalise_groups_reasons(self):
         self.assertEqual(sweep.normalise("line 12: call to foo() is 'x' 3"), "call to foo() is '_' N")
         self.assertEqual(sweep.normalise("calls a::b, c which did not lift"), "calls a function that did not lift")

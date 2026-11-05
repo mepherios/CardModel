@@ -823,6 +823,25 @@ def carry(content: Counter, mapping: dict[str, Counter]) -> tuple[Counter, Count
     return +image, +gap
 
 
+RANK = "@"      # op/ADD@int,int->int: the atom at one rank of the signature (FOUNDATIONS D1: an op card's ranks)
+
+
+def base_atom(a: str) -> str:
+    """The atom without its rank: op/ADD@int,int->int is op/ADD."""
+    return a.split(RANK, 1)[0]
+
+
+def ranked_atom(a: str, rank: str) -> str:
+    return f"{a}{RANK}{rank}"
+
+
+def forget_ranks(content: Counter) -> Counter:
+    """The carry map that forgets ranks, op/ADD@int,int->int -> op/ADD: a homomorphism onto the rank-blind content,
+    so forgetting the ranks of a term's ranked content (codegen.ranked_content) gives term_content of it, and a gap
+    at one rank refines the rank-blind gap."""
+    return carry(content, {a: Counter({base_atom(a): 1}) for a in content})[0]
+
+
 def preserves_gcd(mapping: dict[str, Counter]) -> bool:
     """True exactly when distinct atoms go to vectors with disjoint support."""
     seen: set[str] = set()
@@ -835,14 +854,14 @@ def preserves_gcd(mapping: dict[str, Counter]) -> bool:
 
 
 # -- the check verify runs -------------------------------------------------------------------------------------------
-CHECK_REGISTRIES = ("godel", "godel_set", "op", "function", "algorithm")   # every registry ``check`` reads
-CHECK_CODE = ("godel", "numbering", "frontend_python", "ir")               # every engine ``check`` runs
+CHECK_REGISTRIES = ("godel", "godel_set", "op", "function", "algorithm", "physics_law")   # every registry ``check`` reads
+CHECK_CODE = ("godel", "numbering", "dimensions", "frontend_python", "ir")               # every engine ``check`` runs
 
 
 def check_key(ctx) -> str:
     """The key of exactly what ``check`` reads, so verify and the self-run skip it when nothing changed (GODEL_AUDIT
-    §6 step 1): each card's content hash (``kernel.canon.card_hash``, CM02) in the registries it reads and of the
-    provability method its numberings name; git's id of the committed ledger and the bytes of the current one (the
+    §6 step 1): each card's content hash (``kernel.canon.card_hash``, CM02) in the registries it reads (the physics
+    laws among them, whose dimension check it runs) and of the provability method its numberings name; git's id of the committed ledger and the bytes of the current one (the
     append-only check); and the source of the engines it runs, with the interpreter's version. ``check`` takes no
     seed (``numbering`` uses seed 0), so equal keys give equal results and any changed input gives a new key."""
     import hashlib
@@ -909,10 +928,10 @@ def check(ctx) -> dict:
             "coverage": round(done / total, 4) if total else None, "missing": missing[:20]}
 
 
-__all__ = ["ContentIndex", "EVENT_KINDS", "LEAVES", "LOGIC", "SPECIAL", "STRUCTURAL_MAX_DIGITS", "add", "atom",
-           "basis_atoms", "basis_version", "card_content", "carry", "check", "check_key", "cofactor", "cost",
-           "decimal_digits", "decode", "deprecate", "divides", "events", "expand", "exponents", "factor",
-           "from_tokens", "from_vector", "gcd", "index_of", "jaccard", "lcm", "ledger", "match", "merge",
-           "module_content", "norm", "nth_prime", "preserves_gcd", "primes", "problems", "resolve", "scale",
-           "stored", "structural", "sub", "substitute", "support", "sync", "term_content", "to_vector", "tokens",
-           "unzig", "valuation", "variables", "vector_problems", "zig"]
+__all__ = ["ContentIndex", "EVENT_KINDS", "LEAVES", "LOGIC", "RANK", "SPECIAL", "STRUCTURAL_MAX_DIGITS", "add",
+           "atom", "base_atom", "basis_atoms", "basis_version", "card_content", "carry", "check", "check_key",
+           "cofactor", "cost", "decimal_digits", "decode", "deprecate", "divides", "events", "expand", "exponents",
+           "factor", "forget_ranks", "from_tokens", "from_vector", "gcd", "index_of", "jaccard", "lcm", "ledger",
+           "match", "merge", "module_content", "norm", "nth_prime", "preserves_gcd", "primes", "problems",
+           "ranked_atom", "resolve", "scale", "stored", "structural", "sub", "substitute", "support", "sync",
+           "term_content", "to_vector", "tokens", "unzig", "valuation", "variables", "vector_problems", "zig"]
