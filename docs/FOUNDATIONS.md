@@ -197,6 +197,8 @@ Remaining, in order:
    stream owns IR types; nothing else adds them). The sort of each is already defined in `engines/sorts.py`. Each
    language card needs a type template per new type and each op card's `ir.types` the ranks at the new sorts, or a
    gap. Emit as wrap-on-store: a store to a u8 variable is `WRAPU(v, 8)`, and an f32 store is `F32(v)`.
+   *Done on `claude/ir-fixed-width`:* `ir.TYPES`, `ir.lower_stores` (interpreter and emitters), carrier type
+   templates in every language card, `ADD` ranks at u8/i8/f32 and `MUL` at u32/f32 (other ops: gap).
 3. **Conformance cells** for the new types in every language (`engines/conformance.py`): u8 and i8 overflow, u32
    multiplication, f32 rounding against `F32`. A language without a native width emits the WRAP template, so it is
    a cell that passes, never a skip.
