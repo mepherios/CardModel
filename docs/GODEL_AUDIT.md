@@ -434,3 +434,16 @@ of step 2 sits on top of the sorted e-graph rather than inside it; and only the 
 (GODEL_METHOD rule 1), so steps 3, 6 and 8 produce *proposal* cards. Measured as not worth doing, so not in the sequence: an
 LHS-content prefilter for rules (≤ 2%), a content lower bound on cost (prunes 0 of 132), hash-consing e-nodes by
 Gödel number, Gödel keys for logic facts, and dedup of `machine/bench` runs (at most 17 of 512).
+
+**Open proposals (2026-11-05).** Pull requests on GitHub that touch this thread, listed from their titles and bodies. Except for #48, they are proposals waiting for the Gödel thread's review and are not counted as done here.
+
+- #48 *physics as a Gödel set: dimensions as signed content, laws as cards*: **merged** 2026-11-05T07:16:44Z (step 4 of GODEL_TARGET §9).
+- #53 *codegen: a language is a carry map; translate and matrix predict its gap from content*: the Gödel thread's codegen-as-carry-map PR (GODEL_TARGET §5, GODEL_AUDIT §6 step 3). Open.
+- #54 *Gödel section cached by the hash of its inputs*: the second half of GODEL_AUDIT §6 step 1 (`godel.check_key`). The first half, valuation by squaring, landed with #28. Open.
+- #55 *Every capability in the main pipeline: tiers, coverage check and Gödel purity (CM50)*: the pipeline coverage check, with Gödel purity as a checked property (G_A14). Conflicts with #50. Open.
+- #58 *search: match/instantiate via godel.match/substitute (Gödel purity A6)*: search calls the core's matcher instead of its own. Open.
+- #66 *godel factor|similar|cofactor: accept FILE.py:FUNC*: the `godel` commands lift a source function to its canonical term. Open.
+- #68 *codes: read Def-27 tokens through the Gödel core*: `engines/codes.py` reads tokens through the core. Its body calls it a proposal for the Gödel thread, which owns that file. Open.
+- #70 *Proposal for the Gödel thread: purity follow-ups (dead number(), Numbering.tokens via core, rational scale)*: open. Its current body describes FOUNDATIONS §7 fixed-width IR types, not the title. Check the diff before reviewing.
+
+No other open PR has godel or token-list in its title.

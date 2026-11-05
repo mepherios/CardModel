@@ -166,3 +166,16 @@ stated on the card, until positional codes take per-set dense ranks, which is th
 | 3. cofactor factoring and similarity as commands | done 2026-11-04: `cardmodel godel factor CARD... | --expr E` (a term over the definitions it contains, with the cofactor and the vector check), `similar` (by |gcd| / |lcm| through the index), `cofactor WHOLE PART`, `decode N --vars`. Today 11 of 577 definitions have a closed term (the rest wait for distillation), so the library is small; it grows with every canonical term |
 | 4. physics as a Gödel set | done 2026-11-04: `godel_set/physics` (the SI base quantities as atoms of arity 0, the dimension model on the card, the derived quantities as a carry map), 13 `physics_law` cards, `engines/dimensions.py`, `cardmodel godel dimension`; §8 |
 | 5. call sites | waiting on the audit's ranking |
+
+**Open proposals (2026-11-05).** Pull requests on GitHub that touch this thread, listed from their titles and bodies. Except for #48, they are proposals waiting for the Gödel thread's review and are not counted as done here.
+
+- #48 *physics as a Gödel set: dimensions as signed content, laws as cards*: **merged** 2026-11-05T07:16:44Z (step 4 of GODEL_TARGET §9).
+- #53 *codegen: a language is a carry map; translate and matrix predict its gap from content*: the Gödel thread's codegen-as-carry-map PR (GODEL_TARGET §5, GODEL_AUDIT §6 step 3). Open.
+- #54 *Gödel section cached by the hash of its inputs*: the second half of GODEL_AUDIT §6 step 1 (`godel.check_key`). The first half, valuation by squaring, landed with #28. Open.
+- #55 *Every capability in the main pipeline: tiers, coverage check and Gödel purity (CM50)*: the pipeline coverage check, with Gödel purity as a checked property (G_A14). Conflicts with #50. Open.
+- #58 *search: match/instantiate via godel.match/substitute (Gödel purity A6)*: search calls the core's matcher instead of its own. Open.
+- #66 *godel factor|similar|cofactor: accept FILE.py:FUNC*: the `godel` commands lift a source function to its canonical term. Open.
+- #68 *codes: read Def-27 tokens through the Gödel core*: `engines/codes.py` reads tokens through the core. Its body calls it a proposal for the Gödel thread, which owns that file. Open.
+- #70 *Proposal for the Gödel thread: purity follow-ups (dead number(), Numbering.tokens via core, rational scale)*: open. Its current body describes FOUNDATIONS §7 fixed-width IR types, not the title. Check the diff before reviewing.
+
+No other open PR has godel or token-list in its title.
