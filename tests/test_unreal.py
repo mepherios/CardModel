@@ -239,3 +239,6 @@ class TargetModel(unittest.TestCase):
                     compared += 1
         self.assertGreater(compared, 1000)
         self.assertEqual(W.evaluate(["DIV", ["float", 1.0], ["float", 0.0]], {}), math.inf)
+        # an integer power is exact past 2^53, where C's pow (doubles) would round (seed 1267396170 drew -25^12)
+        self.assertEqual(W.evaluate(["POW", ["int", -25], ["int", 12]], {}), 59604644775390625)
+        self.assertEqual(W.evaluate(["POW", ["float", 2.0], ["float", 0.5]], {}), math.sqrt(2.0))

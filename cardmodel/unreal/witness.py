@@ -189,6 +189,8 @@ def _evaluate(t, env: dict, memo: dict):
         return -a[0]
     if head == "F32":
         return f32(a[0])
+    if head == "POW" and all(isinstance(x, int) and not isinstance(x, bool) for x in a) and a[1] >= 0:
+        return a[0] ** a[1]            # an integer power is exact; C's pow rounds past 2^53 (-25^12), the model doesn't
     if head in C_DOUBLE:
         return C_DOUBLE[head](*[float(x) for x in a])
     if head == "TO_FLOAT":
