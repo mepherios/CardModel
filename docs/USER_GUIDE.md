@@ -65,8 +65,8 @@ To write one translation to a file: `cardmodel emit --lang c mathy.py --out math
 
 * Parameters must be `int`, `float`, `bool`, `list[int]` or `list[float]`. `str`, `list[str]`, `dict`, tuples,
   classes, records and closures do not lift yet.
-* Real-world code lifts poorly: 1 of 149 functions from six stdlib modules (instance state, varargs, keyword-only
-  parameters, non-numeric defaults, `try`, nested defs are the main blockers). Aim it at small numeric functions.
+* Real-world code lifts poorly: 223 of 13,300 functions in the Python 3.14 stdlib (1.68 %, `lift-sweep`, 6920ac6;
+  instance state, non-numeric defaults, varargs and keyword-only parameters are the main blockers). Aim it at small numeric functions.
 * `emit --lang rust` and `emit --lang go` of a file with two or more functions produce code that does not compile on
   `main` (repeated `#![allow]` / one `package` clause per function). Fixed in PR #63. `emit --lang c` compiles.
   `translate` (which runs each function separately) is not affected.

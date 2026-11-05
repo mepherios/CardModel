@@ -90,7 +90,7 @@ cardmodel understand PATH --propose  # also writes redesign proposal cards with 
 Measured numbers this proposal starts from (reported in this session's stream, to be re-measured by the first
 `understand` run):
 
-* **0.67 %** lift rate on a stdlib sample: most real code does not lift into T_Σ(X) yet.
+* **1.68 %** lift rate on the Python 3.14 stdlib (223 of 13,300 functions, 6920ac6): most real code does not lift into T_Σ(X) yet.
 * **24.6 %** of definitions have a canonical identity; the rest are identified on raw or α-normal terms.
 * **Types are the blocker**: no arrays, tuples or records as sorts yet (D1 lists them as planned, MATH_CORE §4);
   the 16 Lean carry misses in GODEL_AUDIT are type and rank atoms.

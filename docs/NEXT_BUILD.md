@@ -14,7 +14,7 @@ TARGETS.md §6:
 | measurement | value | source |
 |---|---|---|
 | `verify --quick` | 17 of 17 sections pass in 146 s; 24,285 cards, 0 errors | assessment (a) |
-| real code that lifts | 254 of 6,576 of the user's functions (96.1 % do not lift); 1 of 149 functions in six stdlib modules (0.67 %) | TARGETS.md §6; assessment (a) |
+| real code that lifts | 254 of 6,576 of the user's functions (96.1 % do not lift); 223 of 13,300 functions in the Python 3.14 stdlib without tests (1.68 %, 6920ac6) | TARGETS.md §6; assessment (a) |
 | canonical definitions (G_U7) | 0.2462 of 577 definitions, target 0.9 | assessment (a) |
 | ARMv5TE symbolic terms | 0 of 167 on main; 92/167 in #67, 98/167 with #79, 156/167 with #78 (PR titles, not re-measured here) | assessment (a); open PRs |
 | goals | 54 goals: 32 met, 6 unmet (G_C4, G_M6, G_P4, G_U3, G_U7, G_U9), 16 not run yet | assessment (a), (c) |

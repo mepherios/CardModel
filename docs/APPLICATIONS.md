@@ -44,15 +44,16 @@ The two functions that did not lift (`str`, `list[str]`/dict) were reported as g
 
 **What blocks wider use.**
 
-* Real-world code barely lifts. On 149 functions from 6 stdlib modules, 1 lifted (0.67 %, measured). The top
-  causes are instance state and records (`self._` 32), varargs and keyword-only parameters (15), non-numeric
-  defaults (11) and tuples (5).
+* Real-world code barely lifts. On the whole Python 3.14 stdlib without tests (`lift-sweep`, 2026-11-05, main 6920ac6), 223 of 13,300 functions lift (1.68 %; 161, 1.21 %, with no gap). The
+  top causes are instance state and records (`self._` 6,487, `self` 1,206), non-numeric defaults (741) and varargs
+  and keyword-only parameters (520). An earlier sample, 1 of 149 functions in six unnamed modules (0.67 %), is not
+  reproducible.
 * The IR has no strings, dicts, tuples, records, classes or closures.
 * `emit` to a single file only produces valid output for C among the languages tried. Rust repeats `#![allow]`
   before each function, and Go repeats the `package` clause (assessment §e, bugs 1 and 2).
 
 **Next step that unlocks it.** Add records and tuples to the IR (the largest blocker class), then rerun
-`lift-sweep` on the same 6 modules. Fixing the Rust and Go multi-function emitters is a small change that unblocks
+`lift-sweep` on the stdlib. Fixing the Rust and Go multi-function emitters is a small change that unblocks
 shipping the output as a library.
 
 ## 2. Finding duplicate or shared logic across a codebase (Gödel content)
@@ -189,7 +190,7 @@ close by itself.
 
 ## What this page does not claim
 
-* No application here works on arbitrary real programs today. The real-code lift rate is 0.67 % (measured).
+* No application here works on arbitrary real programs today. The real-code lift rate is 1.68 % on the stdlib (measured, §1).
 * The assessment did not run full `verify`, the full unit test suite, `self run`, `matrix` or `analyse`.
 * `cover` reports 54 goals: 32 met, 6 unmet, and 16 not run yet. The unmet goals are G_C4, G_M6, G_P4, G_U3, G_U7
   and G_U9.
