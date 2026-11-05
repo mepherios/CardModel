@@ -117,7 +117,8 @@ What each step does:
 * `verify --quick` witnesses everything, now including the project's cards.
 * `cover` shows the project's coverage and goals.
 
-Unsupported Python constructs are listed with line numbers (`translate`, `emit`), never pasted through. Each one is a
+`observe` and `learn` read every language a frontend reads (C, Go, Rust, Java, ...; docs/FRONTENDS.md), not only
+Python. Unsupported constructs are listed with line numbers (`translate`, `emit`, `observe`), never pasted through. Each one is a
 precise translation gap to close (see ROADMAP).
 
 ### Worked example A — the algorithms in `examples/algorithms`
@@ -676,8 +677,11 @@ with no `sorry` (`cardmodel verify --only formal`). Beyond that:
 2. **Strings and lists in the IR.** Start with `len`, indexing and a `for x in xs` loop on `list[int]`. Each op is a
    card, and the conformance matrix tells you when a language row is green. AnyPS5's standard data functions and
    the game's text both wait on this.
-3. **A C frontend** (lift C functions into the same IR), which gives C -> Python/Rust/Go translation with the same
-   witness, and lets the learning step learn from C trees, not only observe them.
+3. **A C frontend**: done (2026-11-05, docs/FRONTENDS.md "C"). C functions lift into the same IR with C's own
+   integer semantics (u8..u32, i8, i16 wrap through WRAPU/WRAPS) and arrays as lists; `translate some.c --to
+   python,rust,go` witnesses each lift against gcc; `observe`/`learn` lift a C tree as one project and promote a C
+   function only when its source witness passes. Next there: structs as records, `size_t` (u64) loops, pointer
+   walks as index loops, functions that write their array parameter.
 4. **Learn from your real projects**: `cardmodel self corpus add ~/Programmering/ting` (and the others you want);
    the self-run learns from a tree whenever it changes. Review what it learned with `cardmodel list` and
    `cardmodel self adopt --dry-run`, then adopt and commit.

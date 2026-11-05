@@ -13,15 +13,19 @@ Each top-level function is also offered to the IR frontend; the result
 Other languages (by the extensions on language cards) get a token-level
 scan: comments and strings are stripped with the card's comment syntax,
 ``name(`` call sites are counted, and names found in the vendored Pheros
-std_library harvest for that language count as named stdlib calls.
+std_library harvest for that language count as named stdlib calls. Their
+functions are offered to the language's own frontend (C, Go, Rust, Java, ...:
+frontends.py) as one project (lift_project: a call to another file's function
+resolves as a linker resolves it), so ``learn`` learns from those trees too.
 
 The observation is ground truth (Pheros L102): it is written once per
 content hash and never edited by rules. Paths are stored relative to the
 observed root (L50: no user paths in cards).
 
-Honest limits (L1): static only (no runtime types); non-Python languages
-are token-level estimates, not parses; aliases (``from m import f as g``)
-are not resolved.
+Honest limits (L1): static only (no runtime types); the card counts of
+non-Python languages are token-level estimates, not parses (their functions
+are parsed, by the frontend); aliases (``from m import f as g``) are not
+resolved.
 """
 from __future__ import annotations
 
@@ -262,6 +266,27 @@ def iter_files(root: Path):
                 continue
 
 
+TEXT_FRONTEND = "cardmodel.engines.frontend_text"
+
+
+def _lift_readable(ctx: Ctx, files: dict, base: Path) -> list[dict]:
+    """Every function of the non-Python files a frontend reads, lifted as one project per language."""
+    if not files:
+        return []
+    from .lift_project import lift_files
+    try:
+        proj = lift_files(ctx, list(files.items()), methods=False, root=base)
+    except Exception as exc:  # noqa: BLE001 -- a frontend crash is an observation, not a failed observe
+        return [{"file": "", "name": "<project>", "line": 0, "liftable": False,
+                 "reasons": [f"{type(exc).__name__}: {exc}"[:200]], "inferred_types": False, "language": ""}]
+    out = []
+    for qual, lf in sorted(proj.functions.items(), key=lambda kv: (kv[0].rsplit("::", 1)[0], kv[1].lineno)):
+        out.append({"file": qual.rsplit("::", 1)[0], "name": lf.name, "line": lf.lineno, "liftable": lf.ok,
+                    "reasons": lf.reasons[:3], "inferred_types": lf.inferred_types, "language": lf.lang,
+                    "qual": qual})
+    return out
+
+
 def observe(ctx: Ctx, root: str | os.PathLike, lift: bool = True) -> dict:
     root = Path(root).resolve()
     if not root.exists():
@@ -273,6 +298,7 @@ def observe(ctx: Ctx, root: str | os.PathLike, lift: bool = True) -> dict:
     fallback_files: dict[str, set] = defaultdict(set)
     fallback_by_lang: dict[str, Counter] = defaultdict(Counter)
     functions = []
+    readable = {}                       # other languages with a frontend: lifted together after the walk
     digest = hashlib.sha256()
     base = root if root.is_dir() else root.parent
     for p in iter_files(root):
@@ -293,10 +319,13 @@ def observe(ctx: Ctx, root: str | os.PathLike, lift: bool = True) -> dict:
                 if lift:
                     for lf in lift_source(text, ctx.ops):
                         functions.append({"file": relp, "name": lf.name, "line": lf.lineno, "liftable": lf.ok,
-                                          "reasons": lf.reasons[:3], "inferred_types": lf.inferred_types})
+                                          "reasons": lf.reasons[:3], "inferred_types": lf.inferred_types,
+                                          "language": "python"})
             else:
                 res = walk_tokens(text, lang, stdlib.get(lang["name"], set()), t.lang_calls.get(lang["name"]))
                 entry["method"] = "token-level"
+                if lift and lang.get("frontend") == TEXT_FRONTEND:
+                    readable[p] = lang["name"]
         except SyntaxError as exc:
             entry["error"] = f"SyntaxError line {exc.lineno}: {exc.msg}"
             files.append(entry)
@@ -310,6 +339,7 @@ def observe(ctx: Ctx, root: str | os.PathLike, lift: bool = True) -> dict:
         for k in res["fallback_calls"]:
             fallback_files[k].add(relp)
         files.append(entry)
+    functions += _lift_readable(ctx, readable, base)
     all_fired = sum(totals.values())
     named_all = sum(n for k, n in totals.items() if k not in t.fallback)
     shape_names = {c.name for c in ctx.store.cards("shape")}
@@ -330,6 +360,7 @@ def observe(ctx: Ctx, root: str | os.PathLike, lift: bool = True) -> dict:
         "functions": functions,
         "fallback_call_files": {k: sorted(fallback_files[k])[:50]
                                 for c in fallback_by_lang.values() for k, _ in c.most_common(200)},
-        "provenance": {"tool": "cardmodel observe", "method": "ast (python) + token-level (others)"},
+        "provenance": {"tool": "cardmodel observe",
+                       "method": "ast (python) + token-level (others) + each language's frontend (functions)"},
     }
     return obs

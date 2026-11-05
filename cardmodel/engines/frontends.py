@@ -11,7 +11,9 @@ card, and compares every output with the IR interpreter. A language with no tool
 ``unavailable``; it never passes silently.
 
 Honest limits (L1): the witness is sampled (seeded); fixed-width sources are compared only on inputs whose IR
-values fit the card's ``int_bits``; the harness renames a ``main`` the source defines (it supplies its own).
+values fit the card's ``int_bits``, and only on arguments the source's parameter types hold (a C ``int`` takes
+no 2^40: frontend_text.param_range); the harness renames a ``main`` the source defines (it supplies its own) and
+passes a C array as a compound literal of the source's element type (``frontend_harness.list_lit``).
 """
 from __future__ import annotations
 
@@ -138,6 +140,14 @@ def source_program(ctx: Ctx, lang: str, source: str, module: dict, calls: list,
     types = list(src_types or [])
 
     def arg(i, p, a):
+        if p["type"].startswith("list["):           # an array argument, spelled with the source's element type
+            tmpl = fh.get("list_lit")
+            if not tmpl:
+                raise EmitGap(f"{lang}: no list_lit in frontend_harness to pass an array")
+            elem = re.sub(r"\bconst\b|\*|\[.*\]", "", types[i] if i < len(types) and types[i] else "").strip()
+            et = p["type"][5:-1]
+            return tmpl.format(elem=elem or {"int": "int64_t", "float": "double"}[et],
+                               items=", ".join(lit(et, x) for x in a) or "0")
         text = lit(p["type"], a)
         if cast and i < len(types) and types[i]:
             text = cast.format(type=types[i], v=text)
@@ -182,7 +192,7 @@ def witness_source(ctx: Ctx, lang: str, source: str, module: dict, inputs: list,
             rows.append({"args": list(args), "out": out, "bits": interp.max_bits})
     bits = card.get("int_bits")
     usable = [r for r in rows if (bits is None or r["bits"] < bits - 1) and V.fits(r["out"], bits)
-              and all(V.fits(a, bits) for a in r["args"])]
+              and all(V.fits(a, bits) for a in r["args"]) and _in_param_ranges(lang, r["args"], src_types)]
     res = {"lang": lang, "inputs": len(rows), "out_of_width": len(rows) - len(usable)}
     if not usable:
         return {**res, "status": "no_inputs"}
@@ -205,12 +215,42 @@ def witness_source(ctx: Ctx, lang: str, source: str, module: dict, inputs: list,
     return res
 
 
+def _in_param_ranges(lang: str, args: list, src_types: list | None) -> bool:
+    """Arguments the source's own parameter types hold (a C ``int`` takes no 2^40; the IR int would)."""
+    if not src_types:
+        return True
+    from .frontend_text import param_range
+    for a, t in zip(args, src_types):
+        rng = param_range(lang, t) if t else None
+        if rng is None:
+            continue
+        vals = a if isinstance(a, list) else [a]
+        if any(isinstance(v, int) and not isinstance(v, bool) and not rng[0] <= v <= rng[1] for v in vals):
+            return False
+    return True
+
+
 def sample_inputs(module: dict, n: int, seed: int) -> list:
     """Seeded arguments for the entry, the translate engine's generators (edges included)."""
     from .translate import _gen_for
     entry = next(f for f in module["functions"] if f["name"] == module["entry"])
     gens = [_gen_for(p["name"], p["type"], 1) for p in entry["params"]]
-    return [list(a) for a in V.inputs(gens, n, random.Random(seed))]
+    rng = random.Random(seed)
+    out = [list(a) for a in V.inputs(gens, n, rng)]
+    if _wraps(module):            # fixed-width C: arguments across the 8/16/32-bit boundaries, where the wraps act
+        for _ in range(n):
+            out.append([rng.choice(WIDE) if p["type"] == "int" and rng.random() < 0.7 else a
+                        for p, a in zip(entry["params"], out[rng.randrange(len(out))] if out else [])])
+    return out
+
+
+WIDE = [-(2 ** 33) - 5, -(2 ** 31) - 1, -(2 ** 31), -65537, -32769, -129, -1, 127, 128, 255, 256, 32767, 32768,
+        65535, 65536, 2 ** 31 - 1, 2 ** 31, 2 ** 32 - 1, 2 ** 32, 2 ** 32 + 7, 3_000_000_019, 123_456_789_012]
+
+
+def _wraps(module: dict) -> bool:
+    from .ir import ops_used
+    return any(ops_used(f) & {"WRAPU", "WRAPS"} for f in module["functions"])
 
 
 # -- the source x target matrix (engines/matrix.py) ------------------------------------------------------------------

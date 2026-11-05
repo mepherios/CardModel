@@ -212,9 +212,12 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   compile per language (the full matrix takes 30–250 s, depending on machine load). Read inputs from stdin instead;
   the build cache then hits across seeds. Each language card needs one more template: `read_int` / `read_float` /
   `read_bool`.
-* 🟢 **Second frontend: C (or JavaScript) → IR**, reusing the conformance matrix as its witness. Lift-and-run makes
-  translation two-way (C → Python and C → Rust, …). The Pheros `translation_gap` cards list which constructs matter
-  first.
+* 🔵 (2026-11-05) **C → IR, and learning from C trees** (docs/FRONTENDS.md "C"): the text frontend's C dialect
+  keeps C's integer semantics (u8..u32, i8, i16 through WRAPU/WRAPS, the usual arithmetic conversions), reads
+  arrays as lists, and `observe`/`learn` lift every frontend language's tree as one project, promoting a function
+  only when its source witness (the original compiled by gcc) passes. Next there: structs as records, `size_t`
+  loops (u64), pointer walks (`*p++`) as index loops, in-place array outputs (a function that writes its array
+  parameter, as a function returning the new list).
 * 🟢 **Strings and lists in the IR.** Types `str` and `list[int]`, plus op cards for len/index/slice/concat. Each new
   op needs per-language templates and conformance cells. This is the biggest coverage gain for real code; Pheros
   `string_ops` gives the vocabulary.

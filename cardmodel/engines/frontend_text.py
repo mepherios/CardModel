@@ -17,10 +17,18 @@ Calls resolve in this order: functions of the same file, the dialect's library t
 everything codegen writes, ``cm_floormod(a, b)`` or ``Math.floorMod(a, b)``, lifts back to its op: a new op card
 with a call-shaped template is liftable with no code change).
 
-Honest limits (L1): int/float/bool scalars only, like the Python frontend; no arrays, strings, structs, classes
-as values, pointers, exceptions or globals (methods of a Java/C#/Kotlin class lift when they are ``static``-like
-functions of scalars); unsigned integers and binary32 floats are reported, not approximated; integer width is the
-language's (fixed-width sources agree with the IR only where no value overflows, as for fixed-width targets);
+C keeps its own integer semantics: ``uint8_t``..``uint32_t``, ``unsigned``, ``int8_t``, ``short`` and ``int`` have
+a kind (signed, bits), expressions take C's kinds (promotion, the usual arithmetic conversions, literal types,
+octal), and wherever C reduces a value modulo 2^w the IR gets ``WRAPU``/``WRAPS`` (the u8..i32 subsorts): unsigned
+results of + - * << ~ and negation, conversions on assignment, return, casts and calls, and narrow or unsigned
+parameters on entry. C arrays read as lists: ``const T *xs`` / ``T xs[]`` parameters (passed with their length,
+never written) and local ``T a[n]`` / ``T a[] = {...}`` arrays (LIST_NEW and ``set``).
+
+Honest limits (L1): int/float/bool scalars (and, in C, lists of int or float); no strings, structs, classes as
+values, pointer arithmetic or dereference, exceptions or globals (methods of a Java/C#/Kotlin class lift when they
+are ``static``-like functions of scalars); 64-bit unsigned integers (``uint64_t``, ``size_t``) and binary32 floats
+are reported, not approximated; signed overflow in C is undefined and is not wrapped (the lift is exact there);
+integer width is otherwise the language's (fixed-width sources agree with the IR only where no value overflows);
 untyped parameters (Ruby, Lua, JavaScript, PHP, Julia) default to ``int`` (JavaScript: ``float`` unless the
 function uses BigInt) and are marked ``inferred_types``.
 """
@@ -64,6 +72,21 @@ _INT_C = {"int", "long", "short", "int64_t", "int32_t", "int16_t", "int8_t", "in
           "long long", "long int", "long long int", "signed", "signed int", "signed long", "short int"}
 _UNSIGNED_C = {"unsigned", "unsigned int", "unsigned long", "unsigned long long", "uint64_t", "uint32_t",
                "uint16_t", "uint8_t", "size_t", "uintmax_t", "unsigned char", "unsigned short", "char"}
+
+# C's integer types as (signed, bits) on an LP64 host (int 32, long 64): every int-kinded C expression lowers to
+# the IR's unbounded int, and the frontend puts C's own conversions back as WRAPU / WRAPS (the u8..i32 subsorts,
+# FOUNDATIONS.md D1) wherever C reduces a value modulo 2^w. ``bool`` promotes like a narrow int.
+_C_KINDS = {**{t: (True, 32) for t in ("int", "signed", "signed int", "int32_t")},
+            **{t: (True, 16) for t in ("short", "short int", "signed short", "int16_t")},
+            **{t: (True, 8) for t in ("signed char", "int8_t")},
+            **{t: (True, 64) for t in ("long", "long int", "long long", "long long int", "signed long", "int64_t",
+                                       "intmax_t", "ptrdiff_t", "ssize_t", "int64")},
+            **{t: (False, 32) for t in ("unsigned", "unsigned int", "uint32_t")},
+            **{t: (False, 16) for t in ("unsigned short", "unsigned short int", "uint16_t")},
+            **{t: (False, 8) for t in ("unsigned char", "uint8_t")},
+            "bool": (False, 1), "_Bool": (False, 1)}
+_C_FIXED = {t for t, k in _C_KINDS.items() if not k[0] and k[1] > 1}       # the unsigned types that now lift
+_C_U64 = "unsigned 64-bit integers wrap modulo 2^64, beyond the targets' signed 64-bit int"
 
 
 @dataclass
@@ -195,7 +218,9 @@ _JS_METHODS = {"toString": ("no", "strings")}
 
 _C_TYPES = {**{t: INT for t in _INT_C}, "double": FLOAT, "long double": FLOAT, "bool": BOOL, "_Bool": BOOL,
             "void": VOID, "auto": "auto"}
-_C_UNSUP = {**{t: "unsigned integers wrap modulo 2^n; the IR int is unbounded" for t in _UNSIGNED_C},
+_C_TYPES.update({t: INT for t, k in _C_KINDS.items() if k[1] > 1})
+_C_UNSUP = {**{t: _C_U64 for t in _UNSIGNED_C - _C_FIXED},
+            "char": "char (a character; int8_t or uint8_t lift as small integers)",
             "float": "binary32 float (the IR float is binary64)"}
 
 
@@ -417,6 +442,8 @@ def tokenize(src: str, d: Dialect) -> list[Tok]:
                 value = int(clean, 0)
             elif any(ch in clean for ch in ".eE"):
                 value = float(clean)
+            elif d.name in ("c", "cpp") and len(clean) > 1 and clean[0] == "0" and clean.isdigit():
+                value = int(clean, 8)                     # C's 017 is octal
             else:
                 value = int(clean)
             toks.append(Tok("num", src[i:k], line, value, suffix, space))
@@ -556,8 +583,9 @@ class Parser:
         raise ParseError(f"expected ';', found {tok.text!r}", tok.line)
 
     # -- types -----------------------------------------------------------------------------------------------------
-    def type_name(self) -> str:
-        """A type as text: `long long`, `std::int64_t`, `i64`, `Int`, `()`, `[]int` (rejected later)."""
+    def type_name(self, ptr_ok: bool = False) -> str:
+        """A type as text: `long long`, `std::int64_t`, `i64`, `Int`, `()`, `[]int` (rejected later). ``ptr_ok``: a
+        C parameter's `*` / `[]` that follows is left for the caller (arrays lift as lists)."""
         parts = []
         if self.accept("("):
             self.expect(")")
@@ -591,6 +619,8 @@ class Parser:
         text = " ".join(parts)
         if self.at("<"):
             raise ParseError(f"generic type {text}<...> is not lifted", self.peek().line)
+        if ptr_ok and self.d.name == "c" and self.at("*", "**"):
+            return text
         if self.at("*", "&", "[", "?") and self.d.name in ("c", "cpp", "csharp", "java", "kotlin", "swift", "typescript"):
             if self.at("[") and self.peek(1).text == "]" or self.at("*", "&", "?"):
                 raise ParseError(f"type {text}{self.peek().text} (pointers, references, arrays, nullables)",
@@ -729,7 +759,7 @@ class Parser:
     def primary(self) -> tuple:
         tok = self.next()
         if tok.kind == "num":
-            return ("num", tok.value, tok.suffix)
+            return ("num", tok.value, tok.suffix, tok.text)
         if tok.kind == "str":
             raise ParseError("string literal", tok.line)
         if tok.kind == "op" and tok.text == "(":
@@ -890,6 +920,14 @@ class Parser:
                     e = ("attr", e, name)
                     if not self.at("("):
                         e = ("mcall", e[1], e[2], [])
+                continue
+            if tok.kind == "op" and tok.text == "[" and self.d.name == "c":
+                self.next()
+                idx = self.expr()
+                self.expect("]")
+                if self.at("["):
+                    raise ParseError("multi-dimensional indexing", tok.line)
+                e = ("index", e, idx)
                 continue
             if tok.kind == "op" and tok.text == "[":
                 raise ParseError("indexing (arrays are not lifted)", tok.line)
@@ -1168,6 +1206,9 @@ class Parser:
                                                          "constexpr", "unsigned", "signed"):
             if toks[j].text in ("unsigned", "signed") and toks[j + 1].kind != "id":
                 return True
+            if toks[j].text in ("unsigned", "signed") and toks[j + 1].text not in ("int", "long", "short", "char") \
+                    and toks[j + 2].kind == "op" and toks[j + 2].text in ("=", ";", ","):
+                return True                                  # unsigned s = 0;
             j += 1
         if toks[j].kind != "id":
             return False
@@ -1185,6 +1226,29 @@ class Parser:
             return True
         return toks[j].kind == "id" and (name in self.d.types or name in self.d.unsupported_types or
                                          toks[j + 1].kind == "op" and toks[j + 1].text in ("=", ";", ","))
+
+    def _c_array_decl(self, name: str, typ: str, line: int) -> dict:
+        """`T a[n];`, `T a[n] = {0};`, `T a[] = {x, y, z};` (one dimension): a local list."""
+        self.expect("[")
+        size = None if self.at("]") else self.expr()
+        self.expect("]")
+        if self.at("["):
+            raise ParseError("multi-dimensional array", line)
+        init = None
+        if self.accept("="):
+            if not self.accept("{"):
+                raise ParseError("array initialised from an expression", line)
+            init = []
+            while not self.at("}"):
+                if self.at("[") or self.at("."):
+                    raise ParseError("designated initialiser", line)
+                init.append(self.expr())
+                if not self.accept(","):
+                    break
+            self.expect("}")
+        if size is None and init is None:
+            raise ParseError("array without a size", line)
+        return {"k": "adecl", "name": name, "type": typ, "size": size, "init": init, "line": line}
 
     def simple_statement(self, allow_decl: bool = True, allow_end: bool = True) -> list[dict]:
         tok = self.peek()
@@ -1236,6 +1300,11 @@ class Parser:
                 if self.at("*", "&"):
                     raise ParseError("pointer or reference variable", line)
                 name = self.ident()
+                if self.at("[") and self.d.name == "c":
+                    out.append(self._c_array_decl(name, typ, line))
+                    if not self.accept(","):
+                        break
+                    continue
                 if self.at("["):
                     raise ParseError("array variable", line)
                 value = None
@@ -1299,11 +1368,15 @@ class Parser:
                     raise ParseError("augmented tuple assignment", line)
                 return [{"k": "multi", "targets": [_name(t, line) for t in e[1]], "value": value, "decl": False,
                          "line": line}]
+            if e[0] == "index":
+                return [{"k": "aset", "target": e, "op": tok.text, "value": value, "line": line}]
             return [{"k": "assign", "target": _name(e, line), "op": tok.text, "value": value, "line": line}]
         if tok.kind == "op" and tok.text in ("++", "--"):
             self.next()
             if allow_end:
                 self.end_stmt()
+            if e[0] == "index":
+                return [{"k": "aset", "target": e, "op": tok.text[0] + "=", "value": ("one",), "line": line}]
             return [{"k": "assign", "target": _name(e, line), "op": tok.text[0] + "=", "value": ("one",),
                      "line": line}]
         if allow_end:
@@ -1803,10 +1876,31 @@ def _params(p: Parser, d: Dialect) -> list:
         if d.name in ("c", "cpp", "java", "csharp"):
             while p.at("const", "final"):
                 p.next()
-            typ = p.type_name()
+            typ = p.type_name(ptr_ok=True)
+            if d.name == "c" and p.at("**"):
+                raise ParseError("pointer to pointer parameter", p.peek().line)
+            if d.name == "c" and p.at("*"):                  # const T *xs: an array, read as a list
+                p.next()
+                while p.at("const", "restrict", "__restrict"):
+                    p.next()
+                if p.at("*", "**"):
+                    raise ParseError("pointer to pointer parameter", p.peek().line)
+                typ += "*"
             if p.at("*", "&", "["):
                 raise ParseError("pointer, reference or array parameter", p.peek().line)
             name = p.ident()
+            if d.name == "c" and p.at("[") and not typ.endswith("*"):     # T xs[] / T xs[n] / T xs[static n]
+                p.next()
+                while not p.at("]"):
+                    if p.peek().kind == "eof":
+                        raise ParseError("unterminated array parameter", p.peek().line)
+                    p.next()
+                p.expect("]")
+                if p.at("["):
+                    raise ParseError("multi-dimensional array parameter", p.peek().line)
+                typ += "*"
+            if p.at("["):
+                raise ParseError("pointer, reference or array parameter", p.peek().line)
             params.append((name, typ))
         elif d.name == "go":
             name = p.ident()
@@ -2005,14 +2099,197 @@ class Lowerer:
         self.externs: dict = {}
         self.cur_type: str | None = None
         self.signed_cast = 0
+        self.c_mode = d.name in ("c", "cpp")
+        self.ckinds: dict[str, tuple] = {}       # C: each int variable's (signed, bits)
+        self.cdefs: dict = {}                    # C: name -> FnDef of the file (parameter and result kinds)
+        self.ret_kind = None
+        self.celems: dict[str, tuple] = {}        # C: each array's element kind
+        self.params_seen: set[str] = set()
 
     def err(self, what: str):
         raise Unsupported(what, self.line)
+
+    # C's fixed-width integers: kinds are (signed, bits); every int-kinded value is kept inside its kind's range
+    def ckind_text(self, text: str | None):
+        if text is None:
+            return None
+        if text.startswith("std::"):
+            text = text[5:]
+        if text in _C_KINDS:
+            return _C_KINDS[text]
+        return (True, 64) if self.d.types.get(text) == INT else None
+
+    @staticmethod
+    def cpromote(k):
+        return (True, 32) if k is not None and k[1] < 32 else k
+
+    def cusual(self, a, b):
+        """C's usual arithmetic conversions on two int kinds (after promotion)."""
+        a, b = self.cpromote(a), self.cpromote(b)
+        if a is None or b is None:
+            return None
+        if a == b:
+            return a
+        if a[0] == b[0]:
+            return a if a[1] >= b[1] else b
+        u, sg = (a, b) if not a[0] else (b, a)
+        return u if u[1] >= sg[1] else sg
+
+    def ckind(self, n):
+        """The C integer kind of an expression node (None: not an integer)."""
+        kind = n[0]
+        if kind == "num":
+            v, suffix = n[1], n[2].lower()
+            raw = (n[3] if len(n) > 3 else str(v)).lower()
+            if isinstance(v, float) or "f" in suffix and not raw.startswith("0x"):
+                return None
+            based = raw.startswith("0x") or raw.startswith("0b") or (len(raw) > 1 and raw[0] == "0")
+            order = [(True, 32), (False, 32), (True, 64), (False, 64)] if based else [(True, 32), (True, 64)]
+            if "u" in suffix:
+                order = [(False, 32), (False, 64)]
+            if "l" in suffix:
+                order = [k for k in order if k[1] == 64]
+            for k in order:
+                lo, hi = (-(1 << (k[1] - 1)), (1 << (k[1] - 1)) - 1) if k[0] else (0, (1 << k[1]) - 1)
+                if lo <= v <= hi:
+                    return k
+            return (False, 64)
+        if kind in ("one", "bool"):
+            return (True, 32)
+        if kind == "cconv":
+            return n[1]
+        if kind == "name":
+            if n[1] in self.ckinds:
+                return self.ckinds[n[1]]
+            return (True, 64) if self.env.get(n[1]) == INT else None
+        if kind == "bin":
+            op = n[1]
+            if op in ("==", "!=", "<", "<=", ">", ">=", "&&", "||"):
+                return (True, 32)
+            if op in ("<<", ">>"):
+                return self.cpromote(self.ckind(n[2]))
+            return self.cusual(self.ckind(n[2]), self.ckind(n[3]))
+        if kind == "un":
+            return (True, 32) if n[1] == "!" else self.cpromote(self.ckind(n[2]))
+        if kind == "tern":
+            return self.cusual(self.ckind(n[2]), self.ckind(n[3]))
+        if kind == "cast":
+            return self.ckind_text(n[1])
+        if kind == "call":
+            f = self.cdefs.get(n[1])
+            if f is not None and n[1] not in self.env:
+                return self.ckind_text(f.ret)
+            ext = self.externs.get(n[1])
+            if ext is not None and ext.get("c_ret"):
+                return self.ckind_text(ext["c_ret"])
+        if kind == "index":
+            return self.celem_kind(n[1])
+        return (True, 64)
+
+    def celem_kind(self, arr_node):
+        if arr_node[0] == "name" and arr_node[1] in self.celems:
+            return self.celems[arr_node[1]]
+        return (True, 64)
+
+    def index(self, n):
+        """``xs[i]`` in C: GET (an index outside the list is an error in every target, as it is undefined in C)."""
+        arr, idx = n[1], n[2]
+        if arr[0] != "name" or arr[1] not in self.env or not self.env[arr[1]].startswith("list["):
+            self.err("indexing something other than an array parameter or local array")
+        i, ti = self.expr(idx)
+        if ti != INT:
+            self.err(f"array index of type {ti}")
+        et = self.env[arr[1]][5:-1]
+        e = ["GET", ["var", arr[1]], i]
+        k = self.celems.get(arr[1])
+        if et == INT and arr[1] in self.params_seen and k is not None and (k[1] < 32 or not k[0]):
+            e = self.cconv(e, (True, 64), k)     # the caller's elements, as the array's type holds them
+        return e, et
+
+    def array_decl(self, s: dict) -> list[dict]:
+        name = s["name"]
+        et = self.ir_type(s["type"])
+        if et not in (INT, FLOAT):
+            self.err(f"array of {s['type']} (lists hold int or float)")
+        k = self.ckind_text(s["type"]) if et == INT else None
+        init = s["init"] or []
+        if s["size"] is not None:
+            n, tn = self.expr(s["size"])
+            if tn != INT:
+                self.err("array size is not an int")
+            if n[0] == "int" and len(init) > n[1]:
+                self.err("more initialisers than elements")
+            if init and n[0] != "int":
+                self.err("initialised variable-length array")
+        else:
+            n = ["int", len(init)]
+        lt = f"list[{et}]"
+        if name in self.env and self.env[name] != lt:
+            self.err(f"variable {name!r} is {self.env[name]} and {lt} (rename one)")
+        self.declare(name, lt)
+        self.celems[name] = k
+        out = [{"k": "assign", "target": name, "value": ["LIST_NEW", n, _zero(et)]}]
+        for i, node in enumerate(init):
+            v, tv = self.expr(node)
+            if et == INT and tv == INT:
+                v = self.cconv(v, self.ckind(node), k)
+            out.append({"k": "set", "target": name, "index": ["int", i], "value": self.coerce(v, tv, et)})
+        return out
+
+    def array_set(self, s: dict) -> list[dict]:
+        tgt = s["target"]
+        arr = tgt[1]
+        if arr[0] != "name" or arr[1] not in self.env or not self.env[arr[1]].startswith("list["):
+            self.err("writing through something other than a local array")
+        name = arr[1]
+        if name in self.params_seen:
+            self.err(f"writes an element of the parameter {name!r} (output through a pointer is not lifted)")
+        et = self.env[name][5:-1]
+        i, ti = self.expr(tgt[2])
+        if ti != INT:
+            self.err(f"array index of type {ti}")
+        if s["op"] == "=":
+            v, tv = self.expr(s["value"])
+            node = s["value"]
+        else:
+            op = s["op"][:-1]
+            self.cur_type = et
+            node = ("bin", op, tgt, s["value"])
+            v, tv = self.binop(op, tgt, s["value"])
+        if et == INT and tv == INT:
+            v = self.cconv(v, self.ckind(node), self.celems.get(name))
+        if et == INT and tv == FLOAT:
+            self.err("a float stored into an int array")
+        return [{"k": "set", "target": name, "index": i, "value": self.coerce(v, tv, et)}]
+
+    def cconv(self, e, kfrom, kto):
+        """C's conversion of an int value of kind ``kfrom`` to kind ``kto``: reduced modulo 2^w unless it fits."""
+        if kto is None or kfrom is None or kto[1] <= 1 or kto == (True, 64):
+            return e
+        if kto[1] >= 64:
+            self.err(_C_U64)
+        if kfrom[1] <= 1:
+            return e
+        if kfrom[0] == kto[0] and kfrom[1] <= kto[1] or not kfrom[0] and kto[0] and kfrom[1] < kto[1]:
+            return e
+        w = kto[1]
+        if e[0] == "int":
+            v = e[1] & ((1 << w) - 1)
+            return ["int", v - (1 << w) if kto[0] and v >> (w - 1) else v]
+        return ["WRAPS" if kto[0] else "WRAPU", e, ["int", w]]
+
+    def cconv_node(self, e, node, kto):
+        return self.cconv(e, self.ckind(node), kto) if self.c_mode else e
 
     # types
     def ir_type(self, text: str | None) -> str | None:
         if text is None:
             return None
+        if text.endswith("*") and self.d.name == "c":       # a C array parameter: a list the function only reads
+            elem = self.ir_type(text[:-1])
+            if elem not in (INT, FLOAT):
+                self.err(f"array of {text[:-1]} (lists hold int or float)")
+            return f"list[{elem}]"
         t = self.d.types.get(text)
         if t is None and self.d.name in ("c", "cpp") and text.startswith("std::"):
             t = self.d.types.get(text[5:])
@@ -2053,6 +2330,20 @@ class Lowerer:
                 self.err("void parameter")
             params.append({"name": pname, "type": t})
             self.env[pname] = t
+        entry_wraps = []
+        self.params_seen = {p["name"] for p in params}
+        if self.c_mode:
+            for pname, ptext in fn.params:
+                if ptext and ptext.endswith("*"):
+                    self.celems[pname] = self.ckind_text(ptext[:-1])
+                k = self.ckind_text(ptext)
+                if k is None or self.env.get(pname) != INT:
+                    continue
+                self.ckinds[pname] = k
+                if k[1] < 32 or not k[0]:          # the caller's argument, converted as C converts it
+                    entry_wraps.append({"k": "assign", "target": pname,
+                                        "value": self.cconv(["var", pname], (True, 64), k)})
+            self.ret_kind = self.ckind_text(fn.ret)
         self.ret = self.ir_type(fn.ret) if fn.ret is not None else None
         if self.ret == VOID:
             self.err("a function without a result (void) is not lifted")
@@ -2064,7 +2355,7 @@ class Lowerer:
         body_src = list(fn.body or [])
         if self.d.implicit_return:
             body_src = _implicit_return(body_src)
-        body = self.block(body_src)
+        body = entry_wraps + self.block(body_src) if self.c_mode else self.block(body_src)
         if not _always_returns(body):
             self.err("a path can reach the end of the function without return")
         rts = self.return_types
@@ -2078,7 +2369,13 @@ class Lowerer:
             else:
                 self.err(f"return types disagree: {sorted(rts)}")
         body = _coerce_returns(body, self.ret, self)
-        return {"name": fn.name, "params": params, "returns": self.ret, "locals": dict(self.locals), "body": body}
+        out = {"name": fn.name, "params": params, "returns": self.ret, "locals": dict(self.locals), "body": body}
+        if any(t.startswith("list[") for t in [*self.locals.values(), *(p["type"] for p in params)]):
+            from .ir import check_lists
+            why = check_lists(out)
+            if why:
+                self.err(why[0])
+        return out
 
     # statements
     def block(self, stmts: list[dict]) -> list[dict]:
@@ -2125,6 +2422,10 @@ class Lowerer:
         k = s["k"]
         if k == "block":
             return self.block(s["body"])
+        if k == "adecl":
+            return self.array_decl(s)
+        if k == "aset":
+            return self.array_set(s)
         if k == "decl":
             name = s["name"]
             want = self.ir_type(s["type"]) if s.get("type") else None
@@ -2132,6 +2433,8 @@ class Lowerer:
                 if want is None:
                     self.err(f"declaration of {name!r} without a type or a value")
                 self.declare(name, want)
+                if self.c_mode and want == INT:
+                    self.ckinds[name] = self.ckind_text(s["type"])
                 return [{"k": "assign", "target": name, "value": _zero(want)}] if self.d.name not in ("c", "cpp") \
                     else []
             e, t = self.expr(s["value"])
@@ -2140,6 +2443,12 @@ class Lowerer:
             if self.widened.get(name) == FLOAT and want == INT:
                 want = FLOAT
             e = self.coerce(e, t, want, implicit_trunc=False)
+            if self.c_mode and want == INT:
+                k = self.ckind_text(s["type"]) if s.get("type") not in (None, "auto") else self.ckind(s["value"])
+                if t == INT:
+                    e = self.cconv(e, self.ckind(s["value"]), k)
+                if name not in self.env:
+                    self.ckinds[name] = k
             if name in self.env and name == _var_of(s["value"]) and self.env[name] == want:
                 return []                                     # let mut a = a;
             self.declare(name, want)
@@ -2156,12 +2465,16 @@ class Lowerer:
                     self.err(f"assignment to {name!r}, which is not a local (globals are not lifted)")
             if s["op"] == "=":
                 e, t = self.expr(s["value"])
+                if t == INT and self.env.get(name) == INT:
+                    e = self.cconv_node(e, s["value"], self.ckinds.get(name))
                 return [self.assign_to(name, e, t)]
             op = s["op"][:-1]
             if op in ("&&", "||"):
                 self.err(f"{s['op']}")
             self.cur_type = self.env.get(name)
             e, t = self.binop(op, ("name", name), s["value"])
+            if t == INT and self.env.get(name) == INT:
+                e = self.cconv_node(e, ("bin", op, ("name", name), s["value"]), self.ckinds.get(name))
             return [self.assign_to(name, e, t)]
         if k == "multi":
             value = s["value"]
@@ -2182,6 +2495,8 @@ class Lowerer:
             if s["value"] is None:
                 self.err("return without a value")
             e, t = self.expr(s["value"])
+            if self.c_mode and t == INT and self.ret == INT:
+                e = self.cconv(e, self.ckind(s["value"]), self.ret_kind)
             if self.ret is not None:
                 e = self.coerce(e, t, self.ret, implicit_trunc=self.d.name in ("c", "cpp"))
                 t = self.ret
@@ -2346,6 +2661,31 @@ class Lowerer:
         return [op, *exprs], rt
 
     def binop(self, op: str, a_node, b_node):
+        """C: the usual arithmetic conversions, and the wrap of an unsigned result (``_binop`` lowers the op)."""
+        if not self.c_mode or op in ("&&", "||"):
+            return self._binop(op, a_node, b_node)
+        ka, kb = self.ckind(a_node), self.ckind(b_node)
+        if ka is None or kb is None:
+            return self._binop(op, a_node, b_node)
+        if op in ("<<", ">>"):
+            k = self.cpromote(ka)
+            e, t = self._binop(op, a_node, b_node)
+            if not k[0] and k[1] >= 64:
+                self.err(_C_U64)
+            if op == "<<" and not k[0] and t == INT:
+                e = ["WRAPU", e, ["int", k[1]]]
+            return e, t
+        common = self.cusual(ka, kb)
+        if common[0]:
+            return self._binop(op, a_node, b_node)        # signed: exact (an overflow is undefined in C)
+        if common[1] >= 64:
+            self.err(_C_U64)
+        e, t = self._binop(op, ("cconv", common, a_node), ("cconv", common, b_node))
+        if op in ("+", "-", "*") and t == INT:
+            e = ["WRAPU", e, ["int", common[1]]]
+        return e, t
+
+    def _binop(self, op: str, a_node, b_node):
         d = self.d
         if op == "or" and d.name == "lua" and a_node[0] == "bin" and a_node[1] == "and":
             x, tx = self.expr(a_node[3])
@@ -2455,9 +2795,18 @@ class Lowerer:
 
     def expr(self, n):
         kind = n[0]
+        if kind == "cconv":
+            e, t = self.expr(n[2])
+            return (self.cconv(e, self.ckind(n[2]), n[1]) if t == INT else e), t
         if kind == "num":
             v, suffix = n[1], n[2]
             s = suffix.lower()
+            if self.c_mode and "u" in s and isinstance(v, int):
+                if self.ckind(n)[1] >= 64:
+                    self.err(f"literal {v}{suffix}: {_C_U64}")
+                return ["int", int(v)], INT
+            if self.c_mode and isinstance(v, int) and self.ckind(n) == (False, 64):
+                self.err(f"literal {n[3] if len(n) > 3 else v}: {_C_U64}")
             if s in ("u", "ul", "ull", "lu", "llu") or s.startswith("u") and self.d.name in ("rust", "zig"):
                 self.err(f"unsigned literal {v}{suffix}")
             if s in ("f",) and self.d.name in ("c", "cpp", "java", "csharp", "kotlin") or s == "f32":
@@ -2505,6 +2854,10 @@ class Lowerer:
                 e, t = self.expr(n[2])
                 if t == BOOL:
                     self.err("negating a bool")
+                if self.c_mode and t == INT and not (self.cpromote(self.ckind(n[2])) or (True,))[0]:
+                    k = self.cpromote(self.ckind(n[2]))
+                    neg = ["int", -e[1]] if e[0] == "int" else self.apply("NEG", [(e, t)])[0]
+                    return self.cconv(neg, (True, 64), k), t
                 if e[0] in ("int", "float"):
                     return [e[0], -e[1]], t
                 return self.apply("NEG", [(e, t)])
@@ -2524,6 +2877,9 @@ class Lowerer:
                 e, t = self.expr(n[2])
                 if t == FLOAT:
                     self.retype_int([(e, t)])
+                if self.c_mode and t == INT and not (self.cpromote(self.ckind(n[2])) or (True,))[0]:
+                    k = self.cpromote(self.ckind(n[2]))
+                    return self.cconv(self.apply("BIT_NOT", [(e, t)])[0], (True, 64), k), t
                 return self.apply("BIT_NOT", [(e, t)])
             self.err(f"unary {op}")
         if kind == "tern":
@@ -2545,6 +2901,8 @@ class Lowerer:
                 e, t = self.expr(n[2])
             finally:
                 self.signed_cast -= want == INT
+            if self.c_mode and want == INT and t == INT:
+                e = self.cconv(e, self.ckind(n[2]), self.ckind_text(n[1]))
             return self.cast(e, t, want)
         if kind == "ann":
             want = self.ir_type(n[1])
@@ -2552,6 +2910,8 @@ class Lowerer:
             if t != want:
                 self.err(f"type assertion {n[1]} on a {t}")
             return e, t
+        if kind == "index":
+            return self.index(n)
         if kind == "call":
             return self.call(n[1], n[2], n[3])
         if kind == "mcall":
@@ -2600,11 +2960,15 @@ class Lowerer:
             if len(args) != len(sig["params"]):
                 self.err(f"{path}() arity mismatch")
             fixed = []
-            for (e, t), want in zip(args, sig["params"]):
+            cdef = self.cdefs.get(path) if self.c_mode else None
+            for i, ((e, t), want) in enumerate(zip(args, sig["params"])):
                 if want is None:
                     want = t
                 if t != want and e[0] == "var" and e[1] in self.untyped_params and e[1] not in self.widened:
                     raise Widen(e[1], want)           # passed to a typed parameter: that is its type
+                if cdef is not None and t == INT and i < len(cdef.params) and \
+                        self.ckind_text(cdef.params[i][1]) == (True, 32):
+                    e = self.cconv(e, self.ckind(arg_nodes[i]), (True, 32))   # narrower params wrap on entry
                 fixed.append(self.coerce(e, t, want))
             ret = sig.get("returns")
             if ret is None:
@@ -2978,6 +3342,20 @@ def lift_source(source: str, ops: dict[str, OpSpec], lang: str, only: list[str] 
     return [lf for lf in results.values() if not only or lf.name in only]
 
 
+def param_range(lang: str, type_text: str):
+    """The values a parameter of this source type holds where the lift does not wrap them on entry (C: ``int`` and
+    ``int32_t``, and the elements of an ``int *`` array; narrower and unsigned ones are wrapped as C converts them):
+    (lo, hi), or None when every IR int is a faithful argument."""
+    if lang not in ("c", "cpp") or not type_text:
+        return None
+    t = type_text.rstrip("*").strip()
+    t = t[5:] if t.startswith("std::") else t
+    k = _C_KINDS.get(t)
+    if k is None or k[1] <= 1:
+        return None
+    return (-(1 << 31), (1 << 31) - 1) if k == (True, 32) else None
+
+
 def signatures(source: str, ops: dict[str, OpSpec], lang: str) -> dict[str, dict]:
     """Each function's declared signature {name: {"params": [type|None], "returns": type|None}} without lifting
     bodies (lift_project gives them to the other files of a project)."""
@@ -2991,6 +3369,8 @@ def signatures(source: str, ops: dict[str, OpSpec], lang: str) -> dict[str, dict
             out[f.name] = {"params": [low.ir_type(t) if t else (d.untyped if d.untyped in (INT, FLOAT) else INT)
                                       for _, t in f.params],
                            "returns": low.ir_type(f.ret) if f.ret else None}
+            if lang in ("c", "cpp"):
+                out[f.name]["c_ret"] = f.ret          # the result's C kind (an unsigned result keeps wrapping)
         except Unsupported:
             continue
     return out
@@ -2998,6 +3378,7 @@ def signatures(source: str, ops: dict[str, OpSpec], lang: str) -> dict[str, dict
 
 def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hints, externs=None) -> dict:
     results: dict[str, Lifted] = {}
+    cdefs = {f.name: f for f in fns if f.body is not None}
     for f in fns:
         if f.name in helper_names and f.name.startswith("cm_"):
             continue                          # codegen's own helpers: their calls lift to the op card
@@ -3011,6 +3392,7 @@ def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hint
         for _ in range(8 + 2 * len(f.params)):
             low = Lowerer(f, d, ops, sigs, patterns, widened, (param_hints or {}).get(f.name))
             low.externs = externs or {}
+            low.cdefs = cdefs
             try:
                 ir = low.lower()
                 sig = sigs.setdefault(f.name, {"params": [], "returns": None})
