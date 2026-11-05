@@ -854,14 +854,14 @@ def preserves_gcd(mapping: dict[str, Counter]) -> bool:
 
 
 # -- the check verify runs -------------------------------------------------------------------------------------------
-CHECK_REGISTRIES = ("godel", "godel_set", "op", "function", "algorithm")   # every registry ``check`` reads
-CHECK_CODE = ("godel", "numbering", "frontend_python", "ir")               # every engine ``check`` runs
+CHECK_REGISTRIES = ("godel", "godel_set", "op", "function", "algorithm", "physics_law")   # every registry ``check`` reads
+CHECK_CODE = ("godel", "numbering", "dimensions", "frontend_python", "ir")               # every engine ``check`` runs
 
 
 def check_key(ctx) -> str:
     """The key of exactly what ``check`` reads, so verify and the self-run skip it when nothing changed (GODEL_AUDIT
-    §6 step 1): each card's content hash (``kernel.canon.card_hash``, CM02) in the registries it reads and of the
-    provability method its numberings name; git's id of the committed ledger and the bytes of the current one (the
+    §6 step 1): each card's content hash (``kernel.canon.card_hash``, CM02) in the registries it reads (the physics
+    laws among them, whose dimension check it runs) and of the provability method its numberings name; git's id of the committed ledger and the bytes of the current one (the
     append-only check); and the source of the engines it runs, with the interpreter's version. ``check`` takes no
     seed (``numbering`` uses seed 0), so equal keys give equal results and any changed input gives a new key."""
     import hashlib
