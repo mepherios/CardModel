@@ -55,6 +55,7 @@ MODULE_SIZE = 100
 PACKAGE_SIZE = 100
 MAX_DEPTH = 8
 PACKAGE = "scalebench"
+CHILD_TIMEOUT_S = 4 * 3600                 # one size; 10⁶ takes tens of minutes
 STAGES = ("lift", "structure", "obligations", "reference")
 
 # kind -> weight; every kind but ``mutual`` (two functions) is one function
@@ -246,7 +247,11 @@ def _child(n: int, seed: int) -> dict:
     env = {**os.environ, "CARDMODEL_SELF": "0"}
     pkg_root = str(Path(__file__).resolve().parents[2])
     env["PYTHONPATH"] = pkg_root + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
-    proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
+    try:
+        proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env,
+                              timeout=CHILD_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return {"n": n, "seed": seed, "error": f"timed out after {CHILD_TIMEOUT_S} s"}
     if proc.returncode != 0:
         tail = (proc.stderr or proc.stdout).strip().splitlines()[-3:]
         return {"n": n, "seed": seed, "error": " | ".join(tail) or f"exit {proc.returncode}"}
