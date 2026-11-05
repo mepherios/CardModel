@@ -10,7 +10,8 @@
     "claude/heuristic-ptolemy-*",
     "claude/project-thread-*",
     "self-optimize/*",
-    "claude/arm-symbolic"
+    "claude/arm-symbolic",
+    "claude/arm-symbolic-loops"
   ],
   "category": "project",
   "docs": [
@@ -38,8 +39,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "d8ae063db3f21ac402388dc8e147e5fa56616062afcb3792a25de32cdb9b2347",
-    "version": "2.0.18",
+    "previous_content_hash": "b24beb68ca7ba18cecb1123589cbc49f73c5526d38729764798c2e3ba21b337e",
+    "version": "2.0.19",
     "version_bump_reason": "patch"
   },
   "metrics": [

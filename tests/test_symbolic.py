@@ -45,6 +45,24 @@ class Symbolic(unittest.TestCase):
         self.assertEqual(eval_expr(res["state"]["cpsr"], env, self.ctx.ops) >> 28, 0b0110)   # Z and C
         with self.assertRaises(SY.Unsupported):
             ex.run("ARM_ADD_imm")                               # the instruction word must be bound
+        # banked[] stores at the CPSR-mode index: guarded writes to every cell (MSR, S-bit with Rd=15)
+        self.assertGreaterEqual(r["counts"].get("pass", 0), 98, seed_note(self))
+        for name in ("ARM_MSR_imm", "ARM_MSR_reg", "ARM_BIC_imm", "ARM_MOV_rsr"):
+            self.assertEqual(r["cards"][name]["status"], "pass", (name, r["cards"][name], seed_note(self)))
+        # loops whose bounds fold under the bound word unroll; LDM/STM/PUSH/POP then stop at the bus (memory)
+        ex2 = SY.Executor(self.ctx, mod)
+        ex2.globals.append("bus_effect")
+        for name, op in (("ARM_LDM", 0xE8BD000F), ("ARM_STM", 0xE92D4010), ("THUMB_PUSH", 0xB51F),
+                         ("THUMB_POP", 0xBC0F), ("THUMB_LDMIA", 0xC80F), ("THUMB_STMIA", 0xC10F)):
+            ex2.run(name, {"op": op})
+        loop = {"k": "for_range", "var": "i", "start": ["int", 0], "stop": ["var", "regs0"], "step": ["int", 1],
+                "body": []}
+        with self.assertRaises(SY.Unsupported):                 # a truly symbolic bound stays unsupported
+            ex2.block([loop], {"g": {"regs0": ["var", "regs0"]}, "l": {}, "ret": None, "returned": False}, None)
+        ex2.block([{**loop, "stop": ["int", 3], "body": [{"k": "assign", "target": "n", "value": [
+            "ADD", ["var", "n"], ["var", "i"]]}]}], env := {"g": {}, "l": {"n": ["int", 0]}, "ret": None,
+                                                           "returned": False}, None)
+        self.assertEqual(env["l"]["n"], ["int", 3])
 
     def test_a_wrong_term_is_caught(self):
         r = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=["LR35902_80"])
