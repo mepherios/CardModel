@@ -9,8 +9,14 @@ that are not op cards become ``["FN", name, *args]`` (math functions).
   real      floats with the math module (sympy-style names accepted)
   fraction  exact rationals where possible, floats for transcendental calls
 
-Honest limits (L1): no complex numbers (``I``), no symbolic simplification;
-names outside the whitelist raise ``UnknownName`` (fail closed).
+A finite sum ``Sum(body, (i, lo, hi))`` (sympy's notation; a trailing ``.doit()`` is accepted and changes
+nothing) is the node ``["SUM", ["var", i], lo, hi, body]``: ``i`` is bound in ``body``, the bounds must be
+integers, and reversed bounds follow sympy (Karr's convention: ``Sum(f, (i, a, b)) = -Sum(f, (i, b+1, a-1))``
+when ``b < a - 1``), so a summation identity holds on every integer bound, as it does symbolically.
+
+Honest limits (L1): no complex numbers (``I``), no symbolic simplification; a sum is evaluated term by term,
+at most ``MAX_SUM_TERMS`` terms (bounded work, CM18); names outside the whitelist raise ``UnknownName``
+(fail closed).
 """
 from __future__ import annotations
 
@@ -35,6 +41,48 @@ FUNCS = {
     "isqrt": math.isqrt, "hypot": math.hypot, "erf": math.erf, "gamma": math.gamma,
     "Ne": lambda a, b: a != b, "Eq": lambda a, b: a == b,
 }
+
+
+def _fibonacci(n):
+    """F(n), exact (sympy's ``fibonacci``), for integers n >= 0."""
+    n = _whole(n, "fibonacci")
+    if n < 0:
+        raise ValueError("fibonacci of a negative number")
+    if n > 4096:
+        raise OverflowError("fibonacci index too large")
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+
+
+def _multiplicity(p, n):
+    """The largest k with p**k dividing n (sympy's ``multiplicity``; for p = 2 it is the 2-adic valuation)."""
+    p, n = _whole(p, "multiplicity"), abs(_whole(n, "multiplicity"))
+    if p < 2 or n == 0:
+        raise ValueError("multiplicity needs p >= 2 and n != 0")
+    k = 0
+    while n % p == 0:
+        n //= p
+        k += 1
+    return k
+
+
+def _whole(x, name):
+    if isinstance(x, Fraction) and x.denominator == 1:
+        return int(x)
+    if isinstance(x, float) and x.is_integer():
+        return int(x)
+    if isinstance(x, int):
+        return x
+    raise ValueError(f"{name} of a non-integer")
+
+
+FUNCS["fibonacci"] = _fibonacci
+FUNCS["multiplicity"] = _multiplicity
+EXACT_FUNCS = ("abs", "max", "min", "gcd", "lcm", "factorial", "comb", "mod", "floor", "ceil", "isqrt", "Ne", "Eq",
+               "fibonacci", "multiplicity")      # keep exact arguments in the int and fraction modes
+MAX_SUM_TERMS = 100_000
 CONSTS = {"pi": math.pi, "E": math.e, "e": math.e, "tau": math.tau, "oo": math.inf}
 
 
@@ -102,6 +150,15 @@ def _conv(n, pv):
         return e
     if isinstance(n, ast.IfExp):
         return ["IF_EXPR", _conv(n.test, pv), _conv(n.body, pv), _conv(n.orelse, pv)]
+    if isinstance(n, ast.Call) and not n.keywords and not n.args and isinstance(n.func, ast.Attribute) \
+            and n.func.attr == "doit" and isinstance(n.func.value, ast.Call) \
+            and ast.unparse(n.func.value.func) in ("Sum", "sympy.Sum", "sp.Sum"):
+        return _conv(n.func.value, pv)               # sympy's evaluate-now on a sum: our sums are evaluated anyway
+    if isinstance(n, ast.Call) and not n.keywords and ast.unparse(n.func) in ("Sum", "sympy.Sum", "sp.Sum") \
+            and len(n.args) == 2 and isinstance(n.args[1], ast.Tuple) and len(n.args[1].elts) == 3 \
+            and isinstance(n.args[1].elts[0], ast.Name):
+        i, lo, hi = n.args[1].elts
+        return ["SUM", ["var", i.id], _conv(lo, pv), _conv(hi, pv), _conv(n.args[0], pv)]
     if isinstance(n, ast.Call) and not n.keywords:
         name = ast.unparse(n.func)
         name = name.split(".")[-1] if name.startswith(("math.", "sympy.", "sp.")) else name
@@ -140,9 +197,20 @@ def resolve_ops(tree, ops):
     return [tree[0], *[resolve_ops(a, ops) for a in tree[1:]]]
 
 
+def sum_terms(lo, hi) -> tuple[int, range]:
+    """The sign and the index range of ``Sum(f, (i, lo, hi))`` under sympy's (Karr's) convention."""
+    lo, hi = _whole(lo, "a sum bound"), _whole(hi, "a sum bound")
+    sign, rng = (1, range(lo, hi + 1)) if hi >= lo - 1 else (-1, range(hi + 1, lo))
+    if len(rng) > MAX_SUM_TERMS:
+        raise EvalError(f"a sum of {len(rng)} terms (at most {MAX_SUM_TERMS})")
+    return sign, rng
+
+
 def variables(tree) -> set[str]:
     out: set[str] = set()
     if isinstance(tree, list):
+        if tree[0] == "SUM":
+            return variables(tree[2]) | variables(tree[3]) | (variables(tree[4]) - {tree[1][1]})
         if tree[0] == "var":
             out.add(tree[1])
         else:
@@ -177,13 +245,18 @@ def evaluate(tree, env: dict, mode: str = "int"):
         return Fraction(v) if mode in ("int", "fraction") and float(v).is_integer() else v
     if head == "const":
         return CONSTS[tree[1]]
+    if head == "SUM":
+        sign, rng = sum_terms(evaluate(tree[2], env, mode), evaluate(tree[3], env, mode))
+        total = 0
+        for k in rng:
+            total += evaluate(tree[4], {**env, tree[1][1]: k}, mode)
+        return sign * total
     args = [evaluate(a, env, mode) for a in tree[(2 if head == "FN" else 1):]]
     if head == "FN":
         fn = FUNCS.get(tree[1])
         if fn is None:
             raise UnknownName(f"function {tree[1]!r}")
-        if mode in ("int", "fraction") and tree[1] not in ("abs", "max", "min", "gcd", "lcm", "factorial", "comb",
-                                                           "mod", "floor", "ceil", "isqrt", "Ne", "Eq"):
+        if mode in ("int", "fraction") and tree[1] not in EXACT_FUNCS:
             args = [float(a) for a in args]
         return fn(*args)
     a = args[0] if args else None
@@ -249,6 +322,8 @@ def to_text(tree) -> str:
         return f"{tree[1]}({', '.join(to_text(a) for a in tree[2:])})"
     if isinstance(tree, list) and tree and tree[0] == "const":
         return tree[1]
+    if isinstance(tree, list) and tree and tree[0] == "SUM":
+        return f"Sum({to_text(tree[4])}, ({tree[1][1]}, {to_text(tree[2])}, {to_text(tree[3])}))"
     if isinstance(tree, list) and tree and tree[0] not in ("var", "int", "float", "bool"):
         head = tree[0]
         inner = [to_text(a) for a in tree[1:]]

@@ -6,7 +6,7 @@ from fractions import Fraction
 from helpers import SEED, model_ctx, seed_note
 
 from cardmodel.engines import redefs, witness
-from cardmodel.engines.exprs import FUNCS, evaluate, parse
+from cardmodel.engines.exprs import FUNCS, MAX_SUM_TERMS, evaluate, parse, to_text, variables
 from cardmodel.kernel.card import Card
 
 
@@ -173,6 +173,43 @@ class Redefinitions(unittest.TestCase):
             r = redefs.verify({"name": "planted", "source_form": src, "target_form": dst, "domain": dom},
                               seed=SEED, symbolic=False)
             self.assertEqual(r["verdict"], "refuted", (src, dst, seed_note(self)))
+
+    def test_sums_and_integer_functions_evaluate_exactly(self):
+        t = parse("Sum(2*i - 1, (i, 1, x)).doit()")
+        self.assertEqual(t[0], "SUM")
+        self.assertEqual(variables(t), {"x"})                      # i is bound: no sample point names it
+        self.assertEqual(parse(to_text(t)), t)
+        # sympy's (Karr's) convention for reversed bounds, so x**2 holds on every integer x, as symbolically
+        self.assertEqual([evaluate(t, {"x": x}) for x in (-3, -1, 0, 1, 2, 5)], [9, 1, 0, 1, 4, 25])
+        self.assertEqual(redefs.exact_value(t, {"x": Fraction(-4)}), 16)
+        with self.assertRaises(ArithmeticError):                   # bounded work (CM18)
+            evaluate(t, {"x": MAX_SUM_TERMS + 1})
+        self.assertEqual(parse("f(x).doit()")[0], "FN")            # only a sum's .doit() is dropped
+        self.assertEqual([evaluate(parse("fibonacci(n)"), {"n": n}) for n in (0, 1, 10, 70)],
+                         [0, 1, 55, 190392490709135])
+        self.assertEqual([evaluate(parse("multiplicity(2, n)"), {"n": n}) for n in (1, 24, -64)], [0, 3, 6])
+        for bad in ("fibonacci(-1)", "multiplicity(2, 0)", "fibonacci(1/2)"):
+            with self.assertRaises(ValueError, msg=bad):
+                evaluate(parse(bad), {})
+
+    def test_cards_that_named_unknown_functions_verify_and_planted_breaks_fail(self):
+        # These four were inconclusive (0 points in the domain): their forms named T, v_2 or a sympy Sum that
+        # the evaluator did not know, so every point raised UnknownName. With exact forms they verify, and a
+        # one-symbol change to either side is refuted, so the witness can fail (CM07).
+        ctx = model_ctx()
+        planted = {"collatz_step_binary": ("source_form", "n / 2 if n % 2 == 0 else 3*n + 1"),   # the plain step T
+                   "collatz_via_2adic_valuation": ("source_form", "n / 2"),                       # one T step
+                   "fibonacci_closed_form": ("target_form", "((1 + sqrt(5))/2)**(_n + 1) / sqrt(5) - "
+                                                            "((1 - sqrt(5))/2)**(_n + 1) / sqrt(5)"),   # F(n+1)
+                   "square_of_x__odd_sum": ("target_form", "Sum(2*i + 1, (i, 1, x))")}
+        for name, (side, wrong) in planted.items():
+            card = ctx.store.get(f"redefinition/{name}")
+            r = redefs.verify(card, seed=SEED, symbolic=False)
+            self.assertEqual(r["verdict"], "verified", (name, r, seed_note(self)))
+            self.assertGreaterEqual(r["valid_points"], redefs.MIN_VALID)
+            self.assertEqual(r["examples"]["disagree"] + r["examples"]["incomplete"], 0, name)
+            r = redefs.verify(dict(card, **{side: wrong}), seed=SEED, symbolic=False)
+            self.assertEqual(r["verdict"], "refuted", (name, seed_note(self)))
 
     def test_every_function_has_an_exact_or_precise_form(self):
         self.assertEqual(set(FUNCS) - redefs.EXACT_FUNCS, set(redefs.PRECISE))   # a new function needs one or the other

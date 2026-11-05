@@ -48,9 +48,9 @@
   "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
   "metadata": {
     "fx_c_narrowed": true,
-    "previous_content_hash": "06b20ce61dd9afc05e60d60ac7b8af894bae8a0d98f1b7aefd4a64d4088ea4a3",
-    "version": "1.1.0",
-    "version_bump_reason": "minor"
+    "previous_content_hash": "de5376eb8a56db676e3c5a35b4dba4b67c3325797a9bb78c987ea3f2e8b6f2ac",
+    "version": "1.1.1",
+    "version_bump_reason": "patch"
   },
   "name": "fibonacci_closed_form",
   "pheros_path": "redefinition/fibonacci_closed_form",
@@ -64,7 +64,7 @@
   "proof_ref": "axiomatic:binet-formula-derived-from-characteristic-polynomial-x^2=x+1",
   "provenance": "derived_from_card",
   "source_form": "fibonacci(_n)",
-  "status": "suspect",
+  "status": "healthy",
   "tags": [
     "binet",
     "closed-form",
@@ -74,18 +74,17 @@
   ],
   "target_form": "((1 + sqrt(5))/2)**_n / sqrt(5) - ((1 - sqrt(5))/2)**_n / sqrt(5)",
   "verification": {
-    "date": "2026-10-21",
+    "date": "2026-11-05",
     "numeric": {
       "examples": {
-        "agree": 0,
+        "agree": 5,
         "disagree": 0,
-        "incomplete": 5,
+        "incomplete": 0,
         "total": 5
       },
-      "seed": 1210246382,
-      "symbolic": "not_simplified_to_zero",
-      "valid_points": 0,
-      "verdict": "inconclusive"
+      "seed": 4072723141,
+      "valid_points": 40,
+      "verdict": "verified"
     }
   },
   "witness_kind": "axiomatic"
