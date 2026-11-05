@@ -123,12 +123,13 @@ The same cycle runs on GitHub's runners, with every target language's toolchain 
 (`.github/actions/toolchains`, which uses `tools/install_toolchains.sh` for Lua 5.4 and the Lean pinned in
 `formal/lean-toolchain`).
 
-* **CI** (`.github/workflows/ci.yml`, every push and pull request): `verify --quick` on the oldest and newest
-  supported Python; then, with every toolchain, `tools/require_toolchains.py` (every codegen language must be
+* **CI** (`.github/workflows/ci.yml`, pull requests, pushes to main and on demand): `verify --quick` on the
+  oldest and newest supported Python; then, once a pull request is ready for review (drafts skip it), with every
+  toolchain, `tools/require_toolchains.py` (every codegen language must be
   runnable, so no check passes because a language was skipped), `docs --check`, the full `verify`,
   `translate examples/algorithms/algos.py`, the `examples/lang` programs and the unit suite with
   `CARDMODEL_SLOW=1`. CI sets `CARDMODEL_SELF=0`: it checks the tracked cards only.
-* **The scheduled cycle** (`.github/workflows/self-optimize.yml`, daily and on demand): `self run --force`, then
+* **The scheduled cycle** (`.github/workflows/self-optimize.yml`, weekly on Mondays and on demand): `self run --force`, then
   `self adopt`, `docs`, `cover --write COVERAGE.md`. When `cards/` changed and the adopted cards pass `verify`,
   `docs --check` and the unit suite, it opens (or updates) one pull request from the branch
   `self-optimize/cycle` with the cycle's report as its body. Merging it is a person's decision. The program
