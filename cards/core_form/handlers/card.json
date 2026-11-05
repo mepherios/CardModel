@@ -1,0 +1,26 @@
+{
+  "category": "core_form",
+  "covers": [
+    "exceptions (raise/try)",
+    "early return from inside",
+    "generators/yield",
+    "async/await"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "handlers",
+  "order": 8,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "statements": [
+      "raise",
+      "try"
+    ]
+  },
+  "statement": "Control as effects: one handler construct for non-local exits.",
+  "tier": 0
+}

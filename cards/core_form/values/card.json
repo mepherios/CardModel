@@ -1,0 +1,35 @@
+{
+  "category": "core_form",
+  "covers": [
+    "literals",
+    "arithmetic",
+    "comparison",
+    "fixed-width integers"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "values",
+  "order": 1,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "ops": [
+      "ADD",
+      "MUL",
+      "CMP_LT",
+      "WRAPU"
+    ],
+    "types": [
+      "int",
+      "float",
+      "bool",
+      "u32",
+      "f32"
+    ]
+  },
+  "statement": "Values of sorts: unbounded integers, bit-vectors of a width, floats, booleans.",
+  "tier": 0
+}

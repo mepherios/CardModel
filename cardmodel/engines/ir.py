@@ -71,6 +71,8 @@ FIXED = (*FIXED_INTS, "f32")    # the subsorts of engines/sorts.py (u8..i32 <= i
 TYPES = ("int", "float", "bool", "str", *FIXED, *LIST_TYPES)
 ELEMS = ("u8", "int")
 NESTED = ("then", "else", "body", "default")
+# the statement kinds the interpreter executes (Interpreter._block); tests/test_compiler_goals.py keeps this exact
+STATEMENTS = ("assign", "return", "store", "set", "do", "switch", "if", "while", "for_range", "break", "continue")
 
 
 class IRError(Exception):

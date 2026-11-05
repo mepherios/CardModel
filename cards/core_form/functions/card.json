@@ -1,0 +1,28 @@
+{
+  "category": "core_form",
+  "covers": [
+    "functions",
+    "procedures",
+    "methods without dispatch",
+    "recursion"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "functions",
+  "order": 3,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "special": [
+      "CALL"
+    ],
+    "statements": [
+      "return"
+    ]
+  },
+  "statement": "First-order functions, calls and recursion.",
+  "tier": 0
+}

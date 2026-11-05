@@ -1,0 +1,29 @@
+{
+  "category": "core_form",
+  "covers": [
+    "I/O",
+    "clock",
+    "syscalls",
+    "MMIO",
+    "foreign code"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boundary",
+  "order": 9,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "modules": [
+      "cardmodel.engines.opaque"
+    ],
+    "special": [
+      "CALL"
+    ]
+  },
+  "statement": "Effects at the boundary: a call the model does not lift, made to the real implementation and witnessed (opaque boundary cards, CM21, CM34).",
+  "tier": 0
+}

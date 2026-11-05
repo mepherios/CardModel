@@ -1,0 +1,6 @@
+{
+  "defined_by": "cardmodel",
+  "description": "The core of programming (docs/GENERAL_COMPILER.md §2): one card per construct every language desugars into, naming what the IR must have for it.",
+  "name": "core_form",
+  "tier": 0
+}

@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "doors_witnessed",
+  "name": "G_C8_doors_witnessed",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "docs/GENERAL_COMPILER.md §6 (the owner's goal of 2026-11-05)"
+  },
+  "statement": "Instruction sets the model reads code through (CPU ISAs now; LLVM IR and CPython bytecode next), counted when every instruction card agrees with its bench in the latest verify. Each door covers every language that compiles to it (docs/GENERAL_COMPILER.md §3).",
+  "target": 4,
+  "tier": 0
+}

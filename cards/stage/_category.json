@@ -8,6 +8,7 @@
     "cardmodel/engines/capabilities.py": "the smoke checks of the core (CM37) call the engines, the pipeline among them, from `verify` and the self-run; a check is not a step of the path it checks",
     "cardmodel/engines/codefacts.py": "facts about a whole source tree for `observe` and `learn` (which constructs occur where): a corpus reading, not a transformation of one function",
     "cardmodel/engines/codes.py": "the positional and arithmetic codes of whole Gödel sets (`cardmodel godel`): bookkeeping of the ledger, read by the content stage through godel.py",
+    "cardmodel/engines/compiler_goals.py": "the general compiler's goal metrics (G_C6-G_C8): it reads the IR's tables, the store and a stdlib sweep for `cover`; it measures the pipeline, it is no step of one input's path",
     "cardmodel/engines/conformance.py": "the op x language matrix (CM17) measures the language cards themselves over every op; the targets stages measure one function's forms",
     "cardmodel/engines/coverage.py": "the goals' metrics read from the latest verify and self-run; it reads the pipeline's coverage, it is not a stage of it",
     "cardmodel/engines/difficulty.py": "difficulty of a whole card set for the self-run's choice of work; no step of one input's path",

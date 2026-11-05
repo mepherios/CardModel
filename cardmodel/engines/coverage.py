@@ -137,6 +137,9 @@ def machines(ctx: Ctx, secs: dict) -> dict:
 
 
 def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
+    if name in ("core_forms_in_ir", "stdlib_lift_closed_rate", "doors_witnessed"):
+        from . import compiler_goals as CG
+        return CG.doors_witnessed(secs) if name == "doors_witnessed" else getattr(CG, name)(ctx)
     if name == "godel_impure":
         from .pipeline import godel_impure
         return godel_impure()

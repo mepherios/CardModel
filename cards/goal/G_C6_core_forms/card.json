@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "core_forms_in_ir",
+  "name": "G_C6_core_forms",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "docs/GENERAL_COMPILER.md §6 (the owner's goal of 2026-11-05)"
+  },
+  "statement": "The core of programming in the IR: core_form cards (values, binding, functions, control, memory, records, closures, handlers, boundary, concurrency) whose every required type, form, op and statement the IR has (engines/compiler_goals.py). Every language is learned as a map into this core, not function by function (docs/GENERAL_COMPILER.md §2).",
+  "target": 10,
+  "tier": 0
+}

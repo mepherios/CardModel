@@ -1,0 +1,28 @@
+{
+  "category": "core_form",
+  "covers": [
+    "threads",
+    "async runtimes",
+    "drivers",
+    "two CPUs"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "concurrency",
+  "order": 10,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "ops": [
+      "ATOMIC_CAS"
+    ],
+    "special": [
+      "SPAWN"
+    ]
+  },
+  "statement": "Threads, atomics and interrupts.",
+  "tier": 0
+}

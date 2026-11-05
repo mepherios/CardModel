@@ -1,0 +1,28 @@
+{
+  "category": "core_form",
+  "covers": [
+    "lambdas",
+    "callbacks",
+    "objects (a record of closures)",
+    "dynamic dispatch",
+    "iterators",
+    "nested defs"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "closures",
+  "order": 7,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "special": [
+      "CLOSURE",
+      "CALL_INDIRECT"
+    ]
+  },
+  "statement": "Functions as values: a function with its captured variables, called indirectly.",
+  "tier": 0
+}

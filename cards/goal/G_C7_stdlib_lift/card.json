@@ -1,0 +1,17 @@
+{
+  "axis": "computation",
+  "category": "goal",
+  "direction": "higher",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "stdlib_lift_closed_rate",
+  "name": "G_C7_stdlib_lift",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "docs/GENERAL_COMPILER.md §6 (the owner's goal of 2026-11-05)"
+  },
+  "statement": "Share of the Python standard library's functions (tests, idlelib and site-packages excluded) that lift into the card IR with no gap (lift-sweep, engines/compiler_goals.py). It rises by closing core constructs, each of which unblocks every function that uses it.",
+  "target": 0.9,
+  "tier": 0
+}

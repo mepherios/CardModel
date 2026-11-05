@@ -107,6 +107,9 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_C3_forms_witnessed` | computation | runnable op forms agreeing with their reference on seeded inputs | = 1.0 |
 | `G_C4_redefinitions_verified` | computation | executable redefinitions verified numerically (or proved with sympy) | ≥ 111 |
 | `G_C5_functions_translated` | computation | function cards whose forms agree in ≥ 3 implementations | ≥ 20 |
+| `G_C6_core_forms` | computation | core constructs (of the ten `core_form` cards) the IR has: every required type, form, op and statement present | = 10 |
+| `G_C7_stdlib_lift` | computation | share of the Python standard library's functions that lift with no gap (`lift-sweep`, tests excluded) | ≥ 0.9 |
+| `G_C8_doors_witnessed` | computation | instruction sets code is read through (CPU ISAs, then LLVM IR and CPython bytecode) with every card agreeing with its bench | ≥ 4 |
 | `G_U1_closure` | understanding | unresolved `depends_on` references (L45) | = 0 |
 | `G_U2_rules_witnessed` | understanding | rewrite rules with a passing numeric witness | ≥ 12 |
 | `G_U3_named_fraction` | understanding | named-card fraction of the model's own code (`cardmodel/`), newest observation of it (hub card_coverage) | ≥ 0.6 |
@@ -185,9 +188,11 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 
 ## Non-goals (and why)
 
-* **A general compiler for arbitrary Python.** The IR covers a verified subset: integer, float and bool functions with
-  control flow. Anything outside it is reported construct by construct, never pasted through (Pheros v_transpile's
-  `raw` nodes made "translated" ambiguous).
+* **Understanding without evidence.** The goal is a general compiler for anything computational (G_C6–G_C8,
+  docs/GENERAL_COMPILER.md): every language learned once as a map into the core of programming, never function by
+  function. What stays out is claiming it: every lifted function is witnessed against its own toolchain, code that
+  reflects on itself (`eval`, attributes by computed name) or is foreign stays an opaque boundary, and deciding
+  every property of arbitrary code is impossible (Rice's theorem), so understanding is tiered (CM46).
 * **Third-party dependencies.** Python's standard library and the host's own toolchains only. `sympy` and
   `cryptography` are optional capabilities that are probed when present and never required.
 * **Editing user source files.** Rewrites are suggestions with evidence (hub L3: surgical edits are a human or agent

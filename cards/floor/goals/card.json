@@ -96,6 +96,21 @@
       "metric": "functions_translated",
       "target": 20
     },
+    "G_C6_core_forms": {
+      "direction": "higher",
+      "metric": "core_forms_in_ir",
+      "target": 10
+    },
+    "G_C7_stdlib_lift": {
+      "direction": "higher",
+      "metric": "stdlib_lift_closed_rate",
+      "target": 0.9
+    },
+    "G_C8_doors_witnessed": {
+      "direction": "higher",
+      "metric": "doors_witnessed",
+      "target": 4
+    },
     "G_D1_design_laws": {
       "direction": "lower",
       "metric": "design_laws_failing",
@@ -284,8 +299,8 @@
   },
   "history": [],
   "metadata": {
-    "previous_content_hash": "1ccb196ade83a4f88687881b596ede4806f00baafb8bc3e7265cd98450c3026c",
-    "version": "1.0.5",
+    "previous_content_hash": "7774c21f67a50773bfa34b7dbdb983532ccbd738eca02fc8a5ed0e411a60cf61",
+    "version": "1.0.6",
     "version_bump_reason": "patch"
   },
   "name": "goals",

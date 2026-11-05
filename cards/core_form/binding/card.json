@@ -1,0 +1,27 @@
+{
+  "category": "core_form",
+  "covers": [
+    "variables",
+    "let",
+    "assignment"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "binding",
+  "order": 2,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "leaves": [
+      "var"
+    ],
+    "statements": [
+      "assign"
+    ]
+  },
+  "statement": "Names bound to values; assignment is rebinding (SSA's values).",
+  "tier": 0
+}

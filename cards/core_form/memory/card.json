@@ -1,0 +1,31 @@
+{
+  "category": "core_form",
+  "covers": [
+    "pointers",
+    "arrays",
+    "mutable objects",
+    "the heap"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "memory",
+  "order": 5,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "special": [
+      "LOAD"
+    ],
+    "statements": [
+      "store"
+    ],
+    "types": [
+      "ref"
+    ]
+  },
+  "statement": "Addresses, load and store over an array sort, with references that alias.",
+  "tier": 0
+}

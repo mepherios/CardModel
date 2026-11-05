@@ -1,0 +1,35 @@
+{
+  "category": "core_form",
+  "covers": [
+    "if",
+    "while",
+    "for",
+    "switch",
+    "break",
+    "continue"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "control",
+  "order": 4,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "special": [
+      "IF_EXPR"
+    ],
+    "statements": [
+      "if",
+      "while",
+      "for_range",
+      "switch",
+      "break",
+      "continue"
+    ]
+  },
+  "statement": "Branches, and loops as fixpoints.",
+  "tier": 0
+}

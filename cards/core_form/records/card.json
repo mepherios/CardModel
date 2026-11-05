@@ -1,0 +1,28 @@
+{
+  "category": "core_form",
+  "covers": [
+    "structs",
+    "class fields",
+    "enums",
+    "None/Option",
+    "tagged unions",
+    "argument records (varargs, keywords)"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "records",
+  "order": 6,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_core_forms.py"
+  },
+  "requires": {
+    "types": [
+      "record",
+      "variant"
+    ]
+  },
+  "statement": "Products and sums of sorts: tuples, records, variants.",
+  "tier": 0
+}

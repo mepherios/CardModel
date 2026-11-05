@@ -235,3 +235,4 @@ command runs the test suite.
 | [docs/SCALING_NEXT.md](docs/SCALING_NEXT.md) | proposal: the next scalability options after the first scale measurements |
 | [docs/UNIVERSAL_UNDERSTANDER.md](docs/UNIVERSAL_UNDERSTANDER.md) | proposal: learning any framework as a mathematical object |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | task-oriented recipes that work on main, each command measured on 2026-11-05 |
+| [docs/GENERAL_COMPILER.md](docs/GENERAL_COMPILER.md) | the owner's goal of 2026-11-05: one compiler for anything computational; the core of programming (ten constructs every language desugars into), the doors code comes in through (LLVM IR, VM bytecode, machine code), the goals G_C6–G_C8 and the plan |
