@@ -625,8 +625,9 @@ shell (browser page, headless runs, saves, the RTC); the ROM survey; a DS machin
 reports its coverage.
 
 **Partial (third build):** the PPU is a scanline renderer and the APU point-sampled; DMG compatibility mode has the
-boot ROM's default palette only (not its per-title ones); MMM01, MBC6/7, HuC1/3, TAMA5, the camera and unlicensed
-multicart mappers are missing; the hardware test suites (Blargg, mooneye, acid2) all pass except what is skipped:
+boot ROM's default palette only (not its per-title ones); MMM01, MBC6, HuC1, TAMA5 and unlicensed multicart
+mappers are missing (MBC7, HuC3, the camera, Wisdom Tree and Sachen are cards; their tilt, sensor and infrared
+are stand-ins, docs/MACHINES.md section 8); the hardware test suites (Blargg, mooneye, acid2) all pass except what is skipped:
 tests for other hardware revisions and one Blargg single that overflows its own log (docs/MACHINES.md section 2);
 the DS has no graphics, sound, SPI devices, RTC or Wi-Fi, and only its ARM-state ARM9 code is lifted (COVERAGE.md
 has the numbers).
@@ -694,8 +695,10 @@ with no `sorry` (`cardmodel verify --only formal`). Beyond that:
      other hardware revisions (dmg0, mgb, sgb, cgb0, agb) or not self-checking. Next there: the boot ROM's
      per-title compatibility palettes for Nintendo's DMG games, as card data (Pan Docs documents how they are
      chosen), if colourised DMG games are wanted.
-   * Close the survey's remaining failures (`cardmodel machine survey` lists them): the missing bank controllers
-     (MBC7, HuC3, camera) are cards to add; the static and blank ones need a trace (the gameboy machine card
+   * Close the survey's remaining failures (`cardmodel machine survey` lists them): the bank controllers MBC7,
+     HuC3 and the camera are cards (`hardware/gb_cartridge`; tests/test_gb_mappers.py runs them on assembled
+     cartridges in the C, Python and reference-interpreter engines); what is left there is confirming them on the
+     real cartridges. The static and blank ones need a trace (the gameboy machine card
      exports `step` and `peek`: `gb.GameBoy(ctx, rom).m.call("step")`, `.m.call("peek", addr)`).
    * The DS, in the order its coverage report asks for it: SPI devices (firmware user settings, touchscreen,
      power), RTC, sound channel status, VRAM banks and the 2D engines (a first picture), then 3D. ARM9 blocks are
