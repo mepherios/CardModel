@@ -19,7 +19,8 @@ Supported subset (everything else is reported, never pasted through):
 A call to a function that did not lift is not a failure of the caller (SCALING.md §3.3, "partial, not
 poisoned"): the callee becomes an *opaque boundary* (``Lifted.boundary``: its signature, its cause, the
 Python callable that implements it) and the caller lifts with that call edge recorded as a gap
-(``Lifted.partial``, ``Lifted.opaque``, ``Lifted.gaps``; close_calls). A partial function is never
+(``Lifted.partial``; ``Lifted.opaque`` names each edge's call line and the boundary card's identity
+hash, egraph.semantic_hash; close_calls). A partial function is never
 ``ok``: no target can run it, so translate, improve and the matrix keep skipping it; its IR runs only in
 the reference interpreter with each opaque call made to the original Python function (engines/opaque.py,
 the witness). A callee is a boundary only when callers can be typed against it: a declared (or lifted)
@@ -80,7 +81,7 @@ class Lifted:
     call_lines: dict = field(default_factory=dict)   # callee -> line of its first call here
     boundary: dict | None = None    # not ok: the opaque boundary card callers may call through (close_calls)
     partial: bool = False           # the body lifted, but it reaches an opaque boundary: witness only, no target
-    opaque: dict = field(default_factory=dict)       # partial: direct gap edges, callee -> call line
+    opaque: dict = field(default_factory=dict)       # partial: direct gap edges, callee -> {line, id of its card}
 
 
 def _ann_type(node) -> str | None:
@@ -825,10 +826,17 @@ def boundary_card(lf) -> dict | None:
         params = [dict(p) for p in lf.ir["params"]]
     else:
         params = [{"name": n, "type": t} for n, t in zip(names, sig["params"])]
-    return {"name": getattr(lf, "qual", None) or lf.name, "category": "opaque_boundary", "params": params,
+    from .egraph import semantic_hash
+    qual = getattr(lf, "qual", None) or lf.name
+    # the permanent name is the core's identity hash (egraph.semantic_hash) of the boundary's own term: what it is
+    # called, what callers are typed against, and the source text that implements it. It has no canonical term, so
+    # it has no Gödel content: its only reading is syntax (GODEL_TARGET F4), which the card says.
+    ident = semantic_hash(["OPAQUE", qual, [p["type"] for p in params], returns, lf.source])
+    return {"name": qual, "category": "opaque_boundary", "id": ident, "params": params,
             "returns": returns, "cause": lf.reasons[0] if lf.reasons else "unknown", "line": lf.lineno,
             "host": host, "module": getattr(lf, "host_module", None),
-            "body_lifted": lf.ir is not None,
+            "body_lifted": lf.ir is not None, "content": None,
+            "content_read_from": "syntax: no canonical term (F4); the identity hashes the signature and source",
             "targets": "none: only the original Python function implements it"}
 
 
@@ -887,7 +895,7 @@ def close_calls(results: dict, known_ok=lambda name: False) -> None:
             c = results[caller]
             if c.ok or getattr(c, "partial", False):
                 line = (getattr(c, "call_lines", None) or {}).get(name)
-                c.opaque[name] = line
+                c.opaque[name] = {"line": line, "id": lf.boundary["id"]}
                 c.reasons.append(f"{f'line {line}: ' if line else ''}calls {name}, an opaque boundary "
                                  f"({lf.boundary['cause']})")
                 if c.ok:

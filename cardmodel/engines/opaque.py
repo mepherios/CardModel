@@ -17,6 +17,11 @@ Python callable that implements it), and its callers lift as ``partial`` with th
   not exercised by the inputs, and the status is ``unexercised``, not ``pass`` (CM07: a witness that cannot fail
   is not a witness).
 
+Gödel model (GODEL_PURITY rule 3): whether a callee lifts and what an opaque call returns are questions about
+values, answered by running the op cards' semantics and the original function, never from content. A boundary's
+permanent name is the core's identity hash (frontend_python.boundary_card, egraph.semantic_hash); it has no
+canonical term and so no Gödel content (its reading is syntax, F4).
+
 Honest limits (L1): the witness executes the original functions, the boundaries included, so it inherits their
 effects; it is run only on request (lift, lift-sweep and observe never call the host). :func:`witness_lifted`
 builds the namespace from the functions' own sources and the module's constants, as translate's reference does,
@@ -140,7 +145,7 @@ def witness(ctx: Ctx, module: dict, host: dict, ref, samples: int = 24, seed: in
                 if not ok or not V.same(r["out"], got):
                     exercised = True
                     break
-        boundaries[name] = {"calls": calls[name], "exercised": exercised, "cause": b.get("cause"),
+        boundaries[name] = {"id": b.get("id"), "calls": calls[name], "exercised": exercised, "cause": b.get("cause"),
                             "line": b.get("line")}
     if mismatch:
         status = "fail"

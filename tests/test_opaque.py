@@ -61,14 +61,20 @@ class SingleFile(unittest.TestCase):
         self.assertEqual(card["returns"], "int")
         self.assertIn("Try", card["cause"])
         self.assertEqual(card["host"], "safe_div")
+        # a permanent name through the core's identity hash; no Gödel content (no canonical term: syntax, F4)
+        from cardmodel.engines.egraph import semantic_hash
+        self.assertEqual(card["id"], semantic_hash(["OPAQUE", "safe_div", ["int", "int"], "int", b.source]))
+        self.assertIsNone(card["content"])
+        again = {lf.name: lf for lf in lift_source(CALLEE + CALLERS, self.ctx.ops)}["safe_div"].boundary
+        self.assertEqual(again["id"], card["id"])
 
     def test_a_caller_lifts_with_the_edge_recorded_as_a_gap(self):
         lf = self.lifted["mean_step"]
         self.assertIsNotNone(lf.ir)
         self.assertTrue(lf.partial)
         self.assertFalse(lf.ok, "a partial function is never ok: no target can run it")
-        self.assertEqual(lf.opaque, {"safe_div": CALLERS.splitlines().index(
-            "    return safe_div(x * 3, y - 2) + x") + 1 + CALLEE.count("\n")})
+        line = CALLERS.splitlines().index("    return safe_div(x * 3, y - 2) + x") + 1 + CALLEE.count("\n")
+        self.assertEqual(lf.opaque, {"safe_div": {"line": line, "id": self.lifted["safe_div"].boundary["id"]}})
         self.assertIn("an opaque boundary", lf.reasons[0])
         # the caller of a partial function is partial through it, with no gap of its own
         up = self.lifted["twice"]
