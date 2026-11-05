@@ -148,11 +148,21 @@
   "frontend": "cardmodel.engines.frontend_python",
   "int_bits": null,
   "metadata": {
-    "previous_content_hash": "efc199a61a5db13f697b399e80fd6e820a5a663786b63d4f71200981d574b330",
-    "version": "1.1.2",
-    "version_bump_reason": "patch"
+    "previous_content_hash": "eaec3d88962461a771cbabd118702fa35b2660cc858056a0fca7bb03f14990e2",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
   },
   "name": "python",
+  "numeric": {
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "off",
+      "reassociate": false,
+      "strict": true
+    },
+    "float_text": "roundtrip",
+    "source": "the reference M: each op is one correctly rounded binary64 operation; repr() round-trips"
+  },
   "probe": {
     "kind": "executable",
     "name": "python3",

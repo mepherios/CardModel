@@ -181,11 +181,28 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "3bdf445cc50e5ceeb17090d489ac024899dbf4cfd8d0ad589847d443f1c351d9",
-    "version": "1.0.4",
-    "version_bump_reason": "patch"
+    "previous_content_hash": "428ff99481b3edfdd1a509ce4b7f79086faaa0bac9b04bae404af9a5c34353fd",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "go",
+  "numeric": {
+    "contract_isa": [
+      "aarch64",
+      "arm64",
+      "ppc64le",
+      "s390x",
+      "riscv64"
+    ],
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "fast",
+      "reassociate": false,
+      "strict": true
+    },
+    "float_text": "roundtrip",
+    "source": "the Go spec allows fusing x*y + z ('An implementation may combine multiple floating-point operations into a single fused operation'); gc fuses on arm64, ppc64le, s390x and riscv64, not on amd64 below GOAMD64=v3; '%v' prints the shortest round-trip text"
+  },
   "probe": {
     "kind": "executable",
     "name": "go",

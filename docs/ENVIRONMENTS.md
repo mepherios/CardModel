@@ -364,22 +364,22 @@ and are the first four probes of E23's suite; they will become cards when E21's 
 | E3 memory consistency | sampled with a seeded scheduler | — | ARM64 rows (weak ordering) | the `memory_order` law |
 | E4 host side | obligations statically checkable once T_dev exists | fences, barriers, layouts witnessed | Metal's rows | T_dev's trace model |
 | E5 watchdogs | `step_budget` as today | — | measured on macOS and iPadOS | per-device constants |
-| E6 hierarchy | measured (§4); the chase on the environment card since #44 (V-A) | — | Apple Silicon's levels | the cache model (bounded tier) |
+| E6 hierarchy | measured (§4) | — | Apple Silicon's levels | the cache model (bounded tier) |
 | E7 host–device transfer | — | not meaningful on a CPU model | unified memory measured | the break-even and roofline theorems |
 | E8 layout, alignment | witnessed for the CPU | `std140`, offset alignment witnessed | — | the layout function per sort |
 | E9 address spaces | — | witnessed | — | waits for MATH_CORE's memory sort |
 | E10 residency | — | — | measured | declared |
 | E11 f16, bf16 | f16 conversion witnessed (§4); bf16 by exact `eval` | f16 arithmetic witnessed | — | the series with the fixed-width work |
-| E12 contraction, ULP bounds | contraction witnessed (§4); `fp_contract` law and measured numeric models in #57 (V-B, open) | per-op ULP measured against M | Metal's fast-math defaults measured | the numeric-model card |
-| E13 denormals | witnessed (§4); `denormal_flush` law and measured FTZ/DAZ in #57 (V-B, open) | the device's FTZ flags witnessed | — | the three laws |
-| E14 reduction order | lane-count dependence witnessed (§4); `reduction_order` law in #57 (V-B, open) | atomic order sampled | — | the reduction op cards |
+| E12 contraction, ULP bounds | contraction witnessed (§4); `fp_contract` measured per runner (V-B) | per-op ULP measured against M | Metal's fast-math defaults measured | the numeric-model card |
+| E13 denormals | witnessed (§4); `denormal_flush` measured per runner, witnessed in `analyse` (V-B) | the device's FTZ flags witnessed | — | the three laws |
+| E14 reduction order | lane-count dependence witnessed (§4); `reduction_order` measured per runner (V-B) | atomic order sampled | — | the reduction op cards |
 | E15 integers on a GPU | — | wrap, shift and conversion rows witnessed | — | rows per shading language |
 | E16 APIs as one theory | the theory and API cards writable | cells run | Metal cells run | T_dev |
 | E17 shading languages | templates writable; no validator or loader here | conformance cells run | — | SPIR-V and WGSL cards |
 | E18 driver fingerprints | the card shape | the software model's version is a fingerprint | real driver rows | — |
 | E19 OS surfaces | Linux and macOS cards from documentation | — | macOS and iPadOS witnessed (Phase I) | Windows, Android |
-| E20 discovery probes | CPU side runs today (`cardmodel env`, #44, V-A) | API queries run | Metal queries run | — |
-| E21 environment card | the generator's card measured (`card_type/environment`, #44, V-A) | — | the Mac's card measured | the schema |
+| E20 discovery probes | CPU side runs today | API queries run | Metal queries run | — |
+| E21 environment card | the generator's card measurable now | — | the Mac's card measured | the schema |
 | E22 `carry` | over the CPU variants | with software rows | with device rows | the command |
 | E23 probe suite | the CPU half exists as `matrix`, `analyse`, `optimize --measure` | the GPU half runs | the device half runs | generation from Σ and E |
 | E24 Gödel layer | proof-tier (GodelCore T1, T2) | — | — | the device atoms' primes |
@@ -393,7 +393,7 @@ FOUNDATIONS D1).
 1. **V-A. The environment card and the probes (E20, E21, E6).** The card schema, the CPU probe (`lscpu` or
    `sysctl`, the chase, the streaming copy) and the full fingerprint on every metric and witness card. The
    generator's own card is written on the first run; `resources.max_parallel` reads it. Measurable now.
-   *Status (2026-11-05): landed with #44.* The schema (`card_type/environment`), the probe and `cardmodel env` are in
+   *Status (2026-11-05):* the schema (`card_type/environment`), the probe and `cardmodel env` are in
    (`engines/environment.py`). The card's name is `env_<fingerprint>` of the declared identity; every capability
    carries its evidence (measured, declared, unknown). On the cloud host the chase took 5.5 s and found plateaus
    at 64 KiB, 512 KiB, 1 MiB and 4 MiB against a declared 32 KiB L1, 1 MiB L2 and 33 MiB L3, with memory at about
@@ -405,20 +405,45 @@ FOUNDATIONS D1).
    `denormal_flush` and `reduction_order` as laws in ANALYSE's family, with rows for the existing runner variants,
    witnessed by §4's probes made into cards. The e-graph reads the float laws it may fire from the target's
    numeric-model card (D17).
-   *Status (2026-11-05): open as #57.* `engines/numeric.py` gives each runner a declared numeric model (its compile
-   flags read against a `numeric` block on its language card) and a measured one (a C probe compiled with the
-   runner's own compile line, inputs read as hex floats so nothing folds). The laws are `numeric_exact` and, when
-   its premise fails, the bounds `fp_contract`, `denormal_flush` and `reduction_order`. `analyse` compares a runner
-   with the reference bit for bit when both models are strict, and with `values.same`'s tolerance otherwise. Measured
-   on a Xeon host with gcc 13.3: `-ffast-math` flushes subnormals (FTZ and DAZ); baseline x86-64 does not contract
-   (no FMA instruction); `-march=native -ffp-contract=fast` fuses, within the contraction bound. Still open: the
-   e-graph reading its float laws from the numeric model (D17), and `analyse` passing arguments through `opaque`.
+   *Status (2026-11-05, `claude/numeric-model`):* `engines/numeric.py`. Each language card has a `numeric` block
+   (data: the compiler's defaults and what each flag permits, whether its float text shows every bit), and a
+   runner's **declared** model reads its compile flags against it: `fp_contract` (permitted by the flags *and* an
+   FMA instruction in the target ISA), `denormal_flush`, `reduction_order`, and strict IEEE otherwise. The
+   **measured** model compiles a C probe with the runner's own compile line and reads its inputs as hex floats
+   from stdin, so nothing folds at compile time: x·x − 1 at x = 1 + 2⁻²⁷, 2⁻¹⁰²² · 0.5 (FTZ), 5 × 10⁻³¹⁰ · 1
+   (DAZ), and a sequential sum of 4,096 mixed-magnitude values, each compared bit for bit with M. Four laws
+   (`numeric.LAWS`) say when two environments agree bit for bit (`numeric_exact`: both models strict, correctly
+   rounded ops only) and the bound otherwise (`fp_contract`: u·|ab|(1+u) + 2u·|ab ± c| per contracted op;
+   `denormal_flush`: under 2⁻¹⁰²² per flushed value; `reduction_order`: 2γₙ₋₁·Σ|xᵢ|). `cardmodel env --numeric`
+   prints every runner's model and the laws checked on the probes; `cardmodel env --measure` stores the models
+   on the environment card (`numeric`, and the capabilities `fp_contract_fused`, `denormal_flush`,
+   `reduction_reassociated`). In `analyse` the three are divergence laws (`fp_contract` and `reduction_order`
+   static, `denormal_flush` fired by the instrumented reference), and the comparison of each runner with the
+   reference is chosen from the numeric models: bit for bit where both are strict and the term is carried
+   exactly, `values.same`'s tolerance otherwise, and bit for bit for the three laws on every runner whose float
+   text shows every bit, because the blanket tolerance (absolute 10⁻¹²) hides a flushed result entirely. The
+   gap of a term (the atoms its model does not carry exactly) is `godel.carry` over the term's content and the
+   model's carry map (`numeric.carry_map`), reported beside the comparison and never used to decide it.
+   *Measured on this host (Xeon 2.1 GHz, gcc 13.3, x86-64 with FMA in `-march=native` only):* `c@O0`, `c@O2`,
+   `c@ubsan` and `c@native` are strict, measured, and agree with M bit for bit on every probe; `c@fastmath`
+   (gcc -O2 -std=c11 -ffast-math) flushes (FTZ and DAZ, measured), does not contract (no FMA in the x86-64
+   baseline, measured) and kept the probe's sum sequential (reassociation permitted, so it stays a declared
+   `reassociate`); `-march=native -ffp-contract=fast` fuses (0x1.0000001p-26 against M's 0x1p-26, 2²⁴ ulps of the
+   cancelled result, inside the contraction bound 1.1 × 10⁻¹⁶); `-O3 -ffast-math -march=native` does all three
+   (its sum is 9 ulps from the sequential one, bound 0.011). Clang 18 fuses at -O2 -march=native in ISO mode
+   (its default `-ffp-contract=on`), gcc does not. In `analyse`, `total(20000, 1e-310)` (a loop sum of x·i) gives
+   2.0 × 10⁻³⁰² in M and every strict runner and 0.0 under `c@fastmath`: witnessed only because the comparison
+   is bit for bit. *Hooks left:* `analyse` passes arguments as literals, so a call the compiler folds at compile
+   time never sees FTZ or DAZ (`half(1e-310)` agrees under fast-math); passing them through the language's
+   `opaque` template, as `bench` mode does, would make every runner compute at run time. The conformance matrix
+   still compares with `values.same` (its signed-zero change is on `claude/go-negzero`); it can take
+   `numeric.agreement` per cell the same way. The e-graph does not yet read the float laws it may fire from a
+   target's numeric model (D17).
 3. **V-C.† f16 and bf16 in the type series (E11), lane sorts (E1).** The series extended, `precision_loss`,
    V(n, s) with its lane-wise law cards, SSE/AVX/NEON instruction cards following `isa/armv5te`'s pattern.
 4. **V-D. The device theory and SPIR-V (E16, E17, E4).** T_dev's op cards, the Vulkan and Metal API cards with
    their carry-over map and gap, a SPIR-V language card, and lavapipe as a probed runner in CI, so the GPU
    conformance cells are witnessed without hardware.
-   *Status (2026-11-05):* next after V-B; it waits on the f32 series (#61).
 5. **V-E.† Kernels (E2, E9, E15, E8).** The launch op with its independence and uniformity obligations, address
    spaces over MATH_CORE's memory sort, BV(32) kernels, layouts and alignment rows.
 6. **V-F. `cardmodel carry` and the transfer card (E22, E23, E5, E10).** The judgment over every environment card

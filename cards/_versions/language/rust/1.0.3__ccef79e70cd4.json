@@ -1,0 +1,265 @@
+{
+  "category": "language",
+  "codegen": {
+    "arg_types": {
+      "str": "&{e}"
+    },
+    "assign": "{name} = {value};",
+    "break": "break;",
+    "continue": "continue;",
+    "declare": "let mut {name}: {type} = {value};",
+    "else": "}} else {{",
+    "empty": "",
+    "end_if": "}}",
+    "end_while": "}}",
+    "func": "fn {name}({params}) -> {ret} {{\n{body}}}\n",
+    "harness": {
+      "bench_call": "cm_acc += {truthy};",
+      "bench_main": "fn main() {{\n    let mut cm_acc: i64 = 0;\n    for _cm_r in 0..{reps} {{\n{calls}    }}\n    println!(\"{{}}\", cm_acc);\n}}\n",
+      "main": "fn main() {{\n{calls}}}\n",
+      "print": {
+        "bool": "println!(\"b:{{}}\", {e});",
+        "float": "println!(\"f:{{:?}}\", {e});",
+        "int": "println!(\"i:{{}}\", {e});",
+        "list[float]": "cm_lf_print(&{e});",
+        "list[int]": "cm_li_print(&{e});",
+        "str": "println!(\"s:{{}}\", cm_s_codes(&{e}));"
+      },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
+      "truthy": {
+        "bool": "(if {e} {{ 1 }} else {{ 0 }})",
+        "float": "(if ({e}) > 0.0 {{ 1 }} else {{ 0 }})",
+        "int": "(if ({e}) != 0 {{ 1 }} else {{ 0 }})"
+      }
+    },
+    "helpers": {
+      "cm_abs_i": "fn cm_abs_i(a: i64) -> i64 { if a < 0 { -a } else { a } }",
+      "cm_floordiv": "fn cm_floordiv(a: i64, b: i64) -> i64 { let q = a / b; if (a % b != 0) && ((a < 0) != (b < 0)) { q - 1 } else { q } }",
+      "cm_floormod": "fn cm_floormod(a: i64, b: i64) -> i64 { let r = a % b; if r != 0 && ((r < 0) != (b < 0)) { r + b } else { r } }",
+      "cm_gcd": "fn cm_gcd(a: i64, b: i64) -> i64 { let mut a = if a < 0 { -a } else { a }; let mut b = if b < 0 { -b } else { b }; while b != 0 { let t = a % b; a = b; b = t; } a }",
+      "cm_ipow": "fn cm_ipow(a: i64, b: i64) -> i64 { let mut r: i64 = 1; let mut a = a; let mut b = b; while b > 0 { if (b & 1) == 1 { r = r.wrapping_mul(a); } b >>= 1; if b > 0 { a = a.wrapping_mul(a); } } r }",
+      "cm_lf_print": "fn cm_lf_print(xs: &[f64]) { println!(\"l:{}\", xs.len()); for v in xs { println!(\"f:{:?}\", v); } }",
+      "cm_li_print": "fn cm_li_print(xs: &[i64]) { println!(\"l:{}\", xs.len()); for v in xs { println!(\"i:{}\", v); } }",
+      "cm_max_f": "fn cm_max_f(a: f64, b: f64) -> f64 { if b > a { b } else { a } }",
+      "cm_max_i": "fn cm_max_i(a: i64, b: i64) -> i64 { if b > a { b } else { a } }",
+      "cm_min_f": "fn cm_min_f(a: f64, b: f64) -> f64 { if b < a { b } else { a } }",
+      "cm_min_i": "fn cm_min_i(a: i64, b: i64) -> i64 { if b < a { b } else { a } }",
+      "cm_modinv": "fn cm_modinv(a: i64, m: i64) -> i64 { let n = if m < 0 { -m } else { m }; let (mut r0, mut r1) = (cm_floormod(a, n), n); let (mut s0, mut s1) = (1i64, 0i64); while r1 != 0 { let q = r0 / r1; let t = r0 - q * r1; r0 = r1; r1 = t; let t = s0 - q * s1; s0 = s1; s1 = t; } if r0 != 1 { panic!(\"base is not invertible\"); } cm_floormod(s0, n) }",
+      "cm_opaque_b": "fn cm_opaque_b(x: bool) -> bool { std::hint::black_box(x) }",
+      "cm_opaque_f": "fn cm_opaque_f(x: f64) -> f64 { std::hint::black_box(x) }",
+      "cm_opaque_i": "fn cm_opaque_i(x: i64) -> i64 { std::hint::black_box(x) }",
+      "cm_powmod": "fn cm_powmod(a: i64, b: i64, m: i64) -> i64 { let (a, b) = if b < 0 { (cm_modinv(a, m), -b) } else { (a, b) }; let mut r = cm_floormod(1, m); let mut a = cm_floormod(a, m); let mut b = b; while b > 0 { if (b & 1) == 1 { r = cm_floormod(r * a, m); } a = cm_floormod(a * a, m); b >>= 1; } r }",
+      "cm_read_bool": "fn cm_read_bool() -> bool { cm_read_int() != 0 }",
+      "cm_read_float": "fn cm_read_float() -> f64 { cm_read_line().trim().parse::<f64>().unwrap() }",
+      "cm_read_int": "fn cm_read_int() -> i64 { cm_read_line().trim().parse::<i64>().unwrap() }",
+      "cm_read_lf": "fn cm_read_lf() -> Vec<f64> { let n = cm_read_int(); (0..n).map(|_| cm_read_float()).collect() }",
+      "cm_read_li": "fn cm_read_li() -> Vec<i64> { let n = cm_read_int(); (0..n).map(|_| cm_read_int()).collect() }",
+      "cm_read_line": "fn cm_read_line() -> String { let mut s = String::new(); std::io::stdin().read_line(&mut s).unwrap(); s }",
+      "cm_s_at": "fn cm_s_at(s: &str, i: i64) -> i64 { if i < 0 { panic!(\"string index out of range\"); } match s.chars().nth(i as usize) { Some(c) => c as i64, None => panic!(\"string index out of range\") } }",
+      "cm_s_chr": "fn cm_s_chr(c: i64) -> String { if c < 0 || c > 0x10FFFF { panic!(\"not a Unicode scalar value\"); } match char::from_u32(c as u32) { Some(ch) => ch.to_string(), None => panic!(\"not a Unicode scalar value\") } }",
+      "cm_s_clamp": "fn cm_s_clamp(i: i64, n: i64) -> i64 { if i < 0 { let j = i.saturating_add(n); if j < 0 { 0 } else { j } } else if i > n { n } else { i } }",
+      "cm_s_cmp": "fn cm_s_cmp(a: &str, b: &str) -> i64 { match a.cmp(b) { std::cmp::Ordering::Less => -1, std::cmp::Ordering::Equal => 0, std::cmp::Ordering::Greater => 1 } }",
+      "cm_s_codes": "fn cm_s_codes(s: &str) -> String { s.chars().map(|c| (c as u32).to_string()).collect::<Vec<String>>().join(\" \") }",
+      "cm_s_concat": "fn cm_s_concat(a: &str, b: &str) -> String { let mut r = String::with_capacity(a.len() + b.len()); r.push_str(a); r.push_str(b); r }",
+      "cm_s_eq": "fn cm_s_eq(a: &str, b: &str) -> bool { a == b }",
+      "cm_s_find": "fn cm_s_find(s: &str, sub: &str, start: i64) -> i64 { let x: Vec<char> = s.chars().collect(); let y: Vec<char> = sub.chars().collect(); let n = x.len() as i64; let m = y.len() as i64; let mut i = start; if i < 0 { i = i.saturating_add(n); if i < 0 { i = 0; } } if i > n { return -1; } while i + m <= n { if x[i as usize..(i + m) as usize] == y[..] { return i; } i += 1; } -1 }",
+      "cm_s_len": "fn cm_s_len(s: &str) -> i64 { s.chars().count() as i64 }",
+      "cm_s_ord": "fn cm_s_ord(s: &str) -> i64 { let mut it = s.chars(); match (it.next(), it.next()) { (Some(c), None) => c as i64, _ => panic!(\"ord of a string whose length is not 1\") } }",
+      "cm_s_slice": "fn cm_s_slice(s: &str, a: i64, b: i64) -> String { let x: Vec<char> = s.chars().collect(); let n = x.len() as i64; let lo = cm_s_clamp(a, n); let hi = cm_s_clamp(b, n); if lo >= hi { String::new() } else { x[lo as usize..hi as usize].iter().collect() } }",
+      "cm_s_to_int": "fn cm_s_to_int(s: &str) -> i64 { let t = s.trim_matches(|c: char| c == ' ' || (c >= '\\t' && c <= '\\r')); let u = t.strip_prefix('+').or_else(|| t.strip_prefix('-')).unwrap_or(t); if u.is_empty() || !u.bytes().all(|b| b.is_ascii_digit()) { panic!(\"not a decimal integer\"); } t.parse::<i64>().expect(\"not a decimal integer\") }"
+    },
+    "if": "if {cond} {{",
+    "indent": "    ",
+    "lib_prelude": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case)]\n@imports@\n",
+    "list_arg": "&{e}",
+    "list_lit": {
+      "list[float]": "vec![{items}]",
+      "list[int]": "vec![{items}]"
+    },
+    "lit": {
+      "false": "false",
+      "float": "({v}f64)",
+      "int": "({v}i64)",
+      "true": "true"
+    },
+    "opaque": {
+      "bool": "cm_opaque_b({v})",
+      "float": "cm_opaque_f({v})",
+      "int": "cm_opaque_i({v})"
+    },
+    "param": "{name}: {type}",
+    "param_rebind": {
+      "any": "let mut {name}: {type} = {name};",
+      "str": "let mut {name}: String = {name}.to_string();"
+    },
+    "param_types": {
+      "list[float]": "&[f64]",
+      "list[int]": "&[i64]",
+      "str": "&str"
+    },
+    "prelude": "#![allow(unused_parens, unused_mut, unused_assignments, unused_variables, dead_code, non_snake_case, unused_imports, unused_braces)]\n@imports@\n",
+    "return": "return {value};",
+    "set": "{name}[({idx}) as usize] = {value};",
+    "str_lit": {
+      "escape": "\\u{{{x}}}",
+      "quote": "String::from(\"{s}\")"
+    },
+    "style": "braces",
+    "types": {
+      "bool": "bool",
+      "f32": "f64",
+      "float": "f64",
+      "i16": "i64",
+      "i32": "i64",
+      "i8": "i64",
+      "int": "i64",
+      "list[float]": "Vec<f64>",
+      "list[int]": "Vec<i64>",
+      "str": "String",
+      "u16": "i64",
+      "u32": "i64",
+      "u8": "i64"
+    },
+    "var_read": {
+      "str": "{name}.to_string()"
+    },
+    "while": "while {cond} {{",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0",
+      "list[float]": "Vec::new()",
+      "list[int]": "Vec::new()",
+      "str": "String::new()"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".rs"
+  ],
+  "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "arg_cast": "(({v}) as {type})",
+    "print": {
+      "bool": "println!(\"b:{{}}\", {e});",
+      "float": "println!(\"f:{{:?}}\", ({e}) as f64);",
+      "int": "println!(\"i:{{}}\", {e});"
+    },
+    "replace": [
+      [
+        "\\bfn\\s+main\\s*\\(",
+        "fn cm_user_main("
+      ]
+    ]
+  },
+  "int_bits": 64,
+  "metadata": {
+    "previous_content_hash": "ea9c7f606e45a2d63c37fc0a70dcdcdb932b9378bd23c042e5b07d9f6120351b",
+    "version": "1.0.3",
+    "version_bump_reason": "patch"
+  },
+  "name": "rust",
+  "probe": {
+    "kind": "executable",
+    "name": "rustc",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "as",
+    "break",
+    "const",
+    "continue",
+    "crate",
+    "else",
+    "enum",
+    "extern",
+    "false",
+    "fn",
+    "for",
+    "if",
+    "impl",
+    "in",
+    "let",
+    "loop",
+    "match",
+    "mod",
+    "move",
+    "mut",
+    "pub",
+    "ref",
+    "return",
+    "self",
+    "Self",
+    "static",
+    "struct",
+    "super",
+    "trait",
+    "true",
+    "type",
+    "unsafe",
+    "use",
+    "where",
+    "while",
+    "async",
+    "await",
+    "dyn",
+    "abstract",
+    "become",
+    "box",
+    "do",
+    "final",
+    "macro",
+    "override",
+    "priv",
+    "typeof",
+    "unsized",
+    "virtual",
+    "yield",
+    "try",
+    "main"
+  ],
+  "runner": {
+    "compile": [
+      "{exe}",
+      "-O",
+      "--edition",
+      "2021",
+      "-o",
+      "{bin}",
+      "{src}"
+    ],
+    "file": "main.rs",
+    "run": [
+      "{bin}"
+    ]
+  },
+  "statement": "Rust with i64 / f64, compiled with rustc -O.",
+  "tier": 0
+}

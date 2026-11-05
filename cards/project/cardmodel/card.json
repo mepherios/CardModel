@@ -17,7 +17,8 @@
     "claude/strings-ir",
     "claude/self-report-*",
     "claude/opaque-callees",
-    "claude/godel-section-cache"
+    "claude/godel-section-cache",
+    "claude/numeric-model"
   ],
   "category": "project",
   "docs": [
@@ -44,7 +45,8 @@
     "signed zero in every target: Go's -0.0 literal, C's (--x), JS printing -0, ceil/floor/trunc and Ruby sqrt of zeros; the matrix compares zeros by sign (claude/go-negzero, local until CI billing is fixed)",
     "strings in the IR (HANDOVER 8.2; claude/strings-ir, local until CI billing is fixed)",
     "claude/self-report-next (draft PR): the self-report's top fixable item, G_C4: the four inconclusive redefinitions get exact forms (exprs: fibonacci, multiplicity, bounded Sum), 107 -> 111 verified",
-    "claude/opaque-callees: failed callees no longer fail their callers (SCALING.md 3.3): opaque boundary cards, partial lifts with the edge as a gap, the host witness (engines/opaque.py)"
+    "claude/opaque-callees: failed callees no longer fail their callers (SCALING.md 3.3): opaque boundary cards, partial lifts with the edge as a gap, the host witness (engines/opaque.py)",
+    "ENVIRONMENTS V-B numeric-model laws (claude/numeric-model): fp_contract, denormal_flush, reduction_order as runner numeric models declared from the flags and measured by a C probe; bit-for-bit vs bounded comparison in analyse"
   ],
   "kind": "program",
   "left": [
@@ -53,8 +55,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "319b46a415ee9899027acfde6a22d826d43eb69d2463342bd122c5f531dccc2e",
-    "version": "2.0.25",
+    "previous_content_hash": "c34328180e525068866a64ea4dfc29d54dedc89d14b5403fe39311040343d028",
+    "version": "2.0.26",
     "version_bump_reason": "patch"
   },
   "metrics": [

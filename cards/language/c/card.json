@@ -252,11 +252,80 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "9bfbe7de6d7420dd239a2ac22de0f0a20aa1f9bda871ca55a0324f497cbc0bf5",
-    "version": "1.1.5",
-    "version_bump_reason": "patch"
+    "previous_content_hash": "4120985faf688ff5c6dd50d2c3646015583de4295de52f1d94e1b203855ce68b",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
   },
   "name": "c",
+  "numeric": {
+    "by_compiler": {
+      "clang": {
+        "default": {
+          "fp_contract": "on"
+        }
+      },
+      "gcc": {
+        "default": {
+          "fp_contract": "fast"
+        },
+        "flags": {
+          "-ffp-contract=on": {
+            "fp_contract": "off"
+          },
+          "-std=c*": {
+            "fp_contract": "off"
+          },
+          "-std=gnu*": {
+            "fp_contract": "fast"
+          }
+        }
+      }
+    },
+    "contract_isa": "fma",
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "on",
+      "reassociate": false,
+      "strict": true
+    },
+    "flags": {
+      "-Ofast": {
+        "denormal_flush": true,
+        "fp_contract": "fast",
+        "reassociate": true,
+        "strict": false
+      },
+      "-fassociative-math": {
+        "reassociate": true,
+        "strict": false
+      },
+      "-ffast-math": {
+        "denormal_flush": true,
+        "fp_contract": "fast",
+        "reassociate": true,
+        "strict": false
+      },
+      "-ffp-contract=fast": {
+        "fp_contract": "fast"
+      },
+      "-ffp-contract=off": {
+        "fp_contract": "off"
+      },
+      "-ffp-contract=on": {
+        "fp_contract": "on"
+      },
+      "-funsafe-math-optimizations": {
+        "denormal_flush": true,
+        "reassociate": true,
+        "strict": false
+      },
+      "-march=native": {
+        "isa": "host"
+      }
+    },
+    "float_text": "roundtrip",
+    "source": "gcc 13 manual §3.11 (-ffp-contract: off in ISO C/C++ modes, fast in GNU modes; -ffast-math links crtfastmath, which sets FTZ and DAZ on x86); clang 18 manual (-ffp-contract=on by default: fusion inside one expression; -ffast-math sets fast and links crtfastmath); '%.17g' prints a binary64 that reads back to the same bits"
+  },
   "probe": {
     "env_override": "CC",
     "kind": "executable",

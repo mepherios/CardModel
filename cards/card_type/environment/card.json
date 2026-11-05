@@ -4,7 +4,9 @@
   ],
   "category": "card_type",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "bb365df72ec59c8921b4a7059d1399e5ceff6d36ab170437d177a0ac2bd0d2bf",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "environment",
   "provenance": {
@@ -36,6 +38,17 @@
         "type": "string"
       },
       "identity": {
+        "type": "object"
+      },
+      "numeric": {
+        "properties": {
+          "laws": {
+            "type": "array"
+          },
+          "models": {
+            "type": "object"
+          }
+        },
         "type": "object"
       },
       "role": {

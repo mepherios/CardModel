@@ -20,6 +20,10 @@ the latency of the level the working set fits in) at working sets from 4 KiB to 
 The levels are read off the chase as plateaus: a size whose latency is ``STEP`` times the fastest load of the
 current level or more starts the next level.
 
+Numeric models (V-B, E12–E14): ``generator`` also records the numeric model of every runner (``numeric``:
+fp_contract, denormal_flush, reduction_order, each declared from the flags and measured by a C probe), and the
+capabilities ``fp_contract_fused``, ``denormal_flush`` and ``reduction_reassociated`` (which runners showed each).
+
 Honest limits (L1): with no C compiler the measured rows are ``unknown`` with the reason; a hypervisor or a busy
 machine adds noise to every timing (the chase reports the median of three passes); the step detection finds the
 working-set sizes where latency rises, which are cache boundaries only up to the associativity and the TLB, so the
@@ -335,7 +339,31 @@ def build_card(identity: dict | None = None, measured: dict | None = None, role:
     }
     if m.get("compiler"):
         card["probes"]["compiler"] = m["compiler"]
+    if m.get("numeric"):
+        _numeric(card, m["numeric"])
     return card
+
+
+def _numeric(card: dict, models: dict) -> None:
+    """The numeric model of every runner on this machine (ENVIRONMENTS.md V-B, E12–E14; engines/numeric.py), and
+    the three capabilities the probes measure: an FMA instruction the compiler uses, FTZ/DAZ under fast-math,
+    and a vectorized (reassociated) float sum."""
+    from . import numeric
+    card["numeric"] = {"models": models, "laws": sorted(numeric.LAWS),
+                       "probe": {"x": numeric.PROBE_X.hex(), "subnormal_result_of": f"{numeric.PROBE_M.hex()} * 0.5",
+                                 "subnormal_operand": numeric.PROBE_S.hex(), "sum_terms": numeric.PROBE_N,
+                                 "sum_seed": numeric.PROBE_SEED}}
+    caps = card["capabilities"]
+
+    def seen(component):
+        rows = [(n, m) for n, m in models.items() if "observed" in m.get(component, {})]
+        hit = [n for n, m in rows if m[component]["observed"] not in (False, "sequential")]
+        if not rows:
+            return _cap(None, "unknown", reason="no runner was probed")
+        return _cap(bool(hit), "measured", probe="numeric", runners=hit)
+    caps["fp_contract_fused"] = seen("fp_contract")
+    caps["denormal_flush"] = seen("denormal_flush")
+    caps["reduction_reassociated"] = seen("reduction_order")
 
 
 def _stale(card, today: datetime.date) -> bool:
@@ -348,7 +376,14 @@ def _stale(card, today: datetime.date) -> bool:
         return True
 
 
-def generator(store, refresh: bool = False, measure_fn=measure) -> tuple[dict, bool]:
+def measure_numeric(store) -> dict:
+    """The numeric model of every runner (engines/numeric.py), the C runners probed on this machine."""
+    from . import numeric
+    from .context import Ctx
+    return numeric.models(Ctx(store))
+
+
+def generator(store, refresh: bool = False, measure_fn=measure, numeric_fn=None) -> tuple[dict, bool]:
     """The generator's card for this machine: read from the store, or probed and saved into the local layer when
     it is missing, stale (older than MAX_AGE_DAYS) or ``refresh``. Returns (card, written)."""
     ident = static()
@@ -356,7 +391,11 @@ def generator(store, refresh: bool = False, measure_fn=measure) -> tuple[dict, b
     have = store.get(f"{CATEGORY}/{name}")
     if have is not None and not refresh and not _stale(have, datetime.date.today()):
         return dict(have), False
-    card = build_card(ident, measure_fn())
+    measured = dict(measure_fn())
+    numeric_models = numeric_fn() if numeric_fn is not None else measure_numeric(store)
+    if numeric_models:
+        measured["numeric"] = numeric_models
+    card = build_card(ident, measured)
     store.ensure_registry(CATEGORY, "local", description="Environment cards measured on this machine "
                           "(docs/ENVIRONMENTS.md D15, E21); untracked.")
     store.save(card, layer="local")
@@ -393,6 +432,9 @@ def render(card: dict) -> str:
         b = resources.budgets(refresh=True)
         lines.append("  budgets: " + ", ".join(f"{k} {b[k]}" for k in ("cpu_workers", "compile_slots", "child_mb",
                                                                         "self_mb")) + f"  (from {b['source']})")
+    if card.get("numeric"):
+        from . import numeric
+        lines.append("  " + numeric.render(card["numeric"]["models"]).replace("\n", "\n  "))
     ch = card.get("probes", {}).get("chase")
     if ch:
         lines.append("  chase (ns per dependent load): " + ", ".join(

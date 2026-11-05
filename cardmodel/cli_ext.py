@@ -970,6 +970,20 @@ def cmd_env(args) -> int:
     from .cli import _ctx, _out
     from .engines import environment as E
     ctx = _ctx(args)
+    if args.numeric:
+        from .engines import numeric
+        models = numeric.models(ctx)
+        checks = {f"{a} vs {b}": numeric.check(models[a], models[b]) for a, b in numeric.PAIRS
+                  if a in models and b in models}
+        data = {"models": models, "checks": checks}
+        lines = [numeric.render(models), "", "laws checked on the probes (premise holds: exact; else the bound):"]
+        for pair, rows in checks.items():
+            lines.append(f"  {pair}:")
+            for r in rows:
+                seen = "bit-equal" if r["bit_equal"] else "Δ %.3g (%s ulps)" % (r["diff"], r["ulps"])
+                lines.append(f"    {r['probe']:<9}{r['law']:<16}{r['predicts']:<20}{seen:<38}{r['verdict']}")
+        _out(args, data, "\n".join(lines))
+        return 0
     if args.static:
         card = E.build_card()
     elif args.measure:
@@ -995,6 +1009,8 @@ def register(sub) -> None:
                                    "and copy bandwidth (written once into the local layer)")
     s.add_argument("--measure", action="store_true", help="probe again and rewrite the card")
     s.add_argument("--static", action="store_true", help="only the declared identity; no compile, nothing written")
+    s.add_argument("--numeric", action="store_true", help="the numeric model of every runner (fp_contract, "
+                   "denormal_flush, reduction_order), probed here, and the numeric laws checked on the probes")
     s.set_defaults(fn=cmd_env)
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")

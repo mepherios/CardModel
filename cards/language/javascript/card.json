@@ -141,11 +141,21 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "previous_content_hash": "26b1f371c4c85494b60b3904520298c3dd71bd3605775c3b4ca205f7947a092a",
-    "version": "1.0.4",
-    "version_bump_reason": "patch"
+    "previous_content_hash": "95d4e3534d9a8514e47b7bd78eb8f8bbe448f5dbe165ff7847f02d9b609cb1e7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "javascript",
+  "numeric": {
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "off",
+      "reassociate": false,
+      "strict": true
+    },
+    "float_text": "roundtrip_unsigned_zero",
+    "source": "ECMA-262 §6.1.6.1: Number operations are IEEE 754 binary64 round-to-nearest, no fusion; String(x) is the shortest text that reads back to the same bits, except the sign of a zero (String(-0) is '0'), so its results are not compared bit for bit"
+  },
   "probe": {
     "kind": "executable",
     "name": "node",

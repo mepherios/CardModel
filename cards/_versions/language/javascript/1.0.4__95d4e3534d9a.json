@@ -1,0 +1,222 @@
+{
+  "call_runner": "node",
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value};",
+    "break": "break;",
+    "continue": "continue;",
+    "declare": "let {name} = {value};",
+    "else": "}} else {{",
+    "empty": "",
+    "end_if": "}}",
+    "end_while": "}}",
+    "func": "function {name}({params}) {{\n{body}}}\n",
+    "harness": {
+      "bench_call": "cm_acc += {truthy};",
+      "bench_main": "let cm_acc = 0n;\nfor (let cm_r = 0; cm_r < {reps}; cm_r++) {{\n{calls}}}\nconsole.log(String(cm_acc));\n",
+      "main": "{calls}",
+      "print": {
+        "bool": "console.log('b:' + (({e}) ? 'true' : 'false'));",
+        "float": "console.log('f:' + ((x) => Object.is(x, -0) ? '-0' : String(x))({e}));",
+        "int": "console.log('i:' + ({e}).toString());",
+        "list[float]": "cm_print_list({e}, 'f');",
+        "list[int]": "cm_print_list({e}, 'i');",
+        "str": "console.log('s:' + Array.from({e}, (c) => c.codePointAt(0)).join(' '));"
+      },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
+      "truthy": {
+        "bool": "(({e}) ? 1n : 0n)",
+        "float": "((({e}) > 0) ? 1n : 0n)",
+        "int": "((({e}) !== 0n) ? 1n : 0n)"
+      }
+    },
+    "helpers": {
+      "cm_abs_i": "function cm_abs_i(a) { return a < 0n ? -a : a; }",
+      "cm_floordiv": "function cm_floordiv(a, b) { const q = a / b; return ((a % b !== 0n) && ((a < 0n) !== (b < 0n))) ? q - 1n : q; }",
+      "cm_floormod": "function cm_floormod(a, b) { const r = a % b; return (r !== 0n && ((r < 0n) !== (b < 0n))) ? r + b : r; }",
+      "cm_gcd": "function cm_gcd(a, b) { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b !== 0n) { const t = a % b; a = b; b = t; } return a; }",
+      "cm_get": "function cm_get(xs, i) { const k = Number(i); if (!(k >= 0 && k < xs.length)) throw new RangeError('index out of range'); return xs[k]; }",
+      "cm_in": "const cm_in = { lines: (await import('node:fs')).readFileSync(0, 'utf8').split('\\n'), pos: 0 };",
+      "cm_list_new": "function cm_list_new(n, v) { if (n < 0n) throw new RangeError('negative length'); return new Array(Number(n)).fill(v); }",
+      "cm_max_f": "function cm_max_f(a, b) { return b > a ? b : a; }",
+      "cm_max_i": "function cm_max_i(a, b) { return b > a ? b : a; }",
+      "cm_min_f": "function cm_min_f(a, b) { return b < a ? b : a; }",
+      "cm_min_i": "function cm_min_i(a, b) { return b < a ? b : a; }",
+      "cm_modinv": "function cm_modinv(a, m) { const n = m < 0n ? -m : m; let r0 = cm_floormod(a, n), r1 = n, s0 = 1n, s1 = 0n; while (r1 !== 0n) { const q = r0 / r1; [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; } if (r0 !== 1n) throw new RangeError(\"base is not invertible\"); return cm_floormod(s0, n); }",
+      "cm_powmod": "function cm_powmod(a, b, m) { if (b < 0n) { a = cm_modinv(a, m); b = -b; } let r = cm_floormod(1n, m); a = cm_floormod(a, m); while (b > 0n) { if ((b & 1n) === 1n) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1n; } return r; }",
+      "cm_print_list": "function cm_print_list(xs, tag) { console.log('l:' + xs.length); for (const v of xs) console.log(tag + ':' + (tag === 'f' ? (Object.is(v, -0) ? '-0' : String(v)) : v.toString())); }",
+      "cm_read_bool": "function cm_read_bool() { return cm_read_int() !== 0n; }",
+      "cm_read_float": "function cm_read_float() { return Number(cm_in.lines[cm_in.pos++].trim()); }",
+      "cm_read_int": "function cm_read_int() { return BigInt(cm_in.lines[cm_in.pos++].trim()); }",
+      "cm_read_lf": "function cm_read_lf() { const n = Number(cm_read_int()); const r = []; for (let i = 0; i < n; i++) r.push(cm_read_float()); return r; }",
+      "cm_read_li": "function cm_read_li() { const n = Number(cm_read_int()); const r = []; for (let i = 0; i < n; i++) r.push(cm_read_int()); return r; }",
+      "cm_s_at": "function cm_s_at(s, i) { const a = cm_s_cps(s); if (i < 0n || i >= BigInt(a.length)) throw new RangeError('string index out of range'); return BigInt(a[Number(i)]); }",
+      "cm_s_chr": "function cm_s_chr(c) { if (c < 0n || c > 0x10FFFFn || (c >= 0xD800n && c <= 0xDFFFn)) throw new RangeError('not a Unicode scalar value'); return String.fromCodePoint(Number(c)); }",
+      "cm_s_clamp": "function cm_s_clamp(i, n) { if (i < 0) { i += n; if (i < 0) i = 0; } else if (i > n) i = n; return i; }",
+      "cm_s_cmp": "function cm_s_cmp(a, b) { const x = cm_s_cps(a), y = cm_s_cps(b); const n = Math.min(x.length, y.length); for (let i = 0; i < n; i++) { if (x[i] !== y[i]) return x[i] < y[i] ? -1n : 1n; } return x.length === y.length ? 0n : (x.length < y.length ? -1n : 1n); }",
+      "cm_s_cps": "function cm_s_cps(s) { return Array.from(s, (c) => c.codePointAt(0)); }",
+      "cm_s_find": "function cm_s_find(s, sub, start) { const x = cm_s_cps(s), y = cm_s_cps(sub); const n = x.length; let i = Number(start); if (i < 0) { i += n; if (i < 0) i = 0; } if (i > n) return -1n; for (; i + y.length <= n; i++) { let k = 0; while (k < y.length && x[i + k] === y[k]) k++; if (k === y.length) return BigInt(i); } return -1n; }",
+      "cm_s_len": "function cm_s_len(s) { let n = 0; for (const _ of s) n++; return BigInt(n); }",
+      "cm_s_ord": "function cm_s_ord(s) { const a = cm_s_cps(s); if (a.length !== 1) throw new TypeError('ord of a string whose length is not 1'); return BigInt(a[0]); }",
+      "cm_s_slice": "function cm_s_slice(s, a, b) { const x = cm_s_cps(s); const lo = cm_s_clamp(Number(a), x.length), hi = cm_s_clamp(Number(b), x.length); return lo < hi ? String.fromCodePoint(...x.slice(lo, hi)) : ''; }",
+      "cm_s_to_int": "function cm_s_to_int(s) { const t = s.replace(/^[ \\t\\n\\r\\v\\f]+|[ \\t\\n\\r\\v\\f]+$/g, ''); if (!/^[+-]?[0-9]+$/.test(t)) throw new SyntaxError('not a decimal integer'); return BigInt(t); }",
+      "cm_set": "function cm_set(xs, i, v) { const k = Number(i); if (!(k >= 0 && k < xs.length)) throw new RangeError('index out of range'); xs[k] = v; }",
+      "cm_trunc_int": "function cm_trunc_int(x) { return BigInt(Math.trunc(x)); }"
+    },
+    "if": "if ({cond}) {{",
+    "indent": "    ",
+    "lib_epilogue": "",
+    "lib_prelude": "@imports@",
+    "list_lit": {
+      "list[float]": "[{items}]",
+      "list[int]": "[{items}]"
+    },
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v}n)",
+      "true": "true"
+    },
+    "param": "{name}",
+    "prelude": "@imports@",
+    "return": "return {value};",
+    "set": "cm_set({name}, {idx}, {value});",
+    "str_lit": {
+      "escape": "\\u{{{x}}}",
+      "quote": "\"{s}\""
+    },
+    "style": "braces",
+    "types": {
+      "bool": "boolean",
+      "f32": "number",
+      "float": "number",
+      "i16": "bigint",
+      "i32": "bigint",
+      "i8": "bigint",
+      "int": "bigint",
+      "list[float]": "number[]",
+      "list[int]": "bigint[]",
+      "str": "string",
+      "u16": "bigint",
+      "u32": "bigint",
+      "u8": "bigint"
+    },
+    "while": "while ({cond}) {{",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0n",
+      "list[float]": "[]",
+      "list[int]": "[]",
+      "str": "''"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".js",
+    ".mjs",
+    ".cjs"
+  ],
+  "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "int_bits": null,
+  "metadata": {
+    "previous_content_hash": "26b1f371c4c85494b60b3904520298c3dd71bd3605775c3b4ca205f7947a092a",
+    "version": "1.0.4",
+    "version_bump_reason": "patch"
+  },
+  "name": "javascript",
+  "probe": {
+    "kind": "executable",
+    "name": "node",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "debugger",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "export",
+    "extends",
+    "finally",
+    "for",
+    "function",
+    "if",
+    "import",
+    "in",
+    "instanceof",
+    "new",
+    "return",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "try",
+    "typeof",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
+    "let",
+    "static",
+    "enum",
+    "await",
+    "implements",
+    "package",
+    "protected",
+    "interface",
+    "private",
+    "public",
+    "null",
+    "true",
+    "false",
+    "undefined",
+    "NaN",
+    "Infinity",
+    "arguments",
+    "eval"
+  ],
+  "runner": {
+    "file": "main.mjs",
+    "run": [
+      "{exe}",
+      "{src}"
+    ]
+  },
+  "statement": "JavaScript on Node: int is BigInt (exact), float is Number.",
+  "tier": 0
+}

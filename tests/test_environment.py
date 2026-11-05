@@ -66,14 +66,14 @@ class EnvironmentTest(unittest.TestCase):
             calls.append(1)
             return {"chase": CURVE, "copy_gb_s": 10.0}
 
-        card, written = E.generator(store, measure_fn=fake)
+        card, written = E.generator(store, measure_fn=fake, numeric_fn=lambda: None)
         self.assertTrue(written)
         self.assertEqual(store.registries, [("environment", "local")])
         self.assertEqual(store.cards[f"environment/{card['name']}"]["_layer"], "local")
-        _, written = E.generator(store, measure_fn=fake)
+        _, written = E.generator(store, measure_fn=fake, numeric_fn=lambda: None)
         self.assertFalse(written)
         self.assertEqual(len(calls), 1)
-        E.generator(store, refresh=True, measure_fn=fake)
+        E.generator(store, refresh=True, measure_fn=fake, numeric_fn=lambda: None)
         self.assertEqual(len(calls), 2)
 
     def test_stale_card_is_remeasured(self):

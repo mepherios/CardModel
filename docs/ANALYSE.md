@@ -56,6 +56,9 @@ difference outside it is reported as boundary behaviour, not counted against the
    | `step_budget` | the reference needs more than 300,000 steps | runners differ by orders of magnitude; timeouts and watchdogs decide |
    | `eval_order` | two effectful calls in one expression | C leaves operand order unspecified |
    | `float_assoc` | a float sum or product of three or more terms | -ffast-math reassociates |
+   | `fp_contract` | a float a·b ± c | rounded once when the flags permit contraction and the target has FMA (clang's default, gcc's GNU modes, -ffast-math with FMA; Go on arm64) |
+   | `denormal_flush` | an operand or result in (0, 2⁻¹⁰²²) | -ffast-math sets FTZ and DAZ for the process: read and written as 0 |
+   | `reduction_order` | a float sum accumulated in a loop | -ffast-math lets the vectorizer sum interleaved partial sums |
 
    An instrumented reference interpreter runs each function on its vectors, on seeded in-domain inputs and on
    boundary inputs (the 64-bit limits, 2³¹, 2⁵³ + 1, shift widths, ±0.0, the binary64 overflow thresholds) and
@@ -65,7 +68,10 @@ difference outside it is reported as boundary behaviour, not counted against the
    `swift@Onone`, `swift@Ounchecked`. A finding is **witnessed** when some runner differs from the reference (the
    difference is real, and the first input and every runner's answer are shown), **guarded** when every runner
    agrees (the codegen handles it, as `cm_floordiv` does for ⌊a/b⌋ in C), and **predicted** when no runner could
-   run it here. Two runners that both refuse an input agree.
+   run it here. Two runners that both refuse an input agree. A runner's value is compared with the reference bit for bit when their
+   numeric models say they must agree exactly (both strict, correctly rounded ops only; `engines/numeric.py`), and
+   within `values.same`'s tolerance otherwise; the three numeric-model laws compare bit for bit on every runner
+   whose float text shows every bit, since a flushed subnormal is inside the tolerance.
 
 `cardmodel matrix` uses the same laws: a failing pair whose first input fires a law says so
 (`explained by: int_width at a + b`).

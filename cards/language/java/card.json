@@ -162,11 +162,21 @@
   "frontend_link": "class_per_file",
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "8a97addcea784d35ff937e83d8235225bc085c6aa96c39b5db1f8465fd6d8f89",
-    "version": "1.0.4",
-    "version_bump_reason": "patch"
+    "previous_content_hash": "9a39da24609940603362e74434e5e632808f25c250caa3572e25565849f41ce9",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "java",
+  "numeric": {
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "off",
+      "reassociate": false,
+      "strict": true
+    },
+    "float_text": "roundtrip",
+    "source": "JEP 306 (Java 17): every float operation is strict IEEE 754; Double.toString reads back to the same double"
+  },
   "probe": {
     "kind": "executable",
     "min_version": "11.0",

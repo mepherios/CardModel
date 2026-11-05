@@ -175,11 +175,21 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "ea9c7f606e45a2d63c37fc0a70dcdcdb932b9378bd23c042e5b07d9f6120351b",
-    "version": "1.0.3",
-    "version_bump_reason": "patch"
+    "previous_content_hash": "ccef79e70cd4d86c1f1a24d6d36ae4a4afdaf74f8891560eb766d00222177ba4",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "rust",
+  "numeric": {
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "off",
+      "reassociate": false,
+      "strict": true
+    },
+    "float_text": "roundtrip",
+    "source": "rustc never fuses or reassociates f64 arithmetic and sets no FTZ (the Rust reference, §'Floating-point'); '{:?}' prints the shortest text that reads back to the same bits"
+  },
   "probe": {
     "kind": "executable",
     "name": "rustc",

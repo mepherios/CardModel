@@ -21,7 +21,8 @@
   cardmodel scale bench [--sizes 1e3,1e4,1e5] [--seed S] [--record]   time and peak memory per function on
                                            synthetic projects of growing size (SCALING.md §6; goals G_A11, G_A12)
   cardmodel show CARD | list [REGISTRY] | probe | new REGISTRY NAME | docs [--check] | clean
-  cardmodel env [--measure|--static]       this machine as an environment card: identity, cache levels, bandwidth
+  cardmodel env [--measure|--static|--numeric]  this machine as an environment card: identity, cache levels,
+                                           bandwidth; --numeric: every runner's numeric model, probed
 
   the model runs itself (engines/selfrun.py, docs/AUTONOMY.md):
   cardmodel self run [--only STEPS] [--force]   one cycle: capabilities, integrity, verify, learn, laws, algebra,
