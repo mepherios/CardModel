@@ -71,7 +71,8 @@ then loop". That design ends at S2.
    topological order (Tarjan, linear time). Recursion inside an SCC is solved as one fixpoint. This replaces every
    "loop until nothing changes over all functions".
 3. **Partial, not poisoned.** A function that doesn't lift becomes an *opaque boundary card* with its signature and
-   observed behaviour. Its callers still lift, and only the edge is a gap. Today one failure fails every caller.
+   observed behaviour. Its callers still lift, and only the edge is a gap (built: `frontend_python.close_calls`,
+   `ProjectLift.boundaries`; observed behaviour is not recorded yet).
 4. **Content addressing everywhere.** Every result card names the hashes of its inputs (source, cards, rules, tool
    versions), the way arcade build ids already do. Equal inputs mean equal results, so a result computed once on any
    machine is reused everywhere.
