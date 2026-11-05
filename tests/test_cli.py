@@ -22,6 +22,19 @@ class CLI(unittest.TestCase):
         self.assertEqual(r.returncode, code, (args, r.stdout[-2000:], r.stderr[-2000:]))
         return r.stdout
 
+    def test_distill_sorts_and_parse_errors(self):
+        r = self.p.cli("distill", "expr:(a+")
+        self.assertEqual(r.returncode, 2, r.stderr)
+        self.assertIn("error: cannot parse expression:", r.stderr)
+        self.assertNotIn("Traceback", r.stderr)
+        out = self.run_ok("distill", "(a+b)+c", "a+(b+c)", "--seed", str(SEED))
+        self.assertIn("equal under laws at sorts {a: int, b: int, c: int}", out)
+        out = self.run_ok("distill", "(a+b)+c", "a+(b+c)", "--seed", str(SEED), "--sort", "float", code=1)
+        self.assertIn("not shown equal at sorts {a: float, b: float, c: float}", out)
+        out = self.run_ok("distill", "(a+b)+c", "a+(b+c)", "--seed", str(SEED), "--var", "a:float", code=1)
+        self.assertIn("a: float, b: int", out)
+        self.assertEqual(json.loads(self.run_ok("--json", "distill", "a+b"))["var_sorts"], {"a": "int", "b": "int"})
+
     def test_commands(self):
         out = self.run_ok("init")
         self.assertIn(".cardmodel", out)
