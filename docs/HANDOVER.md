@@ -1,4 +1,4 @@
-# HANDOVER (2026-11-05, refreshed 06:45 UTC): state of the work, for the next model
+# HANDOVER (2026-11-05, refreshed 07:20 UTC): state of the work, for the next model
 
 This is a snapshot handover for a model (or person) picking up CardModel cold. It says where main is, what is in
 flight on which branch, what was left unfinished, and what only the owner can decide. The long-form operating manual
@@ -76,77 +76,74 @@ without hand work.
 
 ## 4. What landed on 2026-11-04 and 11-05
 
-On main (`a336f93`): CI workflows (#4), lazy indexed store (#18), GODEL.md (#20), FOUNDATIONS F2, F4, F5 and the
-fixed-width / binary32 subsorts `u8..i32 <= int`, `f32 <= float` (#21 to #24, #29, #30), GODEL_AUDIT.md (#25),
-ENVIRONMENTS.md (#27), **the restructured Gödel core and GODEL_TARGET.md (#28)**, and **lists in math notation,
-nested loops in constant stack, `tanh` in Lua closing the Lua GELU gap, Swift argument labels and exact integer POW
-(#32)**.
+On main (`2781387`, 07:20 UTC): CI workflows (#4), lazy indexed store (#18), GODEL.md (#20), FOUNDATIONS F2, F4, F5
+and the subsorts `u8..i32 <= int`, `f32 <= float` (#21 to #24, #29, #30), GODEL_AUDIT.md (#25), ENVIRONMENTS.md
+(#27), the restructured Gödel core and GODEL_TARGET.md (#28), lists in math notation and `tanh` in Lua (#32), the
+`godel factor | similar | cofactor | decode` commands (#46), LR35902 instruction terms under the register sorts
+(#31), the lifter simplifying only by rule-card laws (#49), the environment card and per-resource budgets (#44), the
+scale benchmark (#45), opaque boundary cards for failed callees (#51), physics as a Gödel set (#48), and the
+foundations stream's own handover (#56). Everything after #28 was merged on local tests (§0).
 
 ## 5. Work streams and where each stands
 
-"Open" PRs below were checked against GitHub at the time of writing. None has run under CI (§0).
+"Open" PRs below were checked against GitHub at 07:20 UTC. None has run under CI (§0).
 
-### 5.1 Gödel model as the foundation (GODEL_TARGET.md §6)
+### 5.1 Gödel model as the foundation (GODEL_TARGET.md §6 and §8)
 
-* Done: step 1 (the design) and step 2 (the core: algebra, cost, Jaccard, `ContentIndex`, `match`, `factor`,
-  `expand`, duplicates retired from `unreal/distill`, `funcalg`, `numbering`; identities tested on random terms).
-* **Open: PR #46** (`claude/project-thread-jm4iji`, 1 commit on current main): step 3, `cardmodel godel factor |
-  similar | cofactor | decode`. `factor` rewrites a term over the definitions it contains with the cofactor and
-  the check γ(t) = γ(context) + Σ γ(instance); `similar` ranks by |gcd| / |lcm|; `decode N --vars a,b` returns a
-  positional code's term.
-* **Queued, no branch yet:** PR 3 physics as a Gödel set (base quantities as atoms with negative exponents, a
-  dimension check of equations); PR 4 codegen as a carry map; PR 5 a rank-level carry map; PR 6 onwards, call sites
-  in GODEL_AUDIT's ranked order, each with a "same answer with and without" test.
-* Owns: `engines/godel.py`, `numbering`, `funcalg`, `codes`, `unreal/distill`.
+* Done: the design, the core (#28), cofactor factoring and similarity as commands (#46), physics as a Gödel set
+  (#48: SI base quantities as atoms, a dimension model of the signature in `engines/dimensions.py`, thirteen
+  `physics_law` cards checked by the godel verify section). GODEL_TARGET.md §8 is the recipe any other non-code
+  domain follows to join.
+* **Open: PR #53** (`claude/project-thread-jm4iji`): codegen as a carry map; translate and matrix predict a
+  language's gap from content.
+* **Open: PR #54** (`claude/godel-section-cache`): the godel verify section cached by the hash of its inputs
+  (GODEL_AUDIT §6 step 1).
+* Left: a rank-level carry map, then call sites in GODEL_AUDIT's ranked order, each with a "same answer with and
+  without" test. Owns `engines/godel.py`, `numbering`, `funcalg`, `codes`, `unreal/distill`.
 
 ### 5.2 Ground CardModel in core mathematics (foundations)
 
-* Done: fixed-width and binary32 subsorts with op cards and laws (FOUNDATIONS D1).
-* **Open: PR #31** (`claude/project-thread-8z7gnb`, merged with main at 06:02): instruction terms distilled under the
-  register sorts, reproducible definition certificates, witnessing the stored canonical terms. Touches
-  `machine/symbolic.py`, `engines/verify.py`, the LR35902 definition pack.
-* **In progress, not pushed:** a machine-code lifter change that simplifies with the rule cards' unit and absorbing
-  laws instead of hand-coded cases.
-* **Left:** the rest of the IR type series (fixed-width ints and f32 as real `engines/ir.py` TYPES with codegen
-  templates and conformance cells in every language), then `str`, tuple, Option, records, `raise`, truthiness. This
-  stream owns `engines/ir.py` TYPES; nothing else should add IR types. It is the main lever on the 96.1 % above.
+**This stream's own handover is [FOUNDATIONS.md §7](FOUNDATIONS.md#7-handover-state-of-this-stream-2026-11-05)**
+(#56): what merged, and the remaining steps in order. Nothing of this stream is unmerged. In short:
+
+1. register sorts for lifted machine code (`machine/lift.py`, `symbolic.register_sorts`);
+2. fixed-width ints and f32 as `engines/ir.py` TYPES, emitted wrap-on-store (this stream owns IR types);
+3. conformance cells for the new types in every language;
+4. frontends lifting C, Rust, Go, Java and C# fixed-width types to these sorts;
+5. then `str`, tuple, Option, records, `raise`, truthiness. This is the main lever on the 96.1 % in §3.
 
 ### 5.3 Independent roadmap prerequisites
 
-1. **Environment card and per-resource budgets: open, PR #44** (`claude/project-thread-41jb89`). `cardmodel env`
-   writes the generator's own card (`env_<fingerprint>`): OS, ISA and extensions, cores and SMT, RAM, declared caches,
-   plus a C pointer chase and streaming copy for measured cache plateaus and bandwidth; each capability carries its
-   evidence tier (D17). Metric cards and verify reports name the card; `resources.budgets()` reads CPU workers,
-   compile slots, memory caps from it, or the OS when no card exists.
-2. **Scale benchmark: open, PR #45** (`claude/project-thread-c60pvh`). `cardmodel scale bench` builds seeded
-   synthetic Python packages, times lift and the cheap per-function stages in a child process per size, records
-   `metric/scale__n<N>`, and adds goals G_A11 (scale slope ≤ 2) and G_A12 (memory bound). Numbers in §3.
-3. **Stop failed callees from failing callers: in progress, not pushed.** A function that does not lift becomes an
-   opaque boundary card with its signature and cause; callers lift with the edge recorded as a gap
-   (`frontend_python.close_calls`, `lift_project.py`). Measure the lift rate before and after with PR #45's bench and
-   the TRANSLATE_REAL_PROGRAMS sweep. Highest-urgency scaling item: it hides most of the lift rate.
+1. Environment card and per-resource budgets: **merged (#44).** `cardmodel env` writes `env_<fingerprint>`;
+   metric cards and verify reports name it; `resources.budgets()` reads from it.
+2. Scale benchmark: **merged (#45).** `cardmodel scale bench`; goals G_A11 and G_A12. Numbers in §3.
+3. Failed callees no longer fail callers: **merged (#51)**, opaque boundary cards. **Open follow-up: PR #52**
+   (`claude/opaque-callees`, draft): host witness and Gödel identity for boundary cards; it needs porting onto #51.
+   Still to do: measure the lift rate before and after with the bench and the TRANSLATE_REAL_PROGRAMS sweep.
 
-### 5.4 Every capability in the main pipeline (tiers and coverage check)
+### 5.4 Every capability in the main pipeline (tiers and coverage check, CM50)
 
-* **In progress, not pushed:** a pipeline registry where every capability declares its tier, and a coverage check
-  that fails when a capability never runs in the main pipeline.
+* **Open: PR #50** (`claude/project-thread-vubpxu`): the pipeline as a registry, every applicable stage runs or says
+  why.
+* **Open: PR #55** (`claude/pipeline-coverage`): tiers, the coverage check and Gödel purity. #50 and #55 overlap, so
+  check which supersedes the other before merging.
 
 ### 5.5 Transformer math in math notation
 
-* Done in #32: transformer functions listed as equations in math notation, the Lua GELU `tanh` gap closed.
-* Branch `claude/ci-exact-int-pow` (no PR) is superseded by #32 and can be deleted.
+* Done in #32. Branch `claude/ci-exact-int-pow` (no PR) is superseded by #32 and can be deleted.
 
 ### 5.6 GPU, driver and environment modelling
 
-* Done: ENVIRONMENTS.md (gaps E1 to E24). V-A is PR #44.
-* Next per ENVIRONMENTS §6, once #44 lands: V-B numeric-model laws (fp_contract, denormal_flush, reduction_order),
-  then V-D a SPIR-V card and lavapipe in CI (also waits on the f32 series).
+* Done: ENVIRONMENTS.md (gaps E1 to E24) and V-A (#44).
+* **Open: PR #57** (`claude/numeric-model`): V-B, numeric-model laws fp_contract, denormal_flush, reduction_order.
+* Next: V-D, a SPIR-V card and lavapipe in CI (also waits on the f32 IR types, §5.2 step 2).
 
-### 5.7 Older open PRs (drafts, from 11-05 00:00 to 03:00 UTC, each merged cleanly into main at 05:50)
+### 5.7 Older open PRs (drafts from 11-05 00:00 to 03:00 UTC; each merged cleanly into main at 05:50)
 
 | PR | branch | what |
 |---|---|---|
 | #42 | ci-fewer-runs | CI minute budget (§0); merge first |
+| #47 | go-negzero | signed zero in every target (Go `-0.0`, C, JS, ceil/floor/trunc, Ruby sqrt) |
 | #41 | stdin-harness | test programs read inputs from stdin, one build per language serves every seed |
 | #40 | hopeful-tesla-yvaan1 | `function_card` records the real source language; stacked on #39 |
 | #39 | c-frontend | C frontend: C integer semantics, arrays as lists, learning from C trees |
@@ -173,11 +170,11 @@ None of these has a thread working on it. Each needs: merge main, full local tes
 
 ## 7. Suggested order for the next model
 
-1. Land what is finished, each on a full local test run against current main: #46, #44, #45, #31, then #42, #38,
-   #41, #39, #40, #36, #35, #34, #33. Merge main into the branch between merges.
-2. Finish the in-progress items that have no branch yet: failed-callee boundary cards (§5.3 item 3), the pipeline
-   coverage registry (§5.4), the rule-card lifter change (§5.2).
-3. Continue the owned series from their own branches: Gödel PRs 3 to 6 (§5.1), the IR type series (§5.2), then V-B.
+1. Land what is finished, each on a full local test run against current main: #54, #53, #57, #50 or #55 (decide
+   which supersedes), #52 after its port, then #42, #47, #38, #41, #39, #40, #36, #35, #34, #33. Merge main into
+   the branch between merges.
+2. Foundations: FOUNDATIONS.md §7 steps 1 to 5, in order.
+3. Gödel: the rank-level carry map, then call sites (§5.1). Measure the lift-rate gain of #51 (§5.3).
 4. Keep the rules: every claim carries its tier; content is stored as sparse vectors, never as integers, and no index
    is reused (CM45); the formal core builds with no `sorry`; a goal never gets easier silently; each branch is listed
    on the `cardmodel` project card (CM41).
