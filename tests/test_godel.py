@@ -435,6 +435,11 @@ class Commands(unittest.TestCase):
             r = proj.cli("godel", "decode", str(n), "--vars", ",".join(names))
             self.assertEqual(r.stdout.strip(), "(p + 3)", r.stderr)
             self.assertEqual(proj.cli("godel", "factor").returncode, 2)
+            for argv in (("godel", "decode"), ("godel", "decode", "--expr", "a+b")):
+                r = proj.cli(*argv)
+                self.assertEqual(r.returncode, 2, r.stderr)
+                self.assertIn("usage: cardmodel godel decode NUMBER", r.stderr)
+                self.assertNotIn("list index out of range", r.stderr)
         finally:
             proj.cleanup()
 

@@ -399,19 +399,31 @@ def cmd_emit(args) -> int:
             print(f"error: {args.source} is not valid {src_lang} (line {exc.lineno}: {exc.msg})", file=sys.stderr)
             return 2
         names = [args.function] if args.function else [lf.name for lf in lifted if lf.ok]
+        notes = []
         for lf in lifted:
             if not lf.ok and (not args.function or lf.name == args.function):
-                texts.append(f"/* {lf.name}: not lifted: {'; '.join(lf.reasons)} */")
-        seen = set()
+                notes.append(f"/* {lf.name}: not lifted: {'; '.join(lf.reasons)} */")
+        # One module for the whole file: emitting each function as its own module repeated the language's
+        # module header (Rust `#![allow]`, Go `package`, Java class wrapper) once per function.
+        combined, ok = [], []
         for n in names:
             module = module_for(n, lifted)
-            todo = [f["name"] for f in module["functions"] if f["name"] not in seen]
-            seen.update(todo)
-            if todo:
-                try:
-                    texts.append(emit_module(ctx.store, ctx.ops, args.lang, module, only=todo))
-                except EmitGap as exc:
-                    texts.append(f"/* {n}: {exc} */")
+            for f in module["functions"]:
+                if all(f["name"] != g["name"] for g in combined):
+                    combined.append(f)
+        for f in combined:
+            try:
+                emit_module(ctx.store, ctx.ops, args.lang, module_for(f["name"], lifted), only=[f["name"]])
+                ok.append(f["name"])
+            except EmitGap as exc:
+                notes.append(f"/* {f['name']}: {exc} */")
+        if ok:
+            try:
+                texts.append(emit_module(ctx.store, ctx.ops, args.lang, {"entry": ok[0], "functions": combined},
+                                         only=ok))
+            except EmitGap as exc:
+                notes.append(f"/* {exc} */")
+        texts.extend(notes)
     text = "\n".join(texts)
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8")

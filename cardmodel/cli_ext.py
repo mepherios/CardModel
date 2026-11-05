@@ -569,6 +569,10 @@ def _godel_structure(cli, ctx, args, GD) -> int:
     if args.action == "decode":
         entries = GD.ledger(ctx.store)
         names = [v for v in (args.vars or "").split(",") if v]
+        if args.expr or len(args.cards) != 1 or not args.cards[0].lstrip("-").isdigit():
+            print("usage: cardmodel godel decode NUMBER [--vars a,b,...]  (decode takes one positional Gödel "
+                  "number; --expr does not apply)", file=sys.stderr)
+            return 2
         try:
             term = GD.decode(int(args.cards[0]), ctx.ops, entries, names)
         except (IndexError, ValueError, KeyError) as exc:

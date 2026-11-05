@@ -461,6 +461,11 @@ def improve_source(ctx: Ctx, source: str, label: str = "<module>", seed: int | N
         rng = random.Random(f"{seed}:{label}:{node.name}")
         fn_ir = next(f for f in module["functions"] if f["name"] == node.name)
         ptypes = [p["type"] for p in fn_ir["params"]]
+        odd = [t for t in ptypes if t not in WIDE]
+        if odd:  # list (and other non-scalar) parameters: no input generators to verify a substitution with
+            kind = "list" if odd[0].startswith("list") else odd[0]
+            entry.update(action="kept", reason=f"not improvable: {kind} parameter ({odd[0]})")
+            continue
         wide = [WIDE[t] for t in ptypes]
         inputs = _cheap_inputs(ref, _unique(V.inputs(gens, samples, rng) + V.inputs(wide, samples, rng)
                                             + structured_inputs(ptypes, rng)))
@@ -627,6 +632,11 @@ def end_to_end(ctx: Ctx, source: str, optimized: str, changed: list[str], seed: 
         fn_ir = next(f for f in module["functions"] if f["name"] == name)
         rng = random.Random(seed + 1)
         ptypes = [p["type"] for p in fn_ir["params"]]
+        odd = [t for t in ptypes if t not in WIDE]
+        if odd:  # list (and other non-scalar) parameters: no input generators to verify a substitution with
+            kind = "list" if odd[0].startswith("list") else odd[0]
+            entry.update(action="kept", reason=f"not improvable: {kind} parameter ({odd[0]})")
+            continue
         wide = [WIDE[t] for t in ptypes]
         inputs = _cheap_inputs(orig[name], _unique(V.inputs(gens, 48, rng) + V.inputs(wide, 96, rng)
                                                    + structured_inputs(ptypes, rng)))
