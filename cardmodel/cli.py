@@ -43,6 +43,8 @@
   cardmodel godel sizes [--limit N]         each code's size for every card with a term (Gödel method W-3)
   cardmodel godel factor|similar CARD... | --expr E   a term over the definitions it contains (its cofactor), or the
                                            definitions sharing most logic with it; cofactor WHOLE PART; decode N --vars
+  cardmodel godel dimension LAW... | --expr E --dims V=D,...   physical dimension as content: a law's two sides agree,
+                                           or an expression's dimension from its variables' (the physics set, G13)
   cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
   cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics

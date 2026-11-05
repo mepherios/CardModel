@@ -71,12 +71,13 @@ then loop". That design ends at S2.
    topological order (Tarjan, linear time). Recursion inside an SCC is solved as one fixpoint. This replaces every
    "loop until nothing changes over all functions".
 3. **Partial, not poisoned.** A function that doesn't lift becomes an *opaque boundary card* with its signature and
-   observed behaviour. Its callers still lift, and only the edge is a gap. *Done for Python (2026-11-05):*
-   `frontend_python.close_calls` gives every function that did not lift a boundary card (signature, cause, the
-   Python callable; its id is `egraph.semantic_hash` of name, signature and source, under syntax, no content);
-   callers become `partial`, never `ok`, so no target is claimed; `engines/opaque.py` witnesses them by running the
-   IR with each opaque call made to the original function, and a boundary the inputs never exercise is not a pass.
-   A callee without a declared or lifted result, or an instance method, is not a boundary (its callers still fail).
+   observed behaviour. Its callers still lift, and only the edge is a gap (built: `frontend_python.close_calls`,
+   `ProjectLift.boundaries`; observed behaviour is not recorded yet). *Witness for Python (2026-11-05):* a boundary
+   the host can call gets the full card (the Python callable; its id is `egraph.semantic_hash` of name, signature
+   and source, under syntax, no content); a caller whose every gap reaches such boundaries is `Lifted.partial`
+   (never `ok`, so no target is claimed), and `engines/opaque.py` witnesses it by running the IR with each opaque
+   call made to the original function; a boundary the inputs never exercise is not a pass. An instance method or a
+   callee without a declared or lifted result is not host-callable (its callers keep the gap but are not partial).
 4. **Content addressing everywhere.** Every result card names the hashes of its inputs (source, cards, rules, tool
    versions), the way arcade build ids already do. Equal inputs mean equal results, so a result computed once on any
    machine is reused everywhere.

@@ -1,0 +1,34 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "F": "force",
+    "a": "acceleration",
+    "m": "mass"
+  },
+  "lhs": [
+    "var",
+    "F"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "newton_second",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "var",
+      "m"
+    ],
+    [
+      "var",
+      "a"
+    ]
+  ],
+  "source": "Newton (1687), Principia, Lex II",
+  "statement": "F = m·a",
+  "tier": 0
+}

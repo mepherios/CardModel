@@ -1,0 +1,37 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "S": "entropy",
+    "W": "1",
+    "k": "entropy"
+  },
+  "lhs": [
+    "var",
+    "S"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "boltzmann_entropy",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "var",
+      "k"
+    ],
+    [
+      "LOG",
+      [
+        "var",
+        "W"
+      ]
+    ]
+  ],
+  "source": "Boltzmann; W a count of microstates, dimensionless",
+  "statement": "S = k·ln W",
+  "tier": 0
+}

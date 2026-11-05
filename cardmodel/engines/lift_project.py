@@ -16,12 +16,15 @@ Every function gets a qualified name ``<module>::<name>`` (``json.decoder::py_sc
 inside the lifted IR name callees by it, and :meth:`ProjectLift.module_for` turns one function and everything it
 calls, across files, back into an ordinary IR module (bare names, mangled only where two files collide).
 
-The closure is one pass over the reverse call graph of the whole project, so it is linear in calls
-(frontend_python.close_calls). A function that did not lift is an opaque boundary (its signature, its cause and the
-Python callable ``module.Class.method`` that implements it); its callers lift as ``partial`` with the edge recorded as
-a gap, and :meth:`ProjectLift.module_for` with ``opaque=True`` gives their module with the boundary cards, which
-only the host witness can run (engines/opaque.py). An instance method is never a boundary (the host would need its
-receiver), so a caller of one that did not lift still fails.
+The closure is partial, not poisoned (SCALING.md §3.3): a function whose own body does not lift becomes an opaque
+boundary card (its declared signature when it types, and its cause; :meth:`ProjectLift.boundaries`), and its
+callers still lift, each such call edge recorded in ``Lifted.gaps``. ``ok`` stays "closed": the function and
+everything it calls lifted, so it runs and translates alone. One pass over the reverse call graph of the whole
+project, linear in calls (frontend_python.close_calls).
+A boundary whose Python callable ``module.Class.method`` the host can call carries it (frontend_python.boundary_card);
+a caller whose every gap reaches such boundaries is ``partial``, and :meth:`ProjectLift.module_for` with
+``opaque=True`` gives its module with the boundary cards, which only the host witness can run (engines/opaque.py).
+An instance method is never host-callable (the host would need its receiver), so a caller of one is not partial.
 
 Honest limits (L1): Python imports resolve statically (no ``__import__``, no star imports, no re-exports through
 ``__init__`` assignments); text languages link by name, not by build system or headers (SCALING.md §4.2);
@@ -47,6 +50,17 @@ class ProjectLift:
     functions: dict = field(default_factory=dict)        # qual -> Lifted (Lifted.qual, .lang, .method set)
     unparsed: list = field(default_factory=list)
     cross_calls: int = 0
+    sigs: dict = field(default_factory=dict)             # qual -> declared signature (boundary cards read it)
+
+    def boundaries(self) -> dict:
+        """qual -> opaque boundary card of every function whose own body did not lift (SCALING.md §3.3), with the
+        number of call edges it leaves as gaps in functions that did lift."""
+        blocked: dict[str, int] = {}
+        for lf in self.functions.values():
+            for g in lf.gaps:
+                blocked[g["callee"]] = blocked.get(g["callee"], 0) + 1
+        return {q: {**lf.boundary, "gap_edges": blocked.get(q, 0)}
+                for q, lf in self.functions.items() if lf.boundary is not None}
 
     def module_for(self, qual: str, opaque: bool = False) -> dict:
         """The IR module of ``qual`` and every function it calls, across files, with bare names. With ``opaque``,
@@ -320,9 +334,12 @@ def _lift_python(ctx: Ctx, lang: str, files: list[Path], root: Path, methods: bo
         for f in pf.defs:
             try:
                 sigs[f"{pf.mod}::{f.name}"] = {"params": [_ann_type(a.annotation) or "int" for a in f.args.args],
-                                                "returns": _ann_type(f.returns)}
+                                                "returns": _ann_type(f.returns),
+                                                "typed": f.returns is not None and
+                                                all(a.annotation is not None for a in f.args.args)}
             except Unsupported:
                 continue
+    result.sigs.update({q: dict(sig) for q, sig in sigs.items()})
     externs = {pf.mod: (_py_externs(pf, sigs, modules) if cross else {}) for pf in pfs}
     consts = {pf.mod: module_constants(pf.tree) for pf in pfs}
     todo = list(pfs)
@@ -369,6 +386,9 @@ def _lift_text(ctx: Ctx, lang: str, files: list[Path], root: Path, cross: bool, 
         except (UnicodeDecodeError, ValueError, RecursionError) as exc:
             result.unparsed.append(f"{p}: {type(exc).__name__}")
     keys = {p: str(p.relative_to(root)) if root in p.parents or p == root else p.name for p in texts}
+    for p, sigs in sigs_by_file.items():
+        for name, sig in sigs.items():
+            result.sigs[f"{keys[p]}::{name}"] = sig
     defined: dict[str, list] = {}
     for p, sigs in sigs_by_file.items():
         for name, sig in sigs.items():
@@ -419,14 +439,16 @@ def lift_files(ctx: Ctx, files: list[tuple[Path, str]], methods: bool = True, cr
         elif module != "cardmodel.engines.frontend_text":          # cardlang, math: one file at a time
             from . import frontends
             for p in ps:
-                for lf in frontends.lift(ctx, p.read_text(encoding="utf-8"), lang):
-                    lf.qual, lf.lang, lf.method = f"{p.name}::{lf.name}", lang, False
-                    if lf.ok:
-                        _requalify(lf.ir, {lf.name: lf.qual})
+                lifted = frontends.lift(ctx, p.read_text(encoding="utf-8"), lang)
+                local = {lf.name: f"{p.name}::{lf.name}" for lf in lifted}    # calls within the file resolve
+                for lf in lifted:
+                    lf.qual, lf.lang, lf.method = local[lf.name], lang, False
+                    if lf.ir is not None:
+                        _requalify(lf.ir, local)
                     result.functions[lf.qual] = lf
         else:
             _lift_text(ctx, lang, ps, root, cross, result)
-    close_calls(result.functions)
+    close_calls(result.functions, sigs=result.sigs)
     for q, lf in result.functions.items():
         if lf.ok:
             home = q.split("::", 1)[0]

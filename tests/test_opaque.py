@@ -77,7 +77,7 @@ class SingleFile(unittest.TestCase):
         self.assertFalse(lf.ok, "a partial function is never ok: no target can run it")
         line = CALLERS.splitlines().index("    return safe_div(x * 3, y - 2) + x") + 1 + CALLEE.count("\n")
         self.assertEqual(lf.opaque, {"safe_div": {"line": line, "id": self.lifted["safe_div"].boundary["id"]}})
-        self.assertIn("an opaque boundary", lf.reasons[0])
+        self.assertTrue(any("an opaque boundary" in r for r in lf.reasons), lf.reasons)
         # the caller of a partial function is partial through it, with no gap of its own
         up = self.lifted["twice"]
         self.assertTrue(up.partial)
@@ -131,8 +131,9 @@ class NotABoundary(unittest.TestCase):
     def test_a_callee_without_a_declared_result_still_fails_its_callers(self):
         src = "def g(x: int):\n    print(x)\n    return x\n\ndef f(x: int) -> int:\n    return g(x) + 1\n"
         by = {lf.name: lf for lf in lift_source(src, model_ctx().ops)}
-        self.assertIsNone(by["g"].boundary)
+        self.assertNotIn("host", by["g"].boundary)       # a boundary card (#51), but not host-callable
         self.assertFalse(by["f"].ok or by["f"].partial)
+        self.assertEqual([g["callee"] for g in by["f"].gaps], ["g"])
         self.assertIn("calls g which did not lift", by["f"].reasons)
 
     def test_a_mutated_list_argument_is_a_mismatch_not_an_agreement(self):
@@ -190,7 +191,7 @@ class Project(unittest.TestCase):
     def test_an_instance_method_is_not_a_boundary(self):
         lf = self.res.functions[f"{self.pkg}.low::K_via"]
         self.assertFalse(lf.ok or lf.partial)
-        self.assertIsNone(self.res.functions[f"{self.pkg}.low::K_st"].boundary)
+        self.assertNotIn("host", self.res.functions[f"{self.pkg}.low::K_st"].boundary)
 
     def test_the_project_witness_imports_the_originals(self):
         rep = opaque.witness_project(self.ctx, self.res, f"{self.pkg}.high::h", self.root, seed=4)
@@ -198,11 +199,12 @@ class Project(unittest.TestCase):
 
     def test_sweep_reports_both_rates(self):
         rep = sweep.sweep(self.ctx, self.root)
-        self.assertEqual(rep["partial"], 1)
-        self.assertEqual(rep["lifted_with_boundaries"], rep["lifted"] + 1)
-        self.assertGreater(rep["rate_with_boundaries"], rep["rate"])
+        self.assertEqual(rep["host_partial"], 1)
+        self.assertEqual(rep["partial"], 2)                 # #51: every lifted body with gaps (K_via too)
+        self.assertEqual(rep["closed_with_boundaries"], rep["closed"] + 1)
+        self.assertGreater(rep["rate_with_boundaries"], rep["closed_rate"])
         self.assertEqual(rep["boundaries_reached"], 2)
-        self.assertIn("partial", sweep.report_text(rep))
+        self.assertIn("host-partial", sweep.report_text(rep))
 
 
 if __name__ == "__main__":

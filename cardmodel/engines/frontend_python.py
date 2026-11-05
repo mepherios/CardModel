@@ -79,8 +79,9 @@ class Lifted:
     host: str | None = None         # the Python attribute path that calls the original ("f", "C.m"); None: none
     host_module: str | None = None  # the module the host path is in (lift_project); None: the file's own namespace
     call_lines: dict = field(default_factory=dict)   # callee -> line of its first call here
-    boundary: dict | None = None    # not ok: the opaque boundary card callers may call through (close_calls)
-    partial: bool = False           # the body lifted, but it reaches an opaque boundary: witness only, no target
+    gaps: list = field(default_factory=list)       # call edges to callees that are not closed (close_calls)
+    boundary: dict | None = None                   # the opaque boundary card of a function that did not lift
+    partial: bool = False           # body lifted, every gap reaches a host-callable boundary: witness only, no target
     opaque: dict = field(default_factory=dict)       # partial: direct gap edges, callee -> {line, id of its card}
 
 
@@ -782,7 +783,8 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
             ptypes = [(_ann_type(x.annotation) or (param_hints or {}).get(f.name, {}).get(x.arg)
                        or _lit_type(defaults.get(x.arg)) or "int") for x in a.args]
             sigs[f.name] = {"params": ptypes, "returns": _ann_type(f.returns), "names": [x.arg for x in a.args],
-                            "defaults": {k: v for k, v in defaults.items() if v is not None}}
+                            "defaults": {k: v for k, v in defaults.items() if v is not None},
+                            "typed": _declared(f, param_hints, defaults)}
         except Unsupported:
             continue
     results: dict[str, Lifted] = {}
@@ -802,8 +804,16 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
         results[f.name] = lf
     if close:
         external = {e["qual"] for e in (externs or {}).values()}
-        close_calls(results, lambda c: c in external)
+        close_calls(results, lambda c: c in external, sigs)
     return [lf for lf in results.values() if not only or lf.name in only]
+
+
+def _declared(f, param_hints: dict | None, defaults: dict) -> bool:
+    """Whether a def's signature types without a guess: every parameter annotated, hinted or given a numeric
+    default, and the result annotated (a boundary card carries only a signature that types)."""
+    hints = (param_hints or {}).get(f.name, {})
+    return f.returns is not None and all(x.annotation is not None or x.arg in hints or
+                                         _lit_type(defaults.get(x.arg)) for x in f.args.args)
 
 
 def callees_of(ir: dict) -> set[str]:
@@ -842,22 +852,38 @@ def boundary_card(lf) -> dict | None:
             "targets": "none: only the original Python function implements it"}
 
 
-def close_calls(results: dict, known_ok=lambda name: False) -> None:
-    """Close the call graph of ``results`` (name -> Lifted) in place, linear in calls (SCALING.md §3.3).
+def lift_status(lf) -> str:
+    """'closed': lifted with every callee lifted (runs and translates on its own); 'partial': its own body lifted,
+    and every call edge to a callee that did not lift is a recorded gap; 'boundary': its own body did not lift, so
+    it is an opaque boundary card (signature when it types, and the cause)."""
+    if lf.ok:
+        return "closed"
+    return "partial" if lf.ir is not None and getattr(lf, "boundary", None) is None else "boundary"
 
-    1. A lifted function fails when it calls a name that is neither in ``results`` nor ``known_ok``, or a function
-       that did not lift and cannot be an opaque boundary (boundary_card is None); such a failure spreads to its
-       callers only through further non-boundaries (a worklist over the reverse call graph, each call visited once).
-    2. Every function that is not ``ok`` gets its boundary card. A lifted caller of one becomes ``partial``: the
-       edge is a gap (``opaque``: callee -> call line, and a reason naming the cause), not a failure.
-    3. ``partial`` spreads to callers (worklist): a function that reaches a boundary through lifted callees is
-       partial too, with no gap of its own.
 
-    A partial function is not ``ok``: its IR runs only through the host (engines/opaque.py), never in a target."""
+def typed_signature(sig: dict | None) -> dict | None:
+    """``{"params", "returns"}`` when every type in it is declared (not guessed), else None."""
+    if not sig or sig.get("typed") is False:
+        return None
+    params, ret = sig.get("params"), sig.get("returns")
+    if params is None or ret is None or any(t is None for t in params):
+        return None
+    return {"params": list(params), "returns": ret}
+
+
+def close_calls(results: dict, known_ok=lambda name: False, sigs: dict | None = None) -> None:
+    """Partial, not poisoned (SCALING.md §3.3). A function whose own body did not lift becomes an opaque boundary
+    card: ``lf.boundary = {"name", "signature", "cause"}`` (the signature only when it types). A function whose body
+    lifted keeps its IR; each call edge to a callee that is not closed (a boundary, a missing function, or a callee
+    with gaps of its own) is recorded in ``lf.gaps``, and ``ok`` (closed: runnable and translatable alone, L45)
+    turns False. Linear in calls: one pass builds the reverse call graph, then a worklist visits each edge once."""
     callers: dict[str, list[str]] = {}
     work: list[str] = []
     for name, lf in results.items():
         if not lf.ok:
+            if not lf.gaps and lf.boundary is None:          # its own body failed (not a caller from a rerun)
+                lf.boundary = {"name": name, "signature": typed_signature((sigs or {}).get(name)),
+                               "cause": lf.reasons[0] if lf.reasons else "unknown"}
             work.append(name)
             continue
         missing = []
@@ -868,50 +894,71 @@ def close_calls(results: dict, known_ok=lambda name: False) -> None:
                 missing.append(c)
         if missing:
             lf.ok = False
+            lf.gaps.extend({"callee": c, "kind": "missing", "cause": "no function of that name lifted"}
+                           for c in sorted(missing))
             lf.reasons.append(f"calls {', '.join(sorted(missing))} which did not lift")
             work.append(name)
-    cards: dict[str, dict | None] = {}
-
-    def card(name):
-        if name not in cards:
-            cards[name] = boundary_card(results[name])
-        return cards[name]
-    while work:                                                     # 1: failures through non-boundaries
+    while work:
         bad = work.pop()
-        if card(bad) is not None:
-            continue
+        b = results[bad]
+        edge = {"callee": bad, "kind": "boundary", "cause": b.boundary["cause"]} if b.boundary else \
+            {"callee": bad, "kind": "partial", "cause": f"{len(b.gaps)} gap(s) of its own"}
         for name in callers.get(bad, ()):
             lf = results[name]
+            if all(g["callee"] != bad for g in lf.gaps):
+                lf.gaps.append(dict(edge))
             if lf.ok:
                 lf.ok = False
                 lf.reasons.append(f"calls {bad} which did not lift")
                 work.append(name)
-    partial: list[str] = []
-    for name, lf in results.items():                                # 2: boundaries and the gap edges to them
-        if lf.ok or getattr(lf, "partial", False):                   # (a partial callee's IR is followed instead)
-            continue
-        if card(name) is None:
-            continue
-        lf.boundary = card(name)
-        for caller in callers.get(name, ()):
-            c = results[caller]
-            if c.ok or getattr(c, "partial", False):
-                line = (getattr(c, "call_lines", None) or {}).get(name)
-                c.opaque[name] = {"line": line, "id": lf.boundary["id"]}
-                c.reasons.append(f"{f'line {line}: ' if line else ''}calls {name}, an opaque boundary "
-                                 f"({lf.boundary['cause']})")
-                if c.ok:
-                    c.ok, c.partial = False, True
-                    partial.append(caller)
-    while partial:                                                  # 3: callers of partial functions
-        p = partial.pop()
-        for caller in callers.get(p, ()):
-            c = results[caller]
-            if c.ok:
-                c.ok, c.partial = False, True
-                c.reasons.append(f"calls {p}, which reaches an opaque boundary")
-                partial.append(caller)
+    _mark_partial(results, callers)
 
+
+def _mark_partial(results: dict, callers: dict) -> None:
+    """On top of the gaps: a boundary whose function the host can call (boundary_card) gets the full card (Gödel
+    identity under syntax, ``host``); a function whose body lifted and whose every gap reaches such a boundary,
+    directly or through other partial functions, is ``partial`` (witness only through engines/opaque.py, never ok,
+    never a target), with its direct boundary edges in ``opaque``. A gap to a missing function, to a boundary the
+    host cannot call (an instance method, no result type) or to a non-partial callee leaves it a plain failure.
+    Greatest fixpoint, linear in gap edges: every lifted, non-ok function starts as a candidate, and a worklist
+    over the reverse call graph removes those with a bad gap."""
+    for lf in results.values():
+        if lf.boundary is not None and "host" not in lf.boundary:
+            card = boundary_card(lf) if lf.ir is None else None
+            if card is not None:
+                lf.boundary = {**lf.boundary, **card}
+    cand = {n for n, lf in results.items() if not lf.ok and lf.ir is not None and lf.gaps}
+
+    def good(g) -> bool:
+        c = results.get(g["callee"])
+        if c is None:
+            return False
+        if g["kind"] == "boundary":
+            return c.boundary is not None and c.boundary.get("host") is not None
+        return g["callee"] in cand
+    drop = [n for n in cand if not all(good(g) for g in results[n].gaps)]
+    while drop:
+        n = drop.pop()
+        if n not in cand:
+            continue
+        cand.discard(n)
+        drop.extend(c for c in callers.get(n, ()) if c in cand)
+    for n in cand:
+        lf = results[n]
+        lf.partial = True
+        for g in lf.gaps:
+            if g["kind"] != "boundary":
+                continue
+            card = results[g["callee"]].boundary
+            line = (getattr(lf, "call_lines", None) or {}).get(g["callee"])
+            lf.opaque[g["callee"]] = {"line": line, "id": card["id"]}
+            why = f"{f'line {line}: ' if line else ''}calls {g['callee']}, an opaque boundary ({card['cause']})"
+            if why not in lf.reasons:
+                lf.reasons.append(why)
+        for g in lf.gaps:
+            why = f"calls {g['callee']}, which reaches an opaque boundary"
+            if g["kind"] == "partial" and why not in lf.reasons:
+                lf.reasons.append(why)
 
 def module_for(name: str, lifted: list[Lifted], opaque: bool = False) -> dict:
     """The IR module containing ``name`` and every function it (transitively) calls. With ``opaque``, ``name`` may
