@@ -11,6 +11,7 @@
     "cardmodel/engines/conformance.py": "the op x language matrix (CM17) measures the language cards themselves over every op; the targets stages measure one function's forms",
     "cardmodel/engines/coverage.py": "the goals' metrics read from the latest verify and self-run; it reads the pipeline's coverage, it is not a stage of it",
     "cardmodel/engines/difficulty.py": "difficulty of a whole card set for the self-run's choice of work; no step of one input's path",
+    "cardmodel/engines/dimensions.py": "physical dimension as Gödel content (the physics set, `cardmodel godel`): a second named model of the IR's ops read from the set card, a check on whole equations, not a step of one input's path",
     "cardmodel/engines/docs.py": "generates LAWS.md, GOALS.md and the floors from the cards (`cardmodel docs`): documentation of the model, not a transformation of an input",
     "cardmodel/engines/environment.py": "the machine the model runs on as a card (`cardmodel env`, ENVIRONMENTS.md V-A): a probe of the host written once into the local layer; the stages read the host through their `host:` facts, they do not describe it",
     "cardmodel/engines/formal.py": "the formal core in Lean (T1-T6) checks the theory's own theorems; the proofs are of the model, not of one input",

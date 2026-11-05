@@ -185,7 +185,7 @@ def _darwin() -> dict:
                               (1, "instruction", ("hw.l1icachesize",)),
                               (2, "unified", ("hw.perflevel0.l2cachesize", "hw.l2cachesize")),
                               (3, "unified", ("hw.l3cachesize",))):
-        v = next((s[k] for k in keys if s.get(k, "0").isdigit() and int(s[k]) > 0), None)
+        v = next((s[k] for k in keys if s.get(k, "0").isdigit() and int(s.get(k, "0")) > 0), None)
         if v:
             caches.append({"level": level, "type": kind, "bytes": int(v)})
     phys = s.get("hw.physicalcpu")
