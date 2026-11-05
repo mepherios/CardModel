@@ -60,7 +60,7 @@ REGS = ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC")
 ENDS = ("jump", "call", "ret")                 # groups that end a block
 EXCLUDED = {0x76, 0x10, 0xFB}                  # HALT, STOP, EI: each a block of its own (one instruction)
 STOP = 0x10                                    # one opcode byte, and it skips the next byte (PC + 2)
-LIFTER = 6                                     # the lifted blocks' shape (in the cache key)
+LIFTER = 7                                     # the lifted blocks' shape (in the cache key)
 PART_STATEMENTS = 120000                       # at most this many IR statements in one compile unit
 RAM_LIFTED = ((0xC000, 0xFE00), (0xFF80, 0xFFFF))   # work RAM and its echo, HRAM (not video or cartridge RAM)
 RAM_BASE = 0xC000                              # the RAM profile's first address (32 bytes, 256 bits, per address)
@@ -282,6 +282,16 @@ def unit_laws(store) -> dict:
     return out
 
 
+# the calls whose value is a byte read from the bus (a u8 in the sorted canonical forms)
+READS = ("rd8", "rd8_idu", "bus_read", "io_read", "rom_read", "peek8", "code_byte")
+
+
+def _masks(e) -> int:
+    """The ``& 0xFF`` / ``& 0xFFFF`` masks in a term."""
+    return sum(1 for x in _iter(e) if x[0] == "BIT_AND" and ["int", 255] in x[1:] or
+               x[0] == "BIT_AND" and ["int", 65535] in x[1:])
+
+
 # -- specialising a block ---------------------------------------------------------------------------------
 class Lifter:
     def __init__(self, ctx, machine_ir: dict, isa: str = "lr35902"):
@@ -303,6 +313,13 @@ class Lifter:
         self.inline_const = {"bus_read", "bus_write", "wram_index", "io_read", "io_write", "rom_read", "peek8",
                              "code_byte"}
         self.n = 0
+        # the registers at the ISA card's widths (A..L u8, PC and SP u16), cached in r_X locals too, and every byte
+        # read from the bus a u8: the sorted laws fire only at those sorts (FOUNDATIONS.md A3, D1, D7)
+        from . import symbolic
+        rs = symbolic.register_sorts(ctx, isa)
+        self.reg_sorts = {**rs, **{f"r_{r}": s for r, s in rs.items()}}
+        self._rules = self._costs = None
+        self.masks_removed = 0
 
     def fresh(self, base: str) -> str:
         self.n += 1
@@ -631,10 +648,67 @@ class Lifter:
         ins = self.inline_stmts(ins, locals_, consts)
         return self.fold_block(ins, dict(consts), locals_)
 
+    # ---- sorted canonical forms of the register assignments ----
+    def sort_registers(self, body: list) -> list:
+        """Each assignment to a register canonicalized by the e-graph under the sorted laws, as symbolic.distill
+        does: the registers at their widths, every byte read a u8 (its read stays one call, in place). So ``x & 255``
+        on a u8 register folds away through ``wrapu8_of_u8``; a term is kept unless its canonical form is cheaper,
+        reads each byte exactly once and uses no op the term did not (the emitters know it)."""
+        out = []
+        for s in body:
+            s = dict(s)
+            if s["k"] == "assign" and s["target"] in self.reg_sorts:
+                s["value"] = self.sorted_canonical(s["value"])
+            for key in ("then", "else"):
+                if key in s:
+                    s[key] = self.sort_registers(s[key])
+            out.append(s)
+        return out
+
+    def sorted_canonical(self, t):
+        if not isinstance(t, list) or t[0] in LEAVES:
+            return t
+        from ..engines import egraph as E
+        if self._rules is None:
+            self._rules, self._costs = E.rules_from_cards(self.ctx.store), SE.op_costs(self.ctx.store)
+        reads: dict = {}
+
+        def abstract(e):
+            if not isinstance(e, list) or not e or e[0] in LEAVES:
+                return e
+            if e[0] == "CALL":
+                if e[1] not in READS or any(x[0] == "CALL" for a in e[2:] for x in _iter(a)):
+                    raise ValueError("an effect other than a byte read")
+                v = f"rd_{len(reads)}"
+                reads[v] = e
+                return ["var", v]
+            if e[0] == "LOAD":
+                raise ValueError("a load")
+            return [e[0], *[abstract(a) for a in e[1:]]]
+        try:
+            a = abstract(t)
+        except ValueError:
+            return t
+        if len(reads) > 1:                      # the e-graph could reorder two reads
+            return t
+        sorts = {**self.reg_sorts, **{v: "u8" for v in reads}}
+        before = E.canonical(a, self._rules, self._costs, sorts, self.ops, max_iter=0, max_nodes=1500)
+        r = E.canonical(a, self._rules, self._costs, sorts, self.ops, max_iter=5, max_nodes=1500)
+        new = r["term"]
+        if new is None or r["cost"] >= before["cost"]:
+            return t
+        heads = lambda e: {x[0] for x in _iter(e)}                      # noqa: E731
+        vs = [x[1] for x in _iter(new) if x[0] == "var"]
+        if not heads(new) <= heads(a) or any(vs.count(v) != 1 for v in reads):
+            return t
+        self.masks_removed += _masks(a) - _masks(new)
+        return self.subst(new, reads)
+
     def finish(self, name: str, params: list, body: list, locals_: dict, cache_regs: bool) -> dict:
         body = self.fold_block(body, {}, locals_)
         if cache_regs:
             body = self.cache_registers(body, locals_)
+        body = self.sort_registers(body)
         self._locals = set(locals_)
         self._exit_live = set()
         body, _ = self.dce(body, set())
@@ -728,7 +802,7 @@ class Lifter:
         if addr < 0xFF80:
             body = [{"k": "if", "cond": ["CMP_NE", ["var", "dma_active"], ["int", 0]],
                      "then": [{"k": "return", "value": ["int", 0]}], "else": []}] + body
-        body = self.fold_block(body, {}, locals_)
+        body = self.sort_registers(self.fold_block(body, {}, locals_))
         self._locals = set(locals_)
         self._exit_live = set()
         body, _ = self.dce(body, set())
@@ -978,7 +1052,8 @@ def lift_blocks(ctx, rom: bytes, mask: int, seen: bytes | None = None, entries: 
            "profiled_instructions": seen_n, "visited": found["visited"],
            "mean_block_instructions": round(instrs / max(1, nblk), 2),
            "ram_instructions_seen": sum(len(e) for e in encodings.values()),
-           "ram_instructions_lifted": sum(r["instructions"] for r in ram), "ram_addresses_lifted": len(ram)}
+           "ram_instructions_lifted": sum(r["instructions"] for r in ram), "ram_addresses_lifted": len(ram),
+           "masks_removed": lifter.masks_removed}
     return blocks, ram, rep
 
 
