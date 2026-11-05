@@ -104,3 +104,93 @@ Build order:
 4. The `framework` card and `understanding` metrics, then `cardmodel understand` (report only).
 5. Redesign proposals (§3), each emitted only with its evidence.
 6. Self-application on CardModel as the standing acceptance test.
+
+## 6. Equality measurer: graded sameness of structures and functions
+
+> Proposal. Nothing here is built unless it names an existing engine. Tiers are those of CM46 (proof,
+> probabilistic, bounded, sample).
+
+Given two structures or functions s, t (terms in T_F, or an opaque boundary run as a witness), the measurer
+returns the **strongest level it can establish**, the evidence, and the tier. Levels are ordered; each implies the
+ones below it for the relation it names (D9).
+
+| level | relation | how it is decided | evidence | tier (CM46) |
+|---|---|---|---|---|
+| **syntactic** | same canonical term: `semantic_hash(canon_E(s)) = semantic_hash(canon_E(t))` (D7) | `engines/egraph.py` `canonical` then `semantic_hash`; α-renamed per GODEL_AUDIT row for `egraph.py` | the shared hash and the relation tag `under` | proof (equal canon is an identity; a *different* hash means only "not shown equal", D7) |
+| **equational** | s ≈_E t: equal under e-graph congruence closure with the card laws E_F ∪ E | saturate both in one e-graph (`saturate`), test same e-class; or `search.prove` | the certificate: the laws that fired, at the sorts they were proved for | proof when every law fired is proof tier; otherwise the weakest tier among the laws used |
+| **observational** | same results on witnesses or tests | run both on seeded witnesses (`ir.eval`, or F itself for opaque ops); `redefs.verify`-style exact then high-precision checks | the witness set, its generator seed and its sort | bounded when the witness set covers a finite domain exhaustively; probabilistic when a theorem bounds the error (D10); sample otherwise |
+| **up to refinement** | s refines t (or s is a quotient of t): an abstraction map α with α(s(x)) = t(α(x)) | α given as a card; the commuting square checked equationally where it lifts, else observationally | α, plus the evidence of the square at its own level | the tier of the square's evidence |
+
+Rules:
+
+* **Gödel content similarity is never proof of equality.** γ forgets arrangement and is not ≈_E-invariant (D11);
+  under GODEL_AUDIT a `similar` / `factor` hit is at most a **candidate for review** that the measurer then tries
+  to decide at one of the four levels above. Tier: proof (it is a property of γ, GODEL_AUDIT).
+* The answer may be **"not established"**; it is never a guessed "equal" (MATH_CORE search row). Tier: design rule.
+* An observational result on one sort is not carried to another (a law on `float` is not promoted from an `int`
+  witness, D6, A3). Tier: design rule.
+* Every result is recorded with its relation (≈_syn, ≈_E, ≈_obs, ⊑_α), never as a bare "equal". Tier: design rule.
+
+## 7. Structure optimizer: redesign under a cost model
+
+> Proposal. It extends §3's "algebraic restructuring under a cost model" and the existing `improve` / `extract`
+> path (D8, CM09). No measured numbers are given here; each row of the table below is to be measured.
+
+### 7.1 Cost model
+
+A cost is a tuple **(time class, memory class, constant factor)**, compared lexicographically by default:
+
+* **time class**: asymptotic class (O(1), O(log n), O(n), O(n log n), O(n²), …). Measured, where possible, by
+  deriving a recurrence from the lifted term and solving it (closed form, or a master-theorem style bound), or by
+  `funcalg` closed forms for loops. Tier: proof when the recurrence is derived and solved; sample when it is
+  fitted from timings at several n.
+* **memory class**: the same, for peak live storage.
+* **constant factor**: measured host cost (D8), as today's `improve` / CM09 do. Tier: sample.
+
+### 7.2 Attaching a cost to an op card
+
+Each op card gains a `cost` field per (rank, sort, target): a time class and memory class as functions of the
+argument sizes, plus a measured constant with its host and date. A missing cost is **unknown**, not zero, and an
+unknown-cost op blocks a "cheaper" claim for any term containing it. Opaque `CALL` nodes carry only a measured
+(sample-tier) cost. Tier: design.
+
+### 7.3 Rewrite search picks a cheaper equal term
+
+Saturate the term in the e-graph under E_F ∪ E, then **extract** under the cost function (`egraph.py` `extract`
+is additive today, GODEL_AUDIT; asymptotic classes need a non-additive extractor that composes sizes through
+sub-terms). Every extracted term is in the same e-class, so it is ≈_E-equal by construction, with the laws fired
+as its certificate. Tier: proof of equality at the laws' tier; the cost win is a separate claim (7.5).
+
+### 7.4 Data-structure substitution as a refinement
+
+Some wins are not equations over one signature but a change of representation: list → array, association list →
+hash map, recomputation → memo table, repeated scans → prefix sums. Each is a **refinement** (§6, level 4):
+
+* the concrete structure C, the abstract A, and an abstraction map α : C → A;
+* **proof obligation**: for each op f used, α(f_C(x)) = f_A(α(x)) (the square commutes), and any invariant of C
+  (e.g. a memo table only holds f's true values; f is pure) is preserved by every op;
+* the obligation is discharged equationally where it lifts (proof), otherwise it stays a tiered witness and the
+  substitution is labelled as such, never a rewrite (§2 step 8).
+
+### 7.5 The shipping guarantee
+
+A redesign ships only when **both** hold:
+
+1. equality between old and new is established at the **equational level or better** (§6), or at the refinement
+   level with its square discharged equationally; observational equality alone is not enough;
+2. a **measured cost win** on the 7.1 model: a lower time or memory class with its derivation, or, at equal classes,
+   a measured constant-factor win with its host and witness set.
+
+Otherwise it is a proposal card with its evidence, not a change. Tier: design rule.
+
+### 7.6 Examples
+
+Illustrative only; no row has been measured, and each class claim must be derived by the optimizer before use.
+
+| before | after | kind | equality needed | expected cost change (to be measured) |
+|---|---|---|---|---|
+| naive recursive Fibonacci | linear loop, or closed form via `funcalg` | rewrite / closed form | equational (or proof from a theorem fixing the witness size, D10) | time class: exponential → linear |
+| recompute f(x) on repeated x | memo table keyed by x | refinement (recomputation → memo) | refinement; obligation: f pure, table holds only f's values | time class may drop; memory class rises |
+| list with indexed access in a loop | array | refinement (list → array) | refinement; obligation: α = to_list commutes with get / set / len | indexed access: O(n) → O(1) |
+| repeated range sums over a fixed array | prefix-sum array | refinement | refinement; obligation: sum(a[i:j]) = P[j] − P[i] | per query: O(n) → O(1), plus O(n) setup |
+| `x * 2` on WRAPU | `x << 1` | rewrite under a law | equational (law proved at WRAPU) | constant factor only |
