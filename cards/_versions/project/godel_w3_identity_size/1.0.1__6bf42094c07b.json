@@ -1,0 +1,51 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/godel-w3-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/GODEL_METHOD.md"
+  ],
+  "done": [
+    "cardmodel godel sizes (engines/codes.py): positional, content, Cantor, Szudzik, base-16 and sha256 sizes",
+    "the size model checked against every buildable integer (within one bit; the pairing recurrence exact)",
+    "findings W3_code_sizes, W3_size_model, W3_gm2_decision"
+  ],
+  "goal": "Which code should identify a card?",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "GM-2 and GM-8 as laws need the user's yes (GM-2 amends CM43)"
+  ],
+  "metadata": {
+    "previous_content_hash": "c5385a24553ec821210cb34e48f4ffe45ebaf61d0089ea74b99c8f9fa9bcd072",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [],
+  "name": "godel_w3_identity_size",
+  "next_steps": [
+    "merge after verify; W-4 (wave 2) applies the record to every card"
+  ],
+  "order": 42,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cardmodel/engines/codes.py",
+    "cards/finding/*"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "source": "The Gödel Method: Research and Development Handover (2026-10-22)",
+    "tool": "tools/seed_godel_method.py"
+  },
+  "standing": "Done on claude/godel-w3-identity: six codes measured for every card with a term; the size model predicts them without building any integer; the GM-2 decision record proposes the hash as identity and a 4096-bit bound for on-demand positional codes.",
+  "statement": "Gödel method research program, wave 1: Which code should identify a card?",
+  "tier": 1,
+  "title": "W-3 Identity and size of codes",
+  "updated": "2026-10-22T02:45:00+02:00",
+  "user_actions": []
+}

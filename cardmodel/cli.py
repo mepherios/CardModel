@@ -15,6 +15,8 @@
   cardmodel improve PATH [--out DIR]       make a module/package faster: verified algorithm substitutions and
                                            rewrites; effectful code byte-identical; native forms for every language
   cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
+  cardmodel scale bench [--sizes 1e3,1e4,1e5] [--seed S] [--record]   time and peak memory per function on
+                                           synthetic projects of growing size (SCALING.md §6; goals G_A11, G_A12)
   cardmodel show CARD | list [REGISTRY] | probe | new REGISTRY NAME | docs [--check] | clean
   cardmodel env [--measure|--static|--numeric]  this machine as an environment card: identity, cache levels,
                                            bandwidth; --numeric: every runner's numeric model, probed
@@ -40,6 +42,8 @@
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel godel ledger|vector|gcd|lcm CARD...   the expanding Gödel model: primes, sparse content vectors (CM43, CM45)
   cardmodel godel sizes [--limit N]         each code's size for every card with a term (Gödel method W-3)
+  cardmodel godel factor|similar CARD... | --expr E   a term over the definitions it contains (its cofactor), or the
+                                           definitions sharing most logic with it; cofactor WHOLE PART; decode N --vars
   cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
   cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics
@@ -595,6 +599,20 @@ def cmd_arena(args) -> int:
     return 0 if sc["sound"] else 1
 
 
+def cmd_scale(args) -> int:
+    from .engines import scale
+    ctx = _ctx(args)
+    sizes = [int(float(x)) for x in args.sizes.split(",")] if args.sizes else list(scale.SIZES)
+    progress = None if args.json else (lambda r: print(f"  measured {r['n']} functions", file=sys.stderr, flush=True))
+    res = scale.bench(ctx, sizes, seed=args.seed, isolate=not args.in_process, progress=progress)
+    text = scale.report_text(res)
+    if args.record:
+        names = scale.record(ctx, res, layer=_layer(ctx, args))
+        text += f"\nrecorded {', '.join(names)}"
+    _out(args, res, text)
+    return 1 if any("error" in r for r in res["rows"]) else 0
+
+
 def cmd_learn(args) -> int:
     from .engines.learn import learn
     ctx = _ctx(args)
@@ -921,6 +939,15 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("arena"); s.add_argument("--count", type=int, default=60); s.add_argument("--seed", type=int)
     s.add_argument("--samples", type=int, default=24); s.add_argument("--out")
     s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_arena)
+    s = sub.add_parser("scale", help="the scale benchmark: time and peak memory per function as a synthetic "
+                                     "project grows (SCALING.md §6)")
+    s.add_argument("action", choices=["bench"])
+    s.add_argument("--sizes", help="comma-separated function counts (default 1e3,1e4,1e5; 1e6 is optional)")
+    s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--record", action="store_true", help="write one metric card per size (goals G_A11, G_A12)")
+    s.add_argument("--in-process", action="store_true", help="no child process per size (peak memory is then "
+                                                              "cumulative)")
+    s.add_argument("--global", dest="global_", action="store_true"); s.set_defaults(fn=cmd_scale)
     s = sub.add_parser("show"); s.add_argument("card"); s.set_defaults(fn=cmd_show)
     s = sub.add_parser("list"); s.add_argument("registry", nargs="?"); s.set_defaults(fn=cmd_list)
     s = sub.add_parser("probe"); s.set_defaults(fn=cmd_probe)
