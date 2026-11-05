@@ -553,6 +553,22 @@ class Lifting(unittest.TestCase):
                 return f, m.get("block_runs")
         return None, m.get("block_runs")
 
+    def test_folding_uses_only_the_rule_cards_laws(self):
+        from cardmodel.machine import lift
+        laws = lift.unit_laws(self.ctx.store)
+        for key in [("ADD", 1, 0), ("ADD", 0, 0), ("BIT_OR", 1, 0), ("BIT_XOR", 0, 0), ("MUL", 1, 1)]:
+            self.assertEqual(laws.get(key), "unit", key)
+        self.assertEqual(laws.get(("BIT_AND", 1, 0)), ("int", 0))
+        self.assertNotIn(("SUB", 0, 0), laws)                   # 0 - x is not x: no such card
+        from cardmodel.machine import build
+        lf = lift.Lifter(self.ctx, build.module(self.ctx, "gameboy"))
+        x = ["var", "A"]
+        self.assertEqual(lf.fold(["BIT_XOR", ["int", 0], x]), x)
+        self.assertEqual(lf.fold(["BIT_AND", x, ["int", 0]]), ["int", 0])
+        self.assertEqual(lf.fold(["SUB", ["int", 0], x]), ["SUB", ["int", 0], x])
+        call = ["CALL", "read", ["int", 1]]
+        self.assertEqual(lf.fold(["MUL", call, ["int", 0]]), ["MUL", call, ["int", 0]])   # an effect is kept
+
     def test_lifted_blocks_match_the_interpreter(self):
         self.assertGreater(self.rep["blocks"], 3)
         diverged, runs = self._run_pair(self.mod)

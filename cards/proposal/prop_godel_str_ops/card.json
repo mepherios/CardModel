@@ -1,0 +1,77 @@
+{
+  "category": "proposal",
+  "name": "prop_godel_str_ops",
+  "proposal_kind": "godel_atoms",
+  "statement": "proposed Gödel ledger atoms for the eleven str op cards (FOUNDATIONS §7 item 5)",
+  "candidate": {
+    "atoms": [
+      {
+        "atom": "op/STR_AT",
+        "set": "B0",
+        "card": "op/STR_AT"
+      },
+      {
+        "atom": "op/STR_CMP",
+        "set": "B0",
+        "card": "op/STR_CMP"
+      },
+      {
+        "atom": "op/STR_CONCAT",
+        "set": "B0",
+        "card": "op/STR_CONCAT"
+      },
+      {
+        "atom": "op/STR_EQ",
+        "set": "B0",
+        "card": "op/STR_EQ"
+      },
+      {
+        "atom": "op/STR_FIND",
+        "set": "B0",
+        "card": "op/STR_FIND"
+      },
+      {
+        "atom": "op/STR_FROM_CODE",
+        "set": "B0",
+        "card": "op/STR_FROM_CODE"
+      },
+      {
+        "atom": "op/STR_FROM_INT",
+        "set": "B0",
+        "card": "op/STR_FROM_INT"
+      },
+      {
+        "atom": "op/STR_LEN",
+        "set": "B0",
+        "card": "op/STR_LEN"
+      },
+      {
+        "atom": "op/STR_ORD",
+        "set": "B0",
+        "card": "op/STR_ORD"
+      },
+      {
+        "atom": "op/STR_SLICE",
+        "set": "B0",
+        "card": "op/STR_SLICE"
+      },
+      {
+        "atom": "op/STR_TO_INT",
+        "set": "B0",
+        "card": "op/STR_TO_INT"
+      }
+    ]
+  },
+  "ready": false,
+  "reason": "Only the ledger writer mints atoms (CM43, GODEL_METHOD coordination rule 1). The branch had appended these at indices 3418-3428, colliding with PR #48 (physics quantities, 3418-3424). Mint them, in this order, at the next free indices after #48's ledger decision (currently 3425 on main), set B0.",
+  "provenance": {
+    "branch": "claude/strings-ir",
+    "commit": "492ec39",
+    "owner": "foundations stream (FOUNDATIONS §7.5)"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "tier": 3,
+  "xleq": null
+}

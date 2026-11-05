@@ -1,0 +1,34 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "P": "power",
+    "W": "energy",
+    "t": "time"
+  },
+  "lhs": [
+    "var",
+    "P"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "work_power",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "DIV",
+    [
+      "var",
+      "W"
+    ],
+    [
+      "var",
+      "t"
+    ]
+  ],
+  "source": "definition",
+  "statement": "P = W / t",
+  "tier": 0
+}

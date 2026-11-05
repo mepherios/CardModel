@@ -2,6 +2,7 @@
 and ``cardmodel lift-sweep`` reports the lift rate with its histogram of first reasons."""
 import json
 import subprocess
+from collections import Counter
 import tempfile
 import time
 import unittest
@@ -11,7 +12,7 @@ from helpers import CLI, ROOT, model_ctx
 
 from cardmodel.engines import lift_project as LP
 from cardmodel.engines import sweep
-from cardmodel.engines.frontend_python import lift_source
+from cardmodel.engines.frontend_python import close_calls, lift_source, lift_status
 from cardmodel.engines.ir import Interpreter
 
 
@@ -56,6 +57,47 @@ class LinearClosure(unittest.TestCase):
         self.assertLess(took, 1.5, f"closure over a {n}-deep chain took {took:.2f} s")
         f1 = next(lf for lf in lifted if lf.name == "f1")
         self.assertIn("calls f0 which did not lift", f1.reasons)
+        # partial, not poisoned: every caller keeps its IR, only f0 is a boundary, each edge is one gap
+        status = Counter(lift_status(lf) for lf in lifted)
+        self.assertEqual(status, {"partial": n - 1, "boundary": 1})
+        self.assertEqual(f1.gaps, [{"callee": "f0", "kind": "boundary", "cause": f1.gaps[0]["cause"]}])
+        self.assertIn("open()", f1.gaps[0]["cause"])
+        f2 = next(lf for lf in lifted if lf.name == "f2")
+        self.assertEqual([(g["callee"], g["kind"]) for g in f2.gaps], [("f1", "partial")])
+
+
+class BoundaryCards(unittest.TestCase):
+    SRC = ("def bad(x: int) -> int:\n    return open(x)\n\n"
+           "def bad_untyped(x):\n    return open(x)\n\n"
+           "def caller(x: int) -> int:\n    return bad(x) + bad_untyped(x) + 1\n\n"
+           "def clean(x: int) -> int:\n    return x + 1\n")
+
+    def setUp(self):
+        self.by = {lf.name: lf for lf in lift_source(self.SRC, model_ctx().ops)}
+
+    def test_failed_function_is_a_boundary_card_with_its_typed_signature(self):
+        b = self.by["bad"].boundary
+        self.assertEqual(b["signature"], {"params": ["int"], "returns": "int"})
+        self.assertIn("open()", b["cause"])
+        self.assertEqual(lift_status(self.by["bad"]), "boundary")
+
+    def test_an_untyped_signature_is_not_guessed_onto_the_card(self):
+        self.assertIsNone(self.by["bad_untyped"].boundary["signature"])
+
+    def test_the_caller_lifts_and_records_each_edge_as_a_gap(self):
+        c = self.by["caller"]
+        self.assertEqual(lift_status(c), "partial")
+        self.assertFalse(c.ok)                        # not closed: it cannot run or translate alone
+        self.assertIsNotNone(c.ir)
+        self.assertEqual(sorted(g["callee"] for g in c.gaps), ["bad", "bad_untyped"])
+        self.assertEqual(lift_status(self.by["clean"]), "closed")
+        self.assertEqual(self.by["clean"].gaps, [])
+
+    def test_closing_twice_adds_no_edges(self):
+        results = {lf.name: lf for lf in self.by.values()}
+        close_calls(results)
+        self.assertEqual(len(results["caller"].gaps), 2)
+        self.assertEqual(lift_status(results["bad"]), "boundary")
 
 
 class PythonProject(unittest.TestCase):
@@ -97,10 +139,16 @@ class PythonProject(unittest.TestCase):
         self.assertFalse(state.ok)
         self.assertIn("self.k", state.reasons[0])
 
-    def test_a_cross_module_caller_of_a_failed_method_fails(self):
+    def test_a_cross_module_caller_of_a_failed_method_lifts_with_a_gap(self):
         lf = self.res.functions["pkg.sub.core::uses_state"]
         self.assertFalse(lf.ok)
         self.assertIn("did not lift", lf.reasons[-1])
+        self.assertEqual(lift_status(lf), "partial")
+        self.assertEqual([(g["callee"], g["kind"]) for g in lf.gaps], [("pkg.util::M_state", "boundary")])
+        card = self.res.boundaries()["pkg.util::M_state"]
+        self.assertEqual(card["signature"], {"params": ["int"], "returns": "int"})
+        self.assertIn("self.k", card["cause"])
+        self.assertEqual(card["gap_edges"], 1)
 
     def test_without_cross_and_methods_is_the_single_file_lift(self):
         res = LP.lift_tree(self.ctx, self.root, methods=False, cross=False)
@@ -159,6 +207,17 @@ class Sweep(unittest.TestCase):
         self.assertGreater(rep["lifted"], single["lifted"])
         self.assertEqual(rep["kinds"]["method"], 4)
         self.assertTrue(any("instance state" in r for r, _ in rep["reasons"]))
+        # uses_state lifts with a gap to the boundary M.state: counted as lifted, not as closed
+        self.assertEqual(rep["lifted"], rep["closed"] + rep["partial"])
+        self.assertGreaterEqual(rep["partial"], 1)
+        self.assertGreaterEqual(rep["gap_edges"], 1)
+        self.assertTrue(any("instance state" in r for r, _ in rep["gap_causes"]))
+
+    def test_calls_within_a_card_or_math_file_resolve_in_a_project_lift(self):
+        # these frontends lift one file at a time; their calls inside the file used to read as missing
+        res = LP.lift_tree(model_ctx(), ROOT / "examples" / "transformer")
+        soft = next(lf for q, lf in res.functions.items() if q.endswith("::softmax"))
+        self.assertTrue(soft.ok, soft.reasons)
 
 
 if __name__ == "__main__":

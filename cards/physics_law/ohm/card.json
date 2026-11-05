@@ -1,0 +1,34 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "I": "current",
+    "R": "resistance",
+    "V": "voltage"
+  },
+  "lhs": [
+    "var",
+    "V"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ohm",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "var",
+      "I"
+    ],
+    [
+      "var",
+      "R"
+    ]
+  ],
+  "source": "Ohm (1827)",
+  "statement": "V = I·R",
+  "tier": 0
+}

@@ -50,12 +50,7 @@ LOGIC_ARITY = {"logic/true": 0, "logic/false": 0, "logic/not": 1, "logic/and": 2
                "logic/iff": 2, "logic/eq": 2, "logic/forall": 2, "logic/exists": 2}
 
 
-def _zig(v: int) -> int:
-    return 2 * v if v >= 0 else -2 * v - 1
-
-
-def _unzig(z: int) -> int:
-    return z // 2 if z % 2 == 0 else -(z + 1) // 2
+_zig, _unzig = G.zig, G.unzig
 
 
 class Numbering:
@@ -123,20 +118,7 @@ class Numbering:
 
     def _codes(self, n: int) -> list[int] | None:
         """The exponents of 2, 3, 5, ... in order, when n is a product of the first m primes each to at least 1."""
-        if n < 2:
-            return None
-        out, i = [], 1
-        while n > 1:
-            p = G.nth_prime(i)
-            e = 0
-            while n % p == 0:
-                n //= p
-                e += 1
-            if e == 0:
-                return None                                     # a skipped prime, or a factor no position has
-            out.append(e)
-            i += 1
-        return out
+        return G.exponents(n, gaps=False) if n >= 2 else None    # None on a skipped prime: no position has it
 
     def decode(self, n: int):
         """The object n codes (variables named x0, x1, ... by first appearance), or None."""
@@ -181,14 +163,21 @@ class Numbering:
         heads = sorted(a for a in self.arity if not a.startswith("effect/") or self.name == "machines")
         terms = [a for a in heads if a.startswith("op/") and self.arity[a] <= 3]
         if self.name != "machines":
-            heads = [a for a in heads if a.startswith("op/")]
+            heads = [a for a in heads if a.startswith("op/") or self.arity[a] == 0]
+
+        own = [a for a in heads if self.by_atom[a]["set"] == self.name]
+        # the set's constants, as its card lists them (a base quantity of the physics set): atoms of arity 0
+        # that are leaves of its objects
+        declared = set((self.card or {}).get("constants") or [])
+        consts = [a for a in own if a in declared and self.arity.get(a) == 0]
 
         def term(d):
             if d == 0 or rng.random() < 0.3 or not terms:
+                if consts and rng.random() < 0.4:
+                    return [rng.choice(consts)]
                 return ["var", rng.choice("abc")] if rng.random() < 0.5 else ["int", rng.randint(-40, 40)]
             a = rng.choice(terms)
             return [a, *[term(d - 1) for _ in range(self.arity[a])]]
-        own = [a for a in heads if self.by_atom[a]["set"] == self.name]
         if self.name == "machines":
             eff = rng.choice(own)
             guard = [self.true] if rng.random() < 0.6 else term(1)
@@ -218,12 +207,8 @@ def _subterms(t):
 
 
 def _content(t) -> Counter:
-    c: Counter = Counter()
-    if isinstance(t, list) and t and t[0] not in ("var", "int"):
-        c[t[0]] += 1
-        for a in t[1:]:
-            c += _content(a)
-    return c
+    """The content of an object of any set: every non-leaf head an atom (engines/godel.term_content)."""
+    return G.term_content(t, None)
 
 
 def check_set(ctx, set_name: str, seed: int = 0, samples: int = 120) -> dict:
@@ -297,7 +282,7 @@ def check(ctx, seed: int = 0) -> dict:
         if not (c.get("numbering") or {}).get("conditions"):
             problems.append(f"{c.qualified}: states no admissible numbering (GM-4)")
             continue
-        r = check_set(ctx, c.name, seed)
+        r = check_set(ctx, c.name, seed, samples=int((c.get("numbering") or {}).get("samples") or 120))
         sets[c.name] = r
         problems += [f"{c.qualified}: {k} fails: {v.get('at')}" for k, v in r["conditions"].items()
                      if v["status"] == "fail"]

@@ -1,0 +1,52 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "L": "length",
+    "T": "time",
+    "g": "acceleration",
+    "pi": "1"
+  },
+  "lhs": [
+    "var",
+    "T"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "pendulum_period",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "MUL",
+      [
+        "int",
+        2
+      ],
+      [
+        "var",
+        "pi"
+      ]
+    ],
+    [
+      "FSQRT",
+      [
+        "DIV",
+        [
+          "var",
+          "L"
+        ],
+        [
+          "var",
+          "g"
+        ]
+      ]
+    ]
+  ],
+  "source": "the small-angle pendulum",
+  "statement": "T = 2·π·√(L / g)",
+  "tier": 0
+}

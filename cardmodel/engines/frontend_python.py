@@ -67,6 +67,8 @@ class Lifted:
     inferred_types: bool = False
     lineno: int = 0
     preamble: str = ""     # what the source needs around it to run alone: module constants, functools
+    gaps: list = field(default_factory=list)       # call edges to callees that are not closed (close_calls)
+    boundary: dict | None = None                   # the opaque boundary card of a function that did not lift
 
 
 def _ann_type(node) -> str | None:
@@ -889,7 +891,8 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
             ptypes = [(_ann_type(x.annotation) or (param_hints or {}).get(f.name, {}).get(x.arg)
                        or _lit_type(defaults.get(x.arg)) or "int") for x in a.args]
             sigs[f.name] = {"params": ptypes, "returns": _ann_type(f.returns), "names": [x.arg for x in a.args],
-                            "defaults": {k: v for k, v in defaults.items() if v is not None}}
+                            "defaults": {k: v for k, v in defaults.items() if v is not None},
+                            "typed": _declared(f, param_hints, defaults)}
         except Unsupported:
             continue
     results: dict[str, Lifted] = {}
@@ -906,22 +909,54 @@ def lift_defs(fdefs: list, lines: list[str], ops: dict[str, OpSpec], only: list[
             results[f.name] = Lifted(f.name, False, None, src, [str(exc)], lifter.inferred, f.lineno, preamble)
     if close:
         external = {e["qual"] for e in (externs or {}).values()}
-        close_calls(results, lambda c: c in external)
+        close_calls(results, lambda c: c in external, sigs)
     return [lf for lf in results.values() if not only or lf.name in only]
+
+
+def _declared(f, param_hints: dict | None, defaults: dict) -> bool:
+    """Whether a def's signature types without a guess: every parameter annotated, hinted or given a numeric
+    default, and the result annotated (a boundary card carries only a signature that types)."""
+    hints = (param_hints or {}).get(f.name, {})
+    return f.returns is not None and all(x.annotation is not None or x.arg in hints or
+                                         _lit_type(defaults.get(x.arg)) for x in f.args.args)
 
 
 def callees_of(ir: dict) -> set[str]:
     return {e[1] for s in _stmts(ir["body"]) for e in _exprs_of(s) if e[0] == "CALL"}
 
 
-def close_calls(results: dict, known_ok=lambda name: False) -> None:
-    """A lifted function that calls a failed or missing one fails too (L45), linear in calls: one pass builds the
-    reverse call graph, then a worklist spreads each failure to its callers once (the old fixed-point loop re-scanned
-    every function per pass: quadratic in the depth of a call chain)."""
+def lift_status(lf) -> str:
+    """'closed': lifted with every callee lifted (runs and translates on its own); 'partial': its own body lifted,
+    and every call edge to a callee that did not lift is a recorded gap; 'boundary': its own body did not lift, so
+    it is an opaque boundary card (signature when it types, and the cause)."""
+    if lf.ok:
+        return "closed"
+    return "partial" if lf.ir is not None and getattr(lf, "boundary", None) is None else "boundary"
+
+
+def typed_signature(sig: dict | None) -> dict | None:
+    """``{"params", "returns"}`` when every type in it is declared (not guessed), else None."""
+    if not sig or sig.get("typed") is False:
+        return None
+    params, ret = sig.get("params"), sig.get("returns")
+    if params is None or ret is None or any(t is None for t in params):
+        return None
+    return {"params": list(params), "returns": ret}
+
+
+def close_calls(results: dict, known_ok=lambda name: False, sigs: dict | None = None) -> None:
+    """Partial, not poisoned (SCALING.md §3.3). A function whose own body did not lift becomes an opaque boundary
+    card: ``lf.boundary = {"name", "signature", "cause"}`` (the signature only when it types). A function whose body
+    lifted keeps its IR; each call edge to a callee that is not closed (a boundary, a missing function, or a callee
+    with gaps of its own) is recorded in ``lf.gaps``, and ``ok`` (closed: runnable and translatable alone, L45)
+    turns False. Linear in calls: one pass builds the reverse call graph, then a worklist visits each edge once."""
     callers: dict[str, list[str]] = {}
     work: list[str] = []
     for name, lf in results.items():
         if not lf.ok:
+            if not lf.gaps and lf.boundary is None:          # its own body failed (not a caller from a rerun)
+                lf.boundary = {"name": name, "signature": typed_signature((sigs or {}).get(name)),
+                               "cause": lf.reasons[0] if lf.reasons else "unknown"}
             work.append(name)
             continue
         missing = []
@@ -932,12 +967,19 @@ def close_calls(results: dict, known_ok=lambda name: False) -> None:
                 missing.append(c)
         if missing:
             lf.ok = False
+            lf.gaps.extend({"callee": c, "kind": "missing", "cause": "no function of that name lifted"}
+                           for c in sorted(missing))
             lf.reasons.append(f"calls {', '.join(sorted(missing))} which did not lift")
             work.append(name)
     while work:
         bad = work.pop()
+        b = results[bad]
+        edge = {"callee": bad, "kind": "boundary", "cause": b.boundary["cause"]} if b.boundary else \
+            {"callee": bad, "kind": "partial", "cause": f"{len(b.gaps)} gap(s) of its own"}
         for name in callers.get(bad, ()):
             lf = results[name]
+            if all(g["callee"] != bad for g in lf.gaps):
+                lf.gaps.append(dict(edge))
             if lf.ok:
                 lf.ok = False
                 lf.reasons.append(f"calls {bad} which did not lift")

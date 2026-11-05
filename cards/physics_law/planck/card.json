@@ -1,0 +1,34 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "E": "energy",
+    "f": "frequency",
+    "h": "action"
+  },
+  "lhs": [
+    "var",
+    "E"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "planck",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "var",
+      "h"
+    ],
+    [
+      "var",
+      "f"
+    ]
+  ],
+  "source": "Planck (1900)",
+  "statement": "E = h·f",
+  "tier": 0
+}

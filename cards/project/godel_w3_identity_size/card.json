@@ -10,7 +10,8 @@
   "done": [
     "cardmodel godel sizes (engines/codes.py): positional, content, Cantor, Szudzik, base-16 and sha256 sizes",
     "the size model checked against every buildable integer (within one bit; the pairing recurrence exact)",
-    "findings W3_code_sizes, W3_size_model, W3_gm2_decision"
+    "findings W3_code_sizes, W3_size_model, W3_gm2_decision",
+    "engines/codes.py reads zig-zag from engines/godel (G.zig), one definition for every positional code (c23554e, docs/GODEL_TARGET.md)"
   ],
   "goal": "Which code should identify a card?",
   "in_progress": [],
@@ -19,8 +20,8 @@
     "GM-2 and GM-8 as laws need the user's yes (GM-2 amends CM43)"
   ],
   "metadata": {
-    "previous_content_hash": "c5385a24553ec821210cb34e48f4ffe45ebaf61d0089ea74b99c8f9fa9bcd072",
-    "version": "1.0.1",
+    "previous_content_hash": "6bf42094c07bea7bad77bff10cfba79804c95c4e5508a146a63722aa62ca2ccd",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "metrics": [],
@@ -46,6 +47,6 @@
   "statement": "Gödel method research program, wave 1: Which code should identify a card?",
   "tier": 1,
   "title": "W-3 Identity and size of codes",
-  "updated": "2026-10-22T02:45:00+02:00",
+  "updated": "2026-11-05T00:45:00+01:00",
   "user_actions": []
 }
