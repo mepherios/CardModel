@@ -1,0 +1,48 @@
+{
+  "category": "capability",
+  "check": "resources",
+  "commands": [
+    "cardmodel verify"
+  ],
+  "core": true,
+  "docs": [
+    "docs/METHODOLOGY.md"
+  ],
+  "laws": [
+    "law/CM18_bounded_work",
+    "law/CM30_resources_are_bounded"
+  ],
+  "metadata": {
+    "previous_content_hash": "1a040a3c528518ec9b626bef108c42ea76ef338e9c8ea4b0061dc76fc628f7a7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/kernel/resources.py"
+  ],
+  "name": "resources",
+  "order": 18,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "conformance"
+      },
+      {
+        "self_step": "store"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the governor's limits are what the runs under it measured on this host"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Bounded work: machine-wide slots for heavy work, memory caps for children and for this process, a timeout on every subprocess.",
+  "tests": [
+    "tests/test_resources.py::test_child_over_its_cap_is_killed",
+    "tests/test_laws.py::test_subprocesses_have_timeouts"
+  ],
+  "tier": 0,
+  "usefulness": "The model works hard without taking your Mac down."
+}

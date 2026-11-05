@@ -1,0 +1,46 @@
+{
+  "category": "capability",
+  "check": "card_language",
+  "commands": [
+    "cardmodel run",
+    "cardmodel lang",
+    "cardmodel repl"
+  ],
+  "core": true,
+  "docs": [
+    "docs/LANGUAGE.md"
+  ],
+  "laws": [
+    "law/CM26_one_language"
+  ],
+  "metadata": {
+    "previous_content_hash": "f199ca99d36b915a2090f4219108d5d972d46b0efc378b139ad270e7e98eee26",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/lang"
+  ],
+  "name": "card_language",
+  "order": 13,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "lang"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every program under examples/lang and stdlib is compiled and run: its tests are fixed inputs"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "One language: functions, logic, theorems, tests and cards in one .card file, compiled to the card IR and from there to every language card.",
+  "tests": [
+    "tests/test_lang.py::test_function_cards_verify_in_languages",
+    "tests/test_lang.py::test_run_passes"
+  ],
+  "tier": 0,
+  "usefulness": "One file says what a thing is, how it behaves and why it is right."
+}

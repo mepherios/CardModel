@@ -9,13 +9,23 @@
   "docs": [
     "docs/METHODOLOGY.md"
   ],
+  "godel": {
+    "gap": {
+      "closes_by": "memoize cheapest_rewrite by the subterm's alpha-identity (no content lower bound: measured, it prunes 0 of 132)",
+      "goal": "goal/G_A14_godel_pure",
+      "reason": "GODEL_AUDIT §4 (engines/improve.py): Gödel today none; its code does not call engines/godel.py"
+    },
+    "needs": "d",
+    "verdict": "KEYED",
+    "why": "the rewrite search repeats on equal subterms (GODEL_AUDIT §4.2); the arena is a CONSUMER"
+  },
   "laws": [
     "law/CM21_effects_are_boundaries",
     "law/CM22_optimizations_self_correct"
   ],
   "metadata": {
-    "previous_content_hash": "6408b14cb7cd76f1449422677a087064f01b4c08136d8891333631bd892393fa",
-    "version": "1.1.0",
+    "previous_content_hash": "6556c8bf444f9127a43127198fc3b58ab06f15a27859ec9e8701aec70dcfe708",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

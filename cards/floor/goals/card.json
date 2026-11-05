@@ -11,6 +11,11 @@
       "metric": "pipeline_gaps",
       "target": 0
     },
+    "G_A14_godel_pure": {
+      "direction": "lower",
+      "metric": "godel_impure",
+      "target": 0
+    },
     "G_A1_self_contained": {
       "direction": "lower",
       "metric": "external_dependencies",
@@ -269,8 +274,8 @@
   },
   "history": [],
   "metadata": {
-    "previous_content_hash": "bf9df04b45dd4f3abdbedf21a28ffb1702d9f650f90b632f27b23443999fb6ee",
-    "version": "1.0.3",
+    "previous_content_hash": "f1636f7df241364c47dfff03004973b50c993bdfe1e42bbcd1bab38b20688b3f",
+    "version": "1.0.4",
     "version_bump_reason": "patch"
   },
   "name": "goals",

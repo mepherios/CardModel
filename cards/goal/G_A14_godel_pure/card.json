@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "godel_impure",
+  "name": "G_A14_godel_pure",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "statement": "Recorded Gödel impurities: CORE or KEYED capabilities whose code does not call the core, and code outside engines/godel.py that defines primes, content or the zigzag or composes a Gödel number by hand (CM50, GODEL_AUDIT §2, GODEL_TARGET §7; `cardmodel pipeline`).",
+  "target": 0,
+  "tier": 0
+}

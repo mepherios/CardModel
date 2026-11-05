@@ -8,13 +8,18 @@
   "docs": [
     "ARCHITECTURE.md"
   ],
+  "godel": {
+    "reason": "ii",
+    "verdict": "NO",
+    "why": "static checks of the program's text (GODEL_AUDIT §4.3: selfcheck, integrity NO)"
+  },
   "laws": [
     "law/CM13_self_contained",
     "law/CM19_never_publish_unasked"
   ],
   "metadata": {
-    "previous_content_hash": "f80bf0708a09ae49eaf6db266341572206aa97393831949b031deeeed7608997",
-    "version": "1.1.0",
+    "previous_content_hash": "e126ce20927ad0e48ccdc2094f0da151d5e144948723a4334c524045fc1f8e46",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

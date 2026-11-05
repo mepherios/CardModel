@@ -1,0 +1,49 @@
+{
+  "category": "capability",
+  "check": "honest_limits",
+  "commands": [
+    "cardmodel probe"
+  ],
+  "core": true,
+  "docs": [
+    "docs/METHODOLOGY.md"
+  ],
+  "laws": [
+    "law/CM01_honest_limits",
+    "law/CM07_no_vacuous_success",
+    "law/CM12_capabilities_are_probed"
+  ],
+  "metadata": {
+    "previous_content_hash": "e2636ae2b9b38a28b4de8eebf5f6c4cb5b2309320724cb1e5250f3cc776aaccc",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/probes.py"
+  ],
+  "name": "honest_limits",
+  "order": 2,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "redefinitions"
+      },
+      {
+        "verify": "conformance"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "a probe is a direct observation of this host; the sections that depend on one report unavailable or inconclusive with its reason: exhaustive over the tools this host has"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Honest limits: what cannot run here is reported with its reason, a check with nothing to check is vacuous (never a pass), and every engine that claims something states its limits.",
+  "tests": [
+    "tests/test_laws.py::test_engines_state_honest_limits",
+    "tests/test_probes.py::test_unavailable_is_reported"
+  ],
+  "tier": 0,
+  "usefulness": "A pass can be trusted: the model never reports a success it did not check."
+}

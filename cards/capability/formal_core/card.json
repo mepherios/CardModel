@@ -8,13 +8,18 @@
   "docs": [
     "docs/MATH_CORE.md"
   ],
+  "godel": {
+    "needs": "a, b, c",
+    "verdict": "CORE",
+    "why": "the Gödel model's own mathematics in Lean: the ground truth (GODEL_AUDIT §4.3: formal/GodelCore CORE)"
+  },
   "laws": [
     "law/CM43_primes_are_forever",
     "law/CM45_content_is_a_sparse_vector"
   ],
   "metadata": {
-    "previous_content_hash": "40544ea0c16c572ad70caa63480bb840e5005e1a05e7e2d79370c513775cacdb",
-    "version": "1.1.0",
+    "previous_content_hash": "12c1cf718fe9c6cd1319d9aa85fa987bece3ce860f4922776e8a35459d746920",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

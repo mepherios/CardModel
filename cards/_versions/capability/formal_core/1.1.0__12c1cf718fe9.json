@@ -1,0 +1,45 @@
+{
+  "category": "capability",
+  "check": "formal_core",
+  "commands": [
+    "cardmodel verify --only formal"
+  ],
+  "core": true,
+  "docs": [
+    "docs/MATH_CORE.md"
+  ],
+  "laws": [
+    "law/CM43_primes_are_forever",
+    "law/CM45_content_is_a_sparse_vector"
+  ],
+  "metadata": {
+    "previous_content_hash": "40544ea0c16c572ad70caa63480bb840e5005e1a05e7e2d79370c513775cacdb",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/formal.py",
+    "formal/GodelCore.lean"
+  ],
+  "name": "formal_core",
+  "order": 30,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "formal"
+      }
+    ],
+    "tier": "proof",
+    "tier_reason": "formal/GodelCore is built by Lean's kernel with no sorry and only the standard axioms (skipped, with its reason, on a host with no Lean toolchain)"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The Gödel model's own mathematics proved in Lean (formal/GodelCore): the divisibility lattice, carry-over and gcd, the append-only ledger, merging versus relating generators, transport of properties, rewrite invariants.",
+  "tests": [
+    "tests/test_formal.py::test_the_core_builds_without_sorry"
+  ],
+  "tier": 0,
+  "usefulness": "The rules the model keeps its numbers by are theorems, checked by a kernel outside the model."
+}

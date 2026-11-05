@@ -9,13 +9,23 @@
   "docs": [
     "docs/MACHINES.md"
   ],
+  "godel": {
+    "gap": {
+      "closes_by": "address emitted functions by structural identity with integer constants as parameters; a cross-ROM block cache keyed by it",
+      "goal": "goal/G_A14_godel_pure",
+      "reason": "GODEL_AUDIT §4 (machine/lift.py): Gödel today none; its code does not call engines/godel.py"
+    },
+    "needs": "d",
+    "verdict": "KEYED",
+    "why": "lifted blocks are cached by ROM and address, not by what they compute; the runtime engines are NO (ii) (GODEL_AUDIT §4.3)"
+  },
   "laws": [
     "law/CM33_lifted_code_is_the_cards",
     "law/CM34_emulation_effects_are_the_shell"
   ],
   "metadata": {
-    "previous_content_hash": "76b9dc16cce345fa1ad3ae489eecca8b4e7321fc3023bf56ca6012ef24bc9f33",
-    "version": "1.1.0",
+    "previous_content_hash": "acab76e2fb4e15d1d89c15a01bd188743b3898f9c2ae9c33ee6b834ba526cca3",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

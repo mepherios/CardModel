@@ -1,0 +1,50 @@
+{
+  "category": "capability",
+  "check": "form_selection",
+  "commands": [
+    "cardmodel rewrite",
+    "cardmodel optimize"
+  ],
+  "core": true,
+  "docs": [
+    "docs/METHODOLOGY.md"
+  ],
+  "laws": [
+    "law/CM05_cheapest_available_form",
+    "law/CM09_measure_before_claiming"
+  ],
+  "metadata": {
+    "previous_content_hash": "6f0839528ae4d55328d405c8103ab549f4f1e28389468a02c0d822a24bdd5fb7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/rewrite.py",
+    "cardmodel/engines/optimize.py"
+  ],
+  "name": "form_selection",
+  "order": 4,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "forms"
+      },
+      {
+        "self_step": "optimize"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the forms chosen are the available ones, witnessed and timed on seeded inputs on this host; costs are measurements, not bounds"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The cheapest available form serves each domain, and costs are measured on this host before they are claimed.",
+  "tests": [
+    "tests/test_rewrite.py::test_cheapest_respects_domain_and_availability",
+    "tests/test_optimize.py::test_measure_writes_metric_cards"
+  ],
+  "tier": 0,
+  "usefulness": "Picks the fastest correct implementation that actually runs on your machine."
+}

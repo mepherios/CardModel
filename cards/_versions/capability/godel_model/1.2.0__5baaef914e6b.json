@@ -1,0 +1,53 @@
+{
+  "category": "capability",
+  "check": "godel_model",
+  "commands": [
+    "cardmodel godel"
+  ],
+  "core": true,
+  "docs": [
+    "GOALS.md",
+    "docs/MATH_CORE.md"
+  ],
+  "laws": [
+    "law/CM31_behaviour_is_numbered",
+    "law/CM43_primes_are_forever",
+    "law/CM45_content_is_a_sparse_vector"
+  ],
+  "metadata": {
+    "previous_content_hash": "8ac8ab1154335d4a11073a0c60822ea29875d5b7932d1b6c58a289a80fa1592d",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/godel.py"
+  ],
+  "name": "godel_model",
+  "order": 25,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "godel"
+      },
+      {
+        "verify": "sources"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the prime ledger and every content vector are checked whole against the storage rules and the last commit"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded exactly; maps between Gödel sets with their gaps; content stored as sparse vectors with their basis version, merges and deprecations as events.",
+  "tests": [
+    "tests/test_godel.py::test_ledger_is_append_only",
+    "tests/test_godel.py::test_content_algebra_and_carry",
+    "tests/test_godel.py::test_structural_numbers_decode_exactly",
+    "tests/test_godel.py::test_stored_records_follow_the_rules",
+    "tests/test_godel.py::test_merges_and_deprecations_never_relate_products"
+  ],
+  "tier": 0,
+  "usefulness": "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."
+}

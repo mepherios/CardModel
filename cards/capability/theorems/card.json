@@ -9,12 +9,22 @@
   "docs": [
     "docs/KNOWLEDGE.md"
   ],
+  "godel": {
+    "gap": {
+      "closes_by": "an identity per statement; dedupe the store; cache Lean results by identity",
+      "goal": "goal/G_A14_godel_pure",
+      "reason": "GODEL_AUDIT §4 (engines/theorems.py): Gödel today none; its code does not call engines/godel.py"
+    },
+    "needs": "a, d",
+    "verdict": "KEYED",
+    "why": "theorem cards have no identity: 87 redundant under alpha (GODEL_AUDIT §4.2)"
+  },
   "laws": [
     "law/CM23_crystallised_knowledge"
   ],
   "metadata": {
-    "previous_content_hash": "969bccf92eb31610fca3f1f21895e235fc7acb5dea425c29d385522a17302a04",
-    "version": "1.1.0",
+    "previous_content_hash": "a69acd9c59361b4a3b37f4741ff4399d5288f9e7e1acb93579c7ff7f46a0ed4f",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

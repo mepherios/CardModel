@@ -3,7 +3,8 @@
 Sections (all on by default; ``only`` selects):
   kernel        load errors, card-type schema validation, closure (CM10/CM11)
   integrity     one program (CM39): unique law and goal numbers, every law carried by a capability, every
-                command, section and doc described, LAWS.md / GOALS.md in sync, no merge markers, no publishing
+                command, section and doc described, LAWS.md / GOALS.md in sync, no merge markers, no publishing;
+                no copy of the Gödel core's algebra outside engines/godel.py but the recorded ones (CM50)
   capabilities  every capability card's smoke check: a core capability that no longer behaves fails (CM37)
   projects      every project card carries its detail and is current: missing detail, a stale card, or a branch
                 with unmerged work that no card lists fails (CM41)

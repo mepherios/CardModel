@@ -9,12 +9,17 @@
   "docs": [
     "docs/LANGUAGE.md"
   ],
+  "godel": {
+    "reason": "i",
+    "verdict": "NO",
+    "why": "derivation computes meaning over facts; a tuple is already an injective hash-consed name (GODEL_AUDIT §4.2: logic NO)"
+  },
   "laws": [
     "law/CM24_logic_carries"
   ],
   "metadata": {
-    "previous_content_hash": "5895f702d4c4ad0333d7b532d1e114348e984e5aeb21a9864932fb440dc6f18a",
-    "version": "1.1.0",
+    "previous_content_hash": "7703b90c08ed5496aa6375ae3685ee220405b95304eacb988aa755d905021fcf",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

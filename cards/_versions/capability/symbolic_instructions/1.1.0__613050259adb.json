@@ -1,0 +1,45 @@
+{
+  "category": "capability",
+  "check": "symbolic_instructions",
+  "commands": [
+    "cardmodel symbolic"
+  ],
+  "core": true,
+  "docs": [
+    "docs/MATH_CORE.md",
+    "docs/MACHINES.md"
+  ],
+  "laws": [
+    "law/CM32_machines_are_cards"
+  ],
+  "metadata": {
+    "previous_content_hash": "c5b26f1dfb511571521a1094891db932d750f60d549863b89a36240426be077f",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/machine/symbolic.py"
+  ],
+  "name": "symbolic_instructions",
+  "order": 27,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "machine"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "each instruction's terms are evaluated against the bench's run of its executable semantics on seeded states (MATH_CORE phase 0 names the proof as next)"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Instruction cards as mathematics: symbolic execution gives each instruction's registers as terms over what it reads, with its bus effects and their conditions, checked against the executable semantics (MATH_CORE phase 0, F5).",
+  "tests": [
+    "tests/test_symbolic.py::test_terms_agree_with_the_semantics",
+    "tests/test_symbolic.py::test_a_wrong_term_is_caught"
+  ],
+  "tier": 0,
+  "usefulness": "A CPU's instructions are understood, not only run: each one is a formula the model can reason about."
+}

@@ -1,0 +1,186 @@
+{
+  "applies_to": [
+    "capability"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "previous_content_hash": "fe9d6821f04fdfdc726aa2b2fefd5ee1267b03bd1c81d16cd547ac627763d5c8",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "capability",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "schema": {
+    "properties": {
+      "check": {
+        "type": "string"
+      },
+      "commands": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "core": {
+        "type": "boolean"
+      },
+      "docs": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "godel": {
+        "properties": {
+          "copies": {
+            "items": {
+              "required": [
+                "at",
+                "reason",
+                "closes_by",
+                "goal"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "gap": {
+            "properties": {
+              "closes_by": {
+                "type": "string"
+              },
+              "goal": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reason",
+              "closes_by",
+              "goal"
+            ],
+            "type": "object"
+          },
+          "needs": {
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "i",
+              "ii",
+              "iii",
+              "iv",
+              "v"
+            ],
+            "type": "string"
+          },
+          "verdict": {
+            "enum": [
+              "CORE",
+              "KEYED",
+              "CONSUMER",
+              "NO"
+            ],
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "why"
+        ],
+        "type": "object"
+      },
+      "laws": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "modules": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "order": {
+        "type": "integer"
+      },
+      "pipeline": {
+        "properties": {
+          "gap": {
+            "properties": {
+              "closes_by": {
+                "type": "string"
+              },
+              "goal": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reason",
+              "closes_by",
+              "goal"
+            ],
+            "type": "object"
+          },
+          "runs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "tier": {
+            "enum": [
+              "proof",
+              "probabilistic",
+              "bounded",
+              "sample"
+            ],
+            "type": "string"
+          },
+          "tier_reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tier",
+          "tier_reason",
+          "runs"
+        ],
+        "type": "object"
+      },
+      "tests": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "usefulness": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "statement",
+      "check",
+      "laws",
+      "tests",
+      "core",
+      "pipeline",
+      "godel"
+    ],
+    "type": "object"
+  },
+  "statement": "A core capability: its smoke check must pass in every verify and self-run (CM37), and it declares its evidence tier, where the main pipeline runs it and its Gödel verdict (CM50).",
+  "tier": 0
+}

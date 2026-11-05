@@ -1,0 +1,43 @@
+{
+  "category": "capability",
+  "check": "world",
+  "commands": [
+    "cardmodel game world"
+  ],
+  "core": true,
+  "docs": [
+    "game/DESIGN.md"
+  ],
+  "laws": [
+    "law/CM29_everything_carries"
+  ],
+  "metadata": {
+    "previous_content_hash": "865c4be95107316abab8431f83f5db25c71e874c3df5696af8488b5fd1eb6b07",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/game/world.py"
+  ],
+  "name": "world",
+  "order": 20,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "game"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the world is run for a fixed number of ticks from fixed seeds and its carry, cause and impact rules checked on that run"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Everything carries: the systemic world's facts carry between ticks, every event explains its causes and every action's impact is measured.",
+  "tests": [
+    "tests/test_game.py::test_world_effects_carry_and_explain"
+  ],
+  "tier": 0,
+  "usefulness": "What you do in the world stays done, and the world can say why."
+}

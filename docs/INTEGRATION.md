@@ -62,10 +62,10 @@ range to this table in the same commit.
 | CM50 | pipeline coverage (`claude/pipeline-coverage`) | every capability runs in the main pipeline (engines/pipeline.py, the `pipeline` verify section) |
 | **CM51 onward** | free | take the next one |
 
-Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U12 (G_U10–U12: unreal-distill), G_L1, G_O1–O4, G_A1–A10, G_A13 (pipeline gaps, `claude/pipeline-coverage`; G_A11–A12 are written on `claude/project-thread-c60pvh`), G_K1–K6, G_D1–D2, G_P1–P5
+Goal ids are `G_<axis letter><n>`. Taken: G_C1–C5, G_U1–U12 (G_U10–U12: unreal-distill), G_L1, G_O1–O4, G_A1–A10, G_A13–A14 (pipeline gaps, Gödel purity, `claude/pipeline-coverage`; G_A11–A12 are written on `claude/project-thread-c60pvh`), G_K1–K6, G_D1–D2, G_P1–P5
 (AnyPS5), G_M1–M6 (machines; G_M6 is MATH_CORE's), G_S1 (products: the store, `claude/jolly-liskov-2d97a8`).
 G_A10 is that branch's law-witness goal, written G_A9 there and renumbered where it met MATH_CORE's G_A9
-(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A14, G_U13, G_C6, G_K7, G_M7,
+(`claude/frosty-lumiere-98e2b7`). The next free one is the axis's next number (G_A15, G_U13, G_C6, G_K7, G_M7,
 G_P6, G_S2 ...).
 
 Two sessions that take the same number find out at the merge: `cardmodel verify --only integrity` reports
@@ -80,7 +80,11 @@ redefinitions, conformance, functions, proofs, selfcheck, portability (main); pr
 
 A new capability card declares `pipeline`: its evidence tier (CM46), the verify sections or self-run steps that run
 its engine, and any part no stage runs as a `gap` with its reason, what closes it and its goal (CM50). The
-`pipeline` section checks each declared stage against the code; `cardmodel pipeline` prints the table.
+`pipeline` section checks each declared stage against the code; `cardmodel pipeline` prints the table. The card
+also declares `godel`: its verdict by GODEL_AUDIT §2 (CORE or KEYED with what it needs, a to e; CONSUMER; NO with
+its reason, i to v); a CORE or KEYED capability whose code does not call engines/godel.py records a gap, and any copy
+of the core's algebra outside godel.py (primes, content, the zigzag, a Gödel number composed by hand) is recorded
+on the capability that holds it, or the section fails (G_A14).
 
 ## 3. Who works where
 

@@ -8,12 +8,17 @@
   "docs": [
     "docs/ANYPS5.md"
   ],
+  "godel": {
+    "reason": "ii",
+    "verdict": "NO",
+    "why": "observations of a C++ project's text: no terms (GODEL_AUDIT §4.3: NO, no terms)"
+  },
   "laws": [
     "law/CM36_unknowns_are_observation_obligations"
   ],
   "metadata": {
-    "previous_content_hash": "014f64528ce1dc56db148158d19e03853c077b1a501e64dcc9762bae6d96d5ff",
-    "version": "1.1.0",
+    "previous_content_hash": "75fe998d1161f5bc45d1732b8f0f4368372a5e8ec7c1d86d1e1e671a58531d53",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

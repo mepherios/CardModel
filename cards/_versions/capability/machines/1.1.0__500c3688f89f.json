@@ -1,0 +1,44 @@
+{
+  "category": "capability",
+  "check": "machines",
+  "commands": [
+    "cardmodel isa"
+  ],
+  "core": true,
+  "docs": [
+    "docs/MACHINES.md"
+  ],
+  "laws": [
+    "law/CM32_machines_are_cards"
+  ],
+  "metadata": {
+    "previous_content_hash": "6e5be3ceaf83cb13a9f6d004aadd71ff7349f0356920eaa065d356ffab42e8a1",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/machine/isa.py",
+    "cardmodel/machine/bench.py"
+  ],
+  "name": "machines",
+  "order": 21,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "machine"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every instruction card runs on seeded states in every engine and the results agree"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Machines are cards: instruction cards conform in every engine (reference IR, host, native), cycles and flags included.",
+  "tests": [
+    "tests/test_machine.py::test_instruction_cards_conform_in_every_engine"
+  ],
+  "tier": 0,
+  "usefulness": "A CPU described once runs the same in every engine."
+}

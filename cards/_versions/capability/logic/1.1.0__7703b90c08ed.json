@@ -1,0 +1,45 @@
+{
+  "category": "capability",
+  "check": "logic",
+  "commands": [
+    "cardmodel logic query",
+    "cardmodel logic why"
+  ],
+  "core": true,
+  "docs": [
+    "docs/LANGUAGE.md"
+  ],
+  "laws": [
+    "law/CM24_logic_carries"
+  ],
+  "metadata": {
+    "previous_content_hash": "5895f702d4c4ad0333d7b532d1e114348e984e5aeb21a9864932fb440dc6f18a",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/logic.py"
+  ],
+  "name": "logic",
+  "order": 12,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "logic"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the self theory is evaluated to its fixpoint over every fact of the store, within the logic budget: exhaustive within those bounds"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Logic as cards: rules with recursion, negation, aggregates and constraints derive facts, each with a minimum-height proof.",
+  "tests": [
+    "tests/test_logic.py::test_proofs_have_minimum_height",
+    "tests/test_logic.py::test_constraint_violation_carries_a_proof"
+  ],
+  "tier": 0,
+  "usefulness": "If x and y then z, written once, explained every time."
+}

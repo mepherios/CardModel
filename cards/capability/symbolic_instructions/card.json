@@ -9,12 +9,17 @@
     "docs/MATH_CORE.md",
     "docs/MACHINES.md"
   ],
+  "godel": {
+    "needs": "a, c",
+    "verdict": "CORE",
+    "why": "instruction terms as definitions with identity and content (GODEL_AUDIT §4.3: CORE for the LR35902)"
+  },
   "laws": [
     "law/CM32_machines_are_cards"
   ],
   "metadata": {
-    "previous_content_hash": "c5b26f1dfb511571521a1094891db932d750f60d549863b89a36240426be077f",
-    "version": "1.1.0",
+    "previous_content_hash": "613050259adb7c101e3c1a3c65030c9bcd499b3451e32717188a20e289be4a90",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

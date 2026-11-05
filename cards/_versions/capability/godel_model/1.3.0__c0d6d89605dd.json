@@ -1,0 +1,80 @@
+{
+  "category": "capability",
+  "check": "godel_model",
+  "commands": [
+    "cardmodel godel"
+  ],
+  "core": true,
+  "docs": [
+    "GOALS.md",
+    "docs/MATH_CORE.md"
+  ],
+  "godel": {
+    "copies": [
+      {
+        "at": "cardmodel/engines/numbering.py:tokens",
+        "closes_by": "godel.tokens with the set's dense ranks (GODEL_AUDIT decision: positional codes by per-set dense ranks, the owner's)",
+        "goal": "goal/G_A14_godel_pure",
+        "reason": "each set's own copy of the 3k + 1 positional scheme (the second of three copies, GODEL_AUDIT §4.3)"
+      },
+      {
+        "at": "cardmodel/engines/numbering.py:encode",
+        "closes_by": "godel.structural over the set's tokens",
+        "goal": "goal/G_A14_godel_pure",
+        "reason": "composes the positional number from nth_prime by hand"
+      },
+      {
+        "at": "cardmodel/engines/codes.py:built_positional_bits",
+        "closes_by": "godel.structural's bit length",
+        "goal": "goal/G_A14_godel_pure",
+        "reason": "builds a positional number by hand to measure its size (W-3, small codes only)"
+      }
+    ],
+    "needs": "a, b, c, d, e",
+    "verdict": "CORE",
+    "why": "the core itself: ledger, content, structure, carry; numbering (W-5) and codes (W-3) are its numberings and their measurement (GODEL_AUDIT §4.2)"
+  },
+  "laws": [
+    "law/CM31_behaviour_is_numbered",
+    "law/CM43_primes_are_forever",
+    "law/CM45_content_is_a_sparse_vector"
+  ],
+  "metadata": {
+    "previous_content_hash": "5baaef914e6b4bfa74eb9a01817db1dc529b5ee36ac7405e7721e12a294d6a16",
+    "version": "1.3.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/godel.py",
+    "cardmodel/engines/numbering.py",
+    "cardmodel/engines/codes.py"
+  ],
+  "name": "godel_model",
+  "order": 25,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "godel"
+      },
+      {
+        "verify": "sources"
+      }
+    ],
+    "tier": "bounded",
+    "tier_reason": "the prime ledger and every content vector are checked whole against the storage rules and the last commit"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "The expanding Gödel model's foundation: atoms take primes in an append-only ledger; a concept's content vector (its factorization), GCD, LCM and divisibility; Gödel's positional structural numbers decoded exactly; maps between Gödel sets with their gaps; content stored as sparse vectors with their basis version, merges and deprecations as events.",
+  "tests": [
+    "tests/test_godel.py::test_ledger_is_append_only",
+    "tests/test_godel.py::test_content_algebra_and_carry",
+    "tests/test_godel.py::test_structural_numbers_decode_exactly",
+    "tests/test_godel.py::test_stored_records_follow_the_rules",
+    "tests/test_godel.py::test_merges_and_deprecations_never_relate_products"
+  ],
+  "tier": 0,
+  "usefulness": "Every concept gets a number that never changes, and two concepts' common factor shows the logic they share."
+}

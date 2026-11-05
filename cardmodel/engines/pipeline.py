@@ -1,4 +1,4 @@
-"""pipeline — every capability runs in the main pipeline, at a stated tier (law CM50).
+"""pipeline — every capability runs in the main pipeline, at a stated tier, true to the Gödel model (law CM50).
 
 The main pipeline is what `cardmodel verify` and `cardmodel self run` do to the model's own cards: the verify
 sections (``engines/verify.py`` SECTIONS; the quick ones in every self-run cycle, all of them in `verify` and the
@@ -24,6 +24,20 @@ cycle's daily ``verify_full``) and the self-run steps (``self_step`` cards namin
   never run    a capability with no counted run and no recorded gap; or a gap without a reason, a way to close it,
                or a goal card that exists; or a gap recorded beside runs (it would hide that the capability runs)
 
+Gödel purity (GODEL_AUDIT §2, GODEL_TARGET §7, docs/GODEL_PURITY rules 1-3): each card's ``godel`` field holds its
+verdict, CORE or KEYED with what it needs from the core (a-e), CONSUMER, or NO with why not (i-v), and ``why``.
+The check fails on:
+  no verdict   a capability without ``godel``, or a verdict, need or reason outside those lists
+  not wired    a CORE or KEYED capability whose own modules never name engines/godel.py, godel1931.py or the identity
+               hash (egraph.semantic_hash), unless it records a ``gap`` (reason, closes_by, goal); a gap recorded
+               while the code calls the core fails too. The pipeline's drivers (verify, capabilities, selfrun) name
+               the core only to run its checks and do not count
+  copies       (in the integrity section, ``purity_problems``) code outside godel.py and godel1931.py that does the
+               core's algebra itself (``purity_findings``: primes, content, the zigzag, positional tokens, prime
+               powers, sieves, similarity over content), unless a capability records it under ``copies`` (at, rule,
+               reason, closes_by, owner, goal); a recorded copy the code no longer has fails too
+Recorded gaps and copies are counted by goal G_A14 (``godel_impure``).
+
 ``registry`` gives the whole table: per capability its tier, its runs with the import path that links each to
 the capability's code, and its gap. `cardmodel pipeline` prints it.
 
@@ -31,6 +45,9 @@ Honest limits (L1): "reaches" is read from imports, not from a trace: a stage th
 module but never calls the part that matters passes, and one that reaches it through two or more modules is not
 seen (declare a module of the capability nearer to the stage, or the stage that calls it). The tier is the card's
 word, checked only for being one of CM46's; the ``tiers`` section and the witness tests check the claims behind it.
+The Gödel verdict is the audit's word too: the check sees that a CORE or KEYED capability names the core, not that it
+uses it for what it needs; and the copy scan reads names and prime powers, so a copy spelled otherwise (a prime table
+built by another name, ``by[i] ** e`` with ``by`` mapping indices to primes) is not seen.
 """
 from __future__ import annotations
 
@@ -244,6 +261,151 @@ def link(stage: dict, modules: list[str], home: str | None = None) -> list[str] 
     return None
 
 
+# -- Gödel purity (GODEL_AUDIT §2, GODEL_TARGET §7) -------------------------------------------------------------
+GODEL_CORE = ("cardmodel.engines.godel", "cardmodel.engines.godel1931")
+IDENTITY = ("cardmodel.engines.egraph", "semantic_hash")     # the identity hash is the core's too (GODEL_PURITY 1)
+VERDICTS = ("CORE", "KEYED", "CONSUMER", "NO")
+LEAN_CORE = "formal/GodelCore"
+# the pipeline's drivers name the core only to run its checks: that is not their capability using it
+DRIVERS = ("cardmodel.engines.verify", "cardmodel.engines.capabilities", "cardmodel.engines.selfrun")
+NEEDS = ("a", "b", "c", "d", "e")
+REASONS = ("i", "ii", "iii", "iv", "v")
+# names of the core's algebra: a definition of one of these outside the core that does not call the core re-implements it
+FAMILY = frozenset({"primes", "nth_prime", "zig", "unzig", "term_content", "module_content", "card_content", "content",
+                    "tokens", "structural", "exponents", "from_tokens", "valuation", "sieve"})
+
+
+def _owned_modules(home: str, modules: list[str]) -> list[str]:
+    return sorted(m for m in _modules(home) if _owns(m, modules))
+
+
+def calls_core(home: str, modules: list[str]) -> str | None:
+    """How a capability's own code reaches the Gödel core (engines/godel.py, godel1931.py, or the identity hash
+    egraph.semantic_hash): ``module -> core`` for the first module that names it, or None. Direct references only."""
+    if any(str(p).rstrip("/").startswith(LEAN_CORE) for p in modules):
+        return "formal/GodelCore is the core's own proofs"
+    owned = _owned_modules(home, modules)
+    for m in owned:
+        if m in GODEL_CORE or m == IDENTITY[0]:
+            return f"{m.removeprefix('cardmodel.')} is the core"
+    for m in owned:
+        if m in DRIVERS:
+            continue
+        f = _file(home, m)
+        for node in sorted(f.calls(f.tree.body), key=lambda n: (n[0], n[1] or "")):
+            if node[0] in GODEL_CORE or node == IDENTITY:
+                return f"{m.removeprefix('cardmodel.')} -> {node[0].removeprefix('cardmodel.')}" + \
+                    (f".{node[1]}" if node[1] else "")
+    return None
+
+
+def recorded_copies(ctx) -> dict[str, str]:
+    """{"path:function": capability} for every known copy of the core's algebra a capability card records."""
+    return {c["at"]: cap.name for cap in ctx.store.cards("capability")
+            for c in ((cap.get("godel") or {}).get("copies") or []) if isinstance(c, dict) and c.get("at")}
+
+
+def purity_problems(ctx, home: str | None = None) -> list[str]:
+    """Every copy of the core's algebra in the code is recorded on a capability card, and every record is still
+    true (GODEL_TARGET §7): the part of the integrity check that keeps the program pure to the Gödel model."""
+    found, recorded = purity_findings(home), recorded_copies(ctx)
+    out = [f"{at}: {found[at]}, outside engines/godel.py: call the core, or record it under `godel.copies` on the "
+           f"capability that owns it (GODEL_TARGET §7, CM50)" for at in sorted(set(found) - set(recorded))]
+    out += [f"capability/{recorded[at]}: records a copy of the core at {at}, which the code no longer has: remove "
+            f"the record" for at in sorted(set(recorded) - set(found))]
+    return out
+
+
+def _defs(tree) -> list[tuple[str, ast.AST]]:
+    """(qualified name, node) for every top-level function and every method: a nested function belongs to the one
+    that holds it (``Reader.codes`` holds its ``walk``)."""
+    out = []
+    for n in tree.body:
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            out.append((n.name, n))
+        elif isinstance(n, ast.ClassDef):
+            out += [(f"{n.name}.{m.name}", m) for m in n.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    return out
+
+
+def _is_const(n, values) -> bool:
+    return isinstance(n, ast.Constant) and type(n.value) is int and n.value in values
+
+
+def _token_code(n) -> int | None:
+    """c for ``3 * x + c`` (c = 1, 2, 3) in either order, else None. Gödel's Def-27 positional tokens are atom 3k+1,
+    integer 3·zig+2, variable 3j+3: a function with two or more of the three forms encodes terms (one alone is a
+    stride or an estimate, such as a PNG row of 3w + 1 bytes)."""
+    if not (isinstance(n, ast.BinOp) and isinstance(n.op, ast.Add)):
+        return None
+    for mul, c in ((n.left, n.right), (n.right, n.left)):
+        if _is_const(c, (1, 2, 3)) and isinstance(mul, ast.BinOp) and isinstance(mul.op, ast.Mult) and \
+                (_is_const(mul.left, (3,)) or _is_const(mul.right, (3,))):
+            return c.value
+    return None
+
+
+@lru_cache(maxsize=4)
+def purity_findings(home: str | None = None) -> dict[str, str]:
+    """Code outside engines/godel.py and godel1931.py that does the core's algebra itself (GODEL_TARGET §7, the
+    owner's purity rule 1): {"path:function": the rule it breaks}. Five readings of each function:
+      core name     named like the core's algebra (FAMILY, or prime/zig in the name) and never calling the core
+      tokens        a positional token scheme: two or more of ``3 * x + 1``, ``3 * x + 2``, ``3 * x + 3`` (Def-27)
+      prime power   a power whose base is a prime: ``p ** e`` with p from a list of primes, ``nth_prime(i) ** c``,
+                    ``index[a]["prime"] ** e`` (a Gödel number composed by hand)
+      sieve         a list named for primes that the function grows while testing divisibility (``%``)
+      similarity    a jaccard or similarity over content that does not call the core's ``jaccard``
+    A function that calls the core for the same thing (a thin wrapper) is not a copy."""
+    home = str(home or paths.home())
+    out = {}
+    for m, path in sorted(_modules(home).items()):
+        if m in GODEL_CORE:
+            continue
+        f = _file(home, m)
+        src = path.read_text(encoding="utf-8")
+        rel = str(path.relative_to(home))
+
+        lines = src.encode("utf-8").splitlines(keepends=True)     # ast's column offsets count UTF-8 bytes
+
+        def seg(n) -> str:              # ast.get_source_segment re-splits the whole file on every call
+            if not hasattr(n, "lineno"):
+                return ""
+            if n.lineno == n.end_lineno:
+                b = lines[n.lineno - 1][n.col_offset:n.end_col_offset]
+            else:
+                b = b"".join([lines[n.lineno - 1][n.col_offset:], *lines[n.lineno:n.end_lineno - 1],
+                              lines[n.end_lineno - 1][:n.end_col_offset]])
+            return b.decode("utf-8", errors="replace")
+        for qual, fn in _defs(f.tree):
+            name = fn.name.lstrip("_")
+            key = f"{rel}:{qual}"
+            nodes = list(ast.walk(fn))
+            named = name in FAMILY or "prime" in name or "zig" in name
+            similar = ("jaccard" in name or "similar" in name) and "content" in seg(fn)
+            core = {c for c in f.calls(fn.body, {fn.name}) if c[0] in GODEL_CORE} if named or similar else set()
+            pv = set()
+            for x in nodes:
+                if isinstance(x, (ast.For, ast.comprehension)) and "prime" in seg(x.iter):
+                    pv |= {n.id for n in ast.walk(x.target) if isinstance(n, ast.Name)}
+            found = None
+            if named and not core:
+                found = f"core name: defines {qual} without calling the core"
+            elif len({_token_code(x) for x in nodes} - {None}) >= 2:
+                found = "tokens: a positional token scheme (3k+1, 3·zig+2, 3j+3) outside godel.tokens"
+            elif any(isinstance(x, ast.BinOp) and isinstance(x.op, ast.Pow) and
+                     ("prime" in seg(x.left) or (isinstance(x.left, ast.Name) and x.left.id in pv)) for x in nodes):
+                found = "prime power: a product of primes raised to exponents, composed by hand"
+            elif any(isinstance(x, ast.BinOp) and isinstance(x.op, ast.Mod) for x in nodes) and any(
+                    isinstance(x, ast.Call) and isinstance(x.func, ast.Attribute) and x.func.attr == "append"
+                    and "prime" in seg(x.func.value) for x in nodes):
+                found = "sieve: a list of primes grown by trial division"
+            elif similar and not any(c[1] == "jaccard" for c in core):
+                found = "similarity: a similarity over content outside godel.jaccard"
+            if found:
+                out[key] = found
+    return out
+
+
 # -- the cards ----------------------------------------------------------------------------------------------------
 def _step_due_ever(card) -> bool:
     return card is not None and card.get("auto", True) and (card.get("every_hours") is not None
@@ -268,6 +430,7 @@ def registry(ctx, home: str | None = None) -> dict:
         rows[cap.name] = row
         if not isinstance(decl, dict):
             probs.append(f"{q}: no `pipeline` field: where it runs in the main pipeline and at what tier (CM50)")
+            _godel_row(q, cap, row, goals, home)
             continue
         tier = decl.get("tier")
         row["tier"] = tier
@@ -323,17 +486,56 @@ def registry(ctx, home: str | None = None) -> dict:
         gap = decl.get("gap")
         row["gap"] = gap
         if gap is not None:
-            if not isinstance(gap, dict):
-                probs.append(f"{q}: its gap is not an object with reason, closes_by and goal")
-            else:
-                for k in ("reason", "closes_by", "goal"):
-                    if not gap.get(k):
-                        probs.append(f"{q}: its gap has no `{k}`")
-                if gap.get("goal") and gap["goal"] not in goals:
-                    probs.append(f"{q}: its gap names {gap['goal']}, which is not a goal card")
+            probs += _gap_problems(q, "gap", gap, goals)
         elif not row["running"]:
             probs.append(f"{q}: never runs in the main pipeline and records no gap (CM50)")
+        _godel_row(q, cap, row, goals, home)
     return rows
+
+
+def _gap_problems(q: str, what: str, gap, goals: set) -> list[str]:
+    if not isinstance(gap, dict):
+        return [f"{q}: its {what} is not an object with reason, closes_by and goal"]
+    out = [f"{q}: its {what} has no `{k}`" for k in ("reason", "closes_by", "goal") if not gap.get(k)]
+    if gap.get("goal") and gap["goal"] not in goals:
+        out.append(f"{q}: its {what} names {gap['goal']}, which is not a goal card")
+    return out
+
+
+def _godel_row(q: str, cap, row: dict, goals: set, home: str) -> None:
+    """The capability's Gödel verdict (GODEL_AUDIT §2) held to its code: a CORE or KEYED capability must call the
+    core, or record why not yet (``gap``); a NO names its reason (i-v); copies of the core's algebra it records."""
+    probs = row["problems"]
+    g = cap.get("godel")
+    row["godel"] = g if isinstance(g, dict) else None
+    if not isinstance(g, dict):
+        probs.append(f"{q}: no `godel` field: its Gödel verdict, CORE, KEYED, CONSUMER or NO (GODEL_AUDIT §2, CM50)")
+        return
+    v = g.get("verdict")
+    if v not in VERDICTS:
+        probs.append(f"{q}: Gödel verdict {v!r} is not one of {', '.join(VERDICTS)}")
+        return
+    if not g.get("why"):
+        probs.append(f"{q}: its Gödel verdict {v} has no `why`")
+    if v in ("CORE", "KEYED"):
+        needs = [x.strip() for x in str(g.get("needs") or "").split(",") if x.strip()]
+        if not needs or any(x not in NEEDS for x in needs):
+            probs.append(f"{q}: a {v} verdict names what it needs from the core, some of a-e (GODEL_AUDIT §2): "
+                         f"{g.get('needs')!r}")
+        via = calls_core(home, list(cap.get("modules") or []))
+        row["godel_calls"] = via
+        if via is None and not g.get("gap"):
+            probs.append(f"{q}: its card says {v} but its code does not call engines/godel.py (or the identity hash), "
+                         f"and it records no gap (CM50)")
+        elif via is not None and g.get("gap"):
+            probs.append(f"{q}: records a Gödel gap but its code calls the core ({via}): remove the gap")
+    elif v == "NO" and g.get("reason") not in REASONS:
+        probs.append(f"{q}: a NO verdict names its reason, one of {', '.join(REASONS)} (GODEL_AUDIT §2): "
+                     f"{g.get('reason')!r}")
+    if g.get("gap"):
+        probs += _gap_problems(q, "Gödel gap", g["gap"], goals)
+    for c in g.get("copies") or []:
+        probs += _gap_problems(q, f"copy {c.get('at') if isinstance(c, dict) else c!r}", c, goals)
 
 
 def _last(ctx) -> dict:
@@ -365,14 +567,20 @@ def check(ctx) -> dict:
     idle = sorted({n for n, r in rows.items() for x in r["runs"]
                    if x.get("last") in ("skipped", "vacuous", "unavailable")})
     tiers = {t: sum(1 for r in rows.values() if r["tier"] == t) for t in TIERS}
+    # Gödel purity: the copies of the core's algebra the cards record (the integrity check holds them to the code)
+    recorded = recorded_copies(ctx)
+    verdicts = {v: sum(1 for r in rows.values() if (r.get("godel") or {}).get("verdict") == v) for v in VERDICTS}
+    unwired = sorted(n for n, r in rows.items() if (r.get("godel") or {}).get("gap"))
     status = "fail" if problems else ("pass" if rows else "vacuous")
     return {"status": status, "problems": problems, "capabilities": len(rows), "running": len(running),
             "never_run": never, "partial": sorted(set(gaps) & set(running)), "gaps": gaps, "gap_count": len(gaps),
-            "idle_here": idle, "tiers": tiers,
+            "idle_here": idle, "tiers": tiers, "godel_verdicts": verdicts, "godel_unwired": unwired,
+            "godel_copies": sorted(recorded), "godel_impure": len(unwired) + len(recorded),
             "registry": {n: {"tier": r["tier"], "running": r["running"],
                              "runs": [{k: v for k, v in x.items()
                                        if k in ("kind", "stage", "where", "via", "last", "problem")} for x in r["runs"]],
-                             **({"gap": r["gap"]} if r["gap"] else {})} for n, r in rows.items()}}
+                             **({"gap": r["gap"]} if r["gap"] else {}),
+                             "godel": r.get("godel"), "godel_calls": r.get("godel_calls")} for n, r in rows.items()}}
 
 
 def table(res: dict) -> str:
@@ -388,6 +596,15 @@ def table(res: dict) -> str:
         if r.get("gap"):
             lines.append(f"  {'':<22} gap: {r['gap'].get('reason')}")
             lines.append(f"  {'':<22}   closes by: {r['gap'].get('closes_by')} ({r['gap'].get('goal')})")
+        g = r.get("godel") or {}
+        if g:
+            what = g.get("needs") if g.get("verdict") in ("CORE", "KEYED") else g.get("reason")
+            lines.append(f"  {'':<22} Gödel {g.get('verdict')}" + (f" ({what})" if what else "")
+                         + (f", calls the core: {r['godel_calls']}" if r.get("godel_calls") else "")
+                         + (f"; NOT WIRED: {g['gap']['closes_by']}" if g.get("gap") else "")
+                         + "".join(f"; copy at {c.get('at')}" for c in g.get("copies") or []))
+    lines.insert(1, f"Gödel verdicts {res['godel_verdicts']}; {len(res['godel_unwired'])} CORE/KEYED not calling the "
+                    f"core, {len(res['godel_copies'])} recorded copies of its algebra (G_A14: {res['godel_impure']})")
     if res.get("idle_here"):
         lines.append(f"  a declared stage skipped or ran nothing in its latest run on this host: {', '.join(res['idle_here'])}")
     for p in res["problems"]:
@@ -395,4 +612,5 @@ def table(res: dict) -> str:
     return "\n".join(lines)
 
 
-__all__ = ["NOT_COUNTED", "TIERS", "check", "link", "registry", "stages", "table"]
+__all__ = ["DRIVERS", "FAMILY", "GODEL_CORE", "NOT_COUNTED", "TIERS", "VERDICTS", "calls_core", "check", "link",
+           "purity_findings", "purity_problems", "recorded_copies", "registry", "stages", "table"]

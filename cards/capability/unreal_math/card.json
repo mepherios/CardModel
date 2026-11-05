@@ -8,13 +8,28 @@
   "docs": [
     "docs/UNREAL.md"
   ],
+  "godel": {
+    "copies": [
+      {
+        "at": "cardmodel/unreal/distill.py:number",
+        "closes_by": "delete it, or godel.py for the number's digits (CM45: the vector is the exact factorization; no integer is stored)",
+        "goal": "goal/G_A14_godel_pure",
+        "owner": "the Gödel thread; GODEL_AUDIT §6 follow-up",
+        "reason": "composes prod p ** e from the ledger's primes by hand (dead code: nothing calls it)",
+        "rule": "prime power"
+      }
+    ],
+    "needs": "b, c",
+    "verdict": "CORE",
+    "why": "canonical forms over the reals, content, and the named -> core carry map (GODEL_AUDIT §4.3: unreal/distill CORE, partly a copy of godel.py)"
+  },
   "laws": [
     "law/CM49_engine_math_is_distilled"
   ],
   "metadata": {
-    "previous_content_hash": "fa7615dc7dc6e6de77c440e00fe9d97d2ca78380e9856bb932bae156a1a18c49",
-    "version": "1.1.0",
-    "version_bump_reason": "minor"
+    "previous_content_hash": "cab8d8cfabcc040d00df6d0300a9f912e333da37a5df9772bff1666665edc075",
+    "version": "1.2.1",
+    "version_bump_reason": "patch"
   },
   "modules": [
     "cardmodel/unreal",

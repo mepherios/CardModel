@@ -8,13 +8,18 @@
   "docs": [
     "docs/METHODOLOGY.md"
   ],
+  "godel": {
+    "reason": "ii",
+    "verdict": "NO",
+    "why": "the memory and CPU governor runs processes (GODEL_AUDIT §4.3)"
+  },
   "laws": [
     "law/CM18_bounded_work",
     "law/CM30_resources_are_bounded"
   ],
   "metadata": {
-    "previous_content_hash": "1a040a3c528518ec9b626bef108c42ea76ef338e9c8ea4b0061dc76fc628f7a7",
-    "version": "1.1.0",
+    "previous_content_hash": "e000cc869ca386a0bf74b8fc7897751bdad82ec3568e8e4a6d1b2a1f664c6dd4",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

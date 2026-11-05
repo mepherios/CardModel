@@ -1,0 +1,53 @@
+{
+  "category": "capability",
+  "check": "witnesses",
+  "commands": [
+    "cardmodel verify"
+  ],
+  "core": true,
+  "docs": [
+    "docs/METHODOLOGY.md"
+  ],
+  "laws": [
+    "law/CM06_random_seeds",
+    "law/CM08_executable_claims_have_witnesses"
+  ],
+  "metadata": {
+    "previous_content_hash": "ab28a7121cabd0720bfe34c15b8e2b1fad3d32b5aabf3e4fe264512addbff811",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/witness.py",
+    "cardmodel/engines/verify.py"
+  ],
+  "name": "witnesses",
+  "order": 3,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "forms"
+      },
+      {
+        "verify": "vectors"
+      },
+      {
+        "verify": "rules"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every op, call and rule card is witnessed on seeded inputs (the known-answer vectors are fixed samples): agreement on the inputs run, not for all inputs"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Executable claims have witnesses: seeded runs reproduce exactly, and a wrong form is caught at its counterexample.",
+  "tests": [
+    "tests/test_witness.py::test_wrong_form_is_caught",
+    "tests/test_witness.py::test_builtin_runnable_forms_are_witnessed",
+    "tests/test_laws.py::test_verify_prints_and_accepts_seed"
+  ],
+  "tier": 0,
+  "usefulness": "Every claim the model makes about code is a run you can repeat with the printed seed."
+}

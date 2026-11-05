@@ -8,12 +8,22 @@
   "docs": [
     "docs/PROVENANCE.md"
   ],
+  "godel": {
+    "gap": {
+      "closes_by": "decide by realnorm.canonical first; group cards by source identity; a one-op left side as the ledger's deprecate trigger",
+      "goal": "goal/G_A14_godel_pure",
+      "reason": "GODEL_AUDIT §4 (engines/redefs.py): Gödel today none; its code does not call engines/godel.py"
+    },
+    "needs": "d",
+    "verdict": "KEYED",
+    "why": "redefinitions are sampled one by one; 111 cards cover 40 concepts (GODEL_AUDIT §4.2)"
+  },
   "laws": [
     "law/CM08_executable_claims_have_witnesses"
   ],
   "metadata": {
-    "previous_content_hash": "eaccf2d133fc4860cc51e18a8082bc422e6fc4fc861dd7741dd2a2190fc47b3c",
-    "version": "1.1.0",
+    "previous_content_hash": "6ef0e50b351cfb2b6b11f0c31bb4ff3112c60595205b1fe5b3dde853a62e8eae",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

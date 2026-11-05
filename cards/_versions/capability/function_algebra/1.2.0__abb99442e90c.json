@@ -1,0 +1,56 @@
+{
+  "category": "capability",
+  "check": "function_algebra",
+  "commands": [
+    "cardmodel algebra"
+  ],
+  "core": true,
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "godel": {
+    "copies": [
+      {
+        "at": "cardmodel/engines/funcalg.py:godel_encode",
+        "closes_by": "identity = the hash of the canonical form; annihilators factored into irreducibles as atoms of a behaviour set (GODEL_AUDIT §4.2)",
+        "goal": "goal/G_A14_godel_pure",
+        "reason": "a positional number of a recurrence composed by hand (one stored at 672 digits, past CM45's cap, against GM-2)"
+      }
+    ],
+    "needs": "a, b",
+    "verdict": "CORE",
+    "why": "a Gödel numbering of behaviours: canonical recurrences, GCD of functions (GODEL_AUDIT §4.2: CORE, to be changed)"
+  },
+  "laws": [
+    "law/CM31_behaviour_is_numbered"
+  ],
+  "metadata": {
+    "previous_content_hash": "486d60ab09951560cea56c011028feee447a418d9a55b1cf3746ad444348b3f6",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/funcalg.py"
+  ],
+  "name": "function_algebra",
+  "order": 15,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "algebra"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "canonical forms and identities are found from and checked on computed terms of each algorithm; no order bound turns them into a proof here"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Behaviour is numbered: canonical forms (annihilator and initial terms), Gödel numbers, the GCD of functions and the identities that carry between them.",
+  "tests": [
+    "tests/test_funcalg.py::test_canonical_forms_carry_between_functions"
+  ],
+  "tier": 0,
+  "usefulness": "Two functions that behave alike are recognised as one, whatever their code, and the faster one is used."
+}

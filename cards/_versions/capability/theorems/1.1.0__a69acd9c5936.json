@@ -1,0 +1,44 @@
+{
+  "category": "capability",
+  "check": "theorems",
+  "commands": [
+    "cardmodel run",
+    "cardmodel verify --only theorems"
+  ],
+  "core": true,
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "laws": [
+    "law/CM23_crystallised_knowledge"
+  ],
+  "metadata": {
+    "previous_content_hash": "969bccf92eb31610fca3f1f21895e235fc7acb5dea425c29d385522a17302a04",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/theorems.py"
+  ],
+  "name": "theorems",
+  "order": 10,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "theorems"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "every theorem card is re-witnessed with the run's seed; Lean-imported ones are proofs, the rest samples"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Crystallised knowledge: a statement carries its evidence (refuted < conjecture < witnessed < proved), and a proof never overrides a counterexample.",
+  "tests": [
+    "tests/test_theorems.py::test_status_follows_evidence"
+  ],
+  "tier": 0,
+  "usefulness": "You always know how sure the model is of a statement, and why."
+}

@@ -1,0 +1,52 @@
+{
+  "category": "capability",
+  "check": "translation",
+  "commands": [
+    "cardmodel translate",
+    "cardmodel emit"
+  ],
+  "core": true,
+  "docs": [
+    "docs/METHODOLOGY.md"
+  ],
+  "laws": [
+    "law/CM16_languages_are_cards",
+    "law/CM17_translation_coverage_is_measured"
+  ],
+  "metadata": {
+    "previous_content_hash": "55296ea8f3fa4e5067c8a0e2b098106a389dca64e643e8caa95260e0aa89c2cc",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/translate.py",
+    "cardmodel/engines/codegen.py",
+    "cardmodel/engines/conformance.py"
+  ],
+  "name": "translation",
+  "order": 7,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "conformance"
+      },
+      {
+        "verify": "functions"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "emission into a real language is witnessed by running against the source, never proved (MATH_CORE §8)"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "One function, every language: lift to the card IR, emit through the language cards, compile, run and agree with the original; the op x language matrix is measured.",
+  "tests": [
+    "tests/test_translate.py::test_functions_agree_across_languages",
+    "tests/test_conformance.py::test_conformance_matrix",
+    "tests/test_laws.py::test_engines_have_no_language_branches"
+  ],
+  "tier": 0,
+  "usefulness": "Write a function once; get it checked in every language this machine can run."
+}

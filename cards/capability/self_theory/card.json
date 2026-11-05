@@ -8,12 +8,16 @@
   "docs": [
     "docs/KNOWLEDGE.md"
   ],
+  "godel": {
+    "verdict": "CONSUMER",
+    "why": "selflogic reports facts about the store, the ledger among them (GODEL_AUDIT §4.2: selflogic CONSUMER)"
+  },
   "laws": [
     "law/CM27_the_model_checks_itself"
   ],
   "metadata": {
-    "previous_content_hash": "e2874bbb45878d0a8b600232f89f5e9c84a0a0517f1a459929bf99f592f9584b",
-    "version": "1.1.0",
+    "previous_content_hash": "79dacbe5aa7c525c6ad6ef9e985be38a845b765072661f520274233ced5ea6b6",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

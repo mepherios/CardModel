@@ -8,12 +8,17 @@
   "docs": [
     "game/DESIGN.md"
   ],
+  "godel": {
+    "reason": "iv",
+    "verdict": "NO",
+    "why": "an exact simplex over values; moves are frame-data records, not terms (GODEL_AUDIT §4.3: game NO (iv))"
+  },
   "laws": [
     "law/CM28_design_is_computed"
   ],
   "metadata": {
-    "previous_content_hash": "1134482454947f8309acf78997117ba0d7d2a6e239f63bc1eee3f36222af13f4",
-    "version": "1.1.0",
+    "previous_content_hash": "23d19579a767152210a6f6fa78fd6c6d5e50bef1f3ef0009c22ec3dcaed7b994",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

@@ -4,8 +4,8 @@
   ],
   "category": "card_type",
   "metadata": {
-    "previous_content_hash": "e07bc411ab38785bb4ef7d78aa6ebd49e7b55fa211665c4b76c53aa3b62aee8d",
-    "version": "1.1.0",
+    "previous_content_hash": "acb5563cce19006b413f5448cecc6a2c9bc9600f9738233438e04a0de87be35e",
+    "version": "1.3.0",
     "version_bump_reason": "minor"
   },
   "name": "capability",
@@ -32,6 +32,73 @@
           "type": "string"
         },
         "type": "array"
+      },
+      "godel": {
+        "properties": {
+          "copies": {
+            "items": {
+              "required": [
+                "at",
+                "rule",
+                "reason",
+                "closes_by",
+                "owner",
+                "goal"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "gap": {
+            "properties": {
+              "closes_by": {
+                "type": "string"
+              },
+              "goal": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reason",
+              "closes_by",
+              "goal"
+            ],
+            "type": "object"
+          },
+          "needs": {
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "i",
+              "ii",
+              "iii",
+              "iv",
+              "v"
+            ],
+            "type": "string"
+          },
+          "verdict": {
+            "enum": [
+              "CORE",
+              "KEYED",
+              "CONSUMER",
+              "NO"
+            ],
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "why"
+        ],
+        "type": "object"
       },
       "laws": {
         "items": {
@@ -111,10 +178,11 @@
       "laws",
       "tests",
       "core",
-      "pipeline"
+      "pipeline",
+      "godel"
     ],
     "type": "object"
   },
-  "statement": "A core capability: its smoke check must pass in every verify and self-run (CM37), and it declares its evidence tier and where the main pipeline runs it (CM50).",
+  "statement": "A core capability: its smoke check must pass in every verify and self-run (CM37), and it declares its evidence tier, where the main pipeline runs it and its Gödel verdict (CM50).",
   "tier": 0
 }

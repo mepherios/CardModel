@@ -1,0 +1,52 @@
+{
+  "category": "capability",
+  "check": "lean",
+  "commands": [
+    "cardmodel lean",
+    "cardmodel run --lean",
+    "cardmodel logic why --lean"
+  ],
+  "core": true,
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "laws": [
+    "law/CM23_crystallised_knowledge",
+    "law/CM24_logic_carries"
+  ],
+  "metadata": {
+    "previous_content_hash": "e805df871a635527a9fe6b5fe6f01db99ab334022a5587ac396c75a05d836121",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/emit/lean.py",
+    "cardmodel/emit/lean_import.py",
+    "cardmodel/emit/lean_logic.py"
+  ],
+  "name": "lean",
+  "order": 11,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "theorems"
+      },
+      {
+        "verify": "proofs"
+      }
+    ],
+    "tier": "proof",
+    "tier_reason": "the proofs section has Lean's kernel check every rule theorem it emits (skipped, with its reason, on a host with no Lean toolchain); the theorems section holds Lean-imported cards to it"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Lean is the proof kernel: theorems, logic derivations and imported statements are checked by Lean, fail-closed.",
+  "tests": [
+    "tests/test_lean_import.py::test_faithful_and_witnessed",
+    "tests/test_logic.py::test_derivations_are_kernel_checked"
+  ],
+  "tier": 0,
+  "usefulness": "Proofs written in Lean become the model's knowledge, and the model's derivations become Lean proofs."
+}

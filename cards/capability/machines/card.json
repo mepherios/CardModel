@@ -8,12 +8,16 @@
   "docs": [
     "docs/MACHINES.md"
   ],
+  "godel": {
+    "verdict": "CONSUMER",
+    "why": "isa compiles semantics and could give one handler per identity class; bench's per-card data differ between identical terms (GODEL_AUDIT §4.3)"
+  },
   "laws": [
     "law/CM32_machines_are_cards"
   ],
   "metadata": {
-    "previous_content_hash": "6e5be3ceaf83cb13a9f6d004aadd71ff7349f0356920eaa065d356ffab42e8a1",
-    "version": "1.1.0",
+    "previous_content_hash": "500c3688f89f7e1376dde6cac50d91828db1d36b1ba232918c0ad11c4f5f8200",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

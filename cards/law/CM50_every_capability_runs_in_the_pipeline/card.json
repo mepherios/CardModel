@@ -1,7 +1,9 @@
 {
   "category": "law",
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "eb2e9d4c463794b7c979b421d6c40389a29e09c90556034b3c6585bd44b9a81a",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "CM50_every_capability_runs_in_the_pipeline",
   "origins": [
@@ -11,7 +13,7 @@
     "origin": "cardmodel",
     "tool": "tools/seed_pipeline.py"
   },
-  "statement": "Every capability runs in the main pipeline: its card declares the tier of the evidence that run gives (CM46) and the verify sections or self-run steps that exercise its engine, and the pipeline check holds each declared stage to the code (it must reach the capability's modules). A capability that no stage runs, or part of one, is a recorded gap with its reason, what would close it and the goal that counts it; a capability with neither a run nor a gap fails verify. The smoke check (CM37) does not count as running.",
+  "statement": "Every capability runs in the main pipeline: its card declares the tier of the evidence that run gives (CM46) and the verify sections or self-run steps that exercise its engine, and the pipeline check holds each declared stage to the code (it must reach the capability's modules). A capability that no stage runs, or part of one, is a recorded gap with its reason, what would close it and the goal that counts it; a capability with neither a run nor a gap fails verify. The smoke check (CM37) does not count as running. Each card also records its Gödel verdict (GODEL_AUDIT §2: CORE, KEYED, CONSUMER, or NO with its reason i-v): a CORE or KEYED capability whose code does not call the core, and any code outside engines/godel.py and godel1931.py that defines primes, content or the zigzag, is a recorded impurity with its goal or fails.",
   "tier": 0,
   "witness": "tests/test_pipeline.py::test_a_capability_never_run_fails"
 }

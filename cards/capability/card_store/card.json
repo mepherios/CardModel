@@ -11,6 +11,16 @@
   "docs": [
     "ARCHITECTURE.md"
   ],
+  "godel": {
+    "gap": {
+      "closes_by": "index columns: identity hash with its relation, basis version, a posting table of content read through godel.resolve; by_identity, divides, multiples",
+      "goal": "goal/G_A14_godel_pure",
+      "reason": "GODEL_AUDIT §4 (kernel/store.py): Gödel today none; its code does not call engines/godel.py"
+    },
+    "needs": "a, b, d, e",
+    "verdict": "KEYED",
+    "why": "kernel/store.py: every card is stored, cached and shared; identity, content and basis columns belong in its index (GODEL_AUDIT §4.3)"
+  },
   "laws": [
     "law/CM02_everything_is_a_card",
     "law/CM03_unknown_fields_survive",
@@ -19,8 +29,8 @@
     "law/CM14_versioned_writes"
   ],
   "metadata": {
-    "previous_content_hash": "ba261895e401f868c3a81041019054db77fb70cc51eeed52167c1784366f3fd7",
-    "version": "1.1.0",
+    "previous_content_hash": "70836751bc2c3d06d33c63ea5c59ccf9413e543090182f6d22c1334f99a2ce6e",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

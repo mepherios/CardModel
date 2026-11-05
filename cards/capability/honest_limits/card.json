@@ -8,14 +8,19 @@
   "docs": [
     "docs/METHODOLOGY.md"
   ],
+  "godel": {
+    "reason": "ii",
+    "verdict": "NO",
+    "why": "probes start processes and read the host (GODEL_AUDIT §4.3: probes NO)"
+  },
   "laws": [
     "law/CM01_honest_limits",
     "law/CM07_no_vacuous_success",
     "law/CM12_capabilities_are_probed"
   ],
   "metadata": {
-    "previous_content_hash": "e2636ae2b9b38a28b4de8eebf5f6c4cb5b2309320724cb1e5250f3cc776aaccc",
-    "version": "1.1.0",
+    "previous_content_hash": "248850c5dd367e12952e2263d5596d13d5e0bb9a9b45ee8d605ca727897d73f2",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

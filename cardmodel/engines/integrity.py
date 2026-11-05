@@ -11,6 +11,9 @@ Checks, each cheap and read-only:
                 reason written down (an ``amended`` field on the goal card, a ``retired`` entry on the floor card)
   source        every module of the program parses (no leftover merge markers in code, docs or card sources)
   boundaries    no publishing calls (pushes to a remote, package or gist uploads) anywhere in the program (CM19)
+  godel         no module outside engines/godel.py and godel1931.py does the core's algebra itself (primes, content,
+                the zigzag, positional tokens, prime powers, sieves, similarity over content: GODEL_TARGET §7),
+                except the known copies a capability card records with their owner and goal (CM50, G_A14)
 
 Honest limits (L1): these checks see names and text, not meaning: two laws with different numbers that say the
 same thing, or a command documented with the wrong arguments, pass. The tests and verify sections check
@@ -220,6 +223,8 @@ def check(ctx) -> dict:
             problems.append(f"{f.relative_to(home)}: merge conflict markers")
     for hit in publishing_calls(home):
         problems.append(f"{hit}: a publishing call (CM19)")
+    from .pipeline import purity_problems
+    problems += purity_problems(ctx, str(home))
 
     return {"status": "fail" if problems else "pass", "problems": problems, "laws": len(laws), "goals": len(goals),
             "capabilities": len(caps), "commands": len(commands), "sections": len(verify.SECTIONS),

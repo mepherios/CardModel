@@ -8,12 +8,22 @@
   "docs": [
     "docs/MATH_CORE.md"
   ],
+  "godel": {
+    "gap": {
+      "closes_by": "cache proof results by (identity pair, relation); its Poly on the shared type",
+      "goal": "goal/G_A14_godel_pure",
+      "reason": "GODEL_AUDIT §4 (engines/tiers.py): Gödel today none; its code does not call engines/godel.py"
+    },
+    "needs": "d",
+    "verdict": "KEYED",
+    "why": "proof results are recomputed per claim (GODEL_AUDIT §4.2: tiers KEYED (d))"
+  },
   "laws": [
     "law/CM46_every_claim_carries_its_tier"
   ],
   "metadata": {
-    "previous_content_hash": "cc7c1665ca34d471c52479929f6d1e0d9c6e4fd16eb9a5255fdb40379be08613",
-    "version": "1.1.0",
+    "previous_content_hash": "a026b8fb9611a85c3328e9e851b631e2646575365706d057bcea771ebba5762e",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "modules": [

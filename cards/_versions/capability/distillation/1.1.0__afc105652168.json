@@ -1,0 +1,44 @@
+{
+  "category": "capability",
+  "check": "distillation",
+  "commands": [
+    "cardmodel distill"
+  ],
+  "core": true,
+  "docs": [
+    "docs/MATH_CORE.md"
+  ],
+  "laws": [
+    "law/CM25_laws_carry_into_optimization"
+  ],
+  "metadata": {
+    "previous_content_hash": "1df6c2035ee9a3cf80d09ecec143ee66e1698512305f98def2089a8714d2bc3c",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/engines/egraph.py"
+  ],
+  "name": "distillation",
+  "order": 26,
+  "pipeline": {
+    "runs": [
+      {
+        "self_step": "arena"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "the arena's rewrites go through equality saturation over witnessed rules; the result is run against the original"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "Equality saturation (an e-graph) over the rewrite rules and the discovered laws: equal terms land in one class, the cheapest term is the canonical one and its hash names it (MATH_CORE phase 0).",
+  "tests": [
+    "tests/test_egraph.py::test_saturation_proves_and_canonicalizes",
+    "tests/test_egraph.py::test_congruence"
+  ],
+  "tier": 0,
+  "usefulness": "Two pieces of code that mean the same thing are recognised as one, and the cheapest is chosen."
+}

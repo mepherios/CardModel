@@ -9,18 +9,67 @@
     "GOALS.md",
     "docs/MATH_CORE.md"
   ],
+  "godel": {
+    "copies": [
+      {
+        "at": "cardmodel/engines/numbering.py:Numbering.tokens",
+        "closes_by": "godel.tokens with the set's dense ranks (the owner's decision: positional codes by per-set dense ranks)",
+        "goal": "goal/G_A14_godel_pure",
+        "owner": "the Gödel thread; GODEL_AUDIT §6 follow-up",
+        "reason": "each set's own copy of the 3k + 1 positional scheme (GODEL_AUDIT §4.3: the second of three)",
+        "rule": "core name"
+      },
+      {
+        "at": "cardmodel/engines/numbering.py:Numbering.encode",
+        "closes_by": "godel.structural over the set's tokens",
+        "goal": "goal/G_A14_godel_pure",
+        "owner": "the Gödel thread; GODEL_AUDIT §6 follow-up",
+        "reason": "composes the positional number from nth_prime by hand",
+        "rule": "prime power"
+      },
+      {
+        "at": "cardmodel/engines/codes.py:Reader.codes",
+        "closes_by": "godel.tokens over the reader's tree",
+        "goal": "goal/G_A14_godel_pure",
+        "owner": "the Gödel thread; GODEL_AUDIT §6 follow-up",
+        "reason": "the Def-27 token codes (3k+1, 3·zig+2, 3j+3) written out again to measure code sizes (W-3)",
+        "rule": "tokens"
+      },
+      {
+        "at": "cardmodel/engines/codes.py:_head_code",
+        "closes_by": "godel.tokens of the head",
+        "goal": "goal/G_A14_godel_pure",
+        "owner": "the Gödel thread; GODEL_AUDIT §6 follow-up",
+        "reason": "a node's Def-27 token code, the same scheme a third time",
+        "rule": "tokens"
+      },
+      {
+        "at": "cardmodel/engines/codes.py:built_positional_bits",
+        "closes_by": "godel.structural's bit length",
+        "goal": "goal/G_A14_godel_pure",
+        "owner": "the Gödel thread; GODEL_AUDIT §6 follow-up",
+        "reason": "builds a positional number by hand to measure its size (small codes only)",
+        "rule": "prime power"
+      }
+    ],
+    "needs": "a, b, c, d, e",
+    "verdict": "CORE",
+    "why": "the core itself: ledger, content, structure, carry; numbering (W-5) and codes (W-3) are its numberings and their measurement (GODEL_AUDIT §4.2)"
+  },
   "laws": [
     "law/CM31_behaviour_is_numbered",
     "law/CM43_primes_are_forever",
     "law/CM45_content_is_a_sparse_vector"
   ],
   "metadata": {
-    "previous_content_hash": "8ac8ab1154335d4a11073a0c60822ea29875d5b7932d1b6c58a289a80fa1592d",
-    "version": "1.2.0",
-    "version_bump_reason": "minor"
+    "previous_content_hash": "c0d6d89605ddde6878a0926a03033d0bb59e931356fcafe1c6b09e81ef67c73c",
+    "version": "1.3.1",
+    "version_bump_reason": "patch"
   },
   "modules": [
-    "cardmodel/engines/godel.py"
+    "cardmodel/engines/godel.py",
+    "cardmodel/engines/numbering.py",
+    "cardmodel/engines/codes.py"
   ],
   "name": "godel_model",
   "order": 25,

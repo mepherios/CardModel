@@ -1,0 +1,59 @@
+{
+  "category": "capability",
+  "check": "unreal_math",
+  "commands": [
+    "cardmodel unreal"
+  ],
+  "core": true,
+  "docs": [
+    "docs/UNREAL.md"
+  ],
+  "godel": {
+    "copies": [
+      {
+        "at": "cardmodel/unreal/distill.py:number",
+        "closes_by": "godel.py for the number's digits (CM45: the vector is the exact factorization; no integer is stored)",
+        "goal": "goal/G_A14_godel_pure",
+        "reason": "composes prod p ** e from the ledger's primes by hand"
+      }
+    ],
+    "needs": "b, c",
+    "verdict": "CORE",
+    "why": "canonical forms over the reals, content, and the named -> core carry map (GODEL_AUDIT §4.3: unreal/distill CORE, partly a copy of godel.py)"
+  },
+  "laws": [
+    "law/CM49_engine_math_is_distilled"
+  ],
+  "metadata": {
+    "previous_content_hash": "93f61d9f897dd79ac5c1c449dfa7a9eae77bb427fec8a16a60d081061aaf288c",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "modules": [
+    "cardmodel/unreal",
+    "cardmodel/engines/realnorm.py"
+  ],
+  "name": "unreal_math",
+  "order": 31,
+  "pipeline": {
+    "runs": [
+      {
+        "verify": "unreal"
+      }
+    ],
+    "tier": "sample",
+    "tier_reason": "lifted terms are witnessed against the compiled code on seeded cases (the engine's sample where its scan is saved, every fixture function otherwise)"
+  },
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_self.py"
+  },
+  "statement": "A game engine's math as cards: Unreal Engine's math read through clang's typed AST, every function lifted to core terms (or its gap's cause), its canonical form over the reals, semantic hash and Gödel numbers, its use, identities between functions, and a witness against the engine's own compiled code.",
+  "tests": [
+    "tests/test_unreal.py::test_engine_math_is_distilled_and_witnessed",
+    "tests/test_unreal.py::test_canonical_forms_over_the_reals",
+    "tests/test_unreal.py::test_engine_cards_trace_to_truth"
+  ],
+  "tier": 0,
+  "usefulness": "The engine's math is understood, not only run: every function a formula with its numbers, checked against the engine itself."
+}
