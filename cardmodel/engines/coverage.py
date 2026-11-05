@@ -137,6 +137,9 @@ def machines(ctx: Ctx, secs: dict) -> dict:
 
 
 def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
+    if name == "godel_impure":
+        from .pipeline import godel_impure
+        return godel_impure()
     st = ctx.store
     if name == "languages_fully_conformant":
         conf = secs.get("conformance")

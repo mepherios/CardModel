@@ -1116,3 +1116,232 @@ def _foundation_exists(ref: str, home: Path) -> bool:
 __all__ = ["FACTS", "FIXTURE", "GROUPS", "OPTIONS", "REFERENCE", "STAGES", "STATUSES", "Job", "Runner",
            "Unavailable", "applies", "coverage", "coverage_of", "fixture_problems", "host_facts", "registry_problems",
            "report_text", "run_file", "run_job", "run_source", "stage_imports", "stages"]
+
+
+# -- Gödel purity (GODEL_AUDIT §2, GODEL_TARGET §7; goal G_A14), ported from the coverage branch ----------------
+from functools import lru_cache  # noqa: E402
+from ..kernel import paths  # noqa: E402
+
+def _modname(rel: Path) -> str:
+    return ".".join(rel.with_suffix("").parts).removesuffix(".__init__")
+
+
+@lru_cache(maxsize=4)
+def _modules(home: str) -> dict[str, Path]:
+    root = Path(home)
+    return {_modname(p.relative_to(root)): p for p in (root / "cardmodel").rglob("*.py")}
+
+
+def _resolve(mods: dict, cur: str, node) -> dict[str, tuple[str, str | None]]:
+    """{local name: (module, name or None)} for one import statement in module ``cur`` (the program's own)."""
+    out = {}
+    if isinstance(node, ast.ImportFrom):
+        parts = cur.split(".")
+        if node.level:
+            keep = len(parts) - node.level + (1 if mods[cur].name == "__init__.py" else 0)
+            prefix = ".".join(parts[:keep] + ([node.module] if node.module else []))
+        else:
+            prefix = node.module or ""
+        for a in node.names:
+            full = f"{prefix}.{a.name}"
+            if full in mods:
+                out[a.asname or a.name] = (full, None)
+            elif prefix in mods:
+                out[a.asname or a.name] = (prefix, a.name)
+    elif isinstance(node, ast.Import):
+        for a in node.names:
+            if a.name in mods:
+                out[a.asname or a.name.split(".")[0]] = (a.name, None)
+    return out
+
+
+class _File:
+    """One module of the program: its module-level import names, functions and classes."""
+
+    def __init__(self, home: str, mod: str):
+        self.home, self.mod = home, mod
+        self.mods = _modules(home)
+        self.tree = ast.parse(self.mods[mod].read_text(encoding="utf-8"))
+        self.names: dict[str, tuple[str, str | None]] = {}
+        self.defs: dict[str, list] = {}
+        for n in self.tree.body:
+            if isinstance(n, (ast.Import, ast.ImportFrom)):
+                self.names.update(_resolve(self.mods, mod, n))
+            elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                self.defs[n.name] = n.body
+            elif isinstance(n, (ast.Assign, ast.AnnAssign)) and n.value is not None:
+                for t in (n.targets if isinstance(n, ast.Assign) else [n.target]):
+                    if isinstance(t, ast.Name):            # a module-level table: BACKENDS = [lean]
+                        self.defs[t.id] = [ast.Expr(n.value)]
+
+    def calls(self, stmts: list, seen: set | None = None) -> set[tuple[str, str | None]]:
+        """The nodes some statements use: their own imports, the module-level import names they read (``X.f`` as
+        (X, f)), and, followed within this file, every function or class of this file they name."""
+        seen = set() if seen is None else seen
+        names = {**self.names, **_local_imports(self, stmts)}
+        out: set = set()
+        for stmt in stmts:
+            for n in ast.walk(stmt):
+                if isinstance(n, (ast.Import, ast.ImportFrom)):
+                    out.update(_resolve(self.mods, self.mod, n).values())
+                elif isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name):
+                    tgt = names.get(n.value.id)
+                    if tgt and tgt[1] is None:
+                        out.add((tgt[0], n.attr))
+                elif isinstance(n, ast.Name):
+                    if n.id in names:
+                        out.add(names[n.id])
+                    elif n.id in self.defs and n.id not in seen:
+                        seen.add(n.id)
+                        out.add((self.mod, n.id))
+                        out |= self.calls(self.defs[n.id], seen)
+        return out
+
+
+def _local_imports(f: _File, stmts: list) -> dict:
+    out = {}
+    for stmt in stmts:
+        for n in ast.walk(stmt):
+            if isinstance(n, (ast.Import, ast.ImportFrom)):
+                out.update(_resolve(f.mods, f.mod, n))
+    return out
+
+
+@lru_cache(maxsize=512)
+def _file(home: str, mod: str) -> _File:
+    return _File(home, mod)
+
+
+@lru_cache(maxsize=4096)
+def _node_calls(home: str, mod: str, name: str) -> frozenset:
+    f = _file(home, mod)
+    body = f.defs.get(name)
+    return frozenset(f.calls(body, {name})) if body is not None else frozenset()
+
+
+GODEL_CORE = ("cardmodel.engines.godel", "cardmodel.engines.godel1931")
+FAMILY = frozenset({"primes", "nth_prime", "zig", "unzig", "term_content", "module_content", "card_content", "content",
+                    "tokens", "structural", "exponents", "from_tokens", "valuation", "sieve"})
+
+def _defs(tree) -> list[tuple[str, ast.AST]]:
+    """(qualified name, node) for every top-level function and every method: a nested function belongs to the one
+    that holds it (``Reader.codes`` holds its ``walk``)."""
+    out = []
+    for n in tree.body:
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            out.append((n.name, n))
+        elif isinstance(n, ast.ClassDef):
+            out += [(f"{n.name}.{m.name}", m) for m in n.body if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    return out
+
+
+def _is_const(n, values) -> bool:
+    return isinstance(n, ast.Constant) and type(n.value) is int and n.value in values
+
+
+def _token_code(n) -> int | None:
+    """c for ``3 * x + c`` (c = 1, 2, 3) in either order, else None. Gödel's Def-27 positional tokens are atom 3k+1,
+    integer 3·zig+2, variable 3j+3: a function with two or more of the three forms encodes terms (one alone is a
+    stride or an estimate, such as a PNG row of 3w + 1 bytes)."""
+    if not (isinstance(n, ast.BinOp) and isinstance(n.op, ast.Add)):
+        return None
+    for mul, c in ((n.left, n.right), (n.right, n.left)):
+        if _is_const(c, (1, 2, 3)) and isinstance(mul, ast.BinOp) and isinstance(mul.op, ast.Mult) and \
+                (_is_const(mul.left, (3,)) or _is_const(mul.right, (3,))):
+            return c.value
+    return None
+
+
+@lru_cache(maxsize=4)
+def purity_findings(home: str | None = None) -> dict[str, str]:
+    """Code outside engines/godel.py and godel1931.py that does the core's algebra itself (GODEL_TARGET §7, the
+    owner's purity rule 1): {"path:function": the rule it breaks}. Five readings of each function:
+      core name     named like the core's algebra (FAMILY, or prime/zig in the name) and never calling the core
+      tokens        a positional token scheme: two or more of ``3 * x + 1``, ``3 * x + 2``, ``3 * x + 3`` (Def-27)
+      prime power   a power whose base is a prime: ``p ** e`` with p from a list of primes, ``nth_prime(i) ** c``,
+                    ``index[a]["prime"] ** e`` (a Gödel number composed by hand)
+      sieve         a list named for primes that the function grows while testing divisibility (``%``)
+      similarity    a jaccard or similarity over content that does not call the core's ``jaccard``
+    A function that calls the core for the same thing (a thin wrapper) is not a copy."""
+    home = str(home or paths.home())
+    out = {}
+    for m, path in sorted(_modules(home).items()):
+        if m in GODEL_CORE:
+            continue
+        f = _file(home, m)
+        src = path.read_text(encoding="utf-8")
+        rel = str(path.relative_to(home))
+
+        lines = src.encode("utf-8").splitlines(keepends=True)     # ast's column offsets count UTF-8 bytes
+
+        def seg(n) -> str:              # ast.get_source_segment re-splits the whole file on every call
+            if not hasattr(n, "lineno"):
+                return ""
+            if n.lineno == n.end_lineno:
+                b = lines[n.lineno - 1][n.col_offset:n.end_col_offset]
+            else:
+                b = b"".join([lines[n.lineno - 1][n.col_offset:], *lines[n.lineno:n.end_lineno - 1],
+                              lines[n.end_lineno - 1][:n.end_col_offset]])
+            return b.decode("utf-8", errors="replace")
+        for qual, fn in _defs(f.tree):
+            name = fn.name.lstrip("_")
+            key = f"{rel}:{qual}"
+            nodes = list(ast.walk(fn))
+            named = name in FAMILY or "prime" in name or "zig" in name
+            similar = ("jaccard" in name or "similar" in name) and "content" in seg(fn)
+            core = {c for c in f.calls(fn.body, {fn.name}) if c[0] in GODEL_CORE} if named or similar else set()
+            pv = set()
+            for x in nodes:
+                if isinstance(x, (ast.For, ast.comprehension)) and "prime" in seg(x.iter):
+                    pv |= {n.id for n in ast.walk(x.target) if isinstance(n, ast.Name)}
+            found = None
+            if named and not core:
+                found = f"core name: defines {qual} without calling the core"
+            elif len({_token_code(x) for x in nodes} - {None}) >= 2:
+                found = "tokens: a positional token scheme (3k+1, 3·zig+2, 3j+3) outside godel.tokens"
+            elif any(isinstance(x, ast.BinOp) and isinstance(x.op, ast.Pow) and
+                     ("prime" in seg(x.left) or (isinstance(x.left, ast.Name) and x.left.id in pv)) for x in nodes):
+                found = "prime power: a product of primes raised to exponents, composed by hand"
+            elif any(isinstance(x, ast.BinOp) and isinstance(x.op, ast.Mod) for x in nodes) and any(
+                    isinstance(x, ast.Call) and isinstance(x.func, ast.Attribute) and x.func.attr == "append"
+                    and "prime" in seg(x.func.value) for x in nodes):
+                found = "sieve: a list of primes grown by trial division"
+            elif similar and not any(c[1] == "jaccard" for c in core):
+                found = "similarity: a similarity over content outside godel.jaccard"
+            if found:
+                out[key] = found
+    return out
+
+
+
+# The known copies of the core's algebra outside engines/godel.py, as of the port. This list may only shrink: a new
+# copy fails the integrity check, and a copy the code no longer has must be removed from it. Its length is goal
+# G_A14's metric (``godel_impure``).
+KNOWN_COPIES = frozenset({
+    "cardmodel/engines/codes.py:Reader.codes",
+    "cardmodel/engines/codes.py:built_positional_bits",
+    "cardmodel/engines/codes.py:_head_code",
+    "cardmodel/engines/funcalg.py:godel_encode",
+    "cardmodel/engines/numbering.py:Numbering.tokens",
+    "cardmodel/engines/numbering.py:Numbering.encode",
+    "cardmodel/unreal/distill.py:number",
+})
+
+
+def godel_impure() -> int:
+    """Goal G_A14's metric: the known copies of the core's algebra still recorded."""
+    return len(KNOWN_COPIES)
+
+
+def purity_problems(ctx=None, home: str | None = None) -> list[str]:
+    """Every copy of the core's algebra in the code is a known one, and every known one is still in the code (the
+    list only shrinks): the part of the integrity check that keeps the program pure to the Gödel model."""
+    found = purity_findings(home)
+    out = [f"{at}: {found[at]}, outside engines/godel.py: call the core (GODEL_TARGET §7, G_A14); the known-copies "
+           f"list in engines/pipeline.py may only shrink" for at in sorted(set(found) - KNOWN_COPIES)]
+    out += [f"{at}: listed in pipeline.KNOWN_COPIES, but the code no longer has it: remove it from the list"
+            for at in sorted(KNOWN_COPIES - set(found))]
+    return out
+
+
+__all__ += ["KNOWN_COPIES", "godel_impure", "purity_findings", "purity_problems"]

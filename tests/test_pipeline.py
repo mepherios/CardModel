@@ -143,5 +143,13 @@ class Cli(unittest.TestCase):
             p.cleanup()
 
 
+class GodelPurityTest(unittest.TestCase):
+    def test_known_copies_only_shrink(self):
+        """Every copy of the core's algebra outside engines/godel.py is a known one, and every known one is still
+        there: a new copy fails, and a fixed one must leave the list (G_A14)."""
+        from cardmodel.engines import pipeline as P
+        self.assertEqual(P.purity_problems(), [])
+        self.assertEqual(P.godel_impure(), len(P.KNOWN_COPIES))
+
 if __name__ == "__main__":
     unittest.main()

@@ -156,6 +156,7 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_A11_scale_slope` | autonomy | time per function at the largest size of the newest `cardmodel scale bench --record` ÷ at 10³ (synthetic projects; SCALING.md §6) | ≤ 2 |
 | `G_A12_scale_memory_bound` | autonomy | peak memory (MB) of the child that measured the largest size of the newest scale bench (SCALING.md §6: at 10⁶) | ≤ 2048 |
 | `G_A13_pipeline_coverage` | autonomy | problems the pipeline coverage check reports: a stage function no card names, an engine no stage reaches without a reason, a dead hypothesis, an entry without a reason (CM50) | = 0 |
+| `G_A14_godel_pure` | autonomy | known copies of the Gödel core's algebra outside engines/godel.py (positional tokens, prime powers, sieves, core names), in `pipeline.KNOWN_COPIES`, a list the integrity check lets only shrink | = 0 |
 | `G_S1_store_launches` | products | catalogue items that do not install, verify, repair and launch through the arcade's store in the last check (CM42) | = 0 |
 
 ### What "done" would mean on each axis

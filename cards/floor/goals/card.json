@@ -21,6 +21,11 @@
       "metric": "pipeline_coverage_problems",
       "target": 0
     },
+    "G_A14_godel_pure": {
+      "direction": "lower",
+      "metric": "godel_impure",
+      "target": 0
+    },
     "G_A1_self_contained": {
       "direction": "lower",
       "metric": "external_dependencies",
@@ -279,8 +284,8 @@
   },
   "history": [],
   "metadata": {
-    "previous_content_hash": "cd528b0c5f452a795cfad8ebee109a97f7bdb0c7a776736f6a7f031e81de1bfe",
-    "version": "1.0.4",
+    "previous_content_hash": "1ccb196ade83a4f88687881b596ede4806f00baafb8bc3e7265cd98450c3026c",
+    "version": "1.0.5",
     "version_bump_reason": "patch"
   },
   "name": "goals",

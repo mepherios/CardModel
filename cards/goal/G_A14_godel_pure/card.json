@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "godel_impure",
+  "name": "G_A14_godel_pure",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "ported from the pipeline-coverage branch"
+  },
+  "statement": "Known copies of the Gödel core's algebra outside engines/godel.py: positional tokens, prime powers composed by hand, sieves, core names that never call the core (GODEL_TARGET §7). They are listed in engines/pipeline.py KNOWN_COPIES, which the integrity check lets only shrink.",
+  "target": 0,
+  "tier": 0
+}
