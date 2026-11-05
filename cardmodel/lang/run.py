@@ -27,7 +27,7 @@ from ..engines import logic as L
 from ..engines import theorems as T
 from ..engines import values as V
 from ..engines.codegen import EmitGap, emit_module
-from ..engines.ir import Interpreter, IRError, StepLimit
+from ..engines.ir import Interpreter, IRError, StepLimit, elem_type
 from .compile import Module
 
 DEFAULT_RANGE = (-50, 50)
@@ -237,8 +237,16 @@ def function_cards(ctx, mod: Module, seed: int, samples: int = 24) -> list[dict]
                     if e[0] == "CALL" and e[1] not in order:
                         need.append(e[1])
         module = {"entry": name, "functions": [mod.functions[n] for n in order]}
-        gens = _bounds(fn)
         interp = Interpreter(module, ctx.ops, step_limit=200_000)
+        if any(elem_type(p["type"]) is not None for p in fn["params"]):
+            # list lengths tie to other parameters (a matrix and its sizes): search the shapes, as for Python
+            from ..engines.translate import infer_domain
+
+            def ref(*args, interp=interp, name=name):
+                return interp.call(name, list(args))
+            gens = infer_domain(ctx, module, ref, want=samples, seed=seed)[0] or _bounds(fn)
+        else:
+            gens = _bounds(fn)
         vectors = []
         for args in V.inputs(gens, samples * 3, rng):
             env = {p["name"]: a for p, a in zip(fn["params"], args)}

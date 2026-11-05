@@ -33,6 +33,19 @@ fib(n) = fibk(n, 0, 1)
 test T(4) = 10                              -- checked by `cardmodel math run`
 ```
 
+Lists (`[ℤ]`, `[ℝ]`; the IR's `list[int]` and `list[float]`, see [LISTS.md](LISTS.md)):
+
+```
+dot : [ℝ] × [ℝ] → ℝ
+dot(a, b) = Σ_{i=0}^{len(a) − 1} a[i] · b[i]          -- xs[i] indexes from 0, len(xs) is the length
+relu(x) = [max(x[i], 0.0) | i < len(x)]              -- [e | i < n]: the list of e for i = 0, …, n − 1
+bump(xs, i) = xs[i ↦ xs[i] + 1]                      -- a new list with element i replaced
+test dot([1.0, 2.0], [3.0, 4.0]) = 11.0              -- literals; list_new(n, v) and list_copy(xs) by name
+```
+
+[examples/transformer/transformer.math](../examples/transformer/transformer.math) writes matmul, softmax, layernorm,
+GELU and the rest this way.
+
 LaTeX works too, and can be mixed with Unicode: `\frac{a}{b}`, `\sqrt{x}`, `\cdot`, `\le`, `\sum_{i=1}^{n}`,
 `\lfloor … \rfloor`, `\begin{cases} 1 & n = 0 \\ n \cdot q(n-1) & \text{otherwise} \end{cases}`,
 `\operatorname{name}`, `\mathbb{N}`, `\bmod`, `\pi`. The emitter's own LaTeX output reads back exactly.
@@ -53,8 +66,12 @@ The IR's semantics apply, and the notation does not change them:
 | `sqrt exp log sin … gcd min max` | op cards; any op card is also callable by its lower-case name (`bit_xor(a, b)`) |
 | `π`, `e` | binary64 constants (`e` only when nothing named e is in scope) |
 
-A function whose only self-calls are tail calls (`fibk`, `gcd` above) is lowered to a loop, so it runs in constant
-stack in every target. Other recursion stays recursion.
+Equations that call each other only in tail position (`fibk` and `gcd` above, or the equations of a loop nest) are
+lowered to one loop, so they run in constant stack in every target. Other recursion stays recursion.
+
+Lists are values: `xs[i ↦ v]` is a new list and never changes `xs`. When nothing reads the old list again
+(`xs = xs[i ↦ v]` as the last binding before a tail call), the update is done in place, and a parameter that is
+updated is copied once on entry. So a loop that fills a list costs what the imperative loop costs.
 
 ## Code as math
 
@@ -75,9 +92,10 @@ collatz_steps_loop1(n, steps) = let n = { ⌊n / 2⌋ if n mod 2 = 0; 3 · n + 1
 
 ## Limits
 
-* No lists or strings in the notation yet. The IR has `list[int]` and `list[float]` ([LISTS.md](LISTS.md)), and
-  the transformer kernels (matrices, softmax, layernorm, attention) lift from Python and verify in every target, but a
-  function with a list parameter is not emitted as equations: it is reported as an `EmitGap`.
+* Lists hold ℤ or ℝ, one level deep (no nested lists, no strings). Matrices are flat row-major lists with their
+  sizes, as in the IR.
+* An emitted list loop reads as recursive equations over its state, not as Σ or `[e | i < n]`: the emitter does not
+  yet recognise a reduction or a tabulation in the loops it is given.
 * Machine state (globals, arrays, stores, switch, void functions) is not emitted as math. It is reported as an
   `EmitGap`.
 * A Σ of floats adds left to right, as the IR does. Binary64 addition is not associative, so a reordered sum is

@@ -188,5 +188,122 @@ class MathLanguageTest(unittest.TestCase):
                                                                            f"{seed_note(self)}")
 
 
+LISTS = r"""
+dot : [ℝ] × [ℝ] → ℝ
+dot(a, b) = Σ_{i=0}^{len(a) − 1} a[i] · b[i]
+
+relu : [ℝ] → [ℝ]
+relu(x) = [max(x[i], 0.0) | i < len(x)]
+
+bump : [ℤ] × ℤ → [ℤ]
+bump(xs, i) = xs[i ↦ xs[i] + 1]
+
+keeps : [ℤ] → ℤ
+keeps(xs) = bump(xs, 0)[0] − xs[0]
+
+fill : [ℤ] × ℤ × ℤ → [ℤ]
+fill(xs, i, n) = xs                         if i ≥ n
+               = fill(xs[i ↦ i · i], i + 1, n)   otherwise
+
+test dot([1.0, 2.0], [3.0, 4.0]) = 11.0
+test relu([-2.0, 3.0])[0] = 0.0
+test keeps([5, 6]) = 1
+test fill([0, 0, 0, 0], 0, 4)[3] = 9
+"""
+
+
+class MathListsTest(unittest.TestCase):
+    """Lists in math notation: [ℝ] types, xs[i], xs[i ↦ v], [e | i < n], literals; the transformer kernels."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_list_notation_lifts_and_tests_pass(self):
+        m = M.lift_text(LISTS, self.ctx.ops)
+        self.assertEqual([r for r in M.run_tests(m, self.ctx.ops) if not r["ok"]], [])
+        types = {f["name"]: ([p["type"] for p in f["params"]], f["returns"]) for f in m["functions"]}
+        self.assertEqual(types["relu"], (["list[float]"], "list[float]"))
+        self.assertEqual(types["bump"], (["list[int]", "int"], "list[int]"))
+
+    def test_updates_keep_value_semantics(self):
+        from cardmodel.engines.ir import check_lists
+        m = M.lift_text(LISTS, self.ctx.ops)
+        for f in m["functions"]:
+            self.assertEqual(check_lists(f), [], f["name"])
+        xs = [5, 6]
+        Interpreter(m, self.ctx.ops).call("bump", [xs, 0])
+        self.assertEqual(xs, [5, 6])             # the caller's list is never written
+
+    def test_tail_loops_over_a_list_run_in_constant_stack(self):
+        m = M.lift_text(LISTS, self.ctx.ops)
+        out = Interpreter(m, self.ctx.ops, step_limit=10_000_000).call("fill", [[0] * 5000, 0, 5000])
+        self.assertEqual(out[4999], 4999 * 4999)
+
+    def test_nested_loops_come_back_as_one_loop(self):
+        lifted = lift_source(TRANSFORMER, self.ctx.ops)
+        mod = module_for("matmul", lifted)
+        back = M.lift_text(M.emit_module(mod), self.ctx.ops)
+        fn = next(f for f in back["functions"] if f["name"] == "matmul")
+        self.assertFalse([e for s in M._stmts(fn["body"]) for k in ("value", "cond") if isinstance(s.get(k), list)
+                          for e in M._walk(s[k]) if e[0] == "CALL"])
+        n = 40                                    # 64,000 inner steps: recursion would overflow any stack
+        a = [float(i % 7) for i in range(n * n)]
+        got = Interpreter(back, self.ctx.ops, step_limit=50_000_000).call("matmul", [a, a, n, n, n])
+        want = Interpreter(mod, self.ctx.ops, step_limit=50_000_000).call("matmul", [a, a, n, n, n])
+        self.assertEqual(got, want)
+
+    def test_loop_variables_avoid_names_in_use(self):
+        """A merged tail loop's own variables (cm_st, cm_nextN) never alias a parameter of the same name."""
+        src = ("f : ℤ × ℤ → ℤ\n"
+               "f(a, cm_next1) = cm_next1                if a ≤ 0\n"
+               "               = f(a − 1, cm_next1 + a)  otherwise\n"
+               "g : ℤ × ℤ × ℤ → ℤ\n"
+               "g(a, b, cm_st) = b                       if a ≤ 0\n"
+               "               = h(a, b + cm_st, cm_st)  otherwise\n"
+               "h : ℤ × ℤ × ℤ → ℤ\n"
+               "h(a, b, cm_st) = g(a − 1, b, cm_st + 1)\n")
+        m = M.lift_text(src, self.ctx.ops)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("f", [3, 0]), 6)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("g", [3, 0, 1]), 6)
+        back = M.lift_text(M.emit_module(m), self.ctx.ops)      # a second round trip sees the emitted names
+        self.assertEqual(Interpreter(back, self.ctx.ops).call("g", [3, 0, 1]), 6)
+
+    def test_spelled_out_greek_keeps_parameters_apart(self):
+        m = M.lift_text("f(μ, mu) = μ − mu\nh(ε, eps) = ε − eps\n", self.ctx.ops)
+        for f in m["functions"]:
+            names = [p["name"] for p in f["params"]]
+            self.assertEqual(len(set(names)), 2, names)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("f", [5.0, 2.0]), 3.0)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("h", [5.0, 2.0]), 3.0)
+
+    def test_transformer_kernels_round_trip_through_math(self):
+        lifted = lift_source(TRANSFORMER, self.ctx.ops)
+        for name in ("softmax", "layernorm", "attention", "matmul"):
+            card = translate.function_card(self.ctx, name, lifted, "transformer.py", seed=SEED)
+            rt = M.round_trip(self.ctx, card)
+            self.assertEqual(rt["status"], "pass", f"{name}: {rt.get('reason') or rt.get('args')} {seed_note(self)}")
+            self.assertGreaterEqual(rt["checked"], 6, name)
+        tex = M.emit_module(module_for("softmax", lifted), latex=True)
+        self.assertIn(r"\mapsto", tex)
+        self.assertIn("[\\mathbb{R}]", tex)
+
+    def test_transformer_math_translates_to_native_targets(self):
+        cards, gaps = M.function_cards(self.ctx, ROOT / "examples" / "transformer" / "transformer.math", SEED)
+        self.assertEqual(gaps, {})
+        langs = [t for t in ("python", "c", "javascript") if self.ctx.available(t)[0]]
+        for card in cards:
+            if card["ir"]["entry"] not in ("matmul", "softmax", "layernorm"):
+                continue
+            self.assertGreaterEqual(len(card["vectors"]), 12)
+            rep = translate.verify_function(self.ctx, card, langs=langs, seed=SEED)
+            for lang in langs:
+                self.assertEqual(rep["languages"][lang]["status"], "pass",
+                                 f"{card['ir']['entry']} {lang}: {rep['languages'][lang]} {seed_note(self)}")
+
+
+TRANSFORMER = (ROOT / "examples" / "transformer" / "transformer.py").read_text(encoding="utf-8")
+
+
 if __name__ == "__main__":
     unittest.main()

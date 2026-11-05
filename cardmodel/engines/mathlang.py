@@ -40,7 +40,10 @@ where-bindings, ``if`` becomes cases, and each loop becomes a recursive equation
 a loop, so a round trip does not deepen the call stack. Emission is checked by a round trip: lift(emit(f)) must
 behave like f on f's inputs (``round_trip``).
 
-Honest limits (L1): no lists or strings yet (the IR has none); machine state (globals, arrays, stores, switch,
+Lists: ``[ℤ]`` and ``[ℝ]`` types, ``xs[i]``, the update ``xs[i ↦ v]`` (a new list), ``[e | i < n]``, literals
+``[a, b]``, ``len``/``list_new``/``list_copy`` by name. Equations that only tail-call each other become one loop.
+
+Honest limits (L1): no strings or nested lists; machine state (globals, arrays, stores, switch,
 void functions) is not emitted as math (an EmitGap); a Σ body is evaluated in IR order, so a Σ of floats sums
 left to right (binary64 is not associative); the LaTeX reader is a subset, not TeX.
 """
@@ -51,7 +54,7 @@ import re
 from dataclasses import dataclass, field
 
 from .codegen import EmitGap
-from .ir import LEAVES, OpSpec
+from .ir import LEAVES, OpSpec, check_lists, elem_type
 
 
 class MathError(ValueError):
@@ -65,8 +68,9 @@ class MathError(ValueError):
 TYPE_NAMES = {"ℤ": "int", "Z": "int", "Int": "int", "int": "int", "ℕ": "nat", "N": "nat", "Nat": "nat",
               "nat": "nat", "ℝ": "float", "R": "float", "Real": "float", "Float": "float", "float": "float",
               "𝔹": "bool", "B": "bool", "Bool": "bool", "bool": "bool"}
-TYPE_SYMBOL = {"int": "ℤ", "float": "ℝ", "bool": "𝔹", "nat": "ℕ"}
-TYPE_LATEX = {"int": r"\mathbb{Z}", "float": r"\mathbb{R}", "bool": r"\mathbb{B}", "nat": r"\mathbb{N}"}
+TYPE_SYMBOL = {"int": "ℤ", "float": "ℝ", "bool": "𝔹", "nat": "ℕ", "list[int]": "[ℤ]", "list[float]": "[ℝ]"}
+TYPE_LATEX = {"int": r"\mathbb{Z}", "float": r"\mathbb{R}", "bool": r"\mathbb{B}", "nat": r"\mathbb{N}",
+              "list[int]": r"[\mathbb{Z}]", "list[float]": r"[\mathbb{R}]"}
 
 # function-call names (lower case) -> op card; every other op card is reachable as its own name in lower case
 BUILTINS = {"sqrt": "FSQRT", "exp": "EXP", "log": "LOG", "ln": "LOG", "sin": "SIN", "cos": "COS", "tan": "TAN",
@@ -99,7 +103,7 @@ _LATEX_SIMPLE = {
     r"\neq": "≠", r"\ne": "≠", r"\lt": "<", r"\gt": ">", r"\land": "∧", r"\wedge": "∧", r"\lor": "∨",
     r"\vee": "∨", r"\lnot": "¬", r"\neg": "¬", r"\bmod": " mod ", r"\mod": " mod ", r"\sum": "Σ", r"\prod": "Π",
     r"\pi": "π", r"\lfloor": "⌊", r"\rfloor": "⌋", r"\lceil": "⌈", r"\rceil": "⌉", r"\lvert": "|",
-    r"\rvert": "|", r"\vert": "|", r"\mid": "|", r"\to": "→", r"\rightarrow": "→", r"\mapsto": "→",
+    r"\rvert": "|", r"\vert": "|", r"\mid": "|", r"\to": "→", r"\rightarrow": "→", r"\mapsto": "↦",
     r"\left": "", r"\right": "", r"\big": "", r"\Big": "", r"\,": " ", r"\;": " ", r"\!": "", r"\quad": " ",
     r"\qquad": " ", r"\ ": " ", r"\colon": ":", r"\_": "_", "\\\\": " ", r"\in": "∈", r"\infty": "∞",
     r"\{": "{", r"\}": "}",
@@ -248,7 +252,7 @@ class Tok:
 
 _SYMS = sorted(["==", "!=", "<=", ">=", "->", "//", "**", "..", "=", "<", ">", "+", "-", "*", "/", "^", "(", ")",
                 "{", "}", "[", "]", ",", ";", ":", "|", "!", "_", "·", "×", "÷", "−", "≤", "≥", "≠", "∧", "∨",
-                "¬", "√", "⌊", "⌋", "⌈", "⌉", "Σ", "∑", "Π", "∏", "π", "→", "∈", "&", "'"], key=len, reverse=True)
+                "¬", "√", "⌊", "⌋", "⌈", "⌉", "Σ", "∑", "Π", "∏", "π", "→", "↦", "∈", "&", "'"], key=len, reverse=True)
 
 
 def tokenize(text: str, line0: int = 1) -> list[Tok]:
@@ -323,7 +327,8 @@ def tokenize(text: str, line0: int = 1) -> list[Tok]:
 #   ("num", int) ("real", float) ("bool", b) ("name", s) ("pi",) ("call", name, [args]) ("bin", op, a, b)
 #   ("neg", a) ("not", a) ("cmp", [a, b, ...], [ops]) ("and", a, b) ("or", a, b) ("pow", a, b) ("abs", a)
 #   ("floor", a) ("ceil", a) ("sqrt", a) ("fact", a) ("sum"|"prod", var, lo, hi, body) ("cases", [(e, cond|None)])
-#   ("let", [(name, e)], body)
+#   ("let", [(name, e)], body) ("index", xs, i) ("update", xs, i, v) ("tab", e, var, n): [e | var < n]
+#   ("listlit", [e, ...])
 
 @dataclass
 class Definition:
@@ -416,6 +421,14 @@ class Parser:
         return name, types, ret
 
     def type_name(self) -> str:
+        if self.at("["):                      # [ℝ], [ℤ]: a list of reals or integers
+            line = self.cur.line
+            self.i += 1
+            et = self.type_name()
+            self.eat("]")
+            if et not in ("int", "float", "nat"):
+                raise MathError("a list holds ℤ or ℝ", line)
+            return f"list[{'int' if et == 'nat' else et}]"
         tk = self.cur
         if tk.kind != "name" or tk.text not in TYPE_NAMES:
             raise MathError(f"unknown type {tk.text!r} (use ℤ ℕ ℝ 𝔹 or Int Nat Real Bool)", tk.line)
@@ -653,10 +666,60 @@ class Parser:
 
     def postfix(self):
         a = self.atom()
-        while self.at("!") and not (self.peek().kind == "sym" and self.peek().text == "="):
-            self.i += 1
-            a = ("fact", a)
-        return a
+        while True:
+            if self.at("!") and not (self.peek().kind == "sym" and self.peek().text == "="):
+                self.i += 1
+                a = ("fact", a)
+            elif self.at("["):                # xs[i] and the update xs[i ↦ v]
+                self.i += 1
+                i = self.expr()
+                if self.at("↦"):
+                    self.i += 1
+                    v = self.expr()
+                    self.eat("]")
+                    a = ("update", a, i, v)
+                else:
+                    self.eat("]")
+                    a = ("index", a, i)
+            else:
+                return a
+
+    def tabulation(self):
+        """``[e | i < n]``: the list of e for i = 0, 1, ..., n - 1."""
+        line = self.cur.line
+        self.eat("[")
+        depth, j, var = 0, self.i, None
+        while j < len(self.t) and self.t[j].kind != "end":      # find `| name <` at this bracket depth
+            tx = self.t[j].text if self.t[j].kind == "sym" else None
+            if tx in ("(", "[", "{", "⌊", "⌈"):
+                depth += 1
+            elif tx in (")", "]", "}", "⌋", "⌉"):
+                if depth == 0:
+                    break
+                depth -= 1
+            elif tx == "|" and depth == 0 and self.t[j + 1].kind == "name" and self.t[j + 2].text == "<":
+                var = self.t[j + 1].text
+                break
+            j += 1
+        if var is None:                       # a literal: [a, b, c]
+            items = []
+            while not self.at("]"):
+                items.append(self.expr())
+                if not self.at("]"):
+                    self.eat(",")
+            self.eat("]")
+            if not items:
+                raise MathError("[] has no element type (write list_new(0, 0.0))", line)
+            return ("listlit", items)
+        self.bound.append({var})
+        e = self.expr()
+        self.bound.pop()
+        self.eat("|")
+        self.i += 1
+        self.eat("<")
+        n = self.expr()
+        self.eat("]")
+        return ("tab", e, var, n)
 
     def atom(self):
         tk = self.cur
@@ -691,6 +754,8 @@ class Parser:
                 return ("pi",)
             if tk.text in ("Σ", "Π"):
                 return self.big_op()
+            if tk.text == "[":
+                return self.tabulation()
             raise MathError(f"unexpected {tk.text!r}", tk.line)
         if tk.kind == "name":
             if tk.text in ("true", "false"):
@@ -794,7 +859,41 @@ def parse(text: str, name: str = "math", op_names=frozenset()) -> MathModule:
 
 # ---- lowering: surface -> card IR -----------------------------------------------------------------------------------
 
+GREEK = {"α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "eps", "ζ": "zeta", "η": "eta", "θ": "theta",
+         "ι": "iota", "κ": "kappa", "λ": "lam", "μ": "mu", "ν": "nu", "ξ": "xi", "ρ": "rho", "σ": "sigma",
+         "τ": "tau", "υ": "upsilon", "φ": "phi", "χ": "chi", "ψ": "psi", "ω": "omega", "Γ": "Gamma",
+         "Δ": "Delta", "Θ": "Theta", "Λ": "Lambda", "Ξ": "Xi", "Φ": "Phi", "Ψ": "Psi", "Ω": "Omega"}
+
+
+def _ident(name: str) -> str:
+    """A surface name as an identifier every target accepts: Greek letters spelled out, other symbols as _."""
+    out = "".join(GREEK.get(c, c) for c in name)
+    return re.sub(r"[^A-Za-z0-9_]", "_", out)
+
+
+def _param_idents(params: list[str], taken: set[str]) -> dict[str, str]:
+    """Each parameter's identifier, distinct from the others: a spelled-out name (μ → mu) that meets another
+    parameter, a function or a builtin gets a suffix (f(μ, mu) has parameters mu_1 and mu)."""
+    plain = {p for p in params if _ident(p) == p}
+    used = set(taken) | plain
+    out = {}
+    for p in params:
+        if p in plain:
+            out[p] = p
+            continue
+        base = n = _ident(p)
+        k = 0
+        while n in used:
+            k += 1
+            n = f"{base}_{k}"
+        used.add(n)
+        out[p] = n
+    return out
+
+
 def _zero(t: str):
+    if elem_type(t) is not None:
+        return ["LIST_NEW", ["int", 0], _zero(elem_type(t))]
     return {"int": ["int", 0], "float": ["float", 0.0], "bool": ["bool", False]}[t]
 
 
@@ -803,10 +902,11 @@ class _FnLower:
         self.low = low
         self.name = name
         self.params = params
-        self.ptypes = dict(zip(params, ptypes))
+        self.pid = _param_idents(params, low.fn_names | low.reserved_names)
+        self.ptypes = {self.pid[p]: t for p, t in zip(params, ptypes)}
         self.ret = ret
         self.locals: dict[str, str] = {}
-        self.scope: list[dict[str, str]] = [{p: p for p in params}]
+        self.scope: list[dict[str, str]] = [dict(self.pid)]
         self.types: dict[str, str] = dict(self.ptypes)
         self.ret_types: set[str] = set()
         self.tmp = 0
@@ -821,7 +921,7 @@ class _FnLower:
 
     def bind(self, name: str, typ: str) -> str:
         """An IR local for a new binding of ``name``: the name itself the first time, a fresh one after."""
-        safe = re.sub(r"[^A-Za-z0-9_]", "_", name)
+        safe = _ident(name)
         if safe in self.types or safe in self.low.fn_names or safe in self.low.reserved_names:
             ir = self.fresh(safe, typ)
         else:
@@ -875,6 +975,12 @@ class _FnLower:
             self.scope.append({})
             out = []
             for name, v in e[1]:
+                cur = self.lookup(name)
+                if v[0] == "update" and v[1] == ("name", name) and cur is not None and \
+                        elem_type(self.types[cur]) is not None:
+                    # xs = xs[i ↦ v] in tail position: nothing reads the old list afterwards, so set it in place
+                    out += self.set_elem(cur, v[2], v[3], line)
+                    continue
                 st, ir, t = self.expr(v, line)
                 out += st + [{"k": "assign", "target": self.bind(name, t), "value": ir}]
             out += self.tail(e[2], line)
@@ -885,6 +991,20 @@ class _FnLower:
             ir, t = ["TO_FLOAT", ir], "float"
         self.ret_types.add(t)
         return st + [{"k": "return", "value": ir}]
+
+    def set_elem(self, target: str, idx, val, line) -> list:
+        """``target[idx] = val`` on the IR list ``target``."""
+        et = elem_type(self.types[target])
+        si, i, ti = self.expr(idx, line)
+        sv, v, tv = self.expr(val, line)
+        if ti != "int":
+            raise MathError(f"a list index must be ℤ, found {TYPE_SYMBOL[ti]}", line)
+        if tv != et:
+            if tv == "int" and et == "float":
+                v = ["TO_FLOAT", v]
+            else:
+                raise MathError(f"storing {TYPE_SYMBOL[tv]} into {TYPE_SYMBOL[self.types[target]]}", line)
+        return si + sv + [{"k": "set", "target": target, "index": i, "value": v}]
 
     def tail_cases(self, cases, line) -> list:
         if cases[-1][1] is not None:
@@ -993,6 +1113,36 @@ class _FnLower:
             return self.call(e[1], e[2], line)
         if k == "cases":
             return self.expr_cases(e[1], line)
+        if k == "index":
+            sa, a, ta = self.expr(e[1], line)
+            si, i, ti = self.expr(e[2], line)
+            if elem_type(ta) is None:
+                raise MathError(f"indexing a {TYPE_SYMBOL[ta]} (only lists have elements)", line)
+            if ti != "int":
+                raise MathError(f"a list index must be ℤ, found {TYPE_SYMBOL[ti]}", line)
+            return sa + si, ["GET", a, i], elem_type(ta)
+        if k == "update":                        # a new list: a copy with one element replaced
+            sa, a, ta = self.expr(e[1], line)
+            if elem_type(ta) is None:
+                raise MathError(f"updating an element of a {TYPE_SYMBOL[ta]}", line)
+            tmp = self.fresh("upd", ta)
+            return sa + [{"k": "assign", "target": tmp, "value": ["LIST_COPY", a]}] + \
+                self.set_elem(tmp, e[2], e[3], line), ["var", tmp], ta
+        if k == "tab":
+            return self.tabulate(e[1], e[2], e[3], line)
+        if k == "listlit":
+            vals = [self.expr(x, line) for x in e[1]]
+            ts = {t for _, _, t in vals}
+            if not ts <= {"int", "float"}:
+                raise MathError("a list holds ℤ or ℝ", line)
+            et = "float" if "float" in ts else "int"
+            tmp = self.fresh("list", f"list[{et}]")
+            stmts = [x for st, _, _ in vals for x in st]
+            stmts.append({"k": "assign", "target": tmp, "value": ["LIST_NEW", ["int", len(vals)], _zero(et)]})
+            for i, (_, v, t) in enumerate(vals):
+                stmts.append({"k": "set", "target": tmp, "index": ["int", i],
+                              "value": ["TO_FLOAT", v] if t != et else v})
+            return stmts, ["var", tmp], f"list[{et}]"
         if k == "let":
             self.scope.append({})
             stmts = []
@@ -1055,6 +1205,28 @@ class _FnLower:
                 "body": sb + [{"k": "assign", "target": acc,
                                "value": ["ADD" if kind == "sum" else "MUL", ["var", acc], bir]}]}
         return sl + sh + [{"k": "assign", "target": acc, "value": start}, loop], ["var", acc], bt
+
+    def tabulate(self, body, var, count, line):
+        """``[body | var < count]``: a new list, filled by a loop over var = 0 .. count-1."""
+        sn, n, tn = self.expr(count, line)
+        if tn != "int":
+            raise MathError(f"a list length must be ℤ, found {TYPE_SYMBOL[tn]}", line)
+        size = self.fresh("n", "int")
+        self.scope.append({})
+        iv = self.bind(var, "int")
+        sb, b, tb = self.expr(body, line)
+        self.scope.pop()
+        if tb not in ("int", "float"):
+            raise MathError(f"a list of {TYPE_SYMBOL[tb]} (lists hold ℤ or ℝ)", line)
+        lt = f"list[{tb}]"
+        out = self.fresh("list", lt)
+        loop = {"k": "for_range", "var": iv, "start": ["int", 0], "stop": ["var", size], "step": ["int", 1],
+                "counter": self.fresh("it", "int"), "stop_var": self.fresh("stop", "int"),
+                "body": sb + [{"k": "set", "target": out, "index": ["var", iv], "value": b}]}
+        return sn + [{"k": "assign", "target": size, "value": n},
+                     {"k": "assign", "target": out, "value": ["LIST_NEW", ["MAX", ["var", size], ["int", 0]],
+                                                              _zero(tb)]},
+                     loop], ["var", out], lt
 
     def call(self, name, args, line):
         vals = [self.expr(a, line) for a in args]
@@ -1204,7 +1376,7 @@ class Lowerer:
             raise MathError(f"{name} is declared → {TYPE_SYMBOL[ret]} but a case is "
                             f"{', '.join(TYPE_SYMBOL[t] for t in sorted(fl.ret_types - {ret}))}"
                             + (" (write ⌊a/b⌋ for integer division)" if ret == "int" else ""), line)
-        fn = {"name": name, "params": [{"name": p, "type": t} for p, t in zip(params, ptypes)],
+        fn = {"name": name, "params": [{"name": fl.pid[p], "type": t} for p, t in zip(params, ptypes)],
               "returns": ret, "locals": dict(fl.locals), "body": stmts}
         requires = []
         for c in domain:
@@ -1216,12 +1388,12 @@ class Lowerer:
             fn["requires"] = requires
             fn["locals"] = dict(fl.locals)
         if sig and sig[0]:
-            nat = [p for p, t in zip(params, sig[0]) if t == "nat"]
+            nat = [fl.pid[p] for p, t in zip(params, sig[0]) if t == "nat"]
             if nat:
                 fn["nat_params"] = nat
                 fn.setdefault("requires", [])
                 fn["requires"] = [["CMP_GE", ["var", p], ["int", 0]] for p in nat] + fn["requires"]
-        return _tail_calls_to_loop(fn)
+        return fn
 
     def module(self) -> dict:
         # return types of unsigned functions: guess int, then lower until the guesses stop changing
@@ -1246,6 +1418,11 @@ class Lowerer:
             if not changed:
                 break
         fns = [self.function(n) for n in self.defs]
+        fns = [_list_values(f) for f in _merge_tail_groups(fns)]
+        for f in fns:
+            probs = check_lists(f)
+            if probs:
+                raise MathError(f"{f['name']}: {probs[0]}")
         return {"entry": fns[0]["name"] if fns else None, "functions": fns}
 
 
@@ -1253,58 +1430,154 @@ def _split_and(e) -> list:
     return _split_and(e[1]) + _split_and(e[2]) if e[0] == "AND" else [e]
 
 
-def _tail_calls_to_loop(fn: dict) -> dict:
-    """A function whose self-calls are all ``return f(...)`` becomes a loop: the parameters are re-bound in
-    parallel and the loop goes round again (no stack growth, so a loop emitted as an equation comes back as one)."""
-    name = fn["name"]
-    tail_sites, other = 0, 0
+def _tail_sites(body, names, in_loop=False) -> list:
+    """(callee, inside a loop body) for every ``return f(...)`` whose f is one of ``names``."""
+    out = []
+    for s in body:
+        v = s.get("value")
+        if s["k"] == "return" and isinstance(v, list) and v and v[0] == "CALL" and v[1] in names:
+            out.append((v[1], in_loop))
+        for key in ("then", "else", "body"):
+            if key in s:
+                out += _tail_sites(s[key], names, in_loop or (key == "body" and s["k"] in ("while", "for_range")))
+    return out
 
-    def scan(body):
-        nonlocal tail_sites, other
-        for s in body:
-            for key in ("value", "cond", "start", "stop", "step", "index"):
-                e = s.get(key)
-                if not isinstance(e, list):
-                    continue
-                top = s["k"] == "return" and key == "value" and e[0] == "CALL" and e[1] == name
-                for sub in _walk(e):
-                    if sub[0] == "CALL" and sub[1] == name:
-                        if top and sub is e:
-                            tail_sites += 1
-                        else:
-                            other += 1
-            for key in ("then", "else", "body"):
-                if key in s:
-                    if key == "body" and s["k"] in ("while", "for_range"):
-                        n0 = tail_sites
-                        scan(s[key])
-                        if tail_sites != n0:          # a return-call inside a loop: continue would hit that loop
-                            other += 1
-                    else:
-                        scan(s[key])
 
-    scan(fn["body"])
-    if not tail_sites or other:
-        return fn
-    locals_ = dict(fn["locals"])
-    params = fn["params"]
-    temps = []
-    for p in params:
-        t = f"cm_next_{p['name']}"
-        locals_[t] = p["type"]
-        temps.append(t)
-    go = "cm_go"
+def _ren_expr(e, ren: dict):
+    if isinstance(e, list) and e:
+        if e[0] == "var":
+            return ["var", ren.get(e[1], e[1])]
+        if e[0] in LEAVES:
+            return e
+        start = 2 if e[0] in ("CALL", "LOAD") else 1
+        return e[:start] + [_ren_expr(a, ren) for a in e[start:]]
+    return e
+
+
+def _ren_stmts(body: list, ren: dict) -> list:
+    """Statements with every variable renamed by ``ren`` (reads and writes)."""
+    out = []
+    for s in body:
+        s2 = {}
+        for key, v in s.items():
+            if key in ("target", "var", "counter", "stop_var") and isinstance(v, str):
+                s2[key] = ren.get(v, v)
+            elif key in ("then", "else", "body"):
+                s2[key] = _ren_stmts(v, ren)
+            elif isinstance(v, list):
+                s2[key] = _ren_expr(v, ren)
+            else:
+                s2[key] = v
+        out.append(s2)
+    return out
+
+
+def _merge_tail_groups(fns: list[dict]) -> list[dict]:
+    """Equations that only tail-call each other (a loop and its continuations, nested loops) become one loop.
+
+    For each function, the functions it reaches through tail calls (``return g(...)``) join it in one ``while``
+    loop: a tail call re-binds the callee's parameters in parallel and jumps to its body (a state variable picks
+    the body). Recursion that is not a tail call stays a call, as does a tail call from inside a loop body. So an
+    emitted loop nest comes back as loops, and runs in constant stack in every target."""
+    by = {f["name"]: f for f in fns}
+    names = set(by)
+    sites = {n: _tail_sites(f["body"], names) for n, f in by.items()}
+    out = []
+    for f in fns:
+        if any(inside for _, inside in sites[f["name"]]):
+            out.append(f)
+            continue
+        group, todo = [f["name"]], [c for c, _ in sites[f["name"]]]
+        while todo:
+            g = todo.pop(0)
+            gf = by[g]
+            if g in group or gf["returns"] != f["returns"] or gf.get("requires") or \
+                    any(inside for _, inside in sites[g]):
+                continue
+            group.append(g)
+            todo += [c for c, _ in sites[g]]
+        if not any(c in group for m in group for c, _ in sites[m]):
+            out.append(f)
+            continue
+        out.append(_dispatch(f, [by[g] for g in group]))
+    return out
+
+
+def _dispatch(root: dict, members: list[dict]) -> dict:
+    multi = len(members) > 1
+    locals_ = dict(root.get("locals") or {})
+    ren, pnames, ptypes = {}, {}, {}
+    # members share a variable when it has the same name and type: only one member runs at a time, and each binds
+    # its variables before reading them (a jump binds the callee's parameters), so lifetimes never overlap; the
+    # equations of one loop nest pass their state under the same names, so most jumps then re-bind nothing
+    known = {p["name"]: p["type"] for p in root["params"]}
+    known.update(locals_)
+    # every name any member uses: the loop's own variables (renames, cm_go, cm_st, cm_nextN) must avoid them all,
+    # or a parameter that happens to be called cm_st would alias the dispatch state
+    taken = set(known)
+    for m in members:
+        taken.update(p["name"] for p in m["params"])
+        taken.update(m.get("locals") or {})
+
+    def fresh(base: str) -> str:
+        n = base
+        while n in taken:
+            n += "_"
+        taken.add(n)
+        return n
+
+    for i, m in enumerate(members):
+        r = {}
+        if i:
+            for v, t in [(p["name"], p["type"]) for p in m["params"]] + list((m.get("locals") or {}).items()):
+                if v in known and known[v] != t:
+                    r[v] = fresh(f"cm_{i}_{v}")
+                known[r.get(v, v)] = t
+                if r.get(v, v) not in {p["name"] for p in root["params"]}:
+                    locals_[r.get(v, v)] = t
+        ren[m["name"]] = r
+        pnames[m["name"]] = [r.get(p["name"], p["name"]) for p in m["params"]]
+        ptypes[m["name"]] = [p["type"] for p in m["params"]]
+    index = {m["name"]: i for i, m in enumerate(members)}
+    go = fresh("cm_go")
     locals_[go] = "bool"
+    st = fresh("cm_st") if multi else None
+    if multi:
+        locals_[st] = "int"
+    count = [0]
 
-    def rewrite(body):
+    def temp(t: str) -> str:
+        count[0] += 1
+        n = fresh(f"cm_next{count[0]}")
+        locals_[n] = t
+        return n
+
+    def jump(callee: str, args: list) -> list:
+        triples = [(p, t, a) for p, t, a in zip(pnames[callee], ptypes[callee], args) if a != ["var", p]]
+        scal = [x for x in triples if elem_type(x[1]) is None]
+        lists = [x for x in triples if elem_type(x[1]) is not None]
+        targets = {p for p, _, _ in lists}
+        first, direct, later, last = [], [], [], []
+        for p, t, a in scal:
+            tmp = temp(t)
+            first.append({"k": "assign", "target": tmp, "value": a})
+            last.append({"k": "assign", "target": p, "value": ["var", tmp]})
+        for p, t, a in lists:
+            if {x[1] for x in _walk(a) if x[0] == "var"} & (targets - {p}):
+                tmp = temp(t)
+                first.append({"k": "assign", "target": tmp, "value": a})
+                later.append({"k": "assign", "target": p, "value": ["var", tmp]})
+            else:
+                direct.append({"k": "assign", "target": p, "value": a})
+        state = [{"k": "assign", "target": st, "value": ["int", index[callee]]}] if multi else []
+        return first + direct + later + last + state + [{"k": "continue"}]
+
+    def rewrite(body: list) -> list:
         out = []
         for s in body:
-            if s["k"] == "return" and isinstance(s.get("value"), list) and s["value"][0] == "CALL" \
-                    and s["value"][1] == name:
-                args = s["value"][2:]
-                out += [{"k": "assign", "target": t, "value": a} for t, a in zip(temps, args)]
-                out += [{"k": "assign", "target": p["name"], "value": ["var", t]} for p, t in zip(params, temps)]
-                out.append({"k": "continue"})
+            v = s.get("value")
+            if s["k"] == "return" and isinstance(v, list) and v and v[0] == "CALL" and v[1] in index:
+                out += jump(v[1], v[2:])
                 continue
             s2 = dict(s)
             for key in ("then", "else"):
@@ -1313,10 +1586,57 @@ def _tail_calls_to_loop(fn: dict) -> dict:
             out.append(s2)
         return out
 
-    body = [{"k": "assign", "target": go, "value": ["bool", True]},
-            {"k": "while", "cond": ["var", go], "body": rewrite(fn["body"])},
-            {"k": "return", "value": _zero(fn["returns"])}]
-    return {**fn, "locals": locals_, "body": body}
+    bodies = [rewrite(_ren_stmts(m["body"], ren[m["name"]])) for m in members]
+    chain = bodies[-1]
+    for i in range(len(members) - 2, -1, -1):
+        chain = [{"k": "if", "cond": ["CMP_EQ", ["var", st], ["int", i]], "then": bodies[i], "else": chain}]
+    body = [{"k": "assign", "target": go, "value": ["bool", True]}]
+    if multi:
+        body.append({"k": "assign", "target": st, "value": ["int", 0]})
+    body += [{"k": "while", "cond": ["var", go], "body": chain}, {"k": "return", "value": _zero(root["returns"])}]
+    return {**root, "locals": locals_, "body": body}
+
+
+def _list_values(fn: dict) -> dict:
+    """Value semantics for lists (ir.check_lists): a list parameter that is written or re-bound is copied on
+    entry; binding a list to another name, or returning a list parameter, copies it."""
+    params = {p["name"]: p["type"] for p in fn["params"]}
+    locals_ = dict(fn.get("locals") or {})
+    body = fn["body"]
+    written = []
+    for s in _stmts(body):
+        if s["k"] in ("set", "assign") and s["target"] in params and elem_type(params[s["target"]]) is not None \
+                and s["target"] not in written:
+            written.append(s["target"])
+    if written:
+        ren = {}
+        for p in written:
+            n = f"cm_own_{p}"
+            while n in locals_ or n in params:
+                n += "_"
+            ren[p] = n
+            locals_[n] = params[p]
+        body = [{"k": "assign", "target": ren[p], "value": ["LIST_COPY", ["var", p]]} for p in written] + \
+            _ren_stmts(body, ren)
+    types = {**params, **locals_}
+
+    def fix(stmts):
+        out = []
+        for s in stmts:
+            s2 = dict(s)
+            v = s2.get("value")
+            if s2["k"] == "assign" and elem_type(types.get(s2["target"], "")) is not None and isinstance(v, list) \
+                    and v and v[0] in ("var", "IF_EXPR"):
+                s2["value"] = ["LIST_COPY", v]
+            if s2["k"] == "return" and isinstance(v, list) and v[:1] == ["var"] and v[1] in params and \
+                    elem_type(params[v[1]]) is not None:
+                s2["value"] = ["LIST_COPY", v]
+            for key in ("then", "else", "body"):
+                if key in s2:
+                    s2[key] = fix(s2[key])
+            out.append(s2)
+        return out
+    return {**fn, "locals": locals_, "body": fix(body)}
 
 
 def _walk(e):
@@ -1371,15 +1691,12 @@ class _Emit:
     MAX_DUP = 6           # an `if` whose continuation is bigger than this many statements gets its own equation
 
     def __init__(self, fn: dict, module: dict):
-        if any(str(t).startswith("list[") for t in [fn.get("returns"), *(p["type"] for p in fn["params"])]) \
-                or any(s["k"] == "set" for s in _stmts(fn["body"])):
-            raise EmitGap("math: lists have no notation yet (the IR has them; the equations do not)")
         bad = [s["k"] for s in _stmts(fn["body"]) if s["k"] in ("store", "do", "switch")]
         if fn.get("returns") == "void" or bad or module.get("globals") or module.get("arrays"):
             raise EmitGap("math: machine state (globals, arrays, stores, switch, void functions) is not emitted "
                           "as equations")
         for s in _stmts(fn["body"]):
-            for key in ("value", "cond", "start", "stop", "step"):
+            for key in ("value", "cond", "start", "stop", "step", "index"):
                 if isinstance(s.get(key), list):
                     for e in _walk(s[key]):
                         if e[0] in ("LOAD", "RAW"):
@@ -1390,9 +1707,11 @@ class _Emit:
         self.types.update(fn.get("locals") or {})
         read = set()
         for s in _stmts(fn["body"]):
-            for key in ("value", "cond", "start", "stop", "step"):
+            for key in ("value", "cond", "start", "stop", "step", "index"):
                 if isinstance(s.get(key), list):
                     read |= {e[1] for e in _walk(s[key]) if e[0] == "var"}
+            if s["k"] == "set":                  # xs[i ↦ v] reads xs
+                read.add(s["target"])
             if s["k"] == "for_range":
                 read |= {s["counter"], s["stop_var"], s["var"]}
         # the state an equation carries: every parameter and every local that is ever read, in a stable order
@@ -1430,6 +1749,9 @@ class _Emit:
         if k == "assign":
             b2 = bound | {s["target"]}
             return ("let", s["target"], s["value"], self.block(rest, b2, nxt, brk, cont))
+        if k == "set":                           # an element store is a new list value: xs = xs[i ↦ v]
+            upd = ["LIST_SET", ["var", s["target"]], s["index"], s["value"]]
+            return ("let", s["target"], upd, self.block(rest, bound | {s["target"]}, nxt, brk, cont))
         if k == "return":
             return ("ir", s["value"])
         if k == "break":
@@ -1502,7 +1824,9 @@ class _Emit:
 
 TOTAL_OPS = {"ADD", "SUB", "MUL", "NEG", "ABS", "MIN", "MAX", "CMP_EQ", "CMP_NE", "CMP_LT", "CMP_LE", "CMP_GT",
              "CMP_GE", "AND", "OR", "NOT", "IF_EXPR", "BIT_AND", "BIT_OR", "BIT_XOR", "BIT_NOT", "TO_FLOAT",
-             "SQUARE", "GCD"}
+             "SQUARE", "GCD", "LEN", "LIST_COPY"}
+# LIST_SET is the emitter's spelling of an element store (``xs[i ↦ v]``, lowered back to a store): it is never an IR
+# op of its own, and a let holding one is never substituted away, so the store stays in place when read back
 
 
 def _total(e) -> bool:
@@ -1613,7 +1937,7 @@ def _tidy(t, used):
         n = _count(body, t[1])
         if n == 0 and _total(t[2]):
             return body
-        if n == 1 and len(list(_walk(t[2]))) <= 12 and (
+        if n == 1 and len(list(_walk(t[2]))) <= 12 and not any(x[0] == "LIST_SET" for x in _walk(t[2])) and (
                 _total(t[2]) or not any(x[0] == "CALL" for x in _walk(t[2])) and _strict(body, t[1])):
             sub = _subst(body, t[1], t[2], _vars(t[2]))
             if sub is not None:
@@ -1713,7 +2037,7 @@ def _readable(name: str, params: list, t, taken: set) -> tuple[list, object]:
     used = set(names) | taken
     for v in sorted(names):
         m = re.fullmatch(r"cm_([A-Za-z_]+?)_?\d*", v)
-        if not m:
+        if not m or v in taken:             # the main equation's own parameters keep their names
             continue
         base = m.group(1).rstrip("_") or "v"
         if base in KEYWORDS or base in BUILTINS or base in used or base in ren.values():
@@ -1730,7 +2054,7 @@ def simplify(eqs: list, main: str) -> list:
     gen = [n for n in params if n != main]
     used: dict[str, set] = {n: set() for n in gen}
     for _ in range(4):
-        for _ in range(len(gen) + 2):
+        while True:                          # monotone, so it ends: a value can pass through many parameters
             changed = False
             for n in gen:
                 fv = _fv(terms[n], used)
@@ -1749,7 +2073,6 @@ def simplify(eqs: list, main: str) -> list:
             terms[n] = _tidy(_map_calls(terms[n], prune), used)
         for n in gen:
             params[n] = [p for i, p in enumerate(params[n]) if i in used[n]]
-        used = {n: set(range(len(params[n]))) for n in gen}
         # recompute from scratch on the pruned equations (lets may have gone, so fewer reads)
         used = {n: set() for n in gen}
     # forwarders: main(x..) = L(x..) with L's parameters equal to main's -> main takes L's equation
@@ -1793,7 +2116,7 @@ def _is_value(t) -> bool:
 def _assigned(body) -> set:
     out = set()
     for s in _stmts(body):
-        if s["k"] == "assign":
+        if s["k"] in ("assign", "set"):
             out.add(s["target"])
         elif s["k"] == "for_range":
             out |= {s["var"], s["counter"], s["stop_var"]}
@@ -1926,6 +2249,11 @@ class Renderer:
             return f"√({self.expr(e[1])})", 9
         if head == "IF_EXPR":
             return self.inline_cases([(("ir", e[2]), e[1]), (("ir", e[3]), None)]), 9
+        if head == "GET":
+            return f"{self.expr(e[1], 9)}[{self.expr(e[2])}]", 9
+        if head == "LIST_SET":
+            arrow = r" \mapsto " if L else " ↦ "
+            return f"{self.expr(e[1], 9)}[{self.expr(e[2])}{arrow}{self.expr(e[3])}]", 9
         name = OP_NAME.get(head, head.lower())
         if name in self.fn_names:          # a module function with the op's name: spell the op card itself
             name = head
@@ -2057,6 +2385,12 @@ def render_surface(e) -> str:
         return out
     if k == "bin":
         return f"({render_surface(e[2])} {e[1]} {render_surface(e[3])})"
+    if k == "listlit":
+        return "[" + ", ".join(render_surface(x) for x in e[1]) + "]"
+    if k == "index":
+        return f"{render_surface(e[1])}[{render_surface(e[2])}]"
+    if k == "neg":
+        return f"-{render_surface(e[1])}"
     return k
 
 
