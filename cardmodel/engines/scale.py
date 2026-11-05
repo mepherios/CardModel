@@ -11,7 +11,9 @@ arena's generator but shaped for size rather than for optimization:
   tail        tail self-recursion (Euclid's gcd)
   mutual      a pair of mutually recursive functions (even/odd)
   fail        a deliberate lift failure (a ``try`` block, which the IR does not have)
-  fail_caller calls a ``fail`` function of its module (today it fails too: the closure, frontend_python.close_calls)
+  fail_caller calls a ``fail`` function of its module: it lifts as partial, the edge an opaque-boundary gap
+              (frontend_python.close_calls); ``lift_rate`` counts closed lifts only, ``lift_rate_with_boundaries``
+              adds the partial ones
 
 Modules hold ``MODULE_SIZE`` functions, packages ``PACKAGE_SIZE`` modules, so 10⁶ functions are 10⁴ modules in 100
 packages. The same (n, seed) always writes the same bytes.
@@ -195,6 +197,7 @@ def _stages(ctx: Ctx, n: int, seed: int, workdir: Path | None, baseline: float) 
         times["lift"] = time.perf_counter() - t0
         peaks["lift"] = _rss_mb()
     ok = {q: lf for q, lf in lifted.functions.items() if lf.ok}
+    n_partial = sum(bool(getattr(lf, "partial", False)) for lf in lifted.functions.values())
     fns = [{**lf.ir, "name": q} for q, lf in sorted(ok.items())]
 
     t0 = time.perf_counter()
@@ -222,13 +225,16 @@ def _stages(ctx: Ctx, n: int, seed: int, workdir: Path | None, baseline: float) 
     by_kind: dict[str, dict] = {}
     for q, k in key.items():
         lf = lifted.functions.get(q)
-        row = by_kind.setdefault(k["kind"], {"functions": 0, "lifted": 0})
+        row = by_kind.setdefault(k["kind"], {"functions": 0, "lifted": 0, "partial": 0})
         row["functions"] += 1
         row["lifted"] += bool(lf and lf.ok)
+        row["partial"] += bool(lf and getattr(lf, "partial", False))
     total = sum(times.values())
     peak = max(peaks.values())
     return {"n": n, "seed": seed, "functions": len(key), "modules": len({k["module"] for k in key.values()}),
             "lifted": len(ok), "lift_rate": round(len(ok) / len(key), 4) if key else None,
+            "partial": n_partial,
+            "lift_rate_with_boundaries": round((len(ok) + n_partial) / len(key), 4) if key else None,
             "cross_calls": lifted.cross_calls, "unparsed": len(lifted.unparsed), "obligations": n_obl,
             "reference_ran": ran, "reference_errors": errors, "by_kind": dict(sorted(by_kind.items())),
             "generate_s": round(gen_s, 3), "stage_s": {s: round(times[s], 3) for s in STAGES},
