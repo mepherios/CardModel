@@ -11,7 +11,8 @@
     "engines/numbering.py: six conditions from Def-1, Rule-1 to Rule-6, Feferman and Grabmayr",
     "every godel_set card states its numbering, arities and witness test",
     "tests/test_numbering.py: one test per set, and deviant numberings that fail",
-    "findings W5_admissible_numberings, W5_arity_gaps"
+    "findings W5_admissible_numberings, W5_arity_gaps",
+    "engines/numbering.py decodes through the restructured core: G.exponents for the positional codes (p-adic valuation, not trial division), G.zig/G.unzig and G.term_content (c23554e, ef792b1, docs/GODEL_TARGET.md)"
   ],
   "goal": "What makes a numbering admissible in each domain?",
   "in_progress": [],
@@ -21,8 +22,8 @@
     "new Gödel sets (physics, chemistry, design on worktree-universal-domains) will need the same statement"
   ],
   "metadata": {
-    "previous_content_hash": "c8c82ce255ea0e943764ac2816a2e684f7e180060164dfb043cfe1af8c474f0c",
-    "version": "1.0.1",
+    "previous_content_hash": "9f5ac7359f46fa2077801d10999d2295cb61362c71260f170eecb80bb116f337",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "metrics": [],
@@ -48,6 +49,6 @@
   "statement": "Gödel method research program, wave 1: What makes a numbering admissible in each domain?",
   "tier": 1,
   "title": "W-5 Admissible numberings",
-  "updated": "2026-10-22T02:53:52+02:00",
+  "updated": "2026-11-05T00:45:00+01:00",
   "user_actions": []
 }

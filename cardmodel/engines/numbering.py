@@ -50,12 +50,7 @@ LOGIC_ARITY = {"logic/true": 0, "logic/false": 0, "logic/not": 1, "logic/and": 2
                "logic/iff": 2, "logic/eq": 2, "logic/forall": 2, "logic/exists": 2}
 
 
-def _zig(v: int) -> int:
-    return 2 * v if v >= 0 else -2 * v - 1
-
-
-def _unzig(z: int) -> int:
-    return z // 2 if z % 2 == 0 else -(z + 1) // 2
+_zig, _unzig = G.zig, G.unzig
 
 
 class Numbering:
@@ -123,20 +118,7 @@ class Numbering:
 
     def _codes(self, n: int) -> list[int] | None:
         """The exponents of 2, 3, 5, ... in order, when n is a product of the first m primes each to at least 1."""
-        if n < 2:
-            return None
-        out, i = [], 1
-        while n > 1:
-            p = G.nth_prime(i)
-            e = 0
-            while n % p == 0:
-                n //= p
-                e += 1
-            if e == 0:
-                return None                                     # a skipped prime, or a factor no position has
-            out.append(e)
-            i += 1
-        return out
+        return G.exponents(n, gaps=False) if n >= 2 else None    # None on a skipped prime: no position has it
 
     def decode(self, n: int):
         """The object n codes (variables named x0, x1, ... by first appearance), or None."""
@@ -218,12 +200,8 @@ def _subterms(t):
 
 
 def _content(t) -> Counter:
-    c: Counter = Counter()
-    if isinstance(t, list) and t and t[0] not in ("var", "int"):
-        c[t[0]] += 1
-        for a in t[1:]:
-            c += _content(a)
-    return c
+    """The content of an object of any set: every non-leaf head an atom (engines/godel.term_content)."""
+    return G.term_content(t, None)
 
 
 def check_set(ctx, set_name: str, seed: int = 0, samples: int = 120) -> dict:
