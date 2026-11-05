@@ -1,0 +1,38 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/equivalence.py",
+    "cardmodel/engines/exprs.py",
+    "cardmodel/engines/numbering.py",
+    "cardmodel/engines/sources.py"
+  ],
+  "foundations": [
+    "D7",
+    "D9",
+    "A4"
+  ],
+  "group": "identity",
+  "laws": [
+    "law/CM44_everything_traces_to_truth"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "identity",
+  "needs": [
+    "reference"
+  ],
+  "order": 50,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "identity",
+  "scope": "function",
+  "statement": "The function's identity under a named relation: the hash of its canonical term under the laws when saturation reached one, else of its term or IR under syntax; beside it the alpha-renamed form.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted"
+  ]
+}

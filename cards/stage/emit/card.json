@@ -1,0 +1,33 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/codegen.py"
+  ],
+  "foundations": [
+    "D14"
+  ],
+  "group": "targets",
+  "laws": [
+    "law/CM16_languages_are_cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "emit",
+  "needs": [
+    "reference"
+  ],
+  "order": 160,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "emit",
+  "scope": "function",
+  "statement": "The term read in every language card with codegen: one form per card, and the gap (an op the card has no template for) named per language instead of patched.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted"
+  ]
+}

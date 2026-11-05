@@ -1,0 +1,34 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/tiers.py"
+  ],
+  "foundations": [
+    "D10"
+  ],
+  "group": "evidence",
+  "laws": [
+    "law/CM46_every_claim_carries_its_tier"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "class",
+  "needs": [
+    "reference"
+  ],
+  "order": 90,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "class",
+  "scope": "function",
+  "statement": "The function's class read from its IR (polynomial, C-finite along one input, guarded regions): the class names the theorem that sizes a finite witness, so claims about it can reach tier proof.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "int_sorted"
+  ]
+}

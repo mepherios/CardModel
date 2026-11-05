@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "pipeline_coverage_problems",
+  "name": "G_A13_pipeline_coverage",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "statement": "Problems the pipeline coverage check reports (a stage function no card names, an engine no stage reaches without a reason, a stage that applies to nothing, an entry without a reason) in the latest verify (CM50).",
+  "target": 0,
+  "tier": 0
+}

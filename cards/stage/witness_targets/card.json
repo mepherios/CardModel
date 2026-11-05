@@ -1,0 +1,34 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/translate.py"
+  ],
+  "foundations": [
+    "D10",
+    "D14"
+  ],
+  "group": "targets",
+  "laws": [
+    "law/CM17_translation_coverage_is_measured"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "witness_targets",
+  "needs": [
+    "emit"
+  ],
+  "order": 170,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "witness_targets",
+  "scope": "function",
+  "statement": "Every generated form compiled and run on the vectors plus fresh seeded inputs and compared with the reference (tier sample); fixed-width targets only on inputs that fit.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted"
+  ]
+}

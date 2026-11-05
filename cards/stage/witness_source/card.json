@@ -1,0 +1,36 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/frontends.py"
+  ],
+  "foundations": [
+    "D3",
+    "D14"
+  ],
+  "group": "targets",
+  "laws": [
+    "law/CM17_translation_coverage_is_measured"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "witness_source",
+  "needs": [
+    "reference"
+  ],
+  "order": 180,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "witness_source",
+  "scope": "function",
+  "statement": "The lift itself witnessed: the original source run by its own toolchain on the vectors and seeded inputs against the IR in M; unavailable, never silent, when the toolchain is missing.",
+  "tier": 0,
+  "unless": [
+    "source_is_reference"
+  ],
+  "when": [
+    "lifted"
+  ]
+}

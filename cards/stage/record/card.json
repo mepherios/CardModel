@@ -1,0 +1,31 @@
+{
+  "category": "stage",
+  "engines": [],
+  "foundations": [
+    "A7"
+  ],
+  "group": "record",
+  "laws": [
+    "law/CM44_everything_traces_to_truth"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "record",
+  "needs": [
+    "reference"
+  ],
+  "order": 220,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "record",
+  "scope": "function",
+  "statement": "The function card with everything this run found: identity, Gödel record, class, certificates and the stage record; healthy when three or more models agree and the lift is faithful; saved on request (--save).",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted"
+  ]
+}

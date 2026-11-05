@@ -1,0 +1,20 @@
+{
+  "category": "law",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "CM50_every_applicable_stage_runs",
+  "origins": [
+    "user requirement 2026-11-04 (for any transformation from input to output, every functionality we want is used properly, so nothing is overlooked in the main function; tiers of modules and submodules, all run where needed)",
+    "docs/FOUNDATIONS.md D5 (a law is a conditional) and A1 (everything is a card)",
+    "CM37",
+    "CM38"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "statement": "Every transformation from an input to its outputs runs every stage whose hypothesis the input satisfies, and its record has one entry per registered stage: ran with its evidence, or skipped, not requested, unavailable or failed with the reason. The set of stages that run is computed from the stage cards, never remembered by a command, and the coverage check fails when a stage function is named by no card, an engine is reached by no stage and named outside the pipeline by no reason, or a stage applies to nothing.",
+  "tier": 0,
+  "witness": "tests/test_pipeline.py::test_every_applicable_stage_runs_or_says_why"
+}

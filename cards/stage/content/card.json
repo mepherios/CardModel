@@ -1,0 +1,34 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/godel.py"
+  ],
+  "foundations": [
+    "D11",
+    "D12"
+  ],
+  "group": "identity",
+  "laws": [
+    "law/CM45_content_is_a_sparse_vector"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "content",
+  "needs": [
+    "reference"
+  ],
+  "order": 60,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "content",
+  "scope": "function",
+  "statement": "The Gödel record: content read from the canonical term where there is one, else from the IR with `read_from` saying so; a sparse vector over the ledger and the positional code when it is small.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted"
+  ]
+}

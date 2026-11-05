@@ -5,6 +5,9 @@ Sections (all on by default; ``only`` selects):
   integrity     one program (CM39): unique law and goal numbers, every law carried by a capability, every
                 command, section and doc described, LAWS.md / GOALS.md in sync, no merge markers, no publishing
   capabilities  every capability card's smoke check: a core capability that no longer behaves fails (CM37)
+  pipeline      the stage registry (cards/stage) against the program and the mathematics, and the fixtures through
+                every stage: a stage function no card names, an engine no stage reaches that is not named outside
+                with a reason, a dead hypothesis, or an entry without a reason fails (CM50)
   projects      every project card carries its detail and is current: missing detail, a stale card, or a branch
                 with unmerged work that no card lists fails (CM41)
   godel         the prime ledger is well formed and only grew since the last commit; content vectors read (CM43)
@@ -62,10 +65,10 @@ from . import conformance, redefs, translate, witness
 from . import values as V
 from .context import Ctx
 
-SECTIONS = ("kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "unreal", "machine",
+SECTIONS = ("kernel", "integrity", "capabilities", "pipeline", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "unreal", "machine",
             "forms", "vectors", "rules", "redefinitions", "conformance", "functions", "proofs", "selfcheck",
             "portability")
-QUICK = ["kernel", "integrity", "capabilities", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
+QUICK = ["kernel", "integrity", "capabilities", "pipeline", "projects", "godel", "sources", "tiers", "formal", "logic", "lang", "theorems", "game", "anyps5", "machine",
          "forms", "vectors", "rules", "redefinitions"]
 
 
@@ -318,6 +321,9 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         elif sec == "godel":
             from . import godel
             res = godel.check(ctx)
+        elif sec == "pipeline":
+            from . import pipeline
+            res = pipeline.coverage(ctx, seed=seed)
         elif sec == "sources":
             from . import sources
             res = sources.check(ctx)

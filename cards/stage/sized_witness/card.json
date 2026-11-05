@@ -1,0 +1,39 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/codegen.py",
+    "cardmodel/engines/tiers.py"
+  ],
+  "foundations": [
+    "D7",
+    "D10"
+  ],
+  "group": "evidence",
+  "laws": [
+    "law/CM46_every_claim_carries_its_tier"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "sized_witness",
+  "needs": [
+    "canon",
+    "class"
+  ],
+  "order": 100,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "sized_witness",
+  "scope": "function",
+  "statement": "The canonical term equals the lifted term at tier proof: both forms' classes size the witness and every point agrees; a disagreement refutes the laws that fired and is a finding.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "canonical",
+    "reduced",
+    "class_known"
+  ]
+}

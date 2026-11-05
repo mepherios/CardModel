@@ -10,7 +10,10 @@
   cardmodel emit --lang L FILE          translate liftable functions of any readable language (or --rules, --hints CARD)
   cardmodel learn [PATH] [--promote]    observe -> propose -> verify -> promote (cards with evidence)
   cardmodel optimize [--card Q] [--apply]  measure real costs -> metric cards -> cost anchors
-  cardmodel translate FILE [--to ...]      lift (any readable language, --from to force) + emit + verify per language
+  cardmodel translate FILE [--to ...]      every stage of the pipeline that applies to each function: lift (any readable
+                                           language, --from to force), identity, evidence, optimize, every target, record
+                                           (--stages prints the record; --only, --deep, --measure, --save)
+  cardmodel pipeline stages|check|run FILE the stage registry (cards/stage): list it, check its coverage (CM50), run it
   cardmodel lift-sweep PATH [--exclude G]  lift a whole tree (calls across files, methods): rate + first reasons
   cardmodel improve PATH [--out DIR]       make a module/package faster: verified algorithm substitutions and
                                            rewrites; effectful code byte-identical; native forms for every language
@@ -440,58 +443,64 @@ def cmd_lift_sweep(args) -> int:
 
 
 def cmd_translate(args) -> int:
-    from .engines import frontends, translate
+    """Every function of FILE through every stage of the pipeline that applies to it (engines/pipeline.py, CM50):
+    the record has one entry per stage; ``--stages`` prints it, ``--only`` restricts it, ``--deep`` and
+    ``--measure`` ask for the stages that are off by default, ``--save`` writes the function cards."""
+    from .engines import pipeline
     ctx = _ctx(args)
     src = Path(args.file).read_text(encoding="utf-8")
     lang = _source_lang(ctx, args, args.file)
     if lang is None:
         return 2
+    langs = args.to.split(",") if args.to else None
+    only = args.only.split(",") if args.only else None
+    options = {"save": bool(args.save), "deep": bool(args.deep), "measure": bool(args.measure)}
     try:
-        lifted = frontends.lift(ctx, src, lang)
+        rec = pipeline.run_source(ctx, src, lang, label=Path(args.file).name, langs=langs, seed=args.seed,
+                                  only=only, options=options)
     except SyntaxError as exc:
         print(f"error: {args.file} is not valid {lang} (line {exc.lineno}: {exc.msg})", file=sys.stderr)
         return 2
-    langs = args.to.split(",") if args.to else None
-    seed = args.seed
-    from .engines import values as V
-    seed = V.fresh_seed() if seed is None else seed
-    results = {}
-    lines = [f"seed {seed}"]
-    for lf in lifted:
-        if not lf.ok:
-            results[lf.name] = {"lifted": False, "reasons": lf.reasons}
-            lines.append(f"  {lf.name:<22} not lifted: {'; '.join(lf.reasons)}")
+    results, failed = {}, []
+    lines = [f"seed {rec['seed']}"]
+    for name, f in rec["functions"].items():
+        lift = f["stages"].get("lift") or {}
+        if not lift.get("lifted"):
+            results[name] = {"lifted": False, "reasons": list(lift.get("reasons") or []), "stages": f["stages"]}
+            lines.append(f"  {name:<22} not lifted: {'; '.join(lift.get('reasons') or [])}")
             continue
-        card = translate.function_card(ctx, lf.name, lifted, Path(args.file).name, seed=seed, lang=lang)
-        rep = translate.verify_function(ctx, card, langs=langs, seed=seed)
-        if lang != "python":            # the lift itself, witnessed against the original source's own toolchain
-            rows = [v["args"] for v in card["vectors"]] + frontends.sample_inputs(card["ir"], 12, seed)
-            wit = frontends.witness_source(ctx, lang, src, card["ir"], rows, getattr(lf, "src_types", None),
-                                               getattr(lf, "src_labels", None))
-            card["verification"]["source_witness"] = wit
-            rep["source_witness"] = wit
-            if wit["status"] == "fail":
-                rep["languages"][f"{lang} (source)"] = {"status": "fail", **wit}
-        results[lf.name] = {"card": card["name"], "report": rep}
-        bad = {k: v for k, v in rep["languages"].items() if v["status"] not in ("pass",)}
-        other = ", ".join(f"{k}={v['status']}" for k, v in bad.items())
-        wit = rep.get("source_witness")
-        lines.append(f"  {lf.name:<22} agrees in {len(rep['agreeing_languages'])}: "
-                     f"{', '.join(rep['agreeing_languages'])}" + (f"  | other: {other}" if bad else "") +
-                     (f"  | {lang} source: {wit['status']}" + (f" ({wit.get('checks')} checks)" if wit.get("checks")
-                                                                else "") if wit else ""))
-        if args.save:
-            card["verification"]["run"] = {k: v for k, v in rep.items() if k != "languages"}
-            card["status"] = "healthy" if len(rep["agreeing_languages"]) >= 3 and not rep["lift_mismatches"] else "suspect"
-            ctx.store.save(card, category="function")
+        rep = f["report"]
+        results[name] = {"card": f["card"], "report": rep, "stages": f["stages"], "facts": f["facts"],
+                         "summary": f["summary"]}
+        c = f["summary"]["counts"]
+        if rep is not None:
+            bad = {k: v["status"] for k, v in rep["languages"].items() if v["status"] != "pass"}
+            other = ", ".join(f"{k}={s}" for k, s in bad.items())
+            line = (f"  {name:<22} agrees in {len(rep['agreeing_languages'])}: {', '.join(rep['agreeing_languages'])}"
+                    + (f"  | other: {other}" if bad else ""))
+        else:
+            line = f"  {name:<22} (targets not witnessed: {(f['stages'].get('witness_targets') or {}).get('reason', '')})"
+        ws = f["stages"].get("witness_source") or {}
+        if ws.get("status") == "ran":
+            line += f"  | {lang} source: {ws.get('witness')}" + (f" ({ws['checks']} checks)" if ws.get("checks") else "")
+        elif ws.get("status") == "unavailable":
+            line += f"  | {lang} source: unavailable ({ws.get('reason')})"
+        line += f"  | stages: {c['ran']} ran, {c['skipped'] + c['not_requested'] + c['unavailable']} not applicable"
+        if c["failed"]:
+            line += f", {c['failed']} FAILED"
+        lines.append(line)
+        for p in f["summary"]["problems"]:
+            lines.append(f"  {'':<22} PROBLEM {p}")
+        if rep is not None and not rep["inputs"]:
+            lines.append(f"  {name:<22} UNVERIFIED: no input where the source and the lifted IR both evaluate")
+        if f["summary"]["problems"] or (rep is not None and not rep["inputs"]):
+            failed.append(name)
+    rec_cov = rec["coverage"]
+    lines.append(f"pipeline: {len(rec['stages'])} stages, coverage {rec_cov['status']}"
+                 + ("" if not rec_cov["problems"] else f" ({len(rec_cov['problems'])} problems)"))
+    if args.stages:
+        lines = pipeline.report_text(rec, verbose=args.verbose).splitlines()
     _out(args, results, "\n".join(lines))
-    failed = [n for n, r in results.items() if "report" in r and (not r["report"]["inputs"] or any(
-        lr["status"] in ("fail", "error") for lr in r["report"]["languages"].values()))]
-    for n in failed:
-        if not results[n]["report"]["inputs"]:
-            lines.append(f"  {n:<22} UNVERIFIED: no input where the source and the lifted IR both evaluate")
-            if not args.json:
-                print(lines[-1])
     return 1 if failed else 0   # functions that did not lift are reported gaps, not failures
 
 
@@ -904,7 +913,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(fn=cmd_emit)
     s = sub.add_parser("translate"); s.add_argument("file"); s.add_argument("--to"); s.add_argument("--seed", type=int)
     s.add_argument("--from", dest="from_lang", metavar="LANG", help="source language (default: from the extension)")
-    s.add_argument("--save", action="store_true"); s.set_defaults(fn=cmd_translate)
+    s.add_argument("--save", action="store_true"); s.add_argument("--only", metavar="STAGES", help="run these stages only")
+    s.add_argument("--deep", action="store_true", help="also witness every predicted divergence in every runner")
+    s.add_argument("--measure", action="store_true", help="also measure every form's cost on this host")
+    s.add_argument("--stages", action="store_true", help="print the record of every stage per function")
+    s.add_argument("--verbose", action="store_true"); s.set_defaults(fn=cmd_translate)
     s = sub.add_parser("lift-sweep", help="how much of a source tree lifts, and the first reason the rest does not")
     s.add_argument("path"); s.add_argument("--exclude", action="append", metavar="GLOB")
     s.add_argument("--langs"); s.add_argument("--top", type=int, default=25)

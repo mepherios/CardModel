@@ -33,6 +33,7 @@ cardmodel/                      the repository IS the model (its home)
 │   │   ├── runners.py          compile/run with cache and timeouts; call protocol (python, node)
 │   │   ├── conformance.py      op x language matrix through real toolchains
 │   │   ├── translate.py        Python function -> function card -> verified forms in every language
+│   │   ├── pipeline.py         the stage registry (cards/stage): every stage that applies to an input runs or says why (CM50)
 │   │   ├── rewrite.py          cheapest form (domain, availability, measured), suggestions, cost vectors
 │   │   ├── search.py           rewrite search: proofs (meet in the middle), cost-directed optimisation
 │   │   ├── exprs.py            expression strings <-> op trees, exact/real evaluation

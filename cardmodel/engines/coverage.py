@@ -137,6 +137,9 @@ def machines(ctx: Ctx, secs: dict) -> dict:
 
 
 def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
+    if name == "godel_impure":
+        from .pipeline import godel_impure
+        return godel_impure()
     st = ctx.store
     if name == "languages_fully_conformant":
         conf = secs.get("conformance")
@@ -265,6 +268,9 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "integrity_problems":
         it = secs.get("integrity")
         return len(it.get("problems", [])) if it and "problems" in it else None
+    if name == "pipeline_coverage_problems":
+        pp = secs.get("pipeline")
+        return len(pp.get("problems", [])) if pp and "problems" in pp else None
     if name in ("definition_coverage", "canonical_definitions", "actions_without_truth", "symbolic_instructions"):
         so = secs.get("sources")
         if not so:

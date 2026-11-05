@@ -1,0 +1,36 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/improve.py",
+    "cardmodel/engines/native.py",
+    "cardmodel/machine/native.py"
+  ],
+  "foundations": [
+    "D14"
+  ],
+  "group": "targets",
+  "laws": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "native",
+  "needs": [
+    "reference"
+  ],
+  "order": 190,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "native",
+  "scope": "function",
+  "statement": "The native path: the function's compiled form called through ctypes inside the box of verified inputs, the original outside it; the wrapper run on the vectors and compared with the reference.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "pure_function",
+    "source_is_reference",
+    "host:compiler"
+  ]
+}

@@ -692,12 +692,31 @@ def integration(ctx: Ctx, seed: int) -> str:
             f"{r['sections']} verify sections documented, generated docs in sync")
 
 
+def pipeline(ctx: Ctx, seed: int) -> str:
+    from . import pipeline as P
+    plan = P.stages(ctx)
+    _need(plan and all(s["run"] in P.STAGES for s in plan), "the stage registry is empty or names a missing stage (CM50)")
+    rec = P.run_source(ctx, P.FIXTURE, P.REFERENCE, label="fixture", langs=[P.REFERENCE], seed=seed, options={})
+    lifted = {n: f for n, f in rec["functions"].items() if f["facts"].get("lifted")}
+    _need(lifted, "no function of the pipeline's fixture lifted")
+    missing = sorted({s["name"] for s in plan} - set(next(iter(lifted.values()))["stages"]))
+    _need(not missing, f"stages without an entry on the fixture: {missing} (CM50)")
+    _need(not rec["coverage"]["problems"], f"the fixture's record has problems: {rec['coverage']['problems'][:3]} (CM50)")
+    per_group = {g: sum(1 for f in lifted.values() for s in plan if s["group"] == g
+                        and f["stages"][s["name"]]["status"] == "ran") for g in P.GROUPS}
+    idle = [g for g, k in per_group.items() if not k]
+    _need(not idle, f"no stage of group {idle} ran on any fixture function (CM50)")
+    ran = sum(per_group.values())
+    return (f"{len(plan)} stages; on the fixture's {len(lifted)} lifted functions {ran} stage runs across every group "
+            f"({', '.join(f'{g} {k}' for g, k in per_group.items())}), every other entry with its reason")
+
+
 CHECKS = {f.__name__: f for f in (card_store, honest_limits, witnesses, form_selection, boundaries, learning,
                                   translation, rewriting, law_discovery, theorems, lean, logic, card_language,
                                   self_theory, function_algebra, redefinitions, improve, resources, game_design,
                                   world, machines, symbolic_instructions, emulation, arcade, live_hub, godel_model,
                                   distillation, four_sources, witness_tiers, formal_core, unreal_math, anyps5,
-                                  self_run, integration)}
+                                  self_run, integration, pipeline)}
 
 
 def run(ctx: Ctx, seed: int = 0, names: list[str] | None = None) -> dict:

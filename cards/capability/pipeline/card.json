@@ -1,0 +1,35 @@
+{
+  "category": "capability",
+  "check": "pipeline",
+  "commands": [
+    "cardmodel translate",
+    "cardmodel pipeline"
+  ],
+  "core": true,
+  "docs": [
+    "docs/PIPELINE.md"
+  ],
+  "laws": [
+    "law/CM50_every_applicable_stage_runs"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "modules": [
+    "cardmodel/engines/pipeline.py"
+  ],
+  "name": "pipeline",
+  "order": 35,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "statement": "The main path is a registry: every stage of the input-to-output pipeline is a card with the facts under which it applies, the runner computes which stages apply to each input and runs all of them, and the coverage check fails when an engine is unreachable from the path without a stated reason.",
+  "tests": [
+    "tests/test_pipeline.py::test_every_applicable_stage_runs_or_says_why",
+    "tests/test_pipeline.py::test_coverage_catches_an_unnamed_stage_function",
+    "tests/test_pipeline.py::test_coverage_catches_a_dead_hypothesis"
+  ],
+  "tier": 0,
+  "usefulness": "Nothing the model can do is left out of a translation by oversight: each step either runs or says why not."
+}
