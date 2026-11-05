@@ -54,7 +54,7 @@ def resolve_language(store, name: str) -> dict:
     base_name = data.get("extends")
     if base_name:
         base = resolve_language(store, base_name)
-        for key in ("codegen", "runner", "probe", "family", "extensions"):
+        for key in ("codegen", "runner", "probe", "family", "extensions", "numeric"):
             if key in base and key not in data:
                 data[key] = base[key]
             elif isinstance(base.get(key), dict) and isinstance(data.get(key), dict):

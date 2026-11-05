@@ -16,7 +16,8 @@
                                            rewrites; effectful code byte-identical; native forms for every language
   cardmodel arena [--count N] [--seed S]   generate a suboptimal program, improve it, score soundness/recall/speed
   cardmodel show CARD | list [REGISTRY] | probe | new REGISTRY NAME | docs [--check] | clean
-  cardmodel env [--measure|--static]       this machine as an environment card: identity, cache levels, bandwidth
+  cardmodel env [--measure|--static|--numeric]  this machine as an environment card: identity, cache levels,
+                                           bandwidth; --numeric: every runner's numeric model, probed
 
   the model runs itself (engines/selfrun.py, docs/AUTONOMY.md):
   cardmodel self run [--only STEPS] [--force]   one cycle: capabilities, integrity, verify, learn, laws, algebra,

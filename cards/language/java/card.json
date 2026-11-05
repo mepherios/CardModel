@@ -38,8 +38,8 @@
       "cm_li_print": "    static void cm_li_print(long[] xs) { System.out.println(\"l:\" + xs.length); for (long v : xs) System.out.println(\"i:\" + v); }",
       "cm_max_f": "    static double cm_max_f(double a, double b) { return b > a ? b : a; }",
       "cm_min_f": "    static double cm_min_f(double a, double b) { return b < a ? b : a; }",
-      "cm_powmod": "    static long cm_powmod(long a, long b, long m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } long r = Math.floorMod(1L, m); a = Math.floorMod(a, m); while (b > 0) { if ((b & 1) == 1) r = Math.floorMod(r * a, m); a = Math.floorMod(a * a, m); b >>= 1; } return r; }",
-      "cm_modinv": "    static long cm_modinv(long a, long m) { long n = Math.abs(m); long r0 = Math.floorMod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { long q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) throw new ArithmeticException(\"base is not invertible\"); return Math.floorMod(s0, n); }"
+      "cm_modinv": "    static long cm_modinv(long a, long m) { long n = Math.abs(m); long r0 = Math.floorMod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { long q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) throw new ArithmeticException(\"base is not invertible\"); return Math.floorMod(s0, n); }",
+      "cm_powmod": "    static long cm_powmod(long a, long b, long m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } long r = Math.floorMod(1L, m); a = Math.floorMod(a, m); while (b > 0) { if ((b & 1) == 1) r = Math.floorMod(r * a, m); a = Math.floorMod(a * a, m); b >>= 1; } return r; }"
     },
     "if": "if ({cond}) {{",
     "import": "import @name@;\n",
@@ -97,7 +97,6 @@
   ],
   "family": "c_like",
   "frontend": "cardmodel.engines.frontend_text",
-  "frontend_link": "class_per_file",
   "frontend_harness": {
     "arg_cast": "(({type})({v}))",
     "hoist": "^\\s*import\\s",
@@ -119,11 +118,24 @@
       ]
     ]
   },
+  "frontend_link": "class_per_file",
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "660ec897eee8b0c0aa80e900922a339fbc7c5c356229703688e9288f1c22a2e8",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "java",
+  "numeric": {
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "off",
+      "reassociate": false,
+      "strict": true
+    },
+    "float_text": "roundtrip",
+    "source": "JEP 306 (Java 17): every float operation is strict IEEE 754; Double.toString reads back to the same double"
+  },
   "probe": {
     "kind": "executable",
     "min_version": "11.0",

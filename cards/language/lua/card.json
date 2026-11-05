@@ -101,9 +101,21 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "cf693facf43728474516e21959bc5fced717f2a5c1227f6088b70cba958c65fd",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "lua",
+  "numeric": {
+    "default": {
+      "denormal_flush": false,
+      "fp_contract": "off",
+      "reassociate": false,
+      "strict": true
+    },
+    "float_text": "roundtrip",
+    "source": "the Lua VM executes one arithmetic instruction per op (nothing to fuse); '%.17g' round-trips"
+  },
   "probe": {
     "kind": "executable",
     "min_version": "5.4",

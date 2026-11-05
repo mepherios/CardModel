@@ -1,0 +1,58 @@
+{
+  "applies_to": [
+    "environment"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "environment",
+  "provenance": {
+    "origin": "cardmodel",
+    "read_for": "docs/ENVIRONMENTS.md D15, D17, E21"
+  },
+  "schema": {
+    "properties": {
+      "capabilities": {
+        "additionalProperties": {
+          "properties": {
+            "evidence": {
+              "enum": [
+                "measured",
+                "declared",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "value",
+            "evidence"
+          ],
+          "type": "object"
+        },
+        "type": "object"
+      },
+      "fingerprint": {
+        "type": "string"
+      },
+      "identity": {
+        "type": "object"
+      },
+      "role": {
+        "enum": [
+          "generator",
+          "runner"
+        ]
+      }
+    },
+    "required": [
+      "role",
+      "fingerprint",
+      "identity",
+      "capabilities"
+    ],
+    "type": "object"
+  },
+  "statement": "An environment (D15): a machine's declared identity and its capabilities, each a value with the tier of its evidence (D17: capabilities are hypotheses of the laws applied for that environment).",
+  "tier": 0
+}
