@@ -28,8 +28,8 @@
     "player profiles (controls per person)"
   ],
   "metadata": {
-    "previous_content_hash": "e3e171d987502b8f62a8515617eda8c38d2140494e49bd85eccbc82eeca39c68",
-    "version": "1.0.1",
+    "previous_content_hash": "be2fd501b440f637114f18e84f75f3edeb52c868ac9c51a20c6c443cc137e798",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "name": "arcade_launcher",
@@ -57,7 +57,7 @@
   "statement": "The Steam-like launcher: store, library, downloads and updates for everything the card model plays natively, with the player's own controls and any controller.",
   "tier": 1,
   "title": "Cardmodel Arcade",
-  "updated": "2026-11-03T23:57:56+01:00",
+  "updated": "2026-11-05T11:40:00+01:00",
   "user_actions": [
     {
       "action": "Update the Game Boy Player, the DS Player and Vector Duel in Cardmodel Arcade (Library: Update)",

@@ -24,7 +24,8 @@
     "pairing through the iPhone Simulator's own screen over the local network; a paired token opens only the store, its builds, the pages, the library and its cartridges",
     "a list of installed programs that plays them without the Mac",
     "the review's findings fixed: devices.json under a lock, codes typed as shown or in any script's digits, malformed requests answered, bounded request bodies and network timeouts, no CORS on cartridges, damaged zips refused, ids and manifest paths checked, unique device names, touch on the touch screen while a controller is in use, sound back after interruptions, steadier frame pacing",
-    "tests/test_arcade_ios.py: 28 tests"
+    "tests/test_arcade_ios.py: 28 tests",
+    "merged into main on 2026-11-05 (the user's yes): claude/epic-bun-008aca on top of the 32-PR merge pass"
   ],
   "goal": "Cardmodel Arcade on iPhone and iPad: every game and console player built from its cards for iOS, installed through the Mac's store and played on the device with touch, a keyboard or a controller.",
   "in_progress": [],
@@ -34,11 +35,15 @@
     "the DS player on iOS (its touch screen is wired in the shell, not yet run)",
     "branch versions for iOS (a branch builds for its program's own platform only)"
   ],
+  "metadata": {
+    "previous_content_hash": "2337b304c50ccaeac9ec97d1cb5e4aae0f4d6292ef43cf45cef9b021f4cfbf0b",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
   "name": "arcade_ios",
   "next_steps": [
     "with the user's team in Xcode: build for ios-iphoneos, install on the device, pair it (cardmodel arcade pair) and run the same checks over the local network",
-    "launcher --platform ios --check nds_player with a DS cartridge from the library",
-    "ask the integrating session for the merge (with the games branch it already contains: f93cd36, c9f9034)"
+    "launcher --platform ios --check nds_player with a DS cartridge from the library"
   ],
   "order": 31,
   "owner": {
@@ -61,7 +66,7 @@
   "statement": "Cardmodel Arcade on iPhone and iPad: the iOS platform card (the Simulator, a device, Mac Catalyst), every game and console player built for it from the cards, and an iOS launcher that installs those builds from the Mac's arcade service and plays them inside itself.",
   "tier": 1,
   "title": "Cardmodel Arcade on iPhone and iPad",
-  "updated": "2026-10-22T18:32:35+02:00",
+  "updated": "2026-11-05T11:40:00+01:00",
   "user_actions": [
     {
       "action": "Add your Apple ID to Xcode (Xcode -> Settings -> Accounts) and choose the development team the iPhone and iPad builds are signed with",
