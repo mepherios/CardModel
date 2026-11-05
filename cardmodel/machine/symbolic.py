@@ -236,6 +236,9 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
     from . import native as N
     if canonical not in ("stored", "distill", None):
         raise ValueError(f"canonical must be 'stored', 'distill' or None, not {canonical!r}")
+    if I.isa_card(ctx.store, isa).get("operand_param"):
+        # an ISA decoded from the instruction word (ARM/Thumb): terms per sampled encoding; no stored canonical forms
+        return {**check_arm(ctx, isa, seed=seed, samples=samples, only=only), "canonical": {}, "distilled": {}}
     mod, cards = module(ctx, isa)
     ex = Executor(ctx, mod)
     m = N.load(ctx, Bd.module(ctx, f"{isa}_bench"), N.resolve_engine(ctx, "host"))
