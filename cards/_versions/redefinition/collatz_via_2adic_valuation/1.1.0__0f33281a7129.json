@@ -1,0 +1,76 @@
+{
+  "category": "redefinition",
+  "condition": "n > 0 and n % 2 == 0",
+  "cost_score": 8,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "integer",
+  "examples": [
+    {
+      "input": {
+        "n": 8
+      },
+      "source_eval": 4,
+      "target_eval": 1
+    },
+    {
+      "input": {
+        "n": 24
+      },
+      "source_eval": 12,
+      "target_eval": 3
+    },
+    {
+      "input": {
+        "n": 64
+      },
+      "source_eval": 32,
+      "target_eval": 1
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "note": "Strip all powers of 2 in one step: for even n, repeatedly halve until odd. Equivalent to applying T exactly v_2(n) times. This is the 'jump' Collatz map. WARNING: the redefinition is NOT a single T step; it is the composition T^{v_2(n)}. It only agrees with the conjecture at the level of orbits, not steps. Mismatch in examples is intentional and documents this.",
+    "previous_content_hash": "9dda7b3af1076ecf009ffde3112b3050d523784a6c3ef53df2841ca9b140cd04",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "collatz_via_2adic_valuation",
+  "pheros_path": "redefinition/collatz_via_2adic_valuation",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "collatz_workbench_2adic_definition",
+  "provenance": "derived_from_card",
+  "source_form": "T(n)",
+  "status": "suspect",
+  "tags": [
+    "2-adic",
+    "collatz",
+    "redefinition"
+  ],
+  "target_form": "n // 2**v_2(n)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 3,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "not_simplified_to_zero",
+      "valid_points": 0,
+      "verdict": "inconclusive"
+    }
+  },
+  "witness_kind": "axiomatic"
+}

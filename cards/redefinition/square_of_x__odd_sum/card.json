@@ -16,9 +16,9 @@
   "is_identity_redefinition": true,
   "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
   "metadata": {
-    "previous_content_hash": "a0bcb532744d6cdd4e42dd7b0832e06299d364ff63ae64104dd0551ee28a6d03",
-    "version": "1.1.0",
-    "version_bump_reason": "minor"
+    "previous_content_hash": "3dcaac87be0bb34d7dec504ec8a376c7054d85d53590adc61f7a8d3e74e4a74f",
+    "version": "1.1.1",
+    "version_bump_reason": "patch"
   },
   "name": "square_of_x__odd_sum",
   "pheros_path": "redefinition/square_of_x__odd_sum",
@@ -33,7 +33,7 @@
   "provenance": "derived_from_card",
   "rationale_for_identity": "Corpus card (tag=test_corpus): represents one canonical member of an equivalence class. source_form == target_form is the identity element of the class, not a vacuous rewrite. Detector exempt per VAC-F heuristic refinement.",
   "source_form": "Sum(2*i-1, (i,1,x)).doit()",
-  "status": "suspect",
+  "status": "healthy",
   "tags": [
     "odd_sum",
     "square_of_x",
@@ -42,7 +42,7 @@
   ],
   "target_form": "Sum(2*i-1, (i,1,x)).doit()",
   "verification": {
-    "date": "2026-10-21",
+    "date": "2026-11-05",
     "numeric": {
       "examples": {
         "agree": 0,
@@ -50,10 +50,9 @@
         "incomplete": 0,
         "total": 0
       },
-      "seed": 1210246382,
-      "symbolic": "proved",
-      "valid_points": 0,
-      "verdict": "inconclusive"
+      "seed": 4072723141,
+      "valid_points": 40,
+      "verdict": "verified"
     }
   },
   "witness_kind": "symbolic"

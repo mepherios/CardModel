@@ -1,0 +1,76 @@
+{
+  "category": "redefinition",
+  "condition": "n > 0 and n % 2 == 0",
+  "cost_score": 8,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "integer",
+  "examples": [
+    {
+      "input": {
+        "n": 8
+      },
+      "source_eval": 1,
+      "target_eval": 1
+    },
+    {
+      "input": {
+        "n": 24
+      },
+      "source_eval": 3,
+      "target_eval": 3
+    },
+    {
+      "input": {
+        "n": 64
+      },
+      "source_eval": 1,
+      "target_eval": 1
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "note": "The 'jump' Collatz map: for even n, strip every factor of 2 in one step, n / 2**v_2(n) (v_2 is the 2-adic valuation, sympy's multiplicity(2, n)); that is the plain map T applied v_2(n) times, so it agrees with the conjecture's orbits, not its single steps. The redefinition is its bit-level form: n & -n is the lowest set bit of n, which is 2**v_2(n). The earlier source form T(n) named an undefined function and was one T step, not the jump.",
+    "previous_content_hash": "0f33281a712980051a5bbcee0c66b307aa21f9578df0c57fb48c55e91c36bca8",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "collatz_via_2adic_valuation",
+  "pheros_path": "redefinition/collatz_via_2adic_valuation",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "collatz_workbench_2adic_definition",
+  "provenance": "derived_from_card",
+  "source_form": "n // 2**multiplicity(2, n)",
+  "status": "suspect",
+  "tags": [
+    "2-adic",
+    "collatz",
+    "redefinition"
+  ],
+  "target_form": "n // (n & -n)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 3,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "not_simplified_to_zero",
+      "valid_points": 0,
+      "verdict": "inconclusive"
+    }
+  },
+  "witness_kind": "axiomatic"
+}

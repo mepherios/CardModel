@@ -14,7 +14,8 @@
     "claude/ci-*",
     "claude/stdin-harness",
     "claude/go-negzero",
-    "claude/strings-ir"
+    "claude/strings-ir",
+    "claude/self-report-*"
   ],
   "category": "project",
   "docs": [
@@ -38,7 +39,8 @@
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
     "signed zero in every target: Go's -0.0 literal, C's (--x), JS printing -0, ceil/floor/trunc and Ruby sqrt of zeros; the matrix compares zeros by sign (claude/go-negzero, local until CI billing is fixed)",
-    "strings in the IR (HANDOVER 8.2; claude/strings-ir, local until CI billing is fixed)"
+    "strings in the IR (HANDOVER 8.2; claude/strings-ir, local until CI billing is fixed)",
+    "claude/self-report-next (draft PR): the self-report's top fixable item, G_C4: the four inconclusive redefinitions get exact forms (exprs: fibonacci, multiplicity, bounded Sum), 107 -> 111 verified"
   ],
   "kind": "program",
   "left": [
@@ -47,8 +49,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "9dee32ad4093d7d719218b6dd5567116d7128257041e5f6adfa793440ee5bf2c",
-    "version": "2.0.21",
+    "previous_content_hash": "8a5a03260b2d0d71574e698ee224e3d059f9f6c07ec9b3fcb1a23f84d573e4e1",
+    "version": "2.0.22",
     "version_bump_reason": "patch"
   },
   "metrics": [

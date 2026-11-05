@@ -1,0 +1,92 @@
+{
+  "category": "redefinition",
+  "condition": "(_n >= 0) & (_n <= 70)",
+  "cost_score": 60,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "integer",
+  "examples": [
+    {
+      "input": {
+        "_n": 0
+      },
+      "source_eval": 0,
+      "target_eval": 0
+    },
+    {
+      "input": {
+        "_n": 1
+      },
+      "source_eval": 1,
+      "target_eval": 1
+    },
+    {
+      "input": {
+        "_n": 10
+      },
+      "source_eval": 55,
+      "target_eval": 55
+    },
+    {
+      "input": {
+        "_n": 15
+      },
+      "source_eval": 610,
+      "target_eval": 610
+    },
+    {
+      "input": {
+        "_n": 20
+      },
+      "source_eval": 6765,
+      "target_eval": 6765
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "fx_c_narrowed": true,
+    "previous_content_hash": "06b20ce61dd9afc05e60d60ac7b8af894bae8a0d98f1b7aefd4a64d4088ea4a3",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "fibonacci_closed_form",
+  "pheros_path": "redefinition/fibonacci_closed_form",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "axiomatic:binet-formula-derived-from-characteristic-polynomial-x^2=x+1",
+  "provenance": "derived_from_card",
+  "source_form": "fibonacci(_n)",
+  "status": "suspect",
+  "tags": [
+    "binet",
+    "closed-form",
+    "fibonacci",
+    "linear-recurrence",
+    "rt-a5-seed"
+  ],
+  "target_form": "((1 + sqrt(5))/2)**_n / sqrt(5) - ((1 - sqrt(5))/2)**_n / sqrt(5)",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 5,
+        "total": 5
+      },
+      "seed": 1210246382,
+      "symbolic": "not_simplified_to_zero",
+      "valid_points": 0,
+      "verdict": "inconclusive"
+    }
+  },
+  "witness_kind": "axiomatic"
+}

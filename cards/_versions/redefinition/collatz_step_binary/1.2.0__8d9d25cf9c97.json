@@ -1,0 +1,77 @@
+{
+  "category": "redefinition",
+  "condition": "n > 0",
+  "cost_score": 5,
+  "derivation_source": "external_documentation_and_mod_source_observation",
+  "domain": "integer",
+  "examples": [
+    {
+      "input": {
+        "n": 6
+      },
+      "source_eval": 3,
+      "target_eval": 3
+    },
+    {
+      "input": {
+        "n": 7
+      },
+      "source_eval": 11,
+      "target_eval": 11
+    },
+    {
+      "input": {
+        "n": 27
+      },
+      "source_eval": 41,
+      "target_eval": 41
+    }
+  ],
+  "flaws": [
+    "monolingual: only one language variant on disk; lifting_plan: add second variant when needed"
+  ],
+  "former_provenance": "bootstrap_seed",
+  "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
+  "metadata": {
+    "note": "The 'compressed' Collatz map T_c, often used in the literature: T_c(n) = n/2 for even n and (3n+1)/2 for odd n, folding the halving that always follows 3n+1 (3n+1 is even when n is odd) into the step. The redefinition is its bit-level form: the parity test is n & 1 and both halvings are exact shifts. T_c reaches 1 iff the plain map T does, and cycles transfer, but T_c is not one T step (T(7) = 22, T_c(7) = 11); the earlier source form T(n) named an undefined function, so the card could not be evaluated, and it would have compared two different maps.",
+    "previous_content_hash": "550375d22dcaf5ad5ca16ea31dcaa256899c81f17ffe07ba96856502da3e0938",
+    "version": "1.2.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "collatz_step_binary",
+  "pheros_path": "redefinition/collatz_step_binary",
+  "platforms": [
+    "windows",
+    "linux",
+    "ubuntu",
+    "macos",
+    "ios"
+  ],
+  "proof_ref": "math_problem_collatz",
+  "provenance": "derived_from_card",
+  "source_form": "n / 2 if n % 2 == 0 else (3*n + 1) / 2",
+  "status": "suspect",
+  "tags": [
+    "T_compressed",
+    "binary",
+    "collatz",
+    "redefinition"
+  ],
+  "target_form": "n >> 1 if (n & 1) == 0 else (3*n + 1) >> 1",
+  "verification": {
+    "date": "2026-10-21",
+    "numeric": {
+      "examples": {
+        "agree": 0,
+        "disagree": 0,
+        "incomplete": 3,
+        "total": 3
+      },
+      "seed": 1210246382,
+      "symbolic": "error:TypeError",
+      "valid_points": 0,
+      "verdict": "inconclusive"
+    }
+  },
+  "witness_kind": "exhaustive"
+}

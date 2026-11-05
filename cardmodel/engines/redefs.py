@@ -49,7 +49,8 @@ from functools import lru_cache
 
 from . import probes
 from . import values as V
-from .exprs import EvalError, ParseError, UnknownName, evaluate, parse, variables
+from .exprs import EXACT_FUNCS as _EXACT_FUNCS
+from .exprs import EvalError, ParseError, UnknownName, evaluate, parse, sum_terms, variables
 
 MIN_VALID = 8
 REAL_TOL = 1e-7
@@ -369,7 +370,7 @@ PRECISE = {"sqrt": _hp_sqrt, "exp": _hp_exp, "log": _hp_log, "log2": _hp_log_bas
        "asinh": _hp_asinh, "acosh": _hp_acosh, "atanh": _hp_atanh, "hypot": _hp_hypot,
        "erf": _hp_erf, "gamma": _hp_gamma}
 _ARITY = {"log": (1, 2), "atan2": (2,), "hypot": None}       # None: any number; otherwise 1
-EXACT_FUNCS = {"abs", "max", "min", "gcd", "lcm", "factorial", "comb", "mod", "floor", "ceil", "isqrt", "Ne", "Eq"}
+EXACT_FUNCS = set(_EXACT_FUNCS)   # functions evaluated on exact arguments (exprs keeps the one list)
 _ARGS = [["var", f"\0{i}"] for i in range(64)]
 
 
@@ -415,6 +416,12 @@ def exact_value(tree, env: dict, digits: int | None = None):
         if digits is None:
             raise _Inexact(tree[1])
         return _hp_const(tree[1], digits)
+    if head == "SUM":                       # a finite sum: every term exact, the bound variable bound per term
+        sign, rng = sum_terms(exact_value(tree[2], env, digits), exact_value(tree[3], env, digits))
+        total = Fraction(0)
+        for k in rng:
+            total += exact_value(tree[4], {**env, tree[1][1]: Fraction(k)}, digits)
+        return sign * total
     args = [exact_value(a, env, digits) for a in tree[(2 if head == "FN" else 1):]]
     if head == "FN" and tree[1] in PRECISE:
         if digits is None:

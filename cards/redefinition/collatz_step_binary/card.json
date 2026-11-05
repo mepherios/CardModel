@@ -16,14 +16,14 @@
       "input": {
         "n": 7
       },
-      "source_eval": 22,
+      "source_eval": 11,
       "target_eval": 11
     },
     {
       "input": {
         "n": 27
       },
-      "source_eval": 82,
+      "source_eval": 41,
       "target_eval": 41
     }
   ],
@@ -33,10 +33,10 @@
   "former_provenance": "bootstrap_seed",
   "lifting_plan": "Currently hand-authored. Path to observation-derived: (1) instrument target program/framework via eBPF/Frida/tracer; (2) observe actual primitives invoked; (3) derive redefinition from observed sequences. The hand-authored card is a hypothesis to validate.",
   "metadata": {
-    "note": "This is the 'compressed' Collatz map T_c often used in the literature: it folds the obligatory n+1 -> (3n+1)/2 step (since 3n+1 is even when n is odd) into a single bit-level operation. T_c reaches 1 iff T reaches 1; cycles transfer. Used as a step-count optimization, not a structural proof step. Mismatch in examples: T(7)=22, T_c(7)=11 -- they agree only on even arguments.",
-    "previous_content_hash": "0b029900ee54d95c43476030103c28914e05ed0b4e345b29105782150bcc598a",
-    "version": "1.1.0",
-    "version_bump_reason": "minor"
+    "note": "The 'compressed' Collatz map T_c, often used in the literature: T_c(n) = n/2 for even n and (3n+1)/2 for odd n, folding the halving that always follows 3n+1 (3n+1 is even when n is odd) into the step. The redefinition is its bit-level form: the parity test is n & 1 and both halvings are exact shifts. T_c reaches 1 iff the plain map T does, and cycles transfer, but T_c is not one T step (T(7) = 22, T_c(7) = 11); the earlier source form T(n) named an undefined function, so the card could not be evaluated, and it would have compared two different maps.",
+    "previous_content_hash": "8d9d25cf9c97a2d5f83ab8c258599dea5d4d7c0e9f68d69c279aa4ee58af53ba",
+    "version": "1.2.1",
+    "version_bump_reason": "patch"
   },
   "name": "collatz_step_binary",
   "pheros_path": "redefinition/collatz_step_binary",
@@ -49,28 +49,27 @@
   ],
   "proof_ref": "math_problem_collatz",
   "provenance": "derived_from_card",
-  "source_form": "T(n)",
-  "status": "suspect",
+  "source_form": "n / 2 if n % 2 == 0 else (3*n + 1) / 2",
+  "status": "healthy",
   "tags": [
     "T_compressed",
     "binary",
     "collatz",
     "redefinition"
   ],
-  "target_form": "Piecewise(Eq(n & 1, 0), n >> 1, (3*n + 1) >> 1)",
+  "target_form": "n >> 1 if (n & 1) == 0 else (3*n + 1) >> 1",
   "verification": {
-    "date": "2026-10-21",
+    "date": "2026-11-05",
     "numeric": {
       "examples": {
-        "agree": 0,
+        "agree": 3,
         "disagree": 0,
-        "incomplete": 3,
+        "incomplete": 0,
         "total": 3
       },
-      "seed": 1210246382,
-      "symbolic": "error:TypeError",
-      "valid_points": 0,
-      "verdict": "inconclusive"
+      "seed": 4072723141,
+      "valid_points": 40,
+      "verdict": "verified"
     }
   },
   "witness_kind": "exhaustive"
