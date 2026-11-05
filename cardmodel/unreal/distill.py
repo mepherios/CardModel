@@ -27,6 +27,7 @@ from __future__ import annotations
 import re
 from collections import Counter, defaultdict
 
+from ..engines import godel as G
 from ..engines import realnorm as RN
 
 # the engine's own organisation: a type (record) names a use; FMath and free functions are read by name
@@ -95,54 +96,24 @@ def use_of(f: dict) -> str:
 
 
 def content(term) -> Counter:
-    """Operations of a term with multiplicity, as ledger atoms (``op/NAME``); constants and variables are not
-    atoms (godel.py's rule). Multiplicity is the term's as a tree; shared subterms are counted once and scaled."""
-    memo: dict[int, Counter] = {}
-
-    def go(x) -> Counter:
-        if not (isinstance(x, list) and x and isinstance(x[0], str) and x[0] not in RN.LEAVES):
-            return Counter()
-        hit = memo.get(id(x))
-        if hit is not None:
-            return hit
-        c = Counter({f"op/{x[0]}": 1})
-        for a in x[1:]:
-            if isinstance(a, list):
-                c.update(go(a))
-        memo[id(x)] = c
-        return c
-    return Counter(go(term))
+    """Operations of a term with multiplicity, as ledger atoms (``op/NAME``): engines/godel.term_content over every
+    head, since a canonical real term has no signature of its own. Constants and variables are not atoms; a
+    shared subterm counts once per reference, computed once."""
+    return G.term_content(term, None)
 
 
 MAX_TOKENS = 4096
 
 
 def tokens(term, index: dict, names: list[str]) -> list[int] | None:
-    """Gödel's positional tokens of a term (godel.py's scheme: atom k -> 3k+1, integer c -> 3*zig(c)+2,
-    variable j -> 3j+3); None when an atom is not in the ledger or the term is past MAX_TOKENS (its number is
-    still defined, but not written out)."""
-    if _size(term) > MAX_TOKENS:
+    """Gödel's positional tokens of a term (engines/godel.tokens: atom k -> 3k+1, integer c -> 3*zig(c)+2,
+    variable j -> 3j+3; a bool constant as the integer the real view converts it to); None when an atom is not in
+    the ledger, a float constant appears, or the term is past MAX_TOKENS (its number is still defined, but not
+    written out)."""
+    try:
+        return G.tokens(term, index, names, max_tokens=MAX_TOKENS, bools_as_ints=True)
+    except (KeyError, ValueError):
         return None
-    out: list[int] = []
-    stack = [term]
-    while stack:
-        t = stack.pop()
-        if t[0] == "var":
-            if t[1] not in names:
-                names.append(t[1])
-            out.append(3 * (names.index(t[1]) + 1))
-        elif t[0] in ("int", "bool"):
-            v = int(t[1])
-            out.append(3 * (2 * v if v >= 0 else -2 * v - 1) + 2)
-        elif t[0] == "float":
-            return None
-        else:
-            e = index.get(f"op/{t[0]}")
-            if e is None:
-                return None
-            out.append(3 * e["index"] + 1)
-            stack.extend(reversed(t[1:]))
-    return out
 
 
 NUMBER_DIGITS = 400
@@ -267,8 +238,8 @@ def run(scan: dict, index: dict) -> dict:
         if "content" in r and r["content"]:
             c = Counter(r["content"])
             u["lifted"] += 1
-            u["gcd"] = c if u["gcd"] is None else Counter({a: min(u["gcd"][a], c[a]) for a in u["gcd"] if a in c})
-            u["lcm"] = Counter({a: max(u["lcm"][a], c[a]) for a in set(u["lcm"]) | set(c)})
+            u["gcd"] = c if u["gcd"] is None else G.gcd(u["gcd"], c)
+            u["lcm"] = G.lcm(u["lcm"], c)
     for u in uses.values():
         u["gcd"] = dict(+(u["gcd"] or Counter()))
         u["lcm"] = dict(+u["lcm"])
@@ -291,7 +262,7 @@ def run(scan: dict, index: dict) -> dict:
             carry[a] = r["content"]
         else:
             gap[a] = f.get("cause") or f["status"]
-    disjoint = _disjoint(carry)
+    disjoint = G.preserves_gcd(carry)
     # the named view: each function's calls as atoms of the engine's set
     named = {}
     for f in lifted:
@@ -304,16 +275,6 @@ def run(scan: dict, index: dict) -> dict:
     return {"rows": rows, "identities": identities, "uses": uses, "carry": {"image": carry, "gap": gap,
                                                                               "preserves_gcd": disjoint},
             "named": named}
-
-
-def _disjoint(mapping: dict) -> bool:
-    seen: set = set()
-    for v in mapping.values():
-        sup = {k for k, e in v.items() if e}
-        if sup & seen:
-            return False
-        seen |= sup
-    return True
 
 
 def new_atoms(scan: dict, index: dict) -> list[str]:

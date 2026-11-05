@@ -38,6 +38,13 @@ class FuncAlgTest(unittest.TestCase):
         self.assertEqual(closed.code(), loop.code())
         self.assertEqual(closed.godel(), loop.godel())
         self.assertEqual(F.godel_decode(loop.godel()), loop.code())
+        # a number that is not a code decodes to its prefix at once, never factoring past the first absent prime
+        # (2 * a large prime used to factor the large prime first)
+        import time
+        t0 = time.monotonic()
+        self.assertEqual(F.godel_decode(2 * 1000000007), [0])
+        self.assertEqual(F.godel_decode(1), [])
+        self.assertLess(time.monotonic() - t0, 1.0)
         # the GCD of functions and what carries
         r = F.gcd_functions(F.fit(T), loop)
         self.assertEqual(r["values"]["common_factor"], "n^2 + n")
