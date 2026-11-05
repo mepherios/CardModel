@@ -116,22 +116,6 @@ def tokens(term, index: dict, names: list[str]) -> list[int] | None:
         return None
 
 
-NUMBER_DIGITS = 400
-
-
-def number(c: Counter, index: dict) -> str | None:
-    """prod p ** e as a decimal string when it has at most NUMBER_DIGITS digits; past that, None (the content
-    vector is its exact factorization; ``digits`` gives its size)."""
-    if any(a not in index for a in c):
-        return None
-    if digits(c, index) > NUMBER_DIGITS:
-        return None
-    n = 1
-    for a, e in c.items():
-        n *= index[a]["prime"] ** e
-    return str(n)
-
-
 def digits(c: Counter, index: dict) -> int | None:
     import math
     if any(a not in index for a in c):
