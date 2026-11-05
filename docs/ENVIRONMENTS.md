@@ -393,6 +393,12 @@ FOUNDATIONS D1).
 1. **V-A. The environment card and the probes (E20, E21, E6).** The card schema, the CPU probe (`lscpu` or
    `sysctl`, the chase, the streaming copy) and the full fingerprint on every metric and witness card. The
    generator's own card is written on the first run; `resources.max_parallel` reads it. Measurable now.
+   *Status (2026-11-05):* the schema (`card_type/environment`), the probe and `cardmodel env` are in
+   (`engines/environment.py`). The card's name is `env_<fingerprint>` of the declared identity; every capability
+   carries its evidence (measured, declared, unknown). On the cloud host the chase took 5.5 s and found plateaus
+   at 64 KiB, 512 KiB, 1 MiB and 4 MiB against a declared 32 KiB L1, 1 MiB L2 and 33 MiB L3, with memory at about
+   140 ns and one-thread copy at 21 GB/s; under a shared hypervisor the plateaus move between runs. The fingerprint
+   on metric and witness cards and the budgets read from the card are the next PR.
 2. **V-B. Numeric-model cards and the three CPU-witnessed laws (E12, E13, E14).** `fp_contract`,
    `denormal_flush` and `reduction_order` as laws in ANALYSE's family, with rows for the existing runner variants,
    witnessed by §4's probes made into cards. The e-graph reads the float laws it may fire from the target's

@@ -1,0 +1,6 @@
+{
+  "defined_by": "cardmodel",
+  "description": "Environment cards (docs/ENVIRONMENTS.md D15, E21): one machine's declared identity and its capabilities, each with the tier of its evidence (measured, declared, unknown). The generator's own card is written by `cardmodel env` into the local layer (state/local/cards/environment, untracked); tracked cards here are declared runners.",
+  "name": "environment",
+  "tier": 1
+}
