@@ -576,6 +576,8 @@ def _godel_structure(cli, ctx, args, GD) -> int:
             return 2
         cli._out(args, {"term": term, "variables": names}, to_text(term))
         return 0
+    if args.action == "dimension":
+        return _godel_dimension(cli, ctx, args)
     targets = _godel_targets(ctx, args)
     if not targets:
         print("error: name a card, or give --expr", file=sys.stderr)
@@ -628,6 +630,45 @@ def _godel_structure(cli, ctx, args, GD) -> int:
     return 2
 
 
+def _godel_dimension(cli, ctx, args) -> int:
+    """The dimension of a physics_law card's sides, or of --expr with --dims (engines/dimensions.py, G13)."""
+    from .engines import dimensions as DM
+    model, derived = DM.model_of(ctx), DM.derived_of(ctx)
+    if not model:
+        print(f"error: no godel_set/{DM.SET} card states a dimension model (tools/seed_physics.py)", file=sys.stderr)
+        return 2
+    recs, lines = {}, []
+    for q in args.cards:
+        card = ctx.store.get(q)
+        if card is None or card.registry != DM.REGISTRY:
+            print(f"error: {q!r} is not a {DM.REGISTRY} card", file=sys.stderr)
+            return 2
+        r = DM.check_law(ctx, card, model, derived)
+        recs[card.qualified] = r
+        side = lambda d: DM.text(d) if d is not None else "?"  # noqa: E731
+        verdict = ("consistent" + (f", {r['name']}" if r["name"] else "")) if r["consistent"] else \
+            "inconsistent: " + "; ".join(r["problems"])
+        lines.append(f"{card.qualified} ({r['statement']}): lhs {side(r['lhs'])}, rhs {side(r['rhs'])}: {verdict}")
+    if args.expr:
+        from .engines.exprs import parse
+        try:
+            env = {k: DM.parse(v, derived) for k, v in (kv.split("=", 1) for kv in (args.dims or "").split(",") if kv)}
+        except ValueError as exc:
+            print(f"error: --dims: {exc}", file=sys.stderr)
+            return 2
+        problems: list[str] = []
+        d = DM.of(parse(args.expr), env, model, problems)
+        name = DM.name_of(d, derived) if d is not None else None
+        recs[args.expr] = {"dimension": DM.text(d) if d is not None else None, "name": name, "problems": problems}
+        lines.append(f"{args.expr}: " + ((DM.text(d) + (f" ({name})" if name and name != "1" else "")) if d is not None
+                                         else "no dimension: " + "; ".join(problems)))
+    if not recs:
+        print("error: name a physics_law card, or give --expr with --dims", file=sys.stderr)
+        return 2
+    cli._out(args, recs, "\n".join(lines))
+    return 0
+
+
 def cmd_godel(args) -> int:
     from collections import Counter
 
@@ -635,7 +676,7 @@ def cmd_godel(args) -> int:
     cli = _cli()
     ctx = cli._ctx(args)
     idx = GD.index_of(ctx.store)
-    if args.action in ("factor", "similar", "cofactor", "decode"):
+    if args.action in ("factor", "similar", "cofactor", "decode", "dimension"):
         return _godel_structure(cli, ctx, args, GD)
     if args.action == "sizes":
         from .engines import codes as CO
@@ -915,9 +956,10 @@ def register(sub) -> None:
     s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_sources)
     s = sub.add_parser("godel", help="the expanding Gödel model: the prime ledger, content vectors, GCD and LCM")
     s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm", "sizes", "factor", "similar", "cofactor",
-                                      "decode"])
+                                      "decode", "dimension"])
     s.add_argument("cards", nargs="*"); s.add_argument("--expr", help="an expression in place of a card")
     s.add_argument("--vars", help="decode: the variable names in order of first appearance, comma-separated")
+    s.add_argument("--dims", help="dimension: each variable's dimension, as m=mass,a=length/time^2")
     s.add_argument("--limit", type=int, default=20); s.set_defaults(fn=cmd_godel)
     from .game import cli as game_cli
     game_cli.register(sub)

@@ -1,0 +1,48 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "E": "energy",
+    "m": "mass",
+    "v": "velocity"
+  },
+  "lhs": [
+    "var",
+    "E"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "kinetic_energy",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "DIV",
+    [
+      "MUL",
+      [
+        "var",
+        "m"
+      ],
+      [
+        "POW",
+        [
+          "var",
+          "v"
+        ],
+        [
+          "int",
+          2
+        ]
+      ]
+    ],
+    [
+      "int",
+      2
+    ]
+  ],
+  "source": "classical mechanics",
+  "statement": "E = m·v² / 2",
+  "tier": 0
+}

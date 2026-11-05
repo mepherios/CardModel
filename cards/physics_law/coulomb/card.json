@@ -1,0 +1,57 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "F": "force",
+    "k": "coulomb_constant",
+    "q1": "charge",
+    "q2": "charge",
+    "r": "length"
+  },
+  "lhs": [
+    "var",
+    "F"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "coulomb",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "DIV",
+    [
+      "MUL",
+      [
+        "MUL",
+        [
+          "var",
+          "k"
+        ],
+        [
+          "var",
+          "q1"
+        ]
+      ],
+      [
+        "var",
+        "q2"
+      ]
+    ],
+    [
+      "POW",
+      [
+        "var",
+        "r"
+      ],
+      [
+        "int",
+        2
+      ]
+    ]
+  ],
+  "source": "Coulomb (1785)",
+  "statement": "F = k·q₁·q₂ / r²",
+  "tier": 0
+}

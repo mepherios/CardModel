@@ -1,0 +1,41 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "E": "energy",
+    "c": "velocity",
+    "m": "mass"
+  },
+  "lhs": [
+    "var",
+    "E"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "mass_energy",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "var",
+      "m"
+    ],
+    [
+      "POW",
+      [
+        "var",
+        "c"
+      ],
+      [
+        "int",
+        2
+      ]
+    ]
+  ],
+  "source": "Einstein (1905)",
+  "statement": "E = m·c²",
+  "tier": 0
+}
