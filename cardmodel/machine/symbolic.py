@@ -88,6 +88,10 @@ class Executor:
         if head in ("AND", "OR") and all(_const(a) for a in args):
             v = (_val(args[0]) and _val(args[1])) if head == "AND" else (_val(args[0]) or _val(args[1]))
             return ["bool", bool(v)]
+        if head in ("AND", "OR") and any(_const(a) and bool(_val(a)) == (head == "OR") for a in args):
+            # the absorbing element: ``x or True`` is True, ``x and False`` is False (an unrolled loop's constant
+            # index decides a guard, and the side it rules out must not run: it may index outside an array)
+            return ["bool", head == "OR"]
         if head in self.ops and head not in ("IF_EXPR", "AND", "OR") and args and all(_const(a) for a in args):
             try:
                 v = self.ops[head].fn(*[_val(a) for a in args])
