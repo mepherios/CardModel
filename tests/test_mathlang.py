@@ -235,6 +235,26 @@ class MathListsTest(unittest.TestCase):
         Interpreter(m, self.ctx.ops).call("bump", [xs, 0])
         self.assertEqual(xs, [5, 6])             # the caller's list is never written
 
+    def test_len_over_a_list_parameter(self):
+        """len(xs) bounds a Σ and divides a mean; without a signature the error says to add one."""
+        src = ("s : [ℤ] → ℤ\n"
+               "s(xs) = Σ_{i=0}^{len(xs) − 1} xs[i]\n"
+               "mean : [ℝ] → ℝ\n"
+               "mean(xs) = (Σ_{i=0}^{len(xs) − 1} xs[i]) / len(xs)\n"
+               "test s([1, 2, 3]) = 6\n"
+               "test mean([1.0, 2.0, 6.0]) = 3.0\n")
+        m = M.lift_text(src, self.ctx.ops)
+        self.assertEqual([r for r in M.run_tests(m, self.ctx.ops) if not r["ok"]], [])
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("s", [[]]), 0)
+        back = M.lift_text(M.emit_module(m), self.ctx.ops)
+        self.assertEqual(Interpreter(back, self.ctx.ops).call("mean", [[2.0, 4.0]]), 3.0)
+        for text, want in [("s(xs) = Σ_{i=0}^{len(xs) − 1} xs[i]\n", "`s : [ℤ] → ℤ`"),
+                           ("g(k, xs) = xs[k]\n", "`g : ℤ × [ℤ] → ℤ`")]:
+            with self.assertRaises(M.MathError) as cm:
+                M.lift_text(text, self.ctx.ops)
+            self.assertIn("has no signature", str(cm.exception))
+            self.assertIn(want, str(cm.exception))
+
     def test_tail_loops_over_a_list_run_in_constant_stack(self):
         m = M.lift_text(LISTS, self.ctx.ops)
         out = Interpreter(m, self.ctx.ops, step_limit=10_000_000).call("fill", [[0] * 5000, 0, 5000])
