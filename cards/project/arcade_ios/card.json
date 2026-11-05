@@ -1,0 +1,84 @@
+{
+  "blockers": [
+    "a real iPhone or iPad needs the user's Apple ID and development team in Xcode (a signing identity, a provisioning profile, Developer Mode on the device)"
+  ],
+  "branches": [
+    "claude/epic-bun-008aca*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/ARCADE.md"
+  ],
+  "done": [
+    "platform/ios: three targets (ios-iphonesimulator, ios-iphoneos, ios-maccatalyst), each with its SDK, triple, environment and signature; the library through the C language card with the target's flags; a UIKit effect shell (GameShell.swift, ShellMain.swift)",
+    "every game and console player builds for any platform card's target (cardmodel arcade build ID --platform KEY): the home platform keeps the depot pointer latest, every other key latest@KEY; the store pictures are drawn once per module and shared",
+    "the service answers with a platform's builds (?platform=KEY, or CardmodelPlatform/KEY in the User-Agent), each with its own build progress and remembered error; branch versions only for a program's own platform",
+    "the iOS launcher (app/arcade_ios): the Mac's pages in a web view with ui/touch.css (a phone gets one column), the Mac launcher's commands, installs with every chunk's and file's SHA-256 checked, an install queue, play inside the app, cartridges fetched from the Mac's library and cached by ETag",
+    "touch controls drawn from each game card's input (a pad, buttons where the gamepad mapping puts them, the touch screen's pointer), keyboards through the card's keys or the launcher's Controls file, game controllers, AVAudioEngine sound, saves flushed when the app leaves the screen",
+    "pairing over the local network: cardmodel arcade pair (a six-digit code, ten minutes, five tries), device tokens kept hashed in devices.json, every network request except the status and the pairing needs a token",
+    "cardmodel arcade launcher --platform ios [--install] [--check GAME [--rom ROMID]]: the launcher built, installed and opened in a Simulator, or run there headless",
+    "measured 2026-10-22: Vector Duel built for the Simulator in 44 s (9 files, ad hoc signed); as Mac Catalyst the iOS shell played Vector Duel 420 frames with a picture and save byte-identical to the macOS build, and the Game Boy Player played Oracle of Ages 900 frames identical to macOS",
+    "measured 2026-10-22 in the iOS 27.1 Simulator (iPhone Duo): --check vector_duel installed through the service (9 files verified) and played 420 frames byte-identical to the Mac's; --check gameboy_player fetched Oracle of Ages from the Mac's library and played 900 frames identical to the Mac's; the store page renders in one column",
+    "the decision written down with its trade-off (docs/ARCADE.md section 6): the iOS launcher reaches the Mac's arcade service over the network and bundles no games",
+    "checked in the iOS 27.0 Simulator on an iPhone 18 Pro Max and an iPad Pro 13-inch (M5): Vector Duel and Oracle of Ages installed through the service, verified and drawn byte-identical to the Mac's; on the iPad, the store, the library, Play, touch play and closing back to the library through the pages",
+    "pairing through the iPhone Simulator's own screen over the local network; a paired token opens only the store, its builds, the pages, the library and its cartridges",
+    "a list of installed programs that plays them without the Mac",
+    "the review's findings fixed: devices.json under a lock, codes typed as shown or in any script's digits, malformed requests answered, bounded request bodies and network timeouts, no CORS on cartridges, damaged zips refused, ids and manifest paths checked, unique device names, touch on the touch screen while a controller is in use, sound back after interruptions, steadier frame pacing",
+    "tests/test_arcade_ios.py: 28 tests"
+  ],
+  "goal": "Cardmodel Arcade on iPhone and iPad: every game and console player built from its cards for iOS, installed through the Mac's store and played on the device with touch, a keyboard or a controller.",
+  "in_progress": [],
+  "kind": "program",
+  "left": [
+    "a real iPhone or iPad: builds signed with the user's identity and a provisioning profile, installed on the device, paired with the Mac over the local network",
+    "the DS player on iOS (its touch screen is wired in the shell, not yet run)",
+    "branch versions for iOS (a branch builds for its program's own platform only)"
+  ],
+  "name": "arcade_ios",
+  "next_steps": [
+    "with the user's team in Xcode: build for ios-iphoneos, install on the device, pair it (cardmodel arcade pair) and run the same checks over the local network",
+    "launcher --platform ios --check nds_player with a DS cartridge from the library",
+    "ask the integrating session for the merge (with the games branch it already contains: f93cd36, c9f9034)"
+  ],
+  "order": 31,
+  "owner": {
+    "name": "arcade-ios",
+    "session": "local_2176243f-dbdd-497d-81df-cfbf557035a5"
+  },
+  "paths": [
+    "cards/platform/ios",
+    "cards/app/arcade_ios",
+    "cards/app/arcade/ui/touch.css",
+    "cardmodel/arcade/ios.py",
+    "cardmodel/arcade/pairing.py",
+    "tests/test_arcade_ios.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "hand-written (CM41)"
+  },
+  "standing": "On claude/epic-bun-008aca, not merged: every program builds for iOS, and the iOS launcher installs and plays them through the Mac's service; checked on an iPhone and an iPad Simulator (iOS 27.0) with pictures byte-identical to the Mac's, and paired over the local network from the iPhone Simulator; not yet on a real device.",
+  "statement": "Cardmodel Arcade on iPhone and iPad: the iOS platform card (the Simulator, a device, Mac Catalyst), every game and console player built for it from the cards, and an iOS launcher that installs those builds from the Mac's arcade service and plays them inside itself.",
+  "tier": 1,
+  "title": "Cardmodel Arcade on iPhone and iPad",
+  "updated": "2026-10-22T18:32:35+02:00",
+  "user_actions": [
+    {
+      "action": "Add your Apple ID to Xcode (Xcode -> Settings -> Accounts) and choose the development team the iPhone and iPad builds are signed with",
+      "unblocks": [
+        "Cardmodel Arcade on your own iPhone or iPad",
+        "builds for ios-iphoneos",
+        "pairing tried from a real device"
+      ],
+      "why": "iOS only runs code signed by the app's team: the launcher, and every game library the Mac sends to a device, must carry your identity (CARDMODEL_IOS_IDENTITY) with a provisioning profile; the Simulator and Mac Catalyst need neither"
+    },
+    {
+      "action": "Decide whether the branch claude/epic-bun-008aca is merged into main",
+      "unblocks": [
+        "iOS builds of every program from main's service",
+        "the iOS launcher and pairing on main"
+      ],
+      "why": "only the integrating session merges, and only after your yes (docs/INTEGRATION.md rule 2)"
+    }
+  ]
+}

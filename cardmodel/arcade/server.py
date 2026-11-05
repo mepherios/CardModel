@@ -13,6 +13,13 @@
     GET  /api/work, /api/work/NAME/commit/HASH                     every session's branch (work.py)
     GET  /api/dev                        everything in progress: projects, activity, branch versions (hub.py)
     GET  /api/events                     the same, pushed as server-sent events whenever it changes (hub.py)
+    GET  /api/cartridge/ID               a listed cartridge's file (an iPhone plays it; X-Cartridge-File names it)
+    POST /api/pair, POST /api/pair/code  a device on the local network pairs with a code this Mac shows (pairing.py)
+
+Every program builds for any platform card (build.py): ``?platform=KEY`` on /api/catalog, /api/game and
+/api/build (``ios``, ``ios-iphonesimulator``), or ``CardmodelPlatform/KEY`` in the client's User-Agent (the iOS
+launcher's pages), means that platform's builds; without it, each program's own. Branch versions are for a
+program's own platform only.
 
 A system card (a console's player, system.py) is in the catalog like a game, under its arcade id. Every program
 also lists its versions on the repository's other worktrees (``branches``), and a program that only a branch has
@@ -23,14 +30,16 @@ and served from its state folder; a chunk is found in whichever store has it.
 A build is due when the hash of the game's sources (its cards, its logic, the platform shell, the arcade build
 code) differs from the latest build's. The service only reads the cards and writes under state/arcade.
 
-Honest limits (L1): localhost only and unauthenticated; one build at a time per game; card changes are seen
-through file times, code changes need a restart of the service.
+Honest limits (L1): unauthenticated on 127.0.0.1 (this Mac); on the local network only paired devices, over plain
+HTTP; one build at a time per game and platform; card changes are seen through file times, code changes need a
+restart of the service.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import mimetypes
+import re
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -40,6 +49,7 @@ from urllib.parse import parse_qs, urlparse
 from . import build as B
 from . import game as G
 from . import library as L
+from . import pairing as P
 from . import system as S
 from . import work as W
 
@@ -80,11 +90,28 @@ def fresh(ctx) -> None:
     _seen["mark"] = mark
 
 
-def latest_info(ctx, gid: str) -> dict | None:
-    root = B.latest(ctx, gid)
+def latest_info(ctx, gid: str, platform: str | None = None) -> dict | None:
+    root = B.latest(ctx, gid, platform)
     if root is None:
         return None
     return json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+
+
+UA_PLATFORM = re.compile(r"CardmodelPlatform/([A-Za-z0-9_.-]+)")
+
+
+def requested_platform(handler, q: dict) -> str | None:
+    """The platform a client asks for: ?platform=KEY, else CardmodelPlatform/KEY in its User-Agent."""
+    p = (q.get("platform") or [""])[0]
+    if not p:
+        m = UA_PLATFORM.search(handler.headers.get("User-Agent") or "")
+        p = m.group(1) if m else ""
+    return p or None
+
+
+def build_key(gid: str, platform: str | None) -> str:
+    """A build's key in the service's progress and error records: the program, and the platform when not its own."""
+    return gid if platform is None else f"{gid}#{platform}"
 
 
 def card_for(ctx, gid: str):
@@ -124,15 +151,18 @@ def _entry(gid: str, kind: str, system: str | None, card, info: dict | None, wt:
     return out
 
 
-def game_entry(ctx, card, full: bool = False) -> dict:
+def game_entry(ctx, card, full: bool = False, platform: str | None = None) -> dict:
     system = card.category == "system"
     gid = S.arcade_id(card) if system else card.name
-    info = latest_info(ctx, gid)
-    src = S.source_hash(ctx, card) if system else B.source_hash(ctx, card)
+    pa = B.platform_arg(ctx.store, card, platform)
+    info = latest_info(ctx, gid, pa)
+    src = S.source_hash(ctx, card, pa) if system else B.source_hash(ctx, card, pa)
+    key = build_key(gid, pa)
     out = _entry(gid, "system" if system else "game", card.name if system else None, card, info, None,
                  build_due=info is None or info.get("source") != src,
-                 building=_builds.get(gid, {}).get("state") == "building", error=build_error(ctx, gid, src), full=full)
+                 building=_builds.get(key, {}).get("state") == "building", error=build_error(ctx, key, src), full=full)
     out["source"] = src
+    out["platform"] = pa or B.home_key(ctx.store, card)
     return out
 
 
@@ -152,10 +182,15 @@ def branch_entry(ctx, gid: str, b: dict, own_version: str | None = None, full: b
     return out
 
 
-def catalog(ctx) -> list[dict]:
-    """Every program of the service's checkout with its branches, then the programs only a branch has."""
-    out = [game_entry(ctx, c) for c in ctx.store.cards("game")] + \
-        [game_entry(ctx, c) for c in ctx.store.cards("system") if c.get("machine")]
+def catalog(ctx, platform: str | None = None) -> list[dict]:
+    """Every program of the service's checkout with its branches, then the programs only a branch has; for another
+    platform than the programs' own, their builds for it (and no branch versions: a branch builds its own)."""
+    cards = [*ctx.store.cards("game"), *[c for c in ctx.store.cards("system") if c.get("machine")]]
+    out = [game_entry(ctx, c, platform=platform) for c in cards]
+    if platform and any(B.platform_arg(ctx.store, c, platform) for c in cards):
+        for e in out:
+            e["branch"], e["branches"] = "", []
+        return out
     others = W.branches()
     here = next((w["branch"] for w in W.worktrees() if w["own"]), "")
     for e in out:
@@ -171,8 +206,13 @@ def catalog(ctx) -> list[dict]:
     return out
 
 
-def program(ctx, gid: str, branch: str | None) -> dict:
-    """/api/game/ID[?branch=NAME]: the program in full, from the service's checkout or from that worktree."""
+def program(ctx, gid: str, branch: str | None, platform: str | None = None) -> dict:
+    """/api/game/ID[?branch=NAME]: the program in full, from the service's checkout or from that worktree; with a
+    platform other than its own, its build for that platform."""
+    if platform:
+        card = card_for(ctx, gid)
+        if B.platform_arg(ctx.store, card, platform):
+            return dict(game_entry(ctx, card, full=True, platform=platform), branch="", branches=[])
     if branch:
         bs = W.branches(gid).get(gid) or []
         b = next((x for x in bs if x["worktree"] == branch), None)
@@ -251,28 +291,30 @@ def build_error(ctx, key: str, src: str) -> str | None:
     return e.get("error") if e.get("source") == src else None
 
 
-def start_build(ctx, gid: str) -> dict:
+def start_build(ctx, gid: str, platform: str | None = None) -> dict:
     card = card_for(ctx, gid)
-    src = S.source_hash(ctx, card) if card.category == "system" else B.source_hash(ctx, card)
+    pa = B.platform_arg(ctx.store, card, platform)
+    src = S.source_hash(ctx, card, pa) if card.category == "system" else B.source_hash(ctx, card, pa)
+    key = build_key(gid, pa)
     with _lock:
-        st = _builds.get(gid)
+        st = _builds.get(key)
         if st and st.get("state") == "building":
             return st
         st = {"state": "building", "step": 0, "of": 6, "label": "starting", "started": time.time(), "source": src}
-        _builds[gid] = st
+        _builds[key] = st
 
     def run():
         try:
             def say(step, of, label):
                 st.update(step=step, of=of, label=label)
             builder = S.build if S.is_system(ctx.store, gid) else B.build
-            info = builder(ctx, gid, progress=say)
+            info = builder(ctx, gid, progress=say, platform=pa)
             st.update(state="done", step=st["of"], label="ready", build=info["build"], version=info["version"],
                       seconds=info["seconds"])
-            _record_error(ctx, gid, src, None)
+            _record_error(ctx, key, src, None)
         except Exception as exc:  # noqa: BLE001 -- the launcher shows the reason
             st.update(state="error", error=f"{type(exc).__name__}: {exc}"[:2000])
-            _record_error(ctx, gid, src, st["error"])
+            _record_error(ctx, key, src, st["error"])
     threading.Thread(target=run, daemon=True).start()
     return st
 
@@ -317,11 +359,18 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quiet
         pass
 
-    def _send(self, code: int, body: bytes, ctype: str = "application/json", extra: dict | None = None):
+    def setup(self):
+        # a client on the network gets a minute per read or write: a slow or silent one cannot hold a thread for ever
+        self.timeout = None if self.client_address[0] in P.LOOPBACK else 60
+        super().setup()
+
+    def _send(self, code: int, body: bytes, ctype: str = "application/json", extra: dict | None = None,
+              cors: bool = True):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
+        if cors:
+            self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Cache-Control", "no-store")
         for k, v in (extra or {}).items():
             self.send_header(k, v)
@@ -339,19 +388,66 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    # this Mac, or a paired device on the local network for what a device needs (pairing.py); the rest is refused
+    # before anything runs
+    def _admit(self, parts: list[str], q: dict) -> bool:
+        if P.allowed(self.ctx, self.client_address[0], self.command, parts, self.headers, q):
+            return True
+        if P.device(self.ctx, P.token_of(self.headers)) is not None:
+            self._json({"error": "that stays on the Mac"}, 403)
+        else:
+            self._json({"error": "pair this device first (cardmodel arcade pair on the Mac)"}, 401)
+        return False
+
+    def _local(self) -> bool:
+        """A request from this Mac that no web page of another origin made (a pairing code is this Mac's to show)."""
+        origin = self.headers.get("Origin")
+        port = self.server.server_address[1]
+        return self.client_address[0] in P.LOOPBACK and origin in (None, f"http://127.0.0.1:{port}",
+                                                                    f"http://localhost:{port}")
+
+    def _body(self) -> dict:
+        """A small JSON object (a pairing request): anything else, or more than 64 KiB, is an empty one."""
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+            if not 0 < n <= 1 << 16:
+                return {}
+            b = json.loads(self.rfile.read(n))
+            return b if isinstance(b, dict) else {}
+        except (ValueError, OSError):
+            return {}
+
     def do_POST(self):
         u = urlparse(self.path)
         parts = u.path.strip("/").split("/")
-        branch = (parse_qs(u.query).get("branch") or [""])[0]
+        q = parse_qs(u.query)
+        branch = (q.get("branch") or [""])[0]
+        if not self._admit(parts, q):
+            return
+        if parts == ["api", "pair"]:
+            b = self._body()
+            token = P.pair(self.ctx, str(b.get("code", "")), str(b.get("name", "")))
+            return self._json({"token": token}) if token else self._json({"error": "wrong or expired code"}, 403)
+        if parts == ["api", "pair", "code"]:
+            if not self._local():
+                return self._json({"error": "only this Mac shows a pairing code"}, 403)
+            if not listen_lan(self.ctx, self.server.server_address[1]):
+                return self._json({"error": "the service cannot listen on the local network (the port is taken)"}, 503)
+            return self._json({**P.new_code(self.ctx), "addresses": P.addresses(self.server.server_address[1])})
+        if parts[:2] == ["api", "library"] and self.client_address[0] not in P.LOOPBACK and parts != ["api", "library", "scan"]:
+            return self._json({"error": "the Mac's cartridge folders are chosen on the Mac"}, 403)
         fresh(self.ctx)
         if len(parts) == 3 and parts[:2] == ["api", "build"]:
             try:
                 if branch:
                     return self._json(start_branch_build(self.ctx, parts[2], branch))
                 card_for(self.ctx, parts[2])
+                pf = requested_platform(self, q)          # another platform's build; else the program's own
+                return self._json(start_build(self.ctx, parts[2], pf) if pf else start_build(self.ctx, parts[2]))
             except KeyError:
                 return self._json({"error": "no such game"}, 404)
-            return self._json(start_build(self.ctx, parts[2]))
+            except B.BuildError as exc:
+                return self._json({"error": str(exc)}, 400)
         if L.route(self, "POST", parts):
             return
         self._json({"error": "not found"}, 404)
@@ -361,6 +457,8 @@ class Handler(BaseHTTPRequestHandler):
         parts = [p for p in u.path.split("/") if p]
         q = parse_qs(u.query)
         ctx = self.ctx
+        if not self._admit(parts, q):
+            return
         from . import hub
         if hub.route(self, parts, q):                    # in progress, live events
             return
@@ -371,11 +469,16 @@ class Handler(BaseHTTPRequestHandler):
             if parts == ["api", "status"]:
                 return self._json({"ok": True, "service": self.server_version, "time": time.time(),
                                    "ui": ui_hash(self.ui_dir)})
+            if parts == ["api", "pair"]:                  # who is asking: a paired device's name, or this Mac
+                return self._json({"device": P.device(ctx, P.token_of(self.headers)) or "this Mac"})
             branch = (q.get("branch") or [""])[0]
+            platform = requested_platform(self, q)
             if parts == ["api", "catalog"]:
-                return self._json(catalog(ctx))
+                return self._json(catalog(ctx, platform))
             if len(parts) == 3 and parts[:2] == ["api", "game"]:
-                return self._json(program(ctx, parts[2], branch or None))
+                return self._json(program(ctx, parts[2], branch or None, platform))
+            if len(parts) == 3 and parts[:2] == ["api", "cartridge"]:
+                return self._cartridge(parts[2])
             if parts == ["api", "work"]:
                 return self._json(work_view(ctx, force=bool(q.get("force"))))
             if len(parts) == 5 and parts[:2] == ["api", "work"] and parts[3] == "commit":
@@ -384,7 +487,9 @@ class Handler(BaseHTTPRequestHandler):
             if L.route(self, "GET", parts):
                 return
             if len(parts) == 3 and parts[:2] == ["api", "build"]:
-                return self._json(_builds.get(f"{parts[2]}@{branch}" if branch else parts[2], {"state": "idle"}))
+                key = f"{parts[2]}@{branch}" if branch else build_key(
+                    parts[2], B.platform_arg(ctx.store, card_for(ctx, parts[2]), platform) if platform else None)
+                return self._json(_builds.get(key, {"state": "idle"}))
             root = B.arcade_root(ctx)
             if q.get("wt"):
                 root = W.state_root(q["wt"][0])
@@ -414,7 +519,29 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(302, b"", "text/plain", {"Location": "/ui/index.html"})
         except KeyError as exc:
             return self._json({"error": str(exc)}, 404)
+        except B.BuildError as exc:                       # a platform the cards do not have
+            return self._json({"error": str(exc)}, 400)
         self._json({"error": "not found"}, 404)
+
+    def _cartridge(self, rom_id: str):
+        """A cartridge the library lists, as its file (a device plays it where the Mac's player would read it). Not
+        for a web page: no page of another origin may read it (no CORS header, and such a request is refused)."""
+        port = self.server.server_address[1]
+        if self.headers.get("Origin") not in (None, f"http://127.0.0.1:{port}", f"http://localhost:{port}"):
+            return self._send(403, b'{"error": "not for a web page"}', cors=False)
+        r = next((x for x in L.scan(self.ctx)["roms"] if x.get("id") == rom_id), None)
+        if r is None or not r.get("path"):
+            return self._json({"error": "no such cartridge"}, 404)
+        p = Path(r["path"])
+        if not p.is_file():
+            return self._json({"error": "the cartridge is not where the library saw it"}, 404)
+        from urllib.parse import quote
+        st = p.stat()
+        tag = f'"{st.st_size}-{st.st_mtime_ns}"'                # a device asks again only when the file changed
+        if self.headers.get("If-None-Match") == tag:
+            return self._send(304, b"", "application/octet-stream", {"ETag": tag}, cors=False)
+        return self._send(200, p.read_bytes(), "application/octet-stream", {"X-Cartridge-File": quote(p.name), "ETag": tag},
+                          cors=False)
 
     def _chunk(self, data: bytes, rate: int):
         self.send_response(200)
@@ -434,16 +561,47 @@ class Handler(BaseHTTPRequestHandler):
                     time.sleep(min(ahead, 2.0))
 
 
-def serve(ctx, port: int = 8770, ui_dir: Path | None = None, ready=None) -> None:
+_lan: dict = {}
+
+
+def listen_lan(ctx, port: int) -> bool:
+    """Also listen on the local network (every address of this Mac, the same port), once: paired devices reach the
+    service there (pairing.py checks every request). False when the port cannot be had there."""
+    with _lock:
+        if port in _lan:
+            return True
+        try:
+            httpd = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+        except OSError:
+            return False
+        _lan[port] = httpd
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return True
+
+
+def serve(ctx, port: int = 8770, ui_dir: Path | None = None, ready=None, lan: bool | None = None) -> None:
+    """The service on 127.0.0.1:port; on the local network too when lan (None: on the launcher's port, when a device
+    has been paired and the network listener was not turned off since, pairing.py; a service on any other port, a
+    test's or a session's, stays on this Mac)."""
     Handler.ctx = ctx
     Handler.ui_dir = ui_dir
     httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    port = httpd.server_address[1]
+    own = int((ctx.store.get("app/arcade") or {}).get("port", 8770))
+    paired = P.load(ctx)
+    if lan or (lan is None and port == own and paired["lan"] and paired["devices"]):
+        listen_lan(ctx, port)
     if ready:
-        ready(httpd.server_address[1])
+        ready(port)
     try:
         httpd.serve_forever()
     finally:
         httpd.server_close()
+        s = _lan.pop(port, None)
+        if s is not None:
+            s.shutdown()
+            s.server_close()
 
 
-__all__ = ["Handler", "branch_entry", "catalog", "game_entry", "program", "serve", "start_branch_build", "start_build"]
+__all__ = ["Handler", "branch_entry", "build_key", "catalog", "game_entry", "listen_lan", "program", "requested_platform",
+           "serve", "start_branch_build", "start_build"]

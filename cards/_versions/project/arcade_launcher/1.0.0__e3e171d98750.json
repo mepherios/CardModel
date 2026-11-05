@@ -1,0 +1,70 @@
+{
+  "blockers": [],
+  "branches": [
+    "claude/sad-sanderson-*"
+  ],
+  "category": "project",
+  "docs": [
+    "docs/ARCADE.md",
+    "docs/STORE.md"
+  ],
+  "done": [
+    "store, library, downloads, verify, versions and branches, In progress",
+    "every cartridge in your folders listed and launched through the store (972 of 972, no failures)",
+    "the service surveys each cartridge itself; pages rebuilt only on change and reloaded after an update",
+    "controls per program or cartridge (keyboard and controller), passed to the game as --controls",
+    "controller setup with a live test, and the launcher driven with a controller",
+    "installs never stop: a refused or lost build ends the wait, installs queue, one launcher at a time, the installed list follows the library folder",
+    "a console player's button opens its cartridges instead of starting it with nothing to play",
+    "a damaged, empty or half-copied cartridge is refused with a message, never a player crash",
+    "the launcher starts its own service again: it ran bin/cardmodel, a shell script, with Python, which failed whenever no service was already running; it now runs the package as a module (python -m cardmodel) and writes the service's output to service.log beside launcher.json (2026-11-03)"
+  ],
+  "goal": "Every game the card model runs installs, updates and plays from one launcher, with your own keys and any controller, on every device you have.",
+  "in_progress": [
+    "the iPhone and iPad launcher (its own session: Cardmodel Arcade on iPhone and iPad)"
+  ],
+  "kind": "program",
+  "left": [
+    "controller navigation tried with a real controller",
+    "player profiles (controls per person)"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "arcade_launcher",
+  "next_steps": [
+    "update the Game Boy Player, the DS Player and Vector Duel in the launcher (the shell changed: controls, the cartridge check)",
+    "per docs/MATH_CORE.md: the launcher stays a shell around cards; what it decides about a game (verdicts, controls) is data the cards and the survey give, checked by witnesses"
+  ],
+  "order": 15,
+  "owner": {
+    "name": "cardmodel-games",
+    "session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b"
+  },
+  "paths": [
+    "cards/app/arcade",
+    "cardmodel/arcade/server.py",
+    "cardmodel/arcade/client.py",
+    "cardmodel/arcade/library.py",
+    "cards/platform/macos/GameShell.swift"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "session": "local_ebd0314c-c068-4425-ab7c-dc023b36278b"
+  },
+  "standing": "All 972 of your cartridges launch through the installed app (971 in the Game Boy Player, Pokemon Diamond in the DS Player). In main since 34cd5cc and in the installed launcher, reinstalled from main: controls per game, controller setup, the library's own verdicts, the page fixes, installs that keep working, and a damaged cartridge refused instead of a crash. The installed programs keep the old shell until each is updated in the launcher.",
+  "statement": "The Steam-like launcher: store, library, downloads and updates for everything the card model plays natively, with the player's own controls and any controller.",
+  "tier": 1,
+  "title": "Cardmodel Arcade",
+  "updated": "2026-11-03T23:53:32+01:00",
+  "user_actions": [
+    {
+      "action": "Update the Game Boy Player, the DS Player and Vector Duel in Cardmodel Arcade (Library: Update)",
+      "unblocks": [
+        "your controls in each game",
+        "a damaged cartridge refused instead of a crash"
+      ],
+      "why": "the installed programs were built with the old shell; an update brings the new one"
+    }
+  ]
+}

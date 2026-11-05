@@ -138,8 +138,10 @@ def _lib_suffix() -> str:
     return ".dylib" if sys.platform == "darwin" else ".so"
 
 
-def build_library(ctx, ir: dict, lang: str) -> tuple[Path, str]:
-    """Emit + compile (cached by source hash). Returns (library path, source)."""
+def build_library(ctx, ir: dict, lang: str, flags: list[str] | None = None,
+                  env: dict | None = None) -> tuple[Path, str]:
+    """Emit + compile (cached by source hash). Returns (library path, source). ``flags`` go right after the
+    compiler (a platform card's target and SDK, for another operating system), ``env`` is the compiler's."""
     em = Emitter(ctx.store, lang, ctx.ops)
     src = em.module_source(ir)
     card = ctx.language(lang)
@@ -147,7 +149,8 @@ def build_library(ctx, ir: dict, lang: str) -> tuple[Path, str]:
     ok, exe = probes.probe(card.get("probe"))
     if not ok:
         raise EngineError(f"{lang} is not available here: {exe}")
-    h = hashlib.sha256(f"{lang}\0{src}\0{emb.get('compile')}".encode()).hexdigest()[:20]
+    key = f"{lang}\0{src}\0{emb.get('compile')}" + (f"\0{flags}" if flags else "")
+    h = hashlib.sha256(key.encode()).hexdigest()[:20]
     d = ctx.state_root / "build" / lang / f"machine-{h}"
     lib = d / f"machine{_lib_suffix()}"
     if lib.is_file():
@@ -157,8 +160,10 @@ def build_library(ctx, ir: dict, lang: str) -> tuple[Path, str]:
     srcp.write_text(src, encoding="utf-8")
     tmp_lib = d / f".building-{os.getpid()}{_lib_suffix()}"
     args = [a.format(exe=exe, src=str(srcp), lib=str(tmp_lib), dir=str(d)) for a in emb["compile"]]
+    if flags:
+        args = args[:1] + list(flags) + args[1:]
     try:
-        p = resources.run(args, cwd=d, timeout=COMPILE_TIMEOUT_S, stdin=subprocess.DEVNULL)
+        p = resources.run(args, cwd=d, timeout=COMPILE_TIMEOUT_S, stdin=subprocess.DEVNULL, env=env)
     except subprocess.TimeoutExpired as exc:
         raise EngineError(f"{lang}: compiling the machine timed out after {COMPILE_TIMEOUT_S}s") from exc
     if p.returncode != 0:

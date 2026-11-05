@@ -6,7 +6,8 @@ native package and a depot exactly like a game (cardmodel/arcade/build.py), so t
     the platform card's effect shell + game.json (with the cartridge, the clock and the flush entry) ──▶ the app
 
 The player is shared by every cartridge of the system: the launcher starts it with ``--rom PATH`` (the shell
-reads the file, a .zip in memory, and hands the bytes to the module) and a save folder per cartridge.
+reads the file, a .zip in memory, and hands the bytes to the module) and a save folder per cartridge. It builds for
+any platform card like a game (``build(ctx, name, platform="ios-iphonesimulator")``, build.py).
 
 Honest limits (L1): one system so far (the Game Boy / Color); the machine runs in the interpreter (no lifted
 blocks, which are per cartridge); the player's store pictures are its own drawing, not the games'.
@@ -104,6 +105,13 @@ def module(ctx, name: str, use_cache: bool = True) -> dict:
     for ref in sorted({m.group(1) + "/" + m.group(2) for text, _ in srcs for m in _CARD_REF.finditer(text)}):
         ref_card = ctx.store.get(ref)
         h.update(ref.encode() + b"\0" + (card_hash(ref_card) if ref_card is not None else "-").encode() + b"\0")
+    # the data of every card the module reads `card.` constants from (the machine's components, the machine, the
+    # system and its tables card), as machine/build.py keys its own: a changed constant is a new module
+    mc = ctx.store.get(f"machine/{card['machine']}") or {}
+    for comp in [*(mc.get("components") or []), f"machine/{card['machine']}", card.qualified,
+                 *([card["tables"]] if card.get("tables") else [])]:
+        h.update(json.dumps(ctx.store.get(comp if "/" in comp else f"hardware/{comp}"), sort_keys=True,
+                            default=str).encode())
     h.update(Path(__file__).read_bytes())
     h.update(Path(Bd.__file__).read_bytes())
     key = h.hexdigest()[:20]
@@ -269,78 +277,35 @@ def render_media(ctx, name: str) -> dict[str, bytes]:
     return out
 
 
-def source_hash(ctx, card) -> str:
+def source_hash(ctx, card, platform: str | None = None) -> str:
     h = hashlib.sha256(json.dumps(dict(card), sort_keys=True, default=str).encode())
     for text, label in sources(ctx, card)[0]:
         h.update(label.encode() + text.encode())
-    plat = B.platform_card(ctx.store, card)
-    h.update(json.dumps(dict(plat), sort_keys=True, default=str).encode())
-    for s in plat["effect_shell"]["sources"]:
-        h.update((plat.path / s).read_bytes())
+    B.platform_hash(h, ctx.store, card, platform)
     here = Path(__file__).parent
     for fname in ("system.py", "build.py"):
         h.update((here / fname).read_bytes())
     return h.hexdigest()[:16]
 
 
-def build(ctx, name: str, progress=None) -> dict:
-    """The player as a depot, in the same layout as a game's (build.build), under its arcade id."""
+def build(ctx, name: str, progress=None, platform: str | None = None) -> dict:
+    """The player as a depot, in the same layout as a game's (build.build), under its arcade id, for its own
+    platform or the one ``platform`` names."""
     say = progress or (lambda step, n, msg: None)
     steps = 6
     t0 = time.time()
     card = system_card(ctx.store, name)
     gid = arcade_id(card)
-    plat = B.platform_card(ctx.store, card)
+    plat, target, _ = B.resolve_platform(ctx.store, card, platform)
+    B.target_values(plat, target)                   # what the target needs, before the long steps
     say(1, steps, "compiling the machine's cards")
     ir = module(ctx, name)
-    lang = plat["library"]["language"]
-    say(2, steps, "emitting native code and compiling it")
-    lib, _ = N.build_library(ctx, ir, lang)
-    say(3, steps, "building the effect shell")
-    exe = B.shell_binary(ctx, plat)
+    lib, exe, lang = B.native_parts(ctx, card, ir, platform, say, steps)
     say(4, steps, "drawing the store pictures")
-    media = render_media(ctx, name)
+    media = B.media_for(ctx, gid, ir, lambda: render_media(ctx, name), card)
     sp = spec(ctx, card, ir, lang)
-    h = hashlib.sha256(lib.read_bytes() + exe.read_bytes() + json.dumps(sp, sort_keys=True).encode()
-                       + card["version"].encode())
-    build_id = h.hexdigest()[:12]
-    say(5, steps, "packing the bundle")
-    root = B.arcade_root(ctx) / "depots" / gid / f"{card['version']}+{build_id}"
-    if root.exists():
-        shutil.rmtree(root)
-    work = root / "work"
-    work.mkdir(parents=True)
-    bundle = plat["bundle"]
-    app_name = card["title"] + bundle.get("suffix", "")
-    content = root / "content"
-    app = content / app_name
-    for key in ("executable_dir", "frameworks_dir", "resources_dir"):
-        (app / bundle[key]).mkdir(parents=True, exist_ok=True)
-    values = {"title": card["title"], "id": gid, "version": card["version"], "build": build_id}
-    shutil.copy(exe, app / bundle["executable_dir"] / card["title"])
-    os.chmod(app / bundle["executable_dir"] / card["title"], 0o755)
-    shutil.copy(lib, app / bundle["frameworks_dir"] / plat["library"]["file"])
-    (app / bundle["resources_dir"] / bundle["spec_file"]).write_text(json.dumps(sp, indent=1), encoding="utf-8")
-    shutil.copy(B.icns(ctx, plat, media.pop("_icon_rgba"), work), app / bundle["resources_dir"] / bundle["icon_file"])
-    plist = {k: B._fill(v, values) for k, v in bundle["info_plist"].items()}
-    (app / "Contents" / "Info.plist").write_bytes(plistlib.dumps(plist))
-    shutil.rmtree(work)
-    say(6, steps, "writing the depot")
-    chunks = B.arcade_root(ctx) / "chunks"
-    chunks.mkdir(parents=True, exist_ok=True)
-    man = B.manifest(content, chunks)
-    mdir = root / "media"
-    mdir.mkdir()
-    for fname, data in media.items():
-        (mdir / fname).write_bytes(data)
-    info = {"id": gid, "title": card["title"], "version": card["version"], "build": build_id,
-            "source": source_hash(ctx, card), "kind": "system", "system": card.name,
-            "app": app_name, "executable": f"{app_name}/{bundle['executable_dir']}/{card['title']}",
-            "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "seconds": round(time.time() - t0, 1),
-            "media": sorted(media), "save": {"dir": plat.get("saves", "").format(id=gid), "file": "save.bin"}, **man}
-    (root / "manifest.json").write_text(json.dumps(info, indent=1), encoding="utf-8")
-    (B.arcade_root(ctx) / "depots" / gid / "latest").write_text(root.name, encoding="utf-8")
-    return info
+    return B.pack(ctx, gid, card, platform, lib, exe, sp, media, say, t0, source=source_hash(ctx, card, platform),
+                  save={"file": "save.bin"}, extra={"kind": "system", "system": card.name})
 
 
 __all__ = ["ID_SUFFIX", "Player", "arcade_id", "build", "check_cartridge", "is_system", "module", "render_media",

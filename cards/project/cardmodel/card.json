@@ -41,7 +41,8 @@
     "in the cloud: GitHub Actions CI with every codegen toolchain (verify, translate, unit suite) and a weekly self cycle that proposes adopted cards as a pull request; verify passes on Linux (docs/AUTONOMY.md section 6)",
     "CI minutes budgeted: a pull request runs once, the full job waits for ready-for-review, pushes run only on main, the self cycle runs weekly (.github/workflows)",
     "2026-11-05 (branch claude/stdin-harness): stdin harnesses (HANDOVER section 8 item 1): every codegen language card reads test inputs from stdin, so one cached build serves every seed; Java compiles once with javac",
-    "2026-11-05 (branch claude/strings-ir): strings in the IR (HANDOVER section 8 item 2): `str` as Unicode code points, eleven op cards (len, index, chr/ord, concat, equality, order, slice, find, int/str conversion) green in the conformance matrix in every installed codegen language, Python `str` functions lifted (examples/strings, docs/STRINGS.md); Lean has no string templates yet"
+    "2026-11-05 (branch claude/strings-ir): strings in the IR (HANDOVER section 8 item 2): `str` as Unicode code points, eleven op cards (len, index, chr/ord, concat, equality, order, slice, find, int/str conversion) green in the conformance matrix in every installed codegen language, Python `str` functions lifted (examples/strings, docs/STRINGS.md); Lean has no string templates yet",
+    "the merges of 2026-10-22 evening: unreal-math c18209b (daf4923), festive-margulis dac3282 (0c8fd0d), sad-sanderson 86d9a58 (34cd5cc)"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [
@@ -58,8 +59,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "6ac3f087d78a74ba039611c9ad92f423a9c6f872a79d5191cdf3af9da07dbcb2",
-    "version": "2.0.29",
+    "previous_content_hash": "de81fcfcfefb37016a78d1693f0b84ebd845f866cdb154fcceaf11f6a6edf877",
+    "version": "2.0.30",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -99,7 +100,7 @@
     "origin": "cardmodel",
     "tool": "tools/seed_projects.py"
   },
-  "standing": "On main 32f5f58: MATH_CORE phases 0 and 1, Gödel method wave 1, and the merges of festive-margulis (11284a6), jolly-liskov (984fc7a) and frosty-lumiere (b15b527). 290 tests pass (1 skipped); the full verify passes 23 of 23 sections (seed 2992561134).",
+  "standing": "On main f582d59: MATH_CORE phases 0 and 1, Gödel method wave 1 and every merge of 2026-10-22 in the integration log (docs/INTEGRATION.md section 5), the last being claude/sad-sanderson-482207 (34cd5cc); the full verify after it passed 23 of 24 sections (unreal skipped: no engine scan in main). The user approved merging claude/epic-bun-008aca (Cardmodel Arcade on iPhone and iPad) on 2026-11-03.",
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
