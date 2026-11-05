@@ -46,6 +46,7 @@
       "cm_min_f": "func cm_min_f(_ a: Double, _ b: Double) -> Double { return b < a ? b : a }",
       "cm_min_i": "func cm_min_i(_ a: Int, _ b: Int) -> Int { return b < a ? b : a }",
       "cm_modinv": "func cm_modinv(_ a: Int, _ m: Int) -> Int { let n = m < 0 ? -m : m; var r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while r1 != 0 { let q = r0 / r1; (r0, r1) = (r1, r0 - q * r1); (s0, s1) = (s1, s0 - q * s1) }; if r0 != 1 { fatalError(\"base is not invertible\") }; return cm_floormod(s0, n) }",
+      "cm_mul": "func cm_mul(_ a: Int, _ b: Int) -> Int { return a &* b }",
       "cm_opaque_b": "@inline(never) func cm_opaque_b(_ x: Bool) -> Bool { return x }",
       "cm_opaque_f": "@inline(never) func cm_opaque_f(_ x: Double) -> Double { return x }",
       "cm_opaque_i": "@inline(never) func cm_opaque_i(_ x: Int) -> Int { return x }",
@@ -150,8 +151,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "b211a0012ebf74e8a3ce849af71d5cff5f422c9df7cb2dee4b236e5579f39653",
-    "version": "1.0.2",
+    "previous_content_hash": "1ccba93e5de0e60b195f35dbcc0dd3b293a14abf834221e5efa0c5833acb21d1",
+    "version": "1.0.3",
     "version_bump_reason": "patch"
   },
   "name": "swift",

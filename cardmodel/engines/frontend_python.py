@@ -989,10 +989,10 @@ def _infer_bare(f, bare: list[str], ops, sigs, hint, consts, externs, src, pream
     why: list[str] = []
     for combo in itertools.product(("list[int]", "list[float]"), repeat=len(bare)):
         h = {**(hint or {}), **dict(zip(bare, combo))}
-        sigs2 = {**sigs, f.name: _sig_with(sigs.get(f.name), f, h, consts)}
-        lifter = _FnLifter(f, ops, sigs2, h, consts, externs)
         label = ", ".join(f"{b}: {t}" for b, t in zip(bare, combo))
-        try:
+        try:                                      # another parameter's annotation may be unsupported (a dict)
+            sigs2 = {**sigs, f.name: _sig_with(sigs.get(f.name), f, h, consts)}
+            lifter = _FnLifter(f, ops, sigs2, h, consts, externs)
             ir = lifter.lift()
         except Unsupported as exc:
             why.append(f"as {label}: {exc.what}")
