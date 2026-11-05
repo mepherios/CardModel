@@ -127,12 +127,42 @@ The audit ([GODEL_AUDIT.md](GODEL_AUDIT.md)) lists every call site. The rule it 
 * A non-code domain (physics) uses the same functions with no domain-specific algebra.
 * `verify`, `matrix` and `analyse` are unchanged by the restructuring, and the test suite passes.
 
-## 8. Progress
+## 8. A non-code domain joins: physics
+
+The recipe any definable system follows, as physics did (`tools/seed_physics.py`, `engines/dimensions.py`):
+
+1. **Atoms.** The SI base quantities (`quantity/length`, `quantity/mass`, `quantity/time`, `quantity/current`,
+   `quantity/temperature`, `quantity/amount`, `quantity/luminosity`) enter the ledger as the set `physics`, each
+   with its prime forever (CM43). Their arity is 0: a quantity is a leaf of a term.
+2. **The set card.** `godel_set/physics` extends B0, states the arities and the numbering (B0's scheme), and the
+   same six admissibility conditions are witnessed on its generated objects by the same checker (W-5,
+   `numbering.check_set`); the quantities appear as leaves of those objects.
+3. **A model of the signature.** The IR's ops act on dimensions through the `model` block of the set card, a
+   Σ-algebra whose carrier is the content group (D14): MUL adds, DIV subtracts, POW scales, FSQRT halves, ADD and
+   SUB need one dimension and keep it, a comparison needs one and gives none, EXP and LOG need none. The group
+   operations are `godel.add`, `sub` and `scale`; the module adds no algebra. The ops' numeric meaning is untouched
+   (A2): this is a second, named model (D9), read from the card.
+4. **Carry-over.** The derived quantities (force, energy, power, pressure, voltage, …) are a carry map from their
+   names to base content on the card (`derived`). It does not preserve gcd (T2): their supports overlap, so the
+   base quantities are the free generators and a derived one is a product, which is what `deprecate` records.
+5. **Laws as cards.** A `physics_law` card is an equation between two terms over variables with stated
+   dimensions. It is consistent exactly when its sides have one content (G13). Thirteen laws (Newton's second,
+   gravitation, Coulomb, the ideal gas, Ohm, Planck, the pendulum period, mass–energy, …) are checked by
+   `dimensions.check`, which the godel verify section runs, and by `cardmodel godel dimension LAW... | --expr E
+   --dims m=mass,a=length/time^2`.
+
+What came for free: the ledger, the sparse vectors, gcd, lcm and cofactors over dimensions, the index, the
+admissibility witness, and the equation check. What the domain brought: seven atoms, one table of how its ops act,
+and its laws. A late atom's positional code is large (a quantity's token code is about 10,240, so one physics
+object codes to about 200,000 bits); the set witnesses admissibility on 20 generated objects for that reason,
+stated on the card, until positional codes take per-set dense ranks, which is the user's decision (the audit).
+
+## 9. Progress
 
 | step | status |
 |---|---|
 | 1. this document | done 2026-11-04 |
 | 2. the core | done 2026-11-04: the algebra, `cost`, `jaccard`, `ContentIndex`, `match`, `factor`, `expand`, the iterative walks, the duplicates retired; every identity of §2 tested on random terms (`tests/test_godel.py`, class `Algebra`) |
-| 3. cofactor factoring and similarity as commands | next |
-| 4. physics as a Gödel set | planned |
+| 3. cofactor factoring and similarity as commands | done 2026-11-04: `cardmodel godel factor CARD... | --expr E` (a term over the definitions it contains, with the cofactor and the vector check), `similar` (by |gcd| / |lcm| through the index), `cofactor WHOLE PART`, `decode N --vars`. Today 11 of 577 definitions have a closed term (the rest wait for distillation), so the library is small; it grows with every canonical term |
+| 4. physics as a Gödel set | done 2026-11-04: `godel_set/physics` (the SI base quantities as atoms of arity 0, the dimension model on the card, the derived quantities as a carry map), 13 `physics_law` cards, `engines/dimensions.py`, `cardmodel godel dimension`; §8 |
 | 5. call sites | waiting on the audit's ranking |

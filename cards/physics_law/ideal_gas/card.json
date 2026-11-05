@@ -1,0 +1,50 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "R": "gas_constant",
+    "T": "temperature",
+    "V": "length^3",
+    "n": "amount",
+    "p": "pressure"
+  },
+  "lhs": [
+    "MUL",
+    [
+      "var",
+      "p"
+    ],
+    [
+      "var",
+      "V"
+    ]
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ideal_gas",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "MUL",
+      [
+        "var",
+        "n"
+      ],
+      [
+        "var",
+        "R"
+      ]
+    ],
+    [
+      "var",
+      "T"
+    ]
+  ],
+  "source": "Clapeyron (1834)",
+  "statement": "p·V = n·R·T",
+  "tier": 0
+}

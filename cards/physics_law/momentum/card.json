@@ -1,0 +1,34 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "m": "mass",
+    "p": "momentum",
+    "v": "velocity"
+  },
+  "lhs": [
+    "var",
+    "p"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "momentum",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "var",
+      "m"
+    ],
+    [
+      "var",
+      "v"
+    ]
+  ],
+  "source": "definition",
+  "statement": "p = m·v",
+  "tier": 0
+}

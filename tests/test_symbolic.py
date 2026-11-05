@@ -51,5 +51,91 @@ class Symbolic(unittest.TestCase):
         self.assertNotEqual(SY.evaluate(wrong, init, out["_ram_in"])["regs"]["A"], out["A"])
 
 
+    def test_canonical_terms_keep_the_meaning(self):
+        # FOUNDATIONS.md D1/D7: registers at their widths (u8, u16) and bus bytes as u8 let the sorted laws simplify
+        # the terms; the canonical terms must still agree with the executable semantics on the bench
+        import random
+        from cardmodel.machine import bench as BN
+        from cardmodel.machine import build as Bd
+        from cardmodel.machine import native as N
+        self.assertEqual(SY.register_sorts(self.ctx, "lr35902")["A"], "u8")
+        self.assertEqual(SY.register_sorts(self.ctx, "lr35902")["SP"], "u16")
+        add = self.ex.run("LR35902_80")
+        canon = SY.distill(self.ctx, "lr35902", add["state"])
+        self.assertEqual(canon["state"]["A"], ["BIT_AND", ["ADD", ["var", "A"], ["var", "B"]], ["int", 255]])
+        m = N.load(self.ctx, Bd.module(self.ctx, "lr35902_bench"), N.resolve_engine(self.ctx, "host"))
+        cards = {c.name: c for c in self.ctx.store.cards("isa")}
+        rng = random.Random(SEED)
+        names = rng.sample(sorted(n for n in cards if n.startswith("LR35902_") and n != "LR35902_CB"), 40)
+        checked = 0
+        for name in names:
+            try:
+                res = self.ex.run(name)
+            except SY.Unsupported:
+                continue
+            d = {**res, "state": SY.distill(self.ctx, "lr35902", res["state"])["state"]}
+            for _ in range(3):
+                st = BN._case_state(rng, cards[name], None)
+                out = BN.run_case(m, cards[name], st, rng.randbytes(0x10000))
+                init = {k: st[k] for k in self.ex.globals}
+                init["PC"] = (st["PC"] + 1) & 0xFFFF
+                got = SY.evaluate(d, init, out["_ram_in"], self.ctx.ops)
+                for reg, v in got["regs"].items():
+                    self.assertEqual(v, out[reg], (name, reg, seed_note(self)))
+                checked += 1
+        self.assertGreater(checked, 60)
+
+    def test_a_wrong_canonical_term_is_caught(self):
+        # CM44: the stored canonical terms (identity hash, Gödel content) are witnessed on the same cases as the raw
+        # terms; a distilled or stored term that disagrees with the semantics fails the card, and a definition whose
+        # canonical terms were not the witnessed ones keeps its obligation open
+        from unittest import mock
+        only = ["LR35902_80"]
+        good = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only, canonical="distill")
+        self.assertEqual(good["cards"]["LR35902_80"]["status"], "pass", seed_note(self))
+        self.assertEqual(good["cards"]["LR35902_80"]["canonical"], "distilled")
+        real = SY.distill
+
+        def wrong(ctx, isa, state, rules=None, costs=None):
+            d = real(ctx, isa, state, rules, costs)
+            return {**d, "state": {**d["state"], "A": ["BIT_AND", ["ADD", d["state"]["A"], ["int", 1]],
+                                                       ["int", 255]]}}
+        with mock.patch.object(SY, "distill", wrong):
+            bad = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only, canonical="distill")
+            self.assertEqual(bad["status"], "fail", seed_note(self))
+            self.assertTrue(any("canonical terms" in p for p in bad["cards"]["LR35902_80"]["problems"]))
+            defs, _ = SY.definitions(self.ctx, "lr35902", bad)
+            self.assertEqual(defs[0]["proof_obligations"][0]["status"], "refuted")
+            # a raw-only witness does not cover the canonical terms definitions() stores
+            raw = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only, canonical=None)
+            self.assertEqual(raw["cards"]["LR35902_80"]["status"], "pass")
+            defs, _ = SY.definitions(self.ctx, "lr35902", raw)
+            self.assertEqual(defs[0]["proof_obligations"][0]["status"], "pending")
+        stored = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only)
+        self.assertEqual(stored["cards"]["LR35902_80"]["canonical"], "stored")
+        res = stored["results"]["LR35902_80"]
+        with mock.patch.object(SY, "_stored_canonical",
+                               lambda ctx, name, r: ({**res["state"], "A": ["BIT_AND", ["ADD", res["state"]["A"], ["int", 1]],
+                                                                         ["int", 255]]}, None)):
+            bad = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only)
+        self.assertEqual(bad["status"], "fail", seed_note(self))
+
+    def test_distill_certificate_is_reproducible(self):
+        # the e-graph's budget cut makes which laws fire depend on set order; the certificate is the whole fired
+        # set, sorted, so regenerating the pack under another hash seed gives the same bytes (09 and B0 differed)
+        import json, os, subprocess, sys
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[1]
+        prog = ("import json, sys; sys.path.insert(0, '.')\n"
+                "from cardmodel.engines.context import Ctx\n"
+                "from cardmodel.kernel.store import open_store\n"
+                "from cardmodel.machine import symbolic as SY\n"
+                "ctx = Ctx(open_store(project=False)); ex = SY.Executor(ctx, SY.module(ctx, 'lr35902')[0])\n"
+                "print(json.dumps({n: list(SY.distill(ctx, 'lr35902', ex.run(n)['state'])['fired'])\n"
+                "                  for n in ('LR35902_09', 'LR35902_B0', 'LR35902_CB_28')}, sort_keys=True))\n")
+        outs = [subprocess.run([sys.executable, "-B", "-c", prog], cwd=root, capture_output=True, text=True,
+                               env={**os.environ, "PYTHONHASHSEED": str(h)}, check=True).stdout for h in (0, 1)]
+        self.assertEqual(json.loads(outs[0]), json.loads(outs[1]))
+
 if __name__ == "__main__":
     unittest.main()

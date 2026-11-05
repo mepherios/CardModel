@@ -1,0 +1,42 @@
+{
+  "category": "physics_law",
+  "dimensions": {
+    "g": "acceleration",
+    "h": "length",
+    "p": "pressure",
+    "rho": "density"
+  },
+  "lhs": [
+    "var",
+    "p"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "hydrostatic_pressure",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_physics.py"
+  },
+  "rhs": [
+    "MUL",
+    [
+      "MUL",
+      [
+        "var",
+        "rho"
+      ],
+      [
+        "var",
+        "g"
+      ]
+    ],
+    [
+      "var",
+      "h"
+    ]
+  ],
+  "source": "fluid statics",
+  "statement": "p = ρ·g·h",
+  "tier": 0
+}

@@ -161,7 +161,7 @@ These are the rules the audit checks. They are proposed as laws to be numbered f
 | unreal/witness | the C/IEEE target model M_C (D14): binary64 and binary32 arithmetic, the platform's libm, a float divided by zero is ±inf | declares IEEE semantics | F6: it had its own evaluator, never compared with M | resolved as a target model: a test pins it to every op card's value on that card's domain (55 ops, no disagreement), and it differs from M only where M is undefined. `f32` is now a subsort of `float` (D1), the sort of F32's results, with its laws (`f32(a) = a` for a of sort f32) |
 | improve | D8 | rewrites are verified and re-verified; substitutions are tiered | rewrites are restricted to int-typed expressions, which is the right workaround for F1 | ok after F1 |
 | learn, observe | evidence gathering | CM04, CM15 | statistics, not semantics, which is acceptable for observation. Its rewrite proposals go through F2's evaluator | F2 |
-| machine (lift, symbolic, absint) | instruction cards as terms (MATH_CORE F5) | `symbolic` produces terms checked against the executable semantics | `lift.py` constant-folds with its own small op table (A2) | open |
+| machine (lift, symbolic, absint) | instruction cards as terms (MATH_CORE F5) | `symbolic` produces terms checked against the executable semantics, distilled to canonical terms under the register sorts (u8, u16) | `lift.py` folded constants through the op cards but simplified with hand-written identities (A3, A5) | fixed: the lifter's simplifications are the rule cards' unit and absorbing laws (`lift.unit_laws`), and nothing else |
 | card store, kernel | storage of cards, content hash of JSON (CM02) | its identity is the hash of a card's JSON, which is a different object from D7's hash of a term | none | ok |
 | self, selfrun | the model checking its own laws (CM27) | logic over the store | none | ok |
 
@@ -176,3 +176,35 @@ These are the rules the audit checks. They are proposed as laws to be numbered f
 4. **Canonical content** (F4, A4). Definition cards read γ from canon_E when distillation reached one, and record
    which term was read.
 5. Then F5 and F6 (hash tags, and F32 or BV(w) as sorts), with MATH_CORE phase 2.
+
+## 7. Handover: state of this stream (2026-11-05)
+
+Merged on main (#16 to #24, #29, #30): this document; sorted e-graph and search (F1, A3); one model (F2, A2);
+canonical content (F4); identities naming their relation (F5); the Unreal evaluator as a target model (F6); the
+subsorts `u8..i32 <= int`, `f32 <= float` with the WRAPU and WRAPS op cards and 21 laws (D1). Then LR35902
+instruction terms distilled under the register sorts (#31); the lifter simplifying only by the rule cards' unit and
+absorbing laws (#49). Every row of the audit in §5 is fixed or pinned. No branch of this stream holds unmerged work
+(`claude/project-thread-8z7gnb` equals main after #49).
+
+Remaining, in order:
+
+1. **Sorts for lifted machine code.** `machine/lift.py` folds machine terms without sorts. Give the lifter the ISA
+   card's register widths (`symbolic.register_sorts`: A..L are u8, PC and SP are u16, read bytes u8) and run
+   `egraph.canonical` with those `var_sorts` on each lifted block's register assignments, as `symbolic.distill`
+   does. Then `x & 0xFF` on a u8 register folds away through `wrapu8_of_u8`. Bump `lift.LIFTER`. Witness:
+   `test_machine.Lifting` (lifted blocks agree with the interpreter frame by frame) and a count of masks removed.
+2. **Fixed-width ints and f32 as IR types.** Add `u8, u16, u32, i8, i16, i32, f32` to `engines/ir.py` `TYPES` (this
+   stream owns IR types; nothing else adds them). The sort of each is already defined in `engines/sorts.py`. Each
+   language card needs a type template per new type and each op card's `ir.types` the ranks at the new sorts, or a
+   gap. Emit as wrap-on-store: a store to a u8 variable is `WRAPU(v, 8)`, and an f32 store is `F32(v)`.
+3. **Conformance cells** for the new types in every language (`engines/conformance.py`): u8 and i8 overflow, u32
+   multiplication, f32 rounding against `F32`. A language without a native width emits the WRAP template, so it is
+   a cell that passes, never a skip.
+4. **Frontends:** lift C `uint8_t`/`int32_t`/`float`, Rust `u8`/`i32`/`f32`, Go, Java and C# fixed-width types to
+   these sorts instead of `int` or `float`.
+5. Then `str`, tuple, Option, records, `raise` and truthiness, per MATH_CORE phase 2.
+
+Rules to keep: a law fires only at its sorts (A3); every new simplification is a rule card witnessed in M
+(`test_witness.Rules`); regenerate the definition packs with `python3 -B tools/seed_sources.py` and keep
+`cardmodel sources check` passing. CI is out of Actions minutes. Merge on a full local `python -B -m unittest`
+from `tests/` (about 40 minutes); V approved this.
