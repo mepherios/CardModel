@@ -1,0 +1,344 @@
+{
+  "category": "language",
+  "codegen": {
+    "array": {
+      "int": "static int64_t {name}[{size}];",
+      "u8": "static uint8_t {name}[{size}];"
+    },
+    "array_export": {
+      "int": "int64_t {name}[{size}];",
+      "u8": "uint8_t {name}[{size}];"
+    },
+    "array_extern": {
+      "int": "extern int64_t {name}[{size}];",
+      "u8": "extern uint8_t {name}[{size}];"
+    },
+    "array_init": {
+      "int": "static int64_t {name}[{size}] = {{{values}}};",
+      "u8": "static uint8_t {name}[{size}] = {{{values}}};"
+    },
+    "assign": "{name} = {value};",
+    "break": "break;",
+    "continue": "continue;",
+    "declare": "{type} {name} = {value};",
+    "do": "{value};",
+    "else": "}} else {{",
+    "empty": ";",
+    "end_if": "}}",
+    "end_while": "}}",
+    "export_prefix": "cmx_",
+    "func": "static {ret} {name}({params}) {{\n{body}}}\n",
+    "func_export": "{ret} {name}({params}) {{\n{body}}}\n",
+    "global": "static {type} {name} = {value};",
+    "global_export": "{type} {name} = {value};",
+    "global_extern": "extern {type} {name};",
+    "harness": {
+      "bench_call": "cm_acc += {truthy};",
+      "bench_main": "int main(void) {{\n    int64_t cm_acc = 0;\n    for (int64_t cm_r = 0; cm_r < {reps}; cm_r++) {{\n{calls}    }}\n    printf(\"%\" PRId64 \"\\n\", cm_acc);\n    return 0;\n}}\n",
+      "main": "int main(void) {{\n{calls}    return 0;\n}}\n",
+      "print": {
+        "bool": "printf(\"b:%s\\n\", ({e}) ? \"true\" : \"false\");",
+        "float": "printf(\"f:%.17g\\n\", (double)({e}));",
+        "int": "printf(\"i:%\" PRId64 \"\\n\", (int64_t)({e}));",
+        "list[float]": "cm_lf_print({e});",
+        "list[int]": "cm_li_print({e});"
+      },
+      "truthy": {
+        "bool": "(({e}) ? 1 : 0)",
+        "float": "((({e}) > 0.0) ? 1 : 0)",
+        "int": "((({e}) != 0) ? 1 : 0)"
+      }
+    },
+    "helpers": {
+      "cm_abs_i": "static @int@ cm_abs_i(@int@ a) { return a < 0 ? -a : a; }",
+      "cm_floordiv": "static @int@ cm_floordiv(@int@ a, @int@ b) { @int@ q = a / b; if ((a % b != 0) && ((a < 0) != (b < 0))) q -= 1; return q; }",
+      "cm_floormod": "static @int@ cm_floormod(@int@ a, @int@ b) { @int@ r = a % b; if (r != 0 && ((r < 0) != (b < 0))) r += b; return r; }",
+      "cm_gcd": "static @int@ cm_gcd(@int@ a, @int@ b) { a = a < 0 ? -a : a; b = b < 0 ? -b : b; while (b != 0) { @int@ t = a % b; a = b; b = t; } return a; }",
+      "cm_ipow": "static @int@ cm_ipow(@int@ a, @int@ b) { @int@ r = 1; while (b > 0) { if (b & 1) r *= a; b >>= 1; if (b) a *= a; } return r; }",
+      "cm_lf": "#include <stdio.h>\n#include <stdlib.h>\ntypedef struct { int64_t n; double *d; } cm_lf;",
+      "cm_lf_copy": "static cm_lf cm_lf_copy(cm_lf a) { return cm_lf_of(a.n, a.d); }",
+      "cm_lf_get": "static double cm_lf_get(cm_lf a, int64_t i) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); return a.d[i]; }",
+      "cm_lf_new": "static cm_lf cm_lf_new(int64_t n, double v) { if (n < 0) cm_list_fail(\"negative length\"); cm_lf r; r.n = n; r.d = (double *)malloc(sizeof(double) * (size_t)(n > 0 ? n : 1)); for (int64_t i = 0; i < n; i++) r.d[i] = v; return r; }",
+      "cm_lf_of": "static cm_lf cm_lf_of(int64_t n, const double *v) { cm_lf r = cm_lf_new(n, 0); for (int64_t i = 0; i < n; i++) r.d[i] = v[i]; return r; }",
+      "cm_lf_print": "static void cm_lf_print(cm_lf a) { printf(\"l:%\" PRId64 \"\\n\", a.n); for (int64_t i = 0; i < a.n; i++) printf(\"f:%.17g\\n\", a.d[i]); }",
+      "cm_lf_set": "static void cm_lf_set(cm_lf a, int64_t i, double v) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); a.d[i] = v; }",
+      "cm_li": "#include <stdio.h>\n#include <stdlib.h>\ntypedef struct { int64_t n; int64_t *d; } cm_li;",
+      "cm_li_copy": "static cm_li cm_li_copy(cm_li a) { return cm_li_of(a.n, a.d); }",
+      "cm_li_get": "static int64_t cm_li_get(cm_li a, int64_t i) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); return a.d[i]; }",
+      "cm_li_new": "static cm_li cm_li_new(int64_t n, int64_t v) { if (n < 0) cm_list_fail(\"negative length\"); cm_li r; r.n = n; r.d = (int64_t *)malloc(sizeof(int64_t) * (size_t)(n > 0 ? n : 1)); for (int64_t i = 0; i < n; i++) r.d[i] = v; return r; }",
+      "cm_li_of": "static cm_li cm_li_of(int64_t n, const int64_t *v) { cm_li r = cm_li_new(n, 0); for (int64_t i = 0; i < n; i++) r.d[i] = v[i]; return r; }",
+      "cm_li_print": "static void cm_li_print(cm_li a) { printf(\"l:%\" PRId64 \"\\n\", a.n); for (int64_t i = 0; i < a.n; i++) printf(\"i:%\" PRId64 \"\\n\", a.d[i]); }",
+      "cm_li_set": "static void cm_li_set(cm_li a, int64_t i, int64_t v) { if (i < 0 || i >= a.n) cm_list_fail(\"index out of range\"); a.d[i] = v; }",
+      "cm_list_fail": "static void cm_list_fail(const char *why) { fputs(why, stderr); fputs(\"\\n\", stderr); exit(3); }",
+      "cm_max_f": "static @float@ cm_max_f(@float@ a, @float@ b) { return b > a ? b : a; }",
+      "cm_max_i": "static @int@ cm_max_i(@int@ a, @int@ b) { return b > a ? b : a; }",
+      "cm_min_f": "static @float@ cm_min_f(@float@ a, @float@ b) { return b < a ? b : a; }",
+      "cm_min_i": "static @int@ cm_min_i(@int@ a, @int@ b) { return b < a ? b : a; }",
+      "cm_opaque_b": "static @bool@ cm_opaque_b(@bool@ x) { volatile @bool@ v = x; return v; }",
+      "cm_opaque_f": "static @float@ cm_opaque_f(@float@ x) { volatile @float@ v = x; return v; }",
+      "cm_opaque_i": "static @int@ cm_opaque_i(@int@ x) { volatile @int@ v = x; return v; }",
+      "cm_powmod": "static @int@ cm_powmod(@int@ a, @int@ b, @int@ m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } @int@ r = cm_floormod(1, m); a = cm_floormod(a, m); while (b > 0) { if (b & 1) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1; } return r; }",
+      "cm_modinv": "static @int@ cm_modinv(@int@ a, @int@ m) { @int@ n = m < 0 ? -m : m; @int@ r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { @int@ q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) __builtin_trap(); return cm_floormod(s0, n); }"
+    },
+    "if": "if ({cond}) {{",
+    "import": "#include <@name@>\n",
+    "indent": "    ",
+    "lib_prelude": "#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n@imports@\n",
+    "list_lit": {
+      "list[float]": "cm_lf_of({n}, (const double[]){{{items_z}}})",
+      "list[int]": "cm_li_of({n}, (const int64_t[]){{{items_z}}})"
+    },
+    "lit": {
+      "false": "false",
+      "float": "{v}",
+      "int": "INT64_C({v})",
+      "true": "true"
+    },
+    "load": {
+      "int": "{arr}[{idx}]",
+      "u8": "{arr}[{idx}]"
+    },
+    "opaque": {
+      "bool": "cm_opaque_b({v})",
+      "float": "cm_opaque_f({v})",
+      "int": "cm_opaque_i({v})"
+    },
+    "param": "{type} {name}",
+    "prelude": "#include <stdio.h>\n#include <stdint.h>\n#include <stdbool.h>\n#include <math.h>\n#include <inttypes.h>\n@imports@\n",
+    "prototype": "static {ret} {name}({params});",
+    "prototype_export": "{ret} {name}({params});",
+    "return": "return {value};",
+    "return_void": "return;",
+    "set": {
+      "list[float]": "cm_lf_set({name}, {idx}, {value});",
+      "list[int]": "cm_li_set({name}, {idx}, {value});"
+    },
+    "store": {
+      "int": "{arr}[{idx}] = {value};",
+      "u8": "{arr}[{idx}] = (uint8_t)({value});"
+    },
+    "style": "braces",
+    "switch": {
+      "body_close": "}} break;",
+      "body_open": "{{",
+      "case": "case {v}:",
+      "default": "default:",
+      "head": "switch ({value}) {{",
+      "tail": "}}"
+    },
+    "types": {
+      "bool": "bool",
+      "float": "double",
+      "int": "int64_t",
+      "list[float]": "cm_lf",
+      "list[int]": "cm_li",
+      "void": "void"
+    },
+    "while": "while ({cond}) {{",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0",
+      "list[float]": "cm_lf_new(0, 0.0)",
+      "list[int]": "cm_li_new(0, 0)"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "embed": {
+    "compile": [
+      "{exe}",
+      "-O2",
+      "-std=c11",
+      "-shared",
+      "-fPIC",
+      "-fwrapv",
+      "-w",
+      "-o",
+      "{lib}",
+      "{src}",
+      "-lm"
+    ],
+    "compile_object": [
+      "{exe}",
+      "-O1",
+      "-std=c11",
+      "-fPIC",
+      "-fwrapv",
+      "-w",
+      "-c",
+      "-o",
+      "{obj}",
+      "{src}"
+    ],
+    "file": "machine.c",
+    "kind": "cabi",
+    "link": [
+      "{exe}",
+      "-shared",
+      "-o",
+      "{lib}",
+      "{objs}",
+      "-lm"
+    ],
+    "statement": "a shared library loaded with ctypes: int64 arguments and results, exported symbols carry the codegen export_prefix, arrays are reachable with in_dll"
+  },
+  "extensions": [
+    ".c",
+    ".h"
+  ],
+  "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "replace": [
+      [
+        "\\bint\\s+main\\s*\\(",
+        "int cm_user_main("
+      ]
+    ]
+  },
+  "int_bits": 64,
+  "metadata": {
+    "previous_content_hash": "f8d0a742dc57a56c17bc5b0e23bc763cf07c117f36d1bde418d99d6bd0cf4515",
+    "version": "1.1.1",
+    "version_bump_reason": "patch"
+  },
+  "name": "c",
+  "probe": {
+    "env_override": "CC",
+    "kind": "executable",
+    "name": "cc",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "auto",
+    "break",
+    "case",
+    "char",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "double",
+    "else",
+    "enum",
+    "extern",
+    "float",
+    "for",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "register",
+    "restrict",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "struct",
+    "switch",
+    "typedef",
+    "union",
+    "unsigned",
+    "void",
+    "volatile",
+    "while",
+    "bool",
+    "true",
+    "false",
+    "main",
+    "printf",
+    "abs",
+    "div",
+    "exp",
+    "log",
+    "pow",
+    "sqrt",
+    "floor",
+    "ceil",
+    "round",
+    "trunc",
+    "fabs",
+    "fmod",
+    "sin",
+    "cos",
+    "tan",
+    "y0",
+    "y1",
+    "j0",
+    "j1",
+    "jn",
+    "yn",
+    "gamma",
+    "log2",
+    "exp2",
+    "isnan",
+    "isinf",
+    "signbit",
+    "nan",
+    "rint",
+    "remainder",
+    "time",
+    "read",
+    "write",
+    "index",
+    "rand",
+    "random",
+    "signal",
+    "sync",
+    "close",
+    "open",
+    "free",
+    "malloc",
+    "exit",
+    "puts",
+    "putc",
+    "getc",
+    "remove",
+    "rename",
+    "stdin",
+    "stdout",
+    "stderr",
+    "NULL",
+    "assert",
+    "halt"
+  ],
+  "runner": {
+    "compile": [
+      "{exe}",
+      "-O2",
+      "-std=c11",
+      "-o",
+      "{bin}",
+      "{src}",
+      "-lm"
+    ],
+    "file": "main.c",
+    "run": [
+      "{bin}"
+    ]
+  },
+  "statement": "C11 with int64_t / double; compiled by the host C compiler.",
+  "tier": 0
+}
