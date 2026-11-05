@@ -253,6 +253,30 @@ class MathListsTest(unittest.TestCase):
         want = Interpreter(mod, self.ctx.ops, step_limit=50_000_000).call("matmul", [a, a, n, n, n])
         self.assertEqual(got, want)
 
+    def test_loop_variables_avoid_names_in_use(self):
+        """A merged tail loop's own variables (cm_st, cm_nextN) never alias a parameter of the same name."""
+        src = ("f : ℤ × ℤ → ℤ\n"
+               "f(a, cm_next1) = cm_next1                if a ≤ 0\n"
+               "               = f(a − 1, cm_next1 + a)  otherwise\n"
+               "g : ℤ × ℤ × ℤ → ℤ\n"
+               "g(a, b, cm_st) = b                       if a ≤ 0\n"
+               "               = h(a, b + cm_st, cm_st)  otherwise\n"
+               "h : ℤ × ℤ × ℤ → ℤ\n"
+               "h(a, b, cm_st) = g(a − 1, b, cm_st + 1)\n")
+        m = M.lift_text(src, self.ctx.ops)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("f", [3, 0]), 6)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("g", [3, 0, 1]), 6)
+        back = M.lift_text(M.emit_module(m), self.ctx.ops)      # a second round trip sees the emitted names
+        self.assertEqual(Interpreter(back, self.ctx.ops).call("g", [3, 0, 1]), 6)
+
+    def test_spelled_out_greek_keeps_parameters_apart(self):
+        m = M.lift_text("f(μ, mu) = μ − mu\nh(ε, eps) = ε − eps\n", self.ctx.ops)
+        for f in m["functions"]:
+            names = [p["name"] for p in f["params"]]
+            self.assertEqual(len(set(names)), 2, names)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("f", [5.0, 2.0]), 3.0)
+        self.assertEqual(Interpreter(m, self.ctx.ops).call("h", [5.0, 2.0]), 3.0)
+
     def test_transformer_kernels_round_trip_through_math(self):
         lifted = lift_source(TRANSFORMER, self.ctx.ops)
         for name in ("softmax", "layernorm", "attention", "matmul"):

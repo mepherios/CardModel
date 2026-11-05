@@ -205,6 +205,8 @@ class Witness(unittest.TestCase):
                 continue
             if not ctx.available(lang)[0]:
                 continue
+            if not ctx.language(lang).get("runner"):
+                continue            # recognised only (C#, Kotlin): its toolchain may be installed, but nothing runs it
             for lf in lifted:
                 if not lf.ok:
                     continue

@@ -871,6 +871,26 @@ def _ident(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]", "_", out)
 
 
+def _param_idents(params: list[str], taken: set[str]) -> dict[str, str]:
+    """Each parameter's identifier, distinct from the others: a spelled-out name (μ → mu) that meets another
+    parameter, a function or a builtin gets a suffix (f(μ, mu) has parameters mu_1 and mu)."""
+    plain = {p for p in params if _ident(p) == p}
+    used = set(taken) | plain
+    out = {}
+    for p in params:
+        if p in plain:
+            out[p] = p
+            continue
+        base = n = _ident(p)
+        k = 0
+        while n in used:
+            k += 1
+            n = f"{base}_{k}"
+        used.add(n)
+        out[p] = n
+    return out
+
+
 def _zero(t: str):
     if elem_type(t) is not None:
         return ["LIST_NEW", ["int", 0], _zero(elem_type(t))]
@@ -882,10 +902,11 @@ class _FnLower:
         self.low = low
         self.name = name
         self.params = params
-        self.ptypes = {_ident(p): t for p, t in zip(params, ptypes)}
+        self.pid = _param_idents(params, low.fn_names | low.reserved_names)
+        self.ptypes = {self.pid[p]: t for p, t in zip(params, ptypes)}
         self.ret = ret
         self.locals: dict[str, str] = {}
-        self.scope: list[dict[str, str]] = [{p: _ident(p) for p in params}]
+        self.scope: list[dict[str, str]] = [dict(self.pid)]
         self.types: dict[str, str] = dict(self.ptypes)
         self.ret_types: set[str] = set()
         self.tmp = 0
@@ -1355,7 +1376,7 @@ class Lowerer:
             raise MathError(f"{name} is declared → {TYPE_SYMBOL[ret]} but a case is "
                             f"{', '.join(TYPE_SYMBOL[t] for t in sorted(fl.ret_types - {ret}))}"
                             + (" (write ⌊a/b⌋ for integer division)" if ret == "int" else ""), line)
-        fn = {"name": name, "params": [{"name": _ident(p), "type": t} for p, t in zip(params, ptypes)],
+        fn = {"name": name, "params": [{"name": fl.pid[p], "type": t} for p, t in zip(params, ptypes)],
               "returns": ret, "locals": dict(fl.locals), "body": stmts}
         requires = []
         for c in domain:
@@ -1367,7 +1388,7 @@ class Lowerer:
             fn["requires"] = requires
             fn["locals"] = dict(fl.locals)
         if sig and sig[0]:
-            nat = [_ident(p) for p, t in zip(params, sig[0]) if t == "nat"]
+            nat = [fl.pid[p] for p, t in zip(params, sig[0]) if t == "nat"]
             if nat:
                 fn["nat_params"] = nat
                 fn.setdefault("requires", [])
@@ -1491,12 +1512,26 @@ def _dispatch(root: dict, members: list[dict]) -> dict:
     # equations of one loop nest pass their state under the same names, so most jumps then re-bind nothing
     known = {p["name"]: p["type"] for p in root["params"]}
     known.update(locals_)
+    # every name any member uses: the loop's own variables (renames, cm_go, cm_st, cm_nextN) must avoid them all,
+    # or a parameter that happens to be called cm_st would alias the dispatch state
+    taken = set(known)
+    for m in members:
+        taken.update(p["name"] for p in m["params"])
+        taken.update(m.get("locals") or {})
+
+    def fresh(base: str) -> str:
+        n = base
+        while n in taken:
+            n += "_"
+        taken.add(n)
+        return n
+
     for i, m in enumerate(members):
         r = {}
         if i:
             for v, t in [(p["name"], p["type"]) for p in m["params"]] + list((m.get("locals") or {}).items()):
                 if v in known and known[v] != t:
-                    r[v] = f"cm_{i}_{v}"
+                    r[v] = fresh(f"cm_{i}_{v}")
                 known[r.get(v, v)] = t
                 if r.get(v, v) not in {p["name"] for p in root["params"]}:
                     locals_[r.get(v, v)] = t
@@ -1504,15 +1539,16 @@ def _dispatch(root: dict, members: list[dict]) -> dict:
         pnames[m["name"]] = [r.get(p["name"], p["name"]) for p in m["params"]]
         ptypes[m["name"]] = [p["type"] for p in m["params"]]
     index = {m["name"]: i for i, m in enumerate(members)}
-    go, st = "cm_go", "cm_st"
+    go = fresh("cm_go")
     locals_[go] = "bool"
+    st = fresh("cm_st") if multi else None
     if multi:
         locals_[st] = "int"
     count = [0]
 
     def temp(t: str) -> str:
         count[0] += 1
-        n = f"cm_next{count[0]}"
+        n = fresh(f"cm_next{count[0]}")
         locals_[n] = t
         return n
 
@@ -2001,7 +2037,7 @@ def _readable(name: str, params: list, t, taken: set) -> tuple[list, object]:
     used = set(names) | taken
     for v in sorted(names):
         m = re.fullmatch(r"cm_([A-Za-z_]+?)_?\d*", v)
-        if not m:
+        if not m or v in taken:             # the main equation's own parameters keep their names
             continue
         base = m.group(1).rstrip("_") or "v"
         if base in KEYWORDS or base in BUILTINS or base in used or base in ren.values():
@@ -2037,7 +2073,6 @@ def simplify(eqs: list, main: str) -> list:
             terms[n] = _tidy(_map_calls(terms[n], prune), used)
         for n in gen:
             params[n] = [p for i, p in enumerate(params[n]) if i in used[n]]
-        used = {n: set(range(len(params[n]))) for n in gen}
         # recompute from scratch on the pruned equations (lets may have gone, so fewer reads)
         used = {n: set() for n in gen}
     # forwarders: main(x..) = L(x..) with L's parameters equal to main's -> main takes L's equation
