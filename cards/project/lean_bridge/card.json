@@ -10,7 +10,8 @@
   "done": [
     "fail-closed batch checking",
     "faithful import with Lean semantics",
-    "derivations as Lean terms"
+    "derivations as Lean terms",
+    "theorems carry one identity per statement (engines/theorems.py, #90): 1,650 theorem cards are 1,586 statements; a settled law or kept Lean proof is reused by identity, not proved again"
   ],
   "goal": "Lean as the proof kernel of the model, with proofs a person can read.",
   "in_progress": [],
@@ -21,8 +22,8 @@
     "proofs linking emitted code to definitions"
   ],
   "metadata": {
-    "previous_content_hash": "9cdcbcfddcd45aeb318bfd6862d4a9d4415e54fb69dbb0bde798a815448f94fa",
-    "version": "2.0.1",
+    "previous_content_hash": "b4c2a4ef44b6f869124ab1a6f3f9850f6444be8292e63fa7bb02bb8959450b1d",
+    "version": "2.0.2",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -64,6 +65,6 @@
   "statement": "Lean as the proof kernel: theorems, derivations and Lean's own library as cards, re-proved by the model's tactics.",
   "tier": 1,
   "title": "The Lean bridge",
-  "updated": "2026-10-22T00:30:00+02:00",
+  "updated": "2026-11-05T12:30:00+01:00",
   "user_actions": []
 }
