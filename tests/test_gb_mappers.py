@@ -329,6 +329,102 @@ class Unlicensed(unittest.TestCase):
                             "a `card.` constant changed, so the cached module must not be reused")
 
 
+# -- the three boards across engines, and the survey's view of their type bytes --------------------------------
+def mbc7_program():
+    """Banks, both enables, the accelerometer (erase, latch, X/Y) and an EEPROM word written and read back."""
+    return [*st(0x2000, 5), *keep(0x4000, 0), *st(0x2000, 0), *keep(0x4000, 1), *keep(0xA020, 2),
+            *st(0x0000, 0x0A), *st(0x4000, 0x40), *st(0xA000, 0x55), *st(0xA010, 0xAA),
+            *[x for k in range(4) for x in keep(0xA020 + 0x10 * k, 3 + k)],
+            *ee_command(0, 0xC0), *ee_command(1, 9, 0xA55A), *ee_read(9, 8)]
+
+
+def huc3_program():
+    """Banks, RAM banks 0-3 in mode 0xA, a refused write in mode 0, the semaphore, infrared, a clock nibble."""
+    return [*st(0x2000, 6), *keep(0x4000, 0), *st(0x2000, 0), *keep(0x4000, 1),
+            *st(0x0000, 0x0A), *[x for b in range(4) for x in st(0x4000, b) + st(0xA010, 0x40 + b)],
+            *[x for b in range(4) for x in st(0x4000, b) + keep(0xA010, 2 + b)],
+            *st(0x0000, 0x00), *st(0xA010, 0x77), *keep(0xA010, 6),
+            *st(0x0000, 0x0D), *keep(0xA000, 7), *st(0x0000, 0x0E), *keep(0xA000, 8),
+            *huc3_cmd(0x40), *huc3_cmd(0x50), *huc3_cmd(0x37), *huc3_cmd(0x40), *huc3_cmd(0x50),
+            *huc3_cmd(0x10), *huc3_answer(9)]
+
+
+def camera_program():
+    """Banks, a write refused before the enable, RAM banks 0-15, the register window and its mirror."""
+    return [*st(0x2000, 7), *keep(0x4000, 0), *st(0x2000, 0), *keep(0x4000, 1),
+            *st(0x4000, 3), *st(0xA010, 0x99), *keep(0xA010, 2),             # writes need 0x0A first
+            *st(0x0000, 0x0A), *[x for b in (0, 5, 15) for x in st(0x4000, b) + st(0xA020, 0x60 + b)],
+            *[x for k, b in enumerate((0, 5, 15)) for x in st(0x4000, b) + keep(0xA020, 3 + k)],
+            *st(0x4000, 0x10), *keep(0xA000, 6), *st(0xA000, 0x06), *keep(0xA000, 7), *keep(0xA080, 8),
+            *keep(0xA001, 9)]
+
+
+BOARDS = {   # type byte, ROM size code, RAM size code, the program, what it must leave in WRAM 0..
+    "mbc7": (0x22, 2, 0, mbc7_program, [5, 0, 0xFF, 0xD0, 0x81, 0xD0, 0x81, 0x00, 0xC2]),
+    "huc3": (0xFE, 2, 3, huc3_program, [6, 0, 0x40, 0x41, 0x42, 0x43, 0x43, 0xFF, 0xC0, 0x17]),
+    "camera": (0xFC, 2, 4, camera_program, [7, 0, 0x00, 0x60, 0x65, 0x6F, 0x00, 0x06, 0x06, 0x00]),
+}
+
+
+def board_rom(ctx, name):
+    t, rom_code, ram_code, prog, _ = BOARDS[name]
+    return cart(ctx, prog(), t, rom_size_code=rom_code, ram_size_code=ram_code)
+
+
+class BoardsAcrossEngines(unittest.TestCase):
+    """MBC7, HuC3 and the camera come from cards, so every engine runs the same board: the C build (native), the
+    Python build (host) and the reference interpreter (ir) must leave the same bytes."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+
+    def test_type_bytes_name_supported_controllers(self):
+        card = self.ctx.store.get("hardware/gb_cartridge")
+        for name, (t, *_r) in BOARDS.items():
+            rom = board_rom(self.ctx, name)
+            info = gb.header(rom, self.ctx.store)
+            self.assertEqual((info["type"], info["mbc"], info["supported"]), (t, name, True))
+            self.assertEqual(info["mbc_kind"], card["mbc_kind"][name])
+            g = gb.GameBoy(self.ctx, rom, "native", sample_rate=0)
+            self.assertEqual(g.m.get("mbc_kind"), card["mbc_kind"][name], f"{name}: the machine runs that board")
+
+    def test_native_and_host_agree(self):
+        for name, (*_r, want) in BOARDS.items():
+            rom = board_rom(self.ctx, name)
+            seen = {}
+            for engine in ("native", "host"):
+                g = run(gb.GameBoy(self.ctx, rom, engine, sample_rate=0), 2)
+                seen[engine] = (bytes(results(g, 32)), g.m.read("cram", 0, g.info["ram_size"]), g.state_hash())
+            self.assertEqual(list(seen["native"][0][:len(want)]), want, name)
+            self.assertEqual(seen["native"], seen["host"], f"{name}: C and Python builds differ")
+            if name == "mbc7":
+                self.assertEqual(ee_word(seen["native"][0], 8), 0xA55A, "MBC7: the EEPROM word comes back")
+
+    def test_reference_interpreter_agrees(self):
+        """The reference interpreter is slow: half a frame is enough for these programs to finish."""
+        for name, (*_r, want) in BOARDS.items():
+            rom = board_rom(self.ctx, name)
+            seen = {}
+            for engine in ("native", "ir"):
+                g = gb.GameBoy(self.ctx, rom, engine, sample_rate=0)
+                g.m.call("run_dots", 70224 // 2)
+                seen[engine] = (bytes(results(g, 32)), g.m.read("cram", 0, 0x4000))
+            self.assertEqual(list(seen["ir"][0][:len(want)]), want, name)
+            self.assertEqual(seen["native"], seen["ir"], f"{name}: the interpreter and the C build differ")
+
+    def test_survey_reports_no_missing_controller(self):
+        import tempfile
+        from pathlib import Path
+        d = Path(tempfile.mkdtemp(prefix="cardmodel_boards_"))
+        for name in BOARDS:
+            (d / f"{name}.gb").write_bytes(board_rom(self.ctx, name))
+        rep = survey.run(self.ctx, d, frames=16)
+        self.assertEqual(rep["unsupported_mappers"], 0)
+        self.assertEqual(sorted((r["mbc"], r["supported"]) for r in rep["rows"]),
+                         [("camera", True), ("huc3", True), ("mbc7", True)])
+
+
 # -- the CGB boot and the survey ------------------------------------------------------------------------------
 class BootAndSurvey(unittest.TestCase):
     @classmethod

@@ -123,7 +123,9 @@ No engine names a language: the choice is card data (`embed` blocks), checked by
   palettes and VRAM bank), OAM DMA and HDMA, joypad, serial (logged), APU (4 channels, frame sequencer, mixer,
   output capacitor).
 * **Cartridge boards** (`hardware/gb_cartridge`: `cart.card`, `mbc7.card`, `huc3.card`, `camera.card`; tests in
-  `tests/test_gb_mappers.py`, each on a cartridge the assembler builds):
+  `tests/test_gb_mappers.py`, each on a cartridge the assembler builds; MBC7, HuC3 and the camera's cartridges
+  leave the same work RAM, cartridge RAM and state in the C build, the Python build and the reference
+  interpreter, and the survey counts their type bytes 0x22, 0xFE and 0xFC as supported):
   * **MBC7** (Kirby Tilt 'n' Tumble): banks, the accelerometer latch (0x55 erases to 0x8000, then 0xAA latches,
     centred on 0x81D0, 1 g = 0x70) and the 93LC56 EEPROM by its data sheet (start bit, opcode, 8 address bits; a
     dummy 0 then 16 bits MSB first; EWEN/EWDS, WRITE, ERASE, ERAL, WRAL). The EEPROM is the first 256 bytes of the
