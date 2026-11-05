@@ -433,6 +433,10 @@ Memory: see docs/METHODOLOGY.md §6 (environment variables `CARDMODEL_MAX_PARALL
   engine (`engines/capabilities.py`), its witness tests and docs. `verify` runs the checks (sections
   `capabilities` and `integrity`, both in `--quick`); LAWS.md lists them under the laws; every law is carried by
   at least one (the integrity check and `stdlib/self.card` both enforce it).
+* **Every capability in the main pipeline** (CM50, `engines/pipeline.py`): each capability card's `pipeline` field
+  names the tier of its evidence (CM46) and the verify sections or self-run steps that run its engine; the
+  `pipeline` section (in `--quick`) holds each to the code and fails on a capability nothing runs unless it records
+  a gap with its reason and goal (G_A13). The smoke check does not count. `cardmodel pipeline` prints the table.
 * **The cycle** (CM38, `engines/selfrun.py`, the `self_step` cards): capabilities, integrity, verify (full every
   24 h), learning from changed source trees (`cardmodel self corpus add PATH` adds yours), laws and identities
   when their cards change, the arena (daily), measurements (weekly) and every goal, then findings (flaws,
