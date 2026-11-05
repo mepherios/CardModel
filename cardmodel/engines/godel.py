@@ -43,6 +43,7 @@ from __future__ import annotations
 import json
 import math
 from collections import Counter
+from fractions import Fraction
 from datetime import date
 
 REGISTRY = "godel"
@@ -410,8 +411,11 @@ def sub(a, b) -> Counter:
     return _strip(out)
 
 
-def scale(a, k: int) -> Counter:
-    """k copies of a content (the content of k occurrences)."""
+def scale(a, k: "int | Fraction") -> Counter:
+    """k copies of a content (the content of k occurrences); a rational k (fractions.Fraction) scales exactly, as a
+    square root halves a dimension. A float is refused: exponents stay exact."""
+    if isinstance(k, float):
+        raise TypeError("scale takes an int or a Fraction, not a float")
     return _strip(Counter({x: e * k for x, e in a.items()}))
 
 
