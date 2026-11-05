@@ -20,7 +20,8 @@
     "claude/godel-section-cache",
     "claude/numeric-model",
     "claude/arm-symbolic",
-    "claude/arm-symbolic-memory"
+    "claude/arm-symbolic-memory",
+    "claude/arm-symbolic-loops"
   ],
   "category": "project",
   "docs": [
@@ -57,8 +58,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "66f1524e5c27c7d42331d9bf64211123dfd2b43838544ec1b60fccb8860a0be5",
-    "version": "2.0.28",
+    "previous_content_hash": "6ac3f087d78a74ba039611c9ad92f423a9c6f872a79d5191cdf3af9da07dbcb2",
+    "version": "2.0.29",
     "version_bump_reason": "patch"
   },
   "metrics": [

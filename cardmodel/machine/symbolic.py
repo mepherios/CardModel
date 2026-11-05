@@ -56,11 +56,30 @@ def _val(t):
     return t[1]
 
 
+def _walk(stmts):
+    for x in stmts:
+        yield x
+        for key in ("then", "else", "body", "default"):
+            if isinstance(x.get(key), list):
+                yield from _walk(x[key])
+        for c in x.get("cases") or []:
+            yield from _walk(c["body"])
+
+
 class Executor:
     def __init__(self, ctx, mod):
         self.ops = ctx.ops
         self.fns = mod.functions
         self.globals = [g["name"] for g in mod.globals if g["name"] != "bus_effect"]
+        self.sizes = {a["name"]: a["size"] for a in getattr(mod, "arrays", None) or []}
+
+    ARRAY_MAX = 64
+
+    def _size(self, name):
+        n = self.sizes.get(name)
+        if n is None or n > self.ARRAY_MAX:
+            raise Unsupported(f"{name}[] indexed by a symbolic term")
+        return n
 
     def fold(self, t):
         head, args = t[0], t[1:]
@@ -80,7 +99,8 @@ class Executor:
     def run(self, fname: str, args: dict | None = None) -> dict:
         """``args`` binds the function's parameters (the ARM cards' instruction word ``op``) to concrete values: the
         terms are then the meaning of that one encoding. Array cells indexed by a constant are registers of their own
-        (``regs[3]`` is the variable ``regs3``); an index that depends on symbols is unsupported."""
+        (``regs[3]`` is the variable ``regs3``); a symbolic index is a select (load) or guarded write (store) over the
+        cells. Loops unroll when their bounds fold to constants under the bound word."""
         self.effects, self.nread = [], 0
         state = {g: ["var", g] for g in self.globals}
         args = args or {}
@@ -105,10 +125,14 @@ class Executor:
             return e
         if head == "LOAD":
             i = self.expr(e[2], env, guard)
-            if not _const(i):
-                raise Unsupported(f"{e[1]}[] indexed by a symbolic term")
-            cell = f"{e[1]}{_val(i)}"
-            return env["g"].get(cell, ["var", cell])
+            if _const(i):
+                cell = f"{e[1]}{_val(i)}"
+                return env["g"].get(cell, ["var", cell])
+            n = self._size(e[1])                      # a symbolic index: a select over the cells
+            t = env["g"].get(f"{e[1]}{n - 1}", ["var", f"{e[1]}{n - 1}"])
+            for k in range(n - 2, -1, -1):
+                t = ["IF_EXPR", ["CMP_EQ", i, ["int", k]], env["g"].get(f"{e[1]}{k}", ["var", f"{e[1]}{k}"]), t]
+            return t
         if head == "CALL":
             name, args = e[1], [self.expr(a, env, guard) for a in e[2:]]
             if name in EFFECTS:
@@ -150,11 +174,63 @@ class Executor:
                 self.branch(s, env, guard, (stmts[n + 1:], *cont))
             elif k == "store":
                 i = self.expr(s["index"], env, guard)
-                if not _const(i):
-                    raise Unsupported(f"store to {s['array']}[] at a symbolic index")
-                env["g"][f"{s['array']}{_val(i)}"] = self.expr(s["value"], env, guard)
+                v = self.expr(s["value"], env, guard)
+                if _const(i):
+                    env["g"][f"{s['array']}{_val(i)}"] = v
+                else:
+                    # an index left symbolic (the banked[] slot of the CPSR mode): a guarded write to every cell
+                    for k in range(self._size(s["array"])):
+                        cell = f"{s['array']}{k}"
+                        old = env["g"].get(cell, ["var", cell])
+                        env["g"][cell] = self.fold(["IF_EXPR", self.fold(["CMP_EQ", i, ["int", k]]), v, old])
+            elif k == "for_range":
+                self.for_range(s, env, guard)
+            elif k == "while":
+                self.while_(s, env, guard)
             else:
                 raise Unsupported(f"statement {k}")
+
+    LOOP_MAX = 64
+
+    def _loop_body(self, body, env, guard, what):
+        """One iteration of a loop body. ``break``/``continue`` and a return from inside are not modelled."""
+        if any(x["k"] in ("break", "continue", "return") for x in _walk(body)):
+            raise Unsupported(f"{what} with break/continue/return")
+        self.block(body, env, guard)
+
+    def for_range(self, s, env, guard) -> None:
+        """Unrolled when its bounds fold to constants under the bound instruction word; a symbolic bound is
+        unsupported."""
+        bounds = []
+        for key in ("start", "stop", "step"):
+            e = s.get(key, ["int", 1] if key == "step" else ["int", 0])
+            v = e if isinstance(e, int) else self.expr(e, env, guard)
+            if isinstance(v, int):
+                v = ["int", v]
+            if not _const(v):
+                raise Unsupported(f"for_range with a symbolic {key}")
+            bounds.append(int(_val(v)))
+        rng = range(*bounds) if bounds[2] else range(0)
+        if len(rng) > self.LOOP_MAX:
+            raise Unsupported(f"for_range of {len(rng)} iterations")
+        scope = "g" if s["var"] in env["g"] and s["var"] not in env["l"] else "l"
+        for i in rng:
+            env[scope][s["var"]] = ["int", i]
+            self._loop_body(s["body"], env, guard, "for_range")
+        if s.get("counter"):
+            env["l"][s["counter"]] = ["int", len(rng)]
+
+    def while_(self, s, env, guard) -> None:
+        """Unrolled while its condition folds to a constant (the loop counters depend on the bound word only);
+        a condition that stays symbolic is unsupported."""
+        for _ in range(self.LOOP_MAX + 1):
+            c = self.expr(s["cond"], env, guard)
+            if not _const(c):
+                raise Unsupported("while with a symbolic condition")
+            if not _val(c):
+                return
+            self._loop_body(s["body"], env, guard, "while")
+        raise Unsupported(f"while of more than {self.LOOP_MAX} iterations")
 
     def branch(self, s, env, guard, cont=()) -> None:
         c = self.expr(s["cond"], env, guard)
