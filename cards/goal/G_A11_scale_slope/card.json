@@ -1,0 +1,17 @@
+{
+  "axis": "autonomy",
+  "category": "goal",
+  "direction": "lower",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "metric": "scale_slope",
+  "name": "G_A11_scale_slope",
+  "provenance": {
+    "origin": "docs/SCALING.md §6 (proposed goal: scale slope)",
+    "tool": "cardmodel scale bench"
+  },
+  "statement": "Time per function at the largest size of the newest `cardmodel scale bench --record` divided by the time per function at 10^3 (synthetic projects: lift, structure, obligations, reference run). SCALING.md §6 measures the slope up to 10^6.",
+  "target": 2,
+  "tier": 0
+}
