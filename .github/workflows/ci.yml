@@ -1,16 +1,23 @@
 name: CI
 
-# Every push and pull request: install cardmodel with every target language's toolchain, then run the unit
-# suite, the full verify (kernel, op x language matrix, function cards, Lean proofs), the translation check
-# and the generated-docs check. Nothing here writes to the repository.
+# Pushes to main, pull requests and on demand: install cardmodel with every target language's toolchain, then
+# run the unit suite, the full verify (kernel, op x language matrix, function cards, Lean proofs), the
+# translation check and the generated-docs check. Nothing here writes to the repository.
+#
+# Runner minutes are budgeted (a private repository's free allowance is small and the full job takes up to
+# 90 minutes): a pull request runs once (no second run from the push to its branch), pushes to other branches
+# run nothing, and the full job waits until a pull request is ready for review. The quick jobs run on drafts
+# too. Run it on a draft by hand: Actions > CI > Run workflow, on the branch.
 
 on:
   push:
+    branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -45,6 +52,7 @@ jobs:
 
   full:
     name: Every language (verify, translate, tests)
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:

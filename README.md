@@ -31,8 +31,8 @@ tells you if that directory is not on PATH. `pip install -e .` also works and gi
 ## In the cloud
 
 GitHub Actions installs every target language's toolchain and runs the unit suite, the full `verify` and the
-translation check on every push and pull request, and runs the self cycle daily, proposing what it learned as a pull
-request (docs/AUTONOMY.md section 6).
+translation check on pull requests (the full job once a pull request is ready for review) and pushes to main, and
+runs the self cycle weekly, proposing what it learned as a pull request (docs/AUTONOMY.md section 6).
 
 ## The main loop
 

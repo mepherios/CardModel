@@ -10,7 +10,8 @@
     "claude/heuristic-ptolemy-*",
     "claude/project-thread-*",
     "self-optimize/*",
-    "claude/docs-bundle-0505"
+    "claude/docs-bundle-0505",
+    "claude/ci-*"
   ],
   "category": "project",
   "docs": [
@@ -27,7 +28,8 @@
     "the merges of 2026-10-22: festive-margulis up to 11284a6 (f25e82a), jolly-liskov 984fc7a (e72fa77), frosty-lumiere b15b527 (32f5f58)",
     "the merges of 2026-10-22 afternoon (the user's yes in the games session): the DS player 0fcb468 (9269eee), the last bank controllers ea14439 (593fe5c), the lifted STOP fix 73e6220 (16ea9fc), the Vector Duel card 85909ec (c1bf07f)",
     "2026-11-03: the installed Cardmodel Arcade starts its own service again (the launcher ran the shell script bin/cardmodel with Python; it now runs python -m cardmodel and logs to service.log)",
-    "in the cloud: GitHub Actions CI with every codegen toolchain (verify, translate, unit suite) and a daily self cycle that proposes adopted cards as a pull request; verify passes on Linux (docs/AUTONOMY.md section 6)"
+    "in the cloud: GitHub Actions CI with every codegen toolchain (verify, translate, unit suite) and a weekly self cycle that proposes adopted cards as a pull request; verify passes on Linux (docs/AUTONOMY.md section 6)",
+    "CI minutes budgeted: a pull request runs once, the full job waits for ready-for-review, pushes run only on main, the self cycle runs weekly (.github/workflows)"
   ],
   "goal": "One self-contained program in which everything is a card: a universal Gödel model that keeps expanding (GOALS.md).",
   "in_progress": [],
@@ -38,8 +40,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "d8ae063db3f21ac402388dc8e147e5fa56616062afcb3792a25de32cdb9b2347",
-    "version": "2.0.18",
+    "previous_content_hash": "6e254da8c82681d0b1b30d30c9b456dbbc0fa75194deb712de89dc490aab8fd7",
+    "version": "2.0.19",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -83,7 +85,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-11-04T21:20:00+01:00",
+  "updated": "2026-11-05T04:20:00+01:00",
   "user_actions": [
     {
       "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",
