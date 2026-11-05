@@ -569,6 +569,36 @@ class Lifting(unittest.TestCase):
         call = ["CALL", "read", ["int", 1]]
         self.assertEqual(lf.fold(["MUL", call, ["int", 0]]), ["MUL", call, ["int", 0]])   # an effect is kept
 
+    def test_register_masks_fold_only_at_their_sorts(self):
+        from cardmodel.machine import build, lift
+        lf = lift.Lifter(self.ctx, build.module(self.ctx, "gameboy"))
+        m = lambda x: ["BIT_AND", x, ["int", 255]]                          # noqa: E731
+        self.assertEqual(lf.sorted_canonical(m(["var", "A"])), ["var", "A"])          # A is u8 (wrapu8_of_u8)
+        self.assertEqual(lf.sorted_canonical(m(["var", "r_B"])), ["var", "r_B"])      # a cached register too
+        rd = ["CALL", "bus_read", ["var", "HL"]]
+        self.assertEqual(lf.sorted_canonical(m(rd)), rd)                               # a byte read is u8
+        self.assertEqual(lf.sorted_canonical(m(["var", "x1_v"])), m(["var", "x1_v"]))  # an int local: no law
+        self.assertEqual(lf.sorted_canonical(m(["var", "SP"])), m(["var", "SP"]))      # u16: the mask stays
+        two = ["ADD", rd, rd]
+        self.assertEqual(lf.sorted_canonical(m(two)), m(two))                          # two reads keep their order
+        self.assertGreater(self.rep["masks_removed"], 0)
+
+    def test_block_locals_take_sorts_from_their_definitions(self):
+        from cardmodel.machine import build, lift
+        lf = lift.Lifter(self.ctx, build.module(self.ctx, "gameboy"))
+        m = lambda x, k=255: ["BIT_AND", x, ["int", k]]                    # noqa: E731
+        asg = lambda t, v: {"k": "assign", "target": t, "value": v}       # noqa: E731
+        body = [asg("x1_v", ["var", "B"]), asg("x2_v", m(["ADD", ["var", "SP"], ["int", 1]], 65535)),
+                asg("x3_v", ["ADD", ["var", "B"], ["int", 1]]), asg("x4_v", ["var", "x1_v"]),
+                asg("x4_v", ["CALL", "bus_read", ["var", "HL"]]),
+                asg("C", m(["var", "x1_v"])), asg("D", m(["var", "x3_v"])), asg("E", m(["var", "x2_v"]))]
+        locs = {f"x{i}_v": "int" for i in range(1, 5)}
+        self.assertEqual(lf.local_sorts(body, locs), {"x1_v": "u8", "x2_v": "u16", "x4_v": "u8"})  # x3_v: int
+        out = lf.sort_registers(body, locs)
+        self.assertEqual(out[5]["value"], ["var", "x1_v"])           # a u8 local: the mask folds
+        self.assertEqual(out[6]["value"], m(["var", "x3_v"]))        # an int local: the mask stays
+        self.assertEqual(out[7]["value"], m(["var", "x2_v"]))        # a u16 local at u8: the mask stays
+
     def test_lifted_blocks_match_the_interpreter(self):
         self.assertGreater(self.rep["blocks"], 3)
         diverged, runs = self._run_pair(self.mod)
