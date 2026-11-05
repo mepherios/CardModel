@@ -39,8 +39,9 @@ Sections (all on by default; ``only`` selects):
                 canonical forms twice alike, every lifted function witnessed against the compiled header
   machine       every ISA's instruction cards: stored IR in sync with their semantics, and per-instruction
                 conformance on the ISA's bench in every engine (reference interpreter, host, native), with their
-                cycle and flag data checked; every instruction's symbolic terms held to its semantics on seeded
-                states (machine/symbolic.py; unsupported ones counted with their reason) (CM32)
+                cycle and flag data checked (CM32); every instruction's symbolic terms are witnessed against the
+                executable semantics on seeded cases (unsupported ones counted with their reason), and where an
+                ISA's instructions have stored definitions, their raw and stored canonical terms (CM44)
   pipeline      every capability card declares its evidence tier and the verify sections or self-run steps that
                 exercise its engine, each checked against the code; one that nothing runs is a recorded gap with
                 its goal, never silent (CM50, engines/pipeline.py)
@@ -60,6 +61,7 @@ section that ran zero checks is ``vacuous`` (CM07), never a pass.
 from __future__ import annotations
 
 import time
+from collections import Counter
 from datetime import datetime, timezone
 
 from . import conformance, redefs, translate, witness
@@ -251,9 +253,22 @@ def _machine(ctx: Ctx, seed: int) -> dict:
                         "failing": {k: v["problems"][:3] for k, v in conf["per_card"].items()
                                     if v["status"] != "pass"}})
             res["status"] = "fail" if sync["drifted"] or conf["status"] == "fail" else conf["status"]
-            sym = _symbolic(ctx, card.name, seed)
-            res["symbolic"] = sym
-            if sym["status"] == "fail":
+            # CM32 for every ISA; CM44 where the instructions have stored definitions: their canonical terms
+            # (their identity and Gödel content) are witnessed with the raw terms they were distilled from
+            from ..machine import symbolic as SY
+            stored = any(ctx.store.get(f"definition/isa__{c.name}") is not None
+                         for c in isa.instructions(ctx.store, card.name))
+            try:
+                sy = SY.check(ctx, card.name, seed=seed, samples=2, canonical="stored" if stored else None)
+                res["symbolic"] = {"counts": sy["counts"], "seed": seed,
+                                   "canonical": dict(Counter(v.get("canonical", "") for v in sy["cards"].values())),
+                                   "failing": {k: v["problems"][:3] for k, v in sy["cards"].items()
+                                               if v["status"] == "fail"}}
+                failed = sy["status"] == "fail"
+            except Exception as exc:  # noqa: BLE001 -- a crash of the executor is a failure, reported with its cause
+                res["symbolic"] = {"status": "fail", "reason": f"{type(exc).__name__}: {exc}"}
+                failed = True
+            if failed:
                 res["status"] = "fail"
         else:
             res["status"] = "fail" if sync["drifted"] else "pass"
@@ -262,19 +277,6 @@ def _machine(ctx: Ctx, seed: int) -> dict:
     return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"), "isas": out,
             "summary": {k: f"{v.get('passed', v['cards'])}/{v['cards']} in {','.join(v.get('engines', []))}"
                         for k, v in out.items()}}
-
-
-def _symbolic(ctx: Ctx, isa: str, seed: int) -> dict:
-    """Every instruction card of one ISA as terms by symbolic execution, held to its executable semantics on seeded
-    states by the bench (CM32, machine/symbolic.py). An instruction the executor does not handle is ``unsupported``
-    with its reason, never a pass; a term that disagrees with the semantics fails the section."""
-    from ..machine import symbolic as SY
-    try:
-        r = SY.check(ctx, isa, seed=seed, samples=2)
-    except Exception as exc:  # noqa: BLE001 -- a crash of the executor is a failure, reported with its cause
-        return {"status": "fail", "reason": f"{type(exc).__name__}: {exc}"}
-    bad = {k: v.get("problems") for k, v in r["cards"].items() if v["status"] == "fail"}
-    return {"status": r["status"], "counts": r["counts"], "failing": dict(list(bad.items())[:10])}
 
 
 def _redefinitions(ctx: Ctx, seed: int) -> dict:

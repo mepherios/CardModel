@@ -38,6 +38,8 @@
   cardmodel algebra form|gcd|total|scan|godel   functions as algebra: canonical forms, GCD of functions, totals
   cardmodel godel ledger|vector|gcd|lcm CARD...   the expanding Gödel model: primes, sparse content vectors (CM43, CM45)
   cardmodel godel sizes [--limit N]         each code's size for every card with a term (Gödel method W-3)
+  cardmodel godel factor|similar CARD... | --expr E   a term over the definitions it contains (its cofactor), or the
+                                           definitions sharing most logic with it; cofactor WHOLE PART; decode N --vars
   cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
   cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics

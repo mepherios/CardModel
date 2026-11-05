@@ -391,6 +391,54 @@ class Algebra(unittest.TestCase):
         self.assertEqual(sorted(G.zig(v) for v in range(-5, 5)), list(range(10)))
 
 
+class Commands(unittest.TestCase):
+    """cardmodel godel factor | similar | cofactor | decode: the structure's own commands (GODEL_TARGET §6, step 3)."""
+
+    def test_factor_similar_cofactor_decode(self):
+        import json
+        from helpers import TempProject
+        from cardmodel import cli_ext as X
+        from cardmodel.engines.exprs import parse, to_text
+        ctx = model_ctx()
+        lib, _ = X._library(ctx)
+        usable = []
+        for k, t in lib.items():                        # definitions whose text parses back to their term
+            try:
+                if parse(to_text(t)) == t:
+                    usable.append((k, t))
+            except Exception:  # noqa: BLE001
+                pass
+        proj = TempProject()
+        try:
+            if usable[:2]:
+                expr = " + ".join(f"({to_text(t)})" for _, t in usable[:2])
+                r = proj.cli("godel", "factor", "--expr", expr)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                for k, _ in usable[:2]:
+                    self.assertIn(f"uses {k}", r.stdout)
+                self.assertIn("Σ γ(instance): True", r.stdout)
+            r = proj.cli("godel", "factor", "definition/alg__cubic_eval")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("Σ γ(instance): True", r.stdout)
+            r = proj.cli("--json", "godel", "similar", "definition/alg__cubic_eval", "--limit", "3")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            rows = json.loads(r.stdout)["definition/alg__cubic_eval"]
+            self.assertEqual(len(rows), 3)
+            self.assertTrue(all(0 < x["jaccard"] <= 1 and x["shared"] for x in rows), rows)
+            r = proj.cli("godel", "cofactor", "definition/alg__cubic_eval", "--expr", "x*y+1")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("cofactor definition/alg__cubic_eval / x*y+1: {'op/ADD': 2, 'op/MUL': 2}", r.stdout)
+            r = proj.cli("godel", "cofactor", "definition/alg__cubic_eval", "--expr", "x // y")
+            self.assertIn("none: the part has", r.stdout)
+            idx = G.index_of(ctx.store)
+            n, names, _ = G.structural(["ADD", ["var", "p"], ["int", 3]], ctx.ops, idx, max_digits=None)
+            r = proj.cli("godel", "decode", str(n), "--vars", ",".join(names))
+            self.assertEqual(r.stdout.strip(), "(p + 3)", r.stderr)
+            self.assertEqual(proj.cli("godel", "factor").returncode, 2)
+        finally:
+            proj.cleanup()
+
+
 def _leaves(t):
     stack = [t]
     while stack:
