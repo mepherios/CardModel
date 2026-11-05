@@ -211,6 +211,17 @@ def static() -> dict:
     }
 
 
+_NAME: str | None = None
+
+
+def card_name() -> str:
+    """``env_<fingerprint>`` of this machine (computed once per process; no probing)."""
+    global _NAME
+    if _NAME is None:
+        _NAME = f"env_{fingerprint(static())}"
+    return _NAME
+
+
 def fingerprint(identity: dict) -> str:
     """Hash of the declared identity (``static()``), 16 hex digits: equal machines get equal names."""
     return hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:16]
@@ -352,10 +363,18 @@ def generator(store, refresh: bool = False, measure_fn=measure) -> tuple[dict, b
     return card, True
 
 
-def cached(store) -> dict | None:
-    """The generator's card for this machine if one was written (no probing)."""
-    c = store.get(f"{CATEGORY}/env_{fingerprint(static())}")
-    return dict(c) if c is not None else None
+def cached(store=None) -> dict | None:
+    """The generator's card for this machine if one was written (no probing). Without a store, read straight from
+    the local layer's file, which is what ``kernel/resources`` does so that it never opens the store."""
+    if store is not None:
+        c = store.get(f"{CATEGORY}/{card_name()}")
+        return dict(c) if c is not None else None
+    from ..kernel import paths
+    f = paths.local_cards() / CATEGORY / card_name() / "card.json"
+    try:
+        return json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def render(card: dict) -> str:
@@ -369,6 +388,11 @@ def render(card: dict) -> str:
         if isinstance(v, int) and k.endswith("_bytes"):
             v = f"{v >> 10} KiB" if v < (1 << 20) else f"{v >> 20} MiB"
         lines.append(f"  {k:<26} {str(v):<12} {c['evidence']}" + (f"  ({c['reason']})" if c.get("reason") else ""))
+    if card.get("name") == card_name():
+        from ..kernel import resources
+        b = resources.budgets(refresh=True)
+        lines.append("  budgets: " + ", ".join(f"{k} {b[k]}" for k in ("cpu_workers", "compile_slots", "child_mb",
+                                                                        "self_mb")) + f"  (from {b['source']})")
     ch = card.get("probes", {}).get("chase")
     if ch:
         lines.append("  chase (ns per dependent load): " + ", ".join(

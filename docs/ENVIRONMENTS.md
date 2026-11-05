@@ -397,8 +397,10 @@ FOUNDATIONS D1).
    (`engines/environment.py`). The card's name is `env_<fingerprint>` of the declared identity; every capability
    carries its evidence (measured, declared, unknown). On the cloud host the chase took 5.5 s and found plateaus
    at 64 KiB, 512 KiB, 1 MiB and 4 MiB against a declared 32 KiB L1, 1 MiB L2 and 33 MiB L3, with memory at about
-   140 ns and one-thread copy at 21 GB/s; under a shared hypervisor the plateaus move between runs. The fingerprint
-   on metric and witness cards and the budgets read from the card are the next PR.
+   140 ns and one-thread copy at 21 GB/s; under a shared hypervisor the plateaus move between runs. Every metric
+   card's host block and every verify report name the card (`env`), and `resources.budgets()` reads per-resource
+   budgets (CPU workers from the physical cores, compile slots, memory caps, measured copy bandwidth and memory
+   latency) from it. `max_parallel` keeps its OS-derived value, so nothing pays for the card at import.
 2. **V-B. Numeric-model cards and the three CPU-witnessed laws (E12, E13, E14).** `fp_contract`,
    `denormal_flush` and `reduction_order` as laws in ANALYSE's family, with rows for the existing runner variants,
    witnessed by §4's probes made into cards. The e-graph reads the float laws it may fire from the target's
