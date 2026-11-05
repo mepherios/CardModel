@@ -49,6 +49,9 @@ not replace. ``record=True`` also writes each card's verdict into the card
 informational: they document an overstated original claim, while the
 card's declared domain is what must pass.
 
+The ``godel`` section is deterministic and costly, so its result is cached under the hash of exactly what it
+reads (``godel.check_key``); ``cached`` in the report lists the sections served that way.
+
 A section that could not run says so (``skipped`` with the reason); a
 section that ran zero checks is ``vacuous`` (CM07), never a pass.
 """
@@ -292,12 +295,35 @@ def _functions(ctx: Ctx, seed: int, langs) -> dict:
     return {"status": "fail" if fails else ("pass" if out else "vacuous"), "failing": fails, "cards": out}
 
 
+GODEL_CACHE = "godel_check_cache"
+
+
+def godel_section(ctx: Ctx) -> tuple[dict, bool]:
+    """The ``godel`` section, and whether it came from the cache: ``godel.check`` is deterministic, so its result is
+    kept in the state directory under ``godel.check_key`` (the hash of exactly what it reads) and reused while that
+    key is unchanged (GODEL_AUDIT §6 step 1). Any changed card, ledger line or engine source gives a new key."""
+    from . import godel
+    key = godel.check_key(ctx)
+    try:
+        kept = ctx.load_state(GODEL_CACHE) or {}
+    except ValueError:                                  # a corrupt cache is a miss, and is rewritten below
+        kept = {}
+    if kept.get("key") == key and isinstance(kept.get("result"), dict):
+        return kept["result"], True
+    res = godel.check(ctx)
+    try:
+        ctx.save_state(GODEL_CACHE, {"key": key, "result": res})
+    except OSError as exc:                              # CM10: say so; the section's result stands
+        res = dict(res, cache_error=f"{type(exc).__name__}: {exc}")
+    return res, False
+
+
 def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs: list[str] | None = None,
         samples: int = 48, record: bool = False, save: bool = True) -> dict:
     seed = V.fresh_seed() if seed is None else seed
     only = list(only or SECTIONS)
     report = {"seed": seed, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "sections": {}}
-    timings = {}
+    timings, cached = {}, []
     for sec in SECTIONS:
         if sec not in only:
             continue
@@ -314,8 +340,9 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
             from . import projects
             res = projects.check(ctx)
         elif sec == "godel":
-            from . import godel
-            res = godel.check(ctx)
+            res, hit = godel_section(ctx)
+            if hit:
+                cached.append(sec)
         elif sec == "sources":
             from . import sources
             res = sources.check(ctx)
@@ -369,6 +396,7 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         timings[sec] = round(time.perf_counter() - t0, 2)
         report["sections"][sec] = res
     report["timings_s"] = timings
+    report["cached"] = cached
     from ..kernel import resources
     report["peak_memory_mb"] = round(resources.peak_mb(), 1)
     report["status"] = "fail" if any(r.get("status") == "fail" for r in report["sections"].values()) else "pass"

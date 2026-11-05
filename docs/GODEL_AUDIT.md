@@ -423,6 +423,13 @@ In dependency order. Each step keeps every existing test green and lands as its 
 | 7 | the self-run work queue with units keyed by identity; `learn` dedup by identity with `merge` proposals; `arena` identity recall | §4.3 | 2, 5 | the cycle does only changed work |
 | 8 | Unreal's identities and lifted atoms as `merge`/`deprecate` events, tier-gated and ≡_ℝ-tagged; per-set dense ranks for positional codes | §4.3 | 4, and the user's decisions below | the first real use of redefinition by cofactors |
 
+**Progress.** Step 1 is done (2026-11-05): the valuation by squaring landed with #28, and the `godel` section is
+cached in verify (`verify.godel_section`) and so in the self-run's verify step, keyed by `godel.check_key` (the
+card hashes of the registries `godel.check` reads, the committed and current ledger, and the source of the engines
+it runs). On a shared 4-core host the section took 14.65 s computed and 0.03 s from the cache (the valuation had
+already taken it from 100.7 s to 15 to 18 s); the cached result equals a fresh one, and any changed input recomputes
+it (`tests/test_godel.py`, `SectionCache`).
+
 **Decisions that are the user's, not the threads'** (each is a law or a permanent ledger change): adopting GM-2 as
 written (identity is the hash; already the practice, §3); GM-4 as a law; positional codes by per-set dense ranks
 (amends CM43's text on numbering); minting the `LEAN_*` and ARM atoms; adopting Unreal's events into the ledger.

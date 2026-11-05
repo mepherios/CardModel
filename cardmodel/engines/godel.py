@@ -823,6 +823,41 @@ def preserves_gcd(mapping: dict[str, Counter]) -> bool:
 
 
 # -- the check verify runs -------------------------------------------------------------------------------------------
+CHECK_REGISTRIES = ("godel", "godel_set", "op", "function", "algorithm")   # every registry ``check`` reads
+CHECK_CODE = ("godel", "numbering", "frontend_python", "ir")               # every engine ``check`` runs
+
+
+def check_key(ctx) -> str:
+    """The key of exactly what ``check`` reads, so verify and the self-run skip it when nothing changed (GODEL_AUDIT
+    §6 step 1): each card's content hash (``kernel.canon.card_hash``, CM02) in the registries it reads and of the
+    provability method its numberings name; git's id of the committed ledger and the bytes of the current one (the
+    append-only check); and the source of the engines it runs, with the interpreter's version. ``check`` takes no
+    seed (``numbering`` uses seed 0), so equal keys give equal results and any changed input gives a new key."""
+    import hashlib
+    import importlib
+    import sys
+    from pathlib import Path
+    from ..arcade.hub import git
+    from ..kernel import paths
+    from ..kernel.canon import card_hash
+    from . import numbering
+    st = ctx.store
+    h = hashlib.sha256(f"python {sys.version_info[0]}.{sys.version_info[1]}\n".encode())
+    for reg in CHECK_REGISTRIES:
+        for c in sorted(st.cards(reg), key=lambda c: c.qualified):
+            h.update(f"{c.qualified} {card_hash(c)}\n".encode())
+    m = st.get(numbering.NATURAL["relation"])
+    h.update(f"{numbering.NATURAL['relation']} {card_hash(m) if m is not None else '-'}\n".encode())
+    rel = f"cards/{REGISTRY}/{PACK}"
+    h.update(f"HEAD:{rel} {(git(paths.home(), 'rev-parse', f'HEAD:{rel}') or '-').strip()}\n".encode())
+    cur = paths.home() / rel
+    h.update(f"{rel} {hashlib.sha256(cur.read_bytes()).hexdigest() if cur.is_file() else '-'}\n".encode())
+    for mod in CHECK_CODE:
+        src = importlib.import_module(f"{__package__}.{mod}").__file__
+        h.update(f"{mod} {hashlib.sha256(Path(src).read_bytes()).hexdigest()}\n".encode())
+    return h.hexdigest()
+
+
 def check(ctx) -> dict:
     """The ledger's shape, that it only grew since the last commit, and how many cards' content is read."""
     from ..arcade.hub import git
@@ -857,8 +892,9 @@ def check(ctx) -> dict:
 
 
 __all__ = ["ContentIndex", "EVENT_KINDS", "LEAVES", "LOGIC", "SPECIAL", "STRUCTURAL_MAX_DIGITS", "add", "atom",
-           "basis_atoms", "basis_version", "card_content", "carry", "check", "cofactor", "cost", "decimal_digits",
-           "decode", "deprecate", "divides", "events", "expand", "exponents", "factor", "from_tokens", "from_vector",
-           "gcd", "index_of", "jaccard", "lcm", "ledger", "match", "merge", "module_content", "norm", "nth_prime",
-           "preserves_gcd", "primes", "problems", "resolve", "scale", "stored", "structural", "sub", "substitute",
-           "support", "sync", "term_content", "to_vector", "tokens", "unzig", "valuation", "variables", "vector_problems", "zig"]
+           "basis_atoms", "basis_version", "card_content", "carry", "check", "check_key", "cofactor", "cost",
+           "decimal_digits", "decode", "deprecate", "divides", "events", "expand", "exponents", "factor",
+           "from_tokens", "from_vector", "gcd", "index_of", "jaccard", "lcm", "ledger", "match", "merge",
+           "module_content", "norm", "nth_prime", "preserves_gcd", "primes", "problems", "resolve", "scale",
+           "stored", "structural", "sub", "substitute", "support", "sync", "term_content", "to_vector", "tokens",
+           "unzig", "valuation", "variables", "vector_problems", "zig"]

@@ -9,7 +9,8 @@
     "claude/gracious-kirch-*",
     "claude/heuristic-ptolemy-*",
     "claude/project-thread-*",
-    "self-optimize/*"
+    "self-optimize/*",
+    "claude/godel-section-cache"
   ],
   "category": "project",
   "docs": [
@@ -37,8 +38,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "f3ff28264d01fe86dd40db23eaf0732e63b5635972b521f39fb47e9e7838ed8e",
-    "version": "2.0.17",
+    "previous_content_hash": "d8ae063db3f21ac402388dc8e147e5fa56616062afcb3792a25de32cdb9b2347",
+    "version": "2.0.18",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -82,7 +83,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-11-04T21:20:00+01:00",
+  "updated": "2026-11-05T08:00:00+01:00",
   "user_actions": [
     {
       "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",
