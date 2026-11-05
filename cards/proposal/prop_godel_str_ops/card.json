@@ -1,78 +1,89 @@
 {
-  "category": "proposal",
-  "name": "prop_godel_str_ops",
-  "proposal_kind": "godel_atoms",
-  "statement": "proposed Gödel ledger atoms for the eleven str op cards (FOUNDATIONS §7 item 5)",
+  "adopted": {
+    "by": "owner",
+    "date": "2026-11-05",
+    "indices": [
+      3425,
+      3435
+    ],
+    "note": "minted in this order, set B0, at the next free indices after physics (3418-3424)"
+  },
   "candidate": {
     "atoms": [
       {
         "atom": "op/STR_AT",
-        "set": "B0",
-        "card": "op/STR_AT"
+        "card": "op/STR_AT",
+        "set": "B0"
       },
       {
         "atom": "op/STR_CMP",
-        "set": "B0",
-        "card": "op/STR_CMP"
+        "card": "op/STR_CMP",
+        "set": "B0"
       },
       {
         "atom": "op/STR_CONCAT",
-        "set": "B0",
-        "card": "op/STR_CONCAT"
+        "card": "op/STR_CONCAT",
+        "set": "B0"
       },
       {
         "atom": "op/STR_EQ",
-        "set": "B0",
-        "card": "op/STR_EQ"
+        "card": "op/STR_EQ",
+        "set": "B0"
       },
       {
         "atom": "op/STR_FIND",
-        "set": "B0",
-        "card": "op/STR_FIND"
+        "card": "op/STR_FIND",
+        "set": "B0"
       },
       {
         "atom": "op/STR_FROM_CODE",
-        "set": "B0",
-        "card": "op/STR_FROM_CODE"
+        "card": "op/STR_FROM_CODE",
+        "set": "B0"
       },
       {
         "atom": "op/STR_FROM_INT",
-        "set": "B0",
-        "card": "op/STR_FROM_INT"
+        "card": "op/STR_FROM_INT",
+        "set": "B0"
       },
       {
         "atom": "op/STR_LEN",
-        "set": "B0",
-        "card": "op/STR_LEN"
+        "card": "op/STR_LEN",
+        "set": "B0"
       },
       {
         "atom": "op/STR_ORD",
-        "set": "B0",
-        "card": "op/STR_ORD"
+        "card": "op/STR_ORD",
+        "set": "B0"
       },
       {
         "atom": "op/STR_SLICE",
-        "set": "B0",
-        "card": "op/STR_SLICE"
+        "card": "op/STR_SLICE",
+        "set": "B0"
       },
       {
         "atom": "op/STR_TO_INT",
-        "set": "B0",
-        "card": "op/STR_TO_INT"
+        "card": "op/STR_TO_INT",
+        "set": "B0"
       }
     ],
     "proposed_indices_from": 3425
   },
-  "ready": false,
-  "reason": "Only the ledger writer mints atoms (CM43, GODEL_METHOD coordination rule 1). The branch had appended these at indices 3418-3428, colliding with PR #48 (physics quantity/* atoms, now merged at 3418-3424). Not minted: once the owner/ledger writer approves, they would take the next free indices from 3425, in this order, set B0.",
+  "category": "proposal",
+  "metadata": {
+    "previous_content_hash": "a2547b7ab79540af011091e6ad37b68ce66909986c61a810789e41ef084a357e",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "prop_godel_str_ops",
+  "proposal_kind": "godel_atoms",
   "provenance": {
     "branch": "claude/strings-ir",
     "commit": "492ec39",
     "owner": "foundations stream (FOUNDATIONS §7.5)"
   },
-  "metadata": {
-    "version": "1.0.0"
-  },
+  "ready": true,
+  "reason": "Only the ledger writer mints atoms (CM43, GODEL_METHOD coordination rule 1). The branch had appended these at indices 3418-3428, colliding with PR #48 (physics quantity/* atoms, now merged at 3418-3424). Not minted: once the owner/ledger writer approves, they would take the next free indices from 3425, in this order, set B0.",
+  "statement": "proposed Gödel ledger atoms for the eleven str op cards (FOUNDATIONS §7 item 5)",
   "tier": 3,
   "xleq": null
 }

@@ -3422,3 +3422,14 @@
 {"atom": "quantity/temperature", "category": "godel", "index": 3422, "name": "p3422__quantity__temperature", "prime": 31849, "set": "physics", "since": "2026-11-05"}
 {"atom": "quantity/amount", "category": "godel", "index": 3423, "name": "p3423__quantity__amount", "prime": 31859, "set": "physics", "since": "2026-11-05"}
 {"atom": "quantity/luminosity", "category": "godel", "index": 3424, "name": "p3424__quantity__luminosity", "prime": 31873, "set": "physics", "since": "2026-11-05"}
+{"atom": "op/STR_AT", "category": "godel", "index": 3425, "name": "p3425__op__STR_AT", "prime": 31883, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_CMP", "category": "godel", "index": 3426, "name": "p3426__op__STR_CMP", "prime": 31891, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_CONCAT", "category": "godel", "index": 3427, "name": "p3427__op__STR_CONCAT", "prime": 31907, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_EQ", "category": "godel", "index": 3428, "name": "p3428__op__STR_EQ", "prime": 31957, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_FIND", "category": "godel", "index": 3429, "name": "p3429__op__STR_FIND", "prime": 31963, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_FROM_CODE", "category": "godel", "index": 3430, "name": "p3430__op__STR_FROM_CODE", "prime": 31973, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_FROM_INT", "category": "godel", "index": 3431, "name": "p3431__op__STR_FROM_INT", "prime": 31981, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_LEN", "category": "godel", "index": 3432, "name": "p3432__op__STR_LEN", "prime": 31991, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_ORD", "category": "godel", "index": 3433, "name": "p3433__op__STR_ORD", "prime": 32003, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_SLICE", "category": "godel", "index": 3434, "name": "p3434__op__STR_SLICE", "prime": 32009, "set": "B0", "since": "2026-11-05"}
+{"atom": "op/STR_TO_INT", "category": "godel", "index": 3435, "name": "p3435__op__STR_TO_INT", "prime": 32027, "set": "B0", "since": "2026-11-05"}
