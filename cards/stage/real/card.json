@@ -1,0 +1,34 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/exprs.py",
+    "cardmodel/engines/realnorm.py"
+  ],
+  "foundations": [
+    "D9"
+  ],
+  "group": "identity",
+  "laws": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "real",
+  "needs": [
+    "reference"
+  ],
+  "order": 70,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "real",
+  "scope": "function",
+  "statement": "The term's normal form over ℝ: equal normal forms are equal rational functions, sound for integer polynomials, so it runs on int-sorted single-term functions.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "straight_line",
+    "int_sorted"
+  ]
+}

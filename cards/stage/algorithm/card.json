@@ -1,0 +1,33 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/improve.py"
+  ],
+  "foundations": [
+    "A5"
+  ],
+  "group": "optimize",
+  "laws": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "algorithm",
+  "needs": [
+    "reference"
+  ],
+  "order": 140,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "algorithm",
+  "scope": "function",
+  "statement": "Labelled substitutions: algorithm cards whose reference form agrees with the function on probe inputs, and a closed or matrix-power form from its own recurrence; each with its tier and precondition, never a rewrite.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "pure_function",
+    "int_sorted"
+  ]
+}

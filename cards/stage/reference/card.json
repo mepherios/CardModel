@@ -1,0 +1,34 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/translate.py"
+  ],
+  "foundations": [
+    "D4"
+  ],
+  "group": "terms",
+  "laws": [
+    "law/CM06_random_seeds",
+    "law/CM08_executable_claims_have_witnesses"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "reference",
+  "needs": [
+    "profile"
+  ],
+  "order": 30,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "reference",
+  "scope": "function",
+  "statement": "The function's value in the model M on seeded inputs: generators narrowed until the reference terminates, known-answer vectors, and the function card that carries them with a form per language card.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted"
+  ]
+}

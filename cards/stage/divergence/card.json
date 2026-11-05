@@ -1,0 +1,35 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/analyse.py"
+  ],
+  "foundations": [
+    "D14",
+    "A6"
+  ],
+  "group": "evidence",
+  "laws": [
+    "law/CM01_honest_limits"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "divergence",
+  "needs": [
+    "reference"
+  ],
+  "order": 110,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "divergence",
+  "scope": "function",
+  "statement": "The obligations of every partial op under its path condition and the divergence laws of the targets on the reference's instrumented runs: proved by a guard, discharged by the domain, sampled, or open.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "pure_function"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/frontend_python.py",
+    "cardmodel/engines/frontends.py"
+  ],
+  "foundations": [
+    "D3",
+    "A1"
+  ],
+  "group": "terms",
+  "laws": [
+    "law/CM16_languages_are_cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "lift",
+  "needs": [],
+  "order": 10,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "lift",
+  "scope": "function",
+  "statement": "The function becomes a term of T_Σ(X) through its language card's frontend, or the gap is named with its reasons; every input starts here.",
+  "tier": 0,
+  "unless": [],
+  "when": []
+}

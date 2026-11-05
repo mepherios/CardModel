@@ -1,0 +1,34 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/analyse.py",
+    "cardmodel/engines/ir.py",
+    "cardmodel/engines/sorts.py"
+  ],
+  "foundations": [
+    "D1",
+    "D3"
+  ],
+  "group": "terms",
+  "laws": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "profile",
+  "needs": [
+    "lift"
+  ],
+  "order": 20,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "profile",
+  "scope": "function",
+  "statement": "The facts every later hypothesis reads: the sorts that occur, whether the body is one term, has loops, recursion, calls, partial ops, and whether the source is the reference language.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted"
+  ]
+}

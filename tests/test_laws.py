@@ -18,14 +18,15 @@ CLAIMING = ["engines/frontend_python.py", "engines/conformance.py", "engines/tra
             "machine/testroms.py", "machine/nds.py", "machine/lift_arm.py", "arcade/gen.py", "arcade/game.py",
             "arcade/build.py", "arcade/server.py", "arcade/cli.py", "arcade/client.py", "engines/witness_runner.py",
             "engines/realnorm.py", "unreal/engine.py", "unreal/units.py", "unreal/clangast.py", "unreal/lift.py",
-            "unreal/scan.py", "unreal/distill.py", "unreal/witness.py", "unreal/atoms.py", "unreal/metrics.py"]
+            "unreal/scan.py", "unreal/distill.py", "unreal/witness.py", "unreal/atoms.py", "unreal/metrics.py",
+            "engines/pipeline.py"]
 NO_LANGUAGE_BRANCHES = ["engines/codegen.py", "engines/runners.py", "engines/conformance.py", "engines/translate.py",
                         "engines/witness.py", "engines/verify.py", "engines/optimize.py", "machine/native.py",
                         "machine/build.py", "machine/isa.py", "machine/bench.py", "machine/gb.py", "machine/survey.py",
                         "machine/asm.py", "machine/lift.py", "machine/shell.py", "machine/diff.py",
                         "machine/testroms.py", "machine/nds.py", "machine/lift_arm.py", "arcade/gen.py",
                         "arcade/game.py", "arcade/build.py", "arcade/server.py", "arcade/cli.py", "arcade/client.py",
-                        "engines/witness_runner.py"]
+                        "engines/witness_runner.py", "engines/pipeline.py"]
 
 
 class Laws(unittest.TestCase):

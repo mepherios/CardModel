@@ -1,0 +1,36 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/improve.py",
+    "cardmodel/engines/ir.py"
+  ],
+  "foundations": [
+    "D8",
+    "A3"
+  ],
+  "group": "optimize",
+  "laws": [
+    "law/CM25_laws_carry_into_optimization"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rewrite",
+  "needs": [
+    "reference"
+  ],
+  "order": 130,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "rewrite",
+  "scope": "function",
+  "statement": "Every int-sorted expression replaced by its cheapest equivalent under the rule cards and saturation, the chain of laws as the certificate, the result verified against the vectors in M.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "pure_function"
+  ]
+}

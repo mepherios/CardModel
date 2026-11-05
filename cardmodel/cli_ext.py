@@ -726,9 +726,55 @@ def cmd_symbolic(args) -> int:
     return 1 if r["status"] == "fail" else 0
 
 
+def cmd_pipeline(args) -> int:
+    """The stage registry (cards/stage, engines/pipeline.py, CM50): list it, check its coverage, run a file."""
+    from .engines import pipeline as P
+    cli = _cli()
+    ctx = cli._ctx(args)
+    if args.action == "stages":
+        plan = P.stages(ctx)
+        lines = [f"{len(plan)} stages (cards/stage) in order; one runs when every `when` fact holds and no `unless` "
+                 f"fact does, else its entry says which failed"]
+        for s in plan:
+            hyp = " ".join(s["when"] + [f"not {u}" for u in s["unless"]]) or "always"
+            lines.append(f"  {s['order']:>4} {s['name']:<19} {s['group']:<9} when {hyp}"
+                         + (f"  (needs {', '.join(s['needs'])})" if s["needs"] else ""))
+            if args.verbose:
+                lines.append(f"       {s['statement']}")
+                lines.append(f"       engines {', '.join(s['engines']) or '-'}; foundations "
+                             f"{', '.join(s['foundations']) or '-'}; laws {', '.join(s['laws']) or '-'}")
+        cli._out(args, {"stages": plan}, "\n".join(lines))
+        return 0
+    if args.action == "check":
+        r = P.coverage(ctx, seed=args.seed or 0)
+        lines = [f"{r['status']}: {r['stages']} stages over {r['engines']} engines ({r['reached']} reached, "
+                 f"{r['outside']} outside with a reason); the fixtures' {r['functions']} functions ran"]
+        lines += [f"  {n:<19} ran on {k}" for n, k in r["ran_per_stage"].items()]
+        lines += [f"  PROBLEM {p}" for p in r["problems"]]
+        cli._out(args, r, "\n".join(lines))
+        return 0 if r["status"] == "pass" else 1
+    if not args.file:
+        print("error: `pipeline run` needs a FILE", file=sys.stderr)
+        return 2
+    lang = cli._source_lang(ctx, args, args.file)
+    if lang is None:
+        return 2
+    rec = P.run_file(ctx, args.file, lang=lang, langs=args.to.split(",") if args.to else None, seed=args.seed,
+                     only=args.only.split(",") if args.only else None,
+                     options={"deep": args.deep, "measure": args.measure, "save": args.save})
+    cli._out(args, rec, P.report_text(rec, verbose=args.verbose))
+    return 1 if rec["coverage"]["status"] == "fail" else 0
+
+
 def register(sub) -> None:
     from . import math_cli
     math_cli.register(sub)
+    s = sub.add_parser("pipeline", help="the stage registry: list the stages, check their coverage (CM50), run a file")
+    s.add_argument("action", choices=["stages", "check", "run"]); s.add_argument("file", nargs="?")
+    s.add_argument("--to"); s.add_argument("--only", metavar="STAGES"); s.add_argument("--seed", type=int)
+    s.add_argument("--from", dest="from_lang", metavar="LANG"); s.add_argument("--deep", action="store_true")
+    s.add_argument("--measure", action="store_true"); s.add_argument("--save", action="store_true")
+    s.add_argument("--verbose", action="store_true"); s.set_defaults(fn=cmd_pipeline)
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
     s.add_argument("--deep", action="store_true"); s.add_argument("--verbose", action="store_true")

@@ -1,0 +1,36 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/analyse.py"
+  ],
+  "foundations": [
+    "D14",
+    "A6"
+  ],
+  "group": "evidence",
+  "laws": [
+    "law/CM01_honest_limits"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "divergence_witness",
+  "needs": [
+    "divergence"
+  ],
+  "order": 120,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "divergence_witness",
+  "scope": "function",
+  "statement": "Every predicted divergence run in every available runner and compared with the reference: witnessed, guarded or still predicted (on request: --deep).",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "pure_function",
+    "opt:deep"
+  ]
+}

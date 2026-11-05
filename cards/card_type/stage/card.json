@@ -1,0 +1,89 @@
+{
+  "applies_to": [
+    "stage"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "stage",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "schema": {
+    "properties": {
+      "engines": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "foundations": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "group": {
+        "enum": [
+          "terms",
+          "identity",
+          "evidence",
+          "optimize",
+          "targets",
+          "record"
+        ]
+      },
+      "laws": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "needs": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "order": {
+        "type": "integer"
+      },
+      "produces": {
+        "type": "string"
+      },
+      "run": {
+        "type": "string"
+      },
+      "scope": {
+        "enum": [
+          "function",
+          "file"
+        ]
+      },
+      "unless": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "when": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "statement",
+      "run",
+      "group",
+      "order",
+      "when"
+    ],
+    "type": "object"
+  },
+  "statement": "A stage of the pipeline: the function of engines/pipeline.py that runs it, the facts of an input's profile under which it applies (`when`, `unless`), the stages it needs, the engines it reaches and the foundations it rests on (CM50).",
+  "tier": 0
+}

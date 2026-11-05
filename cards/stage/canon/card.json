@@ -1,0 +1,38 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/egraph.py",
+    "cardmodel/engines/exprs.py",
+    "cardmodel/engines/search.py"
+  ],
+  "foundations": [
+    "D6",
+    "D7",
+    "A3"
+  ],
+  "group": "identity",
+  "laws": [
+    "law/CM20_laws_are_cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "canon",
+  "needs": [
+    "reference"
+  ],
+  "order": 40,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "canon",
+  "scope": "function",
+  "statement": "canon_E of a single-term function by equality saturation at its sorts: the cheapest member of its class, the laws that fired as its certificate, and its semantic hash.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "straight_line"
+  ]
+}

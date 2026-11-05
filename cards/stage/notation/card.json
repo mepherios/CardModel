@@ -1,0 +1,33 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/mathlang.py",
+    "cardmodel/engines/matrix.py"
+  ],
+  "foundations": [
+    "D3"
+  ],
+  "group": "targets",
+  "laws": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "notation",
+  "needs": [
+    "reference"
+  ],
+  "order": 200,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "notation",
+  "scope": "function",
+  "statement": "Mathematical notation as a target: the function written as equations, read back, and compared with the IR on the vectors.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "pure_function"
+  ]
+}

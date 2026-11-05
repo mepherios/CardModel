@@ -1,0 +1,34 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/funcalg.py"
+  ],
+  "foundations": [
+    "D9"
+  ],
+  "group": "identity",
+  "laws": [
+    "law/CM31_behaviour_is_numbered"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "behaviour",
+  "needs": [
+    "reference"
+  ],
+  "order": 80,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "behaviour",
+  "scope": "function",
+  "statement": "The behaviour form of a one-integer function: the linear recurrence it satisfies, checked on unused terms, its canonical description and Gödel number.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "one_int_param"
+  ]
+}

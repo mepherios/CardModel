@@ -1,0 +1,32 @@
+{
+  "category": "stage",
+  "engines": [
+    "cardmodel/engines/matrix.py"
+  ],
+  "foundations": [
+    "D14"
+  ],
+  "group": "targets",
+  "laws": [],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "round_trip",
+  "needs": [
+    "emit"
+  ],
+  "order": 210,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_pipeline.py"
+  },
+  "run": "round_trip",
+  "scope": "function",
+  "statement": "lift ∘ emit_L ≈ id on the vectors for every target that also has a frontend: the frontends read the emitted text, no toolchain is needed.",
+  "tier": 0,
+  "unless": [],
+  "when": [
+    "lifted",
+    "pure_function"
+  ]
+}
