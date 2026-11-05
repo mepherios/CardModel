@@ -832,7 +832,9 @@ def boundary_card(lf) -> dict | None:
     # called, what callers are typed against, and the source text that implements it. It has no canonical term, so
     # it has no Gödel content: its only reading is syntax (GODEL_TARGET F4), which the card says.
     ident = semantic_hash(["OPAQUE", qual, [p["type"] for p in params], returns, lf.source])
-    return {"name": qual, "category": "opaque_boundary", "id": ident, "params": params,
+    return {"name": qual, "category": "opaque_boundary", "id": ident,
+            "identity": {"hash": ident, "of": "opaque boundary (name, signature, source)", "under": "syntax"},
+            "params": params,
             "returns": returns, "cause": lf.reasons[0] if lf.reasons else "unknown", "line": lf.lineno,
             "host": host, "module": getattr(lf, "host_module", None),
             "body_lifted": lf.ir is not None, "content": None,

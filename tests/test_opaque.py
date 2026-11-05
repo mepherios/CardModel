@@ -65,6 +65,8 @@ class SingleFile(unittest.TestCase):
         from cardmodel.engines.egraph import semantic_hash
         self.assertEqual(card["id"], semantic_hash(["OPAQUE", "safe_div", ["int", "int"], "int", b.source]))
         self.assertIsNone(card["content"])
+        self.assertEqual(card["identity"], {"hash": card["id"], "of": "opaque boundary (name, signature, source)",
+                                            "under": "syntax"})                  # F5: the identity names its relation
         again = {lf.name: lf for lf in lift_source(CALLEE + CALLERS, self.ctx.ops)}["safe_div"].boundary
         self.assertEqual(again["id"], card["id"])
 
