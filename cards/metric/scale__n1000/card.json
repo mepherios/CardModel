@@ -1,0 +1,117 @@
+{
+  "category": "metric",
+  "form": "lift+structure+obligations+reference",
+  "host": {
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+    "id": "70d7b7de8252",
+    "machine": "x86_64",
+    "node": null,
+    "python": "3.13.18",
+    "system": "Linux"
+  },
+  "lang": "python",
+  "median_ns": 518340.0,
+  "metadata": {
+    "seed": 0,
+    "version": "1.0.0"
+  },
+  "name": "scale__n1000",
+  "provenance": {
+    "tool": "cardmodel scale bench"
+  },
+  "run": {
+    "finished": "2026-11-05T05:57:14+00:00",
+    "largest_peak_mb": 1988.2,
+    "seed": 0,
+    "sizes": [
+      1000,
+      10000,
+      100000
+    ],
+    "slope": 1.796,
+    "slope_between": [
+      1000,
+      100000
+    ]
+  },
+  "samples": 1,
+  "scale": {
+    "baseline_mb": 23.7,
+    "by_kind": {
+      "chain": {
+        "functions": 207,
+        "lifted": 207
+      },
+      "cross": {
+        "functions": 83,
+        "lifted": 83
+      },
+      "fail": {
+        "functions": 77,
+        "lifted": 0
+      },
+      "fail_caller": {
+        "functions": 59,
+        "lifted": 0
+      },
+      "leaf": {
+        "functions": 258,
+        "lifted": 258
+      },
+      "loop": {
+        "functions": 136,
+        "lifted": 136
+      },
+      "mutual": {
+        "functions": 84,
+        "lifted": 84
+      },
+      "recursive": {
+        "functions": 49,
+        "lifted": 49
+      },
+      "tail": {
+        "functions": 47,
+        "lifted": 47
+      }
+    },
+    "cross_calls": 83,
+    "functions": 1000,
+    "generate_s": 0.012,
+    "kb_per_function": 20.48,
+    "lift_rate": 0.864,
+    "lifted": 864,
+    "modules": 10,
+    "n": 1000,
+    "obligations": 780,
+    "peak_mb": 43.7,
+    "peak_over_baseline_mb": 20.0,
+    "reference_errors": 0,
+    "reference_ran": 864,
+    "seed": 0,
+    "stage_peak_mb": {
+      "lift": 43.4,
+      "obligations": 43.7,
+      "reference": 43.7,
+      "structure": 43.7
+    },
+    "stage_s": {
+      "lift": 0.469,
+      "obligations": 0.016,
+      "reference": 0.016,
+      "structure": 0.017
+    },
+    "total_s": 0.518,
+    "unparsed": 0,
+    "us_per_function": {
+      "lift": 469.34,
+      "obligations": 15.97,
+      "reference": 15.53,
+      "structure": 17.5,
+      "total": 518.34
+    }
+  },
+  "statement": "scale bench at 1000 synthetic functions: 518.34 µs and 20.48 KB per function, peak 43.7 MB, lift rate 0.864",
+  "target_card": "goal/G_A11_scale_slope",
+  "tier": 3
+}
