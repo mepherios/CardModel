@@ -32,8 +32,10 @@ class Symbolic(unittest.TestCase):
         r = SY.check_arm(self.ctx, "armv5te", seed=SEED, samples=3)
         fails = {k: v["problems"] for k, v in r["cards"].items() if v["status"] == "fail"}
         self.assertEqual(fails, {}, seed_note(self))
-        self.assertGreaterEqual(r["counts"].get("pass", 0), 80, seed_note(self))
-        self.assertEqual(r["cards"]["ARM_ADC_imm"]["status"], "pass", seed_note(self))
+        self.assertGreaterEqual(r["counts"].get("pass", 0), 156, seed_note(self))
+        for name in ("ARM_ADC_imm", "ARM_LDR_imm", "ARM_STRH_reg", "THUMB_LDRSB_reg", "ARM_SWI", "ARM_MRC", "ARM_MCR",
+                     "THUMB_UNDEF_DE"):                 # bus reads/writes by width, exceptions, coprocessor
+            self.assertEqual(r["cards"][name]["status"], "pass", (name, seed_note(self)))
         mod, _ = SY.module(self.ctx, "armv5te")
         ex = SY.Executor(self.ctx, mod)
         res = ex.run("ARM_ADD_imm", {"op": 0xE2910001})        # ADDS r0, r1, #1: r0 and the NZCV flags as terms
@@ -45,6 +47,16 @@ class Symbolic(unittest.TestCase):
         self.assertEqual(eval_expr(res["state"]["cpsr"], env, self.ctx.ops) >> 28, 0b0110)   # Z and C
         with self.assertRaises(SY.Unsupported):
             ex.run("ARM_ADD_imm")                               # the instruction word must be bound
+        ldr = ex.run("ARM_LDR_imm", {"op": 0xE5910004})        # LDR r0, [r1, #4]: one u32 read, r0 its value
+        self.assertEqual([(e["op"], e["sort"]) for e in ldr["effects"]], [("rd32", "u32")])
+        ram = bytearray(0x10000)
+        ram[0x104:0x108] = (0xDEADBEEF).to_bytes(4, "little")
+        bus = SY.arm_bus(ldr, {"regs1": 0x100, "cpsr": 0x13}, bytes(ram), self.ctx.ops)
+        self.assertEqual(bus["trace"], [(3, 0x104, 0xDEADBEEF)])
+        self.assertEqual(eval_expr(ldr["state"]["regs0"], bus["env"], self.ctx.ops), 0xDEADBEEF)
+        st = ex.run("ARM_STRB_imm", {"op": 0xE5C10000})        # STRB r0, [r1]: one byte written, the trace says so
+        bus = SY.arm_bus(st, {"regs0": 0x1234, "regs1": 0x20, "cpsr": 0x13}, bytes(0x10000), self.ctx.ops)
+        self.assertEqual(bus["trace"], [(4, 0x20, 0x34)])
 
     def test_a_wrong_term_is_caught(self):
         r = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=["LR35902_80"])

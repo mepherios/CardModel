@@ -19,7 +19,8 @@
     "claude/opaque-callees",
     "claude/godel-section-cache",
     "claude/numeric-model",
-    "claude/arm-symbolic"
+    "claude/arm-symbolic",
+    "claude/arm-symbolic-memory"
   ],
   "category": "project",
   "docs": [
@@ -56,8 +57,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "4a37a27c2d1888dc158f1bdfbe533dddcdabc3697bfa7ff1eecbd1de5a660b76",
-    "version": "2.0.27",
+    "previous_content_hash": "66f1524e5c27c7d42331d9bf64211123dfd2b43838544ec1b60fccb8860a0be5",
+    "version": "2.0.28",
     "version_bump_reason": "patch"
   },
   "metrics": [
