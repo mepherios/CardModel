@@ -52,8 +52,12 @@ NOISE = 0.15
 
 
 def host() -> dict:
+    """The host block on every metric card. ``env`` names the environment card of this machine
+    (``environment/env_<fingerprint>``, docs/ENVIRONMENTS.md E21), so a measurement says which machine's full
+    identity it was taken on; ``id`` stays the short cost-model key the ``by_host`` rows are filed under."""
+    from .environment import card_name
     return {"system": platform.system(), "machine": platform.machine(), "python": sys.version.split()[0],
-            "node": None, "cpu": _cpu_model(), "id": host_id()}
+            "node": None, "cpu": _cpu_model(), "id": host_id(), "env": card_name()}
 
 
 def _cpu_model() -> str:

@@ -71,7 +71,8 @@ then loop". That design ends at S2.
    topological order (Tarjan, linear time). Recursion inside an SCC is solved as one fixpoint. This replaces every
    "loop until nothing changes over all functions".
 3. **Partial, not poisoned.** A function that doesn't lift becomes an *opaque boundary card* with its signature and
-   observed behaviour. Its callers still lift, and only the edge is a gap. Today one failure fails every caller.
+   observed behaviour. Its callers still lift, and only the edge is a gap (built: `frontend_python.close_calls`,
+   `ProjectLift.boundaries`; observed behaviour is not recorded yet).
 4. **Content addressing everywhere.** Every result card names the hashes of its inputs (source, cards, rules, tool
    versions), the way arcade build ids already do. Equal inputs mean equal results, so a result computed once on any
    machine is reused everywhere.
@@ -231,6 +232,15 @@ and peak memory per function, so the slope is a goal card.
 * **S-A: measure and fix the shape (S1 solid).** The scale benchmark. The linear lift closure. Opaque boundary
   cards. Per-resource budgets. A process pool for lifting and summarizing. Goal: time per function flat from 10³ to
   10⁵ on synthetic projects.
+  *Status (2026-11-05):* the benchmark is in (`engines/scale.py`, `cardmodel scale bench [--sizes ...] [--record]`,
+  goals G_A11 scale slope and G_A12 memory bound). It writes a seeded package of leaf, loop, chain, cross-module,
+  recursive, tail, mutual, failing and failing-caller functions (100 per module), and times `lift_project`,
+  `analyse.structure`, `analyse.obligations` and a reference run of every lifted function, each size in its own
+  child process. First run (Linux, Xeon 2.8 GHz, Python 3.13, seed 0; `cards/metric/scale__n*`): 518, 572 and
+  931 µs per function at 10³, 10⁴ and 10⁵ (slope 1.80, nearly all of it in `lift`: 469 → 860 µs); 20 KB per
+  function, peak 1,988 MB at 10⁵, so 10⁶ would need about 20 GB and G_A12 fails there today. The lift rate is
+  0.86: every deliberate failure's callers fail with it until opaque boundary cards land. Summarize, verify across
+  languages and optimize are not timed yet.
 * **S-B: the indexed store and summaries (S2 ready).** A SQLite index, lazy loading, a content-addressed corpus
   store. Summary cards and the SCC-ordered analyses. Logic per shard. Goal: start-up time independent of store size;
   the whole Python stdlib swept (methods included) in under an hour on 4 cores.

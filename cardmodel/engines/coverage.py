@@ -222,6 +222,9 @@ def _metric(ctx: Ctx, name: str, rep: dict, secs: dict):
     if name == "peak_memory_mb":
         return rep.get("peak_memory_mb") if isinstance(rep, dict) and rep.get("peak_memory_mb") else \
             (ctx.load_state("last_verify") or {}).get("peak_memory_mb")
+    if name in ("scale_slope", "scale_peak_memory_mb"):
+        from . import scale
+        return scale.goal_metric(st, name)
     if name == "design_laws_failing":
         gm = secs.get("game")
         return len(gm.get("failing", [])) if gm and "failing" in gm else None

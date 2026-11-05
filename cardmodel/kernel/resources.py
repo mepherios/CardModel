@@ -138,6 +138,46 @@ def max_parallel() -> int:
     return _POLICY["max_parallel"]
 
 
+_BUDGETS: dict | None = None
+
+
+def budgets(refresh: bool = False) -> dict:
+    """Separate budgets per resource (docs/SCALING.md §4.4), read from this machine's environment card when
+    ``cardmodel env`` has written one (docs/ENVIRONMENTS.md V-A), else from the OS as ``policy()`` does.
+
+      cpu_workers    Python-side worker processes: the physical cores (CARDMODEL_CPU_WORKERS overrides)
+      compile_slots  heavy subprocesses at once, machine-wide: ``max_parallel`` (memory per toolchain bounds it)
+      child_mb, self_mb, ram_mb   the memory caps and the machine's RAM
+      copy_gb_s, memory_ns        measured one-thread copy bandwidth and memory latency, when the card has them
+
+    Each value comes with ``source``: the environment card's name, or ``os`` when there is no card. Computed on
+    first use, never at import, so commands that do not plan parallel work pay nothing for it."""
+    global _BUDGETS
+    if _BUDGETS is not None and not refresh:
+        return _BUDGETS
+    try:
+        from ..engines import environment
+        card = environment.cached()
+    except Exception:  # noqa: BLE001 -- a missing or unreadable card means the OS policy, never a failure
+        card = None
+    caps = (card or {}).get("capabilities") or {}
+
+    def cap(name):
+        c = caps.get(name) or {}
+        return c.get("value") if c.get("evidence") in ("measured", "declared") else None
+
+    cores = cap("cores_physical") or cap("cores_logical") or _POLICY["cpus"]
+    _BUDGETS = {
+        "cpu_workers": _env_int("CARDMODEL_CPU_WORKERS", int(cores)),
+        "compile_slots": _POLICY["max_parallel"],
+        "child_mb": _POLICY["child_mb"], "self_mb": _POLICY["self_mb"],
+        "ram_mb": cap("ram_mb") or _POLICY["ram_mb"],
+        "copy_gb_s": cap("copy_gb_s"), "memory_ns": cap("latency_memory_ns"),
+        "source": card["name"] if card else "os",
+    }
+    return _BUDGETS
+
+
 def peak_mb() -> float:
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return rss / (1 << 20) if sys.platform == "darwin" else rss / 1024

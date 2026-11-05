@@ -153,6 +153,8 @@ metric that the program computes (`cardmodel status`, `cardmodel cover`). The cu
 | `G_M5_ds_decoded` | machines | DS instructions executed that no ARM/Thumb card decodes | = 0 |
 | `G_M6_symbolic_instructions` | machines | instruction cards whose symbolic terms agree with their executable semantics (LR35902 and ARM) | ≥ 679 |
 | `G_A10_law_witnesses_pass` | autonomy | law cards whose witness test fails, errs or is missing in the last self-run's `law_witnesses` step (CM20, CM38) | = 0 |
+| `G_A11_scale_slope` | autonomy | time per function at the largest size of the newest `cardmodel scale bench --record` ÷ at 10³ (synthetic projects; SCALING.md §6) | ≤ 2 |
+| `G_A12_scale_memory_bound` | autonomy | peak memory (MB) of the child that measured the largest size of the newest scale bench (SCALING.md §6: at 10⁶) | ≤ 2048 |
 | `G_A13_pipeline_gaps` | autonomy | recorded pipeline gaps: capabilities, or parts of them, that no verify section or self-run step exercises (CM50; `cardmodel pipeline`) | = 0 |
 | `G_A14_godel_pure` | autonomy | recorded Gödel impurities: CORE or KEYED capabilities whose code does not call the core, and copies of its algebra outside engines/godel.py (CM50; `cardmodel pipeline`) | = 0 |
 | `G_S1_store_launches` | products | catalogue items that do not install, verify, repair and launch through the arcade's store in the last check (CM42) | = 0 |

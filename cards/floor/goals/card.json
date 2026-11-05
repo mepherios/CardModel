@@ -6,6 +6,16 @@
       "metric": "law_witnesses_failing",
       "target": 0
     },
+    "G_A11_scale_slope": {
+      "direction": "lower",
+      "metric": "scale_slope",
+      "target": 2
+    },
+    "G_A12_scale_memory_bound": {
+      "direction": "lower",
+      "metric": "scale_peak_memory_mb",
+      "target": 2048
+    },
     "G_A13_pipeline_gaps": {
       "direction": "lower",
       "metric": "pipeline_gaps",
@@ -274,7 +284,7 @@
   },
   "history": [],
   "metadata": {
-    "previous_content_hash": "f1636f7df241364c47dfff03004973b50c993bdfe1e42bbcd1bab38b20688b3f",
+    "previous_content_hash": "cd528b0c5f452a795cfad8ebee109a97f7bdb0c7a776736f6a7f031e81de1bfe",
     "version": "1.0.4",
     "version_bump_reason": "patch"
   },

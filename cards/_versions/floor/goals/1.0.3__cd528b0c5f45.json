@@ -1,0 +1,289 @@
+{
+  "category": "floor",
+  "floors": {
+    "G_A10_law_witnesses_pass": {
+      "direction": "lower",
+      "metric": "law_witnesses_failing",
+      "target": 0
+    },
+    "G_A11_scale_slope": {
+      "direction": "lower",
+      "metric": "scale_slope",
+      "target": 2
+    },
+    "G_A12_scale_memory_bound": {
+      "direction": "lower",
+      "metric": "scale_peak_memory_mb",
+      "target": 2048
+    },
+    "G_A1_self_contained": {
+      "direction": "lower",
+      "metric": "external_dependencies",
+      "target": 0
+    },
+    "G_A2_runs_on_every_python": {
+      "direction": "lower",
+      "metric": "python_failures",
+      "target": 0
+    },
+    "G_A3_memory_bounded": {
+      "direction": "lower",
+      "metric": "peak_memory_mb",
+      "target": 1024
+    },
+    "G_A4_capabilities_failing": {
+      "direction": "lower",
+      "metric": "capabilities_failing",
+      "target": 0
+    },
+    "G_A5_integrity_problems": {
+      "direction": "lower",
+      "metric": "integrity_problems",
+      "target": 0
+    },
+    "G_A6_laws_carried": {
+      "direction": "lower",
+      "metric": "laws_uncarried",
+      "target": 0
+    },
+    "G_A7_self_run_fresh": {
+      "direction": "lower",
+      "metric": "self_run_age_hours",
+      "target": 24
+    },
+    "G_A8_project_cards_current": {
+      "direction": "lower",
+      "metric": "project_card_problems",
+      "target": 0
+    },
+    "G_A9_actions_without_truth": {
+      "direction": "lower",
+      "metric": "actions_without_truth",
+      "target": 0
+    },
+    "G_C1_languages_verified": {
+      "direction": "higher",
+      "metric": "languages_fully_conformant",
+      "target": 10
+    },
+    "G_C2_op_conformance": {
+      "direction": "higher",
+      "metric": "op_conformance_rate",
+      "target": 1.0
+    },
+    "G_C3_forms_witnessed": {
+      "direction": "higher",
+      "metric": "forms_witnessed_rate",
+      "target": 1.0
+    },
+    "G_C4_redefinitions_verified": {
+      "direction": "higher",
+      "metric": "redefinitions_verified",
+      "target": 111
+    },
+    "G_C5_functions_translated": {
+      "direction": "higher",
+      "metric": "functions_translated",
+      "target": 20
+    },
+    "G_D1_design_laws": {
+      "direction": "lower",
+      "metric": "design_laws_failing",
+      "target": 0
+    },
+    "G_D2_equilibrium_support": {
+      "direction": "higher",
+      "metric": "equilibrium_support",
+      "target": 8
+    },
+    "G_K1_theorems_proved": {
+      "direction": "higher",
+      "metric": "theorems_proved",
+      "target": 150
+    },
+    "G_K2_lean_imported": {
+      "direction": "higher",
+      "metric": "lean_imported",
+      "target": 300
+    },
+    "G_K3_lean_mismatches": {
+      "direction": "lower",
+      "metric": "lean_mismatches",
+      "target": 0
+    },
+    "G_K4_self_violations": {
+      "direction": "lower",
+      "metric": "self_violations",
+      "target": 0
+    },
+    "G_K5_programs_pass": {
+      "direction": "higher",
+      "metric": "card_programs_passing",
+      "target": 6
+    },
+    "G_K6_functional_identities": {
+      "direction": "higher",
+      "metric": "functional_identities",
+      "target": 5
+    },
+    "G_L1_learned_cards": {
+      "direction": "higher",
+      "metric": "learned_cards",
+      "target": 10
+    },
+    "G_M1_isa_conformance": {
+      "direction": "lower",
+      "metric": "isa_cards_failing",
+      "target": 0
+    },
+    "G_M2_roms_boot": {
+      "direction": "higher",
+      "metric": "roms_boot_fraction",
+      "target": 0.95
+    },
+    "G_M3_lifted_identical": {
+      "direction": "lower",
+      "metric": "lifted_runs_differing",
+      "target": 0
+    },
+    "G_M4_test_roms": {
+      "direction": "higher",
+      "metric": "test_roms_pass_rate",
+      "target": 1.0
+    },
+    "G_M5_ds_decoded": {
+      "direction": "lower",
+      "metric": "ds_undecodable_executed",
+      "target": 0
+    },
+    "G_M6_symbolic_instructions": {
+      "direction": "higher",
+      "metric": "symbolic_instructions",
+      "target": 679
+    },
+    "G_O1_measured_forms": {
+      "direction": "higher",
+      "metric": "measured_forms",
+      "target": 30
+    },
+    "G_O2_arena_sound": {
+      "direction": "lower",
+      "metric": "arena_unsound_runs",
+      "target": 0
+    },
+    "G_O3_arena_recall": {
+      "direction": "higher",
+      "metric": "arena_recall",
+      "target": 0.9
+    },
+    "G_O4_arena_speedup": {
+      "direction": "higher",
+      "metric": "arena_geomean_speedup",
+      "target": 10
+    },
+    "G_P1_anyps5_badge_reproduced": {
+      "direction": "lower",
+      "metric": "anyps5_parity_mismatches",
+      "target": 0
+    },
+    "G_P2_anyps5_gaps_unclassified": {
+      "direction": "lower",
+      "metric": "anyps5_gaps_unclassified",
+      "target": 0
+    },
+    "G_P3_anyps5_closable_open": {
+      "direction": "lower",
+      "metric": "anyps5_closable_open",
+      "target": 0
+    },
+    "G_P4_anyps5_complete_fraction": {
+      "direction": "higher",
+      "metric": "anyps5_complete_fraction",
+      "target": 1.0
+    },
+    "G_P5_anyps5_witness_disagreements": {
+      "direction": "lower",
+      "metric": "anyps5_witness_disagreements",
+      "target": 0
+    },
+    "G_S1_store_launches": {
+      "direction": "lower",
+      "metric": "store_items_failing",
+      "target": 0
+    },
+    "G_U10_engine_math_lifted": {
+      "direction": "higher",
+      "metric": "unreal_lifted_fraction",
+      "target": 0.9
+    },
+    "G_U11_engine_math_witnessed": {
+      "direction": "higher",
+      "metric": "unreal_witnessed_fraction",
+      "target": 0.9
+    },
+    "G_U12_engine_math_refuted": {
+      "direction": "lower",
+      "metric": "unreal_refuted",
+      "target": 0
+    },
+    "G_U1_closure": {
+      "direction": "lower",
+      "metric": "unresolved_references",
+      "target": 0
+    },
+    "G_U2_rules_witnessed": {
+      "direction": "higher",
+      "metric": "rules_witnessed",
+      "target": 12
+    },
+    "G_U3_named_fraction": {
+      "direction": "higher",
+      "metric": "named_fraction",
+      "target": 0.6
+    },
+    "G_U4_valid_cards": {
+      "direction": "lower",
+      "metric": "schema_errors",
+      "target": 0
+    },
+    "G_U5_content_vectors": {
+      "direction": "higher",
+      "metric": "content_vector_coverage",
+      "target": 1.0
+    },
+    "G_U6_definitions": {
+      "direction": "higher",
+      "metric": "definition_coverage",
+      "target": 1.0
+    },
+    "G_U7_canonical_definitions": {
+      "direction": "higher",
+      "metric": "canonical_definitions",
+      "target": 0.9
+    },
+    "G_U8_formal_core": {
+      "direction": "lower",
+      "metric": "formal_core_problems",
+      "target": 0
+    },
+    "G_U9_algorithm_forms_proved": {
+      "direction": "higher",
+      "metric": "algorithm_forms_proved",
+      "target": 0.5
+    }
+  },
+  "history": [],
+  "metadata": {
+    "previous_content_hash": "bf9df04b45dd4f3abdbedf21a28ffb1702d9f650f90b632f27b23443999fb6ee",
+    "version": "1.0.3",
+    "version_bump_reason": "patch"
+  },
+  "name": "goals",
+  "provenance": {
+    "check": "engines/integrity.py floor_problems",
+    "origin": "cardmodel docs"
+  },
+  "retired": [],
+  "statement": "The floor of every goal: the hardest target it has had, its metric and direction. A goal may get harder or be added freely; easier, changed or removed only with a reason (CM37: the core is never lost; `cardmodel docs` records the floors, the integrity check holds them).",
+  "tier": 0
+}
