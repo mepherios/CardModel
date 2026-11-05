@@ -19,6 +19,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 
+from . import godel
 from . import sorts as S
 from .exprs import parse, size, to_text
 
@@ -54,29 +55,48 @@ def load_rules(store, names: list[str] | None = None) -> list[Rule]:
     return out
 
 
-def match(pattern, expr, b: dict | None = None) -> dict | None:
-    b = {} if b is None else b
+def core_pattern(pattern):
+    """A ``?x`` pattern in godel's form: each ``"?x"`` becomes ``["var", "?x"]``, so matching and substitution are
+    ``godel.match`` / ``godel.substitute`` (GODEL_PURITY rule 1: one core). A leaf node and the name slot of a
+    CALL/LOAD are left as they are, since the core does not descend into them."""
     if isinstance(pattern, str) and pattern.startswith("?"):
-        if pattern in b:
-            return b if b[pattern] == expr else None
-        b[pattern] = expr
-        return b
-    if isinstance(pattern, list) and isinstance(expr, list):
-        if len(pattern) != len(expr) or pattern[0] != expr[0]:
-            return None
-        for p, e in zip(pattern[1:], expr[1:]):
-            if match(p, e, b) is None:
-                return None
-        return b
-    return b if pattern == expr else None
-
-
-def instantiate(pattern, b: dict):
-    if isinstance(pattern, str) and pattern.startswith("?"):
-        return b.get(pattern, pattern)
-    if isinstance(pattern, list):
-        return [instantiate(p, b) for p in pattern]
+        return ["var", pattern]
+    if isinstance(pattern, list) and pattern:
+        if isinstance(pattern[0], str) and pattern[0] in godel.LEAVES:
+            return pattern
+        start = 2 if isinstance(pattern[0], str) and pattern[0] in godel.SPECIAL else 1
+        return [*pattern[:start], *(core_pattern(x) for x in pattern[start:])]
     return pattern
+
+
+def _literal_vars(pattern) -> set:
+    """The names of the term variables (``["var", "x"]``) a ``?x`` pattern contains: constants of the pattern, which
+    the core would read as pattern variables."""
+    if isinstance(pattern, list) and pattern:
+        if pattern[0] == "var":
+            return {pattern[1]}
+        return set().union(*(_literal_vars(x) for x in pattern[1:]))
+    return set()
+
+
+def match(pattern, expr, b: dict | None = None, core=None) -> dict | None:
+    """``godel.match`` over a ``?x`` pattern (``core`` = its ``core_pattern``, when already converted). A term
+    variable written in the pattern is a constant here: it must bind itself, and its binding is dropped."""
+    core = core_pattern(pattern) if core is None else core
+    out = godel.match(core, expr, b)
+    if out is None:
+        return None
+    for name in _literal_vars(pattern):
+        if name in out and out.pop(name) != ["var", name]:
+            return None
+    return out
+
+
+def instantiate(pattern, b: dict, core=None):
+    """``godel.substitute`` over a ``?x`` pattern; a variable ``b`` does not bind stays ``"?x"``."""
+    core = core_pattern(pattern) if core is None else core
+    binds = {**{v: v for v in _pattern_vars(pattern)}, **b}
+    return godel.substitute(core, binds)
 
 
 def _key(e) -> str:
@@ -104,15 +124,16 @@ def rewrites(expr, rules: list[Rule], var_sorts: dict | None = None, ops: dict |
     out = []
     seen = set()
     law = {id(r): S.law_sorts(_pattern_vars(r.lhs) | _pattern_vars(r.rhs), r.domain) for r in rules}
+    cores = {id(r): (core_pattern(r.lhs), core_pattern(r.rhs)) for r in rules}
 
     def sort_of(t):
         return S.term_sort(t, var_sorts, ops)
 
     def visit(node, rebuild):
         for r in rules:
-            b = match(r.lhs, node)
+            b = match(r.lhs, node, core=cores[id(r)][0])
             if b is not None and S.admits(law[id(r)], b, sort_of):
-                sub = instantiate(r.rhs, b)
+                sub = instantiate(r.rhs, b, core=cores[id(r)][1])
                 if _unbound(sub):
                     continue            # a variable that occurs only on the other side: not a rewrite
                 new = rebuild(sub)
