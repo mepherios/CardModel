@@ -94,21 +94,19 @@ class Numbering:
         return [f"effect/{e['op']}", guard if guard is not None else [self.true], *(e.get("args") or [])]
 
     def tokens(self, t, varnames: list) -> list[int]:
-        if isinstance(t, list) and t and t[0] == "var":
-            if t[1] not in varnames:
-                varnames.append(t[1])
-            return [3 * varnames.index(t[1]) + 3]
-        if isinstance(t, list) and t and t[0] == "int":
-            return [3 * _zig(int(t[1])) + 2]
-        if isinstance(t, list) and t:
-            atom = t[0] if "/" in str(t[0]) else f"op/{t[0]}"
-            if atom not in self.by_atom or len(t) - 1 != self.arity.get(atom, 0):
-                raise ValueError(f"{atom} with {len(t) - 1} arguments is not an object of {self.name}")
-            out = [3 * self.by_atom[atom]["index"] + 1]
-            for a in t[1:]:
-                out += self.tokens(a, varnames)
-            return out
-        raise ValueError(f"not an object: {t!r}")
+        """Def-27 prefix tokens of an object (the core's ``godel.tokens``), after checking each atom's arity here."""
+        stack = [t]
+        while stack:
+            x = stack.pop()
+            if not (isinstance(x, list) and x):
+                raise ValueError(f"not an object: {x!r}")
+            if x[0] in ("var", "int"):
+                continue
+            atom = G.atom(x[0])
+            if atom is None or atom not in self.by_atom or len(x) - 1 != self.arity.get(atom, 0):
+                raise ValueError(f"{atom or x[0]} with {len(x) - 1} arguments is not an object of {self.name}")
+            stack.extend(x[1:])
+        return G.tokens(t, self.by_atom, varnames)
 
     def encode(self, t) -> int:
         n = 1
