@@ -27,7 +27,6 @@ rejected proposal is kept, not deleted, so it can be revisited.
 from __future__ import annotations
 
 import ast
-import hashlib
 import random
 import re
 from collections import Counter, defaultdict
@@ -160,7 +159,7 @@ def propose_rewrites(ctx: Ctx, root: Path, seed: int, limit: int = 60) -> list[d
             if not 3 <= size(expr) <= 9 or any(isinstance(e, list) and e[0] in ("FN", "const", "float")
                                                for e in _nodes(expr)):
                 continue
-            key = repr(expr)
+            key = rewrite_identity(expr)         # one proposal per expression up to its names (the audit's step 2)
             if key in seen:
                 continue
             seen.add(key)
@@ -172,9 +171,9 @@ def propose_rewrites(ctx: Ctx, root: Path, seed: int, limit: int = 60) -> list[d
             valid_when = res.get("valid_when") or []
             out.append({"kind": "rewrite", "ready": ok and checks >= MIN_EVIDENCE,
                         "reason": f"{checks} checks (edge values, then seeded)" + ("" if ok else f", MISMATCH {mismatch}"),
-                        "candidate": {"name": "sugg_" + hashlib.sha256(
-                                          f"{p.relative_to(base)}:{node.lineno}:{key}".encode()).hexdigest()[:12],
-                                      "category": "suggestion", "tier": 3,
+                        "candidate": {"name": "sugg_" + key.rsplit(":", 1)[-1][:12],    # by identity, not file:line
+                                      "category": "suggestion", "tier": 3, "identity": {
+                                          "hash": key, "of": "rewrite source", "under": "alpha"},
                                       "statement": f"{res['input']} -> {res['best']}",
                                       "file": str(p.relative_to(base)), "line": node.lineno,
                                       "from": res["input"], "to": res["best"], "steps": res["steps"],
@@ -186,6 +185,22 @@ def propose_rewrites(ctx: Ctx, root: Path, seed: int, limit: int = 60) -> list[d
             if len(out) >= limit:
                 return out
     return out
+
+
+def rewrite_identity(expr) -> str:
+    """The expression up to the names of its variables (``["var", x]`` renamed by first appearance): the key under
+    which a rewrite is proposed once and the name of its suggestion, so the name survives the code moving."""
+    from .egraph import semantic_hash
+    names: dict = {}
+
+    def walk(e):
+        if isinstance(e, list):
+            if len(e) == 2 and e[0] == "var" and isinstance(e[1], str):
+                names.setdefault(e[1], f"v{len(names)}")
+                return ["var", names[e[1]]]
+            return [walk(x) for x in e]
+        return e
+    return semantic_hash(walk(expr))
 
 
 EDGE_INTS = (0, 1, -1, 2, -2, 63, 64, -64)

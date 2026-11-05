@@ -197,6 +197,49 @@ def statement(card) -> str:
     return f"forall {binder}, {body}" if binder else body
 
 
+# -- identity -------------------------------------------------------------------------------------
+def alpha_statement(card) -> list:
+    """The statement up to the names of its variables (FOUNDATIONS D7): the variables renamed ``v0, v1, …`` by
+    first appearance (the conclusion first, then the hypotheses in their order), the hypotheses then sorted, the
+    sort of every variable that appears kept, and the semantics the statement is read under. Two cards with one
+    α-statement state one theorem, whatever their names; a changed sort, semantics or side is another statement."""
+    types = {v["name"]: v.get("type", "int") for v in card.get("vars") or []}
+    names: dict = {}
+
+    def walk(p):
+        if isinstance(p, list):
+            if len(p) == 2 and p[0] == "var" and isinstance(p[1], str):
+                names.setdefault(p[1], f"v{len(names)}")
+                return ["var", names[p[1]]]
+            return [walk(x) for x in p]
+        return p
+    concl = walk(card["concl"])
+    hyps = sorted((walk(h) for h in card.get("hyps") or []), key=repr)
+    sorts = sorted((new, types.get(old, "int")) for old, new in names.items())
+    return [card.get("semantics") or "card", sorts, hyps, concl]
+
+
+def identity(card) -> str:
+    """``egraph.semantic_hash`` of :func:`alpha_statement`: the one identity of a theorem (GM-2, the audit's
+    step 2), the key under which a statement is witnessed, proved and stored once."""
+    from .egraph import semantic_hash
+    return semantic_hash(alpha_statement(card))
+
+
+def identity_record(card) -> dict:
+    """The identity as a card records it (FOUNDATIONS A4): the hash, what it is of, and the relation (≡_α)."""
+    return {"hash": identity(card), "of": "theorem statement", "under": "alpha"}
+
+
+def by_identity(store) -> dict[str, list]:
+    """identity -> the stored theorem cards that state it, in registry order. A group of more than one is the
+    same theorem stored under several names (the audit's duplicates), whose evidence belongs together."""
+    out: dict[str, list] = {}
+    for card in store.cards("theorem"):
+        out.setdefault(identity(card), []).append(card)
+    return out
+
+
 # -- inputs ---------------------------------------------------------------------------------------
 INT_EDGES = [0, 1, -1, 2, -2, 3, -3, 7, -7, 10, -10, 64, -64, 255, 256, -256, 1000, -1000, 65536, 2**31 - 1, -(2**31)]
 
@@ -518,9 +561,16 @@ def lean_theorem(card, store, ops, tactic: str, name: str | None = None) -> str:
     return f"theorem {name or lean_name(card['name'])}{(' ' + head) if head else ''} : {concl} := by {tactic}"
 
 
-def prove(cards, store, ops, tactics=TACTICS, timeout_s: int = 600, deep: bool = False) -> dict:
+PROOF_CACHE = "lean_proofs"      # state file: identity|toolchain|tactics -> the proved result (never an unproved one)
+
+
+def prove(cards, store, ops, tactics=TACTICS, timeout_s: int = 600, deep: bool = False, ctx=None) -> dict:
     """Try each tactic on every card's Lean statement (one file per round; failures mapped back by line).
-    ``deep`` adds Lean's library search (exact?), which re-derives a proof from core lemmas."""
+    ``deep`` adds Lean's library search (exact?), which re-derives a proof from core lemmas. With ``ctx`` a proof
+    is kept in the state file ``lean_proofs`` under the statement's :func:`identity`, the toolchain and the
+    tactics, and a statement proved before under that key (the same theorem up to its names, from any run or any
+    source) is not sent to Lean again: its result is the kept one, with ``cached`` saying so and the Lean text
+    rendered for this card. Only a proof is kept: an unproved statement is tried again every time."""
     tactics = tuple(tactics) + (DEEP_TACTICS if deep else ())
     from ..emit import lean as L
     exe = L.lean_exe()
@@ -536,6 +586,19 @@ def prove(cards, store, ops, tactics=TACTICS, timeout_s: int = 600, deep: bool =
         for card in pending:
             out[card["name"]] = {"status": "no_toolchain"}
         return {"toolchain": None, "results": out}
+    cache = _proof_cache(ctx)
+    keys = {card["name"]: f"{identity(card)}|{toolchain_version(exe)}|{','.join(tactics)}" for card in pending}
+    if cache is not None:
+        still = []
+        for card in pending:
+            kept = cache.get(keys[card["name"]])
+            if isinstance(kept, dict) and kept.get("status") == "proved" and kept.get("tactic") in tactics:
+                out[card["name"]] = {"status": "proved", "tactic": kept["tactic"],
+                                     "lean": lean_theorem(card, store, ops, kept["tactic"]),
+                                     "cached": {"identity": keys[card["name"]].split("|")[0], "from": kept.get("name")}}
+            else:
+                still.append(card)
+        pending = still
     for tactic in tactics:
         if not pending:
             break
@@ -555,7 +618,26 @@ def prove(cards, store, ops, tactics=TACTICS, timeout_s: int = 600, deep: bool =
     for card in pending:
         out[card["name"]] = {"status": "unproved", "tried": list(tactics),
                              "lean": lean_theorem(card, store, ops, "sorry")}
+    if cache is not None:
+        new = {keys[n]: {"status": "proved", "tactic": r["tactic"], "name": n} for n, r in out.items()
+               if r.get("status") == "proved" and not r.get("cached") and n in keys}
+        if new:
+            cache.update(new)
+            try:
+                ctx.save_state(PROOF_CACHE, cache)
+            except OSError:                     # CM10: the proofs stand; only their memory is lost
+                pass
     return {"toolchain": exe, "results": out}
+
+
+def _proof_cache(ctx) -> dict | None:
+    if ctx is None:
+        return None
+    try:
+        kept = ctx.load_state(PROOF_CACHE) or {}
+    except ValueError:                          # a corrupt cache is empty, never an error
+        kept = {}
+    return kept if isinstance(kept, dict) else {}
 
 
 def toolchain_version(exe: str | None) -> str | None:
@@ -596,5 +678,6 @@ def settle(card: dict, witness_result: dict | None, proof_result: dict | None, e
     return card
 
 
-__all__ = ["NotLean", "TACTICS", "eval_prop", "lean_prop", "lean_term", "lean_theorem", "prop_text", "prove",
-           "settle", "statement", "toolchain_version", "witness"]
+__all__ = ["NotLean", "PROOF_CACHE", "TACTICS", "alpha_statement", "by_identity", "eval_prop", "identity",
+           "identity_record", "lean_prop", "lean_term", "lean_theorem", "prop_text", "prove", "settle", "statement",
+           "toolchain_version", "witness"]

@@ -133,6 +133,29 @@ class RewriteSuggestions(unittest.TestCase):
         self.assertTrue(sound["ready"], sound["reason"])
         self.assertEqual(sound["candidate"]["valid_when"], [])
 
+    def test_one_proposal_per_expression_up_to_names(self):
+        from pathlib import Path
+        from cardmodel.engines.learn import propose_rewrites, rewrite_identity
+        a = {"a.py": "def f(x):\n    return (x * 2) + (x * 2)\n"}
+        both = {**a, "b.py": "def g(y):\n    return (y * 2) + (y * 2)\n"}
+        alone, together = TempProject(a), TempProject(both)
+        try:
+            one = propose_rewrites(alone.ctx(), Path(alone.dir), SEED)
+            two = propose_rewrites(together.ctx(), Path(together.dir), SEED)
+        finally:
+            alone.cleanup()
+            together.cleanup()
+        self.assertTrue(one, seed_note(self))
+        self.assertEqual([s["candidate"]["name"] for s in two], [s["candidate"]["name"] for s in one],
+                         "the same expression under other names, in another file, is proposed once")
+        for s in one:
+            ident = s["candidate"]["identity"]
+            self.assertEqual((ident["under"], s["candidate"]["name"]),
+                             ("alpha", "sugg_" + ident["hash"].rsplit(":", 1)[-1][:12]))
+            self.assertEqual(ident["hash"], rewrite_identity(["ADD", ["MUL", ["var", "q"], ["int", 2]],
+                                                              ["MUL", ["var", "q"], ["int", 2]]])
+                             if s["candidate"]["from"] == "((x * 2) + (x * 2))" else ident["hash"])
+
     def test_check_rewrite_counts_one_sided_errors(self):
         import random
         from cardmodel.engines.exprs import parse
