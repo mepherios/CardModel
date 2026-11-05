@@ -11,7 +11,8 @@ arena's generator but shaped for size rather than for optimization:
   tail        tail self-recursion (Euclid's gcd)
   mutual      a pair of mutually recursive functions (even/odd)
   fail        a deliberate lift failure (a ``try`` block, which the IR does not have)
-  fail_caller calls a ``fail`` function of its module (today it fails too: the closure, frontend_python.close_calls)
+  fail_caller calls a ``fail`` function of its module (it lifts with that edge as a gap but is not closed, so it
+              counts as not lifted here: frontend_python.close_calls, lift_status)
 
 Modules hold ``MODULE_SIZE`` functions, packages ``PACKAGE_SIZE`` modules, so 10⁶ functions are 10⁴ modules in 100
 packages. The same (n, seed) always writes the same bytes.

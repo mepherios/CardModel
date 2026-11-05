@@ -321,6 +321,8 @@ class Lifted:
     lang: str = ""
     src_types: list = field(default_factory=list)   # parameter types as the source spells them (harness casts)
     src_labels: list = field(default_factory=list)  # argument labels a call writes (Swift's `scale(2, by: 1.5)`)
+    gaps: list = field(default_factory=list)        # call edges to callees that are not closed (close_calls)
+    boundary: dict | None = None                    # the opaque boundary card of a function that did not lift
 
 
 # -- tokens ----------------------------------------------------------------------------------------------------------
@@ -2979,7 +2981,7 @@ def lift_source(source: str, ops: dict[str, OpSpec], lang: str, only: list[str] 
     if close:
         from .frontend_python import close_calls
         external = {e["qual"] for e in (externs or {}).values()}
-        close_calls(results, lambda c: c in external)
+        close_calls(results, lambda c: c in external, sigs)
     return [lf for lf in results.values() if not only or lf.name in only]
 
 
@@ -2995,7 +2997,8 @@ def signatures(source: str, ops: dict[str, OpSpec], lang: str) -> dict[str, dict
         try:
             out[f.name] = {"params": [low.ir_type(t) if t else (d.untyped if d.untyped in (INT, FLOAT) else INT)
                                       for _, t in f.params],
-                           "returns": low.ir_type(f.ret) if f.ret else None}
+                           "returns": low.ir_type(f.ret) if f.ret else None,
+                           "typed": bool(f.ret) and all(t for _, t in f.params)}
         except Unsupported:
             continue
     return out

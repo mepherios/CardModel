@@ -62,8 +62,15 @@ an imported class); the text languages link by unique name like a C linker, and 
 `Class_method` when `self`/`cls` is used only to call other methods; `self.x` is reported (it needs record types).
 Functions are named `<module>::<name>`; `ProjectLift.module_for(qual)` gives back one ordinary IR module, renaming
 only where two files define the same name. The closure is one linear pass over the project's reverse call graph.
+The closure is partial, not poisoned (SCALING.md §3.3): a function whose own body does not lift becomes an opaque
+boundary card (its declared signature when it types, and its cause), and its callers still lift with each such call
+edge recorded as a gap (`Lifted.gaps`, `ProjectLift.boundaries()`). `ok` means *closed*: the function and everything
+it calls lifted, so it runs and translates alone. `lift-sweep` reports both rates and counts gap edges by cause.
 
-Python 3.13 stdlib without its tests (3,183 files): 110 of 11,999 top-level functions lift one file at a time; 113
+Python 3.13 stdlib without its tests, methods included (3,279 files, 49,684 functions, 2026-11-05): 579 lift
+(1.17 %), 300 of them closed and 279 with gaps; before boundary cards those 279 counted as failures (300, 0.60 %).
+1,302 of the 49,105 boundary cards carry a typed signature, and they leave 276 call edges as gaps (most: `self.x`).
+Earlier, Python 3.13 stdlib without its tests (3,183 files): 110 of 11,999 top-level functions lift one file at a time; 113
 with calls across modules (most callees fail for their own reasons first); 296 of 49,743 with methods. The first
 reasons are `self.x` (23,968 methods), non-scalar annotations (5,495) and defaults/varargs (4,611).
 
