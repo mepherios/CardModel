@@ -18,9 +18,15 @@ cardmodel translate examples/transformer/transformer.py      # 13 kernels, every
 | `feed_forward`, `block` | gelu(x W1) W2, and a pre-norm attention block with its residual |
 | `argmax` | the index of the largest logit |
 
-Every kernel agrees with the Python original in C, C++, Go, Java, JavaScript, Python, Ruby and Rust, and in Lua
-except `gelu` and `feed_forward` (Lua's standard library has no `tanh`, so that is reported as a gap rather than
-approximated). Swift and TypeScript are emitted but need their toolchains to run. Lean has no list templates.
+Every kernel agrees with the Python original in C, C++, Go, Java, JavaScript, Lua, Python, Ruby and Rust. Lua's
+standard library has no `tanh`, so its card language defines one (`cm_tanh`: a Taylor series below 0.05, the exp
+form above, within 2e-15 of libm). Swift and TypeScript are emitted but need their toolchains to run. Lean has no
+list templates.
+
+The same kernels in mathematical notation are in
+[examples/transformer/transformer.math](../examples/transformer/transformer.math), and every Python kernel also
+round-trips through math: `cardmodel math emit examples/transformer/transformer.py` writes them as equations, and
+`cardmodel math translate` on that output runs them in every target again.
 
 ## Semantics
 
@@ -60,4 +66,4 @@ tolerance as scalars.
 * `sum`, `max` and `min` over a list are not lifted. Python 3.12 and later compensate a float `sum`, so a plain
   loop in another language would not match it. Write the loop.
 * No append, slicing other than `xs[:]`, negative indices, nested lists or other element types.
-* No list notation in the math language: a list function is reported as an `EmitGap` there.
+* Lean has no list templates (an `EmitGap`).
