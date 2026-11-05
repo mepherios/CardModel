@@ -85,6 +85,41 @@ class Symbolic(unittest.TestCase):
                 checked += 1
         self.assertGreater(checked, 60)
 
+    def test_a_wrong_canonical_term_is_caught(self):
+        # CM44: the stored canonical terms (identity hash, Gödel content) are witnessed on the same cases as the raw
+        # terms; a distilled or stored term that disagrees with the semantics fails the card, and a definition whose
+        # canonical terms were not the witnessed ones keeps its obligation open
+        from unittest import mock
+        only = ["LR35902_80"]
+        good = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only, canonical="distill")
+        self.assertEqual(good["cards"]["LR35902_80"]["status"], "pass", seed_note(self))
+        self.assertEqual(good["cards"]["LR35902_80"]["canonical"], "distilled")
+        real = SY.distill
+
+        def wrong(ctx, isa, state, rules=None, costs=None):
+            d = real(ctx, isa, state, rules, costs)
+            return {**d, "state": {**d["state"], "A": ["BIT_AND", ["ADD", d["state"]["A"], ["int", 1]],
+                                                       ["int", 255]]}}
+        with mock.patch.object(SY, "distill", wrong):
+            bad = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only, canonical="distill")
+            self.assertEqual(bad["status"], "fail", seed_note(self))
+            self.assertTrue(any("canonical terms" in p for p in bad["cards"]["LR35902_80"]["problems"]))
+            defs, _ = SY.definitions(self.ctx, "lr35902", bad)
+            self.assertEqual(defs[0]["proof_obligations"][0]["status"], "refuted")
+            # a raw-only witness does not cover the canonical terms definitions() stores
+            raw = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only, canonical=None)
+            self.assertEqual(raw["cards"]["LR35902_80"]["status"], "pass")
+            defs, _ = SY.definitions(self.ctx, "lr35902", raw)
+            self.assertEqual(defs[0]["proof_obligations"][0]["status"], "pending")
+        stored = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only)
+        self.assertEqual(stored["cards"]["LR35902_80"]["canonical"], "stored")
+        res = stored["results"]["LR35902_80"]
+        with mock.patch.object(SY, "_stored_canonical",
+                               lambda ctx, name, r: ({**res["state"], "A": ["BIT_AND", ["ADD", res["state"]["A"], ["int", 1]],
+                                                                         ["int", 255]]}, None)):
+            bad = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=only)
+        self.assertEqual(bad["status"], "fail", seed_note(self))
+
     def test_distill_certificate_is_reproducible(self):
         # the e-graph's budget cut makes which laws fire depend on set order; the certificate is the whole fired
         # set, sorted, so regenerating the pack under another hash seed gives the same bytes (09 and B0 differed)

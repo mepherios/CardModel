@@ -19,6 +19,7 @@ e-graph canonicalizes them as a separate step).
 """
 from __future__ import annotations
 
+import json
 import random
 from collections import Counter
 
@@ -180,16 +181,43 @@ def evaluate(result: dict, init: dict, ram: bytes, ops: dict | None = None) -> d
     return {"regs": regs, "writes": writes, "cycles": cycles, **counts}
 
 
-def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list[str] | None = None) -> dict:
-    """Symbolic terms against the bench's run of the executable semantics, card by card."""
+def _stored_canonical(ctx, name: str, res: dict) -> tuple[dict | None, str | None]:
+    """The canonical state the stored definition carries, and why it can't be used (absent, or its raw terms are not
+    the card's terms any more: the pack is stale)."""
+    d = ctx.store.get(f"definition/isa__{name}")
+    if d is None or not isinstance((d.get("canonical") or {}).get("term"), dict):
+        return None, "no stored definition"
+    fresh = json.loads(json.dumps({"state": res["state"], "effects": res["effects"]}))
+    if (d.get("math") or {}).get("term") != fresh:
+        return None, "the stored definition's terms are not the card's symbolic terms (regenerate the pack)"
+    return d["canonical"]["term"]["state"], None
+
+
+def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list[str] | None = None,
+          canonical: str = "stored") -> dict:
+    """Symbolic terms against the bench's run of the executable semantics, card by card. The same cases also witness
+    the canonical terms, the ones a definition stores as its canonical form, identity and Gödel content (CM44):
+    ``canonical="stored"`` evaluates the stored definition's canonical terms (distilling only where none is stored),
+    ``"distill"`` distills afresh (kept in ``distilled`` for ``definitions``), ``None`` checks the raw terms only.
+    A canonical term that disagrees with the semantics fails its card like a raw one."""
     from . import bench as BN
     from . import build as Bd
     from . import native as N
+    if canonical not in ("stored", "distill", None):
+        raise ValueError(f"canonical must be 'stored', 'distill' or None, not {canonical!r}")
     mod, cards = module(ctx, isa)
     ex = Executor(ctx, mod)
     m = N.load(ctx, Bd.module(ctx, f"{isa}_bench"), N.resolve_engine(ctx, "host"))
     rng = random.Random(seed)
-    per, results = {}, {}
+    per, results, canon, distilled = {}, {}, {}, {}
+    laws = []                                         # rules and costs, read once when something is distilled
+
+    def _distill(res):
+        if not laws:
+            from ..engines import egraph as E
+            from ..engines import search
+            laws.extend([E.rules_from_cards(ctx.store), search.op_costs(ctx.store)])
+        return distill(ctx, isa, res["state"], *laws)
     for card in cards:
         if only and card.name not in only:
             continue
@@ -204,6 +232,16 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
                               "selects; each of those has its own terms", "registers": sorted(res["state"]),
                               "effects": len(res["effects"])}
             continue
+        cstate, csource = None, None
+        if canonical == "stored":
+            cstate, why = _stored_canonical(ctx, card.name, res)
+            csource = "stored" if cstate is not None else f"distilled ({why})"
+        if canonical is not None and cstate is None:
+            distilled[card.name] = _distill(res)
+            cstate, csource = distilled[card.name]["state"], csource or "distilled"
+        if cstate is not None:
+            canon[card.name] = cstate
+        cres = {**res, "state": cstate} if cstate is not None else None
         fetches = 2 if card.get("prefix") is not None else 1
         outcomes = ["taken", "not_taken"] if isinstance(card.get("cycles"), dict) else [None]
         problems, runs = [], 0
@@ -222,6 +260,15 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
                         have = 1                      # the bench's hang() locks the CPU
                     if have != want:
                         problems.append(f"{k}: terms give {have}, the semantics {want}")
+                if cres is not None:                  # the canonical terms on the same case (effects are shared)
+                    cregs = evaluate(cres, init, out["_ram_in"], ctx.ops)["regs"]
+                    for k in ex.globals:
+                        want = out[k] if k in out else st[k]
+                        have = cregs.get(k, init[k])
+                        if k == "locked" and got["hang"]:
+                            have = 1
+                        if have != want:
+                            problems.append(f"{k}: canonical terms give {have}, the semantics {want}")
                 written = {a: v for a, v in got["writes"].items() if v != out["_ram_in"][a]}
                 if sorted(written.items()) != out["ram_changes"]:
                     problems.append(f"memory: terms write {sorted(written.items())[:3]}, the semantics "
@@ -231,10 +278,12 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
                 if got["halt"] != out["halt_calls"] or got["stop"] != out["stop_calls"]:
                     problems.append("halt/stop effects differ")
         per[card.name] = {"status": "fail" if problems else "pass", "runs": runs, "problems": sorted(set(problems))[:4],
-                          "registers": sorted(res["state"]), "effects": len(res["effects"])}
+                          "registers": sorted(res["state"]), "effects": len(res["effects"]),
+                          "canonical": csource or "not checked"}
     st = [r["status"] for r in per.values()]
     return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"), "isa": isa, "seed": seed,
-            "counts": {s: st.count(s) for s in sorted(set(st))}, "cards": per, "results": results}
+            "counts": {s: st.count(s) for s in sorted(set(st))}, "cards": per, "results": results,
+            "canonical": canon, "distilled": distilled}
 
 
 def content(res: dict, ops) -> dict:
@@ -305,7 +354,10 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
         dname, aname = f"isa__{name}", f"isa__{name}__semantics"
         status = {"pass": "witnessed", "fail": "refuted"}.get(row.get("status"), row.get("status", "pending"))
         term = {"state": res["state"], "effects": res["effects"]}
-        d = distill(ctx, isa, res["state"], rules, costs)
+        d = (checked.get("distilled") or {}).get(name) or distill(ctx, isa, res["state"], rules, costs)
+        if status == "witnessed" and (checked.get("canonical") or {}).get(name) != d["state"]:
+            # the witness ran on other canonical terms (or none): the stored terms' obligation is still open (CM44)
+            status = "pending"
         canon = {"state": d["state"], "effects": res["effects"]}
         cont = content({"state": d["state"], "effects": res["effects"]}, ctx.ops)
         defs.append({"name": dname, "category": "definition", "subject": card.qualified,
