@@ -742,7 +742,7 @@ def cmd_distill(args) -> int:
     from .engines import egraph as E
     from .engines import search
     from .engines import values as V
-    from .engines.exprs import parse, to_text
+    from .engines.exprs import ParseError, UnknownName, parse, to_text, variables
     cli = _cli()
     ctx = cli._ctx(args)
     rules, costs = E.rules_from_cards(ctx.store), search.op_costs(ctx.store)
@@ -755,16 +755,31 @@ def cmd_distill(args) -> int:
     if not args.exprs or len(args.exprs) > 2:
         print("usage: cardmodel distill EXPR [EXPR2] | --measure", file=sys.stderr)
         return 2
-    terms = [parse(e) for e in args.exprs]
+    try:
+        terms = [parse(e[5:] if e.startswith("expr:") else e) for e in args.exprs]
+    except (ParseError, UnknownName) as exc:
+        print(f"error: cannot parse expression: {exc}", file=sys.stderr)
+        return 2
+    # the e-graph is sorted (FOUNDATIONS A3, D6): every variable gets a sort (--sort, else int; --var NAME:SORT wins)
+    names = sorted(set().union(*(variables(t) for t in terms)))
+    var_sorts = {n: args.sort for n in names}
+    for spec in args.var or []:
+        name, sep, sort = spec.partition(":")
+        if not sep or not name or sort not in ("int", "float", "bool"):
+            print(f"error: --var expects NAME:SORT with SORT one of int, float, bool (got {spec!r})", file=sys.stderr)
+            return 2
+        var_sorts[name] = sort
+    at = "{" + ", ".join(f"{n}: {var_sorts[n]}" for n in names) + "}"
     if len(terms) == 1:
-        r = E.canonical(terms[0], rules, costs, **budget)
-        cli._out(args, r, f"{to_text(r['term'])}   cost {r['cost']}   {r['hash']}\n"
+        r = {**E.canonical(terms[0], rules, costs, var_sorts=var_sorts, **budget), "var_sorts": var_sorts}
+        cli._out(args, r, f"{to_text(r['term'])}   cost {r['cost']}   {r['hash']}   at sorts {at}\n"
                           f"{r['iterations']} iterations, {r['nodes']} nodes, {'saturated' if r['saturated'] else 'budget spent'}; "
                           f"equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")
         return 0
-    r = E.equal(terms[0], terms[1], rules, **budget)
+    r = {**E.equal(terms[0], terms[1], rules, var_sorts=var_sorts, **budget), "var_sorts": var_sorts}
     w = E.witness(terms[0], terms[1], V.fresh_seed() if args.seed is None else args.seed, ops=ctx.ops)
-    verdict = "equal" if r["equal"] else "not shown equal (within the budget; not a disproof)"
+    verdict = (f"equal under laws at sorts {at}" if r["equal"]
+               else f"not shown equal at sorts {at} (within the budget; not a disproof)")
     cli._out(args, {**r, "witness": w}, f"{verdict}; witness {w['status']} on {w['checks']} inputs "
                                         f"(seed {w.get('seed')}); equalities used: {', '.join(list(r['fired'])[:8]) or 'none'}")
     return 0 if r["equal"] else 1
@@ -939,7 +954,11 @@ def register(sub) -> None:
                                        "two terms are equal")
     s.add_argument("exprs", nargs="*"); s.add_argument("--measure", action="store_true")
     s.add_argument("--iterations", type=int, default=8); s.add_argument("--nodes", type=int, default=4000)
-    s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_distill)
+    s.add_argument("--seed", type=int)
+    s.add_argument("--sort", choices=("int", "float", "bool"), default="int",
+                   help="the sort of every variable (default int); laws hold only at the sorts their cards state")
+    s.add_argument("--var", action="append", metavar="NAME:SORT", help="one variable's sort (repeatable; wins over --sort)")
+    s.set_defaults(fn=cmd_distill)
     s = sub.add_parser("symbolic", help="instruction cards as terms: symbolic execution, checked against their "
                                         "executable semantics")
     s.add_argument("isa", nargs="?", default="lr35902"); s.add_argument("cards", nargs="*")

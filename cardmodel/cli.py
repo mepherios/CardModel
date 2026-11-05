@@ -45,7 +45,7 @@
                                            definitions sharing most logic with it; cofactor WHOLE PART; decode N --vars
   cardmodel godel dimension LAW... | --expr E --dims V=D,...   physical dimension as content: a law's two sides agree,
                                            or an expression's dimension from its variables' (the physics set, G13)
-  cardmodel distill EXPR [EXPR2] | --measure   equality saturation: canonical term and semantic hash, or equality
+  cardmodel distill EXPR [EXPR2] [--sort S|--var N:S] | --measure   equality saturation: canonical term and semantic hash, or equality
   cardmodel sources check|build [--write]   the four sources: definitions, actions, transformations, methods (CM44)
   cardmodel symbolic [ISA] [CARD...]       instruction cards as terms, checked against their executable semantics
   cardmodel tiers census|prove ALGORITHM    each claim's tier; prove an algorithm's forms by sized witnesses (CM46)
