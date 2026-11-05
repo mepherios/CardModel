@@ -167,7 +167,7 @@ class Idiomatic(unittest.TestCase):
             "c": ("unsigned long h(unsigned long x) { return x * 31; }", "unsigned"),
             "rust": ("fn s(v: &Vec<i64>) -> i64 { v[0] }", "reference"),
             "go": ("func f(xs []int64) int64 { return xs[0] }", "type"),
-            "java": ("class A { static char f(char x) { return x; } }", "char"),
+            "java": ("class A { static String f(String x) { return x; } }", "String"),
             "ruby": ("def f(s)\n  puts s\nend\n", "I/O"),
             "javascript": ("function f(a) { return a.length; }", ".length"),
         }
@@ -252,18 +252,27 @@ class Witness(unittest.TestCase):
 WIDTH_SRC = {
     "go": ("package main\n\nfunc addU8(a uint8, b uint8) uint8 {\n\treturn a + b\n}\n\n"
            "func mulI32(a int32, b int32) int32 {\n\tvar c int32 = a * b\n\tc += 1\n\treturn c\n}\n\n"
-           "func scale(x float32) float32 {\n\treturn x * 0.1\n}\n"),
+           "func scale(x float32) float32 {\n\treturn x * 0.1\n}\n\n"
+           "func narrow(a uint8) uint8 {\n\treturn a * 2\n}\n\n"
+           "func viaCall(a uint8) int64 {\n\treturn int64(narrow(a) + 100)\n}\n"),
     "java": ("class W {\n    static int mulI32(int a, int b) { return a * b + 1; }\n"
              "    static byte addB(byte a, byte b) { return (byte) (a + b); }\n"
-             "    static float scale(float x) { return x * 0.1f; }\n}\n"),
+             "    static float scale(float x) { return x * 0.1f; }\n"
+             "    static int sumC(char c, char d) { return c + d; }\n"
+             "    static int triC(char c) { char e = (char) (c * 3); return e; }\n}\n"),
     "rust": ("fn add_u8(a: u8, b: u8) -> u8 {\n    a + b\n}\n\nfn trunc(a: i32) -> u8 {\n    a as u8\n}\n\n"
-             "fn scale(x: f32) -> f32 {\n    x * 0.1\n}\n"),
+             "fn scale(x: f32) -> f32 {\n    x * 0.1\n}\n\n"
+             "fn wadd(a: u8, b: u8) -> u8 {\n    a.wrapping_add(b)\n}\n\n"
+             "fn wmul(a: i8, b: i8) -> i8 {\n    a.wrapping_mul(b).wrapping_sub(1)\n}\n\n"
+             "fn via_call(a: u8) -> u8 {\n    wadd(a, a).wrapping_add(7)\n}\n"),
     "csharp": ("class W {\n    static byte AddB(byte a, byte b) { return (byte)(a + b); }\n"
                "    static int Mul(int a, int b) { return a * b; }\n    static uint U(uint a, uint b) { return a * b; }\n}\n"),
 }
 WIDTH_INPUTS = {"addU8": [[200, 100], [1, 2], [255, 255]], "mulI32": [[100000, 100000], [-3, 7], [2147483647, 2]],
                 "addB": [[100, 100], [-128, -1], [3, 4]], "add_u8": [[1, 2], [100, 100]],
-                "trunc": [[300], [-1], [5]], "scale": [[3.0], [1.25]]}
+                "trunc": [[300], [-1], [5]], "scale": [[3.0], [1.25]], "narrow": [[200], [3]],
+                "viaCall": [[200], [100], [3]], "sumC": [[65535, 65535], [1, 2]], "triC": [[30000], [5]],
+                "wadd": [[200, 100], [1, 2]], "wmul": [[-128, -1], [100, 3], [2, 3]], "via_call": [[200], [1]]}
 
 
 def _heads(e) -> set:
@@ -307,6 +316,29 @@ class FixedWidth(unittest.TestCase):
         self.assertTrue(any("debug" in d for d in rs["add_u8"].divergences), rs["add_u8"].divergences)
         self.assertIn("WRAPU", self.heads(rs["trunc"]))            # `as u8` truncates in every build
         self.assertEqual(rs["trunc"].divergences, [])
+
+    def test_call_takes_the_callees_result_sort(self):
+        _, go = self.lifted("go")
+        self.assertIn("WRAPU", self.heads(go["viaCall"]))          # narrow(a) + 100 wraps at u8 before int64()
+        _, rs = self.lifted("rust")
+        self.assertTrue(rs["via_call"].ok)                          # wadd(a, a).wrapping_add(7): u8 from the sig
+
+    def test_rust_wrapping_and_unsupported_overflow_methods(self):
+        _, rs = self.lifted("rust")
+        self.assertIn("WRAPU", self.heads(rs["wadd"]))
+        self.assertIn("WRAPS", self.heads(rs["wmul"]))
+        self.assertEqual(rs["wadd"].divergences, [])
+        ctx = model_ctx()
+        for m in ("checked_add", "saturating_mul"):
+            lf, = F.lift(ctx, f"fn f(a: u8) -> u8 {{\n    let b = 1;\n    a.{m}(b)\n}}\n", "rust")
+            self.assertFalse(lf.ok, m)
+            self.assertIn("line 3", " ".join(lf.reasons))
+            self.assertIn(m, " ".join(lf.reasons))
+
+    def test_java_char_is_u16(self):
+        _, java = self.lifted("java")
+        self.assertEqual(java["sumC"].sorts, {"c": "u16", "d": "u16"})
+        self.assertIn("WRAPU", self.heads(java["triC"]))
 
     def test_sources_agree_on_overflow(self):
         ran = 0

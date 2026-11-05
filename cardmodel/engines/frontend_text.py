@@ -70,12 +70,12 @@ _UNSIGNED_C = {"unsigned", "unsigned int", "unsigned long", "unsigned long long"
 # the sort they denote. ``_WRAPS``: languages whose integer arithmetic wraps modulo 2^w (Go, Java, C#), so the
 # lift puts WRAPU/WRAPS on every result that can leave its sort. Rust is not among them: overflow panics in a debug
 # build and wraps only in release, so a Rust lift stays exact and records the overflow as a divergence (its domain
-# is "no overflow"); Rust's ``as`` casts do truncate and lift as WRAP. float32 is F32 (binary32 rounding) in all.
+# is "no overflow"); Rust's ``as`` casts and ``wrapping_*`` methods do wrap and lift as WRAP. float32 is F32 (binary32 rounding) in all.
 _FIXED_SORTS = {
     "rust": {"u8": "u8", "u16": "u16", "u32": "u32", "i8": "i8", "i16": "i16", "i32": "i32", "f32": "f32"},
     "go": {"uint8": "u8", "byte": "u8", "uint16": "u16", "uint32": "u32", "int8": "i8", "int16": "i16",
            "int32": "i32", "float32": "f32"},
-    "java": {"byte": "i8", "short": "i16", "int": "i32", "float": "f32"},
+    "java": {"byte": "i8", "short": "i16", "char": "u16", "int": "i32", "float": "f32"},
     "csharp": {"byte": "u8", "sbyte": "i8", "short": "i16", "ushort": "u16", "int": "i32", "uint": "u32",
                "Int32": "i32", "float": "f32", "Single": "f32"},
 }
@@ -197,6 +197,9 @@ _RUBY_FUNCS = {"Math.sqrt": ("op", "FSQRT"), "Math.exp": ("op", "EXP"), "Math.lo
 _METHODS_COMMON = {"abs": ("op", "ABS"), "min": ("op", "MIN"), "max": ("op", "MAX"), "sqrt": ("op", "FSQRT"),
                    "floor": ("op", "FLOOR"), "ceil": ("op", "CEIL"), "trunc": ("op", "TRUNC"),
                    "exp": ("op", "EXP"), "sin": ("op", "SIN"), "cos": ("op", "COS"), "tan": ("op", "TAN")}
+# Rust's explicit-overflow integer methods: wrapping_* wraps modulo 2^w in every build (WRAPU/WRAPS at the
+# receiver's sort); checked_* (Option) and saturating_* (clamp) have no IR form yet and are reported unsupported.
+_RUST_WRAPPING = {"wrapping_add": "ADD", "wrapping_sub": "SUB", "wrapping_mul": "MUL"}
 _RUST_METHODS = {**_METHODS_COMMON, "ln": ("op", "LOG"), "powi": ("fpow",), "powf": ("fpow",), "pow": ("ipow",),
                  "is_nan": ("op", "ISNAN"), "count_ones": ("op", "POPCOUNT"), "leading_zeros": ("op", "CLZ64"),
                  "trailing_zeros": ("op", "CTZ64"), "rem_euclid": ("rem_euclid",), "signum": ("no", "signum"),
@@ -229,8 +232,9 @@ def _dialects() -> dict[str, Dialect]:
                        types={**_C_TYPES, "std::int64_t": INT, "std::int32_t": INT, "int64": INT},
                        unsupported_types=dict(_C_UNSUP), funcs=dict(_C_FUNCS), emit_keys=("cpp", "c", "c_like"))
     d["java"] = Dialect("java", types={"long": INT, "int": INT, "short": INT, "byte": INT, "double": FLOAT,
-                                        "float": FLOAT, "boolean": BOOL, "void": VOID, "var": "auto"},
-                        unsupported_types={"char": "char"}, funcs=dict(_JAVA_FUNCS),
+                                        "float": FLOAT, "boolean": BOOL, "void": VOID, "var": "auto",
+                                        "char": INT},
+                        unsupported_types={}, funcs=dict(_JAVA_FUNCS),
                         emit_keys=("java", "c_like"))
     d["csharp"] = Dialect("csharp", preproc=True, types={"long": INT, "int": INT, "short": INT, "double": FLOAT,
                                                           "bool": BOOL, "void": VOID, "var": "auto",
@@ -2532,6 +2536,17 @@ class Lowerer:
             return self.sorts.get(n[1])
         if kind == "cast" or kind == "call" and n[1] in self.fixed and n[1] in self.d.casts:
             return self.fixed.get(n[1])
+        if kind == "call":                   # f(x): the callee's declared result sort
+            path = n[1][5:] if n[1].startswith("self.") else n[1]
+            sig = self.sigs.get(path) if path not in self.env else None
+            if sig is not None:
+                return sig.get("sort")
+            parts = n[1].split(".")          # x.wrapping_add(y) parsed as a call on a local
+            if len(parts) == 2 and parts[0] in self.env and parts[1] in _RUST_WRAPPING and self.d.name == "rust":
+                return self.sorts.get(parts[0])
+            return None
+        if kind == "mcall" and n[2] in _RUST_WRAPPING and self.d.name == "rust":
+            return self.sort_of(n[1])
         if kind == "un":
             return self.sort_of(n[2]) if n[1] in ("-", "~", "+") else None
         if kind == "bin":
@@ -2898,6 +2913,20 @@ class Lowerer:
         self.err(f"{path}()")
 
     def method(self, recv_node, name: str, arg_nodes: list):
+        if self.d.name == "rust" and name.startswith(("checked_", "saturating_", "overflowing_")):
+            self.err(f".{name}(): Rust's {name.split('_')[0]} arithmetic (Option / clamp) has no IR form; not lifted")
+        if self.d.name == "rust" and name in _RUST_WRAPPING:
+            srt = self.sort_of(recv_node)
+            if srt in (None, "lit", "f32"):
+                self.err(f".{name}() on a receiver without a known u8..i32 sort")
+            if len(arg_nodes) != 1:
+                self.err(f".{name}() arity")
+            r, rt = self.expr(recv_node)
+            b, tb = self.expr(arg_nodes[0])
+            if rt != INT or tb != INT:
+                self.err(f".{name}() on {rt}, {tb}")
+            e, _ = self.apply(_RUST_WRAPPING[name], [(r, rt), (b, tb)])
+            return self.wrap(e, srt), INT
         r, rt = self.expr(recv_node)
         args = [self.expr(a) for a in arg_nodes]
         d = self.d
@@ -3130,6 +3159,8 @@ def lift_source(source: str, ops: dict[str, OpSpec], lang: str, only: list[str] 
                 ptypes.append(t)
             ret = low.ir_type(f.ret) if f.ret else None
             sigs[f.name] = {"params": ptypes, "returns": ret}
+            if f.ret in low.fixed:            # a narrow result: callers' arithmetic on it is in that sort
+                sigs[f.name]["sort"] = low.fixed[f.ret]
         except Unsupported:
             continue
     results: dict[str, Lifted] = {}
