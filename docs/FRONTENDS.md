@@ -81,7 +81,16 @@ reasons are `self.x` (23,968 methods), non-scalar annotations (5,495) and defaul
 
 * Scalars only (`int`, `float`, `bool`), like the Python frontend. Arrays, strings, structs, pointers, closures,
   exceptions and globals are reported with their line, never guessed. Lists come with the IR's list types.
-* Unsigned integers and binary32 floats are reported, not approximated.
+* Fixed-width types lift to the sorts of `engines/sorts.py` (FOUNDATIONS.md §7 item 4): Rust `u8`..`i32`/`f32`,
+  Go `uint8`/`byte`..`int32`/`float32`, Java `byte`/`short`/`int`/`float`, C# `byte`/`sbyte`/`short`/`ushort`/
+  `int`/`uint`/`float`. Each lifted function records them in `Lifted.sorts` (parameter or local -> sort). Go, Java
+  and C# wrap, so every result that can leave its sort (`+ - * << ~`, negation, compound assignment, signed `/`
+  except in C#, which throws) gets `WRAPU`/`WRAPS`; Java and C# promote narrow operands to `int` first, so
+  `(byte)(a + b)` is `WRAPS(WRAPS(a + b, 32), 8)`. Rust overflow panics in a debug build and wraps only in
+  release, so a Rust lift stays exact and lists the possible overflow in `Lifted.divergences` (its domain is "no
+  overflow"); Rust's `as u8` truncates in every build and lifts as `WRAPU`. `float32` results are `F32`
+  (binary32 rounding), and a Go/Rust untyped constant beside a float32 is rounded too. Float-to-narrow-int casts
+  (saturating in Rust and Java) are reported. C's integer rules are PR #39's; 64-bit unsigned types are reported.
 * Fixed-width sources agree with the IR only where no value overflows. The witness compares only inputs whose IR
   values fit the card's `int_bits`.
 * A hand parser covers the IR subset of each language, not the whole grammar. The roadmap's per-language parsers

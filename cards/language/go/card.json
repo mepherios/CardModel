@@ -146,7 +146,7 @@
     "prelude": "",
     "print": {
       "bool": "cm_fmt.Printf(\"b:%v\\n\", {e})",
-      "float": "cm_fmt.Printf(\"f:%v\\n\", {e})",
+      "float": "cm_fmt.Printf(\"f:%v\\n\", float64({e}))",
       "int": "cm_fmt.Printf(\"i:%d\\n\", {e})"
     },
     "replace": [
