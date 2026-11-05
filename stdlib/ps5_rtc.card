@@ -168,6 +168,56 @@ fn dos_field(v: Int, f: Int) -> Int requires 0 <= v, v <= 0xFFFFFFFF, 0 <= f, f 
 fn civil_field(n: Int, f: Int) -> Int requires 0 <= n, n <= 3652058, 0 <= f, f <= 2 =
   if f == 0 then civil_year(n) else (if f == 1 then civil_month(n) else civil_day(n))
 
+-- tick arithmetic (anyps5_semantics/rtc_tick_arithmetic). Fixed units are fixed lengths of microseconds. A month
+-- or year step moves the calendar date and keeps the time of day; the day is clamped to the new month's length
+-- (the calendar has no 31 February). Only results inside 0001-01-01 .. 9999-12-31 are derived: what libSceRtc
+-- does past either end (AnyPS5 wraps the fixed units modulo 2^64 and leaves the destination unwritten for months)
+-- is the console's contract, not the calendar's.
+fn tick_add(t: Int, n: Int, unit: Int) -> Int requires 0 <= t, t <= 315537897599999999 = t + n * unit
+fn tick_add_in_range(t: Int, n: Int, unit: Int) -> Bool =
+  0 <= t and t <= max_tick() and 0 <= t + n * unit and t + n * unit <= max_tick()
+fn add_ticks(t: Int, n: Int) -> Int requires 0 <= t, t <= 315537897599999999 = tick_add(t, n, 1)
+fn add_seconds(t: Int, n: Int) -> Int requires 0 <= t, t <= 315537897599999999 = tick_add(t, n, 1000000)
+fn add_minutes(t: Int, n: Int) -> Int requires 0 <= t, t <= 315537897599999999 = tick_add(t, n, 60000000)
+fn add_hours(t: Int, n: Int) -> Int requires 0 <= t, t <= 315537897599999999 = tick_add(t, n, 3600000000)
+fn add_days(t: Int, n: Int) -> Int requires 0 <= t, t <= 315537897599999999 = tick_add(t, n, ticks_per_day())
+fn add_weeks(t: Int, n: Int) -> Int requires 0 <= t, t <= 315537897599999999 = tick_add(t, n, 7 * ticks_per_day())
+fn ticks_in_range(t: Int, n: Int) -> Bool = tick_add_in_range(t, n, 1)
+fn seconds_in_range(t: Int, n: Int) -> Bool = tick_add_in_range(t, n, 1000000)
+fn minutes_in_range(t: Int, n: Int) -> Bool = tick_add_in_range(t, n, 60000000)
+fn hours_in_range(t: Int, n: Int) -> Bool = tick_add_in_range(t, n, 3600000000)
+fn days_in_range(t: Int, n: Int) -> Bool = tick_add_in_range(t, n, ticks_per_day())
+fn weeks_in_range(t: Int, n: Int) -> Bool = tick_add_in_range(t, n, 7 * ticks_per_day())
+-- months counted from January of year 0: the step lands in year index // 12, month index % 12 + 1
+fn month_index(t: Int, k: Int) -> Int requires 0 <= t, t <= 315537897599999999 = tick_year(t) * 12 + tick_month(t) - 1 + k
+fn months_in_range(t: Int, k: Int) -> Bool =
+  0 <= t and t <= max_tick() and 12 <= month_index(t, k) and month_index(t, k) <= 9999 * 12 + 11
+fn add_months(t: Int, k: Int) -> Int requires 0 <= t, t <= 315537897599999999 {
+  let i = month_index(t, k)
+  let y = i // 12
+  let m = i % 12 + 1
+  let d = if tick_day(t) > month_days(y, m) then month_days(y, m) else tick_day(t)
+  return days_from_civil(y, m, d) * ticks_per_day() + t % ticks_per_day()
+}
+fn add_years(t: Int, k: Int) -> Int requires 0 <= t, t <= 315537897599999999 = add_months(t, 12 * k)
+fn years_in_range(t: Int, k: Int) -> Bool = months_in_range(t, 12 * k)
+-- ticks are ordered as instants are: -1, 0, 1
+fn compare_tick(a: Int, b: Int) -> Int = if a < b then -1 else (if a > b then 1 else 0)
+-- sceRtcSetTime_t and sceRtcSetWin32FileTime: the date and time of an epoch offset, one field per call; an
+-- offset before the epoch or past 9999-12-31 is refused with libSceRtc's invalid-value code (observation)
+fn rtc_set_time_t_field(s: Int, f: Int) -> Int requires 0 <= f, f <= 6 {
+  if s < 0 or s > (max_tick() - unix_epoch_tick()) // 1000000 { return e_invalid_value() }
+  return rtc_set_tick_field(unix_epoch_tick() + s * 1000000, f)
+}
+fn rtc_set_win32_field(w: Int, f: Int) -> Int requires 0 <= w, 0 <= f, f <= 6 {
+  if w // 10 > max_tick() - win32_epoch_tick() { return e_invalid_value() }
+  return rtc_set_tick_field(win32_epoch_tick() + w // 10, f)
+}
+
+theorem month_step_round_trip(t: Int, k: Int) requires 0 <= t, t <= 315537897599999999, -1200 <= k, k <= 1200:
+  (not months_in_range(t, k)) or (tick_year(add_months(t, k)) * 12 + tick_month(add_months(t, k)) - 1 == month_index(t, k))
+theorem month_step_keeps_time_of_day(t: Int, k: Int) requires 0 <= t, t <= 315537897599999999, -1200 <= k, k <= 1200:
+  (not months_in_range(t, k)) or add_months(t, k) % ticks_per_day() == t % ticks_per_day()
 theorem fast_form_is_the_definition(y: Int, m: Int, d: Int) requires 1 <= y, y <= 9999, 1 <= m, m <= 12, 1 <= d, d <= 31:
   days_from_civil_fast(y, m, d) == days_from_civil(y, m, d)
 theorem year_lengths(y: Int) requires 1 <= y, y <= 9999:
@@ -198,3 +248,13 @@ test rtc_check_valid(2026, 2, 29, 0, 0, 0, 0) == e_invalid_day() and rtc_check_v
 test rtc_get_time_t(1970, 1, 2, 0, 0, 0, 0) == 86400 and rtc_get_time_t(1969, 12, 31, 0, 0, 0, 0) == e_invalid_value()
 test rtc_dos_time_written(1979, 1, 1, 0, 0, 0) == 0 and rtc_dos_time_written(2108, 1, 1, 0, 0, 0) == 0xFF9FBF7D
 test days_from_civil_fast(2026, 10, 21) == days_from_civil(2026, 10, 21) and days_from_civil_fast(1, 1, 1) == 0
+test add_months(tick(2024, 1, 31, 12, 0, 0, 5), 1) == tick(2024, 2, 29, 12, 0, 0, 5)
+test add_months(tick(2023, 3, 31, 0, 0, 0, 0), -1) == tick(2023, 2, 28, 0, 0, 0, 0)
+test add_years(tick(2024, 2, 29, 23, 59, 59, 999999), 1) == tick(2025, 2, 28, 23, 59, 59, 999999)
+test add_months(tick(1, 1, 1, 0, 0, 0, 0), 12 * 9999 - 1) == tick(9999, 12, 1, 0, 0, 0, 0)
+test months_in_range(tick(1, 1, 1, 0, 0, 0, 0), 0) and not months_in_range(tick(1, 1, 1, 0, 0, 0, 0), -1)
+test add_weeks(tick(2026, 10, 21, 0, 0, 0, 0), 2) == tick(2026, 11, 4, 0, 0, 0, 0)
+test add_hours(tick(1999, 12, 31, 23, 0, 0, 0), 1) == tick(2000, 1, 1, 0, 0, 0, 0)
+test compare_tick(3, 5) == -1 and compare_tick(5, 5) == 0 and compare_tick(7, 5) == 1
+test rtc_set_time_t_field(86400, 2) == 2 and rtc_set_time_t_field(-1, 0) == e_invalid_value()
+test rtc_set_win32_field(116444736000000000, 0) == 1970 and rtc_set_win32_field(0, 0) == 1601

@@ -93,12 +93,13 @@ order it by what it unblocks, and refuse to count it as done.
 
 ## What the model closed and witnessed
 
-Eight semantics bindings over seven programs, each derived from a public standard, each run next to
-AnyPS5's code:
+Nine semantics bindings over seven programs, each derived from a public standard; eight of them run next to
+AnyPS5's code so far:
 
 | program | standard | AnyPS5 code it runs |
 |---|---|---|
 | `stdlib/ps5_rtc.card` | proleptic Gregorian calendar, Unix and Win32 epochs, FAT date/time | libSceRtc exports and its `daysFromCivil` / `civilFromDays` |
+| `stdlib/ps5_rtc.card` (`rtc_tick_arithmetic`) | the same calendar: month and year steps clamp the day, fixed units, epoch offsets | libSceRtc's `sceRtcTickAdd*`, `sceRtcCompareTick`, `sceRtcSetTime_t`, `sceRtcSetWin32FileTime` (bound; its witness waits for a run on a machine with the AnyPS5 checkout) |
 | `stdlib/ps5_libc.card` | libgcc runtime ABI integer routines; ISO C 7.4 in the "C" locale | libc's compiler builtins (and the console behaviour AnyPS5 recorded outside the ABI's domain), ctype |
 | `stdlib/ps5_libm.card` | IEEE 754 exact operations (round to integral, min/max, fdim, scaleB, convert to integer) | libc's Math.cpp and MathExact.cpp in double, float and long double (built for x86-64, the PS5's architecture: on an Apple-silicon Mac it runs under Rosetta) |
 | `stdlib/ps5_net.card` | network byte order (RFC 1700, POSIX) | libSceNet's hton/ntoh |

@@ -1,0 +1,440 @@
+{
+  "category": "anyps5_semantics",
+  "checks": [
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -315537897599999999,
+          315537897599999999
+        ]
+      ],
+      "call": "AddTicks({0}, {1})",
+      "edges": [
+        [
+          0,
+          0
+        ],
+        [
+          315537897599999999,
+          0
+        ],
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          315537897599999999,
+          -315537897599999999
+        ],
+        [
+          1,
+          -1
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddTicks",
+      "fn": "add_ticks",
+      "where": "ticks_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -315537897599999999,
+          315537897599999999
+        ]
+      ],
+      "call": "AddMicroseconds({0}, {1})",
+      "edges": [
+        [
+          0,
+          1
+        ],
+        [
+          315537897599999999,
+          -1
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddMicroseconds",
+      "fn": "add_ticks",
+      "where": "ticks_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -315537897600,
+          315537897599
+        ]
+      ],
+      "call": "AddSeconds({0}, {1})",
+      "edges": [
+        [
+          0,
+          315537897599
+        ],
+        [
+          315537897599999999,
+          -315537897599
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddSeconds",
+      "fn": "add_seconds",
+      "where": "seconds_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -5258964960,
+          5258964959
+        ]
+      ],
+      "call": "AddMinutes({0}, {1})",
+      "edges": [
+        [
+          0,
+          1
+        ],
+        [
+          315537897599999999,
+          -1
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddMinutes",
+      "fn": "add_minutes",
+      "where": "minutes_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -87660000,
+          87660000
+        ]
+      ],
+      "call": "AddHours({0}, {1})",
+      "edges": [
+        [
+          0,
+          1
+        ],
+        [
+          315537897599999999,
+          -1
+        ],
+        [
+          0,
+          87649
+        ],
+        [
+          0,
+          2147483647
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddHours",
+      "fn": "add_hours",
+      "where": "hours_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -3652059,
+          3652059
+        ]
+      ],
+      "call": "AddDays({0}, {1})",
+      "edges": [
+        [
+          0,
+          3652058
+        ],
+        [
+          315537897599999999,
+          -3652058
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddDays",
+      "fn": "add_days",
+      "where": "days_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -521723,
+          521723
+        ]
+      ],
+      "call": "AddWeeks({0}, {1})",
+      "edges": [
+        [
+          0,
+          521722
+        ],
+        [
+          315537897599999999,
+          -521722
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddWeeks",
+      "fn": "add_weeks",
+      "where": "weeks_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -120000,
+          120000
+        ]
+      ],
+      "call": "AddMonths({0}, {1})",
+      "edges": [
+        [
+          2592000000000,
+          1
+        ],
+        [
+          7689600000000,
+          -1
+        ],
+        [
+          0,
+          119987
+        ],
+        [
+          315537897599999999,
+          -119987
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddMonths",
+      "fn": "add_months",
+      "where": "months_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          315537897599999999
+        ],
+        [
+          -9999,
+          9999
+        ]
+      ],
+      "call": "AddYears({0}, {1})",
+      "edges": [
+        [
+          99705600000000,
+          1
+        ],
+        [
+          0,
+          9998
+        ],
+        [
+          315537897599999999,
+          -9998
+        ]
+      ],
+      "export": "libSceRtc.sceRtcTickAddYears",
+      "fn": "add_years",
+      "where": "years_in_range"
+    },
+    {
+      "args": [
+        [
+          0,
+          18446744073709551615
+        ],
+        [
+          0,
+          18446744073709551615
+        ]
+      ],
+      "call": "Compare({0}, {1})",
+      "edges": [
+        [
+          0,
+          0
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          18446744073709551615,
+          18446744073709551615
+        ],
+        [
+          0,
+          18446744073709551615
+        ],
+        [
+          18446744073709551615,
+          0
+        ]
+      ],
+      "export": "libSceRtc.sceRtcCompareTick",
+      "fn": "compare_tick"
+    },
+    {
+      "args": [
+        [
+          -1000000000000,
+          300000000000
+        ],
+        [
+          0,
+          6
+        ]
+      ],
+      "call": "SetTimeT({0}, {1})",
+      "edges": [
+        [
+          0,
+          0
+        ],
+        [
+          -1,
+          0
+        ],
+        [
+          253402300799,
+          5
+        ],
+        [
+          253402300800,
+          0
+        ],
+        [
+          951782400,
+          2
+        ]
+      ],
+      "export": "libSceRtc.sceRtcSetTime_t",
+      "fn": "rtc_set_time_t_field"
+    },
+    {
+      "args": [
+        [
+          0,
+          18446744073709551615
+        ],
+        [
+          0,
+          6
+        ]
+      ],
+      "call": "SetWin32({0}, {1})",
+      "edges": [
+        [
+          0,
+          0
+        ],
+        [
+          116444736000000000,
+          0
+        ],
+        [
+          2650467743999999999,
+          6
+        ],
+        [
+          2650467744000000000,
+          0
+        ],
+        [
+          18446744073709551615,
+          0
+        ]
+      ],
+      "export": "libSceRtc.sceRtcSetWin32FileTime",
+      "fn": "rtc_set_win32_field"
+    }
+  ],
+  "closes": [],
+  "closes_debt": [],
+  "covers": [
+    "libSceRtc.sceRtcCompareTick",
+    "libSceRtc.sceRtcSetTime_t",
+    "libSceRtc.sceRtcSetWin32FileTime",
+    "libSceRtc.sceRtcTickAddDays",
+    "libSceRtc.sceRtcTickAddHours",
+    "libSceRtc.sceRtcTickAddMicroseconds",
+    "libSceRtc.sceRtcTickAddMinutes",
+    "libSceRtc.sceRtcTickAddMonths",
+    "libSceRtc.sceRtcTickAddSeconds",
+    "libSceRtc.sceRtcTickAddTicks",
+    "libSceRtc.sceRtcTickAddWeeks",
+    "libSceRtc.sceRtcTickAddYears"
+  ],
+  "harness": {
+    "include": [
+      "core/libs/prx/libSceRtc/Export.cpp"
+    ],
+    "language": "cpp",
+    "link": {
+      "darwin": [
+        "-Wl,-undefined,dynamic_lookup"
+      ],
+      "linux": [
+        "-Wl,--unresolved-symbols=ignore-all"
+      ]
+    },
+    "prelude_file": "harness.hpp"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "rtc_tick_arithmetic",
+  "observed": [
+    {
+      "source": "core/libs/prx/libSceRtc/Export.cpp",
+      "what": "results past 0001-01-01 .. 9999-12-31: the fixed units wrap modulo 2^64, a month or year step leaves the destination unwritten and returns 0 (not derived; excluded by the checks' where)"
+    },
+    {
+      "source": "core/libs/prx/libSceRtc/Export.cpp",
+      "what": "the invalid-value code sceRtcSetTime_t and sceRtcSetWin32FileTime return outside the calendar"
+    }
+  ],
+  "program": "stdlib/ps5_rtc.card",
+  "provenance": {
+    "by": "the AnyPS5 blockers session (hand-written binding)",
+    "origin": "cardmodel",
+    "written": "2026-11-05"
+  },
+  "source": "core/libs/prx/libSceRtc/Export.cpp",
+  "standard": "ISO 8601 proleptic Gregorian calendar (month and year steps clamp the day to the new month's length); POSIX time_t epoch; Win32 FILETIME (100 ns since 1601-01-01)",
+  "statement": "libSceRtc's tick arithmetic: adding ticks, microseconds, seconds, minutes, hours, days, weeks, months and years to a tick, comparing ticks, and the date and time of a Unix or Win32 epoch offset, against AnyPS5's own libSceRtc."
+}

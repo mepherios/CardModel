@@ -1,7 +1,8 @@
 {
   "blockers": [],
   "branches": [
-    "claude/recursing-williams-*"
+    "claude/recursing-williams-*",
+    "claude/anyps5-blockers"
   ],
   "category": "project",
   "docs": [
@@ -11,11 +12,13 @@
     "the badge reproduced",
     "every gap with its cause",
     "witnesses against public standards",
-    "on the branch: VISION.md, the machine-code lifter (9db0861)"
+    "on the branch: VISION.md, the machine-code lifter (9db0861)",
+    "libSceRtc's tick arithmetic derived (stdlib/ps5_rtc.card: month and year steps with the day clamped, fixed units, compare, epoch offsets) and bound to 12 complete exports (anyps5_semantics/rtc_tick_arithmetic)"
   ],
   "goal": "AnyPS5's real coverage, every gap's cause, and its code witnessed against semantics from public standards.",
   "in_progress": [
-    "the plan's next steps on its branch"
+    "the plan's next steps on its branch",
+    "rtc_tick_arithmetic waits for its witness run (the AnyPS5 checkout and a C++ compiler on the user's machine)"
   ],
   "kind": "program",
   "left": [
@@ -25,8 +28,8 @@
     "console observations"
   ],
   "metadata": {
-    "previous_content_hash": "6cfb9c2844c6a06f876b0e7c4c8a40365e56b2994e1763141546f148b00969a0",
-    "version": "2.0.1",
+    "previous_content_hash": "aca7cd30df1e4d78c4150f0e35fc4c35ab661fbb968196075bb83b099ef0a445",
+    "version": "2.0.2",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -42,7 +45,8 @@
   ],
   "name": "anyps5",
   "next_steps": [
-    "its session asks for the merge when a step is ready"
+    "its session asks for the merge when a step is ready",
+    "the pending blockers `anyps5 blocks` ranks are observation (sceAjmBatchJobRunSplit, sceAgcDcbSetIndexIndirectArgs) or wait for the string/list IR (vfscanf, vsscanf)"
   ],
   "order": 7,
   "owner": {
@@ -65,6 +69,13 @@
   "statement": "AnyPS5 read as cards: its badge reproduced, its real coverage, every gap with the cause that keeps it open.",
   "tier": 1,
   "title": "AnyPS5 on cards",
-  "updated": "2026-10-22T00:30:00+02:00",
-  "user_actions": []
+  "updated": "2026-11-05T12:00:00+00:00",
+  "user_actions": [
+    {
+      "action": "Run `cardmodel anyps5 witness ~/Documents/AnyPS5-main --global --semantics rtc_tick_arithmetic` and commit its anyps5_witness card",
+      "unblocks": [
+        "12 complete libSceRtc exports counted as witnessed (122 -> 134 if they agree)"
+      ]
+    }
+  ]
 }
