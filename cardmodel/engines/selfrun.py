@@ -288,6 +288,7 @@ def _run_verify(c: Cycle, full: bool) -> dict:
            "sections": {s: {"status": r.get("status"), **({"reason": r["reason"]} if r.get("reason") else {})}
                         for s, r in rep["sections"].items()},
            "peak_memory_mb": rep.get("peak_memory_mb"), "timings_s": rep.get("timings_s"),
+           "cached": rep.get("cached", []),
            "summary": f"{len(rep['sections'])} sections, failing {failing or 'none'}"}
     moved = quarantine_if_cause(c, failing)
     if moved:

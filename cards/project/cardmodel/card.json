@@ -16,7 +16,8 @@
     "claude/go-negzero",
     "claude/strings-ir",
     "claude/self-report-*",
-    "claude/opaque-callees"
+    "claude/opaque-callees",
+    "claude/godel-section-cache"
   ],
   "category": "project",
   "docs": [
@@ -52,8 +53,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "250cf51da0c758bf7ccb2cbf3831cdf225b00709e6cf822914a6d392ead02fcf",
-    "version": "2.0.24",
+    "previous_content_hash": "319b46a415ee9899027acfde6a22d826d43eb69d2463342bd122c5f531dccc2e",
+    "version": "2.0.25",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -97,7 +98,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-11-05T08:00:00+00:00",
+  "updated": "2026-11-05T08:00:00+01:00",
   "user_actions": [
     {
       "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",

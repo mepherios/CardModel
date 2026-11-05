@@ -91,8 +91,17 @@ class Content(unittest.TestCase):
         self.assertFalse(G.preserves_gcd({"x": Counter({"X": 1}), "y": Counter({"X": 1, "Y": 1})}))
 
     def test_cards_have_content(self):
-        ctx = model_ctx()
-        r = G.check(ctx)
+        from cardmodel.engines import verify
+        tmp = Path(tempfile.mkdtemp(prefix="cardmodel_gstate_"))
+        try:
+            ctx = _StateIn(model_ctx().store, tmp)
+            r, hit = verify.godel_section(ctx)                  # computed, then kept under its input key
+            self.assertFalse(hit)
+            kept, hit = verify.godel_section(ctx)               # on the model's real cards: the kept result is it
+            self.assertTrue(hit)
+            self.assertEqual(kept, r)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
         proposed = proposed_atoms()
         problems = [x for x in r["problems"] if not _only_proposed(x, proposed)]
         missing = [x for x in r["missing"] if not _only_proposed(x, proposed)]
@@ -105,6 +114,65 @@ class Content(unittest.TestCase):
         self.assertIn("op/MUL", sq)
         th, why = G.card_content(ctx, ctx.store.cards("theorem")[0])
         self.assertGreaterEqual(th["logic/forall"], 1, why)
+
+
+class _StateIn(Ctx):
+    """A context whose state directory (where verify keeps the godel section's cache) is a temporary one."""
+
+    def __init__(self, store, root: Path):
+        super().__init__(store)
+        self._root = root
+
+    @property
+    def state_root(self) -> Path:
+        return self._root
+
+
+class SectionCache(unittest.TestCase):
+    def test_godel_section_recomputes_exactly_when_an_input_changes(self):
+        from cardmodel.engines import verify
+        tmp = Path(tempfile.mkdtemp(prefix="cardmodel_gcache_"))
+        try:
+            st = Store([("model", tmp / "cards")])
+            G.sync(st, ["op/ADD", "op/MUL"], "S", since="2026-01-01")
+            ctx = Ctx(st)
+            self.assertEqual(ctx.state_root, tmp / "state")
+            first, hit = verify.godel_section(ctx)
+            self.assertFalse(hit)
+            for _ in range(2):                                  # unchanged inputs: a hit, equal to a fresh check
+                kept, hit = verify.godel_section(ctx)
+                self.assertTrue(hit)
+                self.assertEqual(kept, first)
+                self.assertEqual(kept, G.check(ctx))
+            rep = verify.run(ctx, seed=SEED, only=["godel"], save=False)
+            self.assertEqual((rep["cached"], rep["sections"]["godel"]), (["godel"], first))
+            # each kind of input it reads, changed once: a new key, the section recomputes and equals a fresh check
+            changes = [lambda: G.sync(st, ["op/SUB"], "S", since="2026-01-02"),                       # the ledger
+                       lambda: st.save({"name": "S", "numbering": {"conditions": ["effective"]}},
+                                       category="godel_set"),                                          # a set
+                       lambda: st.save({"name": "f", "ir": {"functions": []}}, category="function"),     # a card read
+                       lambda: st.save({"name": "f", "ir": {"functions": [], "note": 1}}, category="function")]
+            for change in changes:
+                before = G.check_key(ctx)
+                change()
+                self.assertNotEqual(G.check_key(ctx), before)
+                res, hit = verify.godel_section(ctx)
+                self.assertFalse(hit)
+                self.assertEqual(res, G.check(ctx))
+                self.assertTrue(verify.godel_section(ctx)[1])
+            # the engines' code is part of the key: another engine in it gives another key
+            key, code = G.check_key(ctx), G.CHECK_CODE
+            try:
+                G.CHECK_CODE = code + ("codes",)
+                self.assertNotEqual(G.check_key(ctx), key)
+            finally:
+                G.CHECK_CODE = code
+            self.assertEqual(G.check_key(ctx), key)
+            # a corrupt cache is a miss, never an error
+            (tmp / "state" / f"{verify.GODEL_CACHE}.json").write_text("{", encoding="utf-8")
+            self.assertFalse(verify.godel_section(ctx)[1])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 class Structure(unittest.TestCase):
