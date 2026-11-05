@@ -48,6 +48,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from ..engines import search as SE
+from ..engines import sorts as S
 from ..engines.codegen import Emitter
 from ..kernel import resources
 from . import build as Bd
@@ -58,7 +60,7 @@ REGS = ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC")
 ENDS = ("jump", "call", "ret")                 # groups that end a block
 EXCLUDED = {0x76, 0x10, 0xFB}                  # HALT, STOP, EI: each a block of its own (one instruction)
 STOP = 0x10                                    # one opcode byte, and it skips the next byte (PC + 2)
-LIFTER = 5                                     # the lifted blocks' shape (in the cache key)
+LIFTER = 6                                     # the lifted blocks' shape (in the cache key)
 PART_STATEMENTS = 120000                       # at most this many IR statements in one compile unit
 RAM_LIFTED = ((0xC000, 0xFE00), (0xFF80, 0xFFFF))   # work RAM and its echo, HRAM (not video or cartridge RAM)
 RAM_BASE = 0xC000                              # the RAM profile's first address (32 bytes, 256 bits, per address)
@@ -259,11 +261,33 @@ def discover(store, rom: bytes, mask: int, seen: bytes | None = None, entries: b
     return {"leaders": sorted(leaders), "visited": len(visited)}
 
 
+def unit_laws(store) -> dict:
+    """The rule cards of the form ``op(x, c) = x`` (a unit) or ``op(x, c) = d`` (absorbing), unconditional and at
+    sort int, as ``(op, position of c, c) -> "unit" | ["int", d]``. Constant folding applies these and no others,
+    so every simplification the lifter makes is a law with a card (FOUNDATIONS.md A3, A5). A machine's values are
+    integers (its registers and bytes), so a law at int applies to every term except a comparison."""
+    out = {}
+    for r in SE.load_rules(store):
+        lhs, rhs = r.lhs, r.rhs
+        if r.condition or r.domain not in (None, "int") or not isinstance(lhs, list) or len(lhs) != 3:
+            continue
+        for i in (0, 1):
+            c, x = lhs[1 + i], lhs[2 - i]
+            if not (isinstance(c, list) and c[:1] == ["int"] and isinstance(x, str) and x.startswith("?")):
+                continue
+            if rhs == x:
+                out[(lhs[0], i, c[1])] = "unit"
+            elif isinstance(rhs, list) and rhs[:1] == ["int"]:
+                out[(lhs[0], i, c[1])] = tuple(rhs)
+    return out
+
+
 # -- specialising a block ---------------------------------------------------------------------------------
 class Lifter:
     def __init__(self, ctx, machine_ir: dict, isa: str = "lr35902"):
         self.ctx = ctx
         self.ops = ctx.ops
+        self.unit_laws = unit_laws(ctx.store)
         self.ir = machine_ir
         self.fns = {f["name"]: f for f in machine_ir["functions"]}
         self.eff = effects(machine_ir)
@@ -489,20 +513,17 @@ class Lifter:
                 return ["bool", v]
             if isinstance(v, int):
                 return ["int", v]
-        # algebraic identities that keep exact semantics
-        if head == "BIT_OR":
-            if args[0] == ["int", 0]:
-                return args[1]
-            if args[1] == ["int", 0]:
-                return args[0]
-        if head == "BIT_AND" and (args[0] == ["int", 0] or args[1] == ["int", 0]):
-            if not self._has_call(args[0]) and not self._has_call(args[1]):
-                return ["int", 0]
-        if head == "ADD":
-            if args[1] == ["int", 0]:
-                return args[0]
-            if args[0] == ["int", 0]:
-                return args[1]
+        # the unit and absorbing laws of the rule cards (FOUNDATIONS.md A3, A5): x + 0 = x, x & 0 = 0, ...
+        if len(args) == 2:
+            for i in (0, 1):
+                law = self.unit_laws.get((head, i, args[i][1] if args[i][0] == "int" else None))
+                other = args[1 - i]
+                if law is None or other[0] == "bool" or S.term_sort(other, ops=self.ops) in ("bool", "float"):
+                    continue
+                if law == "unit":
+                    return other
+                if not self._has_call(other):        # an absorbed argument is dropped, so it must have no effect
+                    return list(law)
         return [head, *args]
 
     def _has_call(self, e) -> bool:
