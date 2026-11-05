@@ -7,7 +7,7 @@
     "java": "Math.tanh({0})",
     "javascript": "Math.tanh({0})",
     "lean": "UNSUPPORTED",
-    "lua": "UNSUPPORTED",
+    "lua": "cm_tanh({0})",
     "python": "math.tanh({0})",
     "ruby": "Math.tanh({0})",
     "rust": "(({0}).tanh())",

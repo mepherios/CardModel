@@ -239,3 +239,4 @@ class TargetModel(unittest.TestCase):
                     compared += 1
         self.assertGreater(compared, 1000)
         self.assertEqual(W.evaluate(["DIV", ["float", 1.0], ["float", 0.0]], {}), math.inf)
+        self.assertEqual(W.evaluate(["POW", ["int", -29], ["int", 12]], {}), 29 ** 12)     # exact, past 2**53

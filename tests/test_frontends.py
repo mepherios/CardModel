@@ -205,15 +205,27 @@ class Witness(unittest.TestCase):
                 continue
             if not ctx.available(lang)[0]:
                 continue
+            if not ctx.language(lang).get("runner"):
+                continue            # recognised only (C#, Kotlin): its toolchain may be installed, but nothing runs it
             for lf in lifted:
                 if not lf.ok:
                     continue
                 module = module_for(lf.name, lifted)
-                res = F.witness_source(ctx, lang, src, module, F.sample_inputs(module, 12, SEED), lf.src_types)
+                res = F.witness_source(ctx, lang, src, module, F.sample_inputs(module, 12, SEED), lf.src_types,
+                                        lf.src_labels)
                 self.assertEqual(res["status"], "pass", f"{name} {lf.name}: {res} {seed_note(self)}")
                 ran += 1
         if ran == 0:
             self.skipTest("no source toolchain on this host")
+
+    def test_swift_harness_writes_argument_labels(self):
+        """`func scale(_ x: Int, by f: Double)` is called as scale(2, by: 1.5): the harness keeps the labels."""
+        ctx = model_ctx()
+        lang, src, lifted = _lift_file(ctx, "algos.swift")
+        lf = next(x for x in lifted if x.name == "scale")
+        self.assertEqual(lf.src_labels, [None, "by"])
+        prog = F.source_program(ctx, lang, src, module_for("scale", lifted), [[2, 1.5]], lf.src_types, lf.src_labels)
+        self.assertIn("scale(Int((2)), by: Double((1.5)))", prog)
 
     def test_wrong_lift_is_caught(self):
         """A lift that read C's `/` as floor division must fail the witness on negative operands (CM07)."""

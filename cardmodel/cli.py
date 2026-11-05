@@ -459,7 +459,8 @@ def cmd_translate(args) -> int:
         rep = translate.verify_function(ctx, card, langs=langs, seed=seed)
         if lang != "python":            # the lift itself, witnessed against the original source's own toolchain
             rows = [v["args"] for v in card["vectors"]] + frontends.sample_inputs(card["ir"], 12, seed)
-            wit = frontends.witness_source(ctx, lang, src, card["ir"], rows, getattr(lf, "src_types", None))
+            wit = frontends.witness_source(ctx, lang, src, card["ir"], rows, getattr(lf, "src_types", None),
+                                               getattr(lf, "src_labels", None))
             card["verification"]["source_witness"] = wit
             rep["source_witness"] = wit
             if wit["status"] == "fail":

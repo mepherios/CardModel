@@ -76,15 +76,17 @@ def infer_domain(ctx: Ctx, module: dict, ref, want: int = 24, seed: int = 0) -> 
     interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
     best: tuple[list[dict], list] = ([], [])
     shapes = _list_shapes(entry["params"])
-    # without lists, half the inputs running is enough; with lists a wrong shape still runs on its degenerate
-    # inputs (a matrix as a vector when a dimension is 1), so keep looking for a shape that nearly always runs
-    enough = want // 2 if shapes == [{}] else want * 9 // 10
+    # without lists, half the inputs running is enough; with lists a wrong shape still runs on some inputs (a
+    # matrix as a vector when a dimension is 1, an n x m list read as n x k while k <= m), so a list shape is taken
+    # at once only when every input runs, else the shape that ran the most inputs wins
+    lists = shapes != [{}]
     for narrow, shape in ((n, sh) for sh in shapes for n in range(3)):
         gens = [_gen_for(p["name"], p["type"], narrow) for p in entry["params"]]
         for i, spec in shape.items():
             gens[i] = {**{k: v for k, v in gens[i].items() if k != "len"}, **spec}
         ok = []
-        for args in V.inputs(gens, want, rng):
+        tried = V.inputs(gens, want, rng)
+        for args in tried:
             try:
                 interp.call(entry["name"], list(args))
                 out = ref(*args)
@@ -94,7 +96,7 @@ def infer_domain(ctx: Ctx, module: dict, ref, want: int = 24, seed: int = 0) -> 
                 continue
             if V.finite(out):
                 ok.append(list(args))
-        if len(ok) >= enough:
+        if len(ok) >= want // 2 and (not lists or len(ok) == len(tried)):
             return gens, ok
         if len(ok) > len(best[1]):
             best = (gens, ok)
