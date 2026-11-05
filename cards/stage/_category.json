@@ -23,6 +23,7 @@
     "cardmodel/engines/logic.py": "the logic engine (rules, queries, proofs of facts) serves `cardmodel logic` and card-language programs; a function has no logic program",
     "cardmodel/engines/mine.py": "mines candidate cards from a corpus for the self-run; a corpus reading, not a transformation of one function",
     "cardmodel/engines/observe.py": "observes a code base for named cards against fallbacks (`cardmodel observe`): a corpus reading for learning",
+    "cardmodel/engines/opaque.py": "the witness of a partial lift (an opaque boundary): the reference interpreter calls the original Python function for each opaque call edge; the lift and reference stages reach it through a partial function, it is no step of its own",
     "cardmodel/engines/projects.py": "project cards and their layering (`cardmodel status`): where the outputs go, not how an input is transformed",
     "cardmodel/engines/redefs.py": "redefinition cards (what a definition was redefined to and why) for `rewrite` over cards, not over functions",
     "cardmodel/engines/scale.py": "the scale benchmark (`cardmodel scale bench`, SCALING.md): generates synthetic projects of n functions and times the model on them; a measurement of the pipeline over many inputs, not a step of one input's path",

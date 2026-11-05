@@ -866,7 +866,7 @@ def safe_mod(a: int, m: int) -> int:
     return a % m
 
 
-def uses_list(xs: list) -> int:
+def uses_list(xs: dict) -> int:
     return len(xs)
 '''
 
