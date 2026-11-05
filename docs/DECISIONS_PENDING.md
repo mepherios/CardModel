@@ -1,0 +1,28 @@
+# Decisions pending: the owner's
+
+Every open decision that only the owner can make, in one table. Each row gives the question, the options as the
+source states them, what each option unblocks, a recommendation (marked **Rec.**, a judgement, not a measurement),
+and the source. Threads do not decide these; they implement the answer. Compiled 2026-11-05 from
+[TARGETS.md](TARGETS.md) §7, [GODEL_METHOD.md](GODEL_METHOD.md), [GODEL_AUDIT.md](GODEL_AUDIT.md),
+[ENVIRONMENTS.md](ENVIRONMENTS.md), [ROADMAP.md](ROADMAP.md), and the open-PR state of today.
+
+| # | question | options | what each unblocks | recommendation | source |
+|---|---|---|---|---|---|
+| 1 | Which target is second after A? | D (the native arcade on every device) or B (program understanding from binaries) | D: Phase I, steps 1, 1e, 6, 7, 7e; B: the REA lineage, steps 1, 5, 6, then F2. Steps up to 6 are shared either way | **Rec.** TARGETS.md §4.2 suggests D and B in parallel after A since they share steps 1, 5, 6; if one must lead, D, the special case the owner says is needed | TARGETS.md §4.2, §7 |
+| 2 | Does the iPad stay the Phase I test device? | yes (as ROADMAP says) or another device | yes: keeps the no-codegen-on-device rule, which makes I4 (AOT lifting) and I5 (binary writer) required rather than convenient | **Rec.** keep the iPad; it is the strictest test | TARGETS.md §7; ROADMAP.md (Phase I) |
+| 3 | W-2: allow the Mathlib and Foundation downloads? | yes / no | yes: kernel-checking the content algebra and carry-over on Mathlib (`claude/godel-w2-mathlib`), target C. No: the plain-Lean `formal/GodelCore` already proves the content algebra, carry-over and freeness | owner's call; no recommendation in the sources | GODEL_METHOD.md W-2 |
+| 4 | Adopt the proposed laws GM-1 to GM-9? | adopt each, or leave as proposals | each adopted law becomes a verify check (e.g. GM-7: verify fails on a method or claim without rank or tier; GM-8: drop stored positional numbers) | decide per law; see rows 5 and 6 for the two the sources single out | GODEL_METHOD.md; TARGETS.md §7 |
+| 5 | GM-2, amending CM43: identity is the sha256 of the canonical term, the positional code a witness | adopt as written / keep CM43's text (structural number is the identity) | adopt: makes the practice law; GM-8's storage bound; one identity key for caches, indexes, dedup | **Rec.** adopt: already the practice (GODEL_AUDIT §3), and at 3,411 atoms positional codes run to thousands of digits | GODEL_METHOD.md W-3 (finding `W3_gm2_decision`); GODEL_AUDIT.md |
+| 6 | GM-4 as a law: verify fails on a set without an admissible numbering | adopt / keep as proposal | adopt: `numbering.check` can fail the `godel` section (today it cannot, `godel.py:456`) | owner's call; the audit notes the check is 98% of the section's time, so pair it with the per-set ranks of row 7 | GODEL_METHOD.md W-5; GODEL_AUDIT.md |
+| 7 | Positional codes by per-set dense ranks (amends CM43's numbering text and GM-4) | adopt / keep global atom indices | adopt: one domain's atoms (Unreal's 3,310) stop inflating every core term's code; decode drops from about 100 s; old codes still decode by basis version | owner's call; the audit's step 8 depends on it | GODEL_AUDIT.md §4 (`unreal/cards.py`), step 8 |
+| 8 | Mint the `LEAN_*` and ARM atoms? | mint / do not | mint: permanent ledger change; Lean and ARM terms get atoms (only the ledger writer mints, GODEL_METHOD rule 1) | owner's call; see row 13 for whether ARM symbolic needs them | GODEL_AUDIT.md |
+| 9 | Adopt Unreal's identities and lifted atoms as `merge`/`deprecate` ledger events? | adopt (tier-gated, ≡_ℝ-tagged) / not | adopt: audit step 8, the first real use of redefinition by cofactors | owner's call | GODEL_AUDIT.md step 8 |
+| 10 | Adopt ENVIRONMENTS.md's D15 to D18 and A8 into FOUNDATIONS.md as written? | adopt as written / amend / not | adopt: environment, device theories, capability cards as hypotheses, the transfer judgment `carry(t, G, R)`, "environments are models" become foundations; E21 environment cards and the D18 judgment can be built on them | owner's call | ENVIRONMENTS.md; TARGETS.md §7 |
+| 11 | Is the owner's Mac the first device in reach for the transfer judgment? | Mac (ARM64, NEON, Apple GPU via Metal) / another | yes: the first real device rows, the Mac's E21 card measured, GPU predictions checked (this host has no GPU) | **Rec.** yes; it is the only device in reach the docs name | ENVIRONMENTS.md; TARGETS.md §7 |
+| 12 | GitHub Actions billing: CI is off | re-enable CI (pay) / keep off with the owner's rule: merge only on full local tests | CI on: PRs run under CI. Off: merges depend on each session running the full local suite and saying so | **Rec.** keep the local-tests rule written down until billing is decided | today (2026-11-05) |
+| 13 | #55 and #50 both claim CM50 / G_A13 | keep #50 / keep #55 | one CM50 number; the other must renumber or close | **Rec.** keep #50, and port #55's purity check and G_A14 onto it | today; PRs #50, #55 |
+| 14 | `str` atoms proposal: mint at indices from 3425? | accept / reject / change the range | accept: string terms get atoms (a permanent ledger change) | owner's call | today; PR #69 |
+| 15 | Does ARM symbolic need ARM atoms? | yes (mint, row 8) / no (express over existing atoms) | settles whether #67 waits on row 8 | owner's call | today; PR #67 |
+| 16 | Who lands the open PR queue? | one named session / the owner by hand | avoids two sessions colliding on merges, as happened today | **Rec.** name one session as the lander; others only open PRs | today |
+
+Note: TARGETS.md §7's last item (merge #4 first so CI runs) is superseded by row 12 while CI is off.
