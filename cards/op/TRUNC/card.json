@@ -8,8 +8,8 @@
     "javascript": "Math.trunc({0})",
     "lean": "UNSUPPORTED",
     "lua": "UNSUPPORTED",
-    "python": "float(math.trunc({0}))",
-    "ruby": "(({0}).truncate.to_f)",
+    "python": "math.copysign(float(math.trunc({0})), {0})",
+    "ruby": "(({0}).truncate.to_f.abs * (1.0 / ({0}) < 0 ? -1.0 : 1.0))",
     "rust": "(({0}).trunc())",
     "swift": "trunc({0})"
   },
@@ -26,7 +26,7 @@
         }
       ]
     },
-    "eval": "lambda a: float(math.trunc(a))",
+    "eval": "lambda a: math.copysign(float(math.trunc(a)), a)",
     "types": [
       [
         "float",
@@ -35,7 +35,9 @@
     ]
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "94127c72c84968b582265f29cb51f0093780b969583a0f23d63cd91c215060f8",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "TRUNC",
   "provenance": {

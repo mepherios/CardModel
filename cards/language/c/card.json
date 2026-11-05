@@ -102,7 +102,7 @@
     },
     "lit": {
       "false": "false",
-      "float": "{v}",
+      "float": "({v})",
       "int": "INT64_C({v})",
       "true": "true"
     },
@@ -224,8 +224,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "c01de084dd6583b83cabb6128c52fa66e31619683f5c3c81ebf8bf3c46586945",
-    "version": "1.1.2",
+    "previous_content_hash": "a32fb18c0132829e3cc41a2d5a007a902a9f373f1654c381c15f067da39d9f14",
+    "version": "1.1.3",
     "version_bump_reason": "patch"
   },
   "name": "c",

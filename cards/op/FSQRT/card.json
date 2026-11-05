@@ -9,7 +9,7 @@
     "lean": "UNSUPPORTED",
     "lua": "math.sqrt({0})",
     "python": "cm_fsqrt({0})",
-    "ruby": "cm_fsqrt({0})",
+    "ruby": "(({0}) == 0.0 ? ({0}) : cm_fsqrt({0}))",
     "rust": "(({0}).sqrt())",
     "swift": "sqrt({0})"
   },
@@ -35,7 +35,9 @@
     ]
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "b268c971e239e1a765aa33fcea99ca15c01c15c69c041681268300d3b00e689f",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "FSQRT",
   "provenance": {

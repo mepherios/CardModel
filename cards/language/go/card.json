@@ -77,6 +77,7 @@
     "lit": {
       "false": "false",
       "float": "float64({v})",
+      "float_neg_zero": "(func() float64 { z := 0.0; return -z })()",
       "int": "int64({v})",
       "true": "true"
     },
@@ -154,8 +155,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "b648c8faeb42ddaa6295e37f494fadbeb615542515ece1a2a61642d314703126",
-    "version": "1.0.1",
+    "previous_content_hash": "9fe0509520f88afca5aec805639824fa6b9a2ad57f6fdc982230c7d060f99607",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "name": "go",

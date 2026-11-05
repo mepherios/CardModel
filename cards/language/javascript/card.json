@@ -17,7 +17,7 @@
       "main": "{calls}",
       "print": {
         "bool": "console.log('b:' + (({e}) ? 'true' : 'false'));",
-        "float": "console.log('f:' + String({e}));",
+        "float": "console.log('f:' + ((x) => Object.is(x, -0) ? '-0' : String(x))({e}));",
         "int": "console.log('i:' + ({e}).toString());",
         "list[float]": "cm_print_list({e}, 'f');",
         "list[int]": "cm_print_list({e}, 'i');"
@@ -49,7 +49,7 @@
       "cm_min_i": "function cm_min_i(a, b) { return b < a ? b : a; }",
       "cm_modinv": "function cm_modinv(a, m) { const n = m < 0n ? -m : m; let r0 = cm_floormod(a, n), r1 = n, s0 = 1n, s1 = 0n; while (r1 !== 0n) { const q = r0 / r1; [r0, r1] = [r1, r0 - q * r1]; [s0, s1] = [s1, s0 - q * s1]; } if (r0 !== 1n) throw new RangeError(\"base is not invertible\"); return cm_floormod(s0, n); }",
       "cm_powmod": "function cm_powmod(a, b, m) { if (b < 0n) { a = cm_modinv(a, m); b = -b; } let r = cm_floormod(1n, m); a = cm_floormod(a, m); while (b > 0n) { if ((b & 1n) === 1n) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1n; } return r; }",
-      "cm_print_list": "function cm_print_list(xs, tag) { console.log('l:' + xs.length); for (const v of xs) console.log(tag + ':' + (tag === 'f' ? String(v) : v.toString())); }",
+      "cm_print_list": "function cm_print_list(xs, tag) { console.log('l:' + xs.length); for (const v of xs) console.log(tag + ':' + (tag === 'f' ? (Object.is(v, -0) ? '-0' : String(v)) : v.toString())); }",
       "cm_read_bool": "function cm_read_bool() { return cm_read_int() !== 0n; }",
       "cm_read_float": "function cm_read_float() { return Number(cm_in.lines[cm_in.pos++].trim()); }",
       "cm_read_int": "function cm_read_int() { return BigInt(cm_in.lines[cm_in.pos++].trim()); }",
@@ -117,8 +117,8 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "previous_content_hash": "864adeb31727d86b7d831883d36a62ffaf67fdd5629e4dda3d6b2d892526bbe3",
-    "version": "1.0.1",
+    "previous_content_hash": "7cab52052196b6573f6719fded28cc0b7fc69fcaac51a5118297daa15e5af860",
+    "version": "1.0.2",
     "version_bump_reason": "patch"
   },
   "name": "javascript",

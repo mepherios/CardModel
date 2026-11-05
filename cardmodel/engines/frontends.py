@@ -16,6 +16,7 @@ values fit the card's ``int_bits``; the harness renames a ``main`` the source de
 from __future__ import annotations
 
 import importlib
+import math
 import random
 import re
 from pathlib import Path
@@ -116,6 +117,8 @@ def source_program(ctx: Ctx, lang: str, source: str, module: dict, calls: list,
         if t == "float":
             if v != v or v in (float("inf"), float("-inf")):
                 raise EmitGap("non-finite float argument")
+            if v == 0 and math.copysign(1.0, v) < 0 and "float_neg_zero" in lits:
+                return lits["float_neg_zero"]     # see codegen: Go's constant -0.0 is +0
             return lits.get("float", "{v}").format(v=repr(float(v)))
         return lits.get("int", "{v}").format(v=int(v))
 

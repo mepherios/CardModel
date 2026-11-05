@@ -1,0 +1,225 @@
+{
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value}",
+    "break": "break",
+    "continue": "continue",
+    "declare": "var {name} {type} = {value}\n\t_ = {name}",
+    "else": "}} else {{",
+    "empty": "",
+    "end_if": "}}",
+    "end_while": "}}",
+    "func": "func {name}({params}) {ret} {{\n{body}}}\n",
+    "harness": {
+      "bench_call": "if {truthy} {{ cm_acc++ }}",
+      "bench_main": "func main() {{\n\tvar cm_acc int64 = 0\n\tfor cm_r := 0; cm_r < {reps}; cm_r++ {{\n{calls}\t}}\n\tfmt.Println(cm_acc)\n}}\n",
+      "main": "func main() {{\n{calls}}}\n",
+      "print": {
+        "bool": "fmt.Printf(\"b:%v\\n\", {e})",
+        "float": "fmt.Printf(\"f:%v\\n\", {e})",
+        "int": "fmt.Printf(\"i:%d\\n\", {e})",
+        "list[float]": "cm_lf_print({e})",
+        "list[int]": "cm_li_print({e})"
+      },
+      "read": {
+        "bool": "cm_read_bool()",
+        "float": "cm_read_float()",
+        "int": "cm_read_int()",
+        "list[float]": "cm_read_lf()",
+        "list[int]": "cm_read_li()"
+      },
+      "truthy": {
+        "bool": "({e})",
+        "float": "(({e}) > 0.0)",
+        "int": "(({e}) != 0)"
+      }
+    },
+    "helper_requires": {
+      "cm_in": [
+        "bufio",
+        "os"
+      ]
+    },
+    "helpers": {
+      "cm_abs_i": "func cm_abs_i(a int64) int64 {\n\tif a < 0 {\n\t\treturn -a\n\t}\n\treturn a\n}",
+      "cm_floordiv": "func cm_floordiv(a int64, b int64) int64 {\n\tq := a / b\n\tif (a%b != 0) && ((a < 0) != (b < 0)) {\n\t\tq--\n\t}\n\treturn q\n}",
+      "cm_floormod": "func cm_floormod(a int64, b int64) int64 {\n\tr := a % b\n\tif r != 0 && ((r < 0) != (b < 0)) {\n\t\tr += b\n\t}\n\treturn r\n}",
+      "cm_gcd": "func cm_gcd(a int64, b int64) int64 {\n\tif a < 0 {\n\t\ta = -a\n\t}\n\tif b < 0 {\n\t\tb = -b\n\t}\n\tfor b != 0 {\n\t\ta, b = b, a%b\n\t}\n\treturn a\n}",
+      "cm_in": "var cm_in = bufio.NewReaderSize(os.Stdin, 1<<16)",
+      "cm_ipow": "func cm_ipow(a int64, b int64) int64 {\n\tvar r int64 = 1\n\tfor b > 0 {\n\t\tif b&1 == 1 {\n\t\t\tr *= a\n\t\t}\n\t\tb >>= 1\n\t\tif b > 0 {\n\t\t\ta *= a\n\t\t}\n\t}\n\treturn r\n}",
+      "cm_lf_new": "func cm_lf_new(n int64, v float64) []float64 {\n\tif n < 0 {\n\t\tpanic(\"negative length\")\n\t}\n\tr := make([]float64, n)\n\tfor i := range r {\n\t\tr[i] = v\n\t}\n\treturn r\n}",
+      "cm_lf_print": "func cm_lf_print(xs []float64) {\n\tfmt.Printf(\"l:%d\\n\", len(xs))\n\tfor _, v := range xs {\n\t\tfmt.Printf(\"f:%v\\n\", v)\n\t}\n}",
+      "cm_li_new": "func cm_li_new(n int64, v int64) []int64 {\n\tif n < 0 {\n\t\tpanic(\"negative length\")\n\t}\n\tr := make([]int64, n)\n\tfor i := range r {\n\t\tr[i] = v\n\t}\n\treturn r\n}",
+      "cm_li_print": "func cm_li_print(xs []int64) {\n\tfmt.Printf(\"l:%d\\n\", len(xs))\n\tfor _, v := range xs {\n\t\tfmt.Printf(\"i:%d\\n\", v)\n\t}\n}",
+      "cm_max_f": "func cm_max_f(a float64, b float64) float64 {\n\tif b > a {\n\t\treturn b\n\t}\n\treturn a\n}",
+      "cm_max_i": "func cm_max_i(a int64, b int64) int64 {\n\tif b > a {\n\t\treturn b\n\t}\n\treturn a\n}",
+      "cm_min_f": "func cm_min_f(a float64, b float64) float64 {\n\tif b < a {\n\t\treturn b\n\t}\n\treturn a\n}",
+      "cm_min_i": "func cm_min_i(a int64, b int64) int64 {\n\tif b < a {\n\t\treturn b\n\t}\n\treturn a\n}",
+      "cm_modinv": "func cm_modinv(a int64, m int64) int64 {\n\tn := m\n\tif n < 0 {\n\t\tn = -n\n\t}\n\tr0, r1 := cm_floormod(a, n), n\n\ts0, s1 := int64(1), int64(0)\n\tfor r1 != 0 {\n\t\tq := r0 / r1\n\t\tr0, r1 = r1, r0-q*r1\n\t\ts0, s1 = s1, s0-q*s1\n\t}\n\tif r0 != 1 {\n\t\tpanic(\"base is not invertible\")\n\t}\n\treturn cm_floormod(s0, n)\n}",
+      "cm_opaque_b": "//go:noinline\nfunc cm_opaque_b(x bool) bool { return x }",
+      "cm_opaque_f": "//go:noinline\nfunc cm_opaque_f(x float64) float64 { return x }",
+      "cm_opaque_i": "//go:noinline\nfunc cm_opaque_i(x int64) int64 { return x }",
+      "cm_powmod": "func cm_powmod(a int64, b int64, m int64) int64 {\n\tif b < 0 {\n\t\ta = cm_modinv(a, m)\n\t\tb = -b\n\t}\n\tr := cm_floormod(1, m)\n\ta = cm_floormod(a, m)\n\tfor b > 0 {\n\t\tif b&1 == 1 {\n\t\t\tr = cm_floormod(r*a, m)\n\t\t}\n\t\ta = cm_floormod(a*a, m)\n\t\tb >>= 1\n\t}\n\treturn r\n}",
+      "cm_read_bool": "func cm_read_bool() bool {\n\treturn cm_read_int() != 0\n}",
+      "cm_read_float": "func cm_read_float() float64 {\n\tvar v float64\n\tfmt.Fscan(cm_in, &v)\n\treturn v\n}",
+      "cm_read_int": "func cm_read_int() int64 {\n\tvar v int64\n\tfmt.Fscan(cm_in, &v)\n\treturn v\n}",
+      "cm_read_lf": "func cm_read_lf() []float64 {\n\tr := make([]float64, cm_read_int())\n\tfor i := range r {\n\t\tr[i] = cm_read_float()\n\t}\n\treturn r\n}",
+      "cm_read_li": "func cm_read_li() []int64 {\n\tr := make([]int64, cm_read_int())\n\tfor i := range r {\n\t\tr[i] = cm_read_int()\n\t}\n\treturn r\n}"
+    },
+    "if": "if {cond} {{",
+    "import": "\t\"@name@\"\n",
+    "indent": "\t",
+    "lib_prelude": "package cardmodel\n\nimport (\n@imports@)\n\n",
+    "list_lit": {
+      "list[float]": "[]float64{{{items}}}",
+      "list[int]": "[]int64{{{items}}}"
+    },
+    "lit": {
+      "false": "false",
+      "float": "float64({v})",
+      "int": "int64({v})",
+      "true": "true"
+    },
+    "opaque": {
+      "bool": "cm_opaque_b({v})",
+      "float": "cm_opaque_f({v})",
+      "int": "cm_opaque_i({v})"
+    },
+    "param": "{name} {type}",
+    "prelude": "package main\n\nimport (\n\t\"fmt\"\n@imports@)\n\nvar _ = fmt.Sprint\n\n",
+    "return": "return {value}",
+    "set": "{name}[{idx}] = {value}",
+    "style": "braces",
+    "types": {
+      "bool": "bool",
+      "float": "float64",
+      "int": "int64",
+      "list[float]": "[]float64",
+      "list[int]": "[]int64"
+    },
+    "while": "for {cond} {{",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0",
+      "list[float]": "[]float64{}",
+      "list[int]": "[]int64{}"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "/*",
+        "*/"
+      ]
+    ],
+    "line": [
+      "//"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".go"
+  ],
+  "family": "c_like",
+  "frontend": "cardmodel.engines.frontend_text",
+  "frontend_harness": {
+    "arg_cast": "{type}({v})",
+    "ensure": [
+      [
+        "^package\\s",
+        "package cardmodel\n"
+      ]
+    ],
+    "main": "func main() {{\n{calls}}}\n\nvar _ = cm_fmt.Sprint\n",
+    "prelude": "",
+    "print": {
+      "bool": "cm_fmt.Printf(\"b:%v\\n\", {e})",
+      "float": "cm_fmt.Printf(\"f:%v\\n\", {e})",
+      "int": "cm_fmt.Printf(\"i:%d\\n\", {e})"
+    },
+    "replace": [
+      [
+        "^package\\s+\\w+",
+        "package main\n\nimport cm_fmt \"fmt\"\n"
+      ],
+      [
+        "\\bfunc\\s+main\\s*\\(",
+        "func cm_user_main("
+      ]
+    ]
+  },
+  "int_bits": 64,
+  "metadata": {
+    "previous_content_hash": "b648c8faeb42ddaa6295e37f494fadbeb615542515ece1a2a61642d314703126",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
+  },
+  "name": "go",
+  "probe": {
+    "kind": "executable",
+    "name": "go",
+    "version_args": [
+      "version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "break",
+    "case",
+    "chan",
+    "const",
+    "continue",
+    "default",
+    "defer",
+    "else",
+    "fallthrough",
+    "for",
+    "func",
+    "go",
+    "goto",
+    "if",
+    "import",
+    "interface",
+    "map",
+    "package",
+    "range",
+    "return",
+    "select",
+    "struct",
+    "switch",
+    "type",
+    "var",
+    "true",
+    "false",
+    "nil",
+    "iota",
+    "main",
+    "len",
+    "cap"
+  ],
+  "runner": {
+    "compile": [
+      "{exe}",
+      "build",
+      "-o",
+      "{bin}",
+      "{src}"
+    ],
+    "env": {
+      "GO111MODULE": "off"
+    },
+    "file": "main.go",
+    "run": [
+      "{bin}"
+    ]
+  },
+  "statement": "Go with int64 / float64, built with go build.",
+  "tier": 0
+}

@@ -12,6 +12,11 @@ Template placeholders: {0} {1} {2} operands · {type} result type name ·
 {t0} {t1} operand type names · {tc} type code (i/f/b) of the first operand.
 An ``emit`` entry may be a dict keyed by the first operand's IR type.
 
+Float literals are ``repr(v)`` in the card's ``lit.float`` template, so a negative literal must be safe next
+to a unary minus (``-{0}`` of ``-2.5`` must not become ``--2.5``) and ``-0.0`` must keep its sign. A target
+where it would not (Go: constant expressions have no negative zero, so ``float64(-0.0)`` is +0) gives
+``lit.float_neg_zero``, an expression the target evaluates to -0.0 at run time (Go negates a zero variable).
+
 Lowering rules shared by every non-native target:
   * locals are hoisted to the top of the function with zero values;
   * parameters that are reassigned are re-bound when the language has
@@ -36,6 +41,7 @@ that checks them; identifiers are renamed only for the language card's
 """
 from __future__ import annotations
 
+import math
 import re
 
 from .ir import LEAVES, elem_type
@@ -127,6 +133,8 @@ class Emitter:
         if kind == "float":
             if v != v or v in (float("inf"), float("-inf")):
                 raise EmitGap(f"{self.lang_name}: non-finite float literal")
+            if v == 0 and math.copysign(1.0, v) < 0 and "float_neg_zero" in lits:
+                return lits["float_neg_zero"]   # a target whose constant -0.0 is +0 (Go constants have no -0)
             text = repr(float(v))
             return lits.get("float", "{v}").format(v=text)
         bits = self.lang.get("int_bits")

@@ -14,11 +14,15 @@ or op card declares no template / UNSUPPORTED) | unavailable (probe failed)
 program fails to compile, each function is retried alone so one bad
 template cannot hide the other cells.
 
+Floats compare with ``values.same(signed_zero=True)`` and every float +0.0 input is also tried as -0.0, so a
+target that loses the sign of a zero (in a literal, an argument or a result) fails its cell.
+
 Honest limits (L1): sampling, not proof; inputs stay inside each op's
 declared domain and, for fixed-width languages, inside the int width.
 """
 from __future__ import annotations
 
+import math
 import random
 from concurrent.futures import ThreadPoolExecutor
 
@@ -65,7 +69,7 @@ def _cases(ops, fns, rng, samples):
         gens = dom.get(",".join(item["sig"][:-1])) or dom.get(key) or [V.DEFAULT_GEN[t] for t in item["sig"][:-1]]
         interp = Interpreter({"functions": [item["fn"]]}, ops)
         rows = []
-        for args in V.inputs(gens, samples, rng):
+        for args in _with_negative_zero(V.inputs(gens, samples, rng)):
             try:
                 out = interp.call(item["fn"]["name"], list(args))
             except Exception:  # noqa: BLE001 -- outside the reference domain (e.g. b == 0)
@@ -74,6 +78,20 @@ def _cases(ops, fns, rng, samples):
                 rows.append((list(args), out))
         cases[item["fn"]["name"]] = rows
     return cases
+
+
+def _with_negative_zero(arg_sets: list[tuple]) -> list[tuple]:
+    """``arg_sets`` plus, for each tuple with a float argument +0.0, the same tuple with -0.0 there: a target
+    that loses the sign of a zero literal (Go's constant -0.0 is +0) then fails a cell, since cells compare
+    zeros by sign."""
+    out, seen = list(arg_sets), {repr(t) for t in arg_sets}
+    for t in arg_sets:
+        if any(type(a) is float and a == 0 and math.copysign(1.0, a) > 0 for a in t):
+            neg = tuple(-0.0 if type(a) is float and a == 0 else a for a in t)
+            if repr(neg) not in seen:
+                seen.add(repr(neg))
+                out.append(neg)
+    return out
 
 
 def run_language(ctx: Ctx, lang: str, fns: list[dict], cases: dict) -> dict:
@@ -111,7 +129,7 @@ def run_language(ctx: Ctx, lang: str, fns: list[dict], cases: dict) -> dict:
             for (name, args, exp), got in zip(index, res.values):
                 c = per.setdefault(name, {"status": "pass", "checks": 0})
                 c["checks"] += 1
-                if c["status"] == "pass" and not V.same(exp, got):
+                if c["status"] == "pass" and not V.same(exp, got, signed_zero=True):
                     c.update(status="fail", args=args, expected=exp, got=got)
             for item in emittable:
                 n = item["fn"]["name"]
@@ -127,7 +145,7 @@ def run_language(ctx: Ctx, lang: str, fns: list[dict], cases: dict) -> dict:
                     cells[n] = {"status": "error", "run": r.status,
                                 "detail": (r.detail or r.stderr or f"{len(r.values)}/{len(exp)} values")[-600:]}
                     continue
-                bad = next(((a, e, g) for (_, a), e, g in zip(my, exp, r.values) if not V.same(e, g)), None)
+                bad = next(((a, e, g) for (_, a), e, g in zip(my, exp, r.values) if not V.same(e, g, signed_zero=True)), None)
                 cells[n] = {"status": "pass", "checks": len(exp)} if bad is None else \
                     {"status": "fail", "checks": len(exp), "args": bad[0], "expected": bad[1], "got": bad[2]}
     return {"available": True, "probe": why, "cells": cells}

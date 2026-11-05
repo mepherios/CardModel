@@ -7,9 +7,9 @@
     "java": "Math.floor({0})",
     "javascript": "Math.floor({0})",
     "lean": "UNSUPPORTED",
-    "lua": "(math.floor({0}) + 0.0)",
-    "python": "float(math.floor({0}))",
-    "ruby": "(({0}).floor.to_f)",
+    "lua": "(math.abs(math.floor({0}) + 0.0) * (1 / ({0}) < 0 and -1.0 or 1.0))",
+    "python": "math.copysign(float(math.floor({0})), {0})",
+    "ruby": "(({0}).floor.to_f.abs * (1.0 / ({0}) < 0 ? -1.0 : 1.0))",
     "rust": "(({0}).floor())",
     "swift": "floor({0})"
   },
@@ -26,7 +26,7 @@
         }
       ]
     },
-    "eval": "lambda a: float(math.floor(a))",
+    "eval": "lambda a: math.copysign(float(math.floor(a)), a)",
     "types": [
       [
         "float",
@@ -35,7 +35,9 @@
     ]
   },
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "593dff2a1e2d497d67ba0d0ec79e83139eab32efdf5927115685c6bedd2afda7",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
   },
   "name": "FLOOR",
   "provenance": {
