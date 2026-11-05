@@ -7,18 +7,18 @@ the running system have complete understanding of the computational structure an
 card model structure that can handle and scale these things accordingly. Find all such problems our model
 currently does not handle but needs to, with our card math as needed."*
 
-Written from `main` at 4a8fab8. [FOUNDATIONS.md](FOUNDATIONS.md) D14 says a target language, with its compiler,
-flags and device, is a Σ-algebra M_L, and a translation is correct where M_L agrees with the model M. Today the
-"device" part of that sentence is implicit: a target is `c@O2` or `rust@release` *on the host the model runs on*.
-This document makes the device explicit. The machine that generates a program (the **generator** G) and the machine
-that runs it (the **runner** R) are two environments, each a model of the theory in the sense of D14, and carrying
-a program from G to R is sound exactly where their models agree. Everything a GPU, a memory hierarchy, a driver or
-a graphics API adds to the picture is one of three things: new **atoms of the signature** (sorts and op cards), a
-new **model with its divergence laws**, or a **measurement** that fixes a cost. §2 states those three forms as
-definitions. §3 is the catalogue of what the model does not handle today, each gap with its card-math form. §4 has
-what was measured on this host while writing, §5 says which gaps are measurable now, which need a device in reach,
-and which are conjecture, and §6 is the order of work. Nothing here changes behaviour; it is the plan the
-environment workstream follows, and the rule for how any new device enters.
+Written from `main` at 4a8fab8, checked against b137860. [FOUNDATIONS.md](FOUNDATIONS.md) D14 says a target
+language, with its compiler, flags and device, is a Σ-algebra M_L, and a translation is correct where M_L agrees
+with the model M. Today the "device" part of that sentence is implicit: a target is `c@O2` or `rust@release` *on the
+host the model runs on*. This document makes the device explicit. The machine that generates a program (the
+**generator** G) and the machine that runs it (the **runner** R) are two environments, each a model of the theory in
+the sense of D14, and carrying a program from G to R is sound exactly where their models agree. Everything a GPU, a
+memory hierarchy, a driver or a graphics API adds to the picture is one of three things: new **atoms of the
+signature** (sorts and op cards), a new **model with its divergence laws**, or a **measurement** that fixes a cost.
+§2 states those three forms as definitions. §3 is the catalogue of what the model does not handle today, each gap
+with its card-math form. §4 has what was measured on this host while writing, §5 says which gaps are measurable now,
+which need a device in reach, and which are conjecture, and §6 is the order of work. Nothing here changes behaviour;
+it is the plan the environment workstream follows, and the rule for how any new device enters.
 
 ## 1. What already counts, and what it gives this plan
 
@@ -26,14 +26,14 @@ environment workstream follows, and the rule for how any new device enters.
 |---|---|---|
 | targets are models, with divergence laws | FOUNDATIONS D14, A6; [ANALYSE.md](ANALYSE.md) and its 12 laws (`int_width` … `float_assoc`); runner variants `c@O0`, `c@O2`, `c@fastmath`, `c@ubsan`, `rust@debug`, … in `engines/analyse.py` (`VARIANTS`) | the exact form every environment difference takes: a law "M_R(op) ≠ M(op) iff cond", fired by the instrumented reference and witnessed per runner. ANALYSE already records one *device* difference (⌊a/0⌋ traps on x86-64 and gives 0 on ARM64) as a per-runner row |
 | costs are measured on the host, never assumed | CM09; metric cards (`cards/metric/metric__ADD__native`: median, MAD, samples, seed, inputs signature, a host block) | the shape of a per-machine measurement card. Its host block holds `machine`, `system`, `python`, `node`: no cores, SIMD extensions, caches, GPU or driver (E21) |
-| hardware as cards: an ISA is its instruction cards, a console is its hardware cards | [MACHINES.md](MACHINES.md): `isa/lr35902`, `isa/armv5te`, `hardware/gb_ppu`, `hardware/nds_3d`, `hardware/nds_vram`, `hardware/nds_dma`, `machine/gameboy`, `machine/nds` (CM32) | the existence proof. A fixed-function GPU (the NDS 3D engine), VRAM banks and DMA are already cards with registers, timing and behaviour. A modern GPU is the same method with three differences: it is programmable, it is reached through a driver rather than owned registers, and its parallel execution model has no counterpart in the LR35902 cards |
+| hardware as cards: an ISA is its instruction cards, a console is its hardware cards | [MACHINES.md](MACHINES.md): `isa/lr35902`, `isa/armv5te`, `hardware/gb_ppu`, `hardware/nds_3d`, `hardware/nds_vram`, `hardware/gb_dma`, `machine/gameboy`, `machine/nds` (CM32) | the existence proof. A fixed-function GPU (the NDS 3D engine), VRAM banks and DMA are already cards with registers, timing and behaviour. A modern GPU is the same method with three differences: it is programmable, it is reached through a driver rather than owned registers, and its parallel execution model has no counterpart in the LR35902 cards |
 | a GPU ISA decoded, with translation gaps named | [ANYPS5.md](ANYPS5.md): RDNA 1/2 instructions over AMD's list, "decoded" kept apart from "translated correctly" | the honesty rule for GPU instruction cards: a decoded instruction is not a translated one until its semantics is a card with vectors |
 | SIMD versus scalar as two builds of one truth | [UNREAL.md](UNREAL.md): the engine's scalar FPU path is *truth*, the NEON build is *shipped*, `-ffp-contract=off` as the engine's own Mac build sets it | the pattern for E1 and E12: the vector form is a model of the scalar form, checked by running, with contraction as a named flag |
 | the platform card and the effect shell | `cards/platform/macos` (bundle, frameworks, shell compile line), CM21, CM34; ROADMAP Phase I (iPadOS as the test of "native") | where the OS, driver and API surface of a runner belongs: boundary cards of a platform card (E19) |
 | the scaling plan's rows for the spectrum and the interaction model | [SCALING.md](SCALING.md) §4.5 (concurrency and memory-model cards), §4.6 (f16, bf16, f32, rounding modes, fused ops), §4.7 (host, device, capability and reach cards) | the slots this document fills in. §4.5's memory-model cards are E3; §4.7's host and device cards are E21. Not redone here, cross-referenced |
 | device runners as a milestone | ROADMAP Phase J4 (the same function on ARM64, x86-64, iPadOS, through the model's own backend) | E22's witness tier: a difference between devices is *witnessed* only when both devices ran it |
 | the Gödel layer: atoms take primes forever, content is a homomorphism, carry-over has a gap | FOUNDATIONS D11–D13; docs/GODEL.md §4 (PR #20); docs/GODEL_AUDIT.md (PR #25); CM43, CM45 | what transfers for free between devices (content) and what does not (arrangement, schedule, cost), §3.5 |
-| the fixed-width type series | MATH_CORE F3 and §4 (BV(w), memory as BV(a) → BV(8)); FOUNDATIONS F6 (binary32 as a sort of its own, not F32 rounding binary64); the foundations workstream is building the fixed-width int and f32 series now | E11 depends on it and adds f16 and bf16 to the same series, not a second mechanism |
+| the fixed-width type series | MATH_CORE F3 and §4 (BV(w), memory as BV(a) → BV(8)); FOUNDATIONS D1 and F6: since #30 the sorts are order-sorted (`engines/sorts.py`), with `u8` … `i32` ≤ `int` and `f32` ≤ `float`, produced by the WRAPU, WRAPS and F32 op cards | E11 depends on it and adds f16 and bf16 to the same series, not a second mechanism |
 
 ## 2. Definitions (proposed, continuing FOUNDATIONS.md's numbering)
 
@@ -183,16 +183,17 @@ smaller runner is a transfer-card refusal, not a slowdown discovered in the fiel
 
 ### 3.3 Numeric models
 
-**E11. f32, f16, bf16 (and tf32) as sorts.** *Today:* `float` is binary64 only; `F32`, `F32_BITS`, `BITS_F32`
-round through binary64 (FOUNDATIONS F6); the fixed-width series under construction adds binary32 as a sort.
-*Needed:* binary16 (IEEE), bfloat16 (binary32 with the low 16 bits of the significand dropped) and tf32 (10
-significand bits, used inside tensor units) as sorts of the same series, each with its own ranks of the arithmetic
-ops, with conversion ops whose `eval` is the exact rounding, and with the laws that *fail* between them stated:
-rounding is not a homomorphism (`f16(a + b) ≠ f16(a) + f16(b)` in general), which is precisely the divergence
-content of a lower-precision device. *Card math:* one type series, one op card per op with one rank per
-precision, a `precision_loss` law fired when a term is carried to a device whose arithmetic sort is narrower than
-the term's. *Evidence:* measurable today for f16 conversion (this host has F16C, §4); bf16 and tf32 arithmetic
-need a device, and their `eval` is exact arithmetic in Python meanwhile (A2: one model, named).
+**E11. f32, f16, bf16 (and tf32) as sorts.** *Today:* `float` is binary64; since #30 `f32` (the values a binary32
+holds) is a subsort of it, produced by `F32` (with `F32_BITS`, `BITS_F32`), but the arithmetic ops keep their
+binary64 ranks (FOUNDATIONS D1), so there is no binary32 arithmetic yet. *Needed:* binary16 (IEEE), bfloat16
+(binary32 with the low 16 bits of the significand dropped) and tf32 (10 significand bits, used inside tensor units)
+as sorts of the same series, each with its own ranks of the arithmetic ops, with conversion ops whose `eval` is the
+exact rounding, and with the laws that *fail* between them stated: rounding is not a homomorphism (`f16(a + b) ≠
+f16(a) + f16(b)` in general), which is precisely the divergence content of a lower-precision device. *Card math:*
+one type series, one op card per op with one rank per precision, a `precision_loss` law fired when a term is carried
+to a device whose arithmetic sort is narrower than the term's. *Evidence:* measurable today for f16 conversion (this
+host has F16C, §4); bf16 and tf32 arithmetic need a device, and their `eval` is exact arithmetic in Python meanwhile
+(A2: one model, named).
 
 **E12. Contraction, rounding and accuracy bounds per op per device.** *Today:* `MULADD` has a Rust FMA form with a
 note; `float_assoc` names `-ffast-math`; UNREAL pins `-ffp-contract=off`. *Needed:* a **numeric-model card** per
@@ -230,15 +231,15 @@ first two are deterministic and equal to each other only over `int`; the third h
 model offers is a rewrite to a fixed tree with a certificate of determinism, at a measured cost. *Evidence:*
 measurable today on the CPU (lane count); with a device for the atomic case.
 
-**E15. Integers on a GPU.** *Today:* `int` is ℤ, and `int_width` has per-language rows. *Needed:* a GPU computes
-in 32 bits natively, emulates 64-bit integers in several instructions, and divides slowly (an emulated sequence of
-tens of instructions). Overflow wraps in SPIR-V, is undefined on paper in the Metal Shading Language (it is
-C++), and `shift_count` and `float_to_int` have their own rows (Direct3D saturates and maps NaN to 0; SPIR-V
-leaves the out-of-range conversion undefined). *Card math:* the same twelve laws of ANALYSE.md with a row per
-shading language and per device, and BV(32) as the default integer sort of a kernel (MATH_CORE F3); the cost
-vector of `DIV` on a GPU is a measured anchor like every other (CM09), so a `DIV` by a constant is rewritten to a
-multiply-and-shift *there* and left alone on the CPU, each with its certificate. *Evidence:* declared until a
-device or software runner witnesses the rows.
+**E15. Integers on a GPU.** *Today:* `int` is ℤ (with `u8` … `i32` as subsorts since #30), and `int_width` has
+per-language rows. *Needed:* a GPU computes in 32 bits natively, emulates 64-bit integers in several instructions,
+and divides slowly (an emulated sequence of tens of instructions). Overflow wraps in SPIR-V, is undefined on paper
+in the Metal Shading Language (it is C++), and `shift_count` and `float_to_int` have their own rows (Direct3D
+saturates and maps NaN to 0; SPIR-V leaves the out-of-range conversion undefined). *Card math:* the same twelve laws
+of ANALYSE.md with a row per shading language and per device, and BV(32) as the default integer sort of a kernel
+(MATH_CORE F3); the cost vector of `DIV` on a GPU is a measured anchor like every other (CM09), so a `DIV` by a
+constant is rewritten to a multiply-and-shift *there* and left alone on the CPU, each with its certificate.
+*Evidence:* declared until a device or software runner witnesses the rows.
 
 ### 3.4 Drivers and API surfaces as models
 
@@ -265,7 +266,7 @@ nothing else is new. The witness is the part that matters for a generator with n
 the CPU) and Microsoft's WARP (Direct3D 12 on the CPU) are *models of the API* that a CI job can run, so the
 conformance cells of every op card at every numeric sort, and the divergence-law firings, are witnessed without
 hardware, labelled with the software model's fingerprint and never confused with the hardware's. They enter as
-probed toolchains (CM01: used when present, never required). *Evidence:* measurable as soon as the CI image has
+probed toolchains (CM12: used when present, never required). *Evidence:* measurable as soon as the CI image has
 Mesa; this host has neither `vulkaninfo` nor a Vulkan loader today, so the tier here is predicted.
 
 **E18. Drivers version the model.** *Today:* a metric card's host block has no driver. *Needed:* the same API on
@@ -285,7 +286,7 @@ is an op with an effect; a program's required boundary set is computed from its 
 lacks one is a transfer-card refusal with the atom named. *Evidence:* writable today from documentation; witnessed
 per platform as Phase I's shells land.
 
-**E20. Discovery: the capability card is probed, not typed in.** *Today:* toolchains are probed (CM01); hardware
+**E20. Discovery: the capability card is probed, not typed in.** *Today:* toolchains are probed (CM12); hardware
 is not. *Needed:* a probe per environment that fills the capability card: `lscpu`, `sysctl` and `cpuid` for the
 CPU; the pointer chase and the streaming copy for the hierarchy (E6); `vkGetPhysicalDeviceProperties` and
 `VkPhysicalDeviceLimits`, `ID3D12Device::CheckFeatureSupport`, `MTLDevice` properties and GPU families, and
@@ -386,7 +387,8 @@ and are the first four probes of E23's suite; they will become cards when E21's 
 ## 6. Order of work
 
 Each step lands as cards, a test that pins them to M, and a row in the tables above; nothing is claimed above its
-tier. Steps marked † depend on the fixed-width type series (MATH_CORE F3, the foundations workstream).
+tier. Steps marked † depend on the fixed-width type series (MATH_CORE F3; its integer and f32 subsorts landed in #30,
+FOUNDATIONS D1).
 
 1. **V-A. The environment card and the probes (E20, E21, E6).** The card schema, the CPU probe (`lscpu` or
    `sysctl`, the chase, the streaming copy) and the full fingerprint on every metric and witness card. The
