@@ -179,9 +179,9 @@ These are the rules the audit checks. They are proposed as laws to be numbered f
 
 ## 7. Handover: state of this stream (2026-11-05)
 
-Merged on main: this document (#16); sorted e-graph and search (#19, F1, A3); one model (#21, F2, A2); canonical
-content (#22, F4); identities naming their relation (#23, F5); the Unreal evaluator as a target model (F6); the
-subsorts `u8..i32 <= int`, `f32 <= float` with the WRAPU and WRAPS op cards and 21 laws (#30, D1); LR35902
+Merged on main (#16 to #24, #29, #30): this document; sorted e-graph and search (F1, A3); one model (F2, A2);
+canonical content (F4); identities naming their relation (F5); the Unreal evaluator as a target model (F6); the
+subsorts `u8..i32 <= int`, `f32 <= float` with the WRAPU and WRAPS op cards and 21 laws (D1). Then LR35902
 instruction terms distilled under the register sorts (#31); the lifter simplifying only by the rule cards' unit and
 absorbing laws (#49). Every row of the audit in §5 is fixed or pinned. No branch of this stream holds unmerged work
 (`claude/project-thread-8z7gnb` equals main after #49).
