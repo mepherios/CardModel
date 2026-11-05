@@ -1,0 +1,66 @@
+{
+  "applies_to": [
+    "op"
+  ],
+  "category": "card_type",
+  "metadata": {
+    "previous_content_hash": "c36893f6680dda176261f0763e74c250fb4754d871310992a91742eaf44eb094",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "op",
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "schema": {
+    "properties": {
+      "emit": {
+        "type": "object"
+      },
+      "forms": {
+        "minItems": 1,
+        "type": "array"
+      },
+      "ir": {
+        "properties": {
+          "arity": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "eval": {
+            "type": "string"
+          },
+          "types": {
+            "items": {
+              "items": {
+                "enum": [
+                  "int",
+                  "float",
+                  "bool",
+                  "str",
+                  "list[int]",
+                  "list[float]"
+                ]
+              },
+              "type": "array"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "arity",
+          "types"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "statement"
+    ],
+    "type": "object"
+  },
+  "statement": "A computation atom.",
+  "tier": 0
+}
