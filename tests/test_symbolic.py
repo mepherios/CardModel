@@ -28,6 +28,24 @@ class Symbolic(unittest.TestCase):
         ret = self.ex.run("LR35902_D8")                        # RET C: the stack reads only when C is set
         self.assertTrue(all(e["guard"] is not None for e in ret["effects"] if e["op"] in SY.READS))
 
+    def test_arm_terms_agree_with_the_bench(self):
+        r = SY.check_arm(self.ctx, "armv5te", seed=SEED, samples=3)
+        fails = {k: v["problems"] for k, v in r["cards"].items() if v["status"] == "fail"}
+        self.assertEqual(fails, {}, seed_note(self))
+        self.assertGreaterEqual(r["counts"].get("pass", 0), 80, seed_note(self))
+        self.assertEqual(r["cards"]["ARM_ADC_imm"]["status"], "pass", seed_note(self))
+        mod, _ = SY.module(self.ctx, "armv5te")
+        ex = SY.Executor(self.ctx, mod)
+        res = ex.run("ARM_ADD_imm", {"op": 0xE2910001})        # ADDS r0, r1, #1: r0 and the NZCV flags as terms
+        self.assertEqual(sorted(res["state"]), ["cpsr", "regs0", "sh_c"])   # sh_c: the shifter carry
+        self.assertEqual(res["effects"], [])
+        from cardmodel.engines.logic import eval_expr
+        env = {"regs1": 0xFFFFFFFF, "cpsr": 0x13, "regs0": 7}
+        self.assertEqual(eval_expr(res["state"]["regs0"], env, self.ctx.ops), 0)
+        self.assertEqual(eval_expr(res["state"]["cpsr"], env, self.ctx.ops) >> 28, 0b0110)   # Z and C
+        with self.assertRaises(SY.Unsupported):
+            ex.run("ARM_ADD_imm")                               # the instruction word must be bound
+
     def test_a_wrong_term_is_caught(self):
         r = SY.check(self.ctx, "lr35902", seed=SEED, samples=2, only=["LR35902_80"])
         res = r["results"]["LR35902_80"]
