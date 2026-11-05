@@ -26,8 +26,13 @@ from collections import Counter
 from ..lang.compile import compile_sources
 from . import isa as I
 
-EFFECTS = ("rd8", "wr8", "idle", "idu", "rd8_idu", "halt", "stop", "hang", "cb_dispatch")
+EFFECTS = ("rd8", "wr8", "idle", "idu", "rd8_idu", "halt", "stop", "hang", "cb_dispatch",
+           # the ARM bus contract: halfword/word reads and writes, and the exception / coprocessor hooks
+           "rd16", "rd32", "wr16", "wr32", "swi", "undefined_op", "cp_read", "cp_write")
 READS = ("rd8", "rd8_idu")
+# every effect that returns a value, with the sort of that value (a read is typed by its width)
+READ_SORTS = {"rd8": "u8", "rd8_idu": "u8", "rd16": "u16", "rd32": "u32", "cp_read": "u32"}
+WRITE_BYTES = {"wr8": 1, "wr16": 2, "wr32": 4}
 CYCLES = ("rd8", "wr8", "idle", "idu", "rd8_idu")
 
 
@@ -108,10 +113,10 @@ class Executor:
             name, args = e[1], [self.expr(a, env, guard) for a in e[2:]]
             if name in EFFECTS:
                 entry = {"op": name, "args": args, "guard": guard}
-                if name in READS:
+                if name in READ_SORTS:
                     v = f"rd{self.nread}"
                     self.nread += 1
-                    entry["result"] = v
+                    entry["result"], entry["sort"] = v, READ_SORTS[name]
                     self.effects.append(entry)
                     return ["var", v]
                 self.effects.append(entry)
@@ -317,6 +322,49 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
             "canonical": canon, "distilled": distilled}
 
 
+def arm_bus(result: dict, init: dict, ram: bytes, ops) -> dict:
+    """The ARM terms' bus effects on one concrete state, in order and under their guards, over a 64 KiB memory
+    mirrored across the address space (the bench's): each read binds its ``rdN`` to the little-endian value at the
+    address as given (unaligned addresses are not rounded: the semantics aligns and rotates), each write stores its
+    low bytes. Returns the environment with the reads bound, the access trace as the bench records it
+    (``(kind, address, value)``, kinds 1-3 reads of 8/16/32 bits, 4-6 writes), and the SWI / undefined /
+    coprocessor hooks' record (the bench's stubs: ``cp_read`` returns the last value written, 0x1234 at first)."""
+    from ..engines.logic import eval_expr
+    mem = bytearray(ram)
+    env = dict(init)
+    env.update({f"rd{i}": 0 for i in range(result["reads"])})
+    rec = {"trace": [], "swi_calls": 0, "swi_last": -1, "undef_calls": 0, "cp_last": -1, "cp_value": 0x1234}
+    kinds = {"rd8": 1, "rd16": 2, "rd32": 3, "wr8": 4, "wr16": 5, "wr32": 6}
+    for e in result["effects"]:
+        if e["guard"] is not None and not eval_expr(e["guard"], env, ops):
+            continue
+        op, args = e["op"], [eval_expr(a, env, ops) for a in e["args"]]
+        if op in ("rd8", "rd16", "rd32"):
+            n = {"rd8": 1, "rd16": 2, "rd32": 4}[op]
+            v = sum(mem[(args[0] + i) & 0xFFFF] << (8 * i) for i in range(n))
+            env[e["result"]] = v
+            rec["trace"].append((kinds[op], args[0] & 0xFFFFFFFF, v))
+        elif op in WRITE_BYTES:
+            n = WRITE_BYTES[op]
+            for i in range(n):
+                mem[(args[0] + i) & 0xFFFF] = (args[1] >> (8 * i)) & 0xFF
+            rec["trace"].append((kinds[op], args[0] & 0xFFFFFFFF, args[1] & ((1 << (8 * n)) - 1)))
+        elif op == "swi":
+            rec["swi_calls"] += 1
+            rec["swi_last"] = args[0]
+        elif op == "undefined_op":
+            rec["undef_calls"] += 1
+        elif op == "cp_read":
+            rec["cp_last"] = args[0]
+            env[e["result"]] = rec["cp_value"]
+        elif op == "cp_write":
+            rec["cp_last"], rec["cp_value"] = args[0], args[1]
+        else:
+            raise Unsupported(f"effect {op} on the ARM bus")
+    rec["trace"] = rec["trace"][:64]
+    return {"env": env, **rec}
+
+
 ARM_REGS = tuple(f"regs{i}" for i in range(16)) + ("cpsr", "spsr")
 
 
@@ -324,8 +372,9 @@ def check_arm(ctx, isa: str = "armv5te", seed: int = 0, samples: int = 4, only: 
     """The ARM/Thumb cards' terms against the bench (``machine/<isa>_bench``), one encoding at a time: for each sample
     a random word the card decodes (condition AL: the condition is ``run_one``'s, not the card's), its terms with
     ``op`` bound, and the bench's run of that word on a random state. Every register (``regs0..15`` as u32, the CPSR,
-    the SPSR) and the next PC must agree. Cards whose terms touch the bus are not evaluated yet (reported
-    ``unsupported``)."""
+    the SPSR) and the next PC must agree, and so must the bus: both run on the same random 64 KiB memory, and the
+    accesses (kind, address, value, in order: reads typed by width, writes with their width) and the SWI /
+    undefined / coprocessor hooks' record must be the bench's (``arm_bus``)."""
     from . import bench as BN
     from . import build as Bd
     from . import native as N
@@ -351,9 +400,6 @@ def check_arm(ctx, isa: str = "armv5te", seed: int = 0, samples: int = 4, only: 
             except Unsupported as exc:
                 reason = str(exc)
                 break
-            if res["effects"]:
-                reason = "bus effects: " + ", ".join(sorted({e["op"] for e in res["effects"]}))
-                break
             results.setdefault(card.name, res)
             regs |= set(res["state"])
             st = BN._arm_state(rng, card)
@@ -361,12 +407,20 @@ def check_arm(ctx, isa: str = "armv5te", seed: int = 0, samples: int = 4, only: 
             init.update({f"banked{i}": v for i, v in enumerate(st["banked"])})
             init.update(cpsr=st["cpsr"], spsr=st["spsr"], pc=st["pc"], sh_c=m.get("sh_c"), arch=m.get("arch"),
                         next_pc=(st["pc"] + (4 if card["set"] == "arm" else 2)) & 0xFFFFFFFF)
-            out = BN.run_arm_case(m, st, op, bytes(0x10000))
-            if out["ntrace"]:
-                reason = "the bench traced bus activity the terms do not have"
+            ram = rng.randbytes(0x10000)
+            out = BN.run_arm_case(m, st, op, ram)
+            got_bus = arm_bus(res, init, ram, ctx.ops)
+            if out["ntrace"] > 64:
+                reason = "the bench's trace overflowed"
                 break
             runs += 1
-            got = {k: eval_expr(t, init, ctx.ops) for k, t in res["state"].items()}
+            env = got_bus["env"]
+            got = {k: eval_expr(t, env, ctx.ops) for k, t in res["state"].items()}
+            if got_bus["trace"] != out["trace"]:
+                problems.append(f"{op:#010x} bus: terms {got_bus['trace'][:3]}, the semantics {out['trace'][:3]}")
+            for k in ("swi_calls", "swi_last", "undef_calls", "cp_last", "cp_value"):
+                if got_bus[k] != out[k]:
+                    problems.append(f"{op:#010x} {k}: terms give {got_bus[k]}, the semantics {out[k]}")
             want = {**{f"regs{i}": v for i, v in enumerate(out["regs"])}, "cpsr": out["cpsr"], "spsr": out["spsr"],
                     "next_pc": out["pc"]}
             for k, w in want.items():
@@ -488,5 +542,5 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
     return defs, acts
 
 
-__all__ = ["Executor", "Unsupported", "check", "check_arm", "content", "definitions", "distill", "evaluate", "module",
+__all__ = ["Executor", "Unsupported", "check", "check_arm", "content", "definitions", "distill", "evaluate", "module", "arm_bus",
            "register_sorts"]
