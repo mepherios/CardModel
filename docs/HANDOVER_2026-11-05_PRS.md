@@ -2,6 +2,84 @@
 
 This is a snapshot of every open PR as of about 07:48 UTC on 2026-11-05 (refreshed; the first version was written at 07:35 and #64–#87 have opened since), written for the next model. The facts come from the GitHub REST API (the PR list and each PR body). The root `HANDOVER.md` is still the operating manual. #43 adds `docs/HANDOVER.md`, an earlier snapshot taken at 06:45.
 
+## Next session: launch checklist
+
+Added at about 07:50 UTC on 2026-11-05. All facts come from the REST API (`pulls?state=open` plus `pulls/N` for `mergeable`/`mergeable_state`). 48 PRs are open. Three conflict with main: #39, #40 and #54. Every other PR reports `mergeable: true`; its state is `unstable` only because CI is red. "Kind" is docs when every changed file is under `docs/` or is a `.md` file.
+
+**#88 bundles the docs PRs #72–#74, #76 and #80–#87.** Land #88 and close those twelve.
+
+### Merge table
+
+| PR | Branch | Conflicts with main | Kind |
+|---|---|---|---|
+| #33 | `claude/anyps5-blockers` | no | code |
+| #34 | `claude/gb-mbc` | no | code |
+| #35 | `claude/self-report-next` | no | code |
+| #36 | `claude/reproducible-packs` | no | code |
+| #38 | `claude/ci-csharp-harness` | no | code |
+| #39 | `claude/c-frontend` | **yes** | code |
+| #40 | `claude/hopeful-tesla-yvaan1` | **yes** | code |
+| #41 | `claude/stdin-harness` | no | code |
+| #42 | `claude/ci-fewer-runs` | no | code |
+| #43 | `claude/project-thread-v2w0a1` | no | docs |
+| #47 | `claude/go-negzero` | no | code |
+| #50 | `claude/project-thread-vubpxu` | no | code |
+| #52 | `claude/opaque-callees` | no | code |
+| #53 | `claude/project-thread-jm4iji` | no | code |
+| #54 | `claude/godel-section-cache` | **yes** | code |
+| #55 | `claude/pipeline-coverage` | no | code |
+| #57 | `claude/numeric-model` | no | code |
+| #58 | `claude/search-uses-godel-match` | no | code |
+| #59 | `claude/showcase-godel` | no | code |
+| #60 | `claude/lifter-sorts` | no | code |
+| #61 | `claude/ir-fixed-width` | no | code |
+| #62 | `claude/frontend-widths` | no | code |
+| #63 | `claude/emit-improve-fixes` | no | code |
+| #64 | `claude/distill-ux` | no | code |
+| #65 | `claude/handover-0505-session` | no | docs |
+| #66 | `claude/godel-cli-source` | no | code |
+| #67 | `claude/arm-symbolic` | no | code |
+| #68 | `claude/codes-uses-core` | no | code |
+| #69 | `claude/strings-ir` | no | code |
+| #70 | `claude/godel-followups` | no | code |
+| #71 | `claude/math-len` | no | code |
+| #72 | `claude/targets-measured-0505` | no | docs |
+| #73 | `claude/godel-progress-0505` | no | docs |
+| #74 | `claude/environments-status-0505` | no | docs |
+| #75 | `claude/bare-list-annotation` | no | code |
+| #76 | `claude/owner-decisions-0505` | no | docs |
+| #77 | `claude/godel-number-tokens` | no | code |
+| #78 | `claude/arm-symbolic-memory` | no | code |
+| #79 | `claude/arm-symbolic-loops` | no | code |
+| #80 | `claude/doc-user-guide` | no | docs |
+| #81 | `claude/doc-machines-next` | no | docs |
+| #82 | `claude/doc-next-build` | no | docs |
+| #83 | `claude/doc-applications` | no | docs |
+| #84 | `claude/doc-ir-types-options` | no | docs |
+| #85 | `claude/doc-scaling-next` | no | docs |
+| #86 | `claude/doc-math-structure` | no | docs |
+| #87 | `claude/doc-universal-understander` | no | docs |
+| #88 | `claude/docs-bundle-0505` | no | docs (+2 non-doc files) |
+
+### Launch steps
+
+1. **Environment setup script.** It failed in this session (exit 1). The owner must fix it in the environment settings: either add the repo as a source, or clone it before the script's `cd`.
+2. **Git fetch.** The clone is single-branch, so add the refspec before fetching PR branches:
+   `git config --add remote.origin.fetch '+refs/heads/claude/*:refs/remotes/origin/claude/*'`
+3. **CI is blocked on GitHub billing.** Until the owner fixes it, the merge rule is: a full local `python -B -m unittest` run from `tests/` passes, and `cardmodel verify` passes.
+4. **Use the REST API only** (`gh api repos/...`). GraphQL is blocked, so `gh pr list/view` and similar commands fail.
+5. **Suggested landing order:**
+   1. The docs bundle #88 (then close #72–#74, #76, #80–#87).
+   2. #50, which now carries #55's purity check if the port landed. #55 was still open at 07:50; check whether the port is in #50, and close #55 if it is.
+   3. The ARM PRs in order: #67 → #78 → #79.
+   4. The rest. The conflicting PRs #39, #40 and #54 need a rebase first.
+6. **Owner decisions:**
+   - GitHub billing (unblocks CI).
+   - The `str` ledger atoms (#69): 11 atoms proposed to take the next free indices from 3425.
+   - The ARM atoms (#67, #78, #79).
+   - Whether to delete the branches `claude/ci-exact-int-pow` and `claude/project-thread-3hwg1g`.
+   - The stray `/addranks.py` at the repo root.
+
 ## Ground rules
 
 - **CI is blocked.** GitHub Actions has run out of billing minutes, so every check fails at once and prints nothing. A red check tells you nothing about the code.
