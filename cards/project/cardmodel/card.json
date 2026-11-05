@@ -18,7 +18,8 @@
     "claude/self-report-*",
     "claude/opaque-callees",
     "claude/godel-section-cache",
-    "claude/numeric-model"
+    "claude/numeric-model",
+    "claude/arm-symbolic"
   ],
   "category": "project",
   "docs": [
@@ -55,8 +56,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "c34328180e525068866a64ea4dfc29d54dedc89d14b5403fe39311040343d028",
-    "version": "2.0.26",
+    "previous_content_hash": "4a37a27c2d1888dc158f1bdfbe533dddcdabc3697bfa7ff1eecbd1de5a660b76",
+    "version": "2.0.27",
     "version_bump_reason": "patch"
   },
   "metrics": [

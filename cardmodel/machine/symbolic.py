@@ -72,10 +72,17 @@ class Executor:
             return ["bool", v] if isinstance(v, bool) else (["int", v] if isinstance(v, int) else t)
         return t
 
-    def run(self, fname: str) -> dict:
+    def run(self, fname: str, args: dict | None = None) -> dict:
+        """``args`` binds the function's parameters (the ARM cards' instruction word ``op``) to concrete values: the
+        terms are then the meaning of that one encoding. Array cells indexed by a constant are registers of their own
+        (``regs[3]`` is the variable ``regs3``); an index that depends on symbols is unsupported."""
         self.effects, self.nread = [], 0
         state = {g: ["var", g] for g in self.globals}
-        env = {"g": state, "l": {}, "ret": None, "returned": False}
+        args = args or {}
+        missing = [p["name"] for p in self.fns[fname]["params"] if p["name"] not in args]
+        if missing:
+            raise Unsupported(f"unbound parameter {missing[0]}")
+        env = {"g": state, "l": {k: ["int", v] for k, v in args.items()}, "ret": None, "returned": False}
         self.block(self.fns[fname]["body"], env, None)
         return {"state": {k: v for k, v in state.items() if v != ["var", k]}, "effects": self.effects,
                 "reads": self.nread}
@@ -91,6 +98,12 @@ class Executor:
             raise Unsupported(f"unknown variable {name}")
         if head in ("int", "bool", "float"):
             return e
+        if head == "LOAD":
+            i = self.expr(e[2], env, guard)
+            if not _const(i):
+                raise Unsupported(f"{e[1]}[] indexed by a symbolic term")
+            cell = f"{e[1]}{_val(i)}"
+            return env["g"].get(cell, ["var", cell])
         if head == "CALL":
             name, args = e[1], [self.expr(a, env, guard) for a in e[2:]]
             if name in EFFECTS:
@@ -112,8 +125,10 @@ class Executor:
             return sub["ret"]
         return self.fold([head, *[self.expr(a, env, guard) for a in e[1:]]])
 
-    def block(self, stmts, env, guard) -> None:
-        for s in stmts:
+    def block(self, stmts, env, guard, cont=()) -> None:
+        """``cont``: the statement lists that follow this block in its function (inner first), so a branch that
+        returns on one side only can run the rest of the function on the other side (path splitting)."""
+        for n, s in enumerate(stmts):
             if env["returned"]:
                 return
             k = s["k"]
@@ -127,26 +142,42 @@ class Executor:
                 env["ret"] = self.expr(s["value"], env, guard) if s.get("value") is not None else None
                 env["returned"] = True
             elif k == "if":
-                self.branch(s, env, guard)
+                self.branch(s, env, guard, (stmts[n + 1:], *cont))
+            elif k == "store":
+                i = self.expr(s["index"], env, guard)
+                if not _const(i):
+                    raise Unsupported(f"store to {s['array']}[] at a symbolic index")
+                env["g"][f"{s['array']}{_val(i)}"] = self.expr(s["value"], env, guard)
             else:
                 raise Unsupported(f"statement {k}")
 
-    def branch(self, s, env, guard) -> None:
+    def branch(self, s, env, guard, cont=()) -> None:
         c = self.expr(s["cond"], env, guard)
         if _const(c):
-            self.block(s["then"] if _val(c) else (s.get("else") or []), env, guard)
+            self.block(s["then"] if _val(c) else (s.get("else") or []), env, guard, cont)
             return
         g1 = c if guard is None else ["AND", guard, c]
         g2 = ["NOT", c] if guard is None else ["AND", guard, ["NOT", c]]
+        mark = (len(self.effects), self.nread)
         e1 = {"g": dict(env["g"]), "l": dict(env["l"]), "ret": env["ret"], "returned": False}
         e2 = {"g": dict(env["g"]), "l": dict(env["l"]), "ret": env["ret"], "returned": False}
-        self.block(s["then"], e1, g1)
-        self.block(s.get("else") or [], e2, g2)
+        self.block(s["then"], e1, g1, cont)
+        self.block(s.get("else") or [], e2, g2, cont)
         if e1["returned"] != e2["returned"]:
-            raise Unsupported("a return on one side of a branch only")
+            # a return on one side only: split the path, each side running the rest of the function to its end
+            del self.effects[mark[0]:]
+            self.nread = mark[1]
+            e1 = {"g": dict(env["g"]), "l": dict(env["l"]), "ret": env["ret"], "returned": False}
+            e2 = {"g": dict(env["g"]), "l": dict(env["l"]), "ret": env["ret"], "returned": False}
+            for side, body, g in ((e1, s["then"], g1), (e2, s.get("else") or [], g2)):
+                self.block(body, side, g, cont)
+                for i, rest in enumerate(cont):
+                    self.block(rest, side, g, cont[i + 1:])
+                side["returned"] = True               # the function ends on both sides now
         for scope in ("g", "l"):
             for k in set(e1[scope]) | set(e2[scope]):
-                a, b = e1[scope].get(k, ["int", 0]), e2[scope].get(k, ["int", 0])
+                dflt = ["var", k] if scope == "g" else ["int", 0]    # a cell first written on one side only
+                a, b = e1[scope].get(k, dflt), e2[scope].get(k, dflt)
                 env[scope][k] = a if a == b else self.fold(["IF_EXPR", c, a, b])
         if e1["returned"]:
             env["ret"] = e1["ret"] if e1["ret"] == e2["ret"] else self.fold(["IF_EXPR", c, e1["ret"], e2["ret"]])
@@ -205,6 +236,9 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
     from . import native as N
     if canonical not in ("stored", "distill", None):
         raise ValueError(f"canonical must be 'stored', 'distill' or None, not {canonical!r}")
+    if I.isa_card(ctx.store, isa).get("operand_param"):
+        # an ISA decoded from the instruction word (ARM/Thumb): terms per sampled encoding; no stored canonical forms
+        return {**check_arm(ctx, isa, seed=seed, samples=samples, only=only), "canonical": {}, "distilled": {}}
     mod, cards = module(ctx, isa)
     ex = Executor(ctx, mod)
     m = N.load(ctx, Bd.module(ctx, f"{isa}_bench"), N.resolve_engine(ctx, "host"))
@@ -284,6 +318,74 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
     return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"), "isa": isa, "seed": seed,
             "counts": {s: st.count(s) for s in sorted(set(st))}, "cards": per, "results": results,
             "canonical": canon, "distilled": distilled}
+
+
+ARM_REGS = tuple(f"regs{i}" for i in range(16)) + ("cpsr", "spsr")
+
+
+def check_arm(ctx, isa: str = "armv5te", seed: int = 0, samples: int = 4, only: list[str] | None = None) -> dict:
+    """The ARM/Thumb cards' terms against the bench (``machine/<isa>_bench``), one encoding at a time: for each sample
+    a random word the card decodes (condition AL: the condition is ``run_one``'s, not the card's), its terms with
+    ``op`` bound, and the bench's run of that word on a random state. Every register (``regs0..15`` as u32, the CPSR,
+    the SPSR) and the next PC must agree. Cards whose terms touch the bus are not evaluated yet (reported
+    ``unsupported``)."""
+    from . import bench as BN
+    from . import build as Bd
+    from . import native as N
+    from ..engines.logic import eval_expr
+    mod, cards = module(ctx, isa)
+    ex = Executor(ctx, mod)
+    m = N.load(ctx, Bd.module(ctx, f"{isa}_bench"), N.resolve_engine(ctx, "host"))
+    rng = random.Random(seed)
+    per, results = {}, {}
+    for card in cards:
+        if only and card.name not in only:
+            continue
+        problems, runs, reason, regs = [], 0, None, set()
+        for _ in range(samples):
+            op = BN._word(rng, card)
+            if card["set"] == "arm" and not card.get("unconditional"):
+                op = (op & 0x0FFFFFFF) | (14 << 28)
+            if BN.decoded_by(cards, op, card["set"]) is not card and \
+                    getattr(BN.decoded_by(cards, op, card["set"]), "name", None) != card.name:
+                continue                              # a word a higher-priority card takes
+            try:
+                res = ex.run(card.name, {mod.functions[card.name]["params"][0]["name"]: op})
+            except Unsupported as exc:
+                reason = str(exc)
+                break
+            if res["effects"]:
+                reason = "bus effects: " + ", ".join(sorted({e["op"] for e in res["effects"]}))
+                break
+            results.setdefault(card.name, res)
+            regs |= set(res["state"])
+            st = BN._arm_state(rng, card)
+            init = {f"regs{i}": v for i, v in enumerate(st["regs"])}
+            init.update({f"banked{i}": v for i, v in enumerate(st["banked"])})
+            init.update(cpsr=st["cpsr"], spsr=st["spsr"], pc=st["pc"], sh_c=m.get("sh_c"), arch=m.get("arch"),
+                        next_pc=(st["pc"] + (4 if card["set"] == "arm" else 2)) & 0xFFFFFFFF)
+            out = BN.run_arm_case(m, st, op, bytes(0x10000))
+            if out["ntrace"]:
+                reason = "the bench traced bus activity the terms do not have"
+                break
+            runs += 1
+            got = {k: eval_expr(t, init, ctx.ops) for k, t in res["state"].items()}
+            want = {**{f"regs{i}": v for i, v in enumerate(out["regs"])}, "cpsr": out["cpsr"], "spsr": out["spsr"],
+                    "next_pc": out["pc"]}
+            for k, w in want.items():
+                h = got.get(k, init[k])
+                if h != w:
+                    problems.append(f"{op:#010x} {k}: terms give {h:#x}, the semantics {w:#x}")
+        if reason is not None:
+            per[card.name] = {"status": "unsupported", "reason": reason}
+        elif not runs:
+            per[card.name] = {"status": "unsupported", "reason": "no sampled word decodes to this card"}
+        else:
+            per[card.name] = {"status": "fail" if problems else "pass", "runs": runs,
+                              "problems": sorted(set(problems))[:4], "registers": sorted(regs)}
+    st = [r["status"] for r in per.values()]
+    return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"), "isa": isa, "seed": seed,
+            "counts": {s: st.count(s) for s in sorted(set(st))}, "cards": per, "results": results}
 
 
 def content(res: dict, ops) -> dict:
@@ -389,5 +491,5 @@ def definitions(ctx, isa: str, checked: dict) -> tuple[list[dict], list[dict]]:
     return defs, acts
 
 
-__all__ = ["Executor", "Unsupported", "check", "content", "definitions", "distill", "evaluate", "module",
+__all__ = ["Executor", "Unsupported", "check", "check_arm", "content", "definitions", "distill", "evaluate", "module",
            "register_sorts"]

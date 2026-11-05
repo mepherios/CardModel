@@ -253,8 +253,18 @@ def _machine(ctx: Ctx, seed: int) -> dict:
                         "failing": {k: v["problems"][:3] for k, v in conf["per_card"].items()
                                     if v["status"] != "pass"}})
             res["status"] = "fail" if sync["drifted"] or conf["status"] == "fail" else conf["status"]
-            if any(ctx.store.get(f"definition/isa__{c.name}") is not None for c in isa.instructions(ctx.store,
-                                                                                                    card.name)):
+            if card.get("operand_param"):
+                # word-decoded ISAs (ARM/Thumb): each card's terms for sampled encodings against the bench; cards the
+                # executor can't take yet stay "unsupported" (reported, not a failure)
+                from ..machine import symbolic as SY
+                sy = SY.check(ctx, card.name, seed=seed, samples=4)
+                res["symbolic"] = {"counts": sy["counts"], "seed": seed,
+                                   "failing": {k: v["problems"][:3] for k, v in sy["cards"].items()
+                                               if v["status"] == "fail"}}
+                if sy["status"] == "fail":
+                    res["status"] = "fail"
+            elif any(ctx.store.get(f"definition/isa__{c.name}") is not None for c in isa.instructions(ctx.store,
+                                                                                                      card.name)):
                 # CM44: the stored definitions' canonical terms (their identity and Gödel content) are witnessed
                 # against the executable semantics on seeded cases, with the raw terms they were distilled from
                 from ..machine import symbolic as SY
