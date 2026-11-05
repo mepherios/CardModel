@@ -64,10 +64,17 @@
     "style": "end",
     "types": {
       "bool": "boolean",
+      "f32": "float",
       "float": "float",
+      "i16": "integer",
+      "i32": "integer",
+      "i8": "integer",
       "int": "integer",
       "list[float]": "table",
-      "list[int]": "table"
+      "list[int]": "table",
+      "u16": "integer",
+      "u32": "integer",
+      "u8": "integer"
     },
     "underscore_ok": true,
     "while": "while {cond} do",
@@ -101,7 +108,9 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": 64,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "cf693facf43728474516e21959bc5fced717f2a5c1227f6088b70cba958c65fd",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "lua",
   "probe": {

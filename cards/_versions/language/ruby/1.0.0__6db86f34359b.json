@@ -1,0 +1,166 @@
+{
+  "category": "language",
+  "codegen": {
+    "assign": "{name} = {value}",
+    "break": "break",
+    "continue": "next",
+    "declare": "{name} = {value}",
+    "else": "else",
+    "empty": "nil",
+    "end_if": "end",
+    "end_while": "end",
+    "func": "def {name}({params})\n{body}end\n",
+    "harness": {
+      "bench_call": "cm_acc += {truthy}",
+      "bench_main": "cm_acc = 0\n{reps}.times do\n{calls}end\nputs(cm_acc)\n",
+      "main": "{calls}",
+      "print": {
+        "bool": "puts(\"b:\" + (({e}) ? \"true\" : \"false\"))",
+        "float": "puts(\"f:\" + ({e}).to_s)",
+        "int": "puts(\"i:\" + ({e}).to_s)",
+        "list[float]": "cm_print_list({e}, 'f')",
+        "list[int]": "cm_print_list({e}, 'i')"
+      },
+      "truthy": {
+        "bool": "(({e}) ? 1 : 0)",
+        "float": "((({e}) > 0.0) ? 1 : 0)",
+        "int": "((({e}) != 0) ? 1 : 0)"
+      }
+    },
+    "helpers": {
+      "cm_acos": "def cm_acos(a)\n  (a >= -1.0 && a <= 1.0) ? Math.acos(a) : Float::NAN\nend",
+      "cm_asin": "def cm_asin(a)\n  (a >= -1.0 && a <= 1.0) ? Math.asin(a) : Float::NAN\nend",
+      "cm_fmod": "def cm_fmod(a, b)\n  b != 0.0 ? a.remainder(b) : Float::NAN\nend",
+      "cm_fsqrt": "def cm_fsqrt(a)\n  a >= 0.0 ? Math.sqrt(a) : Float::NAN\nend",
+      "cm_get": "def cm_get(xs, i)\n  raise IndexError, 'index out of range' unless i >= 0 && i < xs.length\n  xs[i]\nend",
+      "cm_max_f": "def cm_max_f(a, b)\n  b > a ? b : a\nend",
+      "cm_max_i": "def cm_max_i(a, b)\n  b > a ? b : a\nend",
+      "cm_min_f": "def cm_min_f(a, b)\n  b < a ? b : a\nend",
+      "cm_min_i": "def cm_min_i(a, b)\n  b < a ? b : a\nend",
+      "cm_modinv": "def cm_modinv(a, m)\n  n = m.abs\n  r0, r1 = a % n, n\n  s0, s1 = 1, 0\n  while r1 != 0\n    q = r0 / r1\n    r0, r1 = r1, r0 - q * r1\n    s0, s1 = s1, s0 - q * s1\n  end\n  raise ZeroDivisionError, \"base is not invertible\" if r0 != 1\n  s0 % n\nend",
+      "cm_powmod": "def cm_powmod(a, b, m)\n  if b < 0\n    a = cm_modinv(a, m)\n    b = -b\n  end\n  a.pow(b, m)\nend",
+      "cm_print_list": "def cm_print_list(xs, tag)\n  puts('l:' + xs.length.to_s)\n  xs.each { |v| puts(tag + ':' + v.to_s) }\nend",
+      "cm_set": "def cm_set(xs, i, v)\n  raise IndexError, 'index out of range' unless i >= 0 && i < xs.length\n  xs[i] = v\nend"
+    },
+    "if": "if {cond}",
+    "indent": "  ",
+    "lib_prelude": "@imports@",
+    "list_lit": {
+      "list[float]": "[{items}]",
+      "list[int]": "[{items}]"
+    },
+    "lit": {
+      "false": "false",
+      "float": "({v})",
+      "int": "({v})",
+      "true": "true"
+    },
+    "lowercase_idents": true,
+    "param": "{name}",
+    "prelude": "@imports@",
+    "return": "return {value}",
+    "set": "cm_set({name}, {idx}, {value})",
+    "style": "end",
+    "types": {
+      "bool": "Boolean",
+      "float": "Float",
+      "int": "Integer",
+      "list[float]": "Array",
+      "list[int]": "Array"
+    },
+    "while": "while {cond}",
+    "zero": {
+      "bool": "false",
+      "float": "0.0",
+      "int": "0",
+      "list[float]": "[]",
+      "list[int]": "[]"
+    }
+  },
+  "comments": {
+    "block": [
+      [
+        "=begin",
+        "=end"
+      ]
+    ],
+    "line": [
+      "#"
+    ],
+    "strings": [
+      "\"",
+      "'"
+    ]
+  },
+  "extensions": [
+    ".rb"
+  ],
+  "family": "ruby",
+  "frontend": "cardmodel.engines.frontend_text",
+  "int_bits": null,
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "ruby",
+  "probe": {
+    "kind": "executable",
+    "name": "ruby",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "BEGIN",
+    "END",
+    "alias",
+    "and",
+    "begin",
+    "break",
+    "case",
+    "class",
+    "def",
+    "defined",
+    "do",
+    "else",
+    "elsif",
+    "end",
+    "ensure",
+    "false",
+    "for",
+    "if",
+    "in",
+    "module",
+    "next",
+    "nil",
+    "not",
+    "or",
+    "redo",
+    "rescue",
+    "retry",
+    "return",
+    "self",
+    "super",
+    "then",
+    "true",
+    "undef",
+    "unless",
+    "until",
+    "when",
+    "while",
+    "yield",
+    "puts"
+  ],
+  "runner": {
+    "file": "main.rb",
+    "run": [
+      "{exe}",
+      "{src}"
+    ]
+  },
+  "statement": "Ruby: Integer is unbounded with floor division, like Python.",
+  "tier": 1
+}

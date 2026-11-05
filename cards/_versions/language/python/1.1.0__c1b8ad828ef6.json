@@ -1,0 +1,183 @@
+{
+  "call_runner": "inprocess",
+  "category": "language",
+  "codegen": {
+    "array": {
+      "int": "{name} = [0] * {size}",
+      "u8": "{name} = bytearray({size})"
+    },
+    "array_init": {
+      "int": "{name} = [{values}]",
+      "u8": "{name} = bytearray([{values}])"
+    },
+    "assign": "{name} = {value}",
+    "break": "break",
+    "continue": "continue",
+    "declare": "{name} = {value}",
+    "do": "{value}",
+    "else": "else:",
+    "empty": "pass",
+    "end_if": "",
+    "end_while": "",
+    "func": "def {name}({params}) -> {ret}:\n{body}\n",
+    "global": "{name} = {value}",
+    "global_use": "global {names}",
+    "harness": {
+      "bench_call": "cm_acc += {truthy}",
+      "bench_main": "def _cm_main():\n    cm_acc = 0\n    for _cm_r in range({reps}):\n{calls}    print(cm_acc)\n\n_cm_main()\n",
+      "main": "def _cm_main():\n{calls}    pass\n\n_cm_main()\n",
+      "print": {
+        "bool": "print('b:' + ('true' if {e} else 'false'))",
+        "float": "print('f:' + repr({e}))",
+        "int": "print('i:' + str({e}))",
+        "list[float]": "cm_print_list({e}, 'f')",
+        "list[int]": "cm_print_list({e}, 'i')"
+      },
+      "truthy": {
+        "bool": "(1 if ({e}) else 0)",
+        "float": "(1 if ({e}) > 0.0 else 0)",
+        "int": "(1 if ({e}) != 0 else 0)"
+      }
+    },
+    "helpers": {
+      "cm_acos": "def cm_acos(a):\n    return math.acos(a) if -1.0 <= a <= 1.0 else math.nan",
+      "cm_asin": "def cm_asin(a):\n    return math.asin(a) if -1.0 <= a <= 1.0 else math.nan",
+      "cm_fmod": "def cm_fmod(a, b):\n    return math.fmod(a, b) if b != 0.0 else math.nan",
+      "cm_fsqrt": "def cm_fsqrt(a):\n    return math.sqrt(a) if a >= 0.0 else math.nan",
+      "cm_print_list": "def cm_print_list(xs, tag):\n    print('l:' + str(len(xs)))\n    for v in xs:\n        print(tag + ':' + (repr(v) if tag == 'f' else str(v)))\n"
+    },
+    "hoist": false,
+    "if": "if {cond}:",
+    "import": "import @name@\n",
+    "indent": "    ",
+    "lib_prelude": "@imports@",
+    "list_lit": {
+      "list[float]": "[{items}]",
+      "list[int]": "[{items}]"
+    },
+    "lit": {
+      "false": "False",
+      "float": "{v}",
+      "int": "{v}",
+      "true": "True"
+    },
+    "load": {
+      "int": "{arr}[{idx}]",
+      "u8": "{arr}[{idx}]"
+    },
+    "native_for_range": "for {var} in range({start}, {stop}, {step}):",
+    "param": "{name}: {type}",
+    "prelude": "@imports@",
+    "return": "return {value}",
+    "return_void": "return",
+    "set": "{name}[{idx}] = {value}",
+    "store": {
+      "int": "{arr}[{idx}] = {value}",
+      "u8": "{arr}[{idx}] = ({value}) & 255"
+    },
+    "style": "indent",
+    "types": {
+      "bool": "bool",
+      "float": "float",
+      "int": "int",
+      "list[float]": "list[float]",
+      "list[int]": "list[int]",
+      "void": "None"
+    },
+    "underscore_ok": true,
+    "while": "while {cond}:",
+    "zero": {
+      "bool": "False",
+      "float": "0.0",
+      "int": "0",
+      "list[float]": "[]",
+      "list[int]": "[]"
+    }
+  },
+  "comments": {
+    "block": [],
+    "line": [
+      "#"
+    ],
+    "strings": [
+      "\"\"\"",
+      "'''",
+      "\"",
+      "'"
+    ]
+  },
+  "embed": {
+    "kind": "python",
+    "statement": "the module runs in this process (exec); globals and arrays are names in its namespace"
+  },
+  "extensions": [
+    ".py"
+  ],
+  "family": "python",
+  "frontend": "cardmodel.engines.frontend_python",
+  "int_bits": null,
+  "metadata": {
+    "previous_content_hash": "a408161e938cb77cfbf3742362816c15d65b29936ac30b395c91e91cdd4c562e",
+    "version": "1.1.0",
+    "version_bump_reason": "minor"
+  },
+  "name": "python",
+  "probe": {
+    "kind": "executable",
+    "name": "python3",
+    "version_args": [
+      "--version"
+    ]
+  },
+  "provenance": {
+    "origin": "cardmodel bootstrap",
+    "tool": "tools/bootstrap.py"
+  },
+  "reserved": [
+    "False",
+    "None",
+    "True",
+    "and",
+    "as",
+    "assert",
+    "async",
+    "await",
+    "break",
+    "class",
+    "continue",
+    "def",
+    "del",
+    "elif",
+    "else",
+    "except",
+    "finally",
+    "for",
+    "from",
+    "global",
+    "if",
+    "import",
+    "in",
+    "is",
+    "lambda",
+    "nonlocal",
+    "not",
+    "or",
+    "pass",
+    "raise",
+    "return",
+    "try",
+    "while",
+    "with",
+    "yield"
+  ],
+  "runner": {
+    "file": "main.py",
+    "run": [
+      "{exe}",
+      "-B",
+      "{src}"
+    ]
+  },
+  "statement": "Python 3: reference semantics of the IR (int is unbounded, floor division).",
+  "tier": 0
+}

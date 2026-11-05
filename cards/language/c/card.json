@@ -74,11 +74,11 @@
       "cm_max_i": "static @int@ cm_max_i(@int@ a, @int@ b) { return b > a ? b : a; }",
       "cm_min_f": "static @float@ cm_min_f(@float@ a, @float@ b) { return b < a ? b : a; }",
       "cm_min_i": "static @int@ cm_min_i(@int@ a, @int@ b) { return b < a ? b : a; }",
+      "cm_modinv": "static @int@ cm_modinv(@int@ a, @int@ m) { @int@ n = m < 0 ? -m : m; @int@ r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { @int@ q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) __builtin_trap(); return cm_floormod(s0, n); }",
       "cm_opaque_b": "static @bool@ cm_opaque_b(@bool@ x) { volatile @bool@ v = x; return v; }",
       "cm_opaque_f": "static @float@ cm_opaque_f(@float@ x) { volatile @float@ v = x; return v; }",
       "cm_opaque_i": "static @int@ cm_opaque_i(@int@ x) { volatile @int@ v = x; return v; }",
-      "cm_powmod": "static @int@ cm_powmod(@int@ a, @int@ b, @int@ m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } @int@ r = cm_floormod(1, m); a = cm_floormod(a, m); while (b > 0) { if (b & 1) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1; } return r; }",
-      "cm_modinv": "static @int@ cm_modinv(@int@ a, @int@ m) { @int@ n = m < 0 ? -m : m; @int@ r0 = cm_floormod(a, n), r1 = n, s0 = 1, s1 = 0; while (r1 != 0) { @int@ q = r0 / r1, t = r0 - q * r1; r0 = r1; r1 = t; t = s0 - q * s1; s0 = s1; s1 = t; } if (r0 != 1) __builtin_trap(); return cm_floormod(s0, n); }"
+      "cm_powmod": "static @int@ cm_powmod(@int@ a, @int@ b, @int@ m) { if (b < 0) { a = cm_modinv(a, m); b = -b; } @int@ r = cm_floormod(1, m); a = cm_floormod(a, m); while (b > 0) { if (b & 1) r = cm_floormod(r * a, m); a = cm_floormod(a * a, m); b >>= 1; } return r; }"
     },
     "if": "if ({cond}) {{",
     "import": "#include <@name@>\n",
@@ -128,10 +128,17 @@
     },
     "types": {
       "bool": "bool",
+      "f32": "double",
       "float": "double",
+      "i16": "int64_t",
+      "i32": "int64_t",
+      "i8": "int64_t",
       "int": "int64_t",
       "list[float]": "cm_lf",
       "list[int]": "cm_li",
+      "u16": "int64_t",
+      "u32": "int64_t",
+      "u8": "int64_t",
       "void": "void"
     },
     "while": "while ({cond}) {{",
@@ -212,8 +219,8 @@
   },
   "int_bits": 64,
   "metadata": {
-    "previous_content_hash": "f8d0a742dc57a56c17bc5b0e23bc763cf07c117f36d1bde418d99d6bd0cf4515",
-    "version": "1.1.1",
+    "previous_content_hash": "c01de084dd6583b83cabb6128c52fa66e31619683f5c3c81ebf8bf3c46586945",
+    "version": "1.1.2",
     "version_bump_reason": "patch"
   },
   "name": "c",

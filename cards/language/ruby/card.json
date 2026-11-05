@@ -63,10 +63,17 @@
     "style": "end",
     "types": {
       "bool": "Boolean",
+      "f32": "Float",
       "float": "Float",
+      "i16": "Integer",
+      "i32": "Integer",
+      "i8": "Integer",
       "int": "Integer",
       "list[float]": "Array",
-      "list[int]": "Array"
+      "list[int]": "Array",
+      "u16": "Integer",
+      "u32": "Integer",
+      "u8": "Integer"
     },
     "while": "while {cond}",
     "zero": {
@@ -99,7 +106,9 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "6db86f34359b3edadb797b7e7111cacb4904896ceb333e66929e84090d345109",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "ruby",
   "probe": {

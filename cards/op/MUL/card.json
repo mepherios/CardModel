@@ -169,6 +169,16 @@
         "float",
         "float",
         "float"
+      ],
+      [
+        "u32",
+        "u32",
+        "u32"
+      ],
+      [
+        "f32",
+        "f32",
+        "f32"
       ]
     ]
   },
@@ -181,8 +191,8 @@
   },
   "metadata": {
     "hub_kind": "binop",
-    "previous_content_hash": "ad67d48c1e810da82130e7e26449c1bdf5a32b5401669424b16b6d53ff695c2f",
-    "version": "1.1.0",
+    "previous_content_hash": "5cfaaf9b5803391022efb465e0803e78bd465e129bec79311dfeb019ec4fc6a1",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "MUL",

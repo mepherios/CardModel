@@ -78,10 +78,17 @@
     "style": "indent",
     "types": {
       "bool": "bool",
+      "f32": "float",
       "float": "float",
+      "i16": "int",
+      "i32": "int",
+      "i8": "int",
       "int": "int",
       "list[float]": "list[float]",
       "list[int]": "list[int]",
+      "u16": "int",
+      "u32": "int",
+      "u8": "int",
       "void": "None"
     },
     "underscore_ok": true,
@@ -117,9 +124,9 @@
   "frontend": "cardmodel.engines.frontend_python",
   "int_bits": null,
   "metadata": {
-    "previous_content_hash": "a408161e938cb77cfbf3742362816c15d65b29936ac30b395c91e91cdd4c562e",
-    "version": "1.1.0",
-    "version_bump_reason": "minor"
+    "previous_content_hash": "c1b8ad828ef688484c09dac2fd06585c12f26846eae9b92bb8cf187b5ae155f5",
+    "version": "1.1.1",
+    "version_bump_reason": "patch"
   },
   "name": "python",
   "probe": {

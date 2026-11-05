@@ -66,10 +66,17 @@
     "style": "braces",
     "types": {
       "bool": "boolean",
+      "f32": "number",
       "float": "number",
+      "i16": "bigint",
+      "i32": "bigint",
+      "i8": "bigint",
       "int": "bigint",
       "list[float]": "number[]",
-      "list[int]": "bigint[]"
+      "list[int]": "bigint[]",
+      "u16": "bigint",
+      "u32": "bigint",
+      "u8": "bigint"
     },
     "while": "while ({cond}) {{",
     "zero": {
@@ -104,7 +111,9 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "version": "1.0.0"
+    "previous_content_hash": "864adeb31727d86b7d831883d36a62ffaf67fdd5629e4dda3d6b2d892526bbe3",
+    "version": "1.0.1",
+    "version_bump_reason": "patch"
   },
   "name": "javascript",
   "probe": {

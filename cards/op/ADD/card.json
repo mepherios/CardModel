@@ -183,6 +183,21 @@
         "float",
         "float",
         "float"
+      ],
+      [
+        "u8",
+        "u8",
+        "u8"
+      ],
+      [
+        "i8",
+        "i8",
+        "i8"
+      ],
+      [
+        "f32",
+        "f32",
+        "f32"
       ]
     ]
   },
@@ -195,8 +210,8 @@
   },
   "metadata": {
     "hub_kind": "binop",
-    "previous_content_hash": "8154c7fc5fcaf86aacecae5a5c27fd8f90d2d6f71e02d8fb8ba195a2f4180a05",
-    "version": "1.1.0",
+    "previous_content_hash": "e8edbd11d909bcee7e631f95567f683761b0db0727791abe1196a32a2db2c7c5",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "ADD",
