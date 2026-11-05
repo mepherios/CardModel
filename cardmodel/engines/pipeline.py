@@ -1318,13 +1318,8 @@ def purity_findings(home: str | None = None) -> dict[str, str]:
 # copy fails the integrity check, and a copy the code no longer has must be removed from it. Its length is goal
 # G_A14's metric (``godel_impure``).
 KNOWN_COPIES = frozenset({
-    "cardmodel/engines/codes.py:Reader.codes",
-    "cardmodel/engines/codes.py:built_positional_bits",
-    "cardmodel/engines/codes.py:_head_code",
     "cardmodel/engines/funcalg.py:godel_encode",
-    "cardmodel/engines/numbering.py:Numbering.tokens",
     "cardmodel/engines/numbering.py:Numbering.encode",
-    "cardmodel/unreal/distill.py:number",
 })
 
 
