@@ -142,7 +142,7 @@ def main(argv=None) -> int:
     built = SO.build(ctx, seed=args.seed)
     stats.update(SO.write(ctx, built))
     from cardmodel.machine import symbolic as SY
-    checked = SY.check(ctx, "lr35902", seed=args.seed, samples=4)
+    checked = SY.check(ctx, "lr35902", seed=args.seed, samples=4, canonical="distill")
     defs, acts = SY.definitions(ctx, "lr35902", checked)
     ctx.store.save_pack("definition", "isa_lr35902", defs, layer="model")
     ctx.store.save_pack("action", "isa_lr35902", acts, layer="model")

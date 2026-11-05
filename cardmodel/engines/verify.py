@@ -37,7 +37,8 @@ Sections (all on by default; ``only`` selects):
                 witnessed again against the engine's compiled code when the engine is on this host
   machine       every ISA's instruction cards: stored IR in sync with their semantics, and per-instruction
                 conformance on the ISA's bench in every engine (reference interpreter, host, native), with their
-                cycle and flag data checked (CM32)
+                cycle and flag data checked (CM32); where an ISA's instructions have stored definitions, their raw
+                and stored canonical terms are witnessed against the executable semantics on seeded cases (CM44)
 
 The result is saved to ``state/last_verify.json`` (coverage and goals read
 it). A run of some sections keeps the other sections of the saved report,
@@ -54,6 +55,7 @@ section that ran zero checks is ``vacuous`` (CM07), never a pass.
 from __future__ import annotations
 
 import time
+from collections import Counter
 from datetime import datetime, timezone
 
 from . import conformance, redefs, translate, witness
@@ -245,6 +247,18 @@ def _machine(ctx: Ctx, seed: int) -> dict:
                         "failing": {k: v["problems"][:3] for k, v in conf["per_card"].items()
                                     if v["status"] != "pass"}})
             res["status"] = "fail" if sync["drifted"] or conf["status"] == "fail" else conf["status"]
+            if any(ctx.store.get(f"definition/isa__{c.name}") is not None for c in isa.instructions(ctx.store,
+                                                                                                    card.name)):
+                # CM44: the stored definitions' canonical terms (their identity and Gödel content) are witnessed
+                # against the executable semantics on seeded cases, with the raw terms they were distilled from
+                from ..machine import symbolic as SY
+                sy = SY.check(ctx, card.name, seed=seed, samples=2, canonical="stored")
+                res["symbolic"] = {"counts": sy["counts"], "seed": seed,
+                                   "canonical": dict(Counter(v.get("canonical", "") for v in sy["cards"].values())),
+                                   "failing": {k: v["problems"][:3] for k, v in sy["cards"].items()
+                                               if v["status"] == "fail"}}
+                if sy["status"] == "fail":
+                    res["status"] = "fail"
         else:
             res["status"] = "fail" if sync["drifted"] else "pass"
         out[card.name] = res
@@ -282,7 +296,9 @@ def run(ctx: Ctx, seed: int | None = None, only: list[str] | None = None, langs:
         samples: int = 48, record: bool = False, save: bool = True) -> dict:
     seed = V.fresh_seed() if seed is None else seed
     only = list(only or SECTIONS)
-    report = {"seed": seed, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"), "sections": {}}
+    from .environment import card_name
+    report = {"seed": seed, "started": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+              "env": card_name(), "sections": {}}
     timings = {}
     for sec in SECTIONS:
         if sec not in only:

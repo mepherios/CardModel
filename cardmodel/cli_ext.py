@@ -522,6 +522,112 @@ def cmd_repl(args) -> int:
             print(f"error: {exc}")
 
 
+def _closed_term(card):
+    """A definition's closed term: the canonical one when distillation reached it, else its single return."""
+    canon = card.get("canonical") or {}
+    if canon.get("status") == "canonical" and canon.get("term") is not None:
+        return canon["term"], "canonical term"
+    m = (card.get("math") or {}).get("term")
+    if isinstance(m, dict) and "body" in m:
+        from .engines.sources import _single_return
+        t = _single_return(m)
+        if t is not None:
+            return t, "lifted term"
+    return None, "no closed term (a loop, several statements, or an instruction)"
+
+
+def _library(ctx) -> tuple[dict, dict]:
+    """Every definition card with a closed term, by qualified name, and where each term was read from."""
+    lib, read = {}, {}
+    for d in ctx.store.cards("definition"):
+        t, why = _closed_term(d)
+        if t is not None:
+            lib[d.qualified], read[d.qualified] = t, why
+    return lib, read
+
+
+def _godel_targets(ctx, args) -> list[tuple[str, list, str]]:
+    """(name, term, read_from) for each card named, then for --expr (so cofactor's part can be an expression)."""
+    from .engines.exprs import parse
+    out = []
+    for q in args.cards:
+        card = ctx.store.get(q)
+        if card is None:
+            raise SystemExit(f"error: no card {q!r}")
+        t, why = _closed_term(card)
+        if t is None:
+            raise SystemExit(f"error: {q}: {why}")
+        out.append((card.qualified, t, why))
+    if args.expr:
+        out.append((args.expr, parse(args.expr), "the expression"))
+    return out
+
+
+def _godel_structure(cli, ctx, args, GD) -> int:
+    """factor, similar, cofactor, decode: the structure's own commands (docs/GODEL_TARGET.md §2, G3-G5, G10, G14)."""
+    from .engines.exprs import to_text
+    if args.action == "decode":
+        entries = GD.ledger(ctx.store)
+        names = [v for v in (args.vars or "").split(",") if v]
+        try:
+            term = GD.decode(int(args.cards[0]), ctx.ops, entries, names)
+        except (IndexError, ValueError, KeyError) as exc:
+            print(f"error: {exc or 'decode takes a positional number and --vars'}", file=sys.stderr)
+            return 2
+        cli._out(args, {"term": term, "variables": names}, to_text(term))
+        return 0
+    targets = _godel_targets(ctx, args)
+    if not targets:
+        print("error: name a card, or give --expr", file=sys.stderr)
+        return 2
+    lib, read = _library(ctx)
+    if args.action == "factor":
+        index = GD.ContentIndex({k: GD.term_content(t, ctx.ops) for k, t in lib.items()})
+        recs, lines = {}, []
+        for name, term, why in targets:
+            r = GD.factor(term, lib, ctx.ops, index=index, exclude=[name])
+            recs[name] = {**r, "read_from": why}
+            lines.append(f"{name} ({why}): {to_text(term)}")
+            lines.append(f"  = {to_text(r['term'])}")
+            for u in r["uses"]:
+                binds = ", ".join(f"{v} := {to_text(t)}" for v, t in u["bindings"].items())
+                lines.append(f"  uses {u['key']} ({read[u['key']]}) at {u['path'] or 'the root'}: {binds}")
+            lines.append(f"  cofactor (what no concept covers): {dict(r['cofactor']) or 'nothing'}; "
+                         f"γ(t) = γ(context) + Σ γ(instance): {r['check']}")
+        cli._out(args, recs, "\n".join(lines))
+        return 0
+    if args.action == "similar":
+        entries = GD.ledger(ctx.store)
+        index = GD.ContentIndex({d.qualified: (d.get("godel") or {}).get("content") or {}
+                                 for d in ctx.store.cards("definition")})
+        recs, lines = {}, []
+        for name, term, why in targets:
+            c = GD.term_content(term, ctx.ops)
+            rows = [(k, s) for k, s in index.similar(c, args.limit + 1) if k != name][:args.limit]
+            recs[name] = [{"card": k, "jaccard": s, "shared": dict(GD.gcd(c, index.contents[k]))} for k, s in rows]
+            lines.append(f"{name} ({why}): {dict(c)}")
+            lines += [f"  {s:.3f}  {k}: shares {dict(GD.gcd(c, index.contents[k]))}" for k, s in rows]
+        cli._out(args, recs, "\n".join(lines))
+        return 0
+    if args.action == "cofactor":
+        if len(targets) != 2:
+            print("error: cofactor takes two cards (the whole, then the part)", file=sys.stderr)
+            return 2
+        (wn, wt, ww), (pn, pt, pw) = targets
+        whole, part = GD.term_content(wt, ctx.ops), GD.term_content(pt, ctx.ops)
+        cof = GD.cofactor(whole, part)
+        r = GD.factor(wt, {pn: pt}, ctx.ops)
+        rec = {"whole": dict(whole), "part": dict(part), "cofactor": dict(cof) if cof is not None else None,
+               "missing": dict(GD.sub(part, GD.gcd(whole, part))) if cof is None else {},
+               "term": r["term"], "uses": r["uses"], "check": r["check"]}
+        lines = [f"{wn} ({ww}): {dict(whole)}", f"{pn} ({pw}): {dict(part)}",
+                 f"cofactor {wn} / {pn}: {rec['cofactor'] if cof is not None else 'none: the part has ' + str(rec['missing']) + ' beyond the whole'}",
+                 f"{wn} over {pn}: {to_text(r['term'])} ({len(r['uses'])} uses; γ(t) = γ(context) + Σ γ(instance): {r['check']})"]
+        cli._out(args, rec, "\n".join(lines))
+        return 0
+    return 2
+
+
 def cmd_godel(args) -> int:
     from collections import Counter
 
@@ -529,6 +635,8 @@ def cmd_godel(args) -> int:
     cli = _cli()
     ctx = cli._ctx(args)
     idx = GD.index_of(ctx.store)
+    if args.action in ("factor", "similar", "cofactor", "decode"):
+        return _godel_structure(cli, ctx, args, GD)
     if args.action == "sizes":
         from .engines import codes as CO
         m = CO.measure(ctx)
@@ -726,9 +834,31 @@ def cmd_symbolic(args) -> int:
     return 1 if r["status"] == "fail" else 0
 
 
+def cmd_env(args) -> int:
+    """The generator's environment card (docs/ENVIRONMENTS.md V-A): read it, or probe and write it."""
+    from .cli import _ctx, _out
+    from .engines import environment as E
+    ctx = _ctx(args)
+    if args.static:
+        card = E.build_card()
+    elif args.measure:
+        card, _ = E.generator(ctx.store, refresh=True)
+    else:
+        card = E.cached(ctx.store)
+        if card is None:
+            card, _ = E.generator(ctx.store)
+    _out(args, card, E.render(card))
+    return 0
+
+
 def register(sub) -> None:
     from . import math_cli
     math_cli.register(sub)
+    s = sub.add_parser("env", help="this machine as an environment card: declared identity, measured cache levels "
+                                   "and copy bandwidth (written once into the local layer)")
+    s.add_argument("--measure", action="store_true", help="probe again and rewrite the card")
+    s.add_argument("--static", action="store_true", help="only the declared identity; no compile, nothing written")
+    s.set_defaults(fn=cmd_env)
     s = sub.add_parser("run", help="run a .card program: tests, queries, theorems, constraints")
     s.add_argument("file"); s.add_argument("--seed", type=int); s.add_argument("--lean", action="store_true")
     s.add_argument("--deep", action="store_true"); s.add_argument("--verbose", action="store_true")
@@ -784,7 +914,10 @@ def register(sub) -> None:
     s.add_argument("action", choices=["check", "build"]); s.add_argument("--write", action="store_true")
     s.add_argument("--seed", type=int); s.set_defaults(fn=cmd_sources)
     s = sub.add_parser("godel", help="the expanding Gödel model: the prime ledger, content vectors, GCD and LCM")
-    s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm", "sizes"]); s.add_argument("cards", nargs="*")
+    s.add_argument("action", choices=["ledger", "vector", "gcd", "lcm", "sizes", "factor", "similar", "cofactor",
+                                      "decode"])
+    s.add_argument("cards", nargs="*"); s.add_argument("--expr", help="an expression in place of a card")
+    s.add_argument("--vars", help="decode: the variable names in order of first appearance, comma-separated")
     s.add_argument("--limit", type=int, default=20); s.set_defaults(fn=cmd_godel)
     from .game import cli as game_cli
     game_cli.register(sub)
