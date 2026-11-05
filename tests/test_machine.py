@@ -569,6 +569,20 @@ class Lifting(unittest.TestCase):
         call = ["CALL", "read", ["int", 1]]
         self.assertEqual(lf.fold(["MUL", call, ["int", 0]]), ["MUL", call, ["int", 0]])   # an effect is kept
 
+    def test_register_masks_fold_only_at_their_sorts(self):
+        from cardmodel.machine import build, lift
+        lf = lift.Lifter(self.ctx, build.module(self.ctx, "gameboy"))
+        m = lambda x: ["BIT_AND", x, ["int", 255]]                          # noqa: E731
+        self.assertEqual(lf.sorted_canonical(m(["var", "A"])), ["var", "A"])          # A is u8 (wrapu8_of_u8)
+        self.assertEqual(lf.sorted_canonical(m(["var", "r_B"])), ["var", "r_B"])      # a cached register too
+        rd = ["CALL", "bus_read", ["var", "HL"]]
+        self.assertEqual(lf.sorted_canonical(m(rd)), rd)                               # a byte read is u8
+        self.assertEqual(lf.sorted_canonical(m(["var", "x1_v"])), m(["var", "x1_v"]))  # an int local: no law
+        self.assertEqual(lf.sorted_canonical(m(["var", "SP"])), m(["var", "SP"]))      # u16: the mask stays
+        two = ["ADD", rd, rd]
+        self.assertEqual(lf.sorted_canonical(m(two)), m(two))                          # two reads keep their order
+        self.assertGreater(self.rep["masks_removed"], 0)
+
     def test_lifted_blocks_match_the_interpreter(self):
         self.assertGreater(self.rep["blocks"], 3)
         diverged, runs = self._run_pair(self.mod)
