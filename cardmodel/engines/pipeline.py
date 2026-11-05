@@ -1220,7 +1220,10 @@ def _node_calls(home: str, mod: str, name: str) -> frozenset:
 
 
 GODEL_CORE = ("cardmodel.engines.godel", "cardmodel.engines.godel1931")
-FAMILY = frozenset({"primes", "nth_prime", "zig", "unzig", "term_content", "module_content", "card_content", "content",
+# the zigzag pair by the core's own names (a bare "zig" would read as the Zig language card: engines hold no language names)
+from .godel import unzig as _unzig, zig as _zig  # noqa: E402
+ZIGZAG = (_zig.__name__, _unzig.__name__)
+FAMILY = frozenset({"primes", "nth_prime", *ZIGZAG, "term_content", "module_content", "card_content", "content",
                     "tokens", "structural", "exponents", "from_tokens", "valuation", "sieve"})
 
 def _defs(tree) -> list[tuple[str, ast.AST]]:
@@ -1287,7 +1290,7 @@ def purity_findings(home: str | None = None) -> dict[str, str]:
             name = fn.name.lstrip("_")
             key = f"{rel}:{qual}"
             nodes = list(ast.walk(fn))
-            named = name in FAMILY or "prime" in name or "zig" in name
+            named = name in FAMILY or "prime" in name or ZIGZAG[0] in name
             similar = ("jaccard" in name or "similar" in name) and "content" in seg(fn)
             core = {c for c in f.calls(fn.body, {fn.name}) if c[0] in GODEL_CORE} if named or similar else set()
             pv = set()
