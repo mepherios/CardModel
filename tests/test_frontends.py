@@ -380,5 +380,48 @@ class Cli(unittest.TestCase):
         self.assertIn("gcd(int64_t a, int64_t b)", p.stdout)
 
 
+class BareListAnnotation(unittest.TestCase):
+    """A parameter annotated with bare ``list`` takes its element type from the body: list[int], then list[float],
+    the first whose lift is witnessed against the source; the lift is marked inferred_types."""
+    SRC = (
+        "def mean(xs: list) -> float:\n"
+        "    t = 0\n"
+        "    for x in xs:\n"
+        "        t += x\n"
+        "    return t / len(xs)\n\n"
+        "def half(xs: list) -> float:\n"
+        "    t = xs[0]\n"
+        "    t = t * 0.5\n"
+        "    return t\n\n"
+        "def smean(xs: list) -> float:\n"
+        "    return sum(xs) / len(xs)\n")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.ctx = model_ctx()
+        cls.lifted = lift_source(cls.SRC, cls.ctx.ops)
+        cls.by = {lf.name: lf for lf in cls.lifted}
+
+    def test_mean_infers_and_witness_agrees(self):
+        from cardmodel.engines import translate
+        for name, want in (("mean", "list[int]"), ("half", "list[float]")):
+            lf = self.by[name]
+            self.assertTrue(lf.ok, lf.reasons)
+            self.assertTrue(lf.inferred_types)
+            self.assertEqual(lf.ir["params"][0]["type"], want)
+        card = translate.function_card(self.ctx, "mean", self.lifted, "bare.py", seed=SEED)
+        fid = card["verification"]["lift_fidelity"]
+        self.assertGreater(fid["checked"], 0)
+        self.assertEqual(fid["mismatched"], 0)
+        interp = Interpreter(module_for("mean", self.lifted), self.ctx.ops)
+        self.assertEqual(interp.call("mean", [[1, 2, 3, 4]]), 2.5)
+
+    def test_undecidable_says_annotate(self):
+        lf = self.by["smean"]
+        self.assertFalse(lf.ok)
+        self.assertIn("annotate as list[int] or list[float]", lf.reasons[0])
+        self.assertIn("type annotation 'list'", lf.reasons[0])
+
+
 if __name__ == "__main__":
     unittest.main()

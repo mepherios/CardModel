@@ -35,7 +35,7 @@ liftable with no code change.
 Untyped parameters (Ruby, Lua, JavaScript, PHP, Julia) are inferred by retrying: a parameter starts as `int`
 (JavaScript: `float` unless the function uses BigInt) and is retyped when its use says otherwise. Used in a
 condition it becomes `bool`, passed to `x.to_i` or `math.floor` it becomes `float`, and passed to a typed function
-or helper it takes that type. Such lifts are marked `inferred_types`.
+or helper it takes that type. Such lifts are marked `inferred_types`. A parameter annotated with bare `list` gets its element type the same way: `list[int]`, then `list[float]`, the first whose lift lifts and agrees with the source on seeded inputs; when neither does, the reason says `annotate as list[int] or list[float]`.
 
 ## Every lift is witnessed
 

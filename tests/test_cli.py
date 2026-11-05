@@ -5,7 +5,7 @@ import unittest
 from helpers import SEED, TempProject
 
 SRC = {"lib/calc.py": "def tri(n: int) -> int:\n    t = 0\n    for i in range(n):\n        t += i\n    return t\n\n"
-                      "def scale(x: int) -> int:\n    return x * 2 + 0\n\ndef bad(xs: list) -> int:\n    return 0\n"}
+                      "def scale(x: int) -> int:\n    return x * 2 + 0\n\ndef bad(xs: dict) -> int:\n    return 0\n"}
 
 
 class CLI(unittest.TestCase):
