@@ -559,11 +559,11 @@ class Emitter:
         prints = harness.get("print") or {}
 
         def readable(n: str) -> bool:
-            return all(p["type"] in reads for p in fdefs[n]["params"]) and fdefs[n]["returns"] in prints
+            return all(p["type"] in reads for p in fdefs[n]["params"]) and carrier(fdefs[n]["returns"]) in prints
         blocks = [n for n in (entries or []) if n in names and (n in groups or readable(n))]
         blocks += [n for n in groups if n not in blocks]
         for n in groups:
-            if fdefs[n]["returns"] not in prints:
+            if carrier(fdefs[n]["returns"]) not in prints:
                 raise EmitGap(f"{self.lang_name}: no print template for {fdefs[n]['returns']}")
             if not readable(n):
                 return None
@@ -599,7 +599,7 @@ class Emitter:
                 declare(a, p["type"], reads[p["type"]], 2)
                 args.append(self.arg(self.var(a), p["type"]))
             text = call_tpl.format(name=self.ident(n), args=sep.join(args))
-            lines.append(ind * 2 + prints[fn["returns"]].format(e=text) + "\n")
+            lines.append(ind * 2 + prints[carrier(fn["returns"])].format(e=text) + "\n")
             inc, _ = self.expr(["ADD", ["var", k], ["int", 1]], types)
             lines.append(ind * 2 + self.tmpl("assign", name=self.var(k), value=inc) + "\n")
             if self.cg.get("end_while"):
