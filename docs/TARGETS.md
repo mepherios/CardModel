@@ -314,6 +314,7 @@ is a limit, not a gap: it is what "natively" can mean on a real device (ROADMAP 
   minting the `LEAN_*` and ARM atoms, and adopting Unreal's identities as ledger events.
 * Whether ENVIRONMENTS.md's D15 to D18 and A8 are adopted into FOUNDATIONS.md as written, and whether the user's
   Mac is the first device in reach for the transfer judgment.
+* All pending owner decisions are tabulated in [DECISIONS_PENDING.md](DECISIONS_PENDING.md).
 * The merge order of the open PRs: #4 brings CI and should go first so that #18, #20, #25 and #27 run under it.
 
 ## 8. Sources
