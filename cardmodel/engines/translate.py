@@ -30,7 +30,7 @@ from ..kernel import resources
 
 from . import godel as G
 from . import values as V
-from .codegen import EmitGap, Emitter, emit_module, predicted_gap
+from .codegen import EmitGap, Emitter, emit_module, predicted_gap, ranked_content
 from .context import Ctx
 from .frontend_python import Lifted, lift_source, module_for
 from .ir import Interpreter, StepLimit, elem_type
@@ -197,9 +197,10 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
         [{"name": f"{lang}_source", "lang": lang, "entry": name, "cost": 1.0, "runnable": True, "original": True,
           "code": ref_src, "notes": "the observed original (witnessed by frontends.witness_source)"}]
     content = G.module_content(module, ctx.ops)
+    ranked = ranked_content(ctx.ops, module)        # the same content at rank level: a gap at one rank is seen too
     gaps, predicted = {}, {}
     for lang in ctx.codegen_languages():
-        missing = predicted_gap(content, ctx.language_gap(lang)) if PREDICT_GAPS else []
+        missing = predicted_gap(ranked, ctx.language_gap(lang)) if PREDICT_GAPS else []
         if missing:                        # known from the content: the language has no template for these atoms
             predicted[lang] = missing
             gaps[lang] = f"{lang}: no template for {', '.join(missing)} (predicted from the content)"
@@ -219,7 +220,7 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
         "ir": module, "generators": gens,
         "vectors": [{"args": r["args"], "out": r["out"]} for r in rows if V.same(r["out"], r["ir_out"])],
         "forms": forms, "emit_gaps": gaps, "predicted_gaps": predicted,
-        "godel": {"content": dict(content), "read_from": "its IR"},
+        "godel": {"content": dict(content), "ranks": dict(ranked), "read_from": "its IR"},
         "depends_on": sorted(G.support(content)),
         "status": "suspect",
         "verification": {"lift_fidelity": {"checked": len(rows), "mismatched": len(mismatched),
@@ -235,6 +236,7 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
     module = card["ir"]
     entry = module["entry"]
     content = G.module_content(module, ctx.ops)
+    ranked = ranked_content(ctx.ops, module)        # the same content at rank level: a gap at one rank is seen too
     ref_form = next((f for f in card["forms"] if f["name"] == "python_source"), None)
     if ref_form is None:                      # card-language functions: the IR itself is the reference
         interp = Interpreter(module, ctx.ops, step_limit=STEP_BUDGET)
@@ -266,7 +268,7 @@ def verify_function(ctx: Ctx, card: dict, langs: list[str] | None = None, seed: 
         skipped = len(rows) - len(usable)
         if not usable:
             return lang, {"status": "no_inputs", "out_of_width": skipped}
-        missing = predicted_gap(content, ctx.language_gap(lang)) if PREDICT_GAPS else []
+        missing = predicted_gap(ranked, ctx.language_gap(lang)) if PREDICT_GAPS else []
         if missing:
             return lang, {"status": "gap", "reason": f"{lang}: no template for {', '.join(missing)} (predicted "
                                                      f"from the content)"}

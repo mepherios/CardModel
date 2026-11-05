@@ -28,7 +28,7 @@ from typing import Callable
 from . import godel as G
 from . import translate
 from . import values as V
-from .codegen import EmitGap, emit_module, predicted_gap
+from .codegen import EmitGap, emit_module, predicted_gap, ranked_content
 from .context import Ctx
 from .ir import Interpreter, IRError, StepLimit
 
@@ -169,7 +169,7 @@ def round_trip(ctx: Ctx, card: dict, target: str) -> dict:
     fe = FRONTENDS.get(target)
     if fe is None or fe.lift_text is None:
         return {"status": "no_frontend"}
-    missing = predicted_gap(G.module_content(card["ir"], ctx.ops), ctx.language_gap(target)) \
+    missing = predicted_gap(ranked_content(ctx.ops, card["ir"]), ctx.language_gap(target)) \
         if translate.PREDICT_GAPS else []
     if missing:
         return {"status": "gap", "reason": f"{target}: no template for {', '.join(missing)} (predicted from the content)"}
