@@ -57,14 +57,17 @@ class LinearClosure(unittest.TestCase):
         self.assertLess(took, 1.5, f"closure over a {n}-deep chain took {took:.2f} s")
         f1 = next(lf for lf in lifted if lf.name == "f1")
         self.assertEqual(list(f1.opaque), ["f0"])
-        # f0 without a declared result cannot be a boundary (callers could not be typed): the failure spreads, linearly
+        # f0 without a declared result cannot be a boundary (f1 could not be typed against it): f1 fails, and f1,
+        # whose body lifted with a known result, is the boundary its own callers lift against
         t = time.perf_counter()
         lifted = lift_source(src + "def f0(x: int):\n    return open(x)\n", model_ctx().ops)
         took = time.perf_counter() - t
-        self.assertEqual(sum(lf.ok or lf.partial for lf in lifted), 0)
         self.assertLess(took, 1.5, f"closure over a {n}-deep chain took {took:.2f} s")
-        f1 = next(lf for lf in lifted if lf.name == "f1")
-        self.assertIn("calls f0 which did not lift", f1.reasons)
+        by = {lf.name: lf for lf in lifted}
+        self.assertFalse(by["f1"].ok or by["f1"].partial)
+        self.assertIn("calls f0 which did not lift", by["f1"].reasons)
+        self.assertEqual(list(by["f2"].opaque), ["f1"])
+        self.assertEqual(sum(lf.partial for lf in lifted), n - 2)
 
 
 class PythonProject(unittest.TestCase):
