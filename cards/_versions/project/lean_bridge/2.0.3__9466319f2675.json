@@ -1,0 +1,71 @@
+{
+  "blockers": [
+    "the readable-proof and definition work waits on MATH_CORE.md's approval"
+  ],
+  "branches": [],
+  "category": "project",
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "done": [
+    "fail-closed batch checking",
+    "faithful import with Lean semantics",
+    "derivations as Lean terms",
+    "theorems carry one identity per statement (engines/theorems.py, #90): 1,650 theorem cards are 1,586 statements; a settled law or kept Lean proof is reused by identity, not proved again",
+    "theorems keyed by identity: one identity per statement up to the names of its variables, a Lean proof kept under it (the lean_proofs state) and never repeated, settled laws taken from the store"
+  ],
+  "goal": "Lean as the proof kernel of the model, with proofs a person can read.",
+  "in_progress": [],
+  "kind": "research",
+  "left": [
+    "the other 67 rewrite rules",
+    "readable proofs (MATH_CORE.md)",
+    "proofs linking emitted code to definitions"
+  ],
+  "metadata": {
+    "previous_content_hash": "36e226ac36ff6c700cc9b9d27e42a23dbc257094bc097ed149eb06bd717dab79",
+    "version": "2.0.3",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "goal": "G_K1_theorems_proved",
+      "label": "theorems proved"
+    },
+    {
+      "goal": "G_K2_lean_imported",
+      "label": "Lean theorems read faithfully"
+    },
+    {
+      "format": "{proved}/{total} rewrite rules proved",
+      "label": "rule proofs",
+      "verify": "proofs"
+    }
+  ],
+  "name": "lean_bridge",
+  "next_steps": [
+    "prove the remaining rewrite rules"
+  ],
+  "order": 11,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cardmodel/emit/lean.py",
+    "cardmodel/emit/lean_import.py",
+    "cardmodel/emit/lean_logic.py",
+    "cardmodel/emit/lean_chain.py",
+    "cardmodel/engines/theorems.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "1579 theorem cards proved, 1489 Lean core theorems read faithfully, 47 of 114 rewrite rules proved.",
+  "statement": "Lean as the proof kernel: theorems, derivations and Lean's own library as cards, re-proved by the model's tactics.",
+  "tier": 1,
+  "title": "The Lean bridge",
+  "updated": "2026-11-05T12:30:00+01:00",
+  "user_actions": []
+}
