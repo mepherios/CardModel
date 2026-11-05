@@ -1780,6 +1780,38 @@ def _julia_short_fn(p: Parser, line) -> FnDef:
     return FnDef(name, params, ret, [{"k": "return", "value": e, "line": line}], line, line, expr_body=True)
 
 
+def param_labels(src: str, d: Dialect, name: str, keyword: str = "func") -> list | None:
+    """Swift: the argument label a call must spell for each parameter of ``func name`` (None where it is ``_``):
+    ``func scale(_ x: Int, by f: Double)`` -> [None, "by"]; ``func f(a: Int)`` -> ["a"]. None if not found."""
+    toks = [t for t in tokenize(src, d) if t.kind not in ("nl", "eof")]
+    for i in range(len(toks) - 2):
+        if not (toks[i].kind == "id" and toks[i].text == keyword and toks[i + 1].text == name):
+            continue
+        j = i + 2
+        if toks[j].text == "<":                             # generic parameters
+            while j < len(toks) and toks[j].text != ">":
+                j += 1
+            j += 1
+        if j >= len(toks) or toks[j].text != "(":
+            continue
+        labels: list = []
+        depth, start = 0, True
+        for t in toks[j + 1:]:
+            if t.kind == "op" and t.text in ")]}" and depth == 0:
+                return labels
+            if depth == 0 and start and t.kind == "id":
+                labels.append(None if t.text == "_" else t.text)
+                start = False
+            elif depth == 0 and t.kind == "op" and t.text == ",":
+                start = True
+            elif t.kind == "op" and t.text in "([{":
+                depth += 1
+            elif t.kind == "op" and t.text in ")]}":
+                depth -= 1
+        return None
+    return None
+
+
 def _params(p: Parser, d: Dialect) -> list:
     if d.name == "ruby" and not p.at("("):
         params = []

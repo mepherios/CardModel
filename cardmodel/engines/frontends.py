@@ -136,11 +136,17 @@ def source_program(ctx: Ctx, lang: str, source: str, module: dict, calls: list,
     lines = []
     cast = fh.get("arg_cast")
     types = list(src_types or [])
+    labels = []
+    if fh.get("arg_label"):                     # Swift: `scale(3, by: 2.0)`, labels read from the declaration
+        from .frontend_text import DIALECTS, param_labels
+        labels = param_labels(source, DIALECTS[lang], name) or []
 
     def arg(i, p, a):
         text = lit(p["type"], a)
         if cast and i < len(types) and types[i]:
             text = cast.format(type=types[i], v=text)
+        if i < len(labels) and labels[i]:
+            text = fh["arg_label"].format(label=labels[i], v=text)
         return text
 
     for args in calls:

@@ -227,6 +227,22 @@ class Witness(unittest.TestCase):
         res = F.witness_source(ctx, lang, src, module, [[-7, 2], [7, -2], [9, 4]])
         self.assertEqual(res["status"], "fail", res)
 
+    def test_swift_harness_spells_argument_labels(self):
+        """`func scale(_ x: Int, by f: Double)` is called `scale(x, by: f)`; no toolchain needed to check the text."""
+        from cardmodel.engines.frontend_text import DIALECTS, param_labels
+        swift = DIALECTS["swift"]
+        self.assertEqual(param_labels("func f(a: Int, _ b: Int, c d: [Int] = [1, 2]) -> Int { 0 }", swift, "f"),
+                         ["a", None, "c"])
+        self.assertEqual(param_labels("func g<T>(_ x: T) -> T { x }", swift, "g"), [None])
+        self.assertIsNone(param_labels("func g(_ x: Int) -> Int { x }", swift, "h"))
+        ctx = model_ctx()
+        lang, src, lifted = _lift_file(ctx, "algos.swift")
+        types = {lf.name: lf.src_types for lf in lifted}
+        prog = F.source_program(ctx, lang, src, module_for("scale", lifted), [[3, 2.5]], types["scale"])
+        self.assertIn("scale(Int((3)), by: Double((2.5)))", prog)
+        prog = F.source_program(ctx, lang, src, module_for("gcd", lifted), [[12, 18]], types["gcd"])
+        self.assertIn("gcd(Int((12)), Int((18)))", prog)
+
     def test_unavailable_toolchain_is_reported(self):
         ctx = model_ctx()
         lang, src, lifted = _lift_file(ctx, "algos.zig")      # zig: a frontend, but no harness to run it yet
