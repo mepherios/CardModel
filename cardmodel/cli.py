@@ -456,6 +456,7 @@ def cmd_translate(args) -> int:
             lines.append(f"  {lf.name:<22} not lifted: {'; '.join(lf.reasons)}")
             continue
         card = translate.function_card(ctx, lf.name, lifted, Path(args.file).name, seed=seed, lang=lang)
+        card["provenance"]["source_lang"] = lang       # function_card's emit loop re-binds its `lang`
         rep = translate.verify_function(ctx, card, langs=langs, seed=seed)
         if lang != "python":            # the lift itself, witnessed against the original source's own toolchain
             rows = [v["args"] for v in card["vectors"]] + frontends.sample_inputs(card["ir"], 12, seed)

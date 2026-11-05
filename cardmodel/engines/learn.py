@@ -6,16 +6,22 @@
      call      a frequent fallback call (``CALL_GENERIC``) becomes a named
                call card. Method calls are generalised by their tail
                (``x.get(...)`` / ``self.cfg.get(...)`` -> ``.get``).
-     function  every liftable Python function becomes a function card
-               with forms in every available language (translate.py).
+     function  every liftable function becomes a function card with forms
+               in every available language (translate.py): Python's, and
+               those of every language a frontend reads (C, Go, Rust, Java,
+               ...), lifted as one project so calls across files resolve.
      rewrite   an expression with a cheaper equivalent under the rule cards
                (search.optimize), checked numerically; advisory only, source
                files are never edited (hub L3).
 3. verify    function cards run in every language against the observed
-             Python; rewrite suggestions are evaluated on seeded inputs.
+             Python (or, for another source language, against the IR, whose
+             lift is itself witnessed by running the ORIGINAL source through
+             its own toolchain: frontends.witness_source); rewrite
+             suggestions are evaluated on seeded inputs.
 4. promote   only with evidence (CM04): calls seen >= 3 times in >= 2 files,
              functions whose lift is faithful and that agree in >= 3
-             implementations, rewrites that passed their numeric check.
+             implementations (a non-Python source's lift also passed its
+             source witness), rewrites that passed their numeric check.
              Promoted cards cite the observation and the run (seed) they came
              from (CM15: confidence + evidence_count). Everything else stays
              in ``proposal/`` with the reason it is not ready.
@@ -95,26 +101,48 @@ def propose_functions(ctx: Ctx, obs: dict, base: Path, seed: int, max_functions:
     by_file = defaultdict(list)
     for f in obs.get("functions") or []:
         if f["liftable"]:
-            by_file[f["file"]].append(f["name"])
+            by_file[(f.get("language") or "python", f["file"])].append(f)
     done = 0
-    for relp, names in sorted(by_file.items()):
-        src = (base / relp).read_text(encoding="utf-8")
-        lifted = lift_source(src, ctx.ops)
-        for name in names:
+    project = None
+    for (src_lang, relp), fns in sorted(by_file.items()):
+        if src_lang == "python":
+            lifted = lift_source((base / relp).read_text(encoding="utf-8"), ctx.ops)
+        elif project is None:
+            project = _project(ctx, obs, base)
+        for f in fns:
+            name = f["name"]
             if done >= max_functions:
                 return out
-            card = function_card(ctx, name, lifted, f"{obs['root']}/{relp}", seed=seed)
+            witness = None
+            if src_lang == "python":
+                card = function_card(ctx, name, lifted, f"{obs['root']}/{relp}", seed=seed)
+            else:
+                qual = f.get("qual") or f"{relp}::{name}"
+                if qual not in project.functions or not project.functions[qual].ok:
+                    continue
+                lifted, source = _module_lifted(project, qual, base)
+                card = function_card(ctx, name, lifted, f"{obs['root']}/{relp}", seed=seed, lang=src_lang)
+                card["provenance"]["source_lang"] = src_lang   # function_card's emit loop re-binds its `lang`
             if known is not None and known(card["name"]):
                 continue
             done += 1
+            if src_lang != "python":
+                from . import frontends
+                rows = [v["args"] for v in card["vectors"]] + frontends.sample_inputs(card["ir"], 12, seed)
+                witness = frontends.witness_source(ctx, src_lang, source, card["ir"], rows,
+                                                   project.functions[qual].src_types)
+                card["verification"]["source_witness"] = witness
             rep = verify_function(ctx, card, langs=langs, seed=seed)
             agreeing = rep["agreeing_languages"]
             checks = min((r.get("checks", 0) for r in rep["languages"].values() if r["status"] == "pass"),
                          default=0)
-            faithful = card["verification"]["lift_fidelity"]["mismatched"] == 0 and rep["lift_mismatches"] == 0
+            faithful = card["verification"]["lift_fidelity"]["mismatched"] == 0 and rep["lift_mismatches"] == 0 \
+                and (witness is None or witness["status"] == "pass")
             failing = sorted(k for k, v in rep["languages"].items() if v["status"] in ("fail", "error"))
             ready = (faithful and len(agreeing) >= MIN_AGREEING and checks >= MIN_EVIDENCE
                      and not (strict and failing))
+            witnessed = "" if witness is None else f", {src_lang} source {witness['status']}" + \
+                (f" ({witness['checks']} checks)" if witness.get("checks") else "")
             card["verification"].update({"run": {k: v for k, v in rep.items() if k != "languages"},
                                          "languages": {k: {kk: vv for kk, vv in v.items()
                                                            if kk in ("status", "checks", "out_of_width", "args",
@@ -125,8 +153,9 @@ def propose_functions(ctx: Ctx, obs: dict, base: Path, seed: int, max_functions:
                                 "evidence_count": checks, "agreeing_languages": agreeing}
             card["provenance"]["learning_loop_refs"] = [f"observation/{obs['name']}"]
             out.append({"kind": "function", "ready": ready, "candidate": card,
-                        "reason": "faithful lift; agrees in " + ", ".join(agreeing) if ready else
-                        f"faithful={faithful}, agreeing={agreeing}, checks={checks}, failing={failing}",
+                        "reason": "faithful lift; agrees in " + ", ".join(agreeing) + witnessed if ready else
+                        f"faithful={faithful}, agreeing={agreeing}, checks={checks}, failing={failing}"
+                        + witnessed,
                         "xleq": {"name": f"xleq_{card['name']}", "category": "xleq", "tier": 3,
                                  "subject": f"function/{card['name']}", "languages": agreeing,
                                  "confidence": "established" if ready and checks >= 3 else "tentative",
@@ -135,6 +164,55 @@ def propose_functions(ctx: Ctx, obs: dict, base: Path, seed: int, max_functions:
                                  "provenance": {"learning_loop_refs": [f"observation/{obs['name']}"],
                                                 "tool": "cardmodel learn"}}})
     return out
+
+
+def _project(ctx: Ctx, obs: dict, base: Path):
+    """The non-Python functions of the observation, lifted together (calls across files resolve)."""
+    from .lift_project import lift_files
+    files = sorted({(base / f["file"], f["language"]) for f in obs.get("functions") or []
+                    if f.get("language") not in (None, "", "python") and f.get("file")})
+    return lift_files(ctx, files, methods=False, root=base)
+
+
+def _module_lifted(project, qual: str, base: Path) -> tuple[list, str]:
+    """``qual`` and everything it calls as a list of lifted functions with bare names (translate.function_card's
+    input), and one source text that defines them all for the source witness: the entry's file as written when
+    nothing crosses files; otherwise (C, C++) the module's own functions under the file's preprocessor lines, each
+    declared first, and (other languages) the file with the callees' definitions after its imports."""
+    import copy
+
+    from .lift_project import _mangle
+    module = project.module_for(qual)
+    home = qual.rsplit("::", 1)[0]
+    by_bare = {}
+    for q, lf in project.functions.items():
+        by_bare.setdefault(lf.name, []).append(q)
+    lifted, extra = [], []
+    for fn in module["functions"]:
+        q = qual if fn["name"] == module["entry"] else \
+            next((x for x in by_bare.get(fn["name"], []) if x.rsplit("::", 1)[0] == home), None) or \
+            next(iter(by_bare.get(fn["name"], [])), None) or \
+            next((x for x in project.functions if _mangle(x) == fn["name"]), None)     # two files, one name
+        if q is None:
+            continue
+        lf = copy.copy(project.functions[q])
+        lf.ir, lf.name = fn, fn["name"]
+        lifted.append(lf)
+        if q.rsplit("::", 1)[0] != home:
+            extra.append(lf.source)
+    text = (base / home).read_text(encoding="utf-8")
+    if extra and lifted and lifted[0].lang in ("c", "cpp"):
+        # the home file's other functions may call into files of their own: the witness compiles the module alone,
+        # under the home file's preprocessor lines, every function declared before any is defined
+        pre = [ln for ln in text.splitlines() if ln.lstrip().startswith("#")]
+        protos = [lf.source[:lf.source.index("{")].strip() + ";" for lf in lifted if "{" in lf.source]
+        return lifted, "\n".join(pre + [""] + protos + [""] + [lf.source for lf in lifted]) + "\n"
+    if extra:
+        lines = text.splitlines()
+        at = max((i + 1 for i, ln in enumerate(lines) if ln.lstrip().startswith(("#", "import ", "package ",
+                                                                                   "use "))), default=0)
+        text = "\n".join(lines[:at] + ["", *extra, ""] + lines[at:]) + "\n"
+    return lifted, text
 
 
 def propose_rewrites(ctx: Ctx, root: Path, seed: int, limit: int = 60) -> list[dict]:

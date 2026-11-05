@@ -203,6 +203,7 @@
   "family": "c_like",
   "frontend": "cardmodel.engines.frontend_text",
   "frontend_harness": {
+    "list_lit": "(({elem}[]){{{items}}})",
     "replace": [
       [
         "\\bint\\s+main\\s*\\(",
