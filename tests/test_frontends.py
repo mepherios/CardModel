@@ -229,7 +229,7 @@ class Witness(unittest.TestCase):
 
     def test_unavailable_toolchain_is_reported(self):
         ctx = model_ctx()
-        lang, src, lifted = _lift_file(ctx, "algos.kt")
+        lang, src, lifted = _lift_file(ctx, "algos.zig")      # zig: a frontend, but no harness to run it yet
         module = module_for("gcd", lifted)
         res = F.witness_source(ctx, lang, src, module, [[12, 18]])
         self.assertIn(res["status"], ("no_harness", "unavailable"))
