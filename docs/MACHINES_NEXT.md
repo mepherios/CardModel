@@ -77,7 +77,7 @@ stored definitions with a Gödel identity (0 today).
 * What: emulation's lifted engine runs on no cartridge in any pipeline stage (G_A13 = 1). Add a stage that
   lifts and runs a small ROM: the Game Boy `busy_rom` (already the #60 benchmark) or the DS `check_image`.
 * Cost: small for the Game Boy (a few seconds; quick verify must stay quick), and the stage must reach the
-  lifter's modules in `engines/pipeline.py`'s call graph. A DS run costs more and belongs in full verify only.
+  lifter's modules in `engines/pipeline.py`'s call graph (in PR #55). A DS run costs more and belongs in full verify only.
 * Unlocks: G_A13 → 0 (34 of 34 fully); the lifter's masks and its agreement with the interpreter become a
   checked number every cycle instead of a one-off.
 * Measurement: G_A13; the stage's time; lifted vs interpreted state after N frames; `masks_removed`.
