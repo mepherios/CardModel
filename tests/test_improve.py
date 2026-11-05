@@ -117,6 +117,14 @@ class Improve(unittest.TestCase):
         self.assertEqual(rep["optimized_source"], src)               # back to the original, byte for byte
         self.assertGreaterEqual(calls["n"], 2)
 
+    def test_list_parameter_is_kept_not_a_crash(self):
+        src = "def total(xs: list[int]) -> int:\n    s = 0\n    for x in xs:\n        s = s + x\n    return s\n"
+        rep = improve.improve_source(self.ctx, src, "l.py", seed=SEED, samples=12, native=False)
+        f = rep["functions"]["total"]
+        self.assertEqual(f["action"], "kept", f)
+        self.assertIn("not improvable: list parameter", f["reason"])
+        self.assertEqual(rep["optimized_source"], src)
+
     def test_native_forms_for_every_language(self):
         rep = improve.improve_source(self.ctx, "def tri(n: int) -> int:\n    t = 0\n    for i in range(n):\n"
                                                "        t += i\n    return t\n", "t.py", seed=SEED, samples=12)
