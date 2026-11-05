@@ -709,10 +709,18 @@ def structural(t, ops, index, max_digits: int | None = STRUCTURAL_MAX_DIGITS) ->
     digits = int(sum(code * math.log10(nth_prime(i)) for i, code in enumerate(toks, start=1))) + 1
     if max_digits is not None and digits > max_digits:
         return None, varnames, digits
+    n = number(toks)
+    return n, varnames, decimal_digits(n)
+
+
+def number(toks: list[int]) -> int:
+    """Gödel's positional number of a token list, ∏ p_i^c_i (p_1 = 2), iterative. The token list may be a forest's
+    (several terms' tokens concatenated, sharing one variable order), which ``structural`` cannot take. It builds the
+    integer, so callers bound its size first (``structural``'s max_digits; codes' BUILD_BITS)."""
     n = 1
     for i, code in enumerate(toks, start=1):
         n *= nth_prime(i) ** code
-    return n, varnames, decimal_digits(n)
+    return n
 
 
 def decimal_digits(n: int) -> int:

@@ -1,0 +1,70 @@
+{
+  "blockers": [],
+  "branches": [],
+  "category": "project",
+  "docs": [
+    "docs/KNOWLEDGE.md"
+  ],
+  "done": [
+    "canonical forms from behaviour",
+    "exact Gödel encode/decode",
+    "GCD of functions, cofactor identities",
+    "the append-only prime ledger and content vectors (MATH_CORE phase 0)",
+    "the prime ledger took two new atoms, op/TRUNCDIV and op/REM (17057a9, the text frontends): appended, no line rewritten"
+  ],
+  "goal": "Functions as algebra: canonical forms with Gödel numbers, and the common factors that carry logic.",
+  "in_progress": [
+    "MATH_CORE phase 1: definitions carry content vectors and structural numbers"
+  ],
+  "kind": "research",
+  "left": [
+    "homomorphism cards between sets",
+    "the physics set (units, dimensional analysis)",
+    "content from canonical terms instead of reference forms"
+  ],
+  "metadata": {
+    "previous_content_hash": "67f0fd6f33c59cd288c6e449502590be60ae6622ab88a10d0cc95777c2d07b59",
+    "version": "2.0.4",
+    "version_bump_reason": "patch"
+  },
+  "metrics": [
+    {
+      "goal": "G_K6_functional_identities",
+      "label": "identities between functions"
+    },
+    {
+      "cards": "functional_identity",
+      "label": "functional identity cards"
+    }
+  ],
+  "name": "godel_functions",
+  "next_steps": [
+    "definition cards with their Gödel numbers (phase 1)"
+  ],
+  "order": 12,
+  "owner": {
+    "name": "cardmodel main (integration)",
+    "session": "local_fcae30d2-ac51-4132-b69b-731309e141cc"
+  },
+  "paths": [
+    "cardmodel/engines/funcalg.py",
+    "stdlib/algebra.card",
+    "cards/functional_identity",
+    "cardmodel/engines/godel.py",
+    "cards/godel",
+    "cards/godel_set",
+    "cards/core_type",
+    "tools/seed_godel.py",
+    "tests/test_godel.py"
+  ],
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/seed_projects.py"
+  },
+  "standing": "The prime ledger (61 atoms, B0 and computation), content vectors for every op, function and algorithm card, exact structural numbers and maps with gaps are on main (law CM43).",
+  "statement": "Functions as algebra: canonical forms, Gödel numbers, the GCD of functions and the identities that carry between them.",
+  "tier": 1,
+  "title": "Gödel-numbered functions",
+  "updated": "2026-11-04T22:15:00+01:00",
+  "user_actions": []
+}

@@ -1,6 +1,8 @@
 {
   "blockers": [],
-  "branches": [],
+  "branches": [
+    "claude/godel-number-tokens"
+  ],
   "category": "project",
   "docs": [
     "docs/KNOWLEDGE.md"
@@ -23,8 +25,8 @@
     "content from canonical terms instead of reference forms"
   ],
   "metadata": {
-    "previous_content_hash": "67f0fd6f33c59cd288c6e449502590be60ae6622ab88a10d0cc95777c2d07b59",
-    "version": "2.0.4",
+    "previous_content_hash": "bd62310766677880a30fe1a3232e58847419a708ef50ec330d8c7e28f87dbb14",
+    "version": "2.0.5",
     "version_bump_reason": "patch"
   },
   "metrics": [
