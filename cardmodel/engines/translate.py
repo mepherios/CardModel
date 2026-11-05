@@ -213,18 +213,18 @@ def function_card(ctx: Ctx, name: str, lifted: list[Lifted], source_label: str, 
     st = structure(ctx, module)                     # identity, content and ranks: the same record on every builder
     needed = emission_content(ctx.ops, module)      # the ranks plus the wrap of every fixed-width store
     gaps, predicted = {}, {}
-    for lang in ctx.codegen_languages():
-        missing = predicted_gap(needed, ctx.language_gap(lang)) if PREDICT_GAPS else []
+    for target in ctx.codegen_languages():
+        missing = predicted_gap(needed, ctx.language_gap(target)) if PREDICT_GAPS else []
         if missing:                        # known from the content: the language has no template for these atoms
-            predicted[lang] = missing
-            gaps[lang] = f"{lang}: no template for {', '.join(missing)} (predicted from the content)"
+            predicted[target] = missing
+            gaps[target] = f"{target}: no template for {', '.join(missing)} (predicted from the content)"
             continue
         try:
-            code = emit_module(ctx.store, ctx.ops, lang, module)
-            forms.append({"name": lang, "lang": lang, "entry": name, "cost": 1.0, "runnable": True,
+            code = emit_module(ctx.store, ctx.ops, target, module)
+            forms.append({"name": target, "lang": target, "entry": name, "cost": 1.0, "runnable": True,
                           "code": code, "generated": True})
         except EmitGap as exc:
-            gaps[lang] = str(exc)
+            gaps[target] = str(exc)
     digest = hashlib.sha256(ref_src.encode()).hexdigest()[:12]
     return {
         "name": f"fn_{name}_{digest}", "category": "function", "tier": 2,

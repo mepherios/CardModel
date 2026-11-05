@@ -4,7 +4,7 @@ from collections import Counter
 
 from helpers import SEED, SLOW, model_ctx, seed_note
 
-from cardmodel.engines import translate
+from cardmodel.engines import frontends, translate
 from cardmodel.engines.codegen import EmitGap, emit_module
 from cardmodel.engines.frontend_python import lift_source, module_for
 from cardmodel.engines.ir import Interpreter
@@ -277,6 +277,16 @@ class Identity(unittest.TestCase):
 
 
 class Translate(unittest.TestCase):
+    def test_card_records_the_source_language(self):
+        """A function lifted from C is recorded as C, not as the last language codegen emitted."""
+        ctx = model_ctx()
+        src = "#include <stdint.h>\nint64_t add3(int64_t a, int64_t b) { return a + b + 3; }\n"
+        lifted = frontends.lift(ctx, src, "c")
+        card = translate.function_card(ctx, "add3", lifted, "add3.c", seed=SEED, lang="c")
+        self.assertEqual(card["provenance"]["source_lang"], "c")
+        self.assertEqual([f["name"] for f in card["forms"] if f.get("original")], ["c_source"])
+        self.assertTrue(any(f.get("generated") for f in card["forms"]))
+
     def test_functions_agree_across_languages(self):
         ctx = model_ctx()
         lifted = lift_source(SRC, ctx.ops)
