@@ -205,15 +205,27 @@ class Witness(unittest.TestCase):
                 continue
             if not ctx.available(lang)[0]:
                 continue
+            if not ctx.language(lang).get("runner"):
+                continue            # recognised only (Zig): its toolchain may be installed, but nothing runs it
             for lf in lifted:
                 if not lf.ok:
                     continue
                 module = module_for(lf.name, lifted)
-                res = F.witness_source(ctx, lang, src, module, F.sample_inputs(module, 12, SEED), lf.src_types)
+                res = F.witness_source(ctx, lang, src, module, F.sample_inputs(module, 12, SEED), lf.src_types,
+                                        lf.src_labels)
                 self.assertEqual(res["status"], "pass", f"{name} {lf.name}: {res} {seed_note(self)}")
                 ran += 1
         if ran == 0:
             self.skipTest("no source toolchain on this host")
+
+    def test_swift_harness_writes_argument_labels(self):
+        """`func scale(_ x: Int, by f: Double)` is called as scale(2, by: 1.5): the harness keeps the labels."""
+        ctx = model_ctx()
+        lang, src, lifted = _lift_file(ctx, "algos.swift")
+        lf = next(x for x in lifted if x.name == "scale")
+        self.assertEqual(lf.src_labels, [None, "by"])
+        prog = F.source_program(ctx, lang, src, module_for("scale", lifted), [[2, 1.5]], lf.src_types, lf.src_labels)
+        self.assertIn("scale(Int((2)), by: Double((1.5)))", prog)
 
     def test_wrong_lift_is_caught(self):
         """A lift that read C's `/` as floor division must fail the witness on negative operands (CM07)."""
@@ -226,22 +238,6 @@ class Witness(unittest.TestCase):
         module = eval(bad)  # noqa: S307 -- our own repr of a dict of lists
         res = F.witness_source(ctx, lang, src, module, [[-7, 2], [7, -2], [9, 4]])
         self.assertEqual(res["status"], "fail", res)
-
-    def test_swift_harness_spells_argument_labels(self):
-        """`func scale(_ x: Int, by f: Double)` is called `scale(x, by: f)`; no toolchain needed to check the text."""
-        from cardmodel.engines.frontend_text import DIALECTS, param_labels
-        swift = DIALECTS["swift"]
-        self.assertEqual(param_labels("func f(a: Int, _ b: Int, c d: [Int] = [1, 2]) -> Int { 0 }", swift, "f"),
-                         ["a", None, "c"])
-        self.assertEqual(param_labels("func g<T>(_ x: T) -> T { x }", swift, "g"), [None])
-        self.assertIsNone(param_labels("func g(_ x: Int) -> Int { x }", swift, "h"))
-        ctx = model_ctx()
-        lang, src, lifted = _lift_file(ctx, "algos.swift")
-        types = {lf.name: lf.src_types for lf in lifted}
-        prog = F.source_program(ctx, lang, src, module_for("scale", lifted), [[3, 2.5]], types["scale"])
-        self.assertIn("scale(Int((3)), by: Double((2.5)))", prog)
-        prog = F.source_program(ctx, lang, src, module_for("gcd", lifted), [[12, 18]], types["gcd"])
-        self.assertIn("gcd(Int((12)), Int((18)))", prog)
 
     def test_unavailable_toolchain_is_reported(self):
         ctx = model_ctx()

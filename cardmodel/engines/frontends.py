@@ -96,7 +96,7 @@ def _rename_main(src: str, pattern: str, repl: str) -> str:
 
 
 def source_program(ctx: Ctx, lang: str, source: str, module: dict, calls: list,
-                   src_types: list | None = None) -> str:
+                   src_types: list | None = None, src_labels: list | None = None) -> str:
     """A complete program: the original ``source`` plus a harness that prints the entry's result for each call
     (the ``i:``/``f:``/``b:`` protocol of runners.run_program)."""
     card = resolve_language(ctx.store, lang)
@@ -136,17 +136,14 @@ def source_program(ctx: Ctx, lang: str, source: str, module: dict, calls: list,
     lines = []
     cast = fh.get("arg_cast")
     types = list(src_types or [])
-    labels = []
-    if fh.get("arg_label"):                     # Swift: `scale(3, by: 2.0)`, labels read from the declaration
-        from .frontend_text import DIALECTS, param_labels
-        labels = param_labels(source, DIALECTS[lang], name) or []
+    labels = list(src_labels or [])
 
     def arg(i, p, a):
         text = lit(p["type"], a)
         if cast and i < len(types) and types[i]:
             text = cast.format(type=types[i], v=text)
         if i < len(labels) and labels[i]:
-            text = fh["arg_label"].format(label=labels[i], v=text)
+            text = f"{labels[i]}: {text}"
         return text
 
     for args in calls:
@@ -171,7 +168,7 @@ def source_program(ctx: Ctx, lang: str, source: str, module: dict, calls: list,
 
 
 def witness_source(ctx: Ctx, lang: str, source: str, module: dict, inputs: list,
-                   src_types: list | None = None) -> dict:
+                   src_types: list | None = None, src_labels: list | None = None) -> dict:
     """Run the original source on ``inputs`` and compare with the IR interpreter (the lift's witness)."""
     entry = module["entry"]
     card = resolve_language(ctx.store, lang)
@@ -193,7 +190,8 @@ def witness_source(ctx: Ctx, lang: str, source: str, module: dict, inputs: list,
     if not usable:
         return {**res, "status": "no_inputs"}
     try:
-        src = source_program(ctx, lang, source, module, [r["args"] for r in usable], src_types)
+        src = source_program(ctx, lang, source, module, [r["args"] for r in usable], src_types,
+                             src_labels)
     except EmitGap as exc:
         return {**res, "status": "no_harness", "reason": str(exc)}
     if not card.get("runner"):
@@ -238,7 +236,8 @@ def register_matrix(matrix) -> None:
                     continue
                 card = translate.function_card(ctx, lf.name, lifted, path.name, seed=seed, lang=lang)
                 card["verification"]["source_witness"] = witness_source(
-                    ctx, lang, src, card["ir"], [v["args"] for v in card["vectors"]], lf.src_types)
+                    ctx, lang, src, card["ir"], [v["args"] for v in card["vectors"]], lf.src_types,
+                    lf.src_labels)
                 out.append(card)
             return out, gaps
         return cards

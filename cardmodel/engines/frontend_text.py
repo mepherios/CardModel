@@ -320,6 +320,7 @@ class Lifted:
     lineno: int = 0
     lang: str = ""
     src_types: list = field(default_factory=list)   # parameter types as the source spells them (harness casts)
+    src_labels: list = field(default_factory=list)  # argument labels a call writes (Swift's `scale(2, by: 1.5)`)
 
 
 # -- tokens ----------------------------------------------------------------------------------------------------------
@@ -493,6 +494,7 @@ class Parser:
         self.t = toks
         self.i = 0
         self.d = d
+        self.labels: list = []      # argument labels of the parameters _params read last (Swift)
         self.bin = {}
         for bp, ops in d.prec:
             for op in ops:
@@ -1581,6 +1583,7 @@ class FnDef:
     end_line: int
     error: str | None = None
     expr_body: bool = False
+    labels: list = field(default_factory=list)   # Swift: each parameter's argument label at a call (None: `_`)
 
 
 def find_functions(src: str, d: Dialect) -> list[FnDef]:
@@ -1690,7 +1693,7 @@ def _try_function(p: Parser, d: Dialect) -> FnDef | None:
             if d.name == "rust" and p.at("where"):
                 raise ParseError("where clause", line)
             body = p.block()
-        return FnDef(name, params, ret, body, line, p.peek(-1).line)
+        return FnDef(name, params, ret, body, line, p.peek(-1).line, labels=list(p.labels))
     # C, C++, Java, C#: Type name(params) { ... } — possibly inside a class
     if d.name in ("java", "csharp", "cpp", "kotlin") and w in ("class", "struct", "object", "namespace",
                                                                "interface", "enum", "record"):
@@ -1780,38 +1783,6 @@ def _julia_short_fn(p: Parser, line) -> FnDef:
     return FnDef(name, params, ret, [{"k": "return", "value": e, "line": line}], line, line, expr_body=True)
 
 
-def param_labels(src: str, d: Dialect, name: str, keyword: str = "func") -> list | None:
-    """Swift: the argument label a call must spell for each parameter of ``func name`` (None where it is ``_``):
-    ``func scale(_ x: Int, by f: Double)`` -> [None, "by"]; ``func f(a: Int)`` -> ["a"]. None if not found."""
-    toks = [t for t in tokenize(src, d) if t.kind not in ("nl", "eof")]
-    for i in range(len(toks) - 2):
-        if not (toks[i].kind == "id" and toks[i].text == keyword and toks[i + 1].text == name):
-            continue
-        j = i + 2
-        if toks[j].text == "<":                             # generic parameters
-            while j < len(toks) and toks[j].text != ">":
-                j += 1
-            j += 1
-        if j >= len(toks) or toks[j].text != "(":
-            continue
-        labels: list = []
-        depth, start = 0, True
-        for t in toks[j + 1:]:
-            if t.kind == "op" and t.text in ")]}" and depth == 0:
-                return labels
-            if depth == 0 and start and t.kind == "id":
-                labels.append(None if t.text == "_" else t.text)
-                start = False
-            elif depth == 0 and t.kind == "op" and t.text == ",":
-                start = True
-            elif t.kind == "op" and t.text in "([{":
-                depth += 1
-            elif t.kind == "op" and t.text in ")]}":
-                depth -= 1
-        return None
-    return None
-
-
 def _params(p: Parser, d: Dialect) -> list:
     if d.name == "ruby" and not p.at("("):
         params = []
@@ -1823,6 +1794,7 @@ def _params(p: Parser, d: Dialect) -> list:
     p.expect("(")
     params: list = []
     pending: list = []                                  # Go: a, b int64
+    p.labels = []
     while not p.at(")"):
         p.skip_newlines()
         if d.name in ("c", "cpp") and p.at("void") and p.peek(1).text == ")":
@@ -1855,6 +1827,7 @@ def _params(p: Parser, d: Dialect) -> list:
             name = first
             if p.peek().kind == "id":
                 name = p.ident()                         # external label, internal name
+            p.labels.append(None if first == "_" else first)
             p.expect(":")
             if p.at("inout"):
                 raise ParseError("inout parameter", p.peek().line)
@@ -3049,7 +3022,7 @@ def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hint
                 sig["params"] = [p["type"] for p in ir["params"]]
                 sig["returns"] = ir["returns"]
                 results[f.name] = Lifted(f.name, True, ir, src, [], low.inferred, f.line, lang,
-                                         [t for _, t in f.params])
+                                         [t for _, t in f.params], list(f.labels))
                 break
             except Widen as w:
                 if widened.get(w.name) == w.typ:
