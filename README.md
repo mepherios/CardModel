@@ -185,6 +185,7 @@ command runs the test suite.
 
 | Read | For |
 |---|---|
+| [docs/HANDOVER.md](docs/HANDOVER.md) | snapshot handover (2026-11-05): CI state, open PRs and branches, each work stream's unfinished part, the owner's open decisions, the suggested order of work |
 | [HANDOVER.md](HANDOVER.md) | how to use, extend and continue it; worked examples (Ting, rea); real vs scaffold; next steps |
 | [GOALS.md](GOALS.md) | purpose and measurable goals (goal cards) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | layout, contract, data flow, design decisions, what was ported from where |
