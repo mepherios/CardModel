@@ -112,6 +112,11 @@
   "frontend": "cardmodel.engines.frontend_text",
   "frontend_harness": {
     "arg_cast": "(({v}) as {type})",
+    "print": {
+      "bool": "println!(\"b:{{}}\", {e});",
+      "float": "println!(\"f:{{:?}}\", ({e}) as f64);",
+      "int": "println!(\"i:{{}}\", {e});"
+    },
     "replace": [
       [
         "\\bfn\\s+main\\s*\\(",

@@ -66,6 +66,28 @@ _UNSIGNED_C = {"unsigned", "unsigned int", "unsigned long", "unsigned long long"
                "uint16_t", "uint8_t", "size_t", "uintmax_t", "unsigned char", "unsigned short", "char"}
 
 
+# Fixed-width sorts (engines/sorts.py, FOUNDATIONS.md §7 item 4): each language's own fixed-width scalar types, by
+# the sort they denote. ``_WRAPS``: languages whose integer arithmetic wraps modulo 2^w (Go, Java, C#), so the
+# lift puts WRAPU/WRAPS on every result that can leave its sort. Rust is not among them: overflow panics in a debug
+# build and wraps only in release, so a Rust lift stays exact and records the overflow as a divergence (its domain
+# is "no overflow"); Rust's ``as`` casts do truncate and lift as WRAP. float32 is F32 (binary32 rounding) in all.
+_FIXED_SORTS = {
+    "rust": {"u8": "u8", "u16": "u16", "u32": "u32", "i8": "i8", "i16": "i16", "i32": "i32", "f32": "f32"},
+    "go": {"uint8": "u8", "byte": "u8", "uint16": "u16", "uint32": "u32", "int8": "i8", "int16": "i16",
+           "int32": "i32", "float32": "f32"},
+    "java": {"byte": "i8", "short": "i16", "int": "i32", "float": "f32"},
+    "csharp": {"byte": "u8", "sbyte": "i8", "short": "i16", "ushort": "u16", "int": "i32", "uint": "u32",
+               "Int32": "i32", "float": "f32", "Single": "f32"},
+}
+_WRAPS = ("go", "java", "csharp")
+_PROMOTES = ("java", "csharp")            # narrow operands promote to int (i32) before arithmetic
+_GROWS = ("+", "-", "*", "<<", "~", "neg")
+
+
+def _sort_bits(sort: str) -> tuple[bool, int]:
+    return sort[0] == "i", int(sort[1:])
+
+
 @dataclass
 class Dialect:
     name: str
@@ -207,14 +229,15 @@ def _dialects() -> dict[str, Dialect]:
                        types={**_C_TYPES, "std::int64_t": INT, "std::int32_t": INT, "int64": INT},
                        unsupported_types=dict(_C_UNSUP), funcs=dict(_C_FUNCS), emit_keys=("cpp", "c", "c_like"))
     d["java"] = Dialect("java", types={"long": INT, "int": INT, "short": INT, "byte": INT, "double": FLOAT,
-                                        "boolean": BOOL, "void": VOID, "var": "auto"},
-                        unsupported_types={"float": "binary32 float", "char": "char"}, funcs=dict(_JAVA_FUNCS),
+                                        "float": FLOAT, "boolean": BOOL, "void": VOID, "var": "auto"},
+                        unsupported_types={"char": "char"}, funcs=dict(_JAVA_FUNCS),
                         emit_keys=("java", "c_like"))
     d["csharp"] = Dialect("csharp", preproc=True, types={"long": INT, "int": INT, "short": INT, "double": FLOAT,
                                                           "bool": BOOL, "void": VOID, "var": "auto",
-                                                          "Int64": INT, "Int32": INT, "Double": FLOAT},
-                          unsupported_types={"float": "binary32 float", "ulong": "unsigned", "uint": "unsigned",
-                                             "decimal": "decimal"},
+                                                          "Int64": INT, "Int32": INT, "Double": FLOAT,
+                                                          "byte": INT, "sbyte": INT, "ushort": INT, "uint": INT,
+                                                          "float": FLOAT, "Single": FLOAT},
+                          unsupported_types={"ulong": "unsigned 64-bit", "decimal": "decimal"},
                           funcs=dict(_CS_FUNCS), emit_keys=("csharp", "c_like"))
     d["kotlin"] = Dialect("kotlin", prec=_KOTLIN_PREC, newline_ends=True, ternary=False,
                           types={"Long": INT, "Int": INT, "Short": INT, "Double": FLOAT, "Boolean": BOOL,
@@ -224,17 +247,17 @@ def _dialects() -> dict[str, Dialect]:
                           emit_keys=("kotlin", "java", "c_like"))
     d["go"] = Dialect("go", prec=_GO_PREC, newline_ends=True, ternary=False,
                       types={"int64": INT, "int": INT, "int32": INT, "int16": INT, "int8": INT, "float64": FLOAT,
-                             "bool": BOOL},
-                      unsupported_types={"float32": "binary32 float", "uint64": "unsigned", "uint": "unsigned",
-                                         "uint32": "unsigned", "uint8": "unsigned", "byte": "unsigned"},
+                             "bool": BOOL, "uint8": INT, "byte": INT, "uint16": INT, "uint32": INT,
+                             "float32": FLOAT},
+                      unsupported_types={"uint64": "unsigned 64-bit", "uint": "unsigned 64-bit"},
                       decl_words=("var", "const"), funcs=dict(_GO_FUNCS), emit_keys=("go", "c_like"),
-                      casts={"float64": FLOAT, "int64": INT, "int": INT, "int32": INT})
+                      casts={"float64": FLOAT, "int64": INT, "int": INT, "int32": INT, "int16": INT, "int8": INT,
+                             "uint8": INT, "byte": INT, "uint16": INT, "uint32": INT, "float32": FLOAT})
     d["rust"] = Dialect("rust", prec=_RUST_PREC, ternary=False, implicit_return=True,
                         types={"i64": INT, "i32": INT, "i16": INT, "i8": INT, "i128": INT, "isize": INT,
-                               "f64": FLOAT, "bool": BOOL, "()": VOID},
-                        unsupported_types={"f32": "binary32 float", "u64": "unsigned", "u32": "unsigned",
-                                           "usize": "unsigned", "u8": "unsigned", "u16": "unsigned",
-                                           "u128": "unsigned"},
+                               "f64": FLOAT, "bool": BOOL, "()": VOID, "u8": INT, "u16": INT, "u32": INT,
+                               "f32": FLOAT},
+                        unsupported_types={"u64": "unsigned 64-bit", "usize": "unsigned", "u128": "unsigned"},
                         decl_words=("let", "const", "static"), methods=dict(_RUST_METHODS),
                         funcs={"i64::abs": ("op", "ABS"), "f64::sqrt": ("op", "FSQRT"), "i64::min": ("op", "MIN"),
                                "i64::max": ("op", "MAX"), "f64::min": ("op", "MIN"), "f64::max": ("op", "MAX"),
@@ -323,6 +346,8 @@ class Lifted:
     src_labels: list = field(default_factory=list)  # argument labels a call writes (Swift's `scale(2, by: 1.5)`)
     gaps: list = field(default_factory=list)        # call edges to callees that are not closed (close_calls)
     boundary: dict | None = None                    # the opaque boundary card of a function that did not lift
+    sorts: dict = field(default_factory=dict)        # parameter/local -> fixed-width sort (u8..i32, f32)
+    divergences: list = field(default_factory=list)  # where the source may differ from the lift (Rust overflow)
 
 
 # -- tokens ----------------------------------------------------------------------------------------------------------
@@ -2012,6 +2037,9 @@ class Lowerer:
         self.externs: dict = {}
         self.cur_type: str | None = None
         self.signed_cast = 0
+        self.fixed = _FIXED_SORTS.get(d.name, {})
+        self.sorts: dict[str, str] = {}           # variable -> fixed-width sort
+        self.divergences: set[str] = set()
 
     def err(self, what: str):
         raise Unsupported(what, self.line)
@@ -2060,6 +2088,8 @@ class Lowerer:
                 self.err("void parameter")
             params.append({"name": pname, "type": t})
             self.env[pname] = t
+            if ptext in self.fixed:
+                self.sorts[pname] = self.fixed[ptext]
         self.ret = self.ir_type(fn.ret) if fn.ret is not None else None
         if self.ret == VOID:
             self.err("a function without a result (void) is not lifted")
@@ -2139,6 +2169,7 @@ class Lowerer:
                 if want is None:
                     self.err(f"declaration of {name!r} without a type or a value")
                 self.declare(name, want)
+                self.record_sort(name, s.get("type"), None)
                 return [{"k": "assign", "target": name, "value": _zero(want)}] if self.d.name not in ("c", "cpp") \
                     else []
             e, t = self.expr(s["value"])
@@ -2150,6 +2181,7 @@ class Lowerer:
             if name in self.env and name == _var_of(s["value"]) and self.env[name] == want:
                 return []                                     # let mut a = a;
             self.declare(name, want)
+            self.record_sort(name, s.get("type"), s["value"])
             return [{"k": "assign", "target": name, "value": e}]
         if k == "assign":
             name = s["target"]
@@ -2169,6 +2201,9 @@ class Lowerer:
                 self.err(f"{s['op']}")
             self.cur_type = self.env.get(name)
             e, t = self.binop(op, ("name", name), s["value"])
+            srt = self.sorts.get(name)
+            if srt is not None:              # b += x: the operation in the variable's sort, stored back into it
+                e = self.fit_sort(e, t, srt, op)
             return [self.assign_to(name, e, t)]
         if k == "multi":
             value = s["value"]
@@ -2461,13 +2496,138 @@ class Lowerer:
             self.err("mixing BigInt and Number")
 
     def expr(self, n):
+        e, t = self._expr(n)
+        if self.fixed and (n[0] in ("bin", "un", "cast", "num") or n[0] == "call" and n[1] in self.fixed):
+            e = self.fit(e, t, n)
+        return e, t
+
+    def record_sort(self, name, typ, value):
+        if not self.fixed:
+            return
+        srt = self.fixed.get(typ) if typ else (self.sort_of(value) if value is not None else None)
+        if srt not in (None, "lit"):
+            self.sorts[name] = srt
+        else:
+            self.sorts.pop(name, None)
+
+    # fixed-width sorts --------------------------------------------------------------------------------------------
+    def sort_of(self, n):
+        """The fixed-width sort of an expression: a sort name, None (the language's 64-bit int or double: exact in
+        the IR) or "lit" (an untyped literal that takes its partner's sort)."""
+        kind = n[0]
+        if kind == "num":
+            s = n[2].lower()
+            if s in self.fixed:
+                return self.fixed[s]
+            if isinstance(n[1], float):
+                if s == "f" and self.d.name in ("java", "csharp"):
+                    return "f32"
+                return "lit" if self.d.name in ("rust", "go") else None
+            if s in ("l", "i64", "u64"):
+                return None
+            return "lit"
+        if kind == "one":
+            return "lit"
+        if kind == "name":
+            return self.sorts.get(n[1])
+        if kind == "cast" or kind == "call" and n[1] in self.fixed and n[1] in self.d.casts:
+            return self.fixed.get(n[1])
+        if kind == "un":
+            return self.sort_of(n[2]) if n[1] in ("-", "~", "+") else None
+        if kind == "bin":
+            if n[1] in ("==", "!=", "<", "<=", ">", ">=", "&&", "||"):
+                return None
+            a = self.sort_of(n[2])
+            if n[1] in ("<<", ">>"):
+                return self.promote(a)
+            return self.join(a, self.sort_of(n[3]))
+        return None
+
+    def promote(self, a):
+        if self.d.name in _PROMOTES and a not in (None, "f32"):
+            if a == "lit":
+                return "i32"
+            if self.d.name == "csharp" and a == "u32":
+                return a
+            return "i32"
+        return a
+
+    def join(self, a, b):
+        if a == "lit" and b == "lit":
+            return "i32" if self.d.name in _PROMOTES else "lit"
+        if a == "lit":
+            a, b = b, a
+        if b == "lit":
+            return self.promote(a)
+        if a is None or b is None:
+            return None
+        if a == "f32" or b == "f32":
+            return "f32" if a == b or self.d.name in _PROMOTES else None
+        if self.d.name in _PROMOTES:
+            if self.d.name == "csharp" and "u32" in (a, b):
+                return "u32" if a == b else (None if a[0] == "i" or b[0] == "i" else "u32")
+            return "i32"
+        return a if a == b else None
+
+    def wrap(self, e, sort: str):
+        signed, w = _sort_bits(sort)
+        if e[0] == "int":
+            v = e[1] & ((1 << w) - 1)
+            return ["int", v - (1 << w) if signed and v >> (w - 1) else v]
+        return ["WRAPS" if signed else "WRAPU", e, ["int", w]]
+
+    def fit(self, e, t, n):
+        """Put the language's own fixed-width semantics on a lowered node: binary32 rounding for f32, and for an
+        integer sort WRAPU/WRAPS where the language wraps (Go, Java, C#; every language's explicit cast)."""
+        s = self.sort_of(n)
+        if s in (None, "lit"):
+            return e
+        if n[0] in ("cast", "call"):
+            if s == "f32":
+                return e if t != FLOAT or e[0] == "F32" else ["F32", e]
+            if t == INT:
+                if e[0] == "TRUNC_INT":
+                    self.err(f"float to {s} conversion (saturates or is undefined out of range; not lifted)")
+                return self.wrap(e, s)
+            return e
+        if n[0] == "num":
+            return ["F32", e] if s == "f32" and t == FLOAT else e
+        op = "neg" if n[0] == "un" and n[1] == "-" else n[1]
+        return self.fit_sort(e, t, s, op)
+
+    def fit_sort(self, e, t, s, op):
+        """The result of ``op`` in sort ``s``: F32 for binary32, WRAPU/WRAPS where the language wraps."""
+        if s == "f32":
+            if t != FLOAT or op not in ("+", "-", "*", "/", "neg"):
+                return e
+            # an untyped constant beside a float32 (Go, Rust) is a float32 constant: rounded first
+            return ["F32", [e[0]] + [["F32", x] if isinstance(x, list) and x[:1] == ["float"] else x for x in e[1:]]]
+        if t != INT:
+            return e
+        if op not in _GROWS and not (op == "/" and s[0] == "i" and self.d.name != "csharp"):
+            return e
+        if op == "~" and s[0] == "i":
+            return e
+        if self.d.name in _WRAPS:
+            return self.wrap(e, s)
+        if self.d.name == "rust":
+            self.divergences.add(f"line {self.line}: {s} {op if op != 'neg' else '-'} may overflow: Rust panics "
+                                 f"in a debug build and wraps in release; the lift is exact (its domain is no "
+                                 f"overflow)")
+        return e
+
+    def _expr(self, n):
         kind = n[0]
         if kind == "num":
             v, suffix = n[1], n[2]
             s = suffix.lower()
-            if s in ("u", "ul", "ull", "lu", "llu") or s.startswith("u") and self.d.name in ("rust", "zig"):
+            if s in self.fixed:
+                pass                                  # 200u8, 1.5f32: a fixed-width literal (fit gives its sort)
+            elif s in ("u", "ul", "ull", "lu", "llu") or s.startswith("u") and self.d.name in ("rust", "zig"):
                 self.err(f"unsigned literal {v}{suffix}")
-            if s in ("f",) and self.d.name in ("c", "cpp", "java", "csharp", "kotlin") or s == "f32":
+            if s in ("f",) and self.d.name in ("java", "csharp"):
+                return ["float", float(v)], FLOAT     # binary32 literal: fit rounds it (F32)
+            if s in ("f",) and self.d.name in ("c", "cpp", "kotlin") or s == "f32" and self.d.name != "rust":
                 self.err(f"binary32 literal {v}{suffix}")
             if s == "m":
                 self.err("decimal literal")
@@ -3026,6 +3186,8 @@ def _lift_all(fns, d, ops, sigs, patterns, helper_names, lines, lang, param_hint
                 sig["returns"] = ir["returns"]
                 results[f.name] = Lifted(f.name, True, ir, src, [], low.inferred, f.line, lang,
                                          [t for _, t in f.params], list(f.labels))
+                results[f.name].sorts = dict(low.sorts)
+                results[f.name].divergences = sorted(low.divergences)
                 break
             except Widen as w:
                 if widened.get(w.name) == w.typ:
