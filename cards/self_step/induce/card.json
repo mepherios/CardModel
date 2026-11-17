@@ -1,0 +1,22 @@
+{
+  "auto": true,
+  "category": "self_step",
+  "every_hours": 24,
+  "measures": "concepts_learned",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "induce",
+  "on_change": [
+    "op",
+    "concept"
+  ],
+  "order": 65,
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/induce.py"
+  },
+  "run": "induce",
+  "statement": "learn the black boxes from behaviour alone and keep the concepts that recur (engines/induce.py)",
+  "tier": 0
+}

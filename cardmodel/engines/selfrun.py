@@ -386,6 +386,26 @@ def _laws(c: Cycle) -> dict:
                        f"{len(rep['rules'])} simplifying rules"}
 
 
+def _induce(c: Cycle) -> dict:
+    """Learn the black boxes from behaviour alone, abstract the concepts that recur, and keep them in the self layer
+    (engines/induce.py): the vocabulary grows from what was understood, never from hand-written logic."""
+    from . import induce as I
+    known = I.load_concepts(c.ctx.store)
+    res = I.curriculum(I.bench_tasks(), c.ctx.ops, known, seed=c.seed)
+    names = {k.name for k in known}
+    cards = [k.card() for k in res["concepts"]]
+    c.wctx.store.save_pack("concept", "induce", cards, layer="self")
+    c.refresh()
+    last = res["curve"][-1]
+    missing = sorted(n for n, r in res["reports"].items() if not r.get("understood"))
+    new = [k.name for k in res["concepts"] if k.name not in names]
+    return {"status": "pass", "curve": res["curve"], "concepts": len(cards), "new_concepts": new,
+            "not_understood": missing,
+            "summary": f"understood {len(last['understood'])}/{len(res['reports'])} black boxes with "
+                       f"{len(cards)} concepts ({len(new)} new)" + (f"; not yet: {', '.join(missing)}"
+                                                                     if missing else "")}
+
+
 def _algebra(c: Cycle) -> dict:
     from . import funcalg as FA
     r = FA.scan_algorithms(c.ctx)
@@ -564,7 +584,7 @@ def _tests(c: Cycle) -> dict:
 
 
 STEPS = {"capabilities": _capabilities, "integrity": _integrity, "verify": _verify, "verify_full": _verify_full,
-         "learn": _learn, "laws": _laws, "algebra": _algebra, "arena": _arena, "optimize": _optimize,
+         "learn": _learn, "induce": _induce, "laws": _laws, "algebra": _algebra, "arena": _arena, "optimize": _optimize,
          "law_witnesses": _law_witnesses, "observe_self": _observe_self, "store": _store, "tests": _tests,
          "goals": _goals}
 

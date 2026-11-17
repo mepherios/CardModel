@@ -17,6 +17,7 @@
     "cardmodel/engines/environment.py": "the machine the model runs on as a card (`cardmodel env`, ENVIRONMENTS.md V-A): a probe of the host written once into the local layer; the stages read the host through their `host:` facts, they do not describe it",
     "cardmodel/engines/formal.py": "the formal core in Lean (T1-T6) checks the theory's own theorems; the proofs are of the model, not of one input",
     "cardmodel/engines/godel1931.py": "the historical construction (Gödel 1931) as a card set, read by `cardmodel godel`; the content stage uses the model's own ledger (godel.py)",
+    "cardmodel/engines/induce.py": "learning from behaviour alone (`cardmodel induce`, the self step `induce`): its input is a black box or examples, not source code, so it has no function to lift; what it learns leaves it as concept cards and plain IR functions the stages then take",
     "cardmodel/engines/integrity.py": "the integrity check of the model's own files and cards (`verify --only integrity`): it checks the registry, it is not a stage of it",
     "cardmodel/engines/laws.py": "law discovery over the op cards (`cardmodel laws`) writes rewrite rules the canon and rewrite stages then read; it runs on the signature, not on an input",
     "cardmodel/engines/learn.py": "learning over a corpus of files (`cardmodel learn`): proposes and promotes cards from many inputs' observations; the unit here is one function",

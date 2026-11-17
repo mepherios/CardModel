@@ -1,5 +1,9 @@
 # cardmodel
 
+**Owner: [mepherios](https://github.com/mepherios).** CardModel is a public project for understanding all computation
+on computers and in programs. Its core ability is learning: the model understands what it is shown and generalises
+from it, instead of answering from hand-written or memorised knowledge (docs/LEARNING.md).
+
 The card model as one self-contained program. Every structure is a card: languages, operators, rules, laws, goals,
 observations, learned functions and measurements. Each card lives in a filesystem registry. From any project folder,
 `cardmodel` can:
@@ -8,7 +12,9 @@ observations, learned functions and measurements. Each card lives in a filesyste
 * **verify** every executable claim by running it (seeded, reproducible, able to fail);
 * **translate** functions to other languages through a card IR, checking each translation with the real compiler or
   interpreter;
-* **learn** new cards from evidence;
+* **learn** new cards from evidence, and **learn computations from behaviour alone**: programs built from the op
+  cards, chosen as the shortest explanation, checked on inputs never seen, with recurring pieces kept as concepts
+  that make the next problem easier (`cardmodel induce`, docs/LEARNING.md);
 * **optimize**: pick the cheapest form, find cheaper equivalent expressions, and measure real costs;
 * **run itself**: every use can start a background cycle that checks its core capabilities, verifies, learns,
   measures and ranks its own flaws and weaknesses (docs/AUTONOMY.md); the core capabilities are cards that carry
@@ -233,6 +239,7 @@ command runs the test suite.
 | [docs/MATH_STRUCTURE_OPTIONS.md](docs/MATH_STRUCTURE_OPTIONS.md) | proposal: putting more of the model's structure into its mathematics |
 | [docs/NEXT_BUILD.md](docs/NEXT_BUILD.md) | what to build next inside TARGETS.md §3, with two or three options per track and the measurement each needs |
 | [docs/SCALING_NEXT.md](docs/SCALING_NEXT.md) | proposal: the next scalability options after the first scale measurements |
+| [docs/LEARNING.md](docs/LEARNING.md) | the owner's direction of 2026-11-17: the model learns from its basics; what the basics are, `cardmodel induce` (learning from behaviour, MDL, held-out checks, concepts), its measured learning curve, and a map of every capability with what is still hand-written and how it becomes learned |
 | [docs/UNIVERSAL_UNDERSTANDER.md](docs/UNIVERSAL_UNDERSTANDER.md) | proposal: learning any framework as a mathematical object |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | task-oriented recipes that work on main, each command measured on 2026-11-05 |
 | [docs/GENERAL_COMPILER.md](docs/GENERAL_COMPILER.md) | the owner's goal of 2026-11-05: one compiler for anything computational; the core of programming (ten constructs every language desugars into), the doors code comes in through (LLVM IR, VM bytecode, machine code), the goals G_C6–G_C8 and the plan |

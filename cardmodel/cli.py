@@ -9,6 +9,8 @@
   cardmodel rewrite CARD | --all | --prove L R | --optimize EXPR | --rank REG --weights k=v,...
   cardmodel emit --lang L FILE          translate liftable functions of any readable language (or --rules, --hints CARD)
   cardmodel learn [PATH] [--promote]    observe -> propose -> verify -> promote (cards with evidence)
+  cardmodel induce bench|fit FILE|concepts  learn computations from behaviour alone: programs over the op cards by
+                                           description length, held-out checks and questions, concepts reused
   cardmodel optimize [--card Q] [--apply]  measure real costs -> metric cards -> cost anchors
   cardmodel translate FILE [--to ...]      every stage of the pipeline that applies to each function: lift (any readable
                                            language, --from to force), identity, evidence, optimize, every target, record
@@ -652,6 +654,64 @@ def cmd_learn(args) -> int:
     return 0
 
 
+def cmd_induce(args) -> int:
+    """Learn computations from their behaviour alone (engines/induce.py): programs over the op cards, chosen by
+    description length, checked on held-out examples and by questions, with concepts abstracted across tasks."""
+    from .engines import induce as I
+    from .engines import values as V
+    ctx = _ctx(args)
+    seed = V.fresh_seed() if args.seed is None else args.seed
+    kw = {"max_size": args.max_size, "budget": args.budget}
+    if args.action == "concepts":
+        cs = I.load_concepts(ctx.store)
+        _out(args, [c.card() for c in cs], "\n".join(f"{c.name}: {I.show(c.body)}  (from "
+                                                     f"{', '.join(c.evidence.get('abstracted_from', []))})"
+                                                     for c in cs) or "no concepts learned yet")
+        return 0
+    known = I.load_concepts(ctx.store)
+    if args.action == "fit":
+        if not args.file:
+            print("error: induce fit needs a JSON file of examples", file=sys.stderr)
+            return 2
+        data = json.loads(Path(args.file).read_text(encoding="utf-8"))
+        task = I.Task(data.get("name", Path(args.file).stem), [tuple(p) for p in data["params"]],
+                      [(tuple(x), y) for x, y in data["examples"]])
+        rep = I.learn_task(task, ctx.ops, known, seed=seed, noise=args.noise, **kw)
+        if not rep.get("found"):
+            text = f"{task.name}: not understood within size {args.max_size} (searched {rep['evaluated']} terms)"
+        else:
+            held = rep.get("held_out")
+            text = "\n".join([
+                f"{task.name}: {rep['program']}",
+                f"  understood {rep['understood']} · compression {rep['compression']}x · errors {rep['errors']}"
+                + (f" · held out {held['correct']}/{held['examples']}" if held else ""),
+                f"  IR checked by the interpreter: {rep['ir_checked']}"])
+        _out(args, rep, text)
+        return 0 if rep.get("understood") else 1
+    tasks = I.bench_tasks()
+    if args.tasks:
+        want = set(args.tasks.split(","))
+        tasks = [t for t in tasks if t.name in want]
+    res = I.curriculum(tasks, ctx.ops, known, seed=seed, **kw)
+    lines = [f"seed {seed} · {len(tasks)} black boxes · learning curve:"]
+    for c in res["curve"]:
+        lines.append(f"  round {c['round']}: understood {len(c['understood'])}/{len(tasks)} with "
+                     f"{len(c['concepts'])} concepts, {c['evaluated']} terms searched")
+    new = [c for c in res["concepts"] if c.name not in {k.name for k in known}]
+    for c in new:
+        lines.append(f"  concept {c.name} = {I.show(c.body)}  (from {', '.join(c.evidence['abstracted_from'])})")
+    for name, rep in res["reports"].items():
+        lines.append(f"  {name:<22} " + (f"{rep['program']}  ({rep['compression']}x)" if rep.get("understood")
+                                         else "not understood"))
+    if args.save and new:
+        names = I.save_concepts(ctx.store, new, layer=_layer(ctx, args))
+        lines.append(f"saved {len(names)} concept cards")
+    data = {"seed": seed, "curve": res["curve"], "concepts": [c.card() for c in res["concepts"]],
+            "reports": {n: {k: v for k, v in r.items() if k != "term"} for n, r in res["reports"].items()}}
+    _out(args, data, "\n".join(lines))
+    return 0
+
+
 def cmd_optimize(args) -> int:
     from .engines import optimize
     from .engines import values as V
@@ -942,6 +1002,15 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("path", nargs="?"); s.add_argument("--promote", action="store_true")
     s.add_argument("--global", dest="global_", action="store_true"); s.add_argument("--seed", type=int)
     s.add_argument("--max-functions", type=int, default=25); s.add_argument("--langs"); s.set_defaults(fn=cmd_learn)
+    s = sub.add_parser("induce", help="learn computations from behaviour alone: programs over the op cards, "
+                                      "chosen by description length, concepts reused across tasks")
+    s.add_argument("action", choices=["bench", "fit", "concepts"]); s.add_argument("file", nargs="?")
+    s.add_argument("--tasks", help="bench: only these black boxes (comma-separated)")
+    s.add_argument("--max-size", type=int, default=7); s.add_argument("--budget", type=int, default=6_000_000)
+    s.add_argument("--noise", type=float, default=0.0, help="fit: largest fraction of examples allowed wrong")
+    s.add_argument("--save", action="store_true", help="bench: write the new concepts as concept cards")
+    s.add_argument("--global", dest="global_", action="store_true"); s.add_argument("--seed", type=int)
+    s.set_defaults(fn=cmd_induce)
     s = sub.add_parser("optimize")
     s.add_argument("--card"); s.add_argument("--functions", action="store_true"); s.add_argument("--apply", action="store_true")
     s.add_argument("--seed", type=int); s.add_argument("--global", dest="global_", action="store_true")
