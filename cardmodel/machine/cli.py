@@ -16,6 +16,11 @@
                                                 screens (top above bottom) after the run, --shots every K frames,
                                                 --wav the sound; --lift also lifts the ARM9's ARM code and runs a
                                                 differential
+  cardmodel machine run PROGRAM [--lift] [--engine native|host|ir] [--arg A ...] [--stdin FILE]
+                                [--variant mips32r2|allegrex] [--max-steps N]
+                                                a foreign program (an ELF executable for another CPU and OS)
+                                                on its ISA's instruction cards and its OS card; --lift
+                                                translates its code ahead of time into native blocks
 """
 from __future__ import annotations
 
@@ -102,9 +107,44 @@ def cmd_isa(args) -> int:
     return 0 if r["status"] == "pass" and sync["status"] == "pass" else 1
 
 
+def cmd_run(args, ctx) -> int:
+    from . import process as P
+    stdin = Path(args.stdin).read_bytes() if args.stdin else b""
+    argv = [Path(args.target).name, *(args.arg or [])]
+    try:
+        r = P.run(ctx, args.target, argv=argv, stdin=stdin, engine=args.engine, variant=args.variant,
+                  lifted=args.lift, max_steps=args.max_steps)
+    except P.LoadError as exc:
+        _out(args, {"error": str(exc)}, f"cannot run {args.target}: {exc}")
+        return 2
+    if not args.json:
+        sys.stdout.write(r["stdout"])
+        sys.stderr.write(r["stderr"])
+    how = f"{r['isa']} on {r['machine']} [{r['engine']}{', lifted' if args.lift else ''}]"
+    line = f"{how}: {r['state']}" + (f" with code {r['exit_code']}" if r["state"] == "exited" else "") + \
+        f"; {r['steps']} instructions in {r['seconds']} s ({r.get('mips_per_second', 0)} M/s); " \
+        f"{r['syscalls']} system calls, {r['unknown_syscalls']} not modelled"
+    if r.get("fault"):
+        f = r["fault"]
+        line += f"; fault {f['code']} at pc {f['pc']:#x} (address {f['addr']:#x})"
+    if r.get("lifted"):
+        lf = r["lifted"]
+        line += f"; {lf['blocks']} lifted blocks cover {lf['covered_words']}/{lf['code_words']} words, " \
+                f"{lf['interpreted']} instructions interpreted"
+    if args.json:
+        print(json.dumps(r, indent=1, sort_keys=True))
+    else:
+        print(line, file=sys.stderr)
+    if r["state"] == "exited":
+        return r["exit_code"]
+    return 1
+
+
 def cmd_machine(args) -> int:
     from . import gb as G
     ctx = _ctx(args)
+    if args.action == "run":
+        return cmd_run(args, ctx)
     if args.action == "info":
         rom, name = G.open_rom(args.target)
         h = G.header(rom, ctx.store)
@@ -250,10 +290,15 @@ def register(sub) -> None:
     s.add_argument("--samples", type=int, default=8); s.add_argument("--seed", type=int); s.add_argument("--engines")
     s.set_defaults(fn=cmd_isa)
     s = sub.add_parser("machine", help="machines: survey ROMs, lift a ROM, differential runs, test ROMs")
-    s.add_argument("action", choices=["survey", "lift", "diff", "info", "testroms", "nds"]); s.add_argument("target")
+    s.add_argument("action", choices=["survey", "lift", "diff", "info", "testroms", "nds", "run"]); s.add_argument("target")
     s.add_argument("--frames", type=int, default=1200); s.add_argument("--engine", default="native")
     s.add_argument("--limit", type=int); s.add_argument("--shots"); s.add_argument("--relift", action="store_true")
-    s.add_argument("--lift", action="store_true", help="nds: also lift the ARM9's code and run a differential")
+    s.add_argument("--lift", action="store_true", help="nds: also lift the ARM9's code and run a differential; "
+                                                       "run: translate the program's code into native blocks")
+    s.add_argument("--arg", action="append", help="run: a command-line argument for the program (repeatable)")
+    s.add_argument("--stdin", help="run: a file the program reads as standard input")
+    s.add_argument("--variant", help="run: the CPU core of the ISA card (mips32: mips32r2 or allegrex)")
+    s.add_argument("--max-steps", type=int, default=10**10, help="run: stop after this many instructions")
     s.add_argument("--input", help="nds: input script, e.g. '1500:start,1506:-' (buttons a b x y l r start select "
                                    "and the d-pad)")
     s.add_argument("--png", help="nds: save both screens (top above bottom) after the run")

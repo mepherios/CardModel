@@ -1,0 +1,11 @@
+{
+  "category": "machine",
+  "name": "mips32_bench",
+  "isa": "mips32",
+  "logic": ["bench.card"],
+  "components": [],
+  "export_state": true,
+  "statement": "A test bench for the MIPS32 / Allegrex instruction cards: flat 64 KiB memory (mirrored over the address space), an access trace, recording SYSCALL/BREAK/exception/reserved-instruction hooks. `cardmodel isa check mips32` runs every card on it in every engine with seeded random instruction words, states and cores.",
+  "provenance": {"origin": "cardmodel"},
+  "tier": 1
+}

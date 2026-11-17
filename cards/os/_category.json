@@ -1,0 +1,5 @@
+{
+  "description": "Operating systems as a program sees them: the system-call interface (numbers, arguments, results, error values), the process's start state and memory layout, as card data, with the calls' behaviour in card-language files next to card.json. A foreign program runs against these cards instead of against the foreign OS.",
+  "name": "os",
+  "tier": 1
+}

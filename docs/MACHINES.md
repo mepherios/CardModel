@@ -331,6 +331,10 @@ time since the save added to it. Keys: arrows, X = A, Z = B, Enter = Start, Shif
 
 ## 7. Adding things
 
+* **A foreign program** (an executable for another CPU and OS, not a console image): docs/FOREIGN.md. The first
+  platform is 32-bit MIPS (MIPS32r2 and the PSP's Allegrex) with Linux o32 system calls as an `os` card;
+  `cardmodel machine run PROGRAM --lift` translates its code ahead of time into native blocks.
+
 * **An instruction**: edit the generator (`tools/gen_lr35902.py`, `tools/gen_armv5te.py`) or the pack, then
   `cardmodel isa build ISA` and `cardmodel isa check ISA`.
 * **A new ISA**: an ISA card with `core.card` and `interface.card`, instruction cards (opcode-byte or mask

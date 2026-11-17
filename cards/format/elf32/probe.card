@@ -1,0 +1,23 @@
+-- Which machine runs this file: the first 64 bytes of a file in, the ELF machine number out (or a negative load
+-- error: -1 not ELF, -2 not 32-bit, -3 big-endian). The host looks the number up in the card's
+-- machine_of_e_machine table and starts that machine.
+const EI_CLASS = card.format.elf32.header.ei_class.at
+const EI_DATA = card.format.elf32.header.ei_data.at
+const E_MACHINE = card.format.elf32.header.e_machine.at
+const ELFCLASS32 = card.format.elf32.constants.ELFCLASS32
+const ELFDATA2LSB = card.format.elf32.constants.ELFDATA2LSB
+array hdr: Byte[64]
+global hdr_len: Int = 0
+
+export fn elf_machine() -> Int {
+  if hdr_len < 52 or hdr[0] != 0x7F or hdr[1] != 0x45 or hdr[2] != 0x4C or hdr[3] != 0x46 {
+    return -1
+  }
+  if hdr[EI_CLASS] != ELFCLASS32 {
+    return -2
+  }
+  if hdr[EI_DATA] != ELFDATA2LSB {
+    return -3
+  }
+  return hdr[E_MACHINE] | (hdr[E_MACHINE + 1] << 8)
+}

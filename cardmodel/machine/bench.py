@@ -203,7 +203,7 @@ def conformance(ctx, isa: str = "lr35902", engines: list[str] | None = None, see
             "runs": sum(r["runs"] for r in per_card.values()), "per_card": per_card}
 
 
-__all__ = ["check_data", "conformance", "run_case"]
+__all__ = ["check_data", "conformance", "mips_conformance", "run_case", "run_mips_case"]
 
 
 # -- ISAs decoded by masks (ARM / Thumb) ----------------------------------------------------------------------
@@ -313,6 +313,8 @@ def check_arm_vectors(m, card) -> list[str]:
 
 
 def mask_conformance(ctx, isa: str, engines=None, seed=None, samples: int = 8, only=None) -> dict:
+    if I.isa_card(ctx.store, isa).get("bench_state") == "mips":
+        return mips_conformance(ctx, isa, engines, seed, samples, only)
     seed = random.SystemRandom().randrange(2**32) if seed is None else seed
     ir = Bd.module(ctx, f"{isa}_bench")
     engines = engines or ["ir", "host", "native"]
@@ -365,4 +367,143 @@ def mask_conformance(ctx, isa: str, engines=None, seed=None, samples: int = 8, o
             "reference": ref, "cards": len(per_card), "passed": st.count("pass"), "failed": st.count("fail"),
             "vacuous": st.count("vacuous"),
             "status": "pass" if per_card and "fail" not in st and len(machines) >= 2 else ("fail" if "fail" in st else "vacuous"),
+            "runs": sum(r["runs"] for r in per_card.values()), "per_card": per_card}
+
+
+# -- MIPS (no flags; delay slots; two cores: MIPS32r2 and the PSP's Allegrex) ----------------------------------
+MIPS_STATE = ("pc", "hi", "lo", "in_slot", "slot_target", "bpending", "variant", "llbit", "ntrace", "sys_calls",
+              "sys_last", "brk_calls", "exc_calls", "exc_last", "exc_info", "undef_calls")
+
+
+def _mips_state(rng, card, variants: dict) -> dict:
+    regs = [0] + [rng.choice([rng.getrandbits(32), rng.getrandbits(16), 0xFFFFFFFF - rng.getrandbits(8),
+                              0x80000000 | rng.getrandbits(8), 0x7FFFFFFF - rng.getrandbits(4)]) for _ in range(31)]
+    variant = variants.get(card.get("arch"), rng.randrange(len(variants)))
+    if rng.randrange(8) == 0:                         # sometimes the other core: the card must be reserved there
+        variant ^= 1
+    return {"regs": regs, "hi": rng.getrandbits(32), "lo": rng.getrandbits(32), "pc": rng.getrandbits(16) & 0xFFFC,
+            "variant": variant, "llbit": rng.randrange(2)}
+
+
+def run_mips_case(m, st: dict, op: int, ram: bytes) -> dict:
+    m.write("mem", ram)
+    ra = m.array("regs")
+    for i, v in enumerate(st["regs"]):
+        ra[i] = v
+    defaults = {"in_slot": 0, "slot_target": 0, "bpending": 0, "ntrace": 0, "sys_calls": 0, "sys_last": -1,
+                "brk_calls": 0, "exc_calls": 0, "exc_last": -1, "exc_info": 0, "undef_calls": 0}
+    for k in MIPS_STATE:
+        m.set(k, st.get(k, defaults.get(k, 0)))
+    m.call("run_one", op)
+    out = {k: m.get(k) for k in MIPS_STATE}
+    out["regs"] = [ra[i] for i in range(32)]
+    n = min(out["ntrace"], 64)
+    tk, ta, tv = m.array("trace_kind"), m.array("trace_addr"), m.array("trace_val")
+    out["trace"] = [(tk[i], ta[i], tv[i]) for i in range(n)]
+    out["mem_hash"] = hashlib.sha1(m.read("mem")).hexdigest()
+    return out
+
+
+def check_mips_data(card, st: dict, out: dict, op: int, variants: dict) -> list[str]:
+    """What holds for every MIPS card: registers stay 32-bit words, r0 reads 0, a card of the other core is a
+    reserved instruction that changes nothing else, and only branches move control past the next word."""
+    problems = []
+    if any(not (0 <= v <= 0xFFFFFFFF) for v in (*out["regs"], out["hi"], out["lo"], out["pc"])):
+        problems.append("a register left the 32-bit range")
+    if out["regs"][0] != 0:
+        problems.append("r0 is not zero")
+    own = variants.get(card.get("arch"))
+    if own is not None and st["variant"] != own:
+        if out["undef_calls"] != 1 or out["regs"] != st["regs"] or out["ntrace"]:
+            problems.append(f"not reserved on variant {st['variant']}")
+        return problems
+    if out["undef_calls"]:
+        problems.append("raised a reserved-instruction exception on its own core")
+    if card["group"] != "branch" and (out["in_slot"] or out["pc"] != (st["pc"] + 4) & 0xFFFFFFFF):
+        problems.append("a non-branch moved control")
+    if out["exc_calls"] and any(a != b for i, (a, b) in enumerate(zip(st["regs"], out["regs"]))):
+        problems.append("an instruction that raised an exception wrote a register")
+    return problems
+
+
+def check_mips_vectors(m, card) -> list[str]:
+    problems = []
+    for v in card.get("vectors") or []:
+        st = {"regs": [0] * 32, "hi": 0, "lo": 0, "pc": 0x1000, "variant": 0, "llbit": 0}
+        for k, val in (v.get("in") or {}).items():
+            reg = _REG_KEY.fullmatch(k)
+            if reg:
+                st["regs"][int(reg.group(1))] = val
+            else:
+                st[k] = val
+        ram = bytearray(0x10000)
+        for a, w in (v.get("mem") or {}).items():
+            ram[int(a, 0):int(a, 0) + 4] = (w & 0xFFFFFFFF).to_bytes(4, "little")
+        out = run_mips_case(m, st, v["op"], bytes(ram))
+        for k, want in (v.get("out") or {}).items():
+            got = out["regs"][int(k[1:])] if _REG_KEY.fullmatch(k) else out.get(k)
+            if got != want:
+                problems.append(f"vector {v.get('name')}: {k} = {got!r}, expected {want:#x}")
+        after = m.read("mem")
+        for a, want in (v.get("mem_out") or {}).items():
+            got = int.from_bytes(after[int(a, 0):int(a, 0) + 4], "little")
+            if got != want:
+                problems.append(f"vector {v.get('name')}: mem[{a}] = {got:#x}, expected {want:#x}")
+    return problems
+
+
+def mips_conformance(ctx, isa: str, engines=None, seed=None, samples: int = 8, only=None) -> dict:
+    seed = random.SystemRandom().randrange(2**32) if seed is None else seed
+    ir = Bd.module(ctx, f"{isa}_bench")
+    engines = engines or ["ir", "host", "native"]
+    machines, unavailable = {}, {}
+    for e in engines:
+        try:
+            lang = N.resolve_engine(ctx, e)
+            machines[lang] = N.load(ctx, ir, lang)
+        except N.EngineError as exc:
+            unavailable[e] = str(exc)
+    ref = "ir" if "ir" in machines else next(iter(machines))
+    allc = I.instructions(ctx.store, isa)
+    variants = I.isa_card(ctx.store, isa).get("variants") or {}
+    cards = [c for c in allc if only is None or c.name in only]
+    rng = random.Random(seed)
+    per_card = {}
+    for card in cards:
+        resources.guard("isa conformance")
+        problems, runs, misses = [], 0, 0
+        for _ in range(samples):
+            op = None
+            for _try in range(24):
+                w = _word(rng, card)
+                d = decoded_by(allc, w, card["set"])
+                if d is not None and d.name == card.name:
+                    op = w
+                    break
+            if op is None:
+                misses += 1
+                continue
+            st = _mips_state(rng, card, variants)
+            ram = rng.randbytes(0x10000)
+            outs = {lang: run_mips_case(mm, st, op, ram) for lang, mm in machines.items()}
+            runs += 1
+            base = outs[ref]
+            for lang, o in outs.items():
+                if lang != ref:
+                    for k in (*MIPS_STATE, "regs", "trace", "mem_hash"):
+                        if o[k] != base[k]:
+                            problems.append(f"{lang} vs {ref} on {op:#010x}: {k} {o[k]!r:.80} vs {base[k]!r:.80}")
+                            break
+            problems += [f"{op:#010x}: {p}" for p in check_mips_data(card, st, base, op, variants)]
+        if card.get("vectors"):
+            for lang, mm in machines.items():
+                problems += [f"{lang}: {p}" for p in check_mips_vectors(mm, card)]
+        status = "fail" if problems else ("pass" if runs else "vacuous")
+        per_card[card.name] = {"mnemonic": card["mnemonic"], "runs": runs, "status": status,
+                               "problems": sorted(set(problems))[:8], "decode_misses": misses}
+    sts = [r["status"] for r in per_card.values()]
+    return {"isa": isa, "seed": seed, "samples": samples, "engines": sorted(machines), "unavailable": unavailable,
+            "reference": ref, "cards": len(per_card), "passed": sts.count("pass"), "failed": sts.count("fail"),
+            "vacuous": sts.count("vacuous"),
+            "status": "pass" if per_card and "fail" not in sts and len(machines) >= 2 else ("fail" if "fail" in sts else "vacuous"),
             "runs": sum(r["runs"] for r in per_card.values()), "per_card": per_card}

@@ -1,0 +1,114 @@
+{
+  "abi": {
+    "args": [
+      "r4",
+      "r5",
+      "r6",
+      "r7",
+      "sp+16",
+      "sp+20"
+    ],
+    "error_flag": "r7",
+    "number": "r2",
+    "result": "r2",
+    "statement": "SYSCALL with the call number in v0 (r2) and arguments in a0-a3 (r4-r7), then on the stack at sp+16 and sp+20; the result comes back in v0 with a3 (r7) = 0, or a positive errno in v0 with a3 = 1"
+  },
+  "auxv": {
+    "AT_NULL": 0,
+    "AT_PAGESZ": 6,
+    "page_size": 4096
+  },
+  "category": "os",
+  "errno": {
+    "EBADF": 9,
+    "EFAULT": 14,
+    "EINVAL": 22,
+    "ENOMEM": 12,
+    "ENOSYS": 89,
+    "ENOTTY": 25
+  },
+  "flags": {
+    "MAP_ANONYMOUS": 2048
+  },
+  "isa": "mips32",
+  "kind": "os",
+  "layout": {
+    "memory_bytes": 8388608,
+    "mmap_top": 8126464,
+    "stack_top": 8388592,
+    "statement": "one flat little-endian address space from 0: the program's segments where its ELF header puts them, brk growing up from the end of the highest segment, anonymous mmap growing down from mmap_top, the stack below stack_top (the top 256 KiB)"
+  },
+  "logic": [
+    "syscalls.card",
+    "start.card"
+  ],
+  "machine": {
+    "getpid": 1000,
+    "ns_per_step": 1
+  },
+  "name": "linux_mips_o32",
+  "provenance": {
+    "origin": "cardmodel",
+    "sources": [
+      "Linux arch/mips/kernel/syscalls/syscall_o32.tbl",
+      "Linux arch/mips/include/uapi/asm/errno.h and mman.h",
+      "System V ABI MIPS RISC Processor Supplement (process start state)"
+    ]
+  },
+  "start": {
+    "statement": "at the entry point sp points to argc, then argv[] and a 0, envp[] and a 0, then the auxiliary vector (AT_PAGESZ, then AT_NULL); start.card builds it from the strings the host hands over"
+  },
+  "statement": "Linux on 32-bit MIPS with the o32 ABI, as a user-mode program sees it: the system calls a self-contained (static, no dynamic loader) program makes to print, read input, grow its heap, map anonymous memory, read the clock and exit. Every other call answers ENOSYS and is counted, so an unmodelled call is visible, never a silent success.",
+  "syscalls": {
+    "brk": 4045,
+    "clock_gettime": 4263,
+    "exit": 4001,
+    "exit_group": 4246,
+    "getpid": 4020,
+    "ioctl": 4054,
+    "mmap": 4090,
+    "mmap2": 4210,
+    "munmap": 4091,
+    "read": 4003,
+    "set_thread_area": 4283,
+    "write": 4004,
+    "writev": 4146
+  },
+  "tier": 1,
+  "toolchain": {
+    "c": [
+      "{exe}",
+      "--target=mipsel-linux-gnu",
+      "-march=mips32r2",
+      "-msoft-float",
+      "-O2",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-nostdlib",
+      "-static",
+      "-fno-pic",
+      "-mno-abicalls",
+      "-fno-stack-protector",
+      "-fuse-ld=lld",
+      "-Wl,-e,__start",
+      "-Wl,--image-base=0x10000",
+      "-o",
+      "{out}",
+      "{srcs}"
+    ],
+    "probe": {
+      "kind": "all",
+      "of": [
+        {
+          "kind": "executable",
+          "name": "clang"
+        },
+        {
+          "kind": "executable",
+          "name": "ld.lld"
+        }
+      ]
+    },
+    "statement": "how to build a self-contained program for this platform on this computer (clang cross-compiles to MIPS and lld links it; no C library, the program brings its own start code and system calls, as tests/foreign/start.c does). Soft float: the FPU is not modelled yet."
+  }
+}

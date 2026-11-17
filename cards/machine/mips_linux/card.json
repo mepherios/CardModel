@@ -1,0 +1,19 @@
+{
+  "category": "machine",
+  "components": [
+    "os/linux_mips_o32",
+    "format/elf32"
+  ],
+  "e_machine": 8,
+  "export_state": true,
+  "isa": "mips32",
+  "logic": [
+    "process.card"
+  ],
+  "name": "mips_linux",
+  "provenance": {
+    "origin": "cardmodel"
+  },
+  "statement": "A user-mode process of a foreign platform: a MIPS32 (or Allegrex) CPU from the instruction cards, one flat address space, Linux/MIPS o32 system calls and the process start from the os card, and the ELF loader from the format card (e_machine is the ELF machine number it runs). The host (cardmodel/machine/process.py) only hands over the file's bytes, the argument strings and standard input, runs `run(n)` and drains the output. Any fault (bad address, reserved instruction, BREAK, an unhandled trap or overflow) stops the process with the cause, never silently.",
+  "tier": 1
+}
