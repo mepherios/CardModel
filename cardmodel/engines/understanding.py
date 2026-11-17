@@ -163,7 +163,7 @@ def _bits_section(a: dict) -> str:
           "|---|---|---|---|---|" + "---|" * len(sole) + "---|"]
     for f in fns:
         post = ", ".join(POST_SHORT[k] for k, v in f["post"].items() if v) or "none"
-        o.append(f"| {f['name']} | {''.join(map(str, f['truth']))} | {', '.join(f['depends_on']) or 'nothing'} | "
+        o.append(f"| {f['name']} | {''.join(map(str, f['truth']))} | {', '.join(f['inputs']) or 'nothing'} | "
                  f"{', '.join(f['op_cards']) or '–'} | `{B.show_term(f['over_op_cards']['term'])}` | "
                  + " | ".join(str(f["over_sole_gate"][g]["gates"]) for g in sole) + f" | {post} |")
     nand = next((f for f in fns if f["name"] == "XNOR"), None)

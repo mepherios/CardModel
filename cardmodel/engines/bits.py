@@ -569,7 +569,7 @@ def master(ops) -> dict:
         term = program_term(prog, 2, True)
         fns.append({
             "name": LABELS[t], "table": t, "truth": [int(bit(t, r)) for r in range(4)],
-            "depends_on": depends_on(t, 2), "op_cards": sorted(by_table.get(t, [])),
+            "inputs": depends_on(t, 2), "op_cards": sorted(by_table.get(t, [])),
             "over_op_cards": {"gates": _gates(prog), "program": show_program(prog, 2, True),
                               "term": term, "ir_checked": check_term(term, 2, t, ops)},
             "over_sole_gate": {g: {"gates": _gates(r["best"][t]), "program": show_program(r["best"][t], 2, False)}
@@ -613,7 +613,7 @@ def mastery(res: dict, level: str = "L01_two_bit_functions") -> list[dict]:
             {"id": "M3_identity", "ok": len({f["table"] for f in fns}) == len(fns) == 16},
         ]
     return [
-        {"id": "M1_space", "ok": len(fns) == 16 and sorted(len(f["depends_on"]) for f in fns)
+        {"id": "M1_space", "ok": len(fns) == 16 and sorted(len(f["inputs"]) for f in fns)
          == [0] * 2 + [1] * 4 + [2] * 10},
         {"id": "M2_observed", "ok": bool(res["observed"]) and all(isinstance(o["table"], int)
                                                                   for o in res["observed"])},
@@ -673,7 +673,7 @@ def function_cards(res: dict) -> list[dict]:
     out = []
     for f in res["functions"]:
         out.append({"name": f"bit2_{f['name']}", "label": f["name"], "tier": 1, "arity": 2, "table": f["table"],
-                    "truth": f["truth"], "depends_on": f["depends_on"], "op_cards": f["op_cards"],
+                    "truth": f["truth"], "inputs": f["inputs"], "op_cards": f["op_cards"],
                     "over_op_cards": f["over_op_cards"], "over_sole_gate": f["over_sole_gate"], "post": f["post"],
                     "complete_alone": f["complete_alone"],
                     "statement": f"{f['name']}(x, y): truth {''.join(map(str, f['truth']))} on rows xy=00,01,10,11"

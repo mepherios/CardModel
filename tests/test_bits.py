@@ -55,7 +55,7 @@ class TestBits(unittest.TestCase):
 
     def test_the_space(self):
         self.assertEqual(sorted(f["table"] for f in RES["functions"]), list(range(16)))
-        deps = sorted(len(f["depends_on"]) for f in RES["functions"])
+        deps = sorted(len(f["inputs"]) for f in RES["functions"])
         self.assertEqual(deps, [0, 0, 1, 1, 1, 1] + [2] * 10)     # constants and one-bit functions found inside
 
     def test_every_function_runs_in_the_interpreter(self):
