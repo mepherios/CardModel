@@ -1,0 +1,26 @@
+{
+  "builds_on": [
+    "L20_operating_system"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "nothing yet"
+  ],
+  "level": 21,
+  "mastery": [
+    "interleavings, races, locks, message passing and consensus, checked by exhaustive state search on small cases"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L21_concurrency",
+  "part": "V. Systems",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What happens when many things run at once?",
+  "statement": "L21 Concurrency and distribution: What happens when many things run at once?",
+  "tier": 0,
+  "title": "Concurrency and distribution"
+}

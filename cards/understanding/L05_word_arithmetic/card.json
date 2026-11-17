@@ -1,0 +1,29 @@
+{
+  "builds_on": [
+    "L04_words"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "op cards ADD, SUB, MUL, TRUNCDIV, REM, CMP_*",
+    "ISA flag semantics in cards/isa"
+  ],
+  "level": 5,
+  "mastery": [
+    "SUB, MUL, DIV, REM, MOD and the CMP_* cards on fixed widths derived as circuits and checked exhaustively at 8 bits",
+    "flags (carry, zero, sign, overflow) derived, matching the ISA cards",
+    "costs of each construction measured (gates, depth)"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L05_word_arithmetic",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How do machines subtract, multiply, divide and compare?",
+  "statement": "L05 Arithmetic on words: How do machines subtract, multiply, divide and compare?",
+  "tier": 0,
+  "title": "Arithmetic on words"
+}

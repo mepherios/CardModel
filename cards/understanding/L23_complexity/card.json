@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L22_computability",
+    "L15_algorithms",
+    "L02_n_bit_functions"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/difficulty.py"
+  ],
+  "level": 23,
+  "mastery": [
+    "P, NP and reductions; satisfiability from L02 as the first NP-complete problem; circuit size from L01 and L02"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L23_complexity",
+  "part": "VI. Limits and knowledge",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What can be computed in reasonable time?",
+  "statement": "L23 Complexity: What can be computed in reasonable time?",
+  "tier": 0,
+  "title": "Complexity"
+}

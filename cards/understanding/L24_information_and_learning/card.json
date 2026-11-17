@@ -1,0 +1,26 @@
+{
+  "builds_on": [
+    "L23_complexity"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/induce.py and docs/LEARNING.md (pull request 93)"
+  ],
+  "level": 24,
+  "mastery": [
+    "information and description length; induction from behaviour; generalisation measured"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L24_information_and_learning",
+  "part": "VI. Limits and knowledge",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How is a computation found from its behaviour?",
+  "statement": "L24 Information and learning: How is a computation found from its behaviour?",
+  "tier": 0,
+  "title": "Information and learning"
+}

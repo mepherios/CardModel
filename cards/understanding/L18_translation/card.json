@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L17_semantics",
+    "L10_instruction_machine"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/translate.py, codegen, the op x language conformance matrix, docs/FOREIGN.md (pull request 94)"
+  ],
+  "level": 18,
+  "mastery": [
+    "lowering to machine code, register allocation, code generation",
+    "every translation checked equal in meaning"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L18_translation",
+  "part": "IV. Languages and translation",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How does one program become another, keeping its meaning?",
+  "statement": "L18 Translation and compilation: How does one program become another, keeping its meaning?",
+  "tier": 0,
+  "title": "Translation and compilation"
+}

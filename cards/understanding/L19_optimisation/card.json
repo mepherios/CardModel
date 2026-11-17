@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L18_translation",
+    "L15_algorithms",
+    "L11_expressions"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/rewrite.py, engines/improve.py, engines/egraph.py"
+  ],
+  "level": 19,
+  "mastery": [
+    "equivalence-preserving rewriting, cost models, superoptimisation (L01's smallest circuits are its smallest case)"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L19_optimisation",
+  "part": "IV. Languages and translation",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What is the cheapest program with the same meaning?",
+  "statement": "L19 Optimisation: What is the cheapest program with the same meaning?",
+  "tier": 0,
+  "title": "Optimisation"
+}

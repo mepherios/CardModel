@@ -1,0 +1,6 @@
+{
+  "defined_by": "engines/understanding.py",
+  "description": "The understanding roadmap: every level of computation on computers and in programs, from the bit upward, each building on the ones it names. A level with an engine is mastered only when that engine's mastery criteria all compute true (engines/understanding.py, docs/UNDERSTANDING.md).",
+  "name": "understanding",
+  "tier": 0
+}

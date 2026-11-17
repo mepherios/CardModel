@@ -1,0 +1,29 @@
+{
+  "builds_on": [
+    "L09_memory",
+    "L05_word_arithmetic"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "cards/isa (LR35902, ARMv5TE; MIPS32 in pull request 94), cardmodel/machine"
+  ],
+  "level": 10,
+  "mastery": [
+    "fetch, decode and execute as one state transition",
+    "each instruction card's meaning derived from L05 circuits and checked against the card",
+    "a small ISA learned from execution traces"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L10_instruction_machine",
+  "part": "II. Time and state",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How does a fixed circuit run any program?",
+  "statement": "L10 The instruction machine: How does a fixed circuit run any program?",
+  "tier": 0,
+  "title": "The instruction machine"
+}

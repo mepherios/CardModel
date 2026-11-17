@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L05_word_arithmetic"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "op cards F32, BITS_F32, F64_BITS, engines/numeric.py, engines/realnorm.py"
+  ],
+  "level": 6,
+  "mastery": [
+    "fixed point and IEEE 754 binary32/64: fields, rounding, NaN and infinities derived from L05",
+    "F32, BITS_F32 and F64_BITS cards checked against the derived encoding",
+    "error bounds stated as laws"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L06_real_numbers",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How do finite bits stand for real numbers?",
+  "statement": "L06 Approximate numbers: How do finite bits stand for real numbers?",
+  "tier": 0,
+  "title": "Approximate numbers"
+}

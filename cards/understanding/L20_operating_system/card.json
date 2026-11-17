@@ -1,0 +1,27 @@
+{
+  "builds_on": [
+    "L10_instruction_machine",
+    "L13_procedures"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "cards/os and the MIPS Linux process model (pull request 94)"
+  ],
+  "level": 20,
+  "mastery": [
+    "processes, system calls, files, devices and interrupts as state machines"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L20_operating_system",
+  "part": "V. Systems",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How does a program meet the world?",
+  "statement": "L20 Operating systems and I/O: How does a program meet the world?",
+  "tier": 0,
+  "title": "Operating systems and I/O"
+}

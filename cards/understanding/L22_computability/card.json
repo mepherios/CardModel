@@ -1,0 +1,27 @@
+{
+  "builds_on": [
+    "L12_control_flow",
+    "L17_semantics"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/godel1931.py, docs/GODEL.md"
+  ],
+  "level": 22,
+  "mastery": [
+    "Turing machines, lambda calculus, universality, the halting problem, Rice's theorem; Gödel numbering"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L22_computability",
+  "part": "VI. Limits and knowledge",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What can be computed at all?",
+  "statement": "L22 Computability: What can be computed at all?",
+  "tier": 0,
+  "title": "Computability"
+}

@@ -1,0 +1,30 @@
+{
+  "builds_on": [],
+  "category": "understanding",
+  "engine": "engines/bits.py",
+  "in_repo": [
+    "the IR sort `bool` (engines/ir.py)",
+    "op cards with a bool rank (cards/op)"
+  ],
+  "level": 0,
+  "mastery": [
+    "the two values are distinct and every comparison of them is decided",
+    "the rows of n bits are exactly 2^n and are enumerated in a fixed order",
+    "a function of bits is identified by its truth table and nothing else"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L00_bit",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What is the smallest difference a machine can hold?",
+  "statement": "L00 The bit: What is the smallest difference a machine can hold?",
+  "tier": 0,
+  "title": "The bit",
+  "why_here": "One value carries no information, so nothing can be computed with it. Two distinguishable values are the least that can be.",
+  "witness": "tests/test_bits.py"
+}

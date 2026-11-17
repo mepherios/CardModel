@@ -996,6 +996,54 @@ def cmd_env(args) -> int:
     return 0
 
 
+def cmd_basics(args) -> int:
+    """The understanding roadmap (cards/understanding) and the smallest piece, mastered (engines/bits.py)."""
+    from .engines import bits as B
+    from .engines import understanding as U
+    cli = _cli()
+    ctx = cli._ctx(args)
+    if args.action == "roadmap":
+        a = U.assess(ctx.store, ctx.ops)
+        if args.write:
+            Path(args.write).write_text(U.render(ctx.store, ctx.ops, a["results"]), encoding="utf-8")
+        lines = [f"{c['name']:<32} {a['status'][c['name']]:<9} {c['question']}" for c in a["levels"]]
+        lines += [f"problem: {p}" for p in a["problems"]]
+        if args.write:
+            lines.append(f"wrote {args.write}")
+        data = {"status": a["status"], "criteria": a["criteria"], "problems": a["problems"]}
+        cli._out(args, data, "\n".join(lines))
+        return 1 if a["problems"] else 0
+    res = B.master(ctx.ops)
+    suff = res["sufficiency"]
+    lines = [f"{'function':<12} {'truth':<6} {'op card':<10} {'gates':>5}  smallest circuit over the op cards   "
+             + "  ".join(f"{g:>4}" for g in suff["sole"])]
+    for f in res["functions"]:
+        lines.append(f"{f['name']:<12} {''.join(map(str, f['truth'])):<6} {','.join(f['op_cards']) or '-':<10} "
+                     f"{f['over_op_cards']['gates']:>5}  {B.show_term(f['over_op_cards']['term']):<34} "
+                     + "  ".join(f"{f['over_sole_gate'][g]['gates']:>4}" for g in suff["sole"]))
+    lines.append(f"complete on its own: {', '.join(suff['sole'])}; {suff['complete']} of {suff['sets']} gate sets "
+                 f"complete; {len(suff['obstructions'])} obstructions; Post's criterion disagrees on "
+                 f"{suff['post_disagreements']}")
+    lines.append(f"laws: {len(res['laws']['laws'])} kept, {res['laws']['derived']} derived (all proved on every row)")
+    for level in ("L00_bit", "L01_two_bit_functions"):
+        crit = B.mastery(res, level)
+        lines.append(f"{level}: " + ", ".join(f"{m['id']} {'ok' if m['ok'] else 'FAILS'}" for m in crit))
+    ok = all(m["ok"] for level in ("L00_bit", "L01_two_bit_functions") for m in B.mastery(res, level))
+    if args.save:
+        layer = cli._layer(ctx, args)
+        ctx.store.save_pack("boolfn", "two_bits", B.function_cards(res), layer=layer,
+                            description="The functions of at most two bits, derived by engines/bits.py "
+                                        "(level L01 of cards/understanding).")
+        ctx.store.save_pack("boolfn", "laws", B.law_cards(res), layer=layer)
+        lines.append(f"saved 16 function cards and {len(res['laws']['laws'])} law cards to the {layer} layer "
+                     "(cards/boolfn)")
+    if args.laws:
+        lines += [f"  {B.law_text(law)}" for law in res["laws"]["laws"]]
+    cli._out(args, {"functions": res["functions"], "sufficiency": suff, "mastery": ok,
+                "laws": [B.law_text(x) for x in res["laws"]["laws"]]}, "\n".join(lines))
+    return 0 if ok else 1
+
+
 def register(sub) -> None:
     from . import math_cli
     math_cli.register(sub)
@@ -1022,6 +1070,11 @@ def register(sub) -> None:
     s.add_argument("--global", dest="global_", action="store_true"); s.add_argument("--lean", action="store_true")
     s.add_argument("--lang"); s.add_argument("--function"); s.add_argument("--out"); s.add_argument("--seed", type=int)
     s.set_defaults(fn=cmd_lang)
+    s = sub.add_parser("basics", help="the understanding roadmap from the bit upward, and its smallest piece "
+                                      "mastered: every function of two bits, derived from the op cards")
+    s.add_argument("action", choices=["roadmap", "bits"]); s.add_argument("--write")
+    s.add_argument("--save", action="store_true"); s.add_argument("--global", dest="global_", action="store_true")
+    s.add_argument("--laws", action="store_true"); s.set_defaults(fn=cmd_basics)
     s = sub.add_parser("logic", help="query, explain (with a Lean proof), mine rules, or check the model's own laws")
     s.add_argument("action", choices=["query", "why", "mine", "self", "code"]); s.add_argument("source", nargs="?")
     s.add_argument("--facts", action="store_true", help="code: print the facts as card-language source")

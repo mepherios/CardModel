@@ -5,6 +5,7 @@
   "name": "stage",
   "outside": {
     "cardmodel/engines/arena.py": "the arena runs card-language programs against each other (`cardmodel arena`): a game loop over whole programs, not a step on one function",
+    "cardmodel/engines/bits.py": "the smallest level of the understanding roadmap (`cardmodel basics bits`): it derives every function of two bits from the op cards' truth tables; its input is the op cards themselves, not a function, and what it finds leaves it as boolfn cards",
     "cardmodel/engines/capabilities.py": "the smoke checks of the core (CM37) call the engines, the pipeline among them, from `verify` and the self-run; a check is not a step of the path it checks",
     "cardmodel/engines/codefacts.py": "facts about a whole source tree for `observe` and `learn` (which constructs occur where): a corpus reading, not a transformation of one function",
     "cardmodel/engines/codes.py": "the positional and arithmetic codes of whole Gödel sets (`cardmodel godel`): bookkeeping of the ledger, read by the content stage through godel.py",
@@ -33,6 +34,7 @@
     "cardmodel/engines/selfrun.py": "the self-run cycle (CM38) schedules steps over the model, `translate` among them; it calls the pipeline, the pipeline does not call it",
     "cardmodel/engines/sweep.py": "sweeps a corpus through `translate` (`cardmodel sweep`): a loop over files, each function of which is this pipeline's unit",
     "cardmodel/engines/theorems.py": "theorem cards with their evidence (CM23) are statements about the model's cards; a function's claims are certificates on its card (the evidence group)",
+    "cardmodel/engines/understanding.py": "the understanding roadmap (`cardmodel basics roadmap`): computes each level's status from cards/understanding and the levels' engines; a map of the model, not a step of one input's path",
     "cardmodel/engines/verify.py": "the verify sections (`cardmodel verify`) run every check of the model, `pipeline` among them",
     "cardmodel/engines/witness_runner.py": "runs the law cards' witness tests for the self-run (CM20): tests of the model, not of an input"
   },

@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L08_state",
+    "L04_words"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/ir.py arrays, LOAD and store"
+  ],
+  "level": 9,
+  "mastery": [
+    "address decoding as an L02 function; read and write as state transitions",
+    "the IR's arrays, LOAD and store explained by this model"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L09_memory",
+  "part": "II. Time and state",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How does a machine find what it stored?",
+  "statement": "L09 Memory: How does a machine find what it stored?",
+  "tier": 0,
+  "title": "Memory"
+}

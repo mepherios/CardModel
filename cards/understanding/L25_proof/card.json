@@ -1,0 +1,27 @@
+{
+  "builds_on": [
+    "L22_computability",
+    "L17_semantics"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/theorems.py, engines/formal.py, Lean"
+  ],
+  "level": 25,
+  "mastery": [
+    "logic and proof systems; machine-checked proofs; L01's exhaustive proofs as the base case"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L25_proof",
+  "part": "VI. Limits and knowledge",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How do we know a program is right?",
+  "statement": "L25 Proof and verification: How do we know a program is right?",
+  "tier": 0,
+  "title": "Proof and verification"
+}

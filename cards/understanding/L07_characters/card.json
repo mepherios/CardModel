@@ -1,0 +1,27 @@
+{
+  "builds_on": [
+    "L04_words"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "docs/STRINGS.md, the STR_* op cards"
+  ],
+  "level": 7,
+  "mastery": [
+    "code points, UTF-8 and UTF-16 as bit layouts derived and checked on every code point",
+    "STR_FROM_CODE and STR_ORD checked against the derived encoding"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L07_characters",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How do bits stand for text?",
+  "statement": "L07 Characters: How do bits stand for text?",
+  "tier": 0,
+  "title": "Characters"
+}

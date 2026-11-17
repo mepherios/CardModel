@@ -1,0 +1,29 @@
+{
+  "builds_on": [
+    "L03_bit_arithmetic"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "op cards WRAPU, WRAPS, BIT_AND, BIT_OR, BIT_XOR, BIT_NOT, SHIFT_LEFT, SHIFT_RIGHT, POPCOUNT, CLZ32, CTZ32",
+    "engines/sorts.py"
+  ],
+  "level": 4,
+  "mastery": [
+    "unsigned and two's-complement readings of w bits, and the ring of integers mod 2^w",
+    "WRAPU, WRAPS, the BIT_* and shift op cards rebuilt as circuits from L03 and checked against their cards on all 8-bit inputs",
+    "overflow and sign extension explained as laws"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L04_words",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How does a row of bits stand for a number?",
+  "statement": "L04 Words and encodings: How does a row of bits stand for a number?",
+  "tier": 0,
+  "title": "Words and encodings"
+}

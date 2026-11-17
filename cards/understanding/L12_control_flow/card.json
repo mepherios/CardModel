@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L11_expressions",
+    "L10_instruction_machine"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "the IR statements if, while, for_range; engines/mathlang.py"
+  ],
+  "level": 12,
+  "mastery": [
+    "branches and loops as control-flow graphs; loops as least fixed points",
+    "termination proved where it holds, reported where it is unknown"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L12_control_flow",
+  "part": "III. Programs",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How do programs choose and repeat?",
+  "statement": "L12 Control flow: How do programs choose and repeat?",
+  "tier": 0,
+  "title": "Control flow"
+}

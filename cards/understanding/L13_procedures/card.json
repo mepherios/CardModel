@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L12_control_flow",
+    "L09_memory"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/funcalg.py, CALL in the IR"
+  ],
+  "level": 13,
+  "mastery": [
+    "calls, stack frames, recursion and calling conventions",
+    "recursion schemes and linear recurrences (funcalg) derived"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L13_procedures",
+  "part": "III. Programs",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How do programs reuse themselves?",
+  "statement": "L13 Procedures and recursion: How do programs reuse themselves?",
+  "tier": 0,
+  "title": "Procedures and recursion"
+}

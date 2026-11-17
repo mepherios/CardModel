@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L13_procedures",
+    "L07_characters"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "docs/LISTS.md, docs/STRINGS.md"
+  ],
+  "level": 14,
+  "mastery": [
+    "sequences, strings, records, trees, graphs and hash tables built from memory",
+    "value versus reference semantics"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L14_data_structures",
+  "part": "III. Programs",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How are many values organised?",
+  "statement": "L14 Data structures: How are many values organised?",
+  "tier": 0,
+  "title": "Data structures"
+}

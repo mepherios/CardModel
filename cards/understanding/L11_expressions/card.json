@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L01_two_bit_functions",
+    "L05_word_arithmetic"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/ir.py, engines/laws.py (templates), engines/egraph.py, engines/induce.py (pull request 93)"
+  ],
+  "level": 11,
+  "mastery": [
+    "terms over the op cards evaluated, shared and costed; L01's circuits are the boolean case",
+    "laws over every sort found by enumeration as in L01, proved where the domain is finite"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L11_expressions",
+  "part": "III. Programs",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What is a program without loops?",
+  "statement": "L11 Expressions and straight-line programs: What is a program without loops?",
+  "tier": 0,
+  "title": "Expressions and straight-line programs"
+}

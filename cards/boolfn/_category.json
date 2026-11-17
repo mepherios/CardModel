@@ -1,0 +1,6 @@
+{
+  "defined_by": "cardmodel",
+  "description": "The functions of at most two bits, derived by engines/bits.py (level L01 of cards/understanding).",
+  "name": "boolfn",
+  "tier": 1
+}

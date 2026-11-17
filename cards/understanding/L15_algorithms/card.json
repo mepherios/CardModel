@@ -1,0 +1,27 @@
+{
+  "builds_on": [
+    "L14_data_structures"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "cards/algorithm, cards/metric, engines/optimize.py"
+  ],
+  "level": 15,
+  "mastery": [
+    "time and space measured and predicted; asymptotic classes",
+    "algorithm cards matched to measured cost"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L15_algorithms",
+  "part": "III. Programs",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How fast, and in how much space?",
+  "statement": "L15 Algorithms and their cost: How fast, and in how much space?",
+  "tier": 0,
+  "title": "Algorithms and their cost"
+}

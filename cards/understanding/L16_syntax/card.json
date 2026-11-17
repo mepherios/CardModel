@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L08_state",
+    "L14_data_structures"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/frontend_text.py, engines/frontend_python.py, cardmodel/lang"
+  ],
+  "level": 16,
+  "mastery": [
+    "regular languages as the finite-state machines of L08; context-free grammars and parsing",
+    "every frontend's grammar as cards"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L16_syntax",
+  "part": "IV. Languages and translation",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How is a program written down and read back?",
+  "statement": "L16 Syntax: How is a program written down and read back?",
+  "tier": 0,
+  "title": "Syntax"
+}

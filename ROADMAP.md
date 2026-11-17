@@ -150,6 +150,22 @@ Status: 🟢 ready · 🟡 in progress · 🔵 done (dated) · ⚫ dropped. Proc
   cartridge in that installed player as the launcher does and compares its picture with the one its cards compute;
   the self-run's `store` step counts the cartridges that do not launch (G_S1).
 
+## Understanding: from the bit upward (2026-11-17)
+
+The owner's direction: master the most basic of basics completely with the card logic, and expand from there.
+`cards/understanding` is the map (26 levels, each building only on levels below it; docs/UNDERSTANDING.md is
+generated from it with computed status).
+
+* 🔵 L00 the bit and L01 every function of two bits, mastered (`cardmodel basics bits`, engines/bits.py): the op
+  cards' truth tables observed by running them; proven-smallest circuits over the op cards and over NAND and NOR
+  alone; all 65,536 gate sets decided complete or not (NAND and NOR found as the only single complete gates, four
+  obstructions found and checked against Post's criterion); 1,592 laws found by enumeration and proved on every row,
+  the textbook ones among them.
+* 🟢 L02 functions of n bits (the frontier): normal forms, the multiplexer, smallest circuits for all 256 three-bit
+  functions (formulas already found), satisfiability.
+* 🟢 then L03 adding bits and L04 words: rebuild ADD, WRAPU and the BIT_* op cards as circuits and check them against
+  the cards on every 8-bit input.
+
 ## Gödel model: next (GOALS.md "What the card model is")
 
 * 🟢 **The prime ledger**: an append-only pack of atoms with their primes (B₀ from the op cards and logic

@@ -36,6 +36,9 @@
   cardmodel lang check|build|emit FILE   check it, turn it into cards (--save), or emit it (--lang rust)
   cardmodel logic query|why|mine|self    ask a theory, explain a fact (--lean: kernel-checked), decipher rules
   cardmodel laws [--save]                discover the laws the op cards obey; prove them; promote to rules
+  cardmodel basics roadmap [--write F] | bits [--save] [--laws]   the understanding roadmap from the bit upward
+                                         (docs/UNDERSTANDING.md) and its smallest piece mastered: every function of
+                                         two bits derived from the op cards, proven-smallest circuits, completeness
   cardmodel lean import F.lean | --core  Lean theorems as cards: faithful reading, witness, re-proof
   cardmodel repl                         interactive card language
   cardmodel math emit|lift|run|translate|roundtrip SOURCE   mathematical notation (Unicode or LaTeX) as a source

@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L16_syntax",
+    "L11_expressions"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "docs/FOUNDATIONS.md, engines/sorts.py"
+  ],
+  "level": 17,
+  "mastery": [
+    "operational and denotational meaning; types and soundness",
+    "the many-sorted signature of docs/FOUNDATIONS.md derived from these"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L17_semantics",
+  "part": "IV. Languages and translation",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What does a program mean, and what can go wrong?",
+  "statement": "L17 Meaning and types: What does a program mean, and what can go wrong?",
+  "tier": 0,
+  "title": "Meaning and types"
+}

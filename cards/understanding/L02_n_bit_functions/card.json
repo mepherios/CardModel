@@ -1,0 +1,30 @@
+{
+  "builds_on": [
+    "L01_two_bit_functions"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "engines/bits.formula_sizes (three-bit formulas, the first step)",
+    "engines/logic.py, engines/egraph.py"
+  ],
+  "level": 2,
+  "mastery": [
+    "normal forms (sum of products, product of sums, XOR polynomial) are derived and checked on all rows",
+    "the multiplexer (IF_EXPR) is observed and Shannon expansion is found as a law",
+    "every one of the 256 three-bit functions has a proven-smallest formula and circuit; four bits by symmetry classes",
+    "deciding whether a function is ever true (satisfiability) is solved by search and by decision diagrams"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L02_n_bit_functions",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How does any function of many bits decompose into two-bit pieces?",
+  "statement": "L02 Functions of n bits: How does any function of many bits decompose into two-bit pieces?",
+  "tier": 0,
+  "title": "Functions of n bits"
+}

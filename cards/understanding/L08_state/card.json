@@ -1,0 +1,27 @@
+{
+  "builds_on": [
+    "L02_n_bit_functions"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "nothing yet as its own level"
+  ],
+  "level": 8,
+  "mastery": [
+    "latch, flip-flop and register as circuits with feedback, and their behaviour over time",
+    "finite-state machines: a next-state function from L02 plus a state; equivalence and minimisation decided exactly"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L08_state",
+  "part": "II. Time and state",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How does a machine remember?",
+  "statement": "L08 State and feedback: How does a machine remember?",
+  "tier": 0,
+  "title": "State and feedback"
+}

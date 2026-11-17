@@ -1,0 +1,35 @@
+{
+  "builds_on": [
+    "L00_bit"
+  ],
+  "category": "understanding",
+  "engine": "engines/bits.py",
+  "in_repo": [
+    "engines/bits.py, cards/boolfn",
+    "the bool op cards AND, OR, NOT, CMP_EQ, CMP_NE"
+  ],
+  "level": 1,
+  "mastery": [
+    "all 16 functions are identified, with the inputs each depends on (constants and one-bit functions are found inside them)",
+    "the op cards' truth tables are observed by running them, never stated",
+    "every function has a smallest circuit over the op cards, re-run by the IR interpreter on every row",
+    "a single gate complete on its own is found, and every function has a proven-smallest circuit over it",
+    "all 65,536 sets of gates are decided complete or not, and Post's criterion agrees on every one",
+    "the laws of the op cards are found by enumeration and each is proved on every row"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L01_two_bit_functions",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "What can be computed from two bits, and from which pieces?",
+  "statement": "L01 Every function of at most two bits: What can be computed from two bits, and from which pieces?",
+  "tier": 0,
+  "title": "Every function of at most two bits",
+  "why_here": "The smallest level with a computation in it, and the only one small enough to finish: 16 objects, 4 rows, every search runs to the end. Functions of one bit cannot be combined into anything new (the model checks that no set of them is complete), so two bits is the smallest complete piece.",
+  "witness": "tests/test_bits.py"
+}

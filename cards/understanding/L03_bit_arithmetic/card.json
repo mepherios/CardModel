@@ -1,0 +1,28 @@
+{
+  "builds_on": [
+    "L02_n_bit_functions"
+  ],
+  "category": "understanding",
+  "in_repo": [
+    "nothing yet: ADD is an op card with a Python meaning"
+  ],
+  "level": 3,
+  "mastery": [
+    "half and full adder found as smallest multi-output circuits from L01/L02 pieces",
+    "ripple-carry addition of w bits built from full adders and checked on every input up to 8 bits",
+    "correctness for every width proved by induction on the width, not by sampling"
+  ],
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "L03_bit_arithmetic",
+  "part": "I. Information and logic: computation without time",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "engines/understanding.py"
+  },
+  "question": "How do bits count?",
+  "statement": "L03 Adding bits: How do bits count?",
+  "tier": 0,
+  "title": "Adding bits"
+}
