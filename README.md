@@ -206,6 +206,7 @@ command runs the test suite.
 | [docs/ANYPS5.md](docs/ANYPS5.md) | AnyPS5 as cards: the 95 % question, the real coverage, why each gap is open, what closes it |
 | [docs/ANYPS5_COVERAGE.md](docs/ANYPS5_COVERAGE.md) | AnyPS5's computed coverage and gaps (generated) |
 | [docs/MACHINES.md](docs/MACHINES.md) | machines as cards: instruction cards, hardware cards, lifting, the effect shell, the DS prototype |
+| [docs/FOREIGN.md](docs/FOREIGN.md) | foreign programs: another platform's executables on its ISA and OS cards, translated ahead of time to native code (MIPS/PSP CPU first) |
 | [docs/ARCADE.md](docs/ARCADE.md) | native games built from cards (Vector Duel), the depot pipeline and the Cardmodel Arcade launcher |
 | [docs/STORE.md](docs/STORE.md) | what is in the store, what the model does for each piece, which products run through it |
 | [docs/AUTONOMY.md](docs/AUTONOMY.md) | the model runs itself: the self-run cycle, the core capabilities, the self layer, findings and the plan |

@@ -28,7 +28,9 @@ from . import isa as I
 
 EFFECTS = ("rd8", "wr8", "idle", "idu", "rd8_idu", "halt", "stop", "hang", "cb_dispatch",
            # the ARM bus contract: halfword/word reads and writes, and the exception / coprocessor hooks
-           "rd16", "rd32", "wr16", "wr32", "swi", "undefined_op", "cp_read", "cp_write")
+           "rd16", "rd32", "wr16", "wr32", "swi", "undefined_op", "cp_read", "cp_write",
+           # the MIPS bus contract's hooks
+           "syscall_op", "break_op", "exception")
 READS = ("rd8", "rd8_idu")
 # every effect that returns a value, with the sort of that value (a read is typed by its width)
 READ_SORTS = {"rd8": "u8", "rd8_idu": "u8", "rd16": "u16", "rd32": "u32", "cp_read": "u32"}
@@ -321,6 +323,8 @@ def check(ctx, isa: str = "lr35902", seed: int = 0, samples: int = 4, only: list
     from . import native as N
     if canonical not in ("stored", "distill", None):
         raise ValueError(f"canonical must be 'stored', 'distill' or None, not {canonical!r}")
+    if I.isa_card(ctx.store, isa).get("bench_state") == "mips":
+        return {**check_mips(ctx, isa, seed=seed, samples=samples, only=only), "canonical": {}, "distilled": {}}
     if I.isa_card(ctx.store, isa).get("operand_param"):
         # an ISA decoded from the instruction word (ARM/Thumb): terms per sampled encoding; no stored canonical forms
         return {**check_arm(ctx, isa, seed=seed, samples=samples, only=only), "canonical": {}, "distilled": {}}
@@ -510,6 +514,119 @@ def check_arm(ctx, isa: str = "armv5te", seed: int = 0, samples: int = 4, only: 
                 h = got.get(k, init[k])
                 if h != w:
                     problems.append(f"{op:#010x} {k}: terms give {h:#x}, the semantics {w:#x}")
+        if reason is not None:
+            per[card.name] = {"status": "unsupported", "reason": reason}
+        elif not runs:
+            per[card.name] = {"status": "unsupported", "reason": "no sampled word decodes to this card"}
+        else:
+            per[card.name] = {"status": "fail" if problems else "pass", "runs": runs,
+                              "problems": sorted(set(problems))[:4], "registers": sorted(regs)}
+    st = [r["status"] for r in per.values()]
+    return {"status": "fail" if "fail" in st else ("pass" if "pass" in st else "vacuous"), "isa": isa, "seed": seed,
+            "counts": {s: st.count(s) for s in sorted(set(st))}, "cards": per, "results": results}
+
+
+def mips_bus(result: dict, init: dict, ram: bytes, ops) -> dict:
+    """The MIPS terms' bus effects on one concrete state, as ``arm_bus`` does for ARM, with the MIPS bench's hooks:
+    SYSCALL and BREAK codes, exceptions (code, info) and reserved instructions."""
+    from ..engines.logic import eval_expr
+    mem = bytearray(ram)
+    env = dict(init)
+    env.update({f"rd{i}": 0 for i in range(result["reads"])})
+    rec = {"trace": [], "sys_calls": 0, "sys_last": -1, "brk_calls": 0, "exc_calls": 0, "exc_last": -1,
+           "exc_info": 0, "undef_calls": 0}
+    kinds = {"rd8": 1, "rd16": 2, "rd32": 3, "wr8": 4, "wr16": 5, "wr32": 6}
+    for e in result["effects"]:
+        if e["guard"] is not None and not eval_expr(e["guard"], env, ops):
+            continue
+        op, args = e["op"], [eval_expr(a, env, ops) for a in e["args"]]
+        if op in ("rd8", "rd16", "rd32"):
+            n = {"rd8": 1, "rd16": 2, "rd32": 4}[op]
+            v = sum(mem[(args[0] + i) & 0xFFFF] << (8 * i) for i in range(n))
+            env[e["result"]] = v
+            rec["trace"].append((kinds[op], args[0] & 0xFFFFFFFF, v))
+        elif op in WRITE_BYTES:
+            n = WRITE_BYTES[op]
+            for i in range(n):
+                mem[(args[0] + i) & 0xFFFF] = (args[1] >> (8 * i)) & 0xFF
+            rec["trace"].append((kinds[op], args[0] & 0xFFFFFFFF, args[1] & ((1 << (8 * n)) - 1)))
+        elif op == "syscall_op":
+            rec["sys_calls"] += 1
+            rec["sys_last"] = args[0]
+        elif op == "break_op":
+            rec["brk_calls"] += 1
+        elif op == "exception":
+            rec["exc_calls"] += 1
+            rec["exc_last"], rec["exc_info"] = args[0], args[1]
+        elif op == "undefined_op":
+            rec["undef_calls"] += 1
+        else:
+            raise Unsupported(f"effect {op} on the MIPS bus")
+    rec["trace"] = rec["trace"][:64]
+    return {"env": env, **rec}
+
+
+def check_mips(ctx, isa: str = "mips32", seed: int = 0, samples: int = 4, only: list[str] | None = None) -> dict:
+    """The MIPS cards' terms against the bench (``machine/<isa>_bench``), one encoding at a time, as ``check_arm``:
+    every register, HI, LO and the LL bit, the branch the card takes (``bpending`` / ``btarget`` against the bench's
+    delay slot) or the next PC, the bus in order, and the SYSCALL / BREAK / exception / reserved-instruction hooks."""
+    from . import bench as BN
+    from . import build as Bd
+    from . import native as N
+    from ..engines.logic import eval_expr
+    mod, cards = module(ctx, isa)
+    ex = Executor(ctx, mod)
+    m = N.load(ctx, Bd.module(ctx, f"{isa}_bench"), N.resolve_engine(ctx, "host"))
+    rng = random.Random(seed)
+    per, results = {}, {}
+    for card in cards:
+        if only and card.name not in only:
+            continue
+        problems, runs, reason, regs = [], 0, None, set()
+        for _ in range(samples):
+            op = BN._word(rng, card)
+            d = BN.decoded_by(cards, op, card["set"])
+            if d is None or d.name != card.name:
+                continue
+            try:
+                res = ex.run(card.name, {mod.functions[card.name]["params"][0]["name"]: op})
+            except Unsupported as exc:
+                reason = str(exc)
+                break
+            results.setdefault(card.name, res)
+            regs |= set(res["state"])
+            st = BN._mips_state(rng, card)
+            init = {f"regs{i}": v for i, v in enumerate(st["regs"])}
+            init.update(hi=st["hi"], lo=st["lo"], pc=st["pc"], variant=st["variant"], llbit=st["llbit"],
+                        next_pc=(st["pc"] + 4) & 0xFFFFFFFF, bpending=0, btarget=0, in_slot=0, slot_target=0)
+            ram = rng.randbytes(0x10000)
+            out = BN.run_mips_case(m, st, op, ram)
+            if out["ntrace"] > 64:
+                reason = "the bench's trace overflowed"
+                break
+            got_bus = mips_bus(res, init, ram, ctx.ops)
+            runs += 1
+            env = got_bus["env"]
+            got = {k: eval_expr(t, env, ctx.ops) for k, t in res["state"].items()}
+            if got_bus["trace"] != out["trace"]:
+                problems.append(f"{op:#010x} bus: terms {got_bus['trace'][:3]}, the semantics {out['trace'][:3]}")
+            for k in ("sys_calls", "sys_last", "brk_calls", "exc_calls", "exc_last", "exc_info", "undef_calls"):
+                if got_bus[k] != out[k]:
+                    problems.append(f"{op:#010x} {k}: terms give {got_bus[k]}, the semantics {out[k]}")
+            want = {**{f"regs{i}": v for i, v in enumerate(out["regs"])}, "hi": out["hi"], "lo": out["lo"],
+                    "llbit": out["llbit"]}
+            if got.get("bpending", 0):
+                want.update(btarget=out["slot_target"])
+                if not out["in_slot"]:
+                    problems.append(f"{op:#010x}: the terms branch, the semantics do not")
+            else:
+                if out["in_slot"]:
+                    problems.append(f"{op:#010x}: the semantics branch, the terms do not")
+                want["next_pc"] = out["pc"]
+            for k, w in want.items():
+                h = got.get(k, init.get(k))
+                if h != w:
+                    problems.append(f"{op:#010x} {k}: terms give {h!r}, the semantics {w:#x}")
         if reason is not None:
             per[card.name] = {"status": "unsupported", "reason": reason}
         elif not runs:

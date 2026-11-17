@@ -123,9 +123,34 @@ def _mask_chain(cards, fixed_mask: int, fixed_val: int, param: str, indent: str)
     return "\n".join(lines), used
 
 
+def _index_fields(fields: list, param: str):
+    """A decode index made of bit fields of the word (card data: ``decode.sets.<set>.index_fields``, high field
+    first): (table size, the bits it fixes, index -> those bits, the index expression)."""
+    widths = [hi - lo + 1 for hi, lo in fields]
+    total = sum(widths)
+    fmask = 0
+    for hi, lo in fields:
+        fmask |= ((1 << (hi - lo + 1)) - 1) << lo
+
+    def fixed(i: int) -> int:
+        v, at = 0, total
+        for (hi, lo), wd in zip(fields, widths):
+            at -= wd
+            v |= ((i >> at) & ((1 << wd) - 1)) << lo
+        return v
+
+    parts, at = [], total
+    for (hi, lo), wd in zip(fields, widths):
+        at -= wd
+        part = f"(({param} >> {lo}) & {(1 << wd) - 1:#x})"
+        parts.append(f"({part} << {at})" if at else part)
+    return 1 << total, fmask, fixed, " | ".join(parts)
+
+
 def mask_dispatch_source(store, isa: str) -> str:
     """Decode tables and dispatch functions for an ISA decoded by masks (ARM: a 12-bit index from bits 27-20 and
-    7-4; Thumb: the top 10 bits), generated from the instruction cards' mask/match and priority."""
+    7-4; Thumb: the top 10 bits; any other set: the ``index_fields`` its ISA card names, e.g. MIPS's opcode and
+    function fields), generated from the instruction cards' mask/match and priority."""
     ic = isa_card(store, isa)
     names = ic.get("dispatch") or {}
     param = ic.get("operand_param", "op")
@@ -138,7 +163,10 @@ def mask_dispatch_source(store, isa: str) -> str:
             out.append(f"fn {fname}({param}: Int) {{\n{body}\n}}\n")
             continue
         cs = [c for c in cards if c.get("set") == key and not c.get("unconditional")]
-        if key == "arm":
+        spec = ((ic.get("decode") or {}).get("sets") or {}).get(key) or {}
+        if spec.get("index_fields"):
+            n, fmask, fixed, index = _index_fields(spec["index_fields"], param)
+        elif key == "arm":
             n, fmask = 4096, 0x0FF000F0
             fixed = lambda i: (((i >> 4) & 0xFF) << 20) | ((i & 0xF) << 4)      # noqa: E731
             index = f"(({param} >> 16) & 0xFF0) | (({param} >> 4) & 0xF)"

@@ -1,0 +1,58 @@
+{
+  "bench_state": "mips",
+  "category": "isa",
+  "core": "core.card",
+  "cycles_note": "card cycles are nominal single-issue figures (1 = one pipeline cycle); memory and multiply/divide latencies are the machine's",
+  "decode": {
+    "kind": "mask",
+    "sets": {
+      "mips": {
+        "bits": 32,
+        "index_fields": [[31, 26], [5, 0]]
+      }
+    }
+  },
+  "delay_slots": "a taken branch or jump executes the next instruction (its delay slot) before control moves; a branch-likely that is not taken skips its slot",
+  "dispatch": {
+    "mips": "mips_exec"
+  },
+  "endianness": "little",
+  "flag_bits": {},
+  "interface": "interface.card",
+  "interface_functions": [
+    "rd8",
+    "rd16",
+    "rd32",
+    "wr8",
+    "wr16",
+    "wr32",
+    "syscall_op",
+    "break_op",
+    "exception",
+    "undefined_op"
+  ],
+  "kind": "isa",
+  "name": "mips32",
+  "operand_param": "op",
+  "provenance": {
+    "origin": "cardmodel",
+    "tool": "tools/gen_mips32.py"
+  },
+  "registers": {
+    "r0-r31": 32,
+    "hi": 32,
+    "lo": 32,
+    "pc": 32
+  },
+  "sources": [
+    "MIPS32 Architecture for Programmers, Volume II: The MIPS32 Instruction Set (Release 2)",
+    "MIPS o32 ABI",
+    "public Allegrex (PSP CPU) instruction listings: the extra SPECIAL and SPECIAL3 encodings"
+  ],
+  "statement": "MIPS32 Release 2, little-endian, user-mode integer instructions, and the Sony Allegrex (the PlayStation Portable's CPU), a MIPS32 core with its own encodings for MADD/MSUB/CLZ/CLO, MIN/MAX, WSBW and BITREV and without SPECIAL2. Thirty-two 32-bit registers (r0 reads 0), HI and LO, branch delay slots. `variant` selects the core: 0 = MIPS32r2, 1 = Allegrex; a card marked arch mips32r2 or allegrex is undefined on the other. One card per instruction (registry isa, pack mips32). No FPU (COP1) or VFPU yet.",
+  "tier": 1,
+  "variants": {
+    "allegrex": 1,
+    "mips32r2": 0
+  }
+}

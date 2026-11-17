@@ -1,0 +1,179 @@
+-- Linux/MIPS o32 system calls, as card logic: the SYSCALL instruction card calls syscall_op; this reads the
+-- number and arguments where the ABI puts them, does the call against the machine's memory, and writes the
+-- result back the o32 way (v0 = result, a3 = 0; or v0 = errno, a3 = 1). Output goes to the out/err buffers and
+-- input comes from inp, all filled and drained by the host (the effect shell): the program itself does no I/O.
+-- A machine using this supplies: mem_ok(a, n), ld8(a), st8(a, v), ld32(a), and globals state and exit_code.
+const SYS_EXIT = card.os.linux_mips_o32.syscalls.exit
+const SYS_EXIT_GROUP = card.os.linux_mips_o32.syscalls.exit_group
+const SYS_READ = card.os.linux_mips_o32.syscalls.read
+const SYS_WRITE = card.os.linux_mips_o32.syscalls.write
+const SYS_WRITEV = card.os.linux_mips_o32.syscalls.writev
+const SYS_BRK = card.os.linux_mips_o32.syscalls.brk
+const SYS_MMAP = card.os.linux_mips_o32.syscalls.mmap
+const SYS_MMAP2 = card.os.linux_mips_o32.syscalls.mmap2
+const SYS_MUNMAP = card.os.linux_mips_o32.syscalls.munmap
+const SYS_GETPID = card.os.linux_mips_o32.syscalls.getpid
+const SYS_IOCTL = card.os.linux_mips_o32.syscalls.ioctl
+const SYS_SET_THREAD_AREA = card.os.linux_mips_o32.syscalls.set_thread_area
+const SYS_CLOCK_GETTIME = card.os.linux_mips_o32.syscalls.clock_gettime
+const EBADF = card.os.linux_mips_o32.errno.EBADF
+const EFAULT = card.os.linux_mips_o32.errno.EFAULT
+const EINVAL = card.os.linux_mips_o32.errno.EINVAL
+const ENOMEM = card.os.linux_mips_o32.errno.ENOMEM
+const ENOSYS = card.os.linux_mips_o32.errno.ENOSYS
+const ENOTTY = card.os.linux_mips_o32.errno.ENOTTY
+const MAP_ANONYMOUS = card.os.linux_mips_o32.flags.MAP_ANONYMOUS
+const MMAP_TOP = card.os.linux_mips_o32.layout.mmap_top
+const PID = card.os.linux_mips_o32.machine.getpid
+const NS_PER_STEP = card.os.linux_mips_o32.machine.ns_per_step
+const OUT_MAX = 0x100000
+const INP_MAX = 0x100000
+
+array out: Byte[OUT_MAX]
+array err: Byte[OUT_MAX]
+array inp: Byte[INP_MAX]
+global out_len: Int = 0
+global err_len: Int = 0
+global out_dropped: Int = 0
+global inp_len: Int = 0
+global inp_pos: Int = 0
+global brk_start: Int = 0
+global brk_cur: Int = 0
+global mmap_low: Int = MMAP_TOP
+global tls: Int = 0
+global syscalls: Int = 0
+global unknown_syscalls: Int = 0
+global last_unknown: Int = -1
+
+fn os_write(fd: Int, buf: Int, n: Int) -> Int {
+  if fd != 1 and fd != 2 {
+    return 0 - EBADF
+  }
+  if not mem_ok(buf, n) {
+    return 0 - EFAULT
+  }
+  for i in 0 .. n {
+    let b = ld8(buf + i)
+    if fd == 1 {
+      if out_len < OUT_MAX {
+        out[out_len] = b
+        out_len += 1
+      } else {
+        out_dropped += 1
+      }
+    } else {
+      if err_len < OUT_MAX {
+        err[err_len] = b
+        err_len += 1
+      } else {
+        out_dropped += 1
+      }
+    }
+  }
+  return n
+}
+fn os_writev(fd: Int, iov: Int, cnt: Int) -> Int {
+  if not mem_ok(iov, cnt * 8) {
+    return 0 - EFAULT
+  }
+  var total = 0
+  for k in 0 .. cnt {
+    let r = os_write(fd, ld32(iov + k * 8), ld32(iov + k * 8 + 4))
+    if r < 0 {
+      return r
+    }
+    total += r
+  }
+  return total
+}
+fn os_read(fd: Int, buf: Int, n: Int) -> Int {
+  if fd != 0 {
+    return 0 - EBADF
+  }
+  if not mem_ok(buf, n) {
+    return 0 - EFAULT
+  }
+  var k = 0
+  while k < n and inp_pos < inp_len {
+    st8(buf + k, inp[inp_pos])
+    inp_pos += 1
+    k += 1
+  }
+  return k
+}
+fn os_brk(a: Int) -> Int {
+  if a >= brk_start and a <= mmap_low {
+    brk_cur = a
+  }
+  return brk_cur
+}
+fn os_mmap(len: Int, flags: Int) -> Int {
+  if (flags & MAP_ANONYMOUS) == 0 {
+    return 0 - ENOSYS
+  }
+  let size = (len + 0xFFF) & 0xFFFFF000
+  if size <= 0 or mmap_low - size < brk_cur {
+    return 0 - ENOMEM
+  }
+  mmap_low = mmap_low - size
+  for i in 0 .. size {
+    st8(mmap_low + i, 0)
+  }
+  return mmap_low
+}
+-- clock_gettime: machine time, NS_PER_STEP nanoseconds per instruction, so runs repeat exactly
+fn os_clock(ts: Int) -> Int {
+  if not mem_ok(ts, 8) {
+    return 0 - EFAULT
+  }
+  let ns = steps * NS_PER_STEP
+  st32(ts, ns // 1000000000)
+  st32(ts + 4, ns % 1000000000)
+  return 0
+}
+
+fn syscall_op(code: Int) {
+  let nr = regs[2]
+  let a0 = regs[4]
+  let a1 = regs[5]
+  let a2 = regs[6]
+  syscalls += 1
+  var r = 0
+  if nr == SYS_EXIT or nr == SYS_EXIT_GROUP {
+    exit_code = a0 & 0xFF
+    state = 1
+    return
+  } elif nr == SYS_WRITE {
+    r = os_write(a0, a1, a2)
+  } elif nr == SYS_WRITEV {
+    r = os_writev(a0, a1, a2)
+  } elif nr == SYS_READ {
+    r = os_read(a0, a1, a2)
+  } elif nr == SYS_BRK {
+    r = os_brk(a0)
+  } elif nr == SYS_MMAP or nr == SYS_MMAP2 {
+    r = os_mmap(a1, regs[7])
+  } elif nr == SYS_MUNMAP {
+    r = 0
+  } elif nr == SYS_GETPID {
+    r = PID
+  } elif nr == SYS_IOCTL {
+    r = 0 - ENOTTY
+  } elif nr == SYS_SET_THREAD_AREA {
+    tls = a0
+    r = 0
+  } elif nr == SYS_CLOCK_GETTIME {
+    r = os_clock(a1)
+  } else {
+    unknown_syscalls += 1
+    last_unknown = nr
+    r = 0 - ENOSYS
+  }
+  if r < 0 {
+    regs[2] = 0 - r
+    regs[7] = 1
+  } else {
+    regs[2] = r & MASK32
+    regs[7] = 0
+  }
+}

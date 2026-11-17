@@ -1,0 +1,39 @@
+-- The bus contract of the MIPS cards, as stubs (each changes machine state, so calls stay ordered). A machine
+-- supplies the real ones: byte/halfword/word reads and writes (the semantics check alignment first), the
+-- SYSCALL and BREAK instructions' code field, an exception (code as in the Cause register: 4 AdEL, 5 AdES,
+-- 12 Ov, 13 Tr; info is the bad address or 0) and a reserved instruction.
+global bus_effect: Int = 0
+
+fn rd8(a: Int) -> Int {
+  bus_effect += 1
+  return 0
+}
+fn rd16(a: Int) -> Int {
+  bus_effect += 1
+  return 0
+}
+fn rd32(a: Int) -> Int {
+  bus_effect += 1
+  return 0
+}
+fn wr8(a: Int, v: Int) {
+  bus_effect += 1
+}
+fn wr16(a: Int, v: Int) {
+  bus_effect += 1
+}
+fn wr32(a: Int, v: Int) {
+  bus_effect += 1
+}
+fn syscall_op(code: Int) {
+  bus_effect += 1
+}
+fn break_op(code: Int) {
+  bus_effect += 1
+}
+fn exception(code: Int, info: Int) {
+  bus_effect += 1
+}
+fn undefined_op(op: Int) {
+  bus_effect += 1
+}

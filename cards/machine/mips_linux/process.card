@@ -1,0 +1,136 @@
+-- One user-mode process: memory, the bus the MIPS cards read and write through, faults, and the run loop that
+-- fetches each instruction word and makes the MIPS step (a taken branch's delay slot runs before the jump).
+-- state: 0 running, 1 exited (exit_code), 2 faulted (fault_code as in the Cause register, fault_addr, fault_pc).
+const MEM_SIZE = card.os.linux_mips_o32.layout.memory_bytes
+const FAULT_BREAK = 9
+const FAULT_RI = 10
+array mem: Byte[MEM_SIZE]
+global state: Int = 0
+global exit_code: Int = 0
+global fault_code: Int = 0
+global fault_addr: Int = 0
+global fault_pc: Int = 0
+global steps: Int = 0
+-- the executable segments' range (set by the loader): a write there marks the lifted code stale
+global code_lo: Int = 0
+global code_hi: Int = 0
+global code_dirty: Int = 0
+
+fn fault(code: Int, a: Int) {
+  if state == 0 {
+    state = 2
+    fault_code = code
+    fault_addr = a & MASK32
+    fault_pc = pc
+  }
+}
+fn mem_ok(a: Int, n: Int) -> Bool = a >= 0 and n >= 0 and a + n <= MEM_SIZE
+fn ld8(a: Int) -> Int = mem[a]
+fn st8(a: Int, v: Int) {
+  mem[a] = v
+}
+fn code_write(a: Int) {
+  if a + 4 > code_lo and a < code_hi {
+    code_dirty = 1
+  }
+}
+fn ld32(a: Int) -> Int = mem[a] | (mem[a + 1] << 8) | (mem[a + 2] << 16) | (mem[a + 3] << 24)
+fn st32(a: Int, v: Int) {
+  mem[a] = v
+  mem[a + 1] = v >> 8
+  mem[a + 2] = v >> 16
+  mem[a + 3] = v >> 24
+}
+
+-- the bus: an address outside memory is an address error (the access does nothing, the process stops)
+fn rd8(a: Int) -> Int {
+  if a >= MEM_SIZE {
+    fault(EXC_ADEL, a)
+    return 0
+  }
+  return mem[a]
+}
+fn rd16(a: Int) -> Int {
+  if a + 2 > MEM_SIZE {
+    fault(EXC_ADEL, a)
+    return 0
+  }
+  return mem[a] | (mem[a + 1] << 8)
+}
+fn rd32(a: Int) -> Int {
+  if a + 4 > MEM_SIZE {
+    fault(EXC_ADEL, a)
+    return 0
+  }
+  return ld32(a)
+}
+fn wr8(a: Int, v: Int) {
+  if a >= MEM_SIZE {
+    fault(EXC_ADES, a)
+  } else {
+    code_write(a)
+    mem[a] = v
+  }
+}
+fn wr16(a: Int, v: Int) {
+  if a + 2 > MEM_SIZE {
+    fault(EXC_ADES, a)
+  } else {
+    code_write(a)
+    mem[a] = v
+    mem[a + 1] = v >> 8
+  }
+}
+fn wr32(a: Int, v: Int) {
+  if a + 4 > MEM_SIZE {
+    fault(EXC_ADES, a)
+  } else {
+    code_write(a)
+    st32(a, v)
+  }
+}
+fn exception(code: Int, info: Int) {
+  fault(code, info)
+}
+fn break_op(code: Int) {
+  fault(FAULT_BREAK, code)
+}
+fn undefined_op(op: Int) {
+  fault(FAULT_RI, op)
+}
+
+fn step(op: Int) {
+  let was = in_slot
+  let t = slot_target
+  in_slot = 0
+  next_pc = (pc + 4) & MASK32
+  mips_exec(op)
+  if state == 2 {
+    return
+  }
+  if bpending != 0 {
+    bpending = 0
+    in_slot = 1
+    slot_target = btarget
+  }
+  if was != 0 {
+    pc = t
+  } else {
+    pc = next_pc
+  }
+}
+
+-- run up to n instructions; returns how many ran
+export fn run(n: Int) -> Int {
+  var k = 0
+  while k < n and state == 0 {
+    if (pc & 3) != 0 or pc + 4 > MEM_SIZE {
+      fault(EXC_ADEL, pc)
+    } else {
+      step(ld32(pc))
+      k += 1
+    }
+  }
+  steps += k
+  return k
+}

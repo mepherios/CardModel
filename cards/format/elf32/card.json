@@ -1,0 +1,48 @@
+{
+  "category": "format",
+  "class": 1,
+  "constants": {
+    "ELFCLASS32": 1,
+    "ELFDATA2LSB": 1,
+    "ELFDATA2MSB": 2,
+    "EM_386": 3,
+    "EM_ARM": 40,
+    "EM_MIPS": 8,
+    "EM_X86_64": 62,
+    "ET_EXEC": 2,
+    "ET_DYN": 3,
+    "PT_INTERP": 3,
+    "PT_LOAD": 1
+  },
+  "header": {
+    "e_entry": [24, 4],
+    "e_flags": [36, 4],
+    "e_machine": [18, 2],
+    "e_phentsize": [42, 2],
+    "e_phnum": [44, 2],
+    "e_phoff": [28, 4],
+    "e_type": [16, 2],
+    "ei_class": [4, 1],
+    "ei_data": [5, 1]
+  },
+  "isa_of_machine": {
+    "8": "mips32"
+  },
+  "kind": "layout",
+  "machine_of_isa": {
+    "mips32": "mips_linux"
+  },
+  "name": "elf32",
+  "parents": ["elf"],
+  "program_header": {
+    "p_filesz": [16, 4],
+    "p_flags": [24, 4],
+    "p_memsz": [20, 4],
+    "p_offset": [4, 4],
+    "p_type": [0, 4],
+    "p_vaddr": [8, 4]
+  },
+  "provenance": {"origin": "cardmodel", "sources": ["System V ABI, Object Files (ELF)", "Tool Interface Standard ELF 1.2"]},
+  "statement": "The 32-bit ELF executable as a loader reads it: header and program-header fields as [offset, size] pairs (byte order from ei_data), the constants that matter for loading, which ISA card an e_machine names and which machine card runs a process of that ISA. A loader copies every PT_LOAD segment's file bytes to its virtual address and zeroes the rest of its memory size.",
+  "tier": 1
+}
