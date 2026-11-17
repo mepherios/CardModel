@@ -595,7 +595,7 @@ def check_mips(ctx, isa: str = "mips32", seed: int = 0, samples: int = 4, only: 
                 break
             results.setdefault(card.name, res)
             regs |= set(res["state"])
-            st = BN._mips_state(rng, card)
+            st = BN._mips_state(rng, card, I.isa_card(ctx.store, isa).get("variants") or {})
             init = {f"regs{i}": v for i, v in enumerate(st["regs"])}
             init.update(hi=st["hi"], lo=st["lo"], pc=st["pc"], variant=st["variant"], llbit=st["llbit"],
                         next_pc=(st["pc"] + 4) & 0xFFFFFFFF, bpending=0, btarget=0, in_slot=0, slot_target=0)

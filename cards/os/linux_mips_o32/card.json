@@ -13,6 +13,11 @@
     "result": "r2",
     "statement": "SYSCALL with the call number in v0 (r2) and arguments in a0-a3 (r4-r7), then on the stack at sp+16 and sp+20; the result comes back in v0 with a3 (r7) = 0, or a positive errno in v0 with a3 = 1"
   },
+  "auxv": {
+    "AT_NULL": 0,
+    "AT_PAGESZ": 6,
+    "page_size": 4096
+  },
   "category": "os",
   "errno": {
     "EBADF": 9,
@@ -34,7 +39,8 @@
     "statement": "one flat little-endian address space from 0: the program's segments where its ELF header puts them, brk growing up from the end of the highest segment, anonymous mmap growing down from mmap_top, the stack below stack_top (the top 256 KiB)"
   },
   "logic": [
-    "syscalls.card"
+    "syscalls.card",
+    "start.card"
   ],
   "machine": {
     "getpid": 1000,
@@ -50,7 +56,7 @@
     ]
   },
   "start": {
-    "statement": "at the entry point sp points to argc, then argv[] and a 0, envp[] and a 0, then the auxiliary vector ending in AT_NULL (the host's loader writes it; see cardmodel/machine/process.py)"
+    "statement": "at the entry point sp points to argc, then argv[] and a 0, envp[] and a 0, then the auxiliary vector (AT_PAGESZ, then AT_NULL); start.card builds it from the strings the host hands over"
   },
   "statement": "Linux on 32-bit MIPS with the o32 ABI, as a user-mode program sees it: the system calls a self-contained (static, no dynamic loader) program makes to print, read input, grow its heap, map anonymous memory, read the clock and exit. Every other call answers ENOSYS and is counted, so an unmodelled call is visible, never a silent success.",
   "syscalls": {

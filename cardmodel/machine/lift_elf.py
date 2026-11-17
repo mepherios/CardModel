@@ -1,148 +1,188 @@
 """lift_elf — a foreign program's code translated ahead of time into card-language blocks, compiled natively.
 
 The interpreter (``process.card``'s ``run``) fetches and decodes every instruction word as it runs. Here the
-program's executable segments are read once: each instruction word is decoded by the same instruction cards
-(``bench.decoded_by``, the decoder the generated dispatch implements) and every block becomes one card-language
-function that calls those cards with constant words. The machine module plus these blocks is emitted through the
-C language card, and the C compiler inlines the cards and folds every field extraction, so the program runs as
-straight-line native code of this computer, with no fetch and no decode. Nothing here is hand-written per
-instruction: the semantics are the cards'.
+program is loaded once by its own machine's card logic (the format card's loader), its code is read back, and each
+word is decoded by the instruction cards (``bench.decoded_by``, the decoder the generated dispatch implements).
+Every block becomes one card-language function that calls those cards with constant words; the machine module
+plus these blocks is emitted through the C language card, and the C compiler inlines the cards and folds every
+field extraction, so the program runs as straight-line native code with no fetch and no decode.
 
-Leaders (where a block starts): the entry point, every direct branch and jump target, the instruction after
-each call's delay slot (where a call returns), and every word in the program's data that points at an
-instruction (function pointers, switch tables). A block runs until a jump, a word no card decodes, or
-``MAX_BLOCK`` instructions; a conditional branch that is not taken continues the block with its delay slot. Any
-other address (a target found only at run time) runs in the interpreter, one instruction at a time, and is
-counted (``interpreted``); so is everything after the program writes into its own code (``code_dirty``).
+**No instruction is known here by name.** What the block former needs about a word comes from that word's card,
+read as mathematics (``symbolic.Executor``: the card's IR executed with the word constant, every register a
+variable):
+
+* it is a control transfer when its terms write ``bpending``; always taken when that term is the constant 1;
+* its target is the taken value of ``btarget``, when that term depends on ``pc`` only (a direct branch or jump);
+* it skips its delay slot when not taken (a branch-likely) when it writes ``next_pc``;
+* it is a call when it writes a register with a value that depends on ``pc`` only (the return address), and that
+  value is where the call returns, so a block starts there;
+* it can stop the process (so the block checks after it) when its terms have any bus or hook effect.
+
+Leaders (where a block starts): the entry point, every direct target, every return address, every word of the
+program's data that points at an instruction (function pointers, switch tables), and wherever another block
+stops. A block runs until an always-taken transfer, a word no card decodes, a transfer whose delay slot is another
+transfer, or ``MAX_BLOCK`` instructions; a branch that is not taken continues the block with its delay slot. Any
+other address runs in the interpreter, one instruction at a time, and is counted (``interpreted``); so is
+everything after the program writes into its own code (``code_dirty``).
 
 The witness is the differential run: the lifted program and the interpreter must end in the same state, output
 and instruction count (tests/test_foreign.py).
 
-Honest limits (L1): MIPS only (the block rules know delay slots); a branch whose delay slot holds another branch
-ends the block before it (the interpreter runs that pair); code is lifted from the file, so a program that
-generates code runs that code interpreted.
+Honest limits (L1): the block rules assume the delay-slot model of the ISA's core (``bpending``/``btarget``/
+``next_pc``, as the MIPS cards have it); code is lifted from the loaded image, so code a program generates runs
+interpreted.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 
+from ..engines.logic import eval_expr
 from ..lang.compile import compile_sources
 from . import build as Bd
 from . import isa as I
+from . import native as N
+from . import symbolic as SY
 from .bench import decoded_by
 
 MAX_BLOCK = 64
-PURE_GROUPS = {"shift", "move", "hilo", "multiply", "divide", "bits", "alu"}
-MAY_FAULT = {"MIPS_ADD", "MIPS_SUB", "MIPS_ADDI"}
-JUMPS = {"MIPS_J", "MIPS_JAL", "MIPS_JR", "MIPS_JALR"}
-CALLS = {"MIPS_JAL", "MIPS_JALR", "MIPS_BLTZAL", "MIPS_BGEZAL", "MIPS_BLTZALL", "MIPS_BGEZALL"}
-ENDS = {"MIPS_BREAK"}
 
 
-def _sx16(v: int) -> int:
-    return v - 0x10000 if v & 0x8000 else v
+def _vars(t, out: set) -> set:
+    if isinstance(t, list):
+        if t[:1] == ["var"] and isinstance(t[1], str):
+            out.add(t[1])
+        else:
+            for x in t:
+                _vars(x, out)
+    return out
+
+
+def _taken(t):
+    """The value a term has on the side that changes it (IF_EXPR(c, new, old) -> new)."""
+    while isinstance(t, list) and t[:1] == ["IF_EXPR"]:
+        t = t[2]
+    return t
+
+
+class Facts:
+    """What the block former needs about one word, read from its card's terms."""
+
+    def __init__(self, res: dict, at: int, ops):
+        st = res["state"]
+        self.transfer = "bpending" in st
+        self.always = st.get("bpending") == ["int", 1]
+        self.likely = "next_pc" in st
+        self.effects = bool(res["effects"])
+        self.target = None
+        bt = _taken(st.get("btarget"))
+        if self.transfer and bt is not None and _vars(bt, set()) <= {"pc"}:
+            self.target = eval_expr(bt, {"pc": at}, ops) & 0xFFFFFFFF
+        self.returns_to = None
+        for k, t in st.items():
+            if k.startswith("regs") and _vars(t, set()) == {"pc"}:
+                self.returns_to = eval_expr(t, {"pc": at}, ops) & 0xFFFFFFFF
 
 
 class Code:
-    """The program's words by address, decoded by the instruction cards."""
+    """The program's words by address, decoded by the instruction cards, with each word's facts."""
 
-    def __init__(self, store, isa: str, data: bytes, elf: dict):
-        self.cards = I.instructions(store, isa)
-        self.words: dict = {}
-        self.data_words: list = []
-        for s in elf["segments"]:
-            chunk = data[s["p_offset"]:s["p_offset"] + s["p_filesz"]]
-            base = s["p_vaddr"]
-            for i in range(0, len(chunk) - 3, 4):
-                w = int.from_bytes(chunk[i:i + 4], "little")
-                if s["p_flags"] & 1:                    # PF_X
-                    self.words[base + i] = w
-                else:
-                    self.data_words.append(w)
-        self.lo = min(self.words, default=0)
-        self.hi = max(self.words, default=-4) + 4
+    def __init__(self, ctx, isa: str, code: dict, data_words: list, entry: int):
+        self.ctx = ctx
+        ic = I.isa_card(ctx.store, isa)
+        self.set = next(iter((ic.get("decode") or {}).get("sets") or {"": None}))
+        self.cards = I.instructions(ctx.store, isa)
+        self.words = code
+        self.data_words = data_words
+        self.entry = entry
+        mod, _ = SY.module(ctx, isa)
+        self.param = ic.get("operand_param", "op")
+        self.ex = SY.Executor(ctx, mod)
         self._dec: dict = {}
+        self._facts: dict = {}
 
     def card(self, a: int):
         if a not in self._dec:
             w = self.words.get(a)
-            self._dec[a] = None if w is None else decoded_by(self.cards, w, "mips")
+            self._dec[a] = None if w is None else decoded_by(self.cards, w, self.set)
         return self._dec[a]
 
-    def target(self, a: int, c, w: int) -> int | None:
-        """A direct branch's or jump's target, or None (through a register)."""
-        if c.name in ("MIPS_J", "MIPS_JAL"):
-            return ((a + 4) & 0xF0000000) | ((w & 0x3FFFFFF) << 2)
-        if c["group"] == "branch" and c.name not in ("MIPS_JR", "MIPS_JALR"):
-            return (a + 4 + (_sx16(w & 0xFFFF) << 2)) & 0xFFFFFFFF
-        return None
-
-    def leaders(self, entry: int) -> list[int]:
-        out = {entry}
-        for a, w in self.words.items():
+    def facts(self, a: int) -> Facts | None:
+        if a not in self._facts:
             c = self.card(a)
-            if c is None or c["group"] != "branch":
+            if c is None:
+                self._facts[a] = None
+            else:
+                try:
+                    res = self.ex.run(c.name, {self.param: self.words[a]})
+                    self._facts[a] = Facts(res, a, self.ctx.ops)
+                except SY.Unsupported:
+                    self._facts[a] = None               # a card the executor can't read: not lifted
+        return self._facts[a]
+
+    def leaders(self) -> list[int]:
+        out = {self.entry}
+        for a in self.words:
+            f = self.facts(a)
+            if f is None:
                 continue
-            t = self.target(a, c, w)
-            if t is not None and t in self.words:
-                out.add(t)
-            if c.name in CALLS and a + 8 in self.words:
-                out.add(a + 8)
-        out.update(w for w in self.data_words if w in self.words and w % 4 == 0)
-        return sorted(a for a in out if self.card(a) is not None)
-
-
-def _call(c, w: int) -> str:
-    return f"  {c.name}({w:#x})"
+            for t in (f.target, f.returns_to):
+                if t is not None and t in self.words:
+                    out.add(t)
+        out.update(w for w in self.data_words if w in self.words)
+        return sorted(a for a in out if self.facts(a) is not None)
 
 
 def block_source(code: Code, start: int) -> tuple[str, int, int | None]:
     """One block as a card-language function returning how many instructions it ran, and the address where it
-    stops without a jump (None after a jump), which is a leader too."""
+    stops without an always-taken transfer (None otherwise), which is a leader too."""
     lines = [f"fn blk_{start:x}() -> Int {{"]
     a, k = start, 0
     while k < MAX_BLOCK:
-        c = code.card(a)
-        if c is None or c.name in ENDS:
+        f = code.facts(a)
+        if f is None:
             break
-        w = code.words[a]
-        if c["group"] == "branch":
+        c, w = code.card(a), code.words[a]
+        if f.transfer:
             sa = a + 4
-            sc = code.card(sa)
-            if sc is None or sc["group"] == "branch" or sc.name in ENDS:
-                break                                   # a branch in a delay slot: leave it to the interpreter
-            lines += [f"  pc = {a:#x}", f"  next_pc = {(a + 4):#x}", _call(c, w),
-                      "  if bpending != 0 {", "    bpending = 0", f"    pc = {sa:#x}",
-                      "  " + _call(sc, code.words[sa]), "    if state != 0 {", f"      return {k + 2}", "    }",
-                      "    pc = btarget", f"    return {k + 2}", "  }",
-                      f"  if next_pc != {(a + 4):#x} {{", "    pc = next_pc", f"    return {k + 1}", "  }"]
+            fs = code.facts(sa)
+            if fs is None or fs.transfer:
+                break                                   # a transfer in a delay slot: leave it to the interpreter
+            slot = [f"    pc = {sa:#x}", f"    {code.card(sa).name}({code.words[sa]:#x})"]
+            if fs.effects:
+                slot += ["    if state != 0 {", f"      return {k + 2}", "    }"]
+            lines += [f"  pc = {a:#x}", f"  next_pc = {sa:#x}", f"  {c.name}({w:#x})"]
+            if f.effects:
+                lines += ["  if state != 0 {", f"    return {k + 1}", "  }"]
+            lines += ["  if bpending != 0 {", "    bpending = 0", *slot, "    pc = btarget", f"    return {k + 2}", "  }"]
+            if f.likely:
+                lines += [f"  if next_pc != {sa:#x} {{", "    pc = next_pc", f"    return {k + 1}", "  }"]
             k += 1
             a += 4
-            if c.name in JUMPS:                         # always taken: the block ends here
+            if f.always:
                 lines += [f"  pc = {a:#x}", f"  return {k}", "}"]
                 return "\n".join(lines) + "\n", k, None
             continue
-        if not (c["group"] in PURE_GROUPS and c.name not in MAY_FAULT and c.get("arch") == "mips32"):
-            lines += [f"  pc = {a:#x}", _call(c, w), "  if state != 0 {", f"    return {k + 1}", "  }"]
+        if f.effects:
+            lines += [f"  pc = {a:#x}", f"  {c.name}({w:#x})", "  if state != 0 {", f"    return {k + 1}", "  }"]
         else:
-            lines.append(_call(c, w))
+            lines.append(f"  {c.name}({w:#x})")
         k += 1
         a += 4
     lines += [f"  pc = {a:#x}", f"  return {k}", "}"]
     return "\n".join(lines) + "\n", k, a
 
 
-def lifted_source(code: Code, entry: int) -> tuple[str, dict]:
+def lifted_source(code: Code) -> tuple[str, dict]:
     blocks, cases, sizes, starts = [], [], [], []
-    todo, seen = list(code.leaders(entry)), set()
+    todo, seen = list(code.leaders()), set()
     while todo:
         a = todo.pop()
         if a in seen:
             continue
         seen.add(a)
         src, n, stop = block_source(code, a)
-        if stop is not None and stop not in seen and code.card(stop) is not None:
+        if stop is not None and stop not in seen and code.facts(stop) is not None:
             todo.append(stop)                          # where this block stops, the next one starts
         if n == 0:
             continue
@@ -186,11 +226,35 @@ export fn run_lifted(n: Int) -> Int {{
     return "\n".join(blocks) + driver, stats
 
 
-def module(ctx, machine: str, data: bytes, elf: dict) -> tuple[dict, dict]:
+def loaded_image(ctx, machine: str, data: bytes) -> tuple[dict, list, int]:
+    """The program as its machine's own loader (card logic) leaves it: code words by address, data words, entry."""
+    mc = Bd.machine_card(ctx.store, machine)
+    engine = "native"
+    try:
+        lang = N.resolve_engine(ctx, engine)
+    except N.EngineError:
+        lang = N.resolve_engine(ctx, "host")
+    m = N.load(ctx, Bd.module(ctx, machine), lang, fresh=True)
+    m.call("reset_all")
+    m.write("file", data)
+    m.set("file_len", len(data))
+    if m.call("load_elf", mc["e_machine"]):
+        raise ValueError("the program does not load (see Process for the reason)")
+    lo, hi, top, entry = m.get("code_lo"), m.get("code_hi"), m.get("brk_start"), m.get("pc")
+    img = m.read("mem", 0, top)
+    code = {a: int.from_bytes(img[a:a + 4], "little") for a in range(lo, hi - 3, 4)}
+    data_words = [int.from_bytes(img[a:a + 4], "little") for a in range(0x1000, top - 3, 4) if not lo <= a < hi]
+    if hasattr(m, "close"):
+        m.close()
+    return code, data_words, entry
+
+
+def module(ctx, machine: str, data: bytes) -> tuple[dict, dict]:
     """The machine module with the program's lifted blocks and ``run_lifted`` (cached by content)."""
     srcs, externs, mc = Bd.sources(ctx.store, machine)
-    code = Code(ctx.store, mc["isa"], data, elf)
-    text, stats = lifted_source(code, elf["entry"])
+    words, data_words, entry = loaded_image(ctx, machine, data)
+    code = Code(ctx, mc["isa"], words, data_words, entry)
+    text, stats = lifted_source(code)
     srcs = [*srcs, (text, f"lifted program ({len(code.words)} words)")]
     h = hashlib.sha256()
     for t, label in srcs:
@@ -201,7 +265,6 @@ def module(ctx, machine: str, data: bytes, elf: dict) -> tuple[dict, dict]:
                             default=str).encode())
     key = h.hexdigest()[:20]
     cache = ctx.state_root / "machine" / f"{machine}-lifted-{key}.json"
-    stats["code_lo"], stats["code_hi"] = code.lo, code.hi
     if cache.is_file():
         return json.loads(cache.read_text(encoding="utf-8")), stats
     mod = compile_sources(srcs, ctx.ops, ctx.store, name=f"{machine}_lifted", externs=externs)
@@ -219,4 +282,4 @@ def module(ctx, machine: str, data: bytes, elf: dict) -> tuple[dict, dict]:
     return ir, stats
 
 
-__all__ = ["Code", "block_source", "lifted_source", "module"]
+__all__ = ["Code", "Facts", "block_source", "lifted_source", "loaded_image", "module"]

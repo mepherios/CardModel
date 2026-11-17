@@ -1,24 +1,24 @@
-"""process — run a foreign program (an ELF executable for another CPU and OS) on the card model.
+"""process — the effect shell for a foreign program (an ELF executable for another CPU and OS).
 
-The program's CPU is its ISA's instruction cards, its operating system is an ``os`` card (system calls as card
-logic), and both compile with a process machine card into one card-IR module that runs in any engine: the
-reference interpreter, Python, or C compiled to native code for this computer. Nothing here knows MIPS or Linux:
-the ELF layout, which ISA an ``e_machine`` names and which machine runs it are card data (``format/elf32``), and
-the process's memory layout comes from the os card.
+Everything that decides anything is card logic: the program's CPU is its ISA's instruction cards, its operating
+system is an ``os`` card (system calls and the process's start state), and its file format is a ``format`` card
+(``probe.card`` says which machine runs a file, ``load.card`` loads it). They compile with a process machine card
+into one card-IR module that runs in any engine: the reference interpreter, Python, or C compiled to native code
+for this computer.
 
-The host's part is the effect shell (CM21): it loads the file, writes the start state (argc, argv, envp, auxv) the
-os card describes, feeds standard input, runs the machine in slices and drains its output.
+What this file does is only what the card model's pure core must not (CM21): read the file and hand its bytes to
+the cards, hand over the argument strings and standard input, run the machine in slices, drain its output, time
+it, and turn the cards' error codes into the cards' messages.
 
-Honest limits (L1): 32-bit little-endian ELF executables, statically linked (a program that asks for a dynamic
-loader, PT_INTERP, is refused); one thread; the os card's system calls only (others answer ENOSYS and are
-counted in ``unknown_syscalls``); no signals; no floating-point unit yet (programs built with soft float).
+Honest limits (L1): 32-bit little-endian static ELF executables; one thread; the os card's system calls only
+(others answer ENOSYS and are counted in ``unknown_syscalls``); no signals; no floating-point unit yet.
 """
 from __future__ import annotations
 
-import struct
 import time
 from pathlib import Path
 
+from ..lang.compile import compile_sources
 from . import build as Bd
 from . import native as N
 
@@ -29,38 +29,26 @@ class LoadError(ValueError):
     pass
 
 
-def _field(data: bytes, at: int, spec, little: bool) -> int:
-    off, size = spec
-    return int.from_bytes(data[at + off:at + off + size], "little" if little else "big")
+def _probe_module(ctx) -> dict:
+    fc = ctx.store.get("format/elf32")
+    text = (fc.path / fc["probe"]).read_text(encoding="utf-8")
+    return compile_sources([(text, "format/elf32/probe.card")], ctx.ops, ctx.store, name="elf32_probe").ir_module(None)
 
 
-def read_elf(store, data: bytes) -> dict:
-    """The executable's header and loadable segments, read by the ``format/elf32`` card's layout."""
-    lay = store.get("format/elf32")
-    k = lay["constants"]
-    if data[:4] != b"\x7fELF":
-        raise LoadError("not an ELF file")
-    if data[4] != k["ELFCLASS32"]:
-        raise LoadError("not a 32-bit ELF file (64-bit programs need a 64-bit ISA card, which does not exist yet)")
-    little = data[5] == k["ELFDATA2LSB"]
-    h = {name: _field(data, 0, spec, little) for name, spec in lay["header"].items()}
-    isa = (lay.get("isa_of_machine") or {}).get(str(h["e_machine"]))
-    if isa is None:
-        raise LoadError(f"no ISA card for ELF machine {h['e_machine']}")
-    segs, interp = [], False
-    for i in range(h["e_phnum"]):
-        at = h["e_phoff"] + i * h["e_phentsize"]
-        p = {name: _field(data, at, spec, little) for name, spec in lay["program_header"].items()}
-        if p["p_type"] == k["PT_INTERP"]:
-            interp = True
-        if p["p_type"] == k["PT_LOAD"]:
-            segs.append(p)
-    if interp:
-        raise LoadError("the program asks for a dynamic loader (PT_INTERP): only static executables run yet")
-    if h["e_type"] not in (k["ET_EXEC"], k["ET_DYN"]):
-        raise LoadError(f"ELF type {h['e_type']:#x} is not an executable")
-    return {"little": little, "isa": isa, "machine": lay["machine_of_isa"][isa], "entry": h["e_entry"],
-            "segments": segs, "header": h}
+def machine_for(ctx, data: bytes) -> str:
+    """Which machine card runs this file, by the format card's own probe (card logic, reference interpreter)."""
+    fc = ctx.store.get("format/elf32")
+    m = N.load(ctx, _probe_module(ctx), "ir")
+    head = data[:64]
+    m.write("hdr", head)
+    m.set("hdr_len", len(head))
+    code = m.call("elf_machine")
+    if code < 0:
+        raise LoadError(fc["load_errors"][str(-code)])
+    name = (fc.get("machine_of_e_machine") or {}).get(str(code))
+    if name is None:
+        raise LoadError(f"no machine card runs ELF machine {code}")
+    return name
 
 
 class Process:
@@ -69,68 +57,42 @@ class Process:
     def __init__(self, ctx, program, argv: list[str] | None = None, env: list[str] | None = None,
                  stdin: bytes = b"", engine: str = "native", variant: str | None = None, fresh: bool = True,
                  lifted: bool = False):
-        data = Path(program).read_bytes() if not isinstance(program, (bytes, bytearray)) else bytes(program)
+        data = bytes(program) if isinstance(program, (bytes, bytearray)) else Path(program).read_bytes()
         self.ctx = ctx
-        self.elf = read_elf(ctx.store, data)
-        if not self.elf["little"]:
-            raise LoadError("big-endian programs need a big-endian bus in the machine card (not built yet)")
-        self.machine_card = ctx.store.get(f"machine/{self.elf['machine']}")
-        self.os = ctx.store.get(self.machine_card["components"][0])
+        self.machine = machine_for(ctx, data)
+        mc = ctx.store.get(f"machine/{self.machine}")
+        self.isa = mc["isa"]
+        fc = ctx.store.get("format/elf32")
+        if len(data) > fc["file_max"]:
+            raise LoadError(f"the file is larger than the format card's file_max ({fc['file_max']} bytes)")
         self.lifted = lifted
         self.lift_stats: dict = {}
         if lifted:
             from . import lift_elf
-            self.ir, self.lift_stats = lift_elf.module(ctx, self.elf["machine"], data, self.elf)
+            self.ir, self.lift_stats = lift_elf.module(ctx, self.machine, data)
         else:
-            self.ir = Bd.module(ctx, self.elf["machine"])
+            self.ir = Bd.module(ctx, self.machine)
         self.engine = N.resolve_engine(ctx, engine)
-        self.m = N.load(ctx, self.ir, self.engine, fresh=fresh) if self.engine != "ir" else N.load(ctx, self.ir, "ir")
+        self.m = N.load(ctx, self.ir, self.engine, fresh=fresh)
         self.m.call("reset_all")
-        lay = self.os["layout"]
-        size = lay["memory_bytes"]
-        top = 0
-        for s in self.elf["segments"]:
-            end = s["p_vaddr"] + s["p_memsz"]
-            if s["p_vaddr"] < 0x1000 or end > lay["mmap_top"]:
-                raise LoadError(f"segment at {s['p_vaddr']:#x}..{end:#x} is outside the process's memory "
-                                f"(0x1000..{lay['mmap_top']:#x})")
-            self.m.write("mem", data[s["p_offset"]:s["p_offset"] + s["p_filesz"]], s["p_vaddr"])
-            top = max(top, end)
-            if s["p_flags"] & 1:                                  # PF_X: the program's code
-                lo, hi = self.m.get("code_lo"), self.m.get("code_hi")
-                self.m.set("code_lo", s["p_vaddr"] if hi == 0 else min(lo, s["p_vaddr"]))
-                self.m.set("code_hi", max(hi, s["p_vaddr"] + s["p_filesz"]))
-        brk = (top + 0xFFF) & ~0xFFF
-        self.m.set("brk_start", brk)
-        self.m.set("brk_cur", brk)
-        isa = ctx.store.get(f"isa/{self.elf['isa']}")
+        self.m.write("file", data)
+        self.m.set("file_len", len(data))
+        err = self.m.call("load_elf", mc["e_machine"])
+        if err:
+            raise LoadError(fc["load_errors"][str(err)])
         if variant is not None:
-            self.m.set("variant", isa["variants"][variant])
-        sp = self._start_stack(argv or [Path(str(program)).name if not isinstance(program, (bytes, bytearray)) else "a.out"],
-                               env or [], lay["stack_top"], size)
-        regs = self.m.array("regs")
-        regs[29] = sp
-        self.m.set("pc", self.elf["entry"])
+            self.m.set("variant", ctx.store.get(f"isa/{self.isa}")["variants"][variant])
+        argv = argv or ["a.out" if isinstance(program, (bytes, bytearray)) else Path(str(program)).name]
+        env = env or []
+        strings = b"".join(s.encode() + b"\0" for s in [*argv, *env])
+        self.m.write("args", strings)
+        self.m.set("args_len", len(strings))
+        self.m.call("start_process", len(argv), len(env))
         if stdin:
             self.m.write("inp", stdin[:0x100000])
             self.m.set("inp_len", min(len(stdin), 0x100000))
         self._out, self._err = bytearray(), bytearray()
         self.seconds = 0.0
-
-    def _start_stack(self, argv, env, top: int, size: int) -> int:
-        """argc, argv[], 0, envp[], 0, auxv (AT_PAGESZ, AT_NULL) as the os card's start state says."""
-        strings = bytearray()
-        offs = []
-        for s in [*argv, *env]:
-            offs.append(len(strings))
-            strings += s.encode() + b"\0"
-        base = (top - len(strings)) & ~15
-        self.m.write("mem", bytes(strings), base)
-        ptrs = [len(argv)] + [base + o for o in offs[:len(argv)]] + [0] + [base + o for o in offs[len(argv):]] + [0]
-        ptrs += [6, 4096, 0, 0]                                  # AT_PAGESZ 4096, AT_NULL
-        sp = (base - 4 * len(ptrs)) & ~15
-        self.m.write("mem", struct.pack(f"<{len(ptrs)}I", *ptrs), sp)
-        return sp
 
     def _drain(self) -> None:
         for name, buf in (("out", self._out), ("err", self._err)):
@@ -162,8 +124,8 @@ class Process:
         g = self.m.get
         state = {0: "running", 1: "exited", 2: "faulted"}[g("state")]
         r = {"state": state, "exit_code": g("exit_code") if state == "exited" else None, "steps": g("steps"),
-             "seconds": round(self.seconds, 4), "engine": self.engine, "isa": self.elf["isa"],
-             "machine": self.elf["machine"], "syscalls": g("syscalls"), "unknown_syscalls": g("unknown_syscalls"),
+             "seconds": round(self.seconds, 4), "engine": self.engine, "isa": self.isa,
+             "machine": self.machine, "syscalls": g("syscalls"), "unknown_syscalls": g("unknown_syscalls"),
              "stdout": self.stdout.decode("utf-8", "replace"), "stderr": self.stderr.decode("utf-8", "replace"),
              "output_dropped": g("out_dropped")}
         if self.lifted:
@@ -182,4 +144,4 @@ def run(ctx, program, **kw) -> dict:
     return Process(ctx, program, **kw).run(max_steps)
 
 
-__all__ = ["LoadError", "Process", "read_elf", "run"]
+__all__ = ["LoadError", "Process", "machine_for", "run"]

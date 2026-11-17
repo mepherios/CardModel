@@ -1,0 +1,104 @@
+-- The ELF loader, as a component of the machine that runs the program. The host copies the file's bytes into
+-- `file` (file_len); load_elf(machine) checks the header (the e_machine this machine runs is its argument, from
+-- the machine card), copies every PT_LOAD segment to memory, zeroes the rest of its memory size, records the
+-- code's range (PF_X segments), sets brk and the entry point, and returns 0 or a load error (the card's
+-- load_errors). Uses the machine's mem, MEM_SIZE, pc, code_lo/code_hi and the os card's brk and mmap_top.
+const FILE_MAX = card.format.elf32.file_max
+const H_TYPE = card.format.elf32.header.e_type.at
+const H_MACHINE = card.format.elf32.header.e_machine.at
+const H_ENTRY = card.format.elf32.header.e_entry.at
+const H_PHOFF = card.format.elf32.header.e_phoff.at
+const H_PHENTSIZE = card.format.elf32.header.e_phentsize.at
+const H_PHNUM = card.format.elf32.header.e_phnum.at
+const P_TYPE = card.format.elf32.program_header.p_type.at
+const P_OFFSET = card.format.elf32.program_header.p_offset.at
+const P_VADDR = card.format.elf32.program_header.p_vaddr.at
+const P_FILESZ = card.format.elf32.program_header.p_filesz.at
+const P_MEMSZ = card.format.elf32.program_header.p_memsz.at
+const P_FLAGS = card.format.elf32.program_header.p_flags.at
+const ET_EXEC = card.format.elf32.constants.ET_EXEC
+const ET_DYN = card.format.elf32.constants.ET_DYN
+const PT_LOAD = card.format.elf32.constants.PT_LOAD
+const PT_INTERP = card.format.elf32.constants.PT_INTERP
+const PF_X = card.format.elf32.constants.PF_X
+const LOAD_LOW = 0x1000
+array file: Byte[FILE_MAX]
+global file_len: Int = 0
+
+fn f8(o: Int) -> Int = if o >= 0 and o < file_len then file[o] else 0
+fn f16(o: Int) -> Int = f8(o) | (f8(o + 1) << 8)
+fn f32(o: Int) -> Int = f16(o) | (f16(o + 2) << 16)
+
+-- the segments in two passes: check every one first, so a refused file leaves memory untouched
+fn seg_error(at: Int) -> Int {
+  let t = f32(at + P_TYPE)
+  if t == PT_INTERP {
+    return 6
+  }
+  if t == PT_LOAD {
+    let va = f32(at + P_VADDR)
+    let off = f32(at + P_OFFSET)
+    let fsz = f32(at + P_FILESZ)
+    if va < LOAD_LOW or va + f32(at + P_MEMSZ) > MMAP_TOP or fsz > f32(at + P_MEMSZ) {
+      return 7
+    }
+    if off + fsz > file_len {
+      return 8
+    }
+  }
+  return 0
+}
+
+export fn load_elf(machine: Int) -> Int {
+  if file_len < 52 or f32(0) != 0x464C457F {
+    return 1
+  }
+  if f16(H_MACHINE) != machine {
+    return 4
+  }
+  let et = f16(H_TYPE)
+  if et != ET_EXEC and et != ET_DYN {
+    return 5
+  }
+  let phoff = f32(H_PHOFF)
+  let phsz = f16(H_PHENTSIZE)
+  let phnum = f16(H_PHNUM)
+  for i in 0 .. phnum {
+    let e = seg_error(phoff + i * phsz)
+    if e != 0 {
+      return e
+    }
+  }
+  var top = 0
+  for i in 0 .. phnum {
+    let at = phoff + i * phsz
+    if f32(at + P_TYPE) == PT_LOAD {
+      let va = f32(at + P_VADDR)
+      let off = f32(at + P_OFFSET)
+      let fsz = f32(at + P_FILESZ)
+      let msz = f32(at + P_MEMSZ)
+      for k in 0 .. msz {
+        if k < fsz {
+          mem[va + k] = file[off + k]
+        } else {
+          mem[va + k] = 0
+        }
+      }
+      if (f32(at + P_FLAGS) & PF_X) != 0 {
+        if code_hi == 0 or va < code_lo {
+          code_lo = va
+        }
+        if va + fsz > code_hi {
+          code_hi = va + fsz
+        }
+      }
+      if va + msz > top {
+        top = va + msz
+      }
+    }
+  }
+  brk_start = (top + 0xFFF) & 0xFFFFF000
+  brk_cur = brk_start
+  pc = f32(H_ENTRY)
+  return 0
+}

@@ -1,0 +1,45 @@
+-- The process's start state, as the System V MIPS ABI gives it: the host copies the argument and environment
+-- strings (each ending in 0, argv first) into `args`; start_process copies them to the top of the stack and
+-- builds argc, argv[], 0, envp[], 0 and the auxiliary vector below them, 16-byte aligned, and points sp there.
+const STACK_TOP = card.os.linux_mips_o32.layout.stack_top
+const AT_PAGESZ = card.os.linux_mips_o32.auxv.AT_PAGESZ
+const AT_NULL = card.os.linux_mips_o32.auxv.AT_NULL
+const PAGE_SIZE = card.os.linux_mips_o32.auxv.page_size
+const ARGS_MAX = 0x10000
+array args: Byte[ARGS_MAX]
+global args_len: Int = 0
+
+export fn start_process(argc: Int, envc: Int) -> Int {
+  let base = (STACK_TOP - args_len) & 0xFFFFFFF0
+  for i in 0 .. args_len {
+    mem[base + i] = args[i]
+  }
+  let nptr = 1 + argc + 1 + envc + 1 + 4
+  let sp = (base - 4 * nptr) & 0xFFFFFFF0
+  st32(sp, argc)
+  var at = sp + 4
+  var s = base
+  for i in 0 .. argc + envc {
+    if i == argc {
+      st32(at, 0)
+      at += 4
+    }
+    st32(at, s)
+    at += 4
+    while mem[s] != 0 {
+      s += 1
+    }
+    s += 1
+  }
+  if envc == 0 {
+    st32(at, 0)
+    at += 4
+  }
+  st32(at, 0)
+  st32(at + 4, AT_PAGESZ)
+  st32(at + 8, PAGE_SIZE)
+  st32(at + 12, AT_NULL)
+  st32(at + 16, 0)
+  regs[29] = sp
+  return sp
+}

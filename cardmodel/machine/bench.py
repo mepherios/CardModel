@@ -375,10 +375,10 @@ MIPS_STATE = ("pc", "hi", "lo", "in_slot", "slot_target", "bpending", "variant",
               "sys_last", "brk_calls", "exc_calls", "exc_last", "exc_info", "undef_calls")
 
 
-def _mips_state(rng, card) -> dict:
+def _mips_state(rng, card, variants: dict) -> dict:
     regs = [0] + [rng.choice([rng.getrandbits(32), rng.getrandbits(16), 0xFFFFFFFF - rng.getrandbits(8),
                               0x80000000 | rng.getrandbits(8), 0x7FFFFFFF - rng.getrandbits(4)]) for _ in range(31)]
-    variant = {"mips32r2": 0, "allegrex": 1}.get(card.get("arch"), rng.randrange(2))
+    variant = variants.get(card.get("arch"), rng.randrange(len(variants)))
     if rng.randrange(8) == 0:                         # sometimes the other core: the card must be reserved there
         variant ^= 1
     return {"regs": regs, "hi": rng.getrandbits(32), "lo": rng.getrandbits(32), "pc": rng.getrandbits(16) & 0xFFFC,
@@ -404,7 +404,7 @@ def run_mips_case(m, st: dict, op: int, ram: bytes) -> dict:
     return out
 
 
-def check_mips_data(card, st: dict, out: dict, op: int) -> list[str]:
+def check_mips_data(card, st: dict, out: dict, op: int, variants: dict) -> list[str]:
     """What holds for every MIPS card: registers stay 32-bit words, r0 reads 0, a card of the other core is a
     reserved instruction that changes nothing else, and only branches move control past the next word."""
     problems = []
@@ -412,7 +412,7 @@ def check_mips_data(card, st: dict, out: dict, op: int) -> list[str]:
         problems.append("a register left the 32-bit range")
     if out["regs"][0] != 0:
         problems.append("r0 is not zero")
-    own = {"mips32r2": 0, "allegrex": 1}.get(card.get("arch"))
+    own = variants.get(card.get("arch"))
     if own is not None and st["variant"] != own:
         if out["undef_calls"] != 1 or out["regs"] != st["regs"] or out["ntrace"]:
             problems.append(f"not reserved on variant {st['variant']}")
@@ -465,6 +465,7 @@ def mips_conformance(ctx, isa: str, engines=None, seed=None, samples: int = 8, o
             unavailable[e] = str(exc)
     ref = "ir" if "ir" in machines else next(iter(machines))
     allc = I.instructions(ctx.store, isa)
+    variants = I.isa_card(ctx.store, isa).get("variants") or {}
     cards = [c for c in allc if only is None or c.name in only]
     rng = random.Random(seed)
     per_card = {}
@@ -482,7 +483,7 @@ def mips_conformance(ctx, isa: str, engines=None, seed=None, samples: int = 8, o
             if op is None:
                 misses += 1
                 continue
-            st = _mips_state(rng, card)
+            st = _mips_state(rng, card, variants)
             ram = rng.randbytes(0x10000)
             outs = {lang: run_mips_case(mm, st, op, ram) for lang, mm in machines.items()}
             runs += 1
@@ -493,7 +494,7 @@ def mips_conformance(ctx, isa: str, engines=None, seed=None, samples: int = 8, o
                         if o[k] != base[k]:
                             problems.append(f"{lang} vs {ref} on {op:#010x}: {k} {o[k]!r:.80} vs {base[k]!r:.80}")
                             break
-            problems += [f"{op:#010x}: {p}" for p in check_mips_data(card, st, base, op)]
+            problems += [f"{op:#010x}: {p}" for p in check_mips_data(card, st, base, op, variants)]
         if card.get("vectors"):
             for lang, mm in machines.items():
                 problems += [f"{lang}: {p}" for p in check_mips_vectors(mm, card)]

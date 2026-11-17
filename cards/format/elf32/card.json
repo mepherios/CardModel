@@ -1,48 +1,52 @@
 {
   "category": "format",
-  "class": 1,
   "constants": {
     "ELFCLASS32": 1,
     "ELFDATA2LSB": 1,
-    "ELFDATA2MSB": 2,
-    "EM_386": 3,
-    "EM_ARM": 40,
-    "EM_MIPS": 8,
-    "EM_X86_64": 62,
-    "ET_EXEC": 2,
     "ET_DYN": 3,
+    "ET_EXEC": 2,
+    "PF_X": 1,
     "PT_INTERP": 3,
     "PT_LOAD": 1
   },
+  "file_max": 8388608,
   "header": {
-    "e_entry": [24, 4],
-    "e_flags": [36, 4],
-    "e_machine": [18, 2],
-    "e_phentsize": [42, 2],
-    "e_phnum": [44, 2],
-    "e_phoff": [28, 4],
-    "e_type": [16, 2],
-    "ei_class": [4, 1],
-    "ei_data": [5, 1]
-  },
-  "isa_of_machine": {
-    "8": "mips32"
+    "e_entry": {"at": 24, "size": 4},
+    "e_machine": {"at": 18, "size": 2},
+    "e_phentsize": {"at": 42, "size": 2},
+    "e_phnum": {"at": 44, "size": 2},
+    "e_phoff": {"at": 28, "size": 4},
+    "e_type": {"at": 16, "size": 2},
+    "ei_class": {"at": 4, "size": 1},
+    "ei_data": {"at": 5, "size": 1}
   },
   "kind": "layout",
-  "machine_of_isa": {
-    "mips32": "mips_linux"
+  "load_errors": {
+    "1": "not an ELF file",
+    "2": "not a 32-bit ELF file (64-bit programs need a 64-bit ISA card and format/elf64, which do not exist yet)",
+    "3": "big-endian: this machine's bus is little-endian",
+    "4": "the ELF machine is not the one this machine card runs",
+    "5": "not an executable (ELF type is neither EXEC nor DYN)",
+    "6": "the program asks for a dynamic loader (PT_INTERP): only static executables run yet",
+    "7": "a loadable segment lies outside the process's memory",
+    "8": "a segment's file bytes lie outside the file"
+  },
+  "logic": ["load.card"],
+  "machine_of_e_machine": {
+    "8": "mips_linux"
   },
   "name": "elf32",
   "parents": ["elf"],
+  "probe": "probe.card",
   "program_header": {
-    "p_filesz": [16, 4],
-    "p_flags": [24, 4],
-    "p_memsz": [20, 4],
-    "p_offset": [4, 4],
-    "p_type": [0, 4],
-    "p_vaddr": [8, 4]
+    "p_filesz": {"at": 16, "size": 4},
+    "p_flags": {"at": 24, "size": 4},
+    "p_memsz": {"at": 20, "size": 4},
+    "p_offset": {"at": 4, "size": 4},
+    "p_type": {"at": 0, "size": 4},
+    "p_vaddr": {"at": 8, "size": 4}
   },
   "provenance": {"origin": "cardmodel", "sources": ["System V ABI, Object Files (ELF)", "Tool Interface Standard ELF 1.2"]},
-  "statement": "The 32-bit ELF executable as a loader reads it: header and program-header fields as [offset, size] pairs (byte order from ei_data), the constants that matter for loading, which ISA card an e_machine names and which machine card runs a process of that ISA. A loader copies every PT_LOAD segment's file bytes to its virtual address and zeroes the rest of its memory size.",
+  "statement": "The 32-bit ELF executable, read by card logic: the header and program-header fields as offsets and sizes, the constants loading needs, which machine card runs a given e_machine, and the loader's error codes. probe.card reads a file's identity (which machine runs it); load.card, a component of that machine, copies every PT_LOAD segment's file bytes to its virtual address, zeroes the rest of its memory size and sets the entry point. The host only hands over the file's bytes.",
   "tier": 1
 }

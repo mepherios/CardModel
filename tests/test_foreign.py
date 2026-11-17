@@ -88,7 +88,7 @@ class MipsCards(unittest.TestCase):
         rng = random.Random(SEED)
         for name, variant in (("ALLEGREX_MAX", 0), ("MIPS_MUL", 1)):
             card = _CTX.store.get(f"isa/{name}")
-            st = bench._mips_state(rng, card)
+            st = bench._mips_state(rng, card, _CTX.store.get("isa/mips32")["variants"])
             st["variant"] = variant
             out = bench.run_mips_case(m, st, card["match"] | (5 << 21) | (6 << 16) | (7 << 11), bytes(0x10000))
             self.assertEqual(out["undef_calls"], 1, name)

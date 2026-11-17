@@ -23,11 +23,11 @@ cards. Adding a platform is adding cards; the pipeline stays the same.
 | layer | cards | what it holds |
 |---|---|---|
 | ISA | `isa/mips32` + `isa/_pack_mips32.jsonl` (109 cards) | MIPS32 Release 2 little-endian user-mode integer instructions and the Sony **Allegrex** (the PSP's CPU): its own MADD/MSUB/CLZ/CLO/MIN/MAX encodings, WSBW, BITREV, no SPECIAL2. `variant` picks the core; a card of the other core is a reserved instruction. Delay slots and branch-likely are in the cards and the step. |
-| OS | `os/linux_mips_o32` | Linux/MIPS o32 system calls as card logic (`syscalls.card`): exit, write, writev, read, brk, mmap/mmap2 (anonymous), munmap, getpid, ioctl, set_thread_area, clock_gettime (machine time, so runs repeat). Every other call answers ENOSYS and is counted. Numbers, errno values, memory layout and the toolchain that builds a program for it are card data. |
-| format | `format/elf32` | the ELF header and program-header fields as `[offset, size]`, which ISA card an `e_machine` names and which machine card runs it. |
+| OS | `os/linux_mips_o32` | the process start (argc, argv, envp, auxv on the stack: `start.card`) and Linux/MIPS o32 system calls (`syscalls.card`), both card logic: exit, write, writev, read, brk, mmap/mmap2 (anonymous), munmap, getpid, ioctl, set_thread_area, clock_gettime (machine time, so runs repeat). Every other call answers ENOSYS and is counted. Numbers, errno values, memory layout and the toolchain that builds a program for it are card data. |
+| format | `format/elf32` | the ELF layout as data and the loader as card logic: `probe.card` says which machine runs a file, `load.card` (a component of that machine) checks the header, copies the segments, zeroes the rest, records the code's range and sets brk and the entry point. Load errors are codes with the card's messages. |
 | machine | `machine/mips_linux`, `machine/mips32_bench` | a user-mode process (flat memory, bus, faults, the run loop) and the one-instruction bench. |
-| host | `cardmodel/machine/process.py` | the effect shell: load the ELF, write argc/argv/envp/auxv, feed stdin, run in slices, drain stdout/stderr. Knows no ISA and no OS. |
-| translation | `cardmodel/machine/lift_elf.py` | the program's code decoded once by the instruction cards and emitted as card-language blocks that call the cards with constant words; the C card compiles them and the C compiler inlines and folds the cards. |
+| host | `cardmodel/machine/process.py` | the effect shell only (CM21): hand the file's bytes, the argument strings and stdin to the cards, run in slices, drain stdout/stderr, time it. It decides nothing about the program. |
+| translation | `cardmodel/machine/lift_elf.py` | the program as its own machine's loader leaves it, each word decoded by the instruction cards and emitted as card-language blocks that call the cards with constant words; the C card compiles them and the C compiler inlines and folds the cards. No instruction is named in it: whether a word branches, where to, whether it is a call and where it returns, whether it skips its delay slot and whether it can stop the process are read from that word's card as terms (the symbolic executor). |
 
 The dispatch for a mask-decoded ISA is now generic: the ISA card names the bit fields that index its decode table
 (`decode.sets.<set>.index_fields`); ARM and Thumb keep their tables.
@@ -86,7 +86,23 @@ propose an instruction's semantics from those pairs and be checked by the same c
 that passes replaces nothing until it agrees with every engine. The os card's calls are the same: each one is a
 function from the process's state to the state after, observable from a program's run.
 
-## 5. Honest limits
+## 5. What is card logic and what is not
+
+Card logic: every instruction, the decoder (generated from the cards' masks), the process's memory and faults,
+the run loop and delay slots, the ELF probe and loader, the process start, every system call, and every fact the
+translator uses about an instruction. Not card logic, by design or not yet:
+
+* **The effect shell** (`process.py`): reading the file, handing bytes over, draining output, timing. This is the
+  I/O the pure core must not do (CM21), as for the Game Boy and the DS.
+* **The translator's traversal** (`lift_elf.py`): which addresses start blocks, how long a block may be and the
+  text of the generated blocks are Python, although every instruction fact it uses is read from the cards. A next
+  step is to state those rules as a card.
+* **The verification harnesses** (`bench.py`, `symbolic.py`) and the **generator** (`tools/gen_mips32.py`) are
+  Python, as for the other ISAs; the semantics the generator writes are card language.
+* **Learned versus written**: the instruction semantics are written from the architecture manual, not learned
+  from observation (section 4 says how a learner could take this over).
+
+## 6. Honest limits
 
 * 32-bit little-endian static ELF executables only; no dynamic loader, threads, signals or FPU.
 * Linux/MIPS is the first OS card because self-written programs for it can be built and checked here; the PSP's

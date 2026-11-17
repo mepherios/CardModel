@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ["MIPS32 Architecture for Programmers Volume II (Release 2)", "MIPS o32 ABI",
        "public Allegrex (PSP CPU) instruction listings"]
-VARIANT = {"mips32r2": 0, "allegrex": 1}
+VARIANT = json.loads((ROOT / "cards" / "isa" / "mips32" / "card.json").read_text(encoding="utf-8"))["variants"]
 
 F_R = {"opcode": [31, 26], "rs": [25, 21], "rt": [20, 16], "rd": [15, 11], "sa": [10, 6], "funct": [5, 0]}
 F_I = {"opcode": [31, 26], "rs": [25, 21], "rt": [20, 16], "imm": [15, 0]}
