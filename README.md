@@ -236,3 +236,11 @@ command runs the test suite.
 | [docs/UNIVERSAL_UNDERSTANDER.md](docs/UNIVERSAL_UNDERSTANDER.md) | proposal: learning any framework as a mathematical object |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | task-oriented recipes that work on main, each command measured on 2026-11-05 |
 | [docs/GENERAL_COMPILER.md](docs/GENERAL_COMPILER.md) | the owner's goal of 2026-11-05: one compiler for anything computational; the core of programming (ten constructs every language desugars into), the doors code comes in through (LLVM IR, VM bytecode, machine code), the goals G_C6–G_C8 and the plan |
+
+## License and ownership
+
+CardModel is owned by **mepherios** and is **source-available for noncommercial use** under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
+
+- You may use, study, change and share it, and build on it, as long as you don't make money from it.
+- Commercial use needs written permission from the owner.
+- Contributions are welcome under the Contributor License Agreement in [CONTRIBUTING.md](CONTRIBUTING.md), which lets the owner relicense the project later, including commercially.
