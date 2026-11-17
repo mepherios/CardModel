@@ -5,6 +5,12 @@ description = "A self-contained card model: every structure is a card; observe, 
 requires-python = ">=3.9"
 dependencies = []
 license = { text = "PolyForm-Noncommercial-1.0.0" }
+authors = [{ name = "mepherios" }]
+maintainers = [{ name = "mepherios" }]
+
+[project.urls]
+Homepage = "https://github.com/mepherios/CardModel"
+Repository = "https://github.com/mepherios/CardModel"
 
 [project.scripts]
 cardmodel = "cardmodel.cli:main"
