@@ -2,15 +2,25 @@
   "call_runner": "node",
   "category": "language",
   "codegen": {
+    "array": {
+      "int": "const {name} = new Array({size}).fill(0n);",
+      "u8": "const {name} = new Uint8Array({size});"
+    },
+    "array_init": {
+      "int": "const {name} = [{values}].map(BigInt);",
+      "u8": "const {name} = new Uint8Array([{values}]);"
+    },
     "assign": "{name} = {value};",
     "break": "break;",
     "continue": "continue;",
     "declare": "let {name} = {value};",
+    "do": "{value};",
     "else": "}} else {{",
     "empty": "",
     "end_if": "}}",
     "end_while": "}}",
     "func": "function {name}({params}) {{\n{body}}}\n",
+    "global": "let {name} = {value};",
     "harness": {
       "bench_call": "cm_acc += {truthy};",
       "bench_main": "let cm_acc = 0n;\nfor (let cm_r = 0; cm_r < {reps}; cm_r++) {{\n{calls}}}\nconsole.log(String(cm_acc));\n",
@@ -83,15 +93,32 @@
       "int": "({v}n)",
       "true": "true"
     },
+    "load": {
+      "int": "{arr}[Number({idx})]",
+      "u8": "BigInt({arr}[Number({idx})])"
+    },
     "param": "{name}",
     "prelude": "@imports@",
     "return": "return {value};",
+    "return_void": "return;",
     "set": "cm_set({name}, {idx}, {value});",
+    "store": {
+      "int": "{arr}[Number({idx})] = {value};",
+      "u8": "{arr}[Number({idx})] = Number(BigInt.asUintN(8, {value}));"
+    },
     "str_lit": {
       "escape": "\\u{{{x}}}",
       "quote": "\"{s}\""
     },
     "style": "braces",
+    "switch": {
+      "body_close": "}} break;",
+      "body_open": "{{",
+      "case": "case {v}:",
+      "default": "default:",
+      "head": "switch ({value}) {{",
+      "tail": "}}"
+    },
     "types": {
       "bool": "boolean",
       "f32": "number",
@@ -105,7 +132,8 @@
       "str": "string",
       "u16": "bigint",
       "u32": "bigint",
-      "u8": "bigint"
+      "u8": "bigint",
+      "void": "void"
     },
     "while": "while ({cond}) {{",
     "zero": {
@@ -132,6 +160,22 @@
       "'"
     ]
   },
+  "embed": {
+    "entry": {
+      "array": "    \"@key@\": @name@,",
+      "function": "    \"@key@\": @name@,",
+      "global": "    \"@key@\": [() => @name@, (v) => { @name@ = v; }],"
+    },
+    "file": "machine.mjs",
+    "kind": "process",
+    "run": [
+      "{exe}",
+      "{src}"
+    ],
+    "serve": "\nconst cm_fns = {\n@functions@\n};\nconst cm_vars = {\n@globals@\n};\nconst cm_arrs = {\n@arrays@\n};\nfunction cm_val(v) { return typeof v === 'string' ? BigInt(v) : v; }\nfunction cm_out(v) { return typeof v === 'bigint' ? v.toString() : (v === undefined ? null : v); }\nconst cm_hexd = Array.from({ length: 256 }, (_, i) => (i < 16 ? '0' : '') + i.toString(16));\nfunction cm_serve_one(r) {\n    if (r.op === 'call') return cm_out(cm_fns[r.name](...r.args.map(cm_val)));\n    if (r.op === 'get') return cm_out(cm_vars[r.name][0]());\n    if (r.op === 'set') { cm_vars[r.name][1](cm_val(r.value)); return null; }\n    const a = cm_arrs[r.name];\n    if (a === undefined) throw new RangeError('no array ' + r.name);\n    const s = r.start || 0;\n    if (r.op === 'read') {\n        const e = r.n == null ? a.length : Math.min(a.length, s + r.n);\n        if (!(a instanceof Uint8Array)) return Array.from(a.slice(s, e), cm_out);\n        const parts = new Array(Math.max(0, e - s));\n        for (let i = s; i < e; i++) parts[i - s] = cm_hexd[a[i]];\n        return parts.join('');\n    }\n    if (r.op === 'write') {\n        if (a instanceof Uint8Array) {\n            const n = r.data.length >> 1;\n            if (s < 0 || s + n > a.length) throw new RangeError('write past the end of ' + r.name);\n            for (let i = 0; i < n; i++) a[s + i] = parseInt(r.data.substr(2 * i, 2), 16);\n        } else {\n            if (s < 0 || s + r.data.length > a.length) throw new RangeError('write past the end of ' + r.name);\n            r.data.forEach((v, i) => { a[s + i] = BigInt(v); });\n        }\n        return null;\n    }\n    throw new RangeError('unknown request ' + r.op);\n}\nfunction cm_serve(line) {\n    const out = [];\n    for (const r of JSON.parse(line)) {\n        try { out.push({ ok: cm_serve_one(r) }); }\n        catch (e) { out.push({ error: String((e && e.stack) || e) }); break; }\n    }\n    return JSON.stringify(out);\n}\n",
+    "statement": "the emitted module and a request server (serve) run in a Node process: one JSON request line in, one answer line out; integers are BigInt (exact, like the reference interpreter) and travel as decimal strings, u8 arrays are Uint8Array and travel as hex",
+    "transport": "\nconst cm_rl = (await import('node:readline')).createInterface({ input: process.stdin });\nfor await (const line of cm_rl) process.stdout.write(cm_serve(line) + '\\n');\n"
+  },
   "extensions": [
     ".js",
     ".mjs",
@@ -141,8 +185,8 @@
   "frontend": "cardmodel.engines.frontend_text",
   "int_bits": null,
   "metadata": {
-    "previous_content_hash": "95d4e3534d9a8514e47b7bd78eb8f8bbe448f5dbe165ff7847f02d9b609cb1e7",
-    "version": "1.1.0",
+    "previous_content_hash": "5742168780aca32eb2c3115b9585edd239e38f58fb259a859de0ef7cc363dc67",
+    "version": "1.2.0",
     "version_bump_reason": "minor"
   },
   "name": "javascript",

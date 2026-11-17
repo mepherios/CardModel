@@ -5,10 +5,16 @@
                     [--save-dir DIR] [--no-save] [--rate HZ] [--relift]
                     [--headless --frames N --input SCRIPT --png F --wav F]
   cardmodel isa build|check|list [ISA] [--samples N] [--seed S] [--engines ir,host,native]
+                                                (also javascript, browser, wasm, wasm@browser)
   cardmodel machine survey DIR [--frames N] [--engine E] [--limit N] [--shots DIR] [--model auto|dmg|cgb]
   cardmodel machine lift ROM [--relift]         lift + compile a ROM's code, print the report
   cardmodel machine diff ROM [--frames N] [--model M]   lifted vs interpreter, frame by frame (state hashes)
   cardmodel machine info ROM                    the cartridge header, decoded with the cartridge card
+  cardmodel machine page ROM --out FILE [--frames N] [--engine REF] [--page-engine javascript|wasm] [--check]
+                                                a self-checking web page: the Game Boy session runs in the page
+                                                (JavaScript emitted from the cards) and every answer is compared
+                                                with the reference engine's (native C by default); --check opens it
+                                                in Chromium and prints the verdict
   cardmodel machine testroms DIR                run test ROMs, read their verdicts (serial / screen / registers)
   cardmodel machine nds ROM [--frames N] [--lift] [--input SCRIPT] [--png F] [--wav F] [--shots DIR --every K]
                                                 [--scale S]   the DS prototype: direct boot, both CPUs, both
@@ -110,6 +116,24 @@ def cmd_machine(args) -> int:
         h = G.header(rom, ctx.store)
         _out(args, h, json.dumps(h, indent=1))
         return 0
+    if args.action == "page":
+        from . import web
+        rom, name = G.open_rom(args.target)
+        frames = args.frames if args.frames != 1200 else 60
+        ir, transcript, run = web.gameboy_session(ctx, rom, frames)
+        expected, ref = web.expected_answers(ctx, ir, transcript, args.engine)
+        out = Path(args.out or f"{Path(name).stem}.html").expanduser()
+        out.write_text(web.page(ctx, ir, transcript, expected, title=f"{run['title'] or Path(name).stem} on the card model",
+                                reference=ref, session=f"{frames} frames of {Path(name).name}, state {run['state_hash'][:16]}",
+                                engine=args.page_engine), encoding="utf-8")
+        data = {"page": str(out), "frames": frames, "batches": len(transcript), "reference": ref,
+                "page_engine": args.page_engine, **run}
+        text = f"{out}: {frames} frames, {len(transcript)} request batches, checked against {ref}"
+        if args.check:
+            data["check"] = web.check_page(ctx, out)
+            text += f"\nbrowser: {data['check']['result']}: {data['check']['text'].splitlines()[0]}"
+        _out(args, data, text)
+        return 0 if not args.check or data["check"]["result"] == "pass" else 1
     if args.action == "survey":
         from . import survey
         shots = Path(args.shots).expanduser() if args.shots else None
@@ -236,7 +260,8 @@ def cmd_machine(args) -> int:
 def register(sub) -> None:
     s = sub.add_parser("emu", help="run a Game Boy / Game Boy Color ROM through the card model")
     s.add_argument("rom")
-    s.add_argument("--engine", default="lifted", help="lifted (default), native, host (Python) or ir (reference)")
+    s.add_argument("--engine", default="lifted", help="lifted (default), native, host (Python), javascript (Node), browser (a Chromium page), "
+                                                      "wasm (WebAssembly in Node), wasm@browser or ir (reference)")
     s.add_argument("--model", default="auto", choices=["auto", "dmg", "cgb"])
     s.add_argument("--port", type=int, default=0); s.add_argument("--no-browser", action="store_true")
     s.add_argument("--save-dir"); s.add_argument("--no-save", action="store_true")
@@ -250,7 +275,7 @@ def register(sub) -> None:
     s.add_argument("--samples", type=int, default=8); s.add_argument("--seed", type=int); s.add_argument("--engines")
     s.set_defaults(fn=cmd_isa)
     s = sub.add_parser("machine", help="machines: survey ROMs, lift a ROM, differential runs, test ROMs")
-    s.add_argument("action", choices=["survey", "lift", "diff", "info", "testroms", "nds"]); s.add_argument("target")
+    s.add_argument("action", choices=["survey", "lift", "diff", "info", "testroms", "nds", "page"]); s.add_argument("target")
     s.add_argument("--frames", type=int, default=1200); s.add_argument("--engine", default="native")
     s.add_argument("--limit", type=int); s.add_argument("--shots"); s.add_argument("--relift", action="store_true")
     s.add_argument("--lift", action="store_true", help="nds: also lift the ARM9's code and run a differential")
@@ -260,6 +285,10 @@ def register(sub) -> None:
     s.add_argument("--wav", help="nds: save the sound of the run")
     s.add_argument("--every", type=int, default=60, help="nds: with --shots, a screenshot every N frames")
     s.add_argument("--scale", type=int, default=1, help="nds: pixel scale of the PNGs")
+    s.add_argument("--out", help="page: the HTML file to write")
+    s.add_argument("--check", action="store_true", help="page: open the page in Chromium and print its verdict")
+    s.add_argument("--page-engine", default="javascript", choices=["javascript", "wasm"],
+                   help="page: what runs in the page, the JavaScript module or the C module compiled to WebAssembly")
     s.add_argument("--model", default="auto", choices=["auto", "dmg", "cgb"],
                    help="survey/diff: the console (cgb runs DMG cartridges in DMG compatibility mode)")
     s.set_defaults(fn=cmd_machine)

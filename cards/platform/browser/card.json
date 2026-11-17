@@ -1,0 +1,57 @@
+{
+  "category": "platform",
+  "embed": {
+    "driver": {
+      "file": "driver.mjs",
+      "text": "// Hosts a machine module in a Chromium page and relays request lines to it (platform/browser card).\nimport { createRequire } from 'node:module';\nimport { readFileSync } from 'node:fs';\nimport { createInterface } from 'node:readline';\nconst require = createRequire(import.meta.url);\nconst { chromium } = require('playwright');\nconst browser = await chromium.launch();\nconst page = await browser.newPage();\npage.on('pageerror', (e) => { process.stderr.write('page error: ' + e + '\\n'); process.exit(3); });\nawait page.setContent('<!doctype html><meta charset=\"utf-8\"><title>cardmodel machine</title><body></body>');\nawait page.addScriptTag({ type: 'module', content: readFileSync(process.argv[2], 'utf8') });\nawait page.waitForFunction(() => typeof window.cm_serve === 'function');\nconst rl = createInterface({ input: process.stdin });\nfor await (const line of rl) process.stdout.write(await page.evaluate((l) => window.cm_serve(l), line) + '\\n');\nawait browser.close();\n"
+    },
+    "kind": "process",
+    "language": "javascript",
+    "probe": {
+      "kind": "all",
+      "of": [
+        {
+          "kind": "executable",
+          "name": "node",
+          "version_args": [
+            "--version"
+          ]
+        },
+        {
+          "kind": "command",
+          "reason": "the Node module playwright (and its Chromium) is not installed",
+          "run": [
+            "node",
+            "-e",
+            "require('playwright')"
+          ]
+        }
+      ]
+    },
+    "run": [
+      "{exe}",
+      "{driver}",
+      "{src}"
+    ],
+    "statement": "the module runs in a Chromium page; a Node driver relays the request lines with page.evaluate",
+    "transport": "\nwindow.cm_serve = cm_serve;\n"
+  },
+  "honest_limits": "Integers are BigInt, exact but slower than machine words; a page has no files, so the effect shell (ROM loading, display, sound) is the page's own program.",
+  "language": "javascript",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "browser",
+  "page": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>@title@</title>\n<style>\n:root { color-scheme: light dark; --bg: #fff; --fg: #111; }\n@media (prefers-color-scheme: dark) { :root { --bg: #111; --fg: #eee; } }\nbody { background: var(--bg); color: var(--fg); font: 14px/1.45 ui-monospace, Menlo, Consolas, monospace;\n       margin: 0; padding: 16px; }\npre { white-space: pre-wrap; word-break: break-word; }\n</style>\n</head>\n<body>\n<h1>@title@</h1>\n<pre id=\"out\">running…</pre>\n<script type=\"module\">\n@module@\nwindow.cm_serve = cm_serve;\n@body@\n</script>\n</body>\n</html>\n",
+  "page_check": {
+    "file": "check.mjs",
+    "run": [
+      "{exe}",
+      "{driver}",
+      "{page}"
+    ],
+    "text": "import { createRequire } from 'node:module';\nimport { pathToFileURL } from 'node:url';\nconst require = createRequire(import.meta.url);\nconst { chromium } = require('playwright');\nconst browser = await chromium.launch();\nconst page = await browser.newPage();\npage.on('pageerror', (e) => { process.stdout.write('error\\n' + e + '\\n'); process.exit(3); });\nawait page.goto(pathToFileURL(process.argv[2]).href);\nawait page.waitForFunction(() => document.body.dataset.result, null, { timeout: 600000 });\nprocess.stdout.write(await page.evaluate(() => document.body.dataset.result + '\\n' + document.getElementById('out').textContent) + '\\n');\nawait browser.close();\n"
+  },
+  "page_replay": "\nconst cm_batches = @batches@;\nconst cm_expected = @expected@;\nconst cm_view = document.getElementById('out');\nconst cm_t0 = performance.now();\nlet cm_same = 0, cm_first = -1, cm_error = '';\nfor (let i = 0; i < cm_batches.length; i++) {\n    const got = JSON.parse(cm_serve(JSON.stringify(cm_batches[i])));\n    const bad = got.find((r) => 'error' in r);\n    if (bad) { cm_error = bad.error; cm_first = i; break; }\n    if (JSON.stringify(got.map((r) => r.ok)) === JSON.stringify(cm_expected[i])) cm_same++;\n    else if (cm_first < 0) cm_first = i;\n}\nconst cm_ms = Math.round(performance.now() - cm_t0);\nconst cm_pass = cm_same === cm_batches.length && !cm_error;\ndocument.body.dataset.result = cm_pass ? 'pass' : 'fail';\ncm_view.textContent = (cm_pass ? 'PASS: ' : 'FAIL: ') + cm_same + ' of ' + cm_batches.length +\n    ' request batches answer exactly as @reference@ did (' + cm_ms + ' ms in this browser).\\n' +\n    (cm_first >= 0 ? 'first difference at batch ' + cm_first + '\\n' : '') + (cm_error ? cm_error + '\\n' : '') +\n    '\\nmachine: @machine@\\nsession: @session@\\nengine: this page (@engine@, emitted from the cards)';\n",
+  "statement": "A web page. A machine module emitted by the JavaScript language card runs in the page itself; the same text that runs in Node runs here, so a browser is one more engine with the same results. Tests drive the page through Chromium (Playwright); `page` is a standalone HTML file that needs nothing but a browser."
+}

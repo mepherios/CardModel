@@ -1,0 +1,73 @@
+{
+  "category": "platform",
+  "embed": {
+    "artifact_file": "machine.wasm",
+    "compile": [
+      "{exe}",
+      "--target=wasm32",
+      "-O2",
+      "-mbulk-memory",
+      "-std=c11",
+      "-nostdlib",
+      "-fwrapv",
+      "-fvisibility=default",
+      "-w",
+      "-I{include}",
+      "-Wl,--no-entry",
+      "-Wl,--export-dynamic",
+      "-o",
+      "{out}",
+      "{src}"
+    ],
+    "compiler": {
+      "name": "clang",
+      "probe": {
+        "kind": "command",
+        "reason": "clang cannot build wasm32 here (it needs the WebAssembly target and wasm-ld)",
+        "run": [
+          "clang",
+          "--target=wasm32",
+          "-nostdlib",
+          "-Wl,--no-entry",
+          "-o",
+          "/dev/null",
+          "-x",
+          "c",
+          "/dev/null"
+        ]
+      }
+    },
+    "entry": {
+      "array": {
+        "int": "    \"@key@\": cm_x.@name@ && new BigInt64Array(cm_x.memory.buffer, cm_x.@name@.value, @size@),",
+        "u8": "    \"@key@\": cm_x.@name@ && new Uint8Array(cm_x.memory.buffer, cm_x.@name@.value, @size@),"
+      },
+      "function": {
+        "bool": "    \"@key@\": (...a) => cm_x.@name@(...a) !== 0,",
+        "default": "    \"@key@\": cm_x.@name@,"
+      },
+      "global": {
+        "bool": "    \"@key@\": [() => cm_u8[cm_x.@name@.value] !== 0, (v) => { cm_u8[cm_x.@name@.value] = v ? 1 : 0; }],",
+        "default": "    \"@key@\": [() => cm_dv.getBigInt64(cm_x.@name@.value, true), (v) => cm_dv.setBigInt64(cm_x.@name@.value, v, true)],",
+        "float": "    \"@key@\": [() => cm_dv.getFloat64(cm_x.@name@.value, true), (v) => cm_dv.setFloat64(cm_x.@name@.value, v, true)],"
+      }
+    },
+    "exported_only": true,
+    "headers": {
+      "math.h": "/* freestanding math for wasm32 (platform/wasm card): WebAssembly instructions only */\n#define sqrt(x) __builtin_sqrt(x)\n#define fabs(x) __builtin_fabs(x)\n#define floor(x) __builtin_floor(x)\n#define ceil(x) __builtin_ceil(x)\n#define trunc(x) __builtin_trunc(x)\n#define nearbyint(x) __builtin_nearbyint(x)\n#define copysign(x, y) __builtin_copysign(x, y)\n#define fmin(x, y) __builtin_fmin(x, y)\n#define fmax(x, y) __builtin_fmax(x, y)\n#define INFINITY __builtin_inf()\n#define NAN __builtin_nan(\"\")\n#define isnan(x) __builtin_isnan(x)\n#define isinf(x) __builtin_isinf(x)\n#define signbit(x) __builtin_signbit(x)\n"
+    },
+    "kind": "process",
+    "language": "c",
+    "preamble": "\nconst cm_wasm = await WebAssembly.instantiate(Uint8Array.from(atob('@wasm_b64@'), (c) => c.charCodeAt(0)), {});\nconst cm_x = cm_wasm.instance.exports;\nconst cm_u8 = new Uint8Array(cm_x.memory.buffer);\nconst cm_dv = new DataView(cm_x.memory.buffer);\n",
+    "server": "javascript",
+    "source_file": "machine.c",
+    "statement": "compile the C module to wasm32, inline it (base64) before the JavaScript request server; the server's transport (Node, or a hosting platform's such as the browser's) runs it"
+  },
+  "honest_limits": "No libc: a machine module that calls a libm function other than the WebAssembly instructions does not build. Memory is the module's static data; machine modules allocate nothing.",
+  "language": "c",
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "name": "wasm",
+  "statement": "WebAssembly. The C language card's machine module compiled for wasm32 (clang, no libc) and served by the JavaScript request server, so it runs wherever JavaScript runs: Node, and any browser (engine wasm@browser). Integers are the C card's int64, the same words as the native library."
+}
