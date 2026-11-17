@@ -13,6 +13,7 @@ are declared inside cards (``probe`` field), so supporting a new backend is
   env          var, [is_dir | is_file]
   platform     system ("Darwin"/"Linux"/"Windows"), [machine]
   python_module module
+  command      run: [exe, args...], [reason]   the command must exit 0 (e.g. a runtime must load a module)
   all / any    of: [probe, ...]
 
 ``probe(spec)`` returns (ok, detail) where detail is the resolved executable
