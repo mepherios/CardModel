@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A self-contained card model: every structure is a card; observe, verify, translate, learn, optimize."
 requires-python = ">=3.9"
 dependencies = []
+license = { text = "PolyForm-Noncommercial-1.0.0" }
 
 [project.scripts]
 cardmodel = "cardmodel.cli:main"
