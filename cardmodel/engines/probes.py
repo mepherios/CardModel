@@ -154,6 +154,13 @@ def _probe(p: dict) -> tuple[bool, str]:
         except (ImportError, ValueError):
             found = False
         return (found, p["module"] if found else f"python module {p['module']} not installed")
+    if kind == "command":
+        # a command that must exit 0 (a module a runtime must resolve, e.g. node -e "require('playwright')")
+        exe = shutil.which(p["run"][0])
+        if not exe:
+            return False, f"{p['run'][0]} not found"
+        rc, out = _run_version(exe, tuple(p["run"][1:]))
+        return (True, " ".join(p["run"])) if rc == 0 else (False, p.get("reason") or f"{' '.join(p['run'])} exited {rc}")
     return False, f"unknown probe kind {kind!r}"
 
 
