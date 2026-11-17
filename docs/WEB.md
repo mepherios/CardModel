@@ -47,6 +47,23 @@ on any of them by name: `--engine javascript`, `--engines ir,native,wasm@browser
 
 `tools/gen_js_machine.py` writes these cards (idempotent; the store versions what changed).
 
+## 2a. What is card logic, and what is not yet (the owner's rule, 2026-11-17: purely card logic, no cheating)
+
+Card logic: every instruction, every hardware rule and the lifted code (the machine's behaviour) come from cards
+and are emitted by the generic codegen; the JavaScript syntax is templates in the language card; no machine, ISA or
+instruction is re-implemented in Python or JavaScript; Python names no language or platform. Nothing is hard-coded
+in a page: its expected answers are computed by the native C build, and planted wrong answers or instructions fail.
+
+**Not card logic yet** (hand-written glue, stored as text in cards, named here so nobody mistakes it for logic):
+
+1. The request server (`language/javascript` `embed.serve`, about 50 lines): moves calls and bytes in and out of a
+   running machine. The card language has no strings or JSON, so it cannot be written in cards until strings land.
+2. The hosts: the browser driver, the wasm preamble and `entry` templates, the freestanding `math.h`. They play the
+   role the hand-written Swift shell plays in `platform/macos`: plumbing around the machine, not its behaviour.
+3. The Game Boy shell's setup (ROM banking, header, power-on) is still Python (`machine/gb.py`); a page records it.
+   This must move into card logic before a playable page (§5 step 2).
+4. `tools/gen_js_machine.py` holds the text of these cards; the cards are generated from it.
+
 ## 3. A page that checks itself
 
 ```sh
