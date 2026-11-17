@@ -22,7 +22,8 @@
     "claude/arm-symbolic",
     "claude/arm-symbolic-memory",
     "claude/arm-symbolic-loops",
-    "license-noncommercial"
+    "license-noncommercial",
+    "claude/hopeful-tesla-*"
   ],
   "category": "project",
   "docs": [
@@ -52,7 +53,8 @@
     "claude/self-report-next (draft PR): the self-report's top fixable item, G_C4: the four inconclusive redefinitions get exact forms (exprs: fibonacci, multiplicity, bounded Sum), 107 -> 111 verified",
     "claude/opaque-callees: failed callees no longer fail their callers (SCALING.md 3.3): opaque boundary cards, partial lifts with the edge as a gap, the host witness (engines/opaque.py)",
     "ENVIRONMENTS V-B numeric-model laws (claude/numeric-model): fp_contract, denormal_flush, reduction_order as runner numeric models declared from the flags and measured by a C probe; bit-for-bit vs bounded comparison in analyse",
-    "license-noncommercial (draft PR #92): PolyForm Noncommercial 1.0.0 license, contributor agreement (CONTRIBUTING.md) and a README section, so the owner can open the repository to noncommercial contributors"
+    "license-noncommercial (draft PR #92): PolyForm Noncommercial 1.0.0 license, contributor agreement (CONTRIBUTING.md) and a README section, so the owner can open the repository to noncommercial contributors",
+    "claude/hopeful-tesla-yvaan1 (PR #40): function_card's emit loop no longer shadows its `lang` parameter, so provenance.source_lang is the real source language for C, Go, ... lifts"
   ],
   "kind": "program",
   "left": [
@@ -61,8 +63,8 @@
     "canonical forms for more definitions (G_U7)"
   ],
   "metadata": {
-    "previous_content_hash": "b1cd507b4226c225b94ac5e55e2a16023a86d31b3d0f68d6ea3e74767defa95c",
-    "version": "2.0.31",
+    "previous_content_hash": "1d03f976bc89954943a1c0fe333edb859b7e3947e8cc4c50678334d4ac04bbd7",
+    "version": "2.0.32",
     "version_bump_reason": "patch"
   },
   "metrics": [
@@ -106,7 +108,7 @@
   "statement": "This program: cards, the language, logic, proofs, translation, optimization, machines, the store, and the cycle that runs it all on itself.",
   "tier": 1,
   "title": "The card model",
-  "updated": "2026-11-17T16:40:00+01:00",
+  "updated": "2026-11-17T15:45:00+00:00",
   "user_actions": [
     {
       "action": "Decide on the proposed laws GM-1 to GM-9 (docs/GODEL_METHOD.md); GM-2 amends CM43",
